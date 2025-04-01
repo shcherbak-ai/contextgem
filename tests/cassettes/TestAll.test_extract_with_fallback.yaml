@@ -1,0 +1,289 @@
+interactions:
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \u201CExpected structure,\u201D you
+      must follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If there are example
+      items (\u201CExtracted concept examples\u201D), try to follow the same style
+      and formatting for your extracted items.\\n    -- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n\\n-
+      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
+      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure your extracted
+      items strictly match that type. Python types are provided (e.g., str for string,
+      int for integer, float for floating-point number, dict for object, etc.).\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- If multiple items are found for a concept,
+      include each as a separate entry within the \\\"extracted_items\\\" array.\\n\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Title\\n\\nConcept description:\\nContract title\\n\\nAmount
+      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: str\\n```\\n\\n```\\n- Concept ID: C1\\nConcept name: Is
+      a contract\\n\\nConcept description:\\nDocument is a contract\\n\\nAmount of
+      extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: bool\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nNon-Disclosure
+      Agreement (NDA)This Non-Disclosure Agreement (the \\\"Agreement\\\") is made
+      and entered into as of July 16, 2024, by and between:Party A:_______________Contact:
+      _____Phone: _____Email: _____Party B:Example.Com LLC5678 Random DriveNew York,
+      NY 00000Contact: Jane Doe, Managing PartnerPhone: (012) 345-6789Email: jane.doe@example.com1.
+      Purpose:The purpose of this Agreement is to protect the confidential information
+      that may be disclosed between the parties during discussions and engagements
+      regarding potential business collaborations and partnerships.2. Definition of
+      Confidential Information:For purposes of this Agreement, \\\"Confidential Information\\\"
+      means any and all non-public information, conveyed in all forms, whether in
+      oral, written, electronic, or other form or media, whether or not marked, designated,
+      or otherwise identified as \\\"confidential,\\\" that has been or may be disclosed
+      to, accessed by, or observed by Receiving Party, which (i) has actual or potential
+      economic value by virtue of not being generally known to, and not being readily
+      ascertainable by proper means by, other persons who can obtain economic value
+      from its disclosure or use, or (ii) is subject to reasonable efforts by Disclosing
+      Party to maintain its secrecy and confidentiality.Confidential Information includes,
+      but is not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.Confidential Information
+      shall not include information that: (a) is or becomes generally available to
+      the public other than as a result of disclosure by Receiving Party or its Representatives;
+      (b) was available to Receiving Party on a non-confidential basis prior to its
+      disclosure by Disclosing Party; (c) becomes available to Receiving Party on
+      a non-confidential basis from a person other than Disclosing Party who is not
+      otherwise bound by a confidentiality obligation to Disclosing Party; or (d)
+      was independently developed by Receiving Party without reference to or use of
+      any Confidential Information. The name of the dog of the Receiving Party is
+      Bob.The designation of information as Confidential Information shall not be
+      determinative of whether such information constitutes a trade secret under applicable
+      law. All Confidential Information shall remain the exclusive property of Disclosing
+      Party, and Receiving Party shall have no rights, by license or otherwise, to
+      use the Confidential Information except as expressly provided herein.3. Obligations
+      of Receiving Party:The party receiving Confidential Information (\\\"Receiving
+      Party\\\") shall:a. Maintain the confidentiality of the Confidential Information
+      and not disclose it to any third party without the prior written consent of
+      the Disclosing Party.b. Use the Confidential Information solely for the purpose
+      of evaluating or engaging in the potential business collaboration.c. Take all
+      necessary precautions to protect the confidentiality of the Confidential Information,
+      which shall be no less than the precautions it takes to protect its own confidential
+      information.4. Exclusions from Confidential Information:Confidential Information
+      does not include information that:a. Is or becomes publicly known through no
+      wrongful act of the Receiving Party.b. Is already known to the Receiving Party
+      at the time of disclosure.c. Is lawfully received from a third party without
+      breach of this Agreement.d. Is independently developed by the Receiving Party
+      without use of or reference to the Disclosing Party's Confidential Information.6.
+      Return of Materials:Upon termination of this Agreement or upon request, the
+      Receiving Party shall return all materials containing Confidential Information
+      to the Disclosing Party or destroy them, at the Disclosing Party's discretion.5.
+      Liability:a. Total Liability Cap:The total liability of either party for any
+      and all claims arising out of or related to this Agreement, whether in contract,
+      tort, or otherwise, shall not exceed the greater of (i) $100,000 or (ii) the
+      total amount paid by the Receiving Party to the Disclosing Party under any separate
+      business agreement between the parties during the twelve (12) months preceding
+      the event giving rise to the claim. This limitation of liability is cumulative
+      and not per incident.b. Penalties for Breach:In the event of a breach of this
+      Agreement by the Receiving Party, the Disclosing Party shall be entitled to
+      seek injunctive relief in addition to any other remedy available at law or in
+      equity. The Receiving Party acknowledges that a breach of this Agreement may
+      cause irreparable harm to the Disclosing Party for which monetary damages would
+      be an inadequate remedy. In addition to injunctive relief, the Receiving Party
+      shall be liable for liquidated damages in the amount of $25,000 for each instance
+      of unauthorized disclosure or use of Confidential Information, which the parties
+      agree represents a reasonable estimate of the damages likely to be suffered
+      and not a penalty.7. No License:Nothing in this Agreement shall be construed
+      as granting any rights to the Receiving Party, by license or otherwise, to any
+      of the Disclosing Party\u2019s Confidential Information, except as expressly
+      set forth in this Agreement.8. Governing Law and Disputes:This Agreement shall
+      be governed by and construed in accordance with the laws of the State of California,
+      without regard to its conflict of law principles.All disputes shall be resolved
+      by the courts of the State of California. This Agreement shall remain in effect
+      for a period of five (5) years from the date of signing this agreement.9. Miscellaneous:a.
+      This Agreement constitutes the entire agreement between the parties with respect
+      to the subject matter hereof and supersedes all prior or contemporaneous oral
+      or written agreements concerning such subject matter.b. Any amendments or modifications
+      to this Agreement must be made in writing and signed by both parties.c. If any
+      provision of this Agreement is found to be unenforceable, the remainder shall
+      be enforced as fully as possible and the unenforceable provision shall be deemed
+      modified to the limited extent required to permit its enforcement in a manner
+      most closely representing the intention of the parties.d. The Disclosing Party
+      shall be a good person to execute this contract.IN WITNESS WHEREOF, the parties
+      hereto have executed this Non-Disclosure Agreement as of the date first above
+      written._____By: ___________________________Name: _____Title: _____Date: ___________________________Example.Com
+      LLCBy: ___________________________Name: Jane DoeTitle: Managing PartnerDate:
+      ___________________________\\n---\\n\"}],\"model\":\"gpt-4o-mini\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '14759'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.66.3
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.66.3
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.2
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA5RTUWvbMBB+968Q92wPx07iJm9ZCxsMBmPdw4iDUaWLo1SWjHQeGSX/fchOY3ft
+        oPODbfR93+nuvruniDFQEtYMxIGTaFqdfLy9/376UWw+i4U44s/ll+Onb/lmhtlifs8hDgr7cERB
+        z6oPwjatRlLWDLBwyAlD1Fkxz/JZtkrzHmisRB1kdUvJ3CaNMirJ0myepEUyu7moD1YJ9LBm24gx
+        xp76d8jTSDzBmqXx80mD3vMaYX0lMQbO6nAC3HvliRuCeASFNYSmT31bmj788AlPGWCBLVVKlrBm
+        JdymJcRTAp7IcUEoK0XY+MDajvjA+WpNcqe80NZ3DtmmdogNGiphZO6G33P8niRm/50EuQ5fX1aa
+        3bQXDved58EP02k9Abgxlnjws3dhd0HO175rW7fOPvi/pLBXRvlD5ZB7a0KPPdkWevQcMbbr/e1e
+        WAats01LFdlH7K/LimI1BIRxrkZ4UVxAssT1RHaTL+M3IlYSiSvtJzMCgosDylE7DhTvpLITIJrU
+        /Tqdt2IPtStTvyf8CIjgOMqqdSiVeFnySHMY9u5ftGuf+4TBo/ulBFak0AUvJO55p4dtAP/bEzbV
+        XpkaXevUsBL7tkqXRV7wVZ4uITpHfwAAAP//AwDiQ9a0IAQAAA==
+    headers:
+      CF-RAY:
+      - DUMMY
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 18 Mar 2025 15:48:24 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - DUMMY
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1400'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 231ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

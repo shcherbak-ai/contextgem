@@ -1,0 +1,298 @@
+{% if data_type == "text" %}
+    {% if add_references %}
+        {% if reference_depth == "sentences" %}
+Below you will find a list of document paragraphs (including sentences) and a list of concepts.
+        {% else %}
+Below you will find a list of document paragraphs and a list of concepts.
+        {% endif %}
+    {% else %}
+Below you will find document text and a list of concepts.
+    {% endif %}
+{% elif data_type == "image" %}
+Below you will find a list of concepts.
+{% endif %}
+
+Your task is to:
+{% if data_type == "text" %}
+    {% if add_references %}
+        {% if reference_depth == "sentences" %}
+1. Read through the provided document paragraphs and their sentences.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), optionally followed by additional information about the paragraph, which may be helpful during your analysis.
+    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence and, optionally, additional information about the sentence, which may be helpful during your analysis.
+        {% else %}
+1. Read through the document paragraphs provided.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph and, optionally, additional information about the paragraph, which may be helpful during your analysis.
+        {% endif %}
+    - Note that paragraphs are listed in the same order they appear in the original document.
+2. Identify whether each concept in the concepts list is addressed within the document paragraphs.
+    {% else %}
+1. Read through the document text provided.
+2. Identify whether each concept in the concepts list is addressed within the document text.
+    {% endif %}
+{% elif data_type == "image" %}
+1. Examine the attached image(s).
+2. Identify whether each concept in the concepts list is addressed within the image(s).
+{% endif %}
+3. For each concept that appears, extract zero or more items relevant to that concept. The item format and structure are specified for each concept.
+4. Produce a JSON array containing your extracted data, in the provided format.
+
+{% if data_type == "text" %}
+    {% if add_references %}
+If a concept is not addressed in the document paragraphs, you must still include an entry in the final JSON output but with an empty "extracted_items" list.
+    {% else %}
+If a concept is not addressed in the document text, you must still include an entry in the final JSON output but with an empty "extracted_items" list.
+    {% endif %}
+{% elif data_type == "image" %}
+If a concept is not addressed in the image(s), you must still include an entry in the final JSON output but with an empty "extracted_items" list.
+{% endif %}
+
+Follow these additional rules:
+
+- Output format:
+Provide your answer in only the following answer format (do not include backticks, code fences, or any introductory/explanatory text).
+
+- Consistency:
+    -- Each JSON object in the list must have two keys: "concept_id" and "extracted_items".
+    -- The value of "concept_id" must match exactly the ID of the concept (for example, "C0", "C1", etc.).
+{% if add_references %}
+    {% if add_justifications %}
+        {% if reference_depth == "sentences" %}
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraphs". If the concept is not found or there are no items to extract, leave the array empty ([]).
+        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- The value of "reference_paragraphs" must be an array of objects with mandatory fields "reference_paragraph_id", which holds the provided ID of the reference paragraph, and "reference_sentence_ids", which holds the provided IDs of the reference sentences within the paragraph. Note that not every sentence in the paragraph necessarily serves as a relevant reference.
+        {% else %}
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraph_ids". If the concept is not found or there are no items to extract, leave the array empty ([]).
+        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        {% endif %}
+    {% else %}
+        {% if reference_depth == "sentences" %}
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraphs". If the concept is not found or there are no items to extract, leave the array empty ([]).
+        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- The value of "reference_paragraphs" must be an array of objects with mandatory fields "reference_paragraph_id", which holds the provided ID of the reference paragraph, and "reference_sentence_ids", which holds the provided IDs of the reference sentences within the paragraph. Note that not every sentence in the paragraph necessarily serves as a relevant reference.
+        {% else %}
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraph_ids". If the concept is not found or there are no items to extract, leave the array empty ([]).
+        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        {% endif %}
+    {% endif %}
+{% else %}
+    {% if add_justifications %}
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "justification". If the concept is not found or there are no items to extract, leave the array empty ([]).
+        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+    {% else %}
+    -- The value of "extracted_items" must be an array. If the concept is not found or there are no items to extract, leave the array empty ([]).
+        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item, even if there is only one, must be part of the "extracted_items" array.
+    {% endif %}
+{% endif %}
+
+{% if add_justifications or add_references %}
+- Item object structure:
+    -- value: Mandatory field holding the extracted item.
+        --- If a specific structure is provided for a concept under “Expected structure,” the extracted item value must follow that structure for all extracted items corresponding to that concept.
+        --- If a rating scale is provided for a concept under "Rating scale," the extracted item value must be within that scale.
+        --- If there are example items (“Extracted concept examples”), the extracted item value should follow the same style and formatting.
+    {% if output_language == "en" %}
+        {% if data_type == "text" %}
+        --- When extracting string values, translate them in English if the original language of the document is not English.
+        {% elif data_type == "image" %}
+        --- When extracting string values from the image(s) that contain text, translate them in English if the original language of the image(s) is not English.
+        {% endif %}
+    {% elif output_language == "adapt" %}
+        {% if data_type == "text" %}
+        --- When extracting string values, retain them in the original language of the document without translating them.
+        {% elif data_type == "image" %}
+        --- When extracting string values from the image(s) that contain text, retain such values in the original language of the image(s) without translating them.
+        {% endif %}
+    {% endif %}
+    {% if add_justifications %}
+    -- justification: Mandatory field holding a justification of why the item was extracted for the concept. Ensure the justification is specific and directly ties the extracted item to the concept's defining features. Never reference the concept's ID in the justification.
+        {% if justification_depth == "brief" %}
+        --- Justification should be brief, i.e. highlight only the essential details.
+        {% elif justification_depth == "balanced" %}
+        --- Justification should be balanced, i.e. cover the key insights with enough detail to be informative, while remaining concise.
+        {% elif justification_depth == "comprehensive" %}
+        --- Justification should be comprehensive, i.e. deliver an in-depth explanation that thoroughly details the rationale and supporting evidence.
+        {% endif %}
+        --- Justification should be no longer than {{ justification_max_sents }} sentences.
+        {% if output_language == "en" %}
+        --- Justification should be in English.
+        {% elif output_language == "adapt" %}
+            {% if data_type == "text" %}
+        --- Justification should be in the original language of the document.
+            {% elif data_type == "image" %}
+        --- If the image(s) contain text, justification should be in the original language of the image(s).
+            {% endif %}
+        {% endif %}
+    {% endif %}
+    {% if add_references %}
+        {% if reference_depth == "sentences" %}
+    -- reference_paragraphs: An array of objects for each paragraph based on which the item was extracted for the concept. Each object should include:
+        --- reference_paragraph_id: Mandatory field holding the provided ID of the reference paragraph. Each paragraph ID must match exactly the provided ID for the paragraph (for example, "P0", "P1", etc.).
+        --- reference_sentence_ids: Mandatory field holding an array of the provided IDs of the sentences within the paragraph, based on which the item was extracted for the concept. Each sentence ID must match exactly the provided ID for the sentence (for example, "P0-S0", "P0-S2", etc.).
+        {% else %}
+    -- reference_paragraph_ids: Mandatory field holding the IDs of the document paragraphs based on which the item was extracted for the concept. Ensure such paragraphs directly tie the extracted item to the concept's defining features. Each paragraph ID must match exactly the provided ID for the paragraph (for example, "P0", "P1", etc.).
+        {% endif %}
+    {% endif %}
+{% else %}
+- Item structure:
+    -- If a specific structure is provided for a concept under “Expected structure,” you must follow that structure for all extracted items corresponding to that concept.
+    -- If a rating scale is provided for a concept under "Rating scale," the extracted item value must be within that scale.
+    -- If there are example items (“Extracted concept examples”), try to follow the same style and formatting for your extracted items.
+    {% if output_language == "en" %}
+        {% if data_type == "text" %}
+    -- When extracting string values, translate them in English if the original language of the document is not English.
+        {% elif data_type == "image" %}
+    -- When extracting string values from the image(s) that contain text, translate them in English if the original language of the image(s) is not English.
+        {% endif %}
+    {% elif output_language == "adapt" %}
+        {% if data_type == "text" %}
+    -- When extracting string values, retain them in the original language of the document without translating them.
+        {% elif data_type == "image" %}
+    -- When extracting string values from the image(s) that contain text, retain such values in the original language of the image(s) without translating them.
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+- Types of extracted items:
+{% if add_justifications or add_references %}
+    -- Each concept specifies an "extracted item type" (found under "Concept extracted item type"). Ensure that the value of each of the extracted items for the concept strictly matches that type. Python types are provided (e.g., str for string, int for integer, float for floating-point number, dict for object, etc.).
+{% else %}
+    -- Each concept specifies an "extracted item type" (found under "Concept extracted item type"). Ensure your extracted items strictly match that type. Python types are provided (e.g., str for string, int for integer, float for floating-point number, dict for object, etc.).
+{% endif %}
+    -- Do not introduce any extra fields or modify the specified structure.
+
+- Handling missing or multiple items:
+    -- If a concept is not mentioned at all, your output should still contain an entry for that concept with an empty "extracted_items" array.
+    -- If multiple items are found for a concept, include each as a separate entry within the "extracted_items" array.
+
+- No additional text:
+    -- Do not include any headers, explanations, or text outside of the JSON array.
+    -- Do not wrap your JSON response in backticks or any other formatting characters.
+
+===
+ANSWER FORMAT (MANDATORY):
+[
+    {
+        "concept_id": str,
+        "extracted_items: [
+{% if add_justifications or add_references %}
+            {
+                "value": ...,
+    {% if add_justifications %}
+        {% if add_references %}
+                "justification": str,
+        {% else %}
+                "justification": str
+        {% endif %}
+    {% endif %}
+    {% if add_references %}
+        {% if reference_depth == "sentences" %}
+                "reference_paragraphs": [
+                    {
+                        "reference_paragraph_id": str,
+                        "reference_sentence_ids": [
+                            str,
+                            ...
+                        ]
+                    },
+                    ...
+                ]
+        {% else %}
+                "reference_paragraph_ids": [
+                    str,
+                    ...
+                ]
+        {% endif %}
+    {% endif %}
+            },
+            ...
+{% else %}
+            ...
+{% endif %}
+        ],
+    },
+    ...
+]
+===
+
+___
+CONCEPTS:
+{% for concept_index, concept_data in enumerate(concepts) %}
+```
+- Concept ID: C{{ concept_index }}
+Concept name: {{ concept_data.name }}
+
+Concept description:
+{{ concept_data.description }}
+    {% if concept_data.structure %}
+
+Expected structure:
+{{ concept_data.structure | pprint }}
+    {% endif %}
+    {% if concept_data.rating_scale %}
+
+Rating scale:
+Based on the concept description, assign and output a rating on the scale from {{ concept_data.rating_scale.start }} (inclusive) to {{ concept_data.rating_scale.end }} (inclusive).
+    {% endif %}
+    {% if concept_data.singular_occurrence %}
+
+Amount of extracted items: This concept may have zero or one extracted item, never multiple items.
+    {% else %}
+
+Amount of extracted items: This concept may have zero, one, or multiple extracted items.
+    {% endif %}
+    {% if concept_data.examples %}
+
+Extracted concept examples:
+        {% for example in concept_data.examples %}
+- {{ example }}
+        {% endfor %}
+    {% endif %}
+
+Concept extracted item type: {{ concept_data._item_type_in_prompt }}
+```
+
+{% endfor %}
+___
+
+{% if data_type == "text" %}
+---
+    {% if add_references %}
+        {% if reference_depth == "sentences" %}
+DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
+        {% else %}
+DOCUMENT PARAGRAPHS:
+        {% endif %}
+        {% for para_index, para_item in enumerate(paragraphs) %}
+            {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text) %}
+            {% if para_text %}
+```
+- Paragraph ID: P{{ para_index }}
+                {% if reference_depth != "sentences" %}
+Paragraph text: {{ para_text }}
+                {% endif %}
+                {% if para_item.additional_context %}
+Additional information about the paragraph: {{ para_item.additional_context }}
+                {% endif %}
+                {% if reference_depth == "sentences" %}
+Paragraph sentences:
+                    {% for sent_index, sent_item in enumerate(para_item.sentences) %}
+                        {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text) %}
+                        {% if sent_text %}
+-- Sentence ID: P{{ para_index }}-S{{ sent_index }}
+Sentence text: {{ sent_text }}
+                            {% if sent_item.additional_context %}
+Additional information about the sentence: {{ sent_item.additional_context }}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+```
+
+            {% endif %}
+        {% endfor %}
+    {% else %}
+DOCUMENT TEXT:
+{{ _clean_text_for_llm_prompt(text) }}
+    {% endif %}
+---
+{% endif %}

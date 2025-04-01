@@ -1,0 +1,128 @@
+[project]
+name = "contextgem"
+version = "0.1.0"
+description = "Easier and faster way to build LLM extraction workflows through powerful abstractions"
+authors = [
+    {name = "shcherbak-ai", email = "sergii@shcherbak.ai"}
+]
+maintainers = [
+    {name = "shcherbak-ai", email = "sergii@shcherbak.ai"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "litellm (>=1.63.3,<2.0.0)",
+    "pydantic (>=2.10.6,<3.0.0)",
+    "aiolimiter (>=1.2.1,<2.0.0)",
+    "jinja2 (>=3.1.5,<4.0.0)",
+    "torch (>=2.6.0,<3.0.0)",
+    "wtpsplit (>=2.1.4,<3.0.0)",
+    "loguru (>=0.7.3,<0.8.0)",
+    "python-ulid (>=3.0.0,<4.0.0)",
+]
+license = {text = "Apache-2.0"}
+keywords = [
+    "document", 
+    "extraction", 
+    "llm", 
+    "ai", 
+    "nlp", 
+    "insights",
+    "structured-data", 
+    "document-processing",
+    "text-analysis",
+    "information-extraction",
+    "insights-extraction",
+    "document-parsing",
+    "data-extraction",
+    "machine-learning",
+    "large-language-models",
+    "document-intelligence",
+    "document-understanding",
+    "semantic-analysis",
+    "text-processing",
+    "content-extraction",
+    "unstructured-data",
+    "legaltech",
+    "contract-analysis",
+    "contract-review",
+    "contract-parsing",
+    "contract-intelligence",
+    "contract-automation",
+    "contract-management",
+    "document-qa",
+    "question-answering",
+    "generative-ai",
+    "knowledge-extraction",
+    "entity-extraction",
+    "context-aware",
+    "zero-shot",
+    "few-shot",
+    "prompt-engineering",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Legal Industry",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Office/Business",
+    "Topic :: Text Processing :: General",
+    "Topic :: Text Processing :: Markup",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Utilities",
+    "Topic :: Education",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/shcherbak-ai/contextgem"
+Documentation = "https://github.com/shcherbak-ai/contextgem/blob/main/README.md"
+Repository = "https://github.com/shcherbak-ai/contextgem.git"
+"Bug Tracker" = "https://github.com/shcherbak-ai/contextgem/issues"
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+coverage = "^7.6.12"
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+python-dotenv = "^1.0.1"
+pip-tools = "^7.4.1"
+pytest-vcr = {git = "https://github.com/shcherbak-ai/pytest-vcr.git", rev = "master"}
+pre-commit = "^4.1.0"
+isort = "^6.0.1"
+sphinx = ">=7.0.0,<8.0.0"
+sphinx-autodoc-typehints = "<3.0.0"
+sphinx-book-theme = "^1.1.4"
+sphinx-copybutton = "^0.5.2"
+sphinx-design = "^0.6.1"
+sphinxext-opengraph = "^0.9.1"
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pytest.ini_options]
+addopts = "-vv -s"
+log_cli = true
+log_cli_level = "WARNING"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

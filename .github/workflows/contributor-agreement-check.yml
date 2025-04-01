@@ -1,0 +1,107 @@
+name: Check Contributor Agreement
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write  # Needed to comment on PRs 
+
+jobs:
+  check-contributor-agreement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Check for contributor agreement
+        id: check-agreement
+        run: |
+          # Get the PR author's username
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          echo "PR author: $PR_AUTHOR"
+          
+          # Check if contributor agreement file exists
+          AGREEMENT_FILE=".github/contributors/${PR_AUTHOR}.md"
+          if [ -f "$AGREEMENT_FILE" ]; then
+            echo "✅ Contributor agreement file found: $AGREEMENT_FILE"
+            
+            # Check if file is not empty and contains the username
+            if [ ! -s "$AGREEMENT_FILE" ]; then
+              echo "❌ Contributor agreement file is empty"
+              exit 1
+            fi
+            
+            if ! grep -q "$PR_AUTHOR" "$AGREEMENT_FILE"; then
+              echo "❌ Contributor agreement file does not contain the contributor's username"
+              exit 1
+            fi
+            
+            echo "✅ Contributor agreement file is valid"
+          else
+            echo "❌ No contributor agreement file found for $PR_AUTHOR"
+            echo "Please create a file at .github/contributors/${PR_AUTHOR}.md with the filled-in contributor agreement."
+            echo "See .github/CONTRIBUTOR_AGREEMENT.md for the template."
+            exit 1
+          fi
+
+      - name: Check for deleted contributor agreements
+        id: check-deleted
+        run: |
+          # Set proper base ref
+          git fetch origin ${{ github.base_ref }}
+          
+          # Get the list of deleted files in this PR
+          DELETED_FILES=$(git diff --name-only --diff-filter=D origin/${{ github.base_ref }} HEAD | grep -E "^.github/contributors/.*\.md$" || true)
+          
+          if [ -n "$DELETED_FILES" ]; then
+            echo "❌ The following contributor agreement files are being deleted in this PR:"
+            echo "$DELETED_FILES"
+            echo "Deletion of contributor agreement files is not allowed."
+            exit 1
+          else
+            echo "✅ No contributor agreement files are being deleted."
+          fi
+
+      - name: Comment on PR if checks fail
+        if: ${{ failure() }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const author = context.payload.pull_request.user.login;
+            let message = '';
+            
+            if ('${{ steps.check-agreement.outcome }}' === 'failure') {
+              message = `Hi @${author}! 👋 
+              
+              Thank you for your contribution! We require all contributors to sign our Contributor Agreement.
+              
+              Please:
+              1. Read the [Contributor Agreement](.github/CONTRIBUTOR_AGREEMENT.md)
+              2. Fill in the required information (make sure to include your GitHub username: ${author})
+              3. Add the filled-in version as \`.github/contributors/${author}.md\` to this PR
+              
+              This helps ensure all contributions are properly licensed. Thanks for your understanding!`;
+            }
+            
+            if ('${{ steps.check-deleted.outcome }}' === 'failure') {
+              message = `Hi @${author}! 👋 
+              
+              Your PR is attempting to delete one or more contributor agreement files. This is not allowed.
+              
+              Please restore the deleted files and update your PR. If you believe this is in error, please contact a maintainer.`;
+            }
+            
+            if (message) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            }

@@ -1,0 +1,60 @@
+repos:
+  
+  # Custom local hooks
+  - repo: local
+    hooks:
+
+      # Use locally installed Black
+      - id: black
+        name: Black code formatter
+        entry: poetry run black contextgem dev tests
+        pass_filenames: false
+        language: system
+        files: '\.py$'
+        stages: [pre-commit]
+
+      # Use locally installed isort
+      - id: isort
+        name: Sort imports
+        entry: poetry run isort contextgem dev tests
+        pass_filenames: false
+        language: system
+        files: '\.py$'
+        stages: [pre-commit]
+
+      # Poetry check
+      - id: poetry
+        name: Poetry check
+        entry: poetry check --lock
+        pass_filenames: false
+        language: system
+        stages: [pre-commit]
+        
+      # Export requirements files
+      - id: export-requirements
+        name: Export requirements files
+        entry: python
+        args: ["-c", "import subprocess; subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.main.txt', '--without-hashes']); subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.dev.txt', '--with', 'dev', '--without-hashes'])"]
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+      
+      # Update README.md from template
+      - id: update-readme
+        name: Update README.md
+        entry: python
+        args: ["-c", "import subprocess; subprocess.run(['python', 'dev/populate_project_readme.py'])"]
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      # Build raw docs for LLM
+      - id: build-raw-docs
+        name: Build raw docs for LLM
+        entry: python docs/build_raw_docs_for_llm.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

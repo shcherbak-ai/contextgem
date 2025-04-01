@@ -1,0 +1,126 @@
+name: tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+
+  tests-with-vcr:
+
+    strategy:
+      matrix:
+        os: [ "ubuntu-latest", "macos-latest", "windows-latest" ]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    defaults:
+      run:
+        shell: bash
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+  
+      - name: Load cached pip wheels
+        id: cached-pip-wheels
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/Library/Caches/pip
+            ~\AppData\Local\pip\Cache
+          key: pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      
+      - name: Install dependencies
+        run: poetry install --no-interaction --with dev --no-root
+
+      - name: Code formatting checks
+        run: |
+          poetry run black --check contextgem dev tests
+          poetry run isort --check contextgem dev tests
+          poetry check --lock
+
+      - name: Run coverage (with VCR)
+        run: |
+          source $VENV
+          coverage run --source contextgem -m pytest --maxfail=1 --disable-warnings -v
+          coverage report -m
+          coverage xml -o coverage_quick.xml
+
+      - name: Extract coverage
+        id: get_coverage
+        run: |
+          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; print(round(float(ET.parse('coverage_quick.xml').getroot().attrib['line-rate'])*100))")
+          echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          # Determine badge color based on coverage percentage
+          if [ $COVERAGE -ge 80 ]; then
+            echo "color=success" >> $GITHUB_OUTPUT
+          elif [ $COVERAGE -ge 60 ]; then
+            echo "color=yellow" >> $GITHUB_OUTPUT
+          else
+            echo "color=critical" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Upload coverage artifact
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: |
+            coverage_quick.xml
+          retention-days: 1
+
+  update-badge:
+    needs: tests-with-vcr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
+          
+      - name: Extract coverage
+        id: get_coverage
+        run: |
+          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; print(round(float(ET.parse('coverage_quick.xml').getroot().attrib['line-rate'])*100))")
+          echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          # Determine badge color based on coverage percentage
+          if [ $COVERAGE -ge 80 ]; then
+            echo "color=success" >> $GITHUB_OUTPUT
+          elif [ $COVERAGE -ge 60 ]; then
+            echo "color=yellow" >> $GITHUB_OUTPUT
+          else
+            echo "color=critical" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Update coverage badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: daaee00e1dfff7a29ca10a922ec3becd
+          filename: coverage.json
+          label: coverage
+          message: ${{ steps.get_coverage.outputs.percentage }}%
+          color: ${{ steps.get_coverage.outputs.color }}
+
+env:
+  CONTEXTGEM_OPENAI_API_KEY: ${{ secrets.CONTEXTGEM_OPENAI_API_KEY }}
