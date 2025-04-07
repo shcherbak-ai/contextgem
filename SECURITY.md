@@ -8,12 +8,9 @@ We maintain security practices for the latest release of this library. Older ver
 
 ## Security Testing
 
-This project is regularly tested for security issues using both:
+This project is automatically tested for security issues using [CodeQL](https://codeql.github.com/) static analysis (run via GitHub Actions).
 
-- [CodeQL](https://codeql.github.com/) static analysis (run via GitHub Actions)
-- [Snyk](https://snyk.io) for continuous dependency vulnerability monitoring
-
-All known transitive vulnerabilities have been manually triaged and either resolved or confirmed to be non-applicable based on how the library is used. See the repository's issue tracker or changelog for relevant audit notes when applicable.
+We also use [Snyk](https://snyk.io) as needed for supplementary dependency vulnerability monitoring.
 
 
 ## Data Privacy

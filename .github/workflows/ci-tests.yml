@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
   workflow_dispatch:
 
 jobs:
@@ -92,6 +92,7 @@ jobs:
   update-badge:
     needs: tests-with-vcr
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
