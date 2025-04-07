@@ -7,14 +7,16 @@
 [![docs](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml)
 [![documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://shcherbak-ai.github.io/contextgem/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-bright.svg)](https://opensource.org/licenses/Apache-2.0)
+![PyPI](https://img.shields.io/pypi/v/contextgem)
 [![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/)
+[![Code Security](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort/)
 [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://pydantic.dev)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
-ContextGem is an LLM framework for easier, faster extraction of structured data and insights from documents through powerful abstractions.
+ContextGem is a free, open-source LLM framework for easier, faster extraction of structured data and insights from documents through powerful abstractions.
 
 
 ## 💎 Why ContextGem?
@@ -24,6 +26,16 @@ Most popular LLM frameworks for extracting structured data from documents requir
 ContextGem addresses this challenge by providing a flexible, intuitive framework that extracts structured data and insights from documents with minimal effort. Complex, most time-consuming parts are handled with **powerful abstractions**, eliminating boilerplate code and reducing development overhead.
 
 Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
+
+
+## 💡 What can you do with ContextGem?
+
+With ContextGem, you can:
+- **Extract structured data** from documents (text, images) with minimal code
+- **Identify and analyze key aspects** (topics, themes, categories) within documents
+- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents
+- **Build complex extraction workflows** through a simple, intuitive API
+- **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
 
 
 ## ⭐ Key features
@@ -177,7 +189,7 @@ doc = Document(
         "The term of the agreement is 1 year from the Effective Date...\n"
         "The Supplier shall provide consultancy services as described in Annex 2...\n"
         "The Customer shall pay the Supplier within 30 calendar days of receiving an invoice...\n"
-        "The purple elephant danced gracefully on the moon while eating ice cream.\n"  # out-of-context / anomaly
+        "The purple elephant danced gracefully on the moon while eating ice cream.\n"  # 💎 anomaly
         "This agreement is governed by the laws of Norway...\n"
     ),
 )
@@ -191,8 +203,9 @@ doc.concepts = [
         reference_depth="sentences",
         add_justifications=True,
         justification_depth="brief",
-        # add more concepts to the document, if needed
     )
+    # add more concepts to the document, if needed
+    # see the docs for available concepts: StringConcept, JsonObjectConcept, etc.
 ]
 # Or use doc.add_concepts([...])
 
@@ -201,7 +214,7 @@ llm = DocumentLLM(
     model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
-    ),  # your API key for the LLM provider
+    ),  # your API key for the LLM provider, e.g. OpenAI, Anthropic, etc.
     # see the docs for more configuration options
 )
 
@@ -209,7 +222,9 @@ llm = DocumentLLM(
 doc = llm.extract_all(doc)  # or use async version llm.extract_all_async(doc)
 
 # Access extracted information in the document object
-print(doc.concepts[0].extracted_items)  # extracted items with references justifications
+print(
+    doc.concepts[0].extracted_items
+)  # extracted items with references & justifications
 # or doc.get_concept_by_name("Anomalies").extracted_items
 
 ```
@@ -234,6 +249,14 @@ See more examples in the documentation:
 ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on [continuously expanding context capacity](https://arxiv.org/abs/2502.12962), evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers maximum accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, traditional RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
 
 Read more on [how it works](https://contextgem.dev/how_it_works.html) in the documentation.
+
+
+## 🤖 Supported LLMs
+
+ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://github.com/BerriAI/litellm) integration:
+- **Cloud LLMs**: OpenAI, Anthropic, Google, Azure OpenAI, and more
+- **Local LLMs**: Run models locally using providers like Ollama, LM Studio, etc.
+- **Simple API**: Unified interface for all LLMs with easy provider switching
 
 
 ## ⚡ Optimizations
@@ -275,11 +298,20 @@ ContextGem is at an early stage. Our development roadmap includes:
 We are committed to making ContextGem the most effective tool for extracting structured information from documents.
 
 
+## 🔐 Security
+
+This project is automatically scanned for security vulnerabilities using [CodeQL](https://codeql.github.com/). We also use [Snyk](https://snyk.io) as needed for supplementary dependency checks.
+
+See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
+
+
 ## 📄 License & Contact
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE) and [NOTICE](https://github.com/shcherbak-ai/contextgem/blob/main/NOTICE) files for details.
 
-Copyright © 2025 [Shcherbak AI AS](https://shcherbak.ai) - AI engineering company developing tools for AI/ML/NLP developers.
+Copyright © 2025 [Shcherbak AI AS](https://shcherbak.ai), an AI engineering company building tools for AI/ML/NLP developers.
+
+Shcherbak AI is now part of Microsoft for Startups.
 
 [Connect with us on LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) for questions or collaboration ideas.
 
