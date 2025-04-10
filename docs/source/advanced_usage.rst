@@ -36,7 +36,7 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
 
 .. raw:: html
 
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/advanced/advanced_aspects_with_concepts.ipynb">
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_aspects_with_concepts.ipynb">
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>
 
@@ -54,7 +54,7 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
 
 .. raw:: html
 
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/advanced/advanced_aspects_and_concepts_document.ipynb">
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_aspects_and_concepts_document.ipynb">
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>
 
@@ -72,6 +72,6 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
 
 .. raw:: html
 
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/advanced/advanced_multiple_docs_pipeline.ipynb">
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_multiple_docs_pipeline.ipynb">
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>

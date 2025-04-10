@@ -60,7 +60,7 @@ Aspect is a defined area or topic within a document (or another aspect). Each as
 ```python
 {{QUICKSTART_ASPECT}}
 ```
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/readme/quickstart_aspect.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_aspect.ipynb)
 
 
 ### Concept extraction
@@ -70,7 +70,7 @@ Concept is a unit of information or an entity, derived from an aspect or the bro
 ```python
 {{QUICKSTART_CONCEPT}}
 ```
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/readme/quickstart_concept.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
 
 ---
 
