@@ -53,7 +53,11 @@ To sign the agreement:
 
 3. **Install pre-commit hooks**:
     ```bash
+    # Install pre-commit hooks
     pre-commit install
+
+    # Install commit-msg hooks (for commitizen)
+    pre-commit install --hook-type commit-msg
     ```
 
 
@@ -102,12 +106,23 @@ To sign the agreement:
 
    Please note that we use pytest-vcr to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#vcr-cassette-management) section below for details.
 
-4. **Commit your changes** with a descriptive commit message:
+4. **Commit your changes** using Conventional Commits format:
    
-   For example:
+   We use [Conventional Commits](https://www.conventionalcommits.org/) format for our commit messages, which enables automatic changelog generation and semantic versioning. Instead of using regular git commit, please use commitizen:
 
    ```bash
-   git commit -m "Add feature: description of your changes"
+   poetry run cz commit
+   ```
+
+   This will guide you through an interactive prompt to create a properly formatted commit message with:
+   - Type of change (feat, fix, docs, style, refactor, etc.)
+   - Optional scope (e.g., api, cli, docs)
+   - Short description
+   - Optional longer description and breaking change notes
+
+   Example of resulting commit message:
+   ```
+   docs(readme): update installation instructions
    ```
 
 

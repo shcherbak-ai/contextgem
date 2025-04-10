@@ -1,4 +1,11 @@
 repos:
+
+  # Commitizen hook for conventional commits
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.5.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
   
   # Custom local hooks
   - repo: local
