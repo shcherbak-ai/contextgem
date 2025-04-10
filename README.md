@@ -225,6 +225,8 @@ for item in doc.aspects[0].extracted_items:
 # or `doc.get_aspect_by_name("Payment Terms").extracted_items`
 
 ```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/readme/quickstart_aspect.ipynb)
+
 
 ### Concept extraction
 
@@ -285,6 +287,7 @@ print(
 # or `doc.get_concept_by_name("Anomalies").extracted_items`
 
 ```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/readme/quickstart_concept.ipynb)
 
 ---
 

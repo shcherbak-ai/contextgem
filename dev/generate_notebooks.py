@@ -36,23 +36,36 @@ EXCLUDE_DIRS = ["optimizations"]
 
 def extract_first_comment(file_path: str | Path) -> Optional[str]:
     """
-    Extract the first comment line from a Python file to use as a title.
+    Extract comment lines from the beginning of a Python file to use as a title.
+    Captures multiple consecutive comment lines.
 
     Args:
         file_path: Path to the Python file
 
     Returns:
-        The first comment if found, None otherwise
+        The combined comment lines if found, None otherwise
     """
+    comment_lines = []
+
     with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
-            # Skip empty lines
-            if line.strip():
-                # Check if the line starts with a comment
-                match = re.match(r"^#\s*(.*)", line.strip())
-                if match:
-                    return match.group(1)
-    return None
+            # Skip empty lines at the beginning
+            if not line.strip():
+                continue
+
+            # Check if the line starts with a comment
+            match = re.match(r"^#\s*(.*)", line.strip())
+            if match:
+                comment_lines.append(match.group(1))
+            else:
+                # Stop at the first non-comment line
+                break
+
+    if not comment_lines:
+        return None
+
+    # Join all comment lines with a space
+    return " ".join(comment_lines)
 
 
 def create_deterministic_metadata() -> dict[str, Any]:

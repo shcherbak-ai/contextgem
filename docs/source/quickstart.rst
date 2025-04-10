@@ -49,6 +49,12 @@ ContextGem follows a simple extraction process:
 .. literalinclude:: ../../dev/usage_examples/docs/quickstart/quickstart_aspect.py
    :language: python
 
+.. raw:: html
+
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/quickstart/quickstart_aspect.ipynb">
+     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+   </a>
+
 
 🌳 Extracting Aspect with Sub-Aspects
 --------------------------------------
@@ -62,6 +68,12 @@ ContextGem follows a simple extraction process:
 
 .. literalinclude:: ../../dev/usage_examples/docs/quickstart/quickstart_sub_aspect.py
    :language: python
+
+.. raw:: html
+
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/quickstart/quickstart_sub_aspect.ipynb">
+     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+   </a>
 
 
 🔍 Concept Extraction from Aspect
@@ -79,6 +91,12 @@ ContextGem follows a simple extraction process:
 .. literalinclude:: ../../dev/usage_examples/docs/quickstart/quickstart_concept_aspect.py
    :language: python
 
+.. raw:: html
+
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/quickstart/quickstart_concept_aspect.ipynb">
+     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+   </a>
+
 
 📝 Concept Extraction from Document (text)
 -------------------------------------------
@@ -95,6 +113,12 @@ ContextGem follows a simple extraction process:
 .. literalinclude:: ../../dev/usage_examples/docs/quickstart/quickstart_concept_document_text.py
    :language: python
 
+.. raw:: html
+
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/quickstart/quickstart_concept_document_text.ipynb">
+     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+   </a>
+
 
 🖼️ Concept Extraction from Document (vision)
 ---------------------------------------------
@@ -108,3 +132,9 @@ ContextGem follows a simple extraction process:
 
 .. literalinclude:: ../../dev/usage_examples/docs/quickstart/quickstart_concept_document_vision.py
    :language: python
+
+.. raw:: html
+
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/notebooks/docs/quickstart/quickstart_concept_document_vision.ipynb">
+     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+   </a>
