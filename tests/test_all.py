@@ -3277,7 +3277,7 @@ class TestAll(TestUtils):
             quickstart_concept_document_vision,
             quickstart_sub_aspect,
         )
-        from dev.usage_examples.readme import quickstart
+        from dev.usage_examples.readme import quickstart_aspect, quickstart_concept
 
     def test_docstring_examples(self):
         """

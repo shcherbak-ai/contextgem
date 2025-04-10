@@ -1,4 +1,11 @@
 repos:
+
+  # Commitizen hook for conventional commits
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.5.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
   
   # Custom local hooks
   - repo: local
@@ -54,6 +61,15 @@ repos:
       - id: build-raw-docs
         name: Build raw docs for LLM
         entry: python docs/build_raw_docs_for_llm.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      # Generate example notebooks
+      - id: generate-notebooks
+        name: Generate example notebooks
+        entry: python dev/generate_notebooks.py
         language: system
         pass_filenames: false
         always_run: true

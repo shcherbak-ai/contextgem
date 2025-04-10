@@ -28,9 +28,8 @@ ContextGem addresses this challenge by providing a flexible, intuitive framework
 Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
 
 
-## 💡 What can you do with ContextGem?
+## 💡 With ContextGem, you can:
 
-With ContextGem, you can:
 - **Extract structured data** from documents (text, images) with minimal code
 - **Identify and analyze key aspects** (topics, themes, categories) within documents
 - **Extract specific concepts** (entities, facts, conclusions, assessments) from documents
@@ -54,9 +53,26 @@ pip install -U contextgem
 
 ## 🚀 Quick start
 
+### Aspect extraction
+
+Aspect is a defined area or topic within a document (or another aspect). Each aspect reflects a specific subject or theme.
+
 ```python
-{{QUICK_START}}
+{{QUICKSTART_ASPECT}}
 ```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_aspect.ipynb)
+
+
+### Concept extraction
+
+Concept is a unit of information or an entity, derived from an aspect or the broader document context.
+
+```python
+{{QUICKSTART_CONCEPT}}
+```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
+
+---
 
 See more examples in the documentation:
 
@@ -132,6 +148,20 @@ We are committed to making ContextGem the most effective tool for extracting str
 This project is automatically scanned for security vulnerabilities using [CodeQL](https://codeql.github.com/). We also use [Snyk](https://snyk.io) as needed for supplementary dependency checks.
 
 See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
+
+
+## 🙏 Acknowledgements
+
+ContextGem relies on these excellent open-source packages:
+
+- [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
+- [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
+- [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
+- [wtpsplit](https://github.com/segment-any-text/wtpsplit): State-of-the-art text segmentation tool
+- [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
+- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
+- [PyTorch](https://github.com/pytorch/pytorch): Industry-standard machine learning framework
+- [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
 
 
 ## 📄 License & Contact

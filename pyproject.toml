@@ -1,6 +1,6 @@
 [project]
 name = "contextgem"
-version = "0.1.1"
+version = "0.1.1.post1"
 description = "Easier and faster way to build LLM extraction workflows through powerful abstractions"
 authors = [
     {name = "shcherbak-ai", email = "sergii@shcherbak.ai"}
@@ -110,6 +110,8 @@ sphinx-book-theme = "^1.1.4"
 sphinx-copybutton = "^0.5.2"
 sphinx-design = "^0.6.1"
 sphinxext-opengraph = "^0.9.1"
+nbformat = "^5.10.4"
+commitizen = "^4.5.1"
 
 [tool.black]
 line-length = 88
@@ -122,6 +124,10 @@ line_length = 88
 addopts = "-vv -s"
 log_cli = true
 log_cli_level = "WARNING"
+
+
+[tool.commitizen]
+name = "cz_conventional_commits"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

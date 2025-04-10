@@ -54,8 +54,9 @@ def extract_code_from_file(file_path):
 
 # Map example files to markers in the template
 USAGE_EXAMPLES_MAPPING = {
-    "dev/usage_examples/readme/quickstart.py": "{{QUICK_START}}",
     "dev/content_snippets/feature_table.html": "{{FEATURE_TABLE}}",
+    "dev/usage_examples/readme/quickstart_aspect.py": "{{QUICKSTART_ASPECT}}",
+    "dev/usage_examples/readme/quickstart_concept.py": "{{QUICKSTART_CONCEPT}}",
 }
 
 if __name__ == "__main__":

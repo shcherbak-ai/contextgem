@@ -28,9 +28,8 @@ ContextGem addresses this challenge by providing a flexible, intuitive framework
 Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
 
 
-## 💡 What can you do with ContextGem?
+## 💡 With ContextGem, you can:
 
-With ContextGem, you can:
 - **Extract structured data** from documents (text, images) with minimal code
 - **Identify and analyze key aspects** (topics, themes, categories) within documents
 - **Extract specific concepts** (entities, facts, conclusions, assessments) from documents
@@ -173,6 +172,66 @@ pip install -U contextgem
 
 ## 🚀 Quick start
 
+### Aspect extraction
+
+Aspect is a defined area or topic within a document (or another aspect). Each aspect reflects a specific subject or theme.
+
+```python
+# Quick Start Example - Extracting payment terms from a document
+
+import os
+
+from contextgem import Aspect, Document, DocumentLLM
+
+# Sample document text (shortened for brevity)
+doc = Document(
+    raw_text=(
+        "SERVICE AGREEMENT\n"
+        "SERVICES. Provider agrees to provide the following services to Client: "
+        "Cloud-based data analytics platform access and maintenance...\n"
+        "PAYMENT. Client agrees to pay $5,000 per month for the services. "
+        "Payment is due on the 1st of each month. Late payments will incur a 2% fee per month...\n"
+        "CONFIDENTIALITY. Both parties agree to keep all proprietary information confidential "
+        "for a period of 5 years following termination of this Agreement..."
+    ),
+)
+
+# Define the aspects to extract
+doc.aspects = [
+    Aspect(
+        name="Payment Terms",
+        description="Payment terms and conditions in the contract",
+        # see the docs for more configuration options, e.g. sub-aspects, concepts, etc.
+    ),
+    # Add more aspects as needed
+]
+# Or use `doc.add_aspects([...])`
+
+# Define an LLM for extracting information from the document
+llm = DocumentLLM(
+    model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
+    api_key=os.environ.get(
+        "CONTEXTGEM_OPENAI_API_KEY"
+    ),  # your API key for the LLM provider, e.g. OpenAI, Anthropic, etc.
+    # see the docs for more configuration options
+)
+
+# Extract information from the document
+doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(doc)`
+
+# Access extracted information in the document object
+for item in doc.aspects[0].extracted_items:
+    print(f"• {item.value}")
+# or `doc.get_aspect_by_name("Payment Terms").extracted_items`
+
+```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_aspect.ipynb)
+
+
+### Concept extraction
+
+Concept is a unit of information or an entity, derived from an aspect or the broader document context.
+
 ```python
 # Quick Start Example - Extracting anomalies from a document, with source references and justifications
 
@@ -180,8 +239,7 @@ import os
 
 from contextgem import Document, DocumentLLM, StringConcept
 
-# Example document instance
-# Document content is shortened for brevity
+# Sample document text (shortened for brevity)
 doc = Document(
     raw_text=(
         "Consultancy Agreement\n"
@@ -203,13 +261,14 @@ doc.concepts = [
         reference_depth="sentences",
         add_justifications=True,
         justification_depth="brief",
+        # see the docs for more configuration options
     )
     # add more concepts to the document, if needed
     # see the docs for available concepts: StringConcept, JsonObjectConcept, etc.
 ]
-# Or use doc.add_concepts([...])
+# Or use `doc.add_concepts([...])`
 
-# Create an LLM for extracting data and insights from the document
+# Define an LLM for extracting information from the document
 llm = DocumentLLM(
     model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ.get(
@@ -219,15 +278,18 @@ llm = DocumentLLM(
 )
 
 # Extract information from the document
-doc = llm.extract_all(doc)  # or use async version llm.extract_all_async(doc)
+doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(doc)`
 
 # Access extracted information in the document object
 print(
     doc.concepts[0].extracted_items
 )  # extracted items with references & justifications
-# or doc.get_concept_by_name("Anomalies").extracted_items
+# or `doc.get_concept_by_name("Anomalies").extracted_items`
 
 ```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
+
+---
 
 See more examples in the documentation:
 
@@ -303,6 +365,20 @@ We are committed to making ContextGem the most effective tool for extracting str
 This project is automatically scanned for security vulnerabilities using [CodeQL](https://codeql.github.com/). We also use [Snyk](https://snyk.io) as needed for supplementary dependency checks.
 
 See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
+
+
+## 🙏 Acknowledgements
+
+ContextGem relies on these excellent open-source packages:
+
+- [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
+- [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
+- [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
+- [wtpsplit](https://github.com/segment-any-text/wtpsplit): State-of-the-art text segmentation tool
+- [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
+- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
+- [PyTorch](https://github.com/pytorch/pytorch): Industry-standard machine learning framework
+- [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
 
 
 ## 📄 License & Contact

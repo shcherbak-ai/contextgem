@@ -261,8 +261,7 @@ Anomaly extraction example (ContextGem)
 
    from contextgem import Document, DocumentLLM, StringConcept
 
-   # Example document instance
-   # Document content is shortened for brevity
+   # Sample document text (shortened for brevity)
    doc = Document(
        raw_text=(
            "Consultancy Agreement\n"
@@ -284,13 +283,14 @@ Anomaly extraction example (ContextGem)
            reference_depth="sentences",
            add_justifications=True,
            justification_depth="brief",
+           # see the docs for more configuration options
        )
        # add more concepts to the document, if needed
        # see the docs for available concepts: StringConcept, JsonObjectConcept, etc.
    ]
-   # Or use doc.add_concepts([...])
+   # Or use `doc.add_concepts([...])`
 
-   # Create an LLM for extracting data and insights from the document
+   # Define an LLM for extracting information from the document
    llm = DocumentLLM(
        model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
        api_key=os.environ.get(
@@ -300,13 +300,13 @@ Anomaly extraction example (ContextGem)
    )
 
    # Extract information from the document
-   doc = llm.extract_all(doc)  # or use async version llm.extract_all_async(doc)
+   doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(doc)`
 
    # Access extracted information in the document object
    print(
        doc.concepts[0].extracted_items
    )  # extracted items with references & justifications
-   # or doc.get_concept_by_name("Anomalies").extracted_items
+   # or `doc.get_concept_by_name("Anomalies").extracted_items`
 
 -[ LangChain ]-
 

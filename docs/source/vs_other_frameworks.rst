@@ -54,7 +54,7 @@ In contrast, ContextGem handles all these complexities automatically. Users simp
         * 🔍 **Automatic reference tracking**: Precise references are automatically extracted and mapped to the original document
         * 📏 **Flexible reference granularity**: References can be tracked at different levels (paragraphs, sentences)
 
-        .. literalinclude:: ../../dev/usage_examples/readme/quickstart.py
+        .. literalinclude:: ../../dev/usage_examples/readme/quickstart_concept.py
             :language: python
             :caption: Anomaly extraction example (ContextGem)
 
