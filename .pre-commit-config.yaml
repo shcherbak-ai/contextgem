@@ -58,3 +58,12 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+
+      # Generate example notebooks
+      - id: generate-notebooks
+        name: Generate example notebooks
+        entry: python dev/generate_notebooks.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
