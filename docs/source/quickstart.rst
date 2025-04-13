@@ -138,3 +138,19 @@ ContextGem follows a simple extraction process:
    <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/quickstart/quickstart_concept_document_vision.ipynb">
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>
+
+
+💬 Lightweight LLM Chat Interface
+----------------------------------
+
+.. note::
+   While ContextGem is primarily designed for advanced structured data extraction, it also provides a lightweight, unified interface for interacting with LLMs via natural language - across both text and vision - with built-in fallback support.
+
+.. literalinclude:: ../../dev/usage_examples/readme/llm_chat.py
+   :language: python
+
+.. raw:: html
+
+   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/llm_chat.ipynb">
+     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+   </a>

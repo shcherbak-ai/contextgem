@@ -77,3 +77,5 @@ AsyncCalsAndKwargs = list[
 DefaultDecimalField = Field(
     default_factory=lambda: Decimal("0.00000"), ge=Decimal("0.00000")
 )
+
+ReasoningEffort = Literal["low", "medium", "high"]

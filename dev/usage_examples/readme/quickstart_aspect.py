@@ -30,10 +30,10 @@ doc.aspects = [
 
 # Define an LLM for extracting information from the document
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
+    model="openai/gpt-4o-mini",  # or another provider/LLM
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
-    ),  # your API key for the LLM provider, e.g. OpenAI, Anthropic, etc.
+    ),  # your API key for the LLM provider
     # see the docs for more configuration options
 )
 
@@ -44,3 +44,6 @@ doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(
 for item in doc.aspects[0].extracted_items:
     print(f"• {item.value}")
 # or `doc.get_aspect_by_name("Payment Terms").extracted_items`
+
+# Output (paragraph from the document):
+# • PAYMENT. Client agrees to pay $5,000 per month for the services. Payment is due on the 1st of each month. Late payments will incur a 2% fee per month...

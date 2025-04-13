@@ -72,6 +72,7 @@ from tests.utils import (
     get_project_root_path,
     get_test_document_text,
     get_test_img,
+    vcr_before_record_request,
     vcr_before_record_response,
 )
 
@@ -82,13 +83,14 @@ load_dotenv()  # This will silently skip if no .env is present
 
 
 # Add other LLM providers for testing, when needed
-TEST_LLM_PROVIDER: Literal["openai"] = "openai"
+TEST_LLM_PROVIDER: Literal["azure_openai", "openai"] = "azure_openai"
 
 
 @pytest.fixture(scope="module")
 def vcr_config():
     return {
         "filter_headers": [(i, "DUMMY") for i in VCR_FILTER_HEADERS],
+        "before_record_request": vcr_before_record_request,
         "before_record_response": vcr_before_record_response,
         "match_on": ["method", "host", "path", "body"],
     }
@@ -169,7 +171,39 @@ class TestAll(TestUtils):
 
     # LLMs
 
-    if TEST_LLM_PROVIDER == "openai":
+    if TEST_LLM_PROVIDER == "azure_openai":
+
+        # Extractor text
+        _llm_extractor_text_kwargs_openai = {
+            "model": "azure/gpt-4o-mini",
+            "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            "role": "extractor_text",
+            "pricing_details": LLMPricing(
+                **{
+                    "input_per_1m_tokens": 0.150,
+                    "output_per_1m_tokens": 0.600,
+                }
+            ),
+        }
+
+        # Reasoner text
+        _llm_reasoner_text_kwargs_openai = {
+            "model": "azure/o3-mini",
+            "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            "role": "reasoner_text",
+            "pricing_details": LLMPricing(
+                **{
+                    "input_per_1m_tokens": 1.10,
+                    "output_per_1m_tokens": 4.40,
+                }
+            ),
+        }
+
+    elif TEST_LLM_PROVIDER == "openai":
 
         # Extractor text
         _llm_extractor_text_kwargs_openai = {
@@ -183,7 +217,6 @@ class TestAll(TestUtils):
                 }
             ),
         }
-        llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
 
         # Reasoner text
         _llm_reasoner_text_kwargs_openai = {
@@ -197,6 +230,16 @@ class TestAll(TestUtils):
                 }
             ),
         }
+
+    else:
+        raise ValueError(f"Test LLM provider {TEST_LLM_PROVIDER} is not supported.")
+
+    if TEST_LLM_PROVIDER in ["azure_openai", "openai"]:
+
+        # Extractor text
+        llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
+
+        # Reasoner text
         llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)
 
         # Extractor vision
@@ -238,9 +281,6 @@ class TestAll(TestUtils):
         llm_extractor_text_non_eng = DocumentLLM(
             **_llm_extractor_text_kwargs_openai, output_language="adapt"
         )
-
-    else:
-        raise ValueError(f"Test LLM provider {TEST_LLM_PROVIDER} is not supported.")
 
     # Images
     test_img_png = get_test_img("invoice.png")
@@ -1686,6 +1726,57 @@ class TestAll(TestUtils):
             context.add_concepts([concept, concept])
 
     @pytest.mark.vcr()
+    def test_system_messages(self):
+        """
+        Tests the system messages functionality of LLMs.
+        """
+        system_message = "When asked, introduce yourself as ContextGem."
+        if TEST_LLM_PROVIDER == "azure_openai":
+            non_reasoning_model = DocumentLLM(
+                model="azure/gpt-4o-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                system_message=system_message,
+            )
+            o1_model = DocumentLLM(
+                model="azure/o1",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                reasoning_effort="low",
+                system_message=system_message,
+            )
+            o3_mini_model = DocumentLLM(
+                model="azure/o3-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                system_message=system_message,
+            )
+        elif TEST_LLM_PROVIDER == "openai":
+            non_reasoning_model = DocumentLLM(
+                model="openai/gpt-4o-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                system_message=system_message,
+            )
+            o1_model = DocumentLLM(
+                model="openai/o1",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                system_message=system_message,
+            )
+            o3_mini_model = DocumentLLM(
+                model="openai/o3-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                system_message=system_message,
+            )
+        for model in [non_reasoning_model, o1_model, o3_mini_model]:
+            model.chat("What's your name?")
+            response = model.get_usage()[0].usage.calls[-1].response
+            assert "ContextGem" in response
+            logger.debug(response)
+
+    @pytest.mark.vcr()
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -3125,6 +3216,49 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+    @pytest.mark.vcr()
+    def test_chat(self):
+        """
+        Tests for the chat method.
+        """
+        for model in [
+            self.llm_extractor_text,
+            self.llm_extractor_vision,
+            self.llm_with_fallback,
+        ]:
+            with pytest.raises(ValueError):
+                model.chat("")
+            with pytest.raises(ValueError):
+                model.chat(prompt="Test", images=1)
+            with pytest.raises(ValueError):
+                model.chat(prompt="Test", images=[1])
+            with pytest.raises(TypeError):
+                model.chat(images=self.test_img_png)
+            if model == self.llm_extractor_vision:
+                # Check with text + image
+                model.chat(
+                    "What's the type of this document?", images=[self.test_img_png]
+                )
+                response = model.get_usage()[0].usage.calls[-1].response.lower()
+                assert "invoice" in response
+            else:
+                # Check with text
+                model.chat("What's the result of 2+2?")
+                if model == self.llm_with_fallback:
+                    response = (
+                        model.fallback_llm.get_usage()[0].usage.calls[-1].response
+                    )
+                else:
+                    response = model.get_usage()[0].usage.calls[-1].response
+                assert "4" in response
+            logger.debug(response)
+        # Test for non-vision model
+        text_only_model = DocumentLLM(model="openai/gpt-3.5-turbo")
+        with pytest.raises(ValueError, match="vision"):
+            text_only_model.chat(
+                "What's the type of this document?", images=[self.test_img_png]
+            )
+
     def test_logger_disabled(self, monkeypatch, capsys):
         """
         Tests for disabling the logger.
@@ -3277,7 +3411,11 @@ class TestAll(TestUtils):
             quickstart_concept_document_vision,
             quickstart_sub_aspect,
         )
-        from dev.usage_examples.readme import quickstart_aspect, quickstart_concept
+        from dev.usage_examples.readme import (
+            llm_chat,
+            quickstart_aspect,
+            quickstart_concept,
+        )
 
     def test_docstring_examples(self):
         """

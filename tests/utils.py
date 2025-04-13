@@ -23,6 +23,7 @@ Module defining utility functions and classes for the tests.
 from __future__ import annotations
 
 import itertools
+import json
 import os
 import re
 import time
@@ -60,18 +61,31 @@ vcr_new_recording_count = 0
 
 
 VCR_FILTER_HEADERS = {
+    "api-key",
+    "apim-request-id",
     "authorization",
-    "openai-organization",
-    "x-request-id",
-    "Set-Cookie",
-    "cookie",
+    "azureml-model-session",
     "CF-RAY",
+    "cookie",
+    "Date",
+    "host",
+    "openai-organization",
+    "Set-Cookie",
+    "uri",
+    "x-aml-cluster",
+    "x-ms-client-request-id",
+    "x-ms-deployment-name",
+    "x-ms-region",
     "x-ratelimit-limit-requests",
     "x-ratelimit-limit-tokens",
     "x-ratelimit-remaining-requests",
     "x-ratelimit-remaining-tokens",
+    "x-ms-rai-invoked",
+    "x-request-id",
     "x-stainless-os",
+    "x-stainless-runtime-version",
 }
+assert len(set(VCR_FILTER_HEADERS)) == len(VCR_FILTER_HEADERS)
 
 
 def vcr_count_recording(response):
@@ -80,11 +94,40 @@ def vcr_count_recording(response):
     return response
 
 
+def vcr_before_record_request(request):
+    # Redact the Azure OpenAI domain & deployment name
+    path_parts = request.uri.split("/openai/deployments/")
+    if len(path_parts) > 1:
+        # Split deployment name and rest of path
+        deployment_and_rest = path_parts[1]
+        deployment_parts = deployment_and_rest.split("/", 1)
+
+        if len(deployment_parts) > 1:
+            # We have a deployment name and a path after it
+            deployment_name = "DUMMY-DEPLOYMENT"
+            rest_of_path = deployment_parts[1]
+            request.uri = f"https://DUMMY-ENDPOINT/openai/deployments/{deployment_name}/{rest_of_path}"
+        else:
+            # Just a deployment name
+            request.uri = f"https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT"
+    return request
+
+
 def vcr_before_record_response(response):
+    # Redact headers
     headers = response.get("headers", {})
     for header in VCR_FILTER_HEADERS:
-        if header in headers:
+        if header.lower() in [h.lower() for h in headers]:
             headers[header] = ["DUMMY"]
+    # Redact body
+    if response["body"]["string"]:
+        try:
+            body = json.loads(response["body"]["string"])
+            if "id" in body:
+                body["id"] = "chatcmpl-DUMMY"
+            response["body"]["string"] = json.dumps(body)
+        except:
+            pass
     vcr_count_recording(response)
     return response
 

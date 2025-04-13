@@ -56,15 +56,13 @@ with warnings.catch_warnings():
     from litellm import acompletion, supports_vision
 
 if TYPE_CHECKING:
-    from contextgem.public.images import Image
     from contextgem.internal.data_models import (
         _LLMUsageOutputContainer,
         _LLMCostOutputContainer,
-        _LLMCall,
     )
 
 from contextgem.internal.base.llms import _GenericLLMProcessor
-from contextgem.internal.data_models import _LLMCost, _LLMUsage
+from contextgem.internal.data_models import _LLMCall, _LLMCost, _LLMUsage
 from contextgem.internal.decorators import _post_init_method
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import (
@@ -72,10 +70,12 @@ from contextgem.internal.typings.aliases import (
     LanguageRequirement,
     LLMRoleAny,
     NonEmptyStr,
+    ReasoningEffort,
     Self,
 )
-from contextgem.internal.utils import _get_template, _setup_jinja2_template
+from contextgem.internal.utils import _get_template, _run_sync, _setup_jinja2_template
 from contextgem.public.data_models import LLMPricing
+from contextgem.public.images import Image
 
 litellm.suppress_debug_info = True
 litellm.set_verbose = False
@@ -313,9 +313,12 @@ class DocumentLLM(_GenericLLMProcessor):
     :type temperature: Optional[float]
     :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
     :type max_tokens: Optional[int]
-    :ivar max_completion_tokens: Maximum token size for output completions in o1 models.
+    :ivar max_completion_tokens: Maximum token size for output completions in o1/o3 models.
         Defaults to 16000.
     :type max_completion_tokens: Optional[int]
+    :ivar reasoning_effort: The effort level for the LLM to reason about the input. Defaults to None.
+        Relevant for o1/o3 models.
+    :type reasoning_effort: Optional[ReasoningEffort]
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
         Defaults to 0.3.
@@ -381,7 +384,10 @@ class DocumentLLM(_GenericLLMProcessor):
     system_message: Optional[NonEmptyStr] = Field(default=None)
     temperature: Optional[StrictFloat] = Field(default=0.3, ge=0)
     max_tokens: Optional[StrictInt] = Field(default=4096, gt=0)
-    max_completion_tokens: Optional[StrictInt] = Field(default=16000, gt=0)  # for o1
+    max_completion_tokens: Optional[StrictInt] = Field(
+        default=16000, gt=0
+    )  # for o1/o3 models
+    reasoning_effort: Optional[ReasoningEffort] = Field(default=None)
     top_p: Optional[StrictFloat] = Field(default=0.3, ge=0)
     num_retries_failed_request: Optional[StrictInt] = Field(default=3, ge=0)
     max_retries_failed_request: Optional[StrictInt] = Field(
@@ -455,6 +461,90 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: list[LLMRoleAny]
         """
         return [self.role]
+
+    def chat(self, prompt: str, images: Optional[list[Image]] = None) -> str:
+        """
+        Synchronously sends a prompt to the LLM and gets a response.
+        For models supporting vision, attach images to the prompt if needed.
+
+        This method allows direct interaction with the LLM by submitting your own prompt.
+
+        :param prompt: The input prompt to send to the LLM
+        :type prompt: str
+        :param images: Optional list of Image instances for vision queries
+        :type images: Optional[list[Image]]
+        :return: The LLM's response
+        :rtype: str
+        :raises ValueError: If the prompt is empty or not a string
+        :raises ValueError: If images parameter is not a list of Image instances
+        :raises ValueError: If images are provided but the model doesn't support vision
+        :raises RuntimeError: If the LLM call fails and no fallback is available
+        """
+        return _run_sync(self.chat_async(prompt, images))
+
+    async def chat_async(
+        self, prompt: str, images: Optional[list[Image]] = None
+    ) -> str:
+        """
+        Asynchronously sends a prompt to the LLM and gets a response.
+        For models supporting vision, attach images to the prompt if needed.
+
+        This method allows direct interaction with the LLM by submitting your own prompt.
+
+        :param prompt: The input prompt to send to the LLM
+        :type prompt: str
+        :param images: Optional list of Image instances for vision queries
+        :type images: Optional[list[Image]]
+        :return: The LLM's response
+        :rtype: str
+        :raises ValueError: If the prompt is empty or not a string
+        :raises ValueError: If images parameter is not a list of Image instances
+        :raises ValueError: If images are provided but the model doesn't support vision
+        :raises RuntimeError: If the LLM call fails and no fallback is available
+        """
+
+        # Validate prompt
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("Prompt must be a non-empty string")
+
+        # Validate images
+        if images and (
+            not isinstance(images, list)
+            or not all(isinstance(image, Image) for image in images)
+        ):
+            raise ValueError("Images must be a list of Image instances")
+
+        # Check for vision support
+        if images and not supports_vision(self.model):
+            raise ValueError(f"Model `{self.model}` does not support vision.")
+
+        # Create LLM call object to track the interaction
+        llm_call = _LLMCall(prompt_kwargs={}, prompt=prompt)
+
+        # Send message to LLM
+        result = await self._query_llm(
+            message=prompt,
+            llm_call_obj=llm_call,
+            images=images,
+            num_retries_failed_request=self.num_retries_failed_request,
+            max_retries_failed_request=self.max_retries_failed_request,
+        )
+
+        # Update usage and cost statistics
+        await self._update_usage_and_cost(result)
+
+        response, _ = result
+
+        # If response is None and fallback LLM is available, try with fallback LLM
+        if response is None and self.fallback_llm:
+            logger.info(f"Using fallback LLM {self.fallback_llm.model} for chat")
+            return await self.fallback_llm.chat_async(prompt, images)
+        elif response is None:
+            raise RuntimeError(
+                "Failed to get response from LLM and no fallback is available"
+            )
+
+        return response
 
     def _update_default_prompt(
         self, prompt_path: str | Path, prompt_type: DefaultPromptType
@@ -757,17 +847,8 @@ class DocumentLLM(_GenericLLMProcessor):
 
         # Handle system message based on model type
         if self.system_message:
-            if self.model in ["openai/o1", "openai/o1-2024-12-17"]:
-                # o1 model doesn't support system messages but support messages with "developer" role,
-                # which aims to achieve the same
-                request_messages.append(
-                    {
-                        "role": "developer",
-                        "content": self.system_message,
-                    }
-                )
-            elif not self.model.startswith("openai/o1"):
-                # o1-preview / o1-mini doesn't support system or "developer" messages
+            if not any(i in self.model for i in ["o1-preview", "o1-mini"]):
+                # o1/o1-mini models don't support system/developer messages
                 request_messages.append(
                     {
                         "role": "system",
@@ -775,7 +856,7 @@ class DocumentLLM(_GenericLLMProcessor):
                     }
                 )
 
-        if not any(i["role"] in ["system", "developer"] for i in request_messages):
+        if not any(i["role"] == "system" for i in request_messages):
             logger.warning(f"System message ignored for the model `{self.model}`.")
 
         # Prepare user message content based on whether images are provided
@@ -811,17 +892,23 @@ class DocumentLLM(_GenericLLMProcessor):
         }
 
         # Add model-specific parameters
-        if any(self.model.startswith(i) for i in ["openai/o1", "openai/o3"]):
+        if any(
+            self.model.startswith(i)
+            for i in ["openai/o1", "openai/o3", "azure/o1", "azure/o3"]
+        ):
             assert (
                 self.max_completion_tokens
             ), "`max_completion_tokens` must be set for o1/o3 models"
             request_dict["max_completion_tokens"] = self.max_completion_tokens
-            # o1/o3 currently doesn't support `max_tokens` (`max_completion_tokens` must be used instead),
+            # o1/o3 models don't support `max_tokens` (`max_completion_tokens` must be used instead),
             # `temperature`, or `top_p`
             if self.temperature or self.top_p:
                 logger.info(
                     "`temperature` and `top_p` parameters are ignored for o1/o3 models."
                 )
+            # Set reasoning effort if provided. Otherwise uses LiteLLM's default.
+            if self.reasoning_effort:
+                request_dict["reasoning_effort"] = self.reasoning_effort
         else:
             request_dict["max_tokens"] = self.max_tokens
             request_dict["temperature"] = self.temperature

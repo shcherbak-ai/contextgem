@@ -183,17 +183,21 @@ You **must** re-record cassettes if:
 #### How to Re-record Cassettes
 
 1. Delete the existing cassette files from the `tests/cassettes/` directory that your test uses
-2. Set up your OpenAI API key in a `.env` file:
+2. Set up the following environment variables in a `.env` file:
    ```
    CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
+   CONTEXTGEM_AZURE_OPENAI_API_KEY=your_azure_openai_api_key
+   CONTEXTGEM_AZURE_OPENAI_API_BASE=your_azure_openai_base
+   CONTEXTGEM_AZURE_OPENAI_API_VERSION=your_azure_openai_api_version
    ```
+   
 3. Set the logger level in your `.env` file for detailed output:
    ```
    CONTEXTGEM_LOGGER_LEVEL=DEBUG
    ```
 4. Run your tests, which will create new cassette files
 
-**Important**: Re-recording cassettes will use your OpenAI API key and may incur charges to your account based on the number and type of API calls made during testing. Please be aware of these potential costs before re-recording. (Re-running the whole test suite with the current set of OpenAI LLMs and making actual LLM API requests currently incurs up to $0.40 USD, based on the default OpenAI API pricing.)
+**Important**: Re-recording cassettes will use your OpenAI API key and may incur charges to your account based on the number and type of API calls made during testing. Please be aware of these potential costs before re-recording. (Re-running the whole test suite with the current set of OpenAI LLMs and making actual LLM API requests currently incurs up to $0.50 USD, based on the default OpenAI API pricing.)
 
 Note that our VCR configuration is set up to automatically strip API keys and other personal data from the cassettes by default.
 

@@ -292,10 +292,10 @@ Anomaly extraction example (ContextGem)
 
    # Define an LLM for extracting information from the document
    llm = DocumentLLM(
-       model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
+       model="openai/gpt-4o-mini",  # or another provider/LLM
        api_key=os.environ.get(
            "CONTEXTGEM_OPENAI_API_KEY"
-       ),  # your API key for the LLM provider, e.g. OpenAI, Anthropic, etc.
+       ),  # your API key for the LLM provider
        # see the docs for more configuration options
    )
 
@@ -3879,6 +3879,46 @@ Tip:
    print("Invoice Total:")
    print(extracted_concepts[0].extracted_items)  # extracted concept items
    # or doc.get_concept_by_name("Invoice Total").extracted_items
+
+
+💬 Lightweight LLM Chat Interface
+=================================
+
+Note:
+
+  While ContextGem is primarily designed for advanced structured data
+  extraction, it also provides a lightweight, unified interface for
+  interacting with LLMs via natural language - across both text and
+  vision - with built-in fallback support.
+
+   # Using LLMs for chat (text + vision), with fallback LLM support
+
+   import os
+
+   from contextgem import DocumentLLM
+
+   # from contextgem import Image
+
+   main_model = DocumentLLM(
+       model="openai/gpt-4o",  # or another provider/model
+       api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),  # your API key for the LLM provider
+   )
+
+   # Optional: fallback LLM
+   fallback_model = DocumentLLM(
+       model="openai/gpt-4o-mini",  # or another provider/model
+       api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),  # your API key for the LLM provider
+       is_fallback=True,
+   )
+   main_model.fallback_llm = fallback_model
+
+   response = main_model.chat(
+       "Hello",
+       # images=[Image(...)]
+   )
+   # or `response = await main_model.chat_async(...)`
+
+   print(response)
 
 
 # ==== advanced_usage ====
@@ -8252,7 +8292,10 @@ class contextgem.public.llms.DocumentLLM(**data)
         response. Defaults to 4096.
 
       * **max_completion_tokens** -- Maximum token size for output
-        completions in o1 models. Defaults to 16000.
+        completions in o1/o3 models. Defaults to 16000.
+
+      * **reasoning_effort** -- The effort level for the LLM to reason
+        about the input. Defaults to None. Relevant for o1/o3 models.
 
       * **top_p** -- Nucleus sampling value (0.0 to 1.0) controlling
         output focus/randomness. Lower values make output more
@@ -8317,6 +8360,8 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **max_tokens** (*Optional**[**int**]*)
 
       * **max_completion_tokens** (*Optional**[**int**]*)
+
+      * **reasoning_effort** (*Optional**[**ReasoningEffort**]*)
 
       * **top_p** (*Optional**[**float**]*)
 
@@ -8418,6 +8463,8 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    max_completion_tokens: Optional[StrictInt]
 
+   reasoning_effort: Optional[ReasoningEffort]
+
    top_p: Optional[StrictFloat]
 
    num_retries_failed_request: Optional[StrictInt]
@@ -8459,6 +8506,71 @@ class contextgem.public.llms.DocumentLLM(**data)
 
       Return type:
          list[LLMRoleAny]
+
+   chat(prompt, images=None)
+
+      Synchronously sends a prompt to the LLM and gets a response. For
+      models supporting vision, attach images to the prompt if needed.
+
+      This method allows direct interaction with the LLM by submitting
+      your own prompt.
+
+      Parameters:
+         * **prompt** (*str*) -- The input prompt to send to the LLM
+
+         * **images** (*Optional**[**list**[**Image**]**]*) --
+           Optional list of Image instances for vision queries
+
+      Returns:
+         The LLM's response
+
+      Return type:
+         str
+
+      Raises:
+         * **ValueError** -- If the prompt is empty or not a string
+
+         * **ValueError** -- If images parameter is not a list of
+           Image instances
+
+         * **ValueError** -- If images are provided but the model
+           doesn't support vision
+
+         * **RuntimeError** -- If the LLM call fails and no fallback
+           is available
+
+   async chat_async(prompt, images=None)
+
+      Asynchronously sends a prompt to the LLM and gets a response.
+      For models supporting vision, attach images to the prompt if
+      needed.
+
+      This method allows direct interaction with the LLM by submitting
+      your own prompt.
+
+      Parameters:
+         * **prompt** (*str*) -- The input prompt to send to the LLM
+
+         * **images** (*Optional**[**list**[**Image**]**]*) --
+           Optional list of Image instances for vision queries
+
+      Returns:
+         The LLM's response
+
+      Return type:
+         str
+
+      Raises:
+         * **ValueError** -- If the prompt is empty or not a string
+
+         * **ValueError** -- If images parameter is not a list of
+           Image instances
+
+         * **ValueError** -- If images are provided but the model
+           doesn't support vision
+
+         * **RuntimeError** -- If the LLM call fails and no fallback
+           is available
 
    _update_default_prompt(prompt_path, prompt_type)
 
