@@ -20,7 +20,7 @@
 ContextGem - Easier and faster way to build LLM extraction workflows through powerful abstractions
 """
 
-__version__ = "0.1.1.post1"
+__version__ = "0.1.2"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
