@@ -36,7 +36,7 @@ Read more on the project [motivation](https://contextgem.dev/motivation.html) in
 - **Build complex extraction workflows** through a simple, intuitive API
 - **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
 
-![ContextGem extraction example](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/content_snippets/readme_code_snippet.png "ContextGem extraction example")
+![ContextGem extraction example](https://github.com/shcherbak-ai/contextgem/blob/dev/dev/content_snippets/readme_code_snippet.png "ContextGem extraction example")
 
 
 ## ⭐ Key features
@@ -71,7 +71,7 @@ ContextGem's core components are the Document, Aspect, and Concept models:
 
 See other industry-specific examples in the table below:
 
-![ContextGem component examples](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/dev/dev/content_snippets/contextgem_component_examples.png "ContextGem component examples")
+![ContextGem component examples](https://github.com/shcherbak-ai/contextgem/blob/dev/dev/content_snippets/contextgem_component_examples.png "ContextGem component examples")
 
 
 ## 📦 Installation

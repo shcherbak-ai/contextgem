@@ -57,7 +57,6 @@ USAGE_EXAMPLES_MAPPING = {
     "dev/content_snippets/feature_table.html": "{{FEATURE_TABLE}}",
     "dev/usage_examples/readme/quickstart_aspect.py": "{{QUICKSTART_ASPECT}}",
     "dev/usage_examples/readme/quickstart_concept.py": "{{QUICKSTART_CONCEPT}}",
-    "dev/usage_examples/readme/llm_chat.py": "{{LLM_CHAT}}",
 }
 
 if __name__ == "__main__":
