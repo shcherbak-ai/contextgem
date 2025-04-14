@@ -45,5 +45,5 @@ for item in doc.aspects[0].extracted_items:
     print(f"• {item.value}")
 # or `doc.get_aspect_by_name("Payment Terms").extracted_items`
 
-# Output (paragraph from the document):
+# Output (exact paragraphs from the document):
 # • PAYMENT. Client agrees to pay $5,000 per month for the services. Payment is due on the 1st of each month. Late payments will incur a 2% fee per month...
