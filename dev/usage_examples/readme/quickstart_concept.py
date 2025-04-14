@@ -35,10 +35,10 @@ doc.concepts = [
 
 # Define an LLM for extracting information from the document
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
+    model="openai/gpt-4o-mini",  # or another provider/LLM
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
-    ),  # your API key for the LLM provider, e.g. OpenAI, Anthropic, etc.
+    ),  # your API key for the LLM provider
     # see the docs for more configuration options
 )
 

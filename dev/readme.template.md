@@ -36,12 +36,44 @@ Read more on the project [motivation](https://contextgem.dev/motivation.html) in
 - **Build complex extraction workflows** through a simple, intuitive API
 - **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
 
+![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
+
 
 ## ⭐ Key features
 
 {{FEATURE_TABLE}}
 
 \* See [descriptions](https://contextgem.dev/motivation.html#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks.html) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
+
+
+## 🧩 Core components
+
+ContextGem's document-specific LLM extraction is built upon the following core components:
+
+- 📄 **Document** model contains text and/or visual content representing a specific document. Examples:
+
+    - _legal documents_: contracts, policies, terms of service
+    - _financial documents_: invoices, receipts, bank statements, financial reports
+    - _business documents_: proposals, business plans, marketing materials, presentations
+
+- 📚 **Aspect** model contains text representing a defined area or topic within a document. Examples:
+
+    - _contract aspects_: payment terms, termination clauses
+    - _invoice aspects_: line-item breakdowns, tax details
+    - _CV aspects_: work experience, education, skills
+
+
+- 🧠 **Concept** model contains a unit of information or an entity, derived from an aspect or the broader document context. Examples:
+
+    - _factual extractions_: a termination date in a contract, a total amount due in an invoice, or a certification in a CV
+    - _analytical insights_: risk assessments, compliance evaluations
+    - _reasoned conclusions_: determining whether a document meets specific criteria or answers particular questions
+
+See other industry-specific examples in the table below:
+
+![ContextGem component examples](https://contextgem.dev/_static/contextgem_component_examples.png "ContextGem component examples")
+
+Read more on [how it works](https://contextgem.dev/how_it_works.html) in the documentation.
 
 
 ## 📦 Installation
@@ -55,8 +87,6 @@ pip install -U contextgem
 
 ### Aspect extraction
 
-Aspect is a defined area or topic within a document (or another aspect). Each aspect reflects a specific subject or theme.
-
 ```python
 {{QUICKSTART_ASPECT}}
 ```
@@ -64,8 +94,6 @@ Aspect is a defined area or topic within a document (or another aspect). Each as
 
 
 ### Concept extraction
-
-Concept is a unit of information or an entity, derived from an aspect or the broader document context.
 
 ```python
 {{QUICKSTART_CONCEPT}}
@@ -82,6 +110,7 @@ See more examples in the documentation:
 - [Concept Extraction from Aspect](https://contextgem.dev/quickstart.html#concept-extraction-from-aspect)
 - [Concept Extraction from Document (text)](https://contextgem.dev/quickstart.html#concept-extraction-from-document-text)
 - [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart.html#concept-extraction-from-document-vision)
+- [LLM chat interface](https://contextgem.dev/quickstart.html#lightweight-llm-chat-interface)
 
 ### Advanced usage examples
 - [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage.html#extracting-aspects-with-concepts)
@@ -91,9 +120,7 @@ See more examples in the documentation:
 
 ## 🎯 Focused document analysis
 
-ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on [continuously expanding context capacity](https://arxiv.org/abs/2502.12962), evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers maximum accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, traditional RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
-
-Read more on [how it works](https://contextgem.dev/how_it_works.html) in the documentation.
+ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on [continuously expanding context capacity](https://arxiv.org/abs/2502.12962), evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
 
 
 ## 🤖 Supported LLMs
@@ -122,7 +149,7 @@ Full documentation is available at [contextgem.dev](https://contextgem.dev).
 A raw text version of the full documentation is available at [`docs/docs-raw-for-llm.txt`](https://github.com/shcherbak-ai/contextgem/blob/main/docs/docs-raw-for-llm.txt). This file is automatically generated and contains all documentation in a format optimized for LLM ingestion (e.g. for Q&A).
 
 
-## 💬 Community
+## 🗨️ Community
 
 If you have a feature request or a bug report, feel free to [open an issue](https://github.com/shcherbak-ai/contextgem/issues/new) on GitHub. If you'd like to discuss a topic or get general advice on using ContextGem for your project, start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
 
