@@ -16,6 +16,9 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
+<img src="https://contextgem.dev/_static/tab_solid.png" alt="ContextGem: 2nd Product of the week" width="250">
+<br/><br/>
+
 ContextGem is a free, open-source LLM framework for easier, faster extraction of structured data and insights from documents through powerful abstractions.
 
 
@@ -26,17 +29,6 @@ Most popular LLM frameworks for extracting structured data from documents requir
 ContextGem addresses this challenge by providing a flexible, intuitive framework that extracts structured data and insights from documents with minimal effort. Complex, most time-consuming parts are handled with **powerful abstractions**, eliminating boilerplate code and reducing development overhead.
 
 Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
-
-
-## 💡 With ContextGem, you can:
-
-- **Extract structured data** from documents (text, images) with minimal code
-- **Identify and analyze key aspects** (topics, themes, categories) within documents
-- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents
-- **Build complex extraction workflows** through a simple, intuitive API
-- **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
-
-![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
 
 
 ## ⭐ Key features
@@ -165,34 +157,17 @@ Read more on the project [motivation](https://contextgem.dev/motivation.html) in
 \* See [descriptions](https://contextgem.dev/motivation.html#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks.html) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
 
 
-## 🧩 Core components
+## 💡 With **minimal code**, you can:
 
-ContextGem's document-specific LLM extraction is built upon the following core components:
+- **Extract structured data** from documents (text, images)
+- **Identify and analyze key aspects** (topics, themes, categories) within documents
+- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents
+- **Build complex extraction workflows** through a simple, intuitive API
+- **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
 
-- 📄 **Document** model contains text and/or visual content representing a specific document. Examples:
+<br/>
 
-    - _legal documents_: contracts, policies, terms of service
-    - _financial documents_: invoices, receipts, bank statements, financial reports
-    - _business documents_: proposals, business plans, marketing materials, presentations
-
-- 📚 **Aspect** model contains text representing a defined area or topic within a document. Examples:
-
-    - _contract aspects_: payment terms, termination clauses
-    - _invoice aspects_: line-item breakdowns, tax details
-    - _CV aspects_: work experience, education, skills
-
-
-- 🧠 **Concept** model contains a unit of information or an entity, derived from an aspect or the broader document context. Examples:
-
-    - _factual extractions_: a termination date in a contract, a total amount due in an invoice, or a certification in a CV
-    - _analytical insights_: risk assessments, compliance evaluations
-    - _reasoned conclusions_: determining whether a document meets specific criteria or answers particular questions
-
-See other industry-specific examples in the table below:
-
-![ContextGem component examples](https://contextgem.dev/_static/contextgem_component_examples.png "ContextGem component examples")
-
-Read more on [how it works](https://contextgem.dev/how_it_works.html) in the documentation.
+![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
 
 
 ## 📦 Installation
@@ -341,6 +316,8 @@ See more examples in the documentation:
 ## 🎯 Focused document analysis
 
 ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on [continuously expanding context capacity](https://arxiv.org/abs/2502.12962), evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
+
+Read more on [how ContextGem works](https://contextgem.dev/how_it_works.html) in the documentation.
 
 
 ## 🤖 Supported LLMs
