@@ -4,7 +4,7 @@ from contextgem import DocxConverter
 
 converter = DocxConverter()
 
-# Convert a DOCX file to a ContextGem Document
+# Convert a DOCX file to an LLM-ready ContextGem Document
 # from path
 document = converter.convert("path/to/document.docx")
 # or from file object

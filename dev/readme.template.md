@@ -86,11 +86,11 @@ See more examples in the documentation:
 
 ## 🔄 Document converters
 
-To create a document for analysis, you can either pass raw text directly, or use ContextGem's built-in document converters that handle various file formats.
+To create a ContextGem document for LLM analysis, you can either pass raw text directly, or use built-in converters that handle various file formats.
 
 ### 📄 DOCX converter
 
-ContextGem provides built-in converter to easily transform DOCX files into ContextGem document objects.
+ContextGem provides built-in converter to easily transform DOCX files into LLM-ready data.
 
 - Extracts information that other open-source tools often do not capture: misaligned tables, comments, footnotes, textboxes, headers/footers, and embedded images
 - Preserves document structure with rich metadata for improved LLM analysis
