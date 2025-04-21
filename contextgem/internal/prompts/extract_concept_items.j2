@@ -263,7 +263,7 @@ DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
 DOCUMENT PARAGRAPHS:
         {% endif %}
         {% for para_index, para_item in enumerate(paragraphs) %}
-            {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text) %}
+            {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False) %}
             {% if para_text %}
 ```
 - Paragraph ID: P{{ para_index }}
@@ -276,12 +276,12 @@ Additional information about the paragraph: {{ para_item.additional_context }}
                 {% if reference_depth == "sentences" %}
 Paragraph sentences:
                     {% for sent_index, sent_item in enumerate(para_item.sentences) %}
-                        {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text) %}
+                        {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False) %}
                         {% if sent_text %}
--- Sentence ID: P{{ para_index }}-S{{ sent_index }}
-Sentence text: {{ sent_text }}
+    -- Sentence ID: P{{ para_index }}-S{{ sent_index }}
+    Sentence text: {{ sent_text }}
                             {% if sent_item.additional_context %}
-Additional information about the sentence: {{ sent_item.additional_context }}
+    Additional information about the sentence: {{ sent_item.additional_context }}
                             {% endif %}
                         {% endif %}
                     {% endfor %}
@@ -292,7 +292,7 @@ Additional information about the sentence: {{ sent_item.additional_context }}
         {% endfor %}
     {% else %}
 DOCUMENT TEXT:
-{{ _clean_text_for_llm_prompt(text) }}
+{{ text }}
     {% endif %}
 ---
 {% endif %}

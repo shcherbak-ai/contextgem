@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from aiolimiter import AsyncLimiter
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
     from contextgem.internal.base.concepts import _Concept
     from contextgem.internal.base.items import _ExtractedItem
     from contextgem.internal.base.examples import _Example
+    from contextgem.internal.data_models import _LLMCost
 
 from contextgem.internal.typings.aliases import Self
 
@@ -172,12 +174,31 @@ class _InstanceSerializer(BaseModel):
 
             elif key == KEY_LLM_COST_PRIVATE:
                 # Reset cost stats when LLM is serialized
-                base_dict[key] = _LLMCost().to_dict()
+                cost_dict = _LLMCost().to_dict()
+                # Convert Decimal objects to floats in the cost dictionary
+                base_dict[key] = self._convert_decimal_to_float(cost_dict)
 
         # Add class name for deserialization
         base_dict[KEY_CLASS_PRIVATE] = self.__class__.__name__
 
         return {**base_dict}
+
+    def _convert_decimal_to_float(self, obj: Any) -> Any:
+        """
+        Recursively converts Decimal objects to floats for JSON serialization.
+
+        :param obj: The object to convert.
+        :type obj: Any
+        :return: The converted object.
+        :rtype: Any
+        """
+        if isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, dict):
+            return {k: self._convert_decimal_to_float(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._convert_decimal_to_float(i) for i in obj]
+        return obj
 
     def to_json(self) -> str:
         """
@@ -266,7 +287,7 @@ class _InstanceSerializer(BaseModel):
         import contextgem.public.concepts as cg_concepts
         import contextgem.public.examples as cg_examples
         from contextgem import Image
-        from contextgem.internal.data_models import _LLMCost, _LLMUsage
+        from contextgem.internal.data_models import _LLMUsage
         from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
         from contextgem.public.aspects import Aspect
         from contextgem.public.data_models import LLMPricing, RatingScale
@@ -330,7 +351,7 @@ class _InstanceSerializer(BaseModel):
             KEY_REFERENCE_SENTENCES_PRIVATE: lambda_list_val(instance_cls=Sentence),
             # LLM attrs
             KEY_LLM_USAGE_PRIVATE: lambda val: _LLMUsage.from_dict(val),
-            KEY_LLM_COST_PRIVATE: lambda val: _LLMCost.from_dict(val),
+            KEY_LLM_COST_PRIVATE: lambda val: cls._convert_llm_cost_dict(val),
             KEY_ASYNC_LIMITER_PRIVATE: lambda val: AsyncLimiter(
                 max_rate=val["max_rate"], time_period=val["time_period"]
             ),
@@ -357,6 +378,26 @@ class _InstanceSerializer(BaseModel):
             setattr(new_instance, priv_k, priv_v)
 
         return new_instance
+
+    @classmethod
+    def _convert_llm_cost_dict(cls, cost_dict: dict[str, Any]) -> _LLMCost:
+        """
+        Converts a dictionary containing _LLMCost data to an _LLMCost instance,
+        ensuring float values are converted to Decimal.
+
+        :param cost_dict: Dictionary containing _LLMCost data
+        :type cost_dict: dict[str, Any]
+        :return: An _LLMCost instance
+        :rtype: _LLMCost
+        """
+        from contextgem.internal.data_models import _LLMCost
+
+        # Convert float values to Decimal
+        cost_dict["input"] = Decimal(str(cost_dict["input"]))
+        cost_dict["output"] = Decimal(str(cost_dict["output"]))
+        cost_dict["total"] = Decimal(str(cost_dict["total"]))
+
+        return _LLMCost.from_dict(cost_dict)
 
     @classmethod
     def from_json(cls, json_string: str) -> Self:

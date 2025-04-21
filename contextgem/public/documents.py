@@ -243,8 +243,10 @@ class Document(_AssignedInstancesProcessor):
                         ), "Not all segmented sentences were matched in paragraph text."
                         paragraph.sentences = [
                             Sentence(
-                                raw_text=i, custom_data=paragraph.custom_data
-                            )  # inherit custom data from paragraph object
+                                raw_text=i,
+                                custom_data=paragraph.custom_data,
+                                additional_context=paragraph.additional_context,
+                            )  # inherit custom data and additional context from paragraph object
                             for i in sent_group
                         ]
 

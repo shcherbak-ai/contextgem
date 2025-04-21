@@ -177,29 +177,51 @@ def _contains_jinja2_tags(text: str) -> bool:
     return False
 
 
-def _clean_text_for_llm_prompt(raw_text: str) -> str:
+def _clean_text_for_llm_prompt(raw_text: str, preserve_linebreaks: bool = True) -> str:
     """
     Removes control characters and other problematic elements from text
     to make it suitable for LLM input.
 
     :param raw_text: The input string to be cleaned, as raw text.
     :type raw_text: str
+    :param preserve_linebreaks: Whether to preserve linebreaks in the text.
+        If False, all whitespace is collapsed to a single space. Defaults to True.
+    :type preserve_linebreaks: bool
     :return: A cleaned and formatted version of the input text.
     :rtype: str
     """
 
-    # Remove various control and invisible characters
-    # This includes:
-    # - ASCII control characters (0x00-0x1F and 0x7F)
-    # - Zero-width characters
-    # - Bidirectional text markers
-    # - Other invisible unicode characters
-    cleaned = re.sub(
-        r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", raw_text
-    )
+    if preserve_linebreaks:
+        # Normalize newlines to \n
+        cleaned = re.sub(r"\r\n|\r", "\n", raw_text)
 
-    # Remove repeated whitespace
-    cleaned = re.sub(r"\s+", " ", cleaned)
+        # Remove control characters EXCEPT newlines (\n = ASCII 10)
+        # This includes:
+        # - ASCII control characters except LF (0x00-0x09, 0x0B-0x1F and 0x7F)
+        # - Zero-width characters
+        # - Bidirectional text markers
+        # - Other invisible unicode characters
+        cleaned = re.sub(
+            r"[\x00-\x09\x0B-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]",
+            "",
+            cleaned,
+        )
+
+        # Replace horizontal whitespace sequences (spaces and tabs) with a single space
+        # while preserving linebreaks
+        cleaned = re.sub(r"[ \t]+", " ", cleaned)
+
+        # Remove extra blank lines (more than one consecutive newline)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+
+    else:
+        # Remove all control characters including newlines
+        cleaned = re.sub(
+            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", raw_text
+        )
+
+        # Remove all whitespace sequences with a single space
+        cleaned = re.sub(r"\s+", " ", cleaned)
 
     # Strip leading/trailing whitespace
     return cleaned.strip()

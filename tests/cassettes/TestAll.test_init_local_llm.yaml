@@ -89,7 +89,7 @@ interactions:
       Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
       of the contract.\n\nAmount of extracted items: This concept may have zero, one,
       or multiple extracted items.\n\nConcept extracted item type: str\n```\n\n___\n\n---\nDOCUMENT
-      TEXT:\nNon-disclosure agreementThe parties shall keep the data confidential.\n---\n\n\n",
+      TEXT:\nNon-disclosure agreement\n\nThe parties shall keep the data confidential.\n---\n\n\n",
       "options": {"temperature": 0.3, "top_p": 0.3, "num_predict": 4096, "seed": 123},
       "stream": false, "images": []}'
     headers:
@@ -100,16 +100,16 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '7377'
+      - '7381'
       host:
       - DUMMY
       user-agent:
-      - litellm/1.66.0
+      - litellm/1.67.0
     method: POST
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "llama3.1:8b", "created_at": "2025-04-13T22:23:53.3532941Z",
+      string: '{"model": "llama3.1:8b", "created_at": "2025-04-20T21:31:58.5219213Z",
         "response": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Non-disclosure agreement\"\n        ]\n    }\n]", "done":
         true, "done_reason": "stop", "context": [128006, 882, 128007, 271, 14711,
@@ -214,12 +214,12 @@ interactions:
         279, 5226, 382, 10301, 315, 28532, 3673, 25, 1115, 7434, 1253, 617, 7315,
         11, 832, 11, 477, 5361, 28532, 3673, 382, 45676, 28532, 1537, 955, 25, 610,
         198, 14196, 19884, 61388, 11192, 45197, 16139, 512, 8284, 52765, 11915, 9306,
-        791, 9875, 4985, 2567, 279, 828, 27285, 627, 4521, 1432, 128009, 128006, 78191,
-        128007, 271, 9837, 262, 341, 286, 330, 69587, 851, 794, 330, 34, 15, 761,
-        286, 330, 24396, 291, 12408, 794, 2330, 310, 330, 8284, 52765, 11915, 9306,
-        702, 286, 5243, 262, 457, 60], "total_duration": 7205875400, "load_duration":
-        6634309700, "prompt_eval_count": 1400, "prompt_eval_duration": 279898000,
-        "eval_count": 32, "eval_duration": 290948100}'
+        271, 791, 9875, 4985, 2567, 279, 828, 27285, 627, 4521, 1432, 128009, 128006,
+        78191, 128007, 271, 9837, 262, 341, 286, 330, 69587, 851, 794, 330, 34, 15,
+        761, 286, 330, 24396, 291, 12408, 794, 2330, 310, 330, 8284, 52765, 11915,
+        9306, 702, 286, 5243, 262, 457, 60], "total_duration": 7708930700, "load_duration":
+        7032312100, "prompt_eval_count": 1401, "prompt_eval_duration": 358633300,
+        "eval_count": 32, "eval_duration": 310643000}'
     headers:
       Content-Type:
       - application/json; charset=utf-8

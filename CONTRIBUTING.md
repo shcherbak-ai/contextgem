@@ -197,7 +197,7 @@ You **must** re-record cassettes if:
    ```
 4. Run your tests, which will create new cassette files
 
-**Important**: Re-recording cassettes will use your OpenAI API key and may incur charges to your account based on the number and type of API calls made during testing. Please be aware of these potential costs before re-recording. (Re-running the whole test suite with the current set of OpenAI LLMs and making actual LLM API requests currently incurs up to $0.50 USD, based on the default OpenAI API pricing.)
+**Important**: Re-recording cassettes will use your OpenAI API key and may incur charges to your account based on the number and type of API calls made during testing. Please be aware of these potential costs before re-recording.
 
 Note that our VCR configuration is set up to automatically strip API keys and other personal data from the cassettes by default.
 

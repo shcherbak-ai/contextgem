@@ -313,11 +313,11 @@ class DocumentLLM(_GenericLLMProcessor):
     :type temperature: Optional[float]
     :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
     :type max_tokens: Optional[int]
-    :ivar max_completion_tokens: Maximum token size for output completions in o1/o3 models.
+    :ivar max_completion_tokens: Maximum token size for output completions in o1/o3/o4 models.
         Defaults to 16000.
     :type max_completion_tokens: Optional[int]
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Defaults to None.
-        Relevant for o1/o3 models.
+        Relevant for o1/o3/o4 models.
     :type reasoning_effort: Optional[ReasoningEffort]
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
@@ -386,7 +386,7 @@ class DocumentLLM(_GenericLLMProcessor):
     max_tokens: Optional[StrictInt] = Field(default=4096, gt=0)
     max_completion_tokens: Optional[StrictInt] = Field(
         default=16000, gt=0
-    )  # for o1/o3 models
+    )  # for o1/o3/o4 models
     reasoning_effort: Optional[ReasoningEffort] = Field(default=None)
     top_p: Optional[StrictFloat] = Field(default=0.3, ge=0)
     num_retries_failed_request: Optional[StrictInt] = Field(default=3, ge=0)
@@ -541,7 +541,7 @@ class DocumentLLM(_GenericLLMProcessor):
             return await self.fallback_llm.chat_async(prompt, images)
         elif response is None:
             raise RuntimeError(
-                "Failed to get response from LLM and no fallback is available"
+                f"Failed to get response from LLM {self.model} and no fallback is available"
             )
 
         return response
@@ -894,17 +894,24 @@ class DocumentLLM(_GenericLLMProcessor):
         # Add model-specific parameters
         if any(
             self.model.startswith(i)
-            for i in ["openai/o1", "openai/o3", "azure/o1", "azure/o3"]
+            for i in [
+                "openai/o1",
+                "openai/o3",
+                "openai/o4",
+                "azure/o1",
+                "azure/o3",
+                "azure/o4",
+            ]
         ):
             assert (
                 self.max_completion_tokens
-            ), "`max_completion_tokens` must be set for o1/o3 models"
+            ), "`max_completion_tokens` must be set for o1/o3/o4 models"
             request_dict["max_completion_tokens"] = self.max_completion_tokens
-            # o1/o3 models don't support `max_tokens` (`max_completion_tokens` must be used instead),
+            # o1/o3/o4 models don't support `max_tokens` (`max_completion_tokens` must be used instead),
             # `temperature`, or `top_p`
             if self.temperature or self.top_p:
                 logger.info(
-                    "`temperature` and `top_p` parameters are ignored for o1/o3 models."
+                    "`temperature` and `top_p` parameters are ignored for o1/o3/o4 models."
                 )
             # Set reasoning effort if provided. Otherwise uses LiteLLM's default.
             if self.reasoning_effort:

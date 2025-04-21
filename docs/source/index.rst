@@ -15,7 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-:og:description: ContextGem: Easier and faster way to build LLM extraction workflows through powerful abstractions.
+:og:description: ContextGem: Effortless LLM extraction from documents
 
 .. image:: _static/contextgem_poster.png
    :width: 100%
@@ -36,7 +36,7 @@
 Welcome to ContextGem Documentation!
 =====================================
 
-ContextGem is an LLM framework for faster, easier extraction of structured data and insights from documents through powerful abstractions.
+ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
 
 |
 
@@ -95,6 +95,23 @@ ContextGem is an LLM framework for faster, easier extraction of structured data 
             
             Explore
     
+    .. grid-item-card:: 🔄 Document Converters
+        :link: converters/docx
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to use ContextGem's built-in document converters for files such as DOCX.
+
+        +++
+        .. button-ref:: converters/docx
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Convert Files
+
     .. grid-item-card:: ⚙️ Optimization Guide
         :link: optimizations/optimization_choosing_llm
         :link-type: doc
@@ -111,6 +128,23 @@ ContextGem is an LLM framework for faster, easier extraction of structured data 
             :expand:
             
             Optimize
+    
+    .. grid-item-card:: 💾 Serialization
+        :link: serialization
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+        
+        Learn how to serialize and deserialize ContextGem objects for storage and transfer.
+        
+        +++
+        .. button-ref:: serialization
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+            
+            Save & Load
     
     .. grid-item-card:: 📖 API Reference
         :link: api/documents
@@ -166,6 +200,13 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
+   :caption: Converters
+   :hidden:
+   
+   converters/docx
+
+.. toctree::
+   :maxdepth: 2
    :caption: Optimization Guide
    :hidden:
    
@@ -177,10 +218,18 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
+   :caption: Serialization
+   :hidden:
+   
+   serialization
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
    :hidden:
    
    api/documents
+   api/converters
    api/aspects
    api/concepts
    api/examples

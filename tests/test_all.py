@@ -25,8 +25,11 @@ from __future__ import annotations
 import os
 import sys
 import warnings
+import xml.etree.ElementTree as ET
+import zipfile
 from copy import deepcopy
 from decimal import Decimal
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -64,6 +67,12 @@ from contextgem.internal.loggers import (
 )
 from contextgem.internal.utils import _split_text_into_paragraphs
 from contextgem.public.concepts import RatingConcept
+from contextgem.public.converters.docx import (
+    NAMESPACES,
+    DocxConverter,
+    DocxFormatError,
+    DocxPackage,
+)
 from contextgem.public.data_models import LLMPricing, RatingScale
 from contextgem.public.utils import reload_logger_settings
 from tests.utils import (
@@ -72,6 +81,7 @@ from tests.utils import (
     get_project_root_path,
     get_test_document_text,
     get_test_img,
+    remove_file,
     vcr_before_record_request,
     vcr_before_record_response,
 )
@@ -126,9 +136,18 @@ class TestAll(TestUtils):
     """
 
     # Documents
+    # From raw texts
     document = Document(raw_text=get_test_document_text())
     document_ua = Document(raw_text=get_test_document_text(lang="ua"))
     document_zh = Document(raw_text=get_test_document_text(lang="zh"))
+    # From DOCX files
+    test_docx_nda_path = os.path.join(
+        get_project_root_path(), "tests", "docx_files", "en_nda_with_anomalies.docx"
+    )
+    test_docx_badly_formatted_path = os.path.join(
+        get_project_root_path(), "tests", "docx_files", "badly_formatted.docx"
+    )
+    document_docx = DocxConverter().convert(test_docx_nda_path)
 
     # Document pipeline
     document_pipeline = DocumentPipeline(
@@ -175,22 +194,22 @@ class TestAll(TestUtils):
 
         # Extractor text
         _llm_extractor_text_kwargs_openai = {
-            "model": "azure/gpt-4o-mini",
+            "model": "azure/gpt-4.1-mini",
             "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
             "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
             "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
             "role": "extractor_text",
             "pricing_details": LLMPricing(
                 **{
-                    "input_per_1m_tokens": 0.150,
-                    "output_per_1m_tokens": 0.600,
+                    "input_per_1m_tokens": 0.40,
+                    "output_per_1m_tokens": 1.60,
                 }
             ),
         }
 
         # Reasoner text
         _llm_reasoner_text_kwargs_openai = {
-            "model": "azure/o3-mini",
+            "model": "azure/o4-mini",
             "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
             "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
             "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
@@ -1733,7 +1752,7 @@ class TestAll(TestUtils):
         system_message = "When asked, introduce yourself as ContextGem."
         if TEST_LLM_PROVIDER == "azure_openai":
             non_reasoning_model = DocumentLLM(
-                model="azure/gpt-4o-mini",
+                model="azure/gpt-4.1-mini",
                 api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
                 api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
                 api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
@@ -1749,6 +1768,13 @@ class TestAll(TestUtils):
             )
             o3_mini_model = DocumentLLM(
                 model="azure/o3-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                system_message=system_message,
+            )
+            o4_mini_model = DocumentLLM(
+                model="azure/o4-mini",
                 api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
                 api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
                 api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
@@ -1770,7 +1796,12 @@ class TestAll(TestUtils):
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 system_message=system_message,
             )
-        for model in [non_reasoning_model, o1_model, o3_mini_model]:
+            o4_mini_model = DocumentLLM(
+                model="openai/o4-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                system_message=system_message,
+            )
+        for model in [non_reasoning_model, o1_model, o3_mini_model, o4_mini_model]:
             model.chat("What's your name?")
             response = model.get_usage()[0].usage.calls[-1].response
             assert "ContextGem" in response
@@ -2539,6 +2570,7 @@ class TestAll(TestUtils):
         "document",
         [
             document,
+            document_docx,
             document_ua,
             # document_zh
         ],
@@ -2776,6 +2808,7 @@ class TestAll(TestUtils):
         "document",
         [
             document,
+            document_docx,
             document_ua,
             # document_zh
         ],
@@ -3411,6 +3444,7 @@ class TestAll(TestUtils):
             quickstart_concept_document_vision,
             quickstart_sub_aspect,
         )
+        from dev.usage_examples.docs.serialization import serialization
         from dev.usage_examples.readme import (
             llm_chat,
             quickstart_aspect,
@@ -3446,6 +3480,434 @@ class TestAll(TestUtils):
         from dev.usage_examples.docstrings.pipelines import def_pipeline
         from dev.usage_examples.docstrings.sentences import def_sentence
         from dev.usage_examples.docstrings.utils import reload_logger_settings
+
+    @pytest.mark.parametrize("raw_text_to_md", [True, False])
+    @pytest.mark.parametrize("strict_mode", [True, False])
+    @pytest.mark.parametrize(
+        "include_options",
+        [
+            "default",  # All options set to True
+            "minimal",  # All options set to False
+            "no_images",  # All options True except images
+        ],
+    )
+    def test_docx_converter(
+        self, raw_text_to_md: bool, strict_mode: bool, include_options: str
+    ):
+        """
+        Tests for the DocxConverter class, covering both convert() and convert_to_text_format() methods.
+
+        This test uses parametrization to test different combinations of:
+        - raw_text_to_md (True/False)
+        - strict_mode (True/False)
+        - include_options (default/minimal/no_images)
+
+        It checks conversion from file path, file object, and BytesIO for compatibility.
+        """
+
+        # Define inclusion parameters based on the option
+        include_params = {
+            "default": {
+                "include_tables": True,
+                "include_comments": True,
+                "include_footnotes": True,
+                "include_headers": True,
+                "include_footers": True,
+                "include_textboxes": True,
+                "include_images": True,
+            },
+            "minimal": {
+                "include_tables": False,
+                "include_comments": False,
+                "include_footnotes": False,
+                "include_headers": False,
+                "include_footers": False,
+                "include_textboxes": False,
+                "include_images": False,
+            },
+            "no_images": {
+                "include_tables": True,
+                "include_comments": True,
+                "include_footnotes": True,
+                "include_headers": True,
+                "include_footers": True,
+                "include_textboxes": True,
+                "include_images": False,
+            },
+        }[include_options]
+
+        # Utility function to verify all DocxPackage attributes are populated
+        def verify_docx_package_attributes(test_file_path_or_object):
+            package = DocxPackage(test_file_path_or_object)
+            try:
+                # Verify all attributes that are present in test DOCX file are populated
+                assert package.archive is not None, "Archive must be populated"
+                assert package.rels != {}, "Relationships must be populated"
+                assert (
+                    package.main_document is not None
+                ), "Main document must be populated"
+                assert package.styles is not None, "Styles must be populated"
+                assert package.numbering is not None, "Numbering must be populated"
+                assert package.footnotes is not None, "Footnotes must be populated"
+                assert package.comments is not None, "Comments must be populated"
+                assert package.headers, "Headers must be populated"
+                assert package.footers, "Footers must be populated"
+                assert package.images, "Images must be populated"
+
+                logger.debug("All DocxPackage attributes successfully verified")
+            finally:
+                if package:
+                    package.close()
+
+        # Prepare file objects for different input methods
+        with open(self.test_docx_badly_formatted_path, "rb") as f:
+            file_bytes = f.read()
+
+        # Create a BytesIO object that can be reset
+        def create_bytesio():
+            return BytesIO(file_bytes)
+
+        # Function to open the file
+        def open_file():
+            return open(self.test_docx_badly_formatted_path, "rb")
+
+        # Create converter instance
+        converter = DocxConverter()
+
+        # Helper function to verify Document objects
+        def verify_document_equality(documents):
+            # Check that all documents have the expected properties
+            for doc in documents:
+                assert isinstance(doc, Document)
+                assert doc.raw_text, "Document should have raw text"
+                assert doc.paragraphs, "Document should have paragraphs"
+
+                # Verify that each sentence inherits additional_context from its paragraph
+                for paragraph in doc.paragraphs:
+                    assert (
+                        paragraph.additional_context
+                    ), "Paragraph should have additional context"
+                    for sentence in paragraph.sentences:
+                        assert (
+                            sentence.additional_context == paragraph.additional_context
+                        ), f"Sentence additional_context should match its paragraph's additional_context"
+                        assert (
+                            sentence.custom_data == paragraph.custom_data
+                        ), f"Sentence custom_data should match its paragraph's custom_data"
+
+            # Check that all documents have the same content
+            first_doc = documents[0]
+            for i, doc in enumerate(documents[1:], 1):
+                assert (
+                    doc.raw_text == first_doc.raw_text
+                ), f"Document {i} has different raw text"
+                assert len(doc.paragraphs) == len(
+                    first_doc.paragraphs
+                ), f"Document {i} has different paragraph count"
+
+                # Check images if they should be included
+                if include_params["include_images"]:
+                    assert len(doc.images) == len(
+                        first_doc.images
+                    ), f"Document {i} has different image count"
+
+        # Test 1: Test convert() method with different input sources
+        documents = []
+
+        # Convert from file path
+        verify_docx_package_attributes(self.test_docx_badly_formatted_path)
+        doc_from_path = converter.convert(
+            self.test_docx_badly_formatted_path,
+            raw_text_to_md=raw_text_to_md,
+            strict_mode=strict_mode,
+            **include_params,
+        )
+        documents.append(doc_from_path)
+
+        # Convert from file object
+        with open_file() as file_obj:
+            verify_docx_package_attributes(file_obj)
+            doc_from_obj = converter.convert(
+                file_obj,
+                raw_text_to_md=raw_text_to_md,
+                strict_mode=strict_mode,
+                **include_params,
+            )
+        documents.append(doc_from_obj)
+
+        # Convert from BytesIO
+        bytesio = create_bytesio()
+        verify_docx_package_attributes(bytesio)
+        doc_from_bytesio = converter.convert(
+            bytesio,
+            raw_text_to_md=raw_text_to_md,
+            strict_mode=strict_mode,
+            **include_params,
+        )
+        documents.append(doc_from_bytesio)
+
+        # Verify all documents are equal content-wise
+        verify_document_equality(documents)
+
+        # Test 2: Test convert_to_text_format() method with different formats and input sources
+        for output_format in ["markdown", "raw"]:
+            text_results = []
+
+            # Text conversion params (exclude include_images as it's not applicable to markdown)
+            text_params = {
+                k: v for k, v in include_params.items() if k != "include_images"
+            }
+
+            # Convert from file path
+            text_from_path = converter.convert_to_text_format(
+                self.test_docx_badly_formatted_path,
+                output_format=output_format,
+                strict_mode=strict_mode,
+                **text_params,
+            )
+            text_results.append(text_from_path)
+
+            # Convert from file object
+            with open_file() as file_obj:
+                text_from_obj = converter.convert_to_text_format(
+                    file_obj,
+                    output_format=output_format,
+                    strict_mode=strict_mode,
+                    **text_params,
+                )
+            text_results.append(text_from_obj)
+
+            # Convert from BytesIO
+            bytesio = create_bytesio()
+            text_from_bytesio = converter.convert_to_text_format(
+                bytesio,
+                output_format=output_format,
+                strict_mode=strict_mode,
+                **text_params,
+            )
+            text_results.append(text_from_bytesio)
+
+            # Verify all text results are equal
+            first_result = text_results[0]
+            for i, result in enumerate(text_results[1:], 1):
+                assert (
+                    result == first_result
+                ), f"Text result {i} is different for format {output_format}"
+
+    @pytest.mark.vcr()
+    def test_docx_converter_llm_extract(self):
+        """
+        Tests for LLM extraction from DOCX files.
+        """
+
+        converter = DocxConverter()
+
+        doc = converter.convert(self.test_docx_badly_formatted_path)
+
+        md_test_chars = ["**", "|", "##"]
+
+        def check_not_markdown(text: str) -> None:
+            """
+            Checks that the text does not contain markdown.
+            """
+            assert not any(i in text for i in md_test_chars)
+
+        def check_is_markdown(text: str, expect_newlines: bool = False) -> None:
+            """
+            Checks that the text contains markdown.
+            """
+            if expect_newlines:
+                assert any(i in text for i in md_test_chars + ["\n"])
+            else:
+                assert any(i in text for i in md_test_chars)
+
+        # Test concept extraction
+        doc.concepts = [
+            NumericalConcept(
+                name="Hidden gems count",
+                description="Number of hidden gems in the document",
+                numeric_type="int",
+                llm_role="extractor_text",
+            ),
+            StringConcept(
+                name="Invoice total amount",
+                description="Total amount of the invoice",
+                llm_role="extractor_vision",
+            ),
+        ]
+
+        # Test extraction from full text (markdown)
+        extracted_concepts = self.llm_group.extract_concepts_from_document(doc)
+        assert extracted_concepts[0].extracted_items
+        logger.debug(extracted_concepts[0].extracted_items[0].value)
+        assert extracted_concepts[0].extracted_items[0].value == 3
+        assert extracted_concepts[1].extracted_items
+        logger.debug(extracted_concepts[1].extracted_items[0].value)
+        assert "4800" in extracted_concepts[1].extracted_items[0].value
+
+        # Check that the text contains newlines and markdown, as full text is passed to LLM
+        check_is_markdown(
+            self.llm_group.get_usage(llm_role="extractor_text")[0]
+            .usage.calls[-1]
+            .prompt_kwargs["text"],
+            expect_newlines=True,
+        )
+
+        # Test extraction with max paragraphs (no markdown)
+        extracted_concepts = self.llm_group.extract_concepts_from_document(
+            doc, max_paragraphs_to_analyze_per_call=25, overwrite_existing=True
+        )
+        assert extracted_concepts[0].extracted_items
+        # Check that the text does not contain markdown, as we process paragraph chunks
+        check_not_markdown(
+            self.llm_group.get_usage(llm_role="extractor_text")[0]
+            .usage.calls[-1]
+            .prompt_kwargs["text"]
+        )
+
+        # Test aspect extraction
+
+        # Test with paragraph-level refs (default)
+        doc.aspects = [
+            Aspect(
+                name="Obligations of the receiving party",
+                description="Clauses describing the obligations of the receiving party",
+            )
+        ]
+        extracted_aspects = self.llm_group.extract_aspects_from_document(doc)
+        assert extracted_aspects[0].extracted_items
+        assert extracted_aspects[0].extracted_items[0].reference_paragraphs
+        # Check that the text does not contain markdown, as we process aspect paragraphs
+        for paragraph in (
+            self.llm_group.get_usage(llm_role="extractor_text")[0]
+            .usage.calls[-1]
+            .prompt_kwargs["paragraphs"]
+        ):
+            check_not_markdown(paragraph.raw_text)
+
+        # Test with sentence-level refs
+        doc.aspects = [
+            Aspect(
+                name="Obligations of the receiving party",
+                description="Clauses describing the obligations of the receiving party",
+                reference_depth="sentences",
+            )
+        ]
+        extracted_aspects = self.llm_group.extract_aspects_from_document(
+            doc, overwrite_existing=True
+        )
+        assert extracted_aspects[0].extracted_items
+        assert extracted_aspects[0].extracted_items[0].reference_sentences
+        for paragraph in (
+            self.llm_group.get_usage(llm_role="extractor_text")[0]
+            .usage.calls[-1]
+            .prompt_kwargs["paragraphs"]
+        ):
+            # Check that the text does not contain markdown, as we process
+            # aspect paragraphs and sentences
+            check_not_markdown(paragraph.raw_text)
+            for sentence in paragraph.sentences:
+                check_not_markdown(sentence.raw_text)
+
+    def test_docx_package_error_handling(self):
+        """
+        Tests for error handling in DocxPackage initialization and XML loading.
+        """
+
+        # Test with invalid file path
+        with pytest.raises(DocxFormatError, match="not found"):
+            DocxPackage("non_existent_file.docx")
+
+        try:
+            # Test with file that's not a zip
+            with open("tests/temp_not_a_docx.txt", "w") as f:
+                f.write("This is not a DOCX file")
+            with pytest.raises(DocxFormatError, match="not a valid"):
+                DocxPackage("tests/temp_not_a_docx.txt")
+
+            # Test with file that's a zip but not a valid docx
+            with zipfile.ZipFile("tests/temp_invalid.docx", "w") as zip_file:
+                zip_file.writestr("dummy.txt", "This is not a valid DOCX structure")
+
+            with pytest.raises(DocxFormatError, match="missing word/document.xml"):
+                DocxPackage("tests/temp_invalid.docx")
+
+        finally:
+            # Clean up
+            remove_file("tests/temp_not_a_docx.txt")
+            remove_file("tests/temp_invalid.docx")
+
+    def test_docx_converter_extract_paragraph_text(self):
+        """
+        Tests for paragraph text extraction from DOCX elements.
+        """
+
+        converter = DocxConverter()
+
+        # Create sample XML elements for testing
+        def create_text_element(text_content):
+            element = ET.Element(f"{{{NAMESPACES['w']}}}t")
+            element.text = text_content
+            return element
+
+        def create_run_with_text(text_content):
+            run = ET.Element(f"{{{NAMESPACES['w']}}}r")
+            text_elem = create_text_element(text_content)
+            run.append(text_elem)
+            return run
+
+        def create_paragraph_with_runs(runs):
+            para = ET.Element(f"{{{NAMESPACES['w']}}}p")
+            for run in runs:
+                para.append(run)
+            return para
+
+        # Basic paragraph with multiple runs
+        runs = [
+            create_run_with_text("First part. "),
+            create_run_with_text("Second part."),
+        ]
+        para = create_paragraph_with_runs(runs)
+        text = converter._extract_paragraph_text(para)
+        assert text == "First part. Second part."
+
+        # Paragraph with line breaks
+        br_run = ET.Element(f"{{{NAMESPACES['w']}}}r")
+        br_run.append(ET.Element(f"{{{NAMESPACES['w']}}}br"))
+        runs_with_br = [
+            create_run_with_text("Before break"),
+            br_run,
+            create_run_with_text("After break"),
+        ]
+        para = create_paragraph_with_runs(runs_with_br)
+        text = converter._extract_paragraph_text(para)
+        assert text == "Before break\nAfter break"
+
+        # Paragraph with footnote reference
+        run_with_footnote = ET.Element(f"{{{NAMESPACES['w']}}}r")
+        footnote_ref = ET.Element(f"{{{NAMESPACES['w']}}}footnoteReference")
+        footnote_ref.attrib[f"{{{NAMESPACES['w']}}}id"] = "1"
+        run_with_footnote.append(footnote_ref)
+        para = create_paragraph_with_runs(
+            [create_run_with_text("Text with footnote "), run_with_footnote]
+        )
+        text = converter._extract_paragraph_text(para)
+        assert text == "Text with footnote [Footnote 1]"
+
+        # Empty paragraph
+        # Create a paragraph element that will result in empty text
+        empty_para = ET.Element(f"{{{NAMESPACES['w']}}}p")
+
+        # Create a minimal mock package
+        class MockPackage:
+            def __init__(self):
+                self.styles = None
+                self.numbering = None
+
+        package = MockPackage()
+
+        result = converter._process_paragraph(empty_para, package)
+        assert result is None
 
     def test_total_cost_and_reset(self):
         """

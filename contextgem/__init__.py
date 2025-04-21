@@ -17,10 +17,10 @@
 #
 
 """
-ContextGem - Easier and faster way to build LLM extraction workflows through powerful abstractions
+ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
@@ -31,6 +31,7 @@ from contextgem.public import (
     DocumentLLM,
     DocumentLLMGroup,
     DocumentPipeline,
+    DocxConverter,
     Image,
     JsonObjectConcept,
     JsonObjectExample,
@@ -78,4 +79,6 @@ __all__ = [
     # Utils
     "image_to_base64",
     "reload_logger_settings",
+    # Converters
+    "DocxConverter",
 ]
