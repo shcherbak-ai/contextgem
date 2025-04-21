@@ -204,8 +204,11 @@ def get_test_img(
 
 
 def remove_file(filepath):
-    os.remove(filepath)
-    logger.debug(f"File '{filepath}' has been removed.")
+    try:
+        os.remove(filepath)
+        logger.debug(f"File '{filepath}' has been removed.")
+    except FileNotFoundError:
+        pass
 
 
 class TestUtils:
@@ -238,6 +241,7 @@ class TestUtils:
             "_reference_sentences",
             "_is_processed",
         ]
+
         # To / from dict
         instance_dict = instance.to_dict()
         new_instance = instance.__class__.from_dict(instance_dict)
@@ -249,6 +253,7 @@ class TestUtils:
                 or attr_name in instance.__private_attributes__
             ):
                 assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
+
         # Saving to disk / loading from disk
         disk_path = f"instance_{str(uuid4())}.json"
         instance.to_disk(disk_path)
@@ -262,6 +267,7 @@ class TestUtils:
             ):
                 assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
         remove_file(disk_path)
+
         # Cloning
         instance_clone = instance.clone()
         assert instance_clone.__dict__ == instance.__dict__
@@ -286,9 +292,24 @@ class TestUtils:
         :type instance: DocumentLLM | DocumentLLMGroup
         :return: None
         """
+        # From json
+        instance_json = instance.to_json()
+        new_instance = instance.__class__.from_json(instance_json)
+        assert instance._eq_deserialized_llm_config(new_instance)
+
+        # From dict
         instance_dict = instance.to_dict()
         new_instance = instance.__class__.from_dict(instance_dict)
         assert instance._eq_deserialized_llm_config(new_instance)
+
+        # From disk
+        disk_path = f"instance_{str(uuid4())}.json"
+        instance.to_disk(disk_path)
+        new_instance = instance.__class__.from_disk(disk_path)
+        assert instance._eq_deserialized_llm_config(new_instance)
+        remove_file(disk_path)
+
+        # Check that pydantic-specific methods are disabled
         with pytest.raises(NotImplementedError):
             instance.model_dump()
         with pytest.raises(NotImplementedError):

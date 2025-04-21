@@ -138,9 +138,7 @@ def concatenate_docs(doc_paths: list[str], text_dir: str, output_file: str) -> N
         output_file (str): Path to the output file where concatenated docs will be saved.
     """
     with open(output_file, "w", encoding="utf-8") as outfile:
-        outfile.write(
-            "ContextGem - Easier and faster way to build LLM extraction workflows through powerful abstractions\n"
-        )
+        outfile.write("ContextGem - Effortless LLM extraction from documents\n")
         outfile.write("=" * 100 + "\n\n")
         outfile.write("Copyright (c) 2025 Shcherbak AI AS\n")
         outfile.write("All rights reserved\n")

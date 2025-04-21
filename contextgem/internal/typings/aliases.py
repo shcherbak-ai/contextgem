@@ -79,3 +79,5 @@ DefaultDecimalField = Field(
 )
 
 ReasoningEffort = Literal["low", "medium", "high"]
+
+RawTextMode = Literal["raw", "markdown"]

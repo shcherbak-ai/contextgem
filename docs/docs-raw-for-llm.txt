@@ -1,4 +1,4 @@
-ContextGem - Easier and faster way to build LLM extraction workflows through powerful abstractions
+ContextGem - Effortless LLM extraction from documents
 ====================================================================================================
 
 Copyright (c) 2025 Shcherbak AI AS
@@ -90,53 +90,53 @@ ContextGem and Other Open-Source LLM Frameworks
 |     | Key built-in abstractions                     | **Context  | Other frameworks*    |
 |     |                                               | Gem**      |                      |
 |=====|===============================================|============|======================|
-| 💎  | **Automated dynamic prompts**  Automatically  | ✅         | ❌                   |
+| 💎  | **Automated dynamic prompts**  Automatically  | 🟢         | ◯                    |
 |     | constructs comprehensive prompts for your     |            |                      |
 |     | specific extraction needs.                    |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Automated data modelling and validators**   | ✅         | ❌                   |
+| 💎  | **Automated data modelling and validators**   | 🟢         | ◯                    |
 |     | Automatically creates data models and         |            |                      |
 |     | validation logic.                             |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Precise granular reference mapping          | ✅         | ❌                   |
+| 💎  | **Precise granular reference mapping          | 🟢         | ◯                    |
 |     | (paragraphs & sentences)**  Automatically     |            |                      |
 |     | maps extracted data to the relevant parts of  |            |                      |
 |     | the document, which will always match in the  |            |                      |
 |     | source document, with customizable            |            |                      |
 |     | granularity.                                  |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Justifications (reasoning backing the       | ✅         | ❌                   |
+| 💎  | **Justifications (reasoning backing the       | 🟢         | ◯                    |
 |     | extraction)**  Automatically provides         |            |                      |
 |     | justifications for each extraction, with      |            |                      |
 |     | customizable granularity.                     |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Neural segmentation (SaT)**  Automatically  | ✅         | ❌                   |
+| 💎  | **Neural segmentation (SaT)**  Automatically  | 🟢         | ◯                    |
 |     | segments the document into paragraphs and     |            |                      |
 |     | sentences using state-of-the-art SaT models,  |            |                      |
 |     | compatible with many languages.               |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Multilingual support (I/O without           | ✅         | ❌                   |
+| 💎  | **Multilingual support (I/O without           | 🟢         | ◯                    |
 |     | prompting)**  Supports multiple languages in  |            |                      |
 |     | input and output without additional           |            |                      |
 |     | prompting.                                    |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Single, unified extraction pipeline         | ✅         | ⚠️                   |
+| 💎  | **Single, unified extraction pipeline         | 🟢         | 🟡                   |
 |     | (declarative, reusable, fully serializable)** |            |                      |
 |     | Allows to define a complete extraction        |            |                      |
 |     | workflow in a single, unified, reusable       |            |                      |
 |     | pipeline, using simple declarative syntax.    |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Grouped LLMs with role-specific tasks**     | ✅         | ⚠️                   |
+| 💎  | **Grouped LLMs with role-specific tasks**     | 🟢         | 🟡                   |
 |     | Allows to easily group LLMs with different    |            |                      |
 |     | roles to process role- specific tasks in the  |            |                      |
 |     | pipeline.                                     |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Nested context extraction**  Automatically  | ✅         | ⚠️                   |
+| 💎  | **Nested context extraction**  Automatically  | 🟢         | 🟡                   |
 |     | manages nested context based on the pipeline  |            |                      |
 |     | definition (e.g. document > aspects > sub-    |            |                      |
 |     | aspects > concepts).                          |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Unified, fully serializable results storage | ✅         | ⚠️                   |
+| 💎  | **Unified, fully serializable results storage | 🟢         | 🟡                   |
 |     | model (document)**  All extraction results    |            |                      |
 |     | are stored on the document object, including  |            |                      |
 |     | aspects, sub-aspects, and concepts. This      |            |                      |
@@ -144,32 +144,32 @@ ContextGem and Other Open-Source LLM Frameworks
 |     | extraction results can be restored, with just |            |                      |
 |     | one line of code.                             |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Extraction task calibration with examples** | ✅         | ⚠️                   |
+| 💎  | **Extraction task calibration with examples** | 🟢         | 🟡                   |
 |     | Allows to easily define and attach output     |            |                      |
 |     | examples that guide the LLM's extraction      |            |                      |
 |     | behavior, without manually modifying prompts. |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Built-in concurrent I/O processing**        | ✅         | ⚠️                   |
+| 💎  | **Built-in concurrent I/O processing**        | 🟢         | 🟡                   |
 |     | Automatically manages concurrent I/O          |            |                      |
 |     | processing to speed up complex extraction     |            |                      |
 |     | workflows, with a simple switch               |            |                      |
 |     | ("use_concurrency=True").                     |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Automated usage & costs tracking**          | ✅         | ⚠️                   |
+| 💎  | **Automated usage & costs tracking**          | 🟢         | 🟡                   |
 |     | Automatically tracks usage (calls, tokens,    |            |                      |
 |     | costs) of all LLM calls.                      |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Fallback and retry logic**  Built-in retry  | ✅         | ✅                   |
+| 💎  | **Fallback and retry logic**  Built-in retry  | 🟢         | 🟢                   |
 |     | logic and easily attachable fallback LLMs.    |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
-| 💎  | **Multiple LLM providers**  Compatible with a | ✅         | ✅                   |
+| 💎  | **Multiple LLM providers**  Compatible with a | 🟢         | 🟢                   |
 |     | wide range of commercial and locally hosted   |            |                      |
 |     | LLMs.                                         |            |                      |
 +-----+-----------------------------------------------+------------+----------------------+
 
-   ✅ - fully supported - no additional setup required
-   ⚠️ - partially supported - requires additional setup
-   ❌ - not supported - requires custom logic
+   🟢 - fully supported - no additional setup required
+   🟡 - partially supported - requires additional setup
+   ◯ - not supported - requires custom logic
 
    * See ContextGem and other frameworks for specific implementation
    examples comparing ContextGem with other popular open-source LLM
@@ -4433,6 +4433,127 @@ Tip:
    print(llm_group.get_cost())
 
 
+# ==== converters/docx ====
+
+DOCX Converter
+**************
+
+ContextGem provides built-in converter to easily transform DOCX files
+into ContextGem document objects.
+
+* 📑 Extracts information that other open-source tools often do not
+  capture: misaligned tables, comments, footnotes, textboxes,
+  headers/footers, and embedded images
+
+* 🧩 Preserves document structure with rich metadata for improved LLM
+  analysis
+
+* 🛠️ Custom native converter that directly processes Word XML with
+  zero external dependencies
+
+
+🚀 Usage
+========
+
+   # Using ContextGem's DocxConverter
+
+   from contextgem import DocxConverter
+
+   converter = DocxConverter()
+
+   # Convert a DOCX file to a ContextGem Document
+   # from path
+   document = converter.convert("path/to/document.docx")
+   # or from file object
+   with open("path/to/document.docx", "rb") as docx_file_object:
+       document = converter.convert(docx_file_object)
+
+   # You can also use it as a standalone text extractor
+   docx_text = converter.convert_to_text_format(
+       "path/to/document.docx",
+       output_format="markdown",  # or "raw"
+   )
+
+
+🔄 Conversion Process
+=====================
+
+The "DocxConverter" performs the following operations when converting
+a DOCX file to a ContextGem Document:
+
++--------------------------------+------------------------------------------------------------------------+
+| Elements                       | Extraction Details                                                     |
+|================================|========================================================================|
+| **Text**                       | Extracts the full document text as either raw text or markdown format  |
+|                                | (controlled by "raw_text_to_md" parameter)                             |
++--------------------------------+------------------------------------------------------------------------+
+| **Paragraphs**                 | Extracts "Paragraph" objects with rich metadata serving as additional  |
+|                                | context for LLM (e.g., *"Style: Normal, Table: 3, Row: 1, Column: 3,   |
+|                                | Table Cell"*)                                                          |
++--------------------------------+------------------------------------------------------------------------+
+| **Headings**                   | Preserves heading levels and formats as markdown headings when in      |
+|                                | markdown mode                                                          |
++--------------------------------+------------------------------------------------------------------------+
+| **Lists**                      | Maintains list hierarchy, numbering, and formatting with proper        |
+|                                | indentation and list type information                                  |
++--------------------------------+------------------------------------------------------------------------+
+| **Tables**                     | Preserves table structure and formats tables in markdown mode (can be  |
+|                                | excluded using "include_tables=False")                                 |
++--------------------------------+------------------------------------------------------------------------+
+| **Headers & Footers**          | Captures document headers and footers with appropriate metadata (can   |
+|                                | be excluded using "include_headers=False" and "include_footers=False") |
++--------------------------------+------------------------------------------------------------------------+
+| **Footnotes**                  | Extracts footnotes with references and preserves connection to         |
+|                                | original text (can be excluded using "include_footnotes=False")        |
++--------------------------------+------------------------------------------------------------------------+
+| **Comments**                   | Preserves document comments with author information and timestamps     |
+|                                | (can be excluded using "include_comments=False")                       |
++--------------------------------+------------------------------------------------------------------------+
+| **Text Boxes**                 | Extracts text from various text box formats (can be excluded using     |
+|                                | "include_textboxes=False")                                             |
++--------------------------------+------------------------------------------------------------------------+
+| **Images**                     | Extracts embedded images and converts them to "Image" objects for      |
+|                                | further processing with vision models (can be excluded using           |
+|                                | "include_images=False")                                                |
++--------------------------------+------------------------------------------------------------------------+
+
+
+💥 Beyond Standard Libraries
+============================
+
+Our evaluation of popular open-source DOCX processing libraries
+revealed critical limitations: most packages either omit important
+elements (e.g. comments, textboxes, or embedded images), fail to
+handle complex structures (such as inconsistently formatted tables),
+or cannot extract paragraphs with the rich metadata needed for LLM
+processing.
+
+While it would have been much easier to use an existing open-source
+package as a dependency, these limitations compelled us to build a
+custom solution. The "DocxConverter" was developed specifically to
+address these gaps, ensuring extraction of the most commonly occurring
+DOCX elements with their contextual relationships preserved.
+
+
+ℹ️ Current Limitations
+======================
+
+DocxConverter has the following limitations, some of which are
+intentional:
+
+* Character-level styling (e.g., bold, underline, italics,
+  strikethrough) is *intentionally skipped* to ensure proper matching
+  of processed paragraphs and sentences in the DOCX content.
+
+* Nested tables are preserved but may lead to table cell duplication.
+
+* Consecutive textboxes are preserved but may lead to textbox content
+  duplication.
+
+* Drawings such as charts are skipped as it is challenging to
+  represent them in text format.
+
+
 # ==== optimizations/optimization_choosing_llm ====
 
 Choosing the Right LLM(s)
@@ -4828,6 +4949,161 @@ Example of configuring LLM extraction for long documents
    )
 
    # ... use the extracted data ...
+
+
+# ==== serialization ====
+
+Serializing objects and results
+*******************************
+
+ContextGem provides multiple serialization methods to preserve your
+document processing pipeline components and results. These methods
+enable you to save your work, transfer data between systems, or
+integrate with other applications.
+
+When using serialization, all extracted data is preserved in the
+serialized objects.
+
+
+💾 Serialization Methods
+========================
+
+The following ContextGem objects support serialization:
+
+* "Document" - Contains document content and extracted information
+
+* "DocumentPipeline" - Defines extraction structure and logic
+
+* "DocumentLLM" - Stores LLM configuration for document processing
+
+Each object supports three serialization methods:
+
+* "to_json()" - Converts the object to a JSON string for cross-
+  platform compatibility
+
+* "to_dict()" - Converts the object to a Python dictionary for in-
+  memory operations
+
+* "to_disc(file_path)" - Saves the object directly to disk at the
+  specified path
+
+
+🔄 Deserialization Methods
+==========================
+
+To reconstruct objects from their serialized forms, use the
+corresponding class methods:
+
+* "from_json(json_string)" - Creates an object from a JSON string
+
+* "from_dict(dict_object)" - Creates an object from a Python
+  dictionary
+
+* "from_disc(file_path)" - Loads an object from a file on disk
+
+
+📝 Example Usage
+================
+
+   # Example of serializing and deserializing ContextGem document,
+   # document pipeline, and LLM config.
+
+   import os
+   from pathlib import Path
+
+   from contextgem import (
+       Aspect,
+       BooleanConcept,
+       Document,
+       DocumentLLM,
+       DocumentPipeline,
+       DocxConverter,
+       StringConcept,
+   )
+
+   # Create a document object
+   converter = DocxConverter()
+   docx_path = str(
+       Path(__file__).resolve().parents[4]
+       / "tests"
+       / "docx_files"
+       / "en_nda_with_anomalies.docx"
+   )  # your file path here (Path adapted for testing)
+   doc = converter.convert(docx_path, strict_mode=True)
+
+   # Create a document pipeline
+   document_pipeline = DocumentPipeline(
+       aspects=[
+           Aspect(
+               name="Categories of confidential information",
+               description="Clauses describing confidential information covered by the NDA",
+               concepts=[
+                   StringConcept(
+                       name="Types of disclosure",
+                       description="Types of disclosure of confidential information",
+                   ),
+                   # ...
+               ],
+           ),
+           # ...
+       ],
+       concepts=[
+           BooleanConcept(
+               name="Is mutual",
+               description="Whether the NDA is mutual (both parties act as discloser/recipient)",
+               add_justifications=True,
+           ),
+           # ...
+       ],
+   )
+
+   # Attach the pipeline to the document
+   doc.assign_pipeline(document_pipeline)
+
+   # Configure a document LLM with your API parameters
+   llm = DocumentLLM(
+       model="azure/gpt-4.1-mini",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+   )
+
+   # Extract data from the document
+   doc = llm.extract_all(doc)
+
+   # Serialize the LLM config, pipeline and document
+   llm_config_json = llm.to_json()  # or to_dict() / to_disc()
+   document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disc()
+   processed_doc_json = doc.to_json()  # or to_dict() / to_disc()
+
+   # Deserialize the LLM config, pipeline and document
+   llm_deserialized = DocumentLLM.from_json(
+       llm_config_json
+   )  # or from_dict() / from_disc()
+   document_pipeline_deserialized = DocumentPipeline.from_json(
+       document_pipeline_json
+   )  # or from_dict() / from_disc()
+   processed_doc_deserialized = Document.from_json(
+       processed_doc_json
+   )  # or from_dict() / from_disc()
+
+   # All extracted data is preserved!
+   assert processed_doc_deserialized.aspects[0].concepts[0].extracted_items
+
+
+🚀 Use Cases
+============
+
+* **Caching Results**: Save processed documents to avoid repeating
+  expensive LLM calls
+
+* **Transfer Between Systems**: Export results from one environment
+  and import in another
+
+* **API Integration**: Convert objects to JSON for API responses
+
+* **Workflow Persistence**: Save pipeline configurations for later
+  reuse
 
 
 # ==== api/documents ====
@@ -5366,6 +5642,169 @@ class contextgem.public.documents.Document(**data)
       Returns the ULID of the instance.
 
    custom_data: dict
+
+
+# ==== api/converters ====
+
+Converters
+**********
+
+class contextgem.public.converters.DocxConverter
+
+   Bases: "object"
+
+   Converter for DOCX files into ContextGem documents.
+
+   This class handles extraction of text, formatting, tables, images,
+   footnotes, comments, and other elements from DOCX files by directly
+   parsing Word XML.
+
+   The resulting ContextGem document is populated with the following:
+
+   * Raw text: The raw text of the DOCX file converted to markdown or
+     left as raw text, based on the "raw_text_to_md" flag.
+
+   * Paragraphs: Paragraph objects with the following metadata:
+
+     * Raw text: The raw text of the paragraph.
+
+     * Additional context: Metadata about the paragraph's style, list
+       level, table cell position, being part of a footnote or
+       comment, etc. This context provides additional information that
+       is useful for LLM analysis and extraction.
+
+   * Images: Image objects constructed from embedded images in the
+     DOCX file.
+
+   Example:
+      DocxConverter usage example
+
+         # Using ContextGem's DocxConverter
+
+         from contextgem import DocxConverter
+
+         converter = DocxConverter()
+
+         # Convert a DOCX file to a ContextGem Document
+         # from path
+         document = converter.convert("path/to/document.docx")
+         # or from file object
+         with open("path/to/document.docx", "rb") as docx_file_object:
+             document = converter.convert(docx_file_object)
+
+         # You can also use it as a standalone text extractor
+         docx_text = converter.convert_to_text_format(
+             "path/to/document.docx",
+             output_format="markdown",  # or "raw"
+         )
+
+   convert_to_text_format(docx_path_or_file, output_format='markdown', include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, strict_mode=False)
+
+      Converts a DOCX file directly to text without creating a
+      ContextGem Document.
+
+      Parameters:
+         * **docx_path_or_file** ("str" | "pathlib._local.Path" |
+           "typing.BinaryIO") -- Path to the DOCX file (as string or
+           Path object) or a file-like object
+
+         * **output_format** ("typing.Literal"["'raw'", "'markdown'"])
+           -- Output format ("markdown" or "raw") (default:
+           "markdown")
+
+         * **include_tables** ("bool") -- If True, include tables in
+           the output (default: True)
+
+         * **include_comments** ("bool") -- If True, include comments
+           in the output (default: True)
+
+         * **include_footnotes** ("bool") -- If True, include
+           footnotes in the output (default: True)
+
+         * **include_headers** ("bool") -- If True, include headers in
+           the output (default: True)
+
+         * **include_footers** ("bool") -- If True, include footers in
+           the output (default: True)
+
+         * **include_textboxes** ("bool") -- If True, include textbox
+           content (default: True)
+
+         * **strict_mode** ("bool") -- If True, raise exceptions for
+           any processing error instead of skipping problematic
+           elements (default: False)
+
+      Return type:
+         "str"
+
+      Returns:
+         Text in the specified format
+
+      Note:
+
+        When using markdown output format, the following conditions
+        apply:
+
+        * Document structure elements (headings, lists, tables) are
+          preserved
+
+        * Character-level formatting (bold, italic, underline) is
+          intentionally skipped to ensure proper text matching between
+          markdown and DOCX content
+
+        * Headings are converted to markdown heading syntax (# Heading
+          1, ## Heading 2, etc.)
+
+        * Lists are converted to markdown list syntax, preserving
+          numbering and hierarchy
+
+        * Tables are formatted using markdown table syntax
+
+        * Footnotes, comments, headers, and footers are included as
+          specially marked sections
+
+   convert(docx_path_or_file, raw_text_to_md=True, include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_images=True, strict_mode=False)
+
+      Converts a DOCX file into a ContextGem Document object.
+
+      Parameters:
+         * **docx_path_or_file** ("str" | "pathlib._local.Path" |
+           "typing.BinaryIO") -- Path to the DOCX file (as string or
+           Path object) or a file-like object
+
+         * **raw_text_to_md** ("bool") -- If True, convert raw text to
+           markdown (default: True)
+
+         * **include_tables** ("bool") -- If True, include tables in
+           the output (default: True)
+
+         * **include_comments** ("bool") -- If True, include comments
+           in the output (default: True)
+
+         * **include_footnotes** ("bool") -- If True, include
+           footnotes in the output (default: True)
+
+         * **include_headers** ("bool") -- If True, include headers in
+           the output (default: True)
+
+         * **include_footers** ("bool") -- If True, include footers in
+           the output (default: True)
+
+         * **include_textboxes** ("bool") -- If True, include textbox
+           content (default: True)
+
+         * **include_images** ("bool") -- If True, extract and include
+           images (default: True)
+
+         * **strict_mode** ("bool") -- If True, raise exceptions for
+           any processing error instead of skipping problematic
+           elements (default: False)
+
+      Return type:
+         "contextgem.public.documents.Document"
+
+      Returns:
+         A populated Document object
 
 
 # ==== api/aspects ====
@@ -8292,10 +8731,11 @@ class contextgem.public.llms.DocumentLLM(**data)
         response. Defaults to 4096.
 
       * **max_completion_tokens** -- Maximum token size for output
-        completions in o1/o3 models. Defaults to 16000.
+        completions in o1/o3/o4 models. Defaults to 16000.
 
       * **reasoning_effort** -- The effort level for the LLM to reason
-        about the input. Defaults to None. Relevant for o1/o3 models.
+        about the input. Defaults to None. Relevant for o1/o3/o4
+        models.
 
       * **top_p** -- Nucleus sampling value (0.0 to 1.0) controlling
         output focus/randomness. Lower values make output more

@@ -25,6 +25,7 @@ from contextgem.public.concepts import (
     RatingConcept,
     StringConcept,
 )
+from contextgem.public.converters import DocxConverter
 from contextgem.public.data_models import LLMPricing, RatingScale
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
@@ -67,4 +68,6 @@ __all__ = [
     # Utils
     "image_to_base64",
     "reload_logger_settings",
+    # Converters
+    "DocxConverter",
 ]

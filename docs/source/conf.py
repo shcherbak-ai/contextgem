@@ -107,13 +107,13 @@ html_theme_options = {
     "use_edit_page_button": True,
     "use_download_button": True,
     "show_navbar_depth": 2,
-    "pygment_dark_style": "github-dark-high-contrast",
+    "pygments_dark_style": "github-dark-high-contrast",
 }
 
 # Open Graph metadata
 ogp_site_url = "https://contextgem.dev/"
 ogp_image = "https://contextgem.dev/_static/contextgem_website_preview_banner.png"
-ogp_description = "ContextGem: Easier and faster way to build LLM extraction workflows through powerful abstractions"
+ogp_description = "ContextGem: Effortless LLM extraction from documents"
 ogp_description_length = 200
 ogp_type = "website"
 ogp_use_first_image = False

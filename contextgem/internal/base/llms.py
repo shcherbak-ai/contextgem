@@ -64,6 +64,7 @@ from contextgem.internal.typings.aliases import (
 from contextgem.internal.utils import (
     _async_multi_executor,
     _chunk_list,
+    _clean_text_for_llm_prompt,
     _group_instances_by_fields,
     _llm_call_result_is_valid,
     _parse_llm_output_as_json,
@@ -970,9 +971,26 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         prompt_kwargs["paragraphs"] = paragraphs_chunk
                     else:
                         # Raw text of document/aspect used for concept extraction
-                        prompt_kwargs["text"] = "\n\n".join(
-                            [p.raw_text for p in paragraphs_chunk]
-                        )
+                        if isinstance(source, Document) and len(
+                            paragraphs_chunk
+                        ) == len(source.paragraphs):
+                            # If the document is being processed as a whole, use the raw text of the document,
+                            # which can be markdown (if converted from DOCX) or raw text.
+                            prompt_kwargs["text"] = _clean_text_for_llm_prompt(
+                                source.raw_text,
+                                preserve_linebreaks=True,
+                            )  # markdown or raw text of the document
+                        else:
+                            # If an aspect is being processed, or if the document is being processed in chunks,
+                            # use the raw text of the paragraphs, which is cleaned of markdown and other formatting.
+                            prompt_kwargs["text"] = "\n\n".join(
+                                [
+                                    _clean_text_for_llm_prompt(
+                                        p.raw_text, preserve_linebreaks=False
+                                    )
+                                    for p in paragraphs_chunk
+                                ]
+                            )
 
                 else:
                     raise ValueError(

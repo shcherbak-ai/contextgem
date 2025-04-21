@@ -71,110 +71,110 @@ With ContextGem, you benefit from a "batteries included" approach, coupled with 
      - **Automated dynamic prompts**
        
        Automatically constructs comprehensive prompts for your specific extraction needs.
-     - ✅
-     - ❌
+     - 🟢
+     - ◯
 
    * - 💎 
      - **Automated data modelling and validators**
     
        Automatically creates data models and validation logic.
-     - ✅
-     - ❌
+     - 🟢
+     - ◯
      
    * - 💎 
      - **Precise granular reference mapping (paragraphs & sentences)**
     
        Automatically maps extracted data to the relevant parts of the document, which will always match in the source document, with customizable granularity.
-     - ✅
-     - ❌
+     - 🟢
+     - ◯
 
    * - 💎 
      - **Justifications (reasoning backing the extraction)**
      
        Automatically provides justifications for each extraction, with customizable granularity.
-     - ✅
-     - ❌
+     - 🟢
+     - ◯
      
    * - 💎 
      - **Neural segmentation (SaT)**
      
        Automatically segments the document into paragraphs and sentences using state-of-the-art SaT models, compatible with many languages.
-     - ✅
-     - ❌
+     - 🟢
+     - ◯
      
    * - 💎 
      - **Multilingual support (I/O without prompting)**
        
        Supports multiple languages in input and output without additional prompting.
-     - ✅
-     - ❌
+     - 🟢
+     - ◯
 
    * - 💎 
      - **Single, unified extraction pipeline (declarative, reusable, fully serializable)**
        
        Allows to define a complete extraction workflow in a single, unified, reusable pipeline, using simple declarative syntax.
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Grouped LLMs with role-specific tasks**
      
        Allows to easily group LLMs with different roles to process role-specific tasks in the pipeline.
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Nested context extraction**
     
        Automatically manages nested context based on the pipeline definition (e.g. document > aspects > sub-aspects > concepts).
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Unified, fully serializable results storage model (document)**
     
        All extraction results are stored on the document object, including aspects, sub-aspects, and concepts. This object is fully serializable, and all the extraction results can be restored, with just one line of code.
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Extraction task calibration with examples**
     
        Allows to easily define and attach output examples that guide the LLM's extraction behavior, without manually modifying prompts.
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Built-in concurrent I/O processing**
     
        Automatically manages concurrent I/O processing to speed up complex extraction workflows, with a simple switch (``use_concurrency=True``).
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Automated usage & costs tracking**
     
        Automatically tracks usage (calls, tokens, costs) of all LLM calls.
-     - ✅
-     - ⚠️
+     - 🟢
+     - 🟡
 
    * - 💎 
      - **Fallback and retry logic**
      
        Built-in retry logic and easily attachable fallback LLMs.
-     - ✅
-     - ✅
+     - 🟢
+     - 🟢
 
    * - 💎 
      - **Multiple LLM providers**
 
        Compatible with a wide range of commercial and locally hosted LLMs.
-     - ✅
-     - ✅
+     - 🟢
+     - 🟢
 
-| ✅ - fully supported - no additional setup required
-| ⚠️ - partially supported - requires additional setup
-| ❌ - not supported - requires custom logic
+| 🟢 - fully supported - no additional setup required
+| 🟡 - partially supported - requires additional setup
+| ◯ - not supported - requires custom logic
 
 
     \* See :doc:`vs_other_frameworks` for specific implementation examples comparing ContextGem with other popular open-source LLM frameworks. (Comparison as of 24 March 2025.)
