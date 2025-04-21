@@ -18,7 +18,7 @@
 DOCX Converter
 ===============
 
-ContextGem provides built-in converter to easily transform DOCX files into ContextGem document objects.
+ContextGem provides built-in converter to easily transform DOCX files into LLM-ready ContextGem document objects.
 
 * 📑 Extracts information that other open-source tools often do not capture: misaligned tables, comments, footnotes, textboxes, headers/footers, and embedded images
 * 🧩 Preserves document structure with rich metadata for improved LLM analysis
