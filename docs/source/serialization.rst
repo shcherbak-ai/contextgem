@@ -35,7 +35,7 @@ Each object supports three serialization methods:
 
 * ``to_json()`` - Converts the object to a JSON string for cross-platform compatibility
 * ``to_dict()`` - Converts the object to a Python dictionary for in-memory operations
-* ``to_disc(file_path)`` - Saves the object directly to disk at the specified path
+* ``to_disk(file_path)`` - Saves the object directly to disk at the specified path
 
 🔄 Deserialization Methods
 ---------------------------
@@ -44,7 +44,7 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 
 * ``from_json(json_string)`` - Creates an object from a JSON string
 * ``from_dict(dict_object)`` - Creates an object from a Python dictionary
-* ``from_disc(file_path)`` - Loads an object from a file on disk
+* ``from_disk(file_path)`` - Loads an object from a file on disk
 
 📝 Example Usage
 -----------------

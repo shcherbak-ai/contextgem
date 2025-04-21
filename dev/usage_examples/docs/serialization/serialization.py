@@ -65,20 +65,20 @@ llm = DocumentLLM(
 doc = llm.extract_all(doc)
 
 # Serialize the LLM config, pipeline and document
-llm_config_json = llm.to_json()  # or to_dict() / to_disc()
-document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disc()
-processed_doc_json = doc.to_json()  # or to_dict() / to_disc()
+llm_config_json = llm.to_json()  # or to_dict() / to_disk()
+document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disk()
+processed_doc_json = doc.to_json()  # or to_dict() / to_disk()
 
 # Deserialize the LLM config, pipeline and document
 llm_deserialized = DocumentLLM.from_json(
     llm_config_json
-)  # or from_dict() / from_disc()
+)  # or from_dict() / from_disk()
 document_pipeline_deserialized = DocumentPipeline.from_json(
     document_pipeline_json
-)  # or from_dict() / from_disc()
+)  # or from_dict() / from_disk()
 processed_doc_deserialized = Document.from_json(
     processed_doc_json
-)  # or from_dict() / from_disc()
+)  # or from_dict() / from_disk()
 
 # All extracted data is preserved!
 assert processed_doc_deserialized.aspects[0].concepts[0].extracted_items

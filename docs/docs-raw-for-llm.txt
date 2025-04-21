@@ -4984,7 +4984,7 @@ Each object supports three serialization methods:
 * "to_dict()" - Converts the object to a Python dictionary for in-
   memory operations
 
-* "to_disc(file_path)" - Saves the object directly to disk at the
+* "to_disk(file_path)" - Saves the object directly to disk at the
   specified path
 
 
@@ -4999,7 +4999,7 @@ corresponding class methods:
 * "from_dict(dict_object)" - Creates an object from a Python
   dictionary
 
-* "from_disc(file_path)" - Loads an object from a file on disk
+* "from_disk(file_path)" - Loads an object from a file on disk
 
 
 📝 Example Usage
@@ -5072,20 +5072,20 @@ corresponding class methods:
    doc = llm.extract_all(doc)
 
    # Serialize the LLM config, pipeline and document
-   llm_config_json = llm.to_json()  # or to_dict() / to_disc()
-   document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disc()
-   processed_doc_json = doc.to_json()  # or to_dict() / to_disc()
+   llm_config_json = llm.to_json()  # or to_dict() / to_disk()
+   document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disk()
+   processed_doc_json = doc.to_json()  # or to_dict() / to_disk()
 
    # Deserialize the LLM config, pipeline and document
    llm_deserialized = DocumentLLM.from_json(
        llm_config_json
-   )  # or from_dict() / from_disc()
+   )  # or from_dict() / from_disk()
    document_pipeline_deserialized = DocumentPipeline.from_json(
        document_pipeline_json
-   )  # or from_dict() / from_disc()
+   )  # or from_dict() / from_disk()
    processed_doc_deserialized = Document.from_json(
        processed_doc_json
-   )  # or from_dict() / from_disc()
+   )  # or from_dict() / from_disk()
 
    # All extracted data is preserved!
    assert processed_doc_deserialized.aspects[0].concepts[0].extracted_items
