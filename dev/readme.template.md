@@ -61,20 +61,6 @@ pip install -U contextgem
 
 ## 🚀 Quick start
 
-### Aspect extraction
-
-> **Aspect is a defined area or topic** within a document (or another aspect). For example, "Payment terms" clauses in a contract.
-
-```python
-{{QUICKSTART_ASPECT}}
-```
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_aspect.ipynb)
-
-
-### Concept extraction
-
-> **Concept is a unit of information or an entity**, derived from an aspect or the broader document context. Concepts represent a wide range of data points and insights, from simple entities (names, dates, monetary values) to complex evaluations, conclusions, and answers to specific questions.
-
 ```python
 {{QUICKSTART_CONCEPT}}
 ```
