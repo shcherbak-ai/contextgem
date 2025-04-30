@@ -17,19 +17,11 @@
 
 :og:description: ContextGem: Effortless LLM extraction from documents
 
-.. image:: _static/contextgem_poster.png
+.. image:: _static/contextgem_readme_header.png
    :width: 100%
    :alt: ContextGem logo
    :target: #
    :align: center
-   :class: only-light
-
-.. image:: _static/contextgem_poster_dark.png
-   :width: 100%
-   :alt: ContextGem logo
-   :target: #
-   :align: center
-   :class: only-dark
 
 |
 
