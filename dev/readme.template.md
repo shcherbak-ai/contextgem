@@ -1,4 +1,4 @@
-![ContextGem](https://contextgem.dev/_static/contextgem_poster.png "ContextGem - Effortless LLM extraction from documents")
+![ContextGem](https://contextgem.dev/_static/contextgem_readme_header.png "ContextGem - Effortless LLM extraction from documents")
 
 # ContextGem: Effortless LLM extraction from documents
 

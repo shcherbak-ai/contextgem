@@ -112,7 +112,7 @@ html_theme_options = {
 
 # Open Graph metadata
 ogp_site_url = "https://contextgem.dev/"
-ogp_image = "https://contextgem.dev/_static/contextgem_website_preview_banner.png"
+ogp_image = "https://contextgem.dev/_static/contextgem_website_preview.png"
 ogp_description = "ContextGem: Effortless LLM extraction from documents"
 ogp_description_length = 200
 ogp_type = "website"
