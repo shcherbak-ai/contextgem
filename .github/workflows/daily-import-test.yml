@@ -1,0 +1,25 @@
+name: Daily Import Test
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  import-test:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          
+      - name: Install contextgem from PyPI
+        run: |
+          python -m pip install --upgrade pip
+          pip install contextgem
+          
+      - name: Test import
+        run: |
+          python -c "import contextgem; print(f'Successfully imported contextgem version {contextgem.__version__}')" 
