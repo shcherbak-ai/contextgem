@@ -16,6 +16,7 @@
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![Reddit](https://img.shields.io/badge/Reddit-Community-FF4500?logo=reddit&logoColor=white)](https://reddit.com/r/ContextGem)
 
 <img src="https://contextgem.dev/_static/tab_solid.png" alt="ContextGem: 2nd Product of the week" width="250">
 <br/><br/>
@@ -150,6 +151,8 @@ A raw text version of the full documentation is available at [`docs/docs-raw-for
 ## 💬 Community
 
 If you have a feature request or a bug report, feel free to [open an issue](https://github.com/shcherbak-ai/contextgem/issues/new) on GitHub. If you'd like to discuss a topic or get general advice on using ContextGem for your project, start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
+
+Join our [Reddit community](https://reddit.com/r/ContextGem) to connect with other users, share your projects, ask questions, and participate in discussions about ContextGem.
 
 
 ## 🤝 Contributing

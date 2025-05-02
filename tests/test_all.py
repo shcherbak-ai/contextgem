@@ -49,6 +49,11 @@ from contextgem.internal.base.attrs import (
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.base.llms import _GenericLLMProcessor
+from contextgem.internal.converters.docx import (
+    WORD_XML_NAMESPACES,
+    DocxFormatError,
+    _DocxPackage,
+)
 from contextgem.internal.data_models import _LLMCost, _LLMUsage
 from contextgem.internal.items import (
     _BooleanItem,
@@ -66,15 +71,6 @@ from contextgem.internal.loggers import (
     logger,
 )
 from contextgem.internal.utils import _split_text_into_paragraphs
-from contextgem.public.concepts import RatingConcept
-from contextgem.public.converters.docx import (
-    NAMESPACES,
-    DocxConverter,
-    DocxFormatError,
-    DocxPackage,
-)
-from contextgem.public.data_models import LLMPricing, RatingScale
-from contextgem.public.utils import reload_logger_settings
 from tests.utils import (
     VCR_FILTER_HEADERS,
     TestUtils,
@@ -3536,9 +3532,9 @@ class TestAll(TestUtils):
             },
         }[include_options]
 
-        # Utility function to verify all DocxPackage attributes are populated
+        # Utility function to verify all _DocxPackage attributes are populated
         def verify_docx_package_attributes(test_file_path_or_object):
-            package = DocxPackage(test_file_path_or_object)
+            package = _DocxPackage(test_file_path_or_object)
             try:
                 # Verify all attributes that are present in test DOCX file are populated
                 assert package.archive is not None, "Archive must be populated"
@@ -3554,7 +3550,7 @@ class TestAll(TestUtils):
                 assert package.footers, "Footers must be populated"
                 assert package.images, "Images must be populated"
 
-                logger.debug("All DocxPackage attributes successfully verified")
+                logger.debug("All _DocxPackage attributes successfully verified")
             finally:
                 if package:
                     package.close()
@@ -3811,26 +3807,26 @@ class TestAll(TestUtils):
 
     def test_docx_package_error_handling(self):
         """
-        Tests for error handling in DocxPackage initialization and XML loading.
+        Tests for error handling in _DocxPackage initialization and XML loading.
         """
 
         # Test with invalid file path
         with pytest.raises(DocxFormatError, match="not found"):
-            DocxPackage("non_existent_file.docx")
+            _DocxPackage("non_existent_file.docx")
 
         try:
             # Test with file that's not a zip
             with open("tests/temp_not_a_docx.txt", "w") as f:
                 f.write("This is not a DOCX file")
             with pytest.raises(DocxFormatError, match="not a valid"):
-                DocxPackage("tests/temp_not_a_docx.txt")
+                _DocxPackage("tests/temp_not_a_docx.txt")
 
             # Test with file that's a zip but not a valid docx
             with zipfile.ZipFile("tests/temp_invalid.docx", "w") as zip_file:
                 zip_file.writestr("dummy.txt", "This is not a valid DOCX structure")
 
             with pytest.raises(DocxFormatError, match="missing word/document.xml"):
-                DocxPackage("tests/temp_invalid.docx")
+                _DocxPackage("tests/temp_invalid.docx")
 
         finally:
             # Clean up
@@ -3846,18 +3842,18 @@ class TestAll(TestUtils):
 
         # Create sample XML elements for testing
         def create_text_element(text_content):
-            element = ET.Element(f"{{{NAMESPACES['w']}}}t")
+            element = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}t")
             element.text = text_content
             return element
 
         def create_run_with_text(text_content):
-            run = ET.Element(f"{{{NAMESPACES['w']}}}r")
+            run = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
             text_elem = create_text_element(text_content)
             run.append(text_elem)
             return run
 
         def create_paragraph_with_runs(runs):
-            para = ET.Element(f"{{{NAMESPACES['w']}}}p")
+            para = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
             for run in runs:
                 para.append(run)
             return para
@@ -3872,8 +3868,8 @@ class TestAll(TestUtils):
         assert text == "First part. Second part."
 
         # Paragraph with line breaks
-        br_run = ET.Element(f"{{{NAMESPACES['w']}}}r")
-        br_run.append(ET.Element(f"{{{NAMESPACES['w']}}}br"))
+        br_run = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
+        br_run.append(ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}br"))
         runs_with_br = [
             create_run_with_text("Before break"),
             br_run,
@@ -3884,9 +3880,9 @@ class TestAll(TestUtils):
         assert text == "Before break\nAfter break"
 
         # Paragraph with footnote reference
-        run_with_footnote = ET.Element(f"{{{NAMESPACES['w']}}}r")
-        footnote_ref = ET.Element(f"{{{NAMESPACES['w']}}}footnoteReference")
-        footnote_ref.attrib[f"{{{NAMESPACES['w']}}}id"] = "1"
+        run_with_footnote = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
+        footnote_ref = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}footnoteReference")
+        footnote_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"] = "1"
         run_with_footnote.append(footnote_ref)
         para = create_paragraph_with_runs(
             [create_run_with_text("Text with footnote "), run_with_footnote]
@@ -3896,7 +3892,7 @@ class TestAll(TestUtils):
 
         # Empty paragraph
         # Create a paragraph element that will result in empty text
-        empty_para = ET.Element(f"{{{NAMESPACES['w']}}}p")
+        empty_para = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
 
         # Create a minimal mock package
         class MockPackage:

@@ -28,6 +28,15 @@ from contextgem.internal.base import (
     _PostInitCollectorMixin,
     _RefParasAndSentsAttrituteProcessor,
 )
+from contextgem.internal.converters import (
+    WORD_XML_NAMESPACES,
+    DocxContentError,
+    DocxConverterError,
+    DocxFormatError,
+    DocxXmlError,
+    _DocxConverterBase,
+    _DocxPackage,
+)
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,
@@ -155,4 +164,13 @@ __all__ = [
     "_is_json_serializable",
     "_get_sat_model",
     "_setup_jinja2_template",
+    # Converters
+    # DOCX
+    "WORD_XML_NAMESPACES",
+    "DocxContentError",
+    "DocxConverterError",
+    "DocxFormatError",
+    "DocxXmlError",
+    "_DocxConverterBase",
+    "_DocxPackage",
 ]
