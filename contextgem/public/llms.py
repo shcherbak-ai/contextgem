@@ -37,8 +37,10 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
+import litellm
 from aiolimiter import AsyncLimiter
 from jinja2 import Template
+from litellm import acompletion, supports_vision
 from pydantic import (
     Field,
     PrivateAttr,
@@ -48,12 +50,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-
-with warnings.catch_warnings():
-    # LiteLLM is not yet fully up-to-date with Pydantic V2.0
-    warnings.simplefilter("ignore", DeprecationWarning)
-    import litellm
-    from litellm import acompletion, supports_vision
 
 if TYPE_CHECKING:
     from contextgem.internal.data_models import (
