@@ -946,7 +946,9 @@ class DocumentLLM(_GenericLLMProcessor):
                     chat_completion = await task
             else:
                 chat_completion = await task
-            answer = chat_completion.choices[0].message.content.strip()
+            answer = chat_completion.choices[
+                0
+            ].message.content  # str, or None if invalid response
             usage.input = chat_completion.usage.prompt_tokens
             usage.output = chat_completion.usage.completion_tokens
             llm_call_obj._record_response_timestamp()

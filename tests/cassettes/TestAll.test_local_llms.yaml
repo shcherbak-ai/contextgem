@@ -1,0 +1,499 @@
+interactions:
+- request:
+    body: '{"model": "llama3.1:8b", "prompt": "### System:\nYou will be assigned tasks
+      involving the extraction, analysis, and interpretation of data within various
+      types of documents. Your role is to carefully process the information and provide
+      accurate, relevant outputs based on the specific instructions provided.\n\nKEY
+      TERMINOLOGY TO UNDERSTAND:\n\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n- Contracts: Legal agreements defining terms
+      and obligations.\n- Invoices: Financial documents detailing transactions and
+      payments.\n- Curricula Vitae (CVs): Resumes outlining an individual''s professional
+      experience and qualifications.\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\n\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n-
+      CV Aspects: Work experience, education, or skills.\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\n\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\n- Interpretative judgments:
+      Such as ratings, classifications, or qualitative assessments based on document
+      content.\n\nGUIDELINES FOR YOUR WORK:\n- Understand the context: Before processing
+      the document, ensure you comprehend the nature of the document and the aspects
+      or concepts you need to focus on.\n- Follow specific instructions: Each task
+      will include detailed instructions, such as which aspects or concepts to focus
+      on and how the data should be presented.\n- Maintain accuracy: Provide precise
+      extractions and analysis, ensuring your outputs align with the document''s intent
+      and context.\n- Adapt to variability: Documents may differ in structure, language,
+      or formatting. Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks.\n\n### User:\nBelow you
+      will find document text and a list of concepts.\n\nYour task is to:\n1. Read
+      through the document text provided.\n2. Identify whether each concept in the
+      concepts list is addressed within the document text.\n3. For each concept that
+      appears, extract zero or more items relevant to that concept. The item format
+      and structure are specified for each concept.\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\n\nIf a concept is not addressed
+      in the document text, you must still include an entry in the final JSON output
+      but with an empty \"extracted_items\" list.\n\nFollow these additional rules:\n\n-
+      Output format:\nProvide your answer in only the following answer format (do
+      not include backticks, code fences, or any introductory/explanatory text).\n\n-
+      Consistency:\n    -- Each JSON object in the list must have two keys: \"concept_id\"
+      and \"extracted_items\".\n    -- The value of \"concept_id\" must match exactly
+      the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    -- The value
+      of \"extracted_items\" must be an array. If the concept is not found or there
+      are no items to extract, leave the array empty ([]).\n        --- Guidance regarding
+      the possible amount of extracted items for the concept is specified under \"Amount
+      of extracted items\". Each extracted item, even if there is only one, must be
+      part of the \"extracted_items\" array.\n\n- Item structure:\n    -- If a specific
+      structure is provided for a concept under \u201cExpected structure,\u201d you
+      must follow that structure for all extracted items corresponding to that concept.\n    --
+      If a rating scale is provided for a concept under \"Rating scale,\" the extracted
+      item value must be within that scale.\n    -- If there are example items (\u201cExtracted
+      concept examples\u201d), try to follow the same style and formatting for your
+      extracted items.\n    -- When extracting string values, translate them in English
+      if the original language of the document is not English.\n\n- Types of extracted
+      items:\n    -- Each concept specifies an \"extracted item type\" (found under
+      \"Concept extracted item type\"). Ensure your extracted items strictly match
+      that type. Python types are provided (e.g., str for string, int for integer,
+      float for floating-point number, dict for object, etc.).\n    -- Do not introduce
+      any extra fields or modify the specified structure.\n\n- Handling missing or
+      multiple items:\n    -- If a concept is not mentioned at all, your output should
+      still contain an entry for that concept with an empty \"extracted_items\" array.\n    --
+      If multiple items are found for a concept, include each as a separate entry
+      within the \"extracted_items\" array.\n\n- No additional text:\n    -- Do not
+      include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n===\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n===\n\n___\nCONCEPTS:\n```\n-
+      Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
+      of the contract.\n\nAmount of extracted items: This concept may have zero, one,
+      or multiple extracted items.\n\nConcept extracted item type: str\n```\n\n___\n\n---\nDOCUMENT
+      TEXT:\nNon-disclosure agreement\n\nThe parties shall keep the data confidential.\n---\n\n\n",
+      "options": {"temperature": 0.3, "top_p": 0.3, "num_predict": 4096, "seed": 123},
+      "stream": false, "images": []}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      content-length:
+      - '7381'
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.68.1
+    method: POST
+    uri: http://localhost:11434/api/generate
+  response:
+    body:
+      string: '{"model": "llama3.1:8b", "created_at": "2025-05-08T17:34:05.0628291Z",
+        "response": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"Non-disclosure agreement\"\n        ]\n    }\n]", "done":
+        true, "done_reason": "stop", "context": [128006, 882, 128007, 271, 14711,
+        744, 512, 2675, 690, 387, 12893, 9256, 16239, 279, 33289, 11, 6492, 11, 323,
+        23692, 315, 828, 2949, 5370, 4595, 315, 9477, 13, 4718, 3560, 374, 311, 15884,
+        1920, 279, 2038, 323, 3493, 13687, 11, 9959, 16674, 3196, 389, 279, 3230,
+        11470, 3984, 382, 4889, 94860, 46, 52532, 5257, 57318, 790, 4064, 1473, 16,
+        13, 12051, 25, 362, 34030, 477, 653, 52243, 1052, 8649, 5439, 477, 9302, 2262,
+        13, 45890, 649, 13592, 304, 955, 323, 7580, 11, 2737, 719, 539, 7347, 311,
+        512, 12, 71659, 25, 25705, 20038, 27409, 3878, 323, 30255, 627, 12, 763, 41783,
+        25, 17961, 9477, 45293, 14463, 323, 14507, 627, 12, 13182, 46582, 29560, 6043,
+        320, 20161, 82, 1680, 1838, 19131, 79774, 459, 3927, 596, 6721, 3217, 323,
+        43784, 627, 12, 3331, 45890, 25, 5884, 1023, 4595, 315, 3626, 430, 1253, 6782,
+        1495, 11, 12920, 11, 5448, 11, 477, 9709, 20447, 627, 9290, 430, 23781, 499,
+        1253, 387, 3318, 449, 2246, 35603, 4856, 1109, 4686, 9477, 13, 4314, 35603,
+        4097, 19885, 315, 264, 8294, 2246, 323, 1288, 387, 30239, 2949, 872, 7347,
+        2317, 13, 3277, 3318, 449, 35603, 11, 5357, 389, 60508, 2038, 505, 279, 2561,
+        2262, 2085, 3339, 32946, 922, 7554, 5596, 382, 17, 13, 81153, 25, 362, 4613,
+        3158, 477, 8712, 2949, 264, 2246, 430, 7612, 10968, 6666, 13, 9062, 13189,
+        34310, 311, 264, 3230, 3917, 477, 7057, 7633, 304, 279, 3465, 13, 1789, 3187,
+        512, 12, 19735, 1666, 8132, 25, 21085, 3878, 11, 9875, 6532, 11, 477, 35508,
+        50198, 627, 12, 41290, 1666, 8132, 25, 24586, 13003, 11, 1584, 6538, 31085,
+        82, 11, 477, 3827, 3649, 627, 12, 14499, 1666, 8132, 25, 5664, 3217, 11, 6873,
+        11, 477, 7512, 627, 2675, 690, 24564, 13878, 439, 42075, 11, 13126, 872, 41961,
+        323, 2317, 2949, 279, 2246, 382, 18, 13, 35455, 25, 362, 5089, 315, 2038,
+        477, 459, 5502, 9959, 311, 279, 3465, 13, 76872, 1253, 387, 14592, 505, 459,
+        13189, 477, 279, 27927, 2246, 2317, 13, 2435, 4097, 264, 7029, 2134, 315,
+        828, 3585, 323, 26793, 11, 505, 4382, 15086, 320, 11654, 11, 13003, 11, 33384,
+        2819, 8, 311, 6485, 56181, 11, 31342, 11, 323, 11503, 311, 3230, 4860, 13,
+        76872, 649, 387, 512, 12, 435, 12210, 11741, 4109, 25, 15483, 439, 264, 16750,
+        22381, 304, 264, 5226, 11, 264, 2860, 3392, 4245, 304, 459, 25637, 11, 477,
+        264, 28706, 304, 264, 14499, 627, 12, 38527, 35758, 26793, 25, 15483, 439,
+        5326, 41300, 11, 8907, 56181, 11, 477, 5497, 3608, 7174, 627, 12, 27857, 291,
+        31342, 25, 15483, 439, 26679, 3508, 264, 2246, 20628, 3230, 13186, 477, 11503,
+        4040, 4860, 627, 12, 73177, 1413, 59358, 25, 15483, 439, 18594, 11, 96771,
+        11, 477, 62129, 41300, 3196, 389, 2246, 2262, 382, 42878, 2818, 34708, 4716,
+        21592, 32904, 512, 12, 71994, 279, 2317, 25, 13538, 8863, 279, 2246, 11, 6106,
+        499, 58389, 279, 7138, 315, 279, 2246, 323, 279, 13878, 477, 19476, 499, 1205,
+        311, 5357, 389, 627, 12, 11359, 3230, 11470, 25, 9062, 3465, 690, 2997, 11944,
+        11470, 11, 1778, 439, 902, 13878, 477, 19476, 311, 5357, 389, 323, 1268, 279,
+        828, 1288, 387, 10666, 627, 12, 87477, 13708, 25, 40665, 24473, 11741, 4109,
+        323, 6492, 11, 23391, 701, 16674, 5398, 449, 279, 2246, 596, 7537, 323, 2317,
+        627, 12, 59531, 311, 54709, 25, 45890, 1253, 1782, 304, 6070, 11, 4221, 11,
+        477, 37666, 13, 2893, 19303, 323, 3881, 33811, 311, 3790, 27339, 13750, 382,
+        81102, 24711, 19323, 3578, 50, 512, 12, 16531, 3149, 16674, 25, 54504, 24001,
+        323, 1664, 12, 63316, 3135, 3196, 389, 279, 3465, 8670, 627, 12, 1398, 10609,
+        811, 320, 9493, 2631, 1680, 3277, 2631, 555, 279, 11470, 11, 2997, 1120, 7174,
+        477, 33811, 369, 701, 58689, 627, 12, 73137, 320, 9493, 2631, 1680, 3277,
+        2631, 555, 279, 11470, 11, 11415, 18845, 11, 12912, 11, 477, 67479, 14955,
+        430, 1436, 923, 907, 311, 279, 3465, 627, 12, 45178, 320, 9493, 2631, 1680,
+        3277, 2631, 555, 279, 11470, 11, 2612, 15407, 3196, 389, 902, 499, 28532,
+        828, 11, 3984, 26793, 11, 477, 1903, 31342, 2391, 279, 3465, 4286, 1383, 36051,
+        287, 311, 420, 12914, 11, 499, 690, 6106, 13263, 323, 1579, 22867, 5178, 4028,
+        17226, 2246, 6492, 9256, 382, 14711, 2724, 512, 39314, 499, 690, 1505, 2246,
+        1495, 323, 264, 1160, 315, 19476, 382, 7927, 3465, 374, 311, 512, 16, 13,
+        4557, 1555, 279, 2246, 1495, 3984, 627, 17, 13, 65647, 3508, 1855, 7434, 304,
+        279, 19476, 1160, 374, 20669, 2949, 279, 2246, 1495, 627, 18, 13, 1789, 1855,
+        7434, 430, 8111, 11, 8819, 7315, 477, 810, 3673, 9959, 311, 430, 7434, 13,
+        578, 1537, 3645, 323, 6070, 527, 5300, 369, 1855, 7434, 627, 19, 13, 87988,
+        264, 4823, 1358, 8649, 701, 28532, 828, 11, 304, 279, 3984, 3645, 382, 2746,
+        264, 7434, 374, 539, 20669, 304, 279, 2246, 1495, 11, 499, 2011, 2103, 2997,
+        459, 4441, 304, 279, 1620, 4823, 2612, 719, 449, 459, 4384, 330, 24396, 291,
+        12408, 1, 1160, 382, 12763, 1521, 5217, 5718, 1473, 12, 9442, 3645, 512, 61524,
+        701, 4320, 304, 1193, 279, 2768, 4320, 3645, 320, 3055, 539, 2997, 1203, 36178,
+        11, 2082, 70255, 11, 477, 904, 62469, 26900, 10609, 5382, 1495, 3677, 12,
+        7440, 48194, 512, 262, 1198, 9062, 4823, 1665, 304, 279, 1160, 2011, 617,
+        1403, 7039, 25, 330, 69587, 851, 1, 323, 330, 24396, 291, 12408, 23811, 262,
+        1198, 578, 907, 315, 330, 69587, 851, 1, 2011, 2489, 7041, 279, 3110, 315,
+        279, 7434, 320, 2000, 3187, 11, 330, 34, 15, 498, 330, 34, 16, 498, 5099,
+        13, 4390, 262, 1198, 578, 907, 315, 330, 24396, 291, 12408, 1, 2011, 387,
+        459, 1358, 13, 1442, 279, 7434, 374, 539, 1766, 477, 1070, 527, 912, 3673,
+        311, 8819, 11, 5387, 279, 1358, 4384, 36023, 4390, 286, 12730, 82661, 9002,
+        279, 3284, 3392, 315, 28532, 3673, 369, 279, 7434, 374, 5300, 1234, 330, 10301,
+        315, 28532, 3673, 3343, 9062, 28532, 1537, 11, 1524, 422, 1070, 374, 1193,
+        832, 11, 2011, 387, 961, 315, 279, 330, 24396, 291, 12408, 1, 1358, 382, 12,
+        5858, 6070, 512, 262, 1198, 1442, 264, 3230, 6070, 374, 3984, 369, 264, 7434,
+        1234, 1054, 19430, 6070, 2476, 499, 2011, 1833, 430, 6070, 369, 682, 28532,
+        3673, 12435, 311, 430, 7434, 627, 262, 1198, 1442, 264, 10959, 5569, 374,
+        3984, 369, 264, 7434, 1234, 330, 22940, 5569, 1359, 279, 28532, 1537, 907,
+        2011, 387, 2949, 430, 5569, 627, 262, 1198, 1442, 1070, 527, 3187, 3673, 27179,
+        30059, 291, 7434, 10507, 56955, 1456, 311, 1833, 279, 1890, 1742, 323, 37666,
+        369, 701, 28532, 3673, 627, 262, 1198, 3277, 60508, 925, 2819, 11, 15025,
+        1124, 304, 6498, 422, 279, 4113, 4221, 315, 279, 2246, 374, 539, 6498, 382,
+        12, 21431, 315, 28532, 3673, 512, 262, 1198, 9062, 7434, 30202, 459, 330,
+        24396, 291, 1537, 955, 1, 320, 15456, 1234, 330, 45676, 28532, 1537, 955,
+        1865, 30379, 701, 28532, 3673, 26549, 2489, 430, 955, 13, 13325, 4595, 527,
+        3984, 320, 68, 1326, 2637, 610, 369, 925, 11, 528, 369, 7698, 11, 2273, 369,
+        19596, 16983, 1396, 11, 6587, 369, 1665, 11, 5099, 13, 4390, 262, 1198, 3234,
+        539, 19678, 904, 5066, 5151, 477, 5719, 279, 5300, 6070, 382, 12, 56813, 7554,
+        477, 5361, 3673, 512, 262, 1198, 1442, 264, 7434, 374, 539, 9932, 520, 682,
+        11, 701, 2612, 1288, 2103, 6782, 459, 4441, 369, 430, 7434, 449, 459, 4384,
+        330, 24396, 291, 12408, 1, 1358, 627, 262, 1198, 1442, 5361, 3673, 527, 1766,
+        369, 264, 7434, 11, 2997, 1855, 439, 264, 8821, 4441, 2949, 279, 330, 24396,
+        291, 12408, 1, 1358, 382, 12, 2360, 5217, 1495, 512, 262, 1198, 3234, 539,
+        2997, 904, 7247, 11, 41941, 11, 477, 1495, 4994, 315, 279, 4823, 1358, 627,
+        262, 1198, 3234, 539, 15411, 701, 4823, 2077, 304, 1203, 36178, 477, 904,
+        1023, 37666, 5885, 382, 20168, 11954, 40451, 53325, 320, 26003, 88358, 997,
+        9837, 262, 341, 286, 330, 69587, 851, 794, 610, 345, 286, 330, 24396, 291,
+        12408, 25, 2330, 310, 12515, 286, 3291, 262, 1173, 262, 12515, 933, 8880,
+        271, 6101, 198, 5910, 21752, 50, 512, 14196, 4077, 12, 35455, 3110, 25, 356,
+        15, 198, 45676, 836, 25, 19735, 2316, 271, 45676, 4096, 512, 791, 2316, 315,
+        279, 5226, 382, 10301, 315, 28532, 3673, 25, 1115, 7434, 1253, 617, 7315,
+        11, 832, 11, 477, 5361, 28532, 3673, 382, 45676, 28532, 1537, 955, 25, 610,
+        198, 14196, 19884, 61388, 11192, 45197, 16139, 512, 8284, 52765, 11915, 9306,
+        271, 791, 9875, 4985, 2567, 279, 828, 27285, 627, 4521, 1432, 128009, 128006,
+        78191, 128007, 271, 9837, 262, 341, 286, 330, 69587, 851, 794, 330, 34, 15,
+        761, 286, 330, 24396, 291, 12408, 794, 2330, 310, 330, 8284, 52765, 11915,
+        9306, 702, 286, 5243, 262, 457, 60], "total_duration": 7238056000, "load_duration":
+        6662426200, "prompt_eval_count": 1401, "prompt_eval_duration": 278041500,
+        "eval_count": 32, "eval_duration": 296942600}'
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - DUMMY
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "deepseek-r1:32b", "prompt": "### System:\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n\nKEY
+      TERMINOLOGY TO UNDERSTAND:\n\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n- Contracts: Legal agreements defining terms
+      and obligations.\n- Invoices: Financial documents detailing transactions and
+      payments.\n- Curricula Vitae (CVs): Resumes outlining an individual''s professional
+      experience and qualifications.\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\n\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n-
+      CV Aspects: Work experience, education, or skills.\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\n\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\n- Interpretative judgments:
+      Such as ratings, classifications, or qualitative assessments based on document
+      content.\n\nGUIDELINES FOR YOUR WORK:\n- Understand the context: Before processing
+      the document, ensure you comprehend the nature of the document and the aspects
+      or concepts you need to focus on.\n- Follow specific instructions: Each task
+      will include detailed instructions, such as which aspects or concepts to focus
+      on and how the data should be presented.\n- Maintain accuracy: Provide precise
+      extractions and analysis, ensuring your outputs align with the document''s intent
+      and context.\n- Adapt to variability: Documents may differ in structure, language,
+      or formatting. Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks.\n\n### User:\nBelow you
+      will find document text and a list of concepts.\n\nYour task is to:\n1. Read
+      through the document text provided.\n2. Identify whether each concept in the
+      concepts list is addressed within the document text.\n3. For each concept that
+      appears, extract zero or more items relevant to that concept. The item format
+      and structure are specified for each concept.\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\n\nIf a concept is not addressed
+      in the document text, you must still include an entry in the final JSON output
+      but with an empty \"extracted_items\" list.\n\nFollow these additional rules:\n\n-
+      Output format:\nProvide your answer in only the following answer format (do
+      not include backticks, code fences, or any introductory/explanatory text).\n\n-
+      Consistency:\n    -- Each JSON object in the list must have two keys: \"concept_id\"
+      and \"extracted_items\".\n    -- The value of \"concept_id\" must match exactly
+      the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    -- The value
+      of \"extracted_items\" must be an array. If the concept is not found or there
+      are no items to extract, leave the array empty ([]).\n        --- Guidance regarding
+      the possible amount of extracted items for the concept is specified under \"Amount
+      of extracted items\". Each extracted item, even if there is only one, must be
+      part of the \"extracted_items\" array.\n\n- Item structure:\n    -- If a specific
+      structure is provided for a concept under \u201cExpected structure,\u201d you
+      must follow that structure for all extracted items corresponding to that concept.\n    --
+      If a rating scale is provided for a concept under \"Rating scale,\" the extracted
+      item value must be within that scale.\n    -- If there are example items (\u201cExtracted
+      concept examples\u201d), try to follow the same style and formatting for your
+      extracted items.\n    -- When extracting string values, translate them in English
+      if the original language of the document is not English.\n\n- Types of extracted
+      items:\n    -- Each concept specifies an \"extracted item type\" (found under
+      \"Concept extracted item type\"). Ensure your extracted items strictly match
+      that type. Python types are provided (e.g., str for string, int for integer,
+      float for floating-point number, dict for object, etc.).\n    -- Do not introduce
+      any extra fields or modify the specified structure.\n\n- Handling missing or
+      multiple items:\n    -- If a concept is not mentioned at all, your output should
+      still contain an entry for that concept with an empty \"extracted_items\" array.\n    --
+      If multiple items are found for a concept, include each as a separate entry
+      within the \"extracted_items\" array.\n\n- No additional text:\n    -- Do not
+      include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n===\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n===\n\n___\nCONCEPTS:\n```\n-
+      Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
+      of the contract.\n\nAmount of extracted items: This concept may have zero, one,
+      or multiple extracted items.\n\nConcept extracted item type: str\n```\n\n___\n\n---\nDOCUMENT
+      TEXT:\nNon-disclosure agreement\n\nThe parties shall keep the data confidential.\n---\n\n\n",
+      "options": {"temperature": 0.3, "top_p": 0.3, "num_predict": 4096, "seed": 123},
+      "stream": false, "images": []}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      content-length:
+      - '7385'
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.68.1
+    method: POST
+    uri: http://localhost:11434/api/generate
+  response:
+    body:
+      string: '{"model": "deepseek-r1:32b", "created_at": "2025-05-08T17:34:35.2027225Z",
+        "response": "<think>\nOkay, so I need to figure out how to extract the concepts
+        from this document text. The user provided a task where they want me to identify
+        whether each concept in the list is addressed within the given document and
+        then extract relevant items.\n\nFirst, let''s look at the concepts provided.
+        There''s only one concept here: C0, which is \"Contract title\". The description
+        says it''s the title of the contract, and the extracted item type is a string.
+        It can have zero, one, or multiple items.\n\nNow, looking at the document
+        text:\n\n\"Non-disclosure agreement\n\nThe parties shall keep the data confidential.\"\n\nSo,
+        the first line is \"Non-disclosure agreement\". That seems like the title
+        of the contract. The second part talks about confidentiality but doesn''t
+        mention any other titles or contracts.\n\nSince C0 is about the contract title,
+        I should extract that first line as the title. There''s only one instance
+        here, so the extracted_items array will have one string: \"Non-disclosure
+        agreement\".\n\nI don''t see any other mentions of a contract title in the
+        document, so no need to add more items. If there were multiple titles, each
+        would be added as separate entries in the array.\n\nSo, putting it all together,
+        the JSON should have an entry for C0 with that single extracted item.\n</think>\n\n[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\"Non-disclosure agreement\"]\n    }\n]",
+        "done": true, "done_reason": "stop", "context": [151644, 14374, 739, 510,
+        2610, 686, 387, 12607, 9079, 15860, 279, 32189, 11, 6358, 11, 323, 22845,
+        315, 821, 2878, 5257, 4494, 315, 9293, 13, 4615, 3476, 374, 311, 15516, 1882,
+        279, 1995, 323, 3410, 13382, 11, 9760, 16275, 3118, 389, 279, 3151, 11221,
+        3897, 382, 4784, 93760, 46, 51432, 5146, 56218, 784, 3976, 1447, 16, 13, 11789,
+        25, 362, 32930, 476, 650, 51143, 1034, 8482, 5326, 476, 9124, 2213, 13, 44790,
+        646, 13289, 304, 943, 323, 7428, 11, 2670, 714, 537, 7199, 311, 510, 12, 70559,
+        25, 24678, 19473, 26312, 3793, 323, 29155, 624, 12, 758, 40683, 25, 17503,
+        9293, 44193, 14131, 323, 14173, 624, 12, 12886, 45482, 28460, 5918, 320, 19589,
+        82, 1648, 1800, 18618, 78674, 458, 3842, 594, 6584, 3139, 323, 42684, 624,
+        12, 3251, 44790, 25, 5765, 1008, 4494, 315, 3542, 429, 1231, 6644, 1467, 11,
+        12632, 11, 5335, 11, 476, 9519, 19856, 624, 9112, 429, 22930, 498, 1231, 387,
+        3238, 448, 2197, 34503, 4751, 1091, 4583, 9293, 13, 4220, 34503, 4009, 19325,
+        315, 264, 8131, 2197, 323, 1265, 387, 29139, 2878, 862, 7199, 2266, 13, 3197,
+        3238, 448, 34503, 11, 5244, 389, 59408, 1995, 504, 279, 2500, 2213, 2041,
+        3259, 31846, 911, 7402, 5479, 382, 17, 13, 80053, 25, 362, 4512, 3082, 476,
+        8544, 2878, 264, 2197, 429, 7460, 10735, 6529, 13, 8886, 12893, 33210, 311,
+        264, 3151, 3832, 476, 6912, 7481, 304, 279, 3383, 13, 1752, 3110, 510, 12,
+        19185, 1634, 7973, 25, 20453, 3793, 11, 9677, 6398, 11, 476, 34408, 49098,
+        624, 12, 40190, 1634, 7973, 25, 23662, 12713, 11, 1555, 6404, 29985, 82, 11,
+        476, 3742, 3565, 624, 12, 14165, 1634, 7973, 25, 5547, 3139, 11, 6731, 11,
+        476, 7361, 624, 2610, 686, 23643, 13566, 438, 40975, 11, 12831, 862, 40861,
+        323, 2266, 2878, 279, 2197, 382, 18, 13, 34355, 25, 362, 4982, 315, 1995,
+        476, 458, 5387, 9760, 311, 279, 3383, 13, 75772, 1231, 387, 14257, 504, 458,
+        12893, 476, 279, 26829, 2197, 2266, 13, 2379, 4009, 264, 6884, 2088, 315,
+        821, 3501, 323, 25709, 11, 504, 4285, 14744, 320, 11400, 11, 12713, 11, 32284,
+        2750, 8, 311, 6351, 55081, 11, 30242, 11, 323, 11253, 311, 3151, 4755, 13,
+        75772, 646, 387, 510, 12, 434, 11944, 11482, 4020, 25, 15132, 438, 264, 16346,
+        21647, 304, 264, 5116, 11, 264, 2790, 3311, 4152, 304, 458, 24615, 11, 476,
+        264, 27606, 304, 264, 14165, 624, 12, 37427, 34658, 25709, 25, 15132, 438,
+        5214, 40200, 11, 8733, 55081, 11, 476, 5383, 3524, 7029, 624, 12, 26759, 291,
+        30242, 25, 15132, 438, 25597, 3425, 264, 2197, 20027, 3151, 12890, 476, 11253,
+        3953, 4755, 624, 12, 72077, 1388, 58258, 25, 15132, 438, 18102, 11, 95671,
+        11, 476, 61029, 40200, 3118, 389, 2197, 2213, 382, 41778, 2749, 33608, 4613,
+        20922, 31804, 510, 12, 70894, 279, 2266, 25, 13235, 8692, 279, 2197, 11, 5978,
+        498, 57289, 279, 6993, 315, 279, 2197, 323, 279, 13566, 476, 18940, 498, 1184,
+        311, 5244, 389, 624, 12, 11112, 3151, 11221, 25, 8886, 3383, 686, 2924, 11682,
+        11221, 11, 1741, 438, 892, 13566, 476, 18940, 311, 5244, 389, 323, 1246, 279,
+        821, 1265, 387, 10449, 624, 12, 86377, 13403, 25, 39565, 23560, 11482, 4020,
+        323, 6358, 11, 22573, 697, 16275, 5285, 448, 279, 2197, 594, 7385, 323, 2266,
+        624, 12, 58431, 311, 53609, 25, 44790, 1231, 1745, 304, 5944, 11, 4128, 11,
+        476, 36566, 13, 2823, 18776, 323, 3796, 32711, 311, 3705, 26244, 13444, 382,
+        80002, 23777, 18793, 3494, 50, 510, 12, 16139, 3073, 16275, 25, 53404, 23126,
+        323, 1632, 12, 62216, 3059, 3118, 389, 279, 3383, 8502, 624, 12, 1374, 10393,
+        804, 320, 9309, 2567, 1648, 3197, 2567, 553, 279, 11221, 11, 2924, 1101, 7029,
+        476, 32711, 369, 697, 57589, 624, 12, 72037, 320, 9309, 2567, 1648, 3197,
+        2567, 553, 279, 11221, 11, 11167, 18339, 11, 12624, 11, 476, 66379, 14613,
+        429, 1410, 912, 897, 311, 279, 3383, 624, 12, 44078, 320, 9309, 2567, 1648,
+        3197, 2567, 553, 279, 11221, 11, 2550, 15057, 3118, 389, 892, 498, 27432,
+        821, 11, 3897, 25709, 11, 476, 1865, 30242, 2337, 279, 3383, 4192, 1359, 34951,
+        287, 311, 419, 12626, 11, 498, 686, 5978, 12966, 323, 1550, 22092, 5068, 3941,
+        16807, 2197, 6358, 9079, 382, 14374, 2657, 510, 38214, 498, 686, 1477, 2197,
+        1467, 323, 264, 1140, 315, 18940, 382, 7771, 3383, 374, 311, 510, 16, 13,
+        4457, 1526, 279, 2197, 1467, 3897, 624, 17, 13, 64547, 3425, 1817, 7286, 304,
+        279, 18940, 1140, 374, 20068, 2878, 279, 2197, 1467, 624, 18, 13, 1752, 1817,
+        7286, 429, 7952, 11, 8649, 7168, 476, 803, 3589, 9760, 311, 429, 7286, 13,
+        576, 1509, 3561, 323, 5944, 525, 5189, 369, 1817, 7286, 624, 19, 13, 86888,
+        264, 4718, 1334, 8482, 697, 27432, 821, 11, 304, 279, 3897, 3561, 382, 2679,
+        264, 7286, 374, 537, 20068, 304, 279, 2197, 1467, 11, 498, 1969, 2058, 2924,
+        458, 4343, 304, 279, 1590, 4718, 2550, 714, 448, 458, 4287, 330, 23493, 291,
+        12134, 1, 1140, 382, 12480, 1493, 5107, 5601, 1447, 12, 9258, 3561, 510, 60424,
+        697, 4226, 304, 1172, 279, 2701, 4226, 3561, 320, 2982, 537, 2924, 1182, 35078,
+        11, 2038, 69155, 11, 476, 894, 61369, 25815, 10393, 5269, 1467, 3593, 12,
+        7292, 47094, 510, 262, 1177, 8886, 4718, 1633, 304, 279, 1140, 1969, 614,
+        1378, 6894, 25, 330, 68487, 842, 1, 323, 330, 23493, 291, 12134, 22956, 262,
+        1177, 576, 897, 315, 330, 68487, 842, 1, 1969, 2432, 6896, 279, 3034, 315,
+        279, 7286, 320, 1958, 3110, 11, 330, 34, 15, 497, 330, 34, 16, 497, 4992,
+        13, 4292, 262, 1177, 576, 897, 315, 330, 23493, 291, 12134, 1, 1969, 387,
+        458, 1334, 13, 1416, 279, 7286, 374, 537, 1730, 476, 1052, 525, 902, 3589,
+        311, 8649, 11, 5274, 279, 1334, 4287, 34923, 4292, 286, 12448, 81561, 8826,
+        279, 3204, 3311, 315, 27432, 3589, 369, 279, 7286, 374, 5189, 1212, 330, 10093,
+        315, 27432, 3589, 3263, 8886, 27432, 1509, 11, 1496, 421, 1052, 374, 1172,
+        825, 11, 1969, 387, 949, 315, 279, 330, 23493, 291, 12134, 1, 1334, 382, 12,
+        5739, 5944, 510, 262, 1177, 1416, 264, 3151, 5944, 374, 3897, 369, 264, 7286,
+        1212, 1036, 18896, 5944, 2419, 498, 1969, 1795, 429, 5944, 369, 678, 27432,
+        3589, 12159, 311, 429, 7286, 624, 262, 1177, 1416, 264, 10728, 5452, 374,
+        3897, 369, 264, 7286, 1212, 330, 22152, 5452, 1335, 279, 27432, 1509, 897,
+        1969, 387, 2878, 429, 5452, 624, 262, 1177, 1416, 1052, 525, 3110, 3589, 26087,
+        28959, 291, 7286, 10295, 55855, 1430, 311, 1795, 279, 1852, 1707, 323, 36566,
+        369, 697, 27432, 3589, 624, 262, 1177, 3197, 59408, 914, 2750, 11, 14683,
+        1105, 304, 6364, 421, 279, 4024, 4128, 315, 279, 2197, 374, 537, 6364, 382,
+        12, 20768, 315, 27432, 3589, 510, 262, 1177, 8886, 7286, 29102, 458, 330,
+        23493, 291, 1509, 943, 1, 320, 15105, 1212, 330, 44576, 27432, 1509, 943,
+        1827, 29279, 697, 27432, 3589, 25470, 2432, 429, 943, 13, 13027, 4494, 525,
+        3897, 320, 68, 1302, 2572, 607, 369, 914, 11, 526, 369, 7546, 11, 2224, 369,
+        19057, 16574, 1372, 11, 6451, 369, 1633, 11, 4992, 13, 4292, 262, 1177, 3155,
+        537, 19131, 894, 4960, 5043, 476, 5602, 279, 5189, 5944, 382, 12, 55713, 7402,
+        476, 5248, 3589, 510, 262, 1177, 1416, 264, 7286, 374, 537, 9733, 518, 678,
+        11, 697, 2550, 1265, 2058, 6644, 458, 4343, 369, 429, 7286, 448, 458, 4287,
+        330, 23493, 291, 12134, 1, 1334, 624, 262, 1177, 1416, 5248, 3589, 525, 1730,
+        369, 264, 7286, 11, 2924, 1817, 438, 264, 8651, 4343, 2878, 279, 330, 23493,
+        291, 12134, 1, 1334, 382, 12, 2308, 5107, 1467, 510, 262, 1177, 3155, 537,
+        2924, 894, 7102, 11, 40841, 11, 476, 1467, 4889, 315, 279, 4718, 1334, 624,
+        262, 1177, 3155, 537, 15061, 697, 4718, 2033, 304, 1182, 35078, 476, 894,
+        1008, 36566, 5766, 382, 19595, 11692, 39351, 52225, 320, 24958, 87258, 982,
+        9640, 262, 341, 286, 330, 68487, 842, 788, 607, 345, 286, 330, 23493, 291,
+        12134, 25, 2278, 310, 12236, 286, 3211, 262, 1153, 262, 12236, 921, 8707,
+        271, 5973, 198, 5790, 21073, 50, 510, 13874, 3989, 12, 34355, 3034, 25, 356,
+        15, 198, 44576, 829, 25, 19185, 2265, 271, 44576, 4008, 510, 785, 2265, 315,
+        279, 5116, 382, 10093, 315, 27432, 3589, 25, 1096, 7286, 1231, 614, 7168,
+        11, 825, 11, 476, 5248, 27432, 3589, 382, 44576, 27432, 1509, 943, 25, 607,
+        198, 13874, 19324, 60288, 10952, 44097, 15762, 510, 8121, 51665, 11653, 9128,
+        271, 785, 9677, 4880, 2506, 279, 821, 26193, 624, 4421, 1406, 151645, 151648,
+        198, 32313, 11, 773, 358, 1184, 311, 7071, 700, 1246, 311, 8649, 279, 18940,
+        504, 419, 2197, 1467, 13, 576, 1196, 3897, 264, 3383, 1380, 807, 1366, 752,
+        311, 10542, 3425, 1817, 7286, 304, 279, 1140, 374, 20068, 2878, 279, 2661,
+        2197, 323, 1221, 8649, 9760, 3589, 382, 5338, 11, 1077, 594, 1401, 518, 279,
+        18940, 3897, 13, 2619, 594, 1172, 825, 7286, 1588, 25, 356, 15, 11, 892, 374,
+        330, 14067, 2265, 3263, 576, 4008, 2727, 432, 594, 279, 2265, 315, 279, 5116,
+        11, 323, 279, 27432, 1509, 943, 374, 264, 914, 13, 1084, 646, 614, 7168, 11,
+        825, 11, 476, 5248, 3589, 382, 7039, 11, 3330, 518, 279, 2197, 1467, 1447,
+        1, 8121, 51665, 11653, 9128, 271, 785, 9677, 4880, 2506, 279, 821, 26193,
+        2217, 4416, 11, 279, 1156, 1555, 374, 330, 8121, 51665, 11653, 9128, 3263,
+        2938, 4977, 1075, 279, 2265, 315, 279, 5116, 13, 576, 2086, 949, 13433, 911,
+        64195, 714, 3171, 944, 6286, 894, 1008, 15311, 476, 17080, 382, 12549, 356,
+        15, 374, 911, 279, 5116, 2265, 11, 358, 1265, 8649, 429, 1156, 1555, 438,
+        279, 2265, 13, 2619, 594, 1172, 825, 2867, 1588, 11, 773, 279, 27432, 12134,
+        1334, 686, 614, 825, 914, 25, 330, 8121, 51665, 11653, 9128, 11436, 40, 1513,
+        944, 1490, 894, 1008, 33845, 315, 264, 5116, 2265, 304, 279, 2197, 11, 773,
+        902, 1184, 311, 912, 803, 3589, 13, 1416, 1052, 1033, 5248, 15311, 11, 1817,
+        1035, 387, 3694, 438, 8651, 10695, 304, 279, 1334, 382, 4416, 11, 10687, 432,
+        678, 3786, 11, 279, 4718, 1265, 614, 458, 4343, 369, 356, 15, 448, 429, 3175,
+        27432, 1509, 624, 151649, 271, 9640, 262, 341, 286, 330, 68487, 842, 788,
+        330, 34, 15, 756, 286, 330, 23493, 291, 12134, 788, 4383, 8121, 51665, 11653,
+        9128, 7026, 262, 456, 60], "total_duration": 27118167400, "load_duration":
+        15050976400, "prompt_eval_count": 1394, "prompt_eval_duration": 907310700,
+        "eval_count": 299, "eval_duration": 11159116900}'
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - DUMMY
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

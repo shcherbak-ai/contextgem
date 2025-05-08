@@ -146,7 +146,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -154,29 +154,29 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\": [\n      {\n        \"value\":
-        \"#1234\",\n        \"justification\": \"The invoice number is explicitly
-        stated as ''Invoice Number: #1234'' at the top right of the invoice.\"\n      }\n    ]\n  },\n  {\n    \"concept_id\":
-        \"C1\",\n    \"extracted_items\": [\n      {\n        \"value\": 4800.0,\n        \"justification\":
-        \"The total invoice amount is shown as ''$4800'' under the ''Total'' and ''Sub
-        Total'' sections on the right side of the invoice.\"\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1745186591, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
-        "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
-        {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
-        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
-        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
-        []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
-        138, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2395, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 2533}}'
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
+        [\n      {\n        \"value\": \"#1234\",\n        \"justification\": \"The
+        invoice number is explicitly stated as ''Invoice Number: #1234'' at the top
+        right of the invoice.\"\n      }\n    ]\n  },\n  {\n    \"concept_id\": \"C1\",\n    \"extracted_items\":
+        [\n      {\n        \"value\": 4800.0,\n        \"justification\": \"The total
+        invoice amount is shown as ''$4800'' under the ''Total'' label in the summary
+        section.\"\n      }\n    ]\n  }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1746726552, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_result": {"jailbreak": {"filtered": false, "detected": false},
+        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
+        1, "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
+        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "custom_blocklists": {"filtered": false, "details": []}}}], "system_fingerprint":
+        "fp_c8225066ea", "usage": {"completion_tokens": 130, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2395, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 2525}}'
     headers:
       Content-Length:
-      - '1884'
+      - '1872'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -190,15 +190,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 3faa90b1-daca-4fea-8e27-2e22c3578390
+      - 0f95d5f9-4f5f-4606-b607-172bd16a25fe
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2351'
+      - '4508'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -354,7 +352,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -362,27 +360,29 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\": [\n            {\"amount\":
-        \"$1000\", \"line\": \"Branding Design\"},\n            {\"amount\": \"$3000\",
-        \"line\": \"Web Design\"},\n            {\"amount\": \"$800\", \"line\": \"Brochure\"},\n            {\"amount\":
-        \"$4800\", \"line\": \"Total\"},\n            {\"amount\": \"$4800\", \"line\":
-        \"Sub Total\"}\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1745186594, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_result": {"jailbreak": {"filtered": false, "detected": false},
-        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
-        1, "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
-        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "custom_blocklists": {"filtered": false, "details": []}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 99, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2216, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2315}}'
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
+        [\n      {\n        \"amount\": \"$1000\",\n        \"line\": \"Branding Design\"\n      },\n      {\n        \"amount\":
+        \"$3000\",\n        \"line\": \"Web Design\"\n      },\n      {\n        \"amount\":
+        \"$800\",\n        \"line\": \"Brochure\"\n      },\n      {\n        \"amount\":
+        \"$4800\",\n        \"line\": \"Total\"\n      },\n      {\n        \"amount\":
+        \"$4800\",\n        \"line\": \"Sub Total\"\n      }\n    ]\n  }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1746726561, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
+        "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
+        {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
+        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
+        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
+        []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
+        124, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        2216, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
+        "total_tokens": 2340}}'
     headers:
       Content-Length:
-      - '1758'
+      - '1865'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -396,15 +396,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 62249755-1d13-444b-aea3-eff76220cba8
+      - 4b7c3fe0-8358-4212-ba77-7692cf299187
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2058'
+      - '7335'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -573,7 +571,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -581,21 +579,18 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        {\n                    \"service_name\": \"Branding Design\",\n                    \"quantity\":
-        1,\n                    \"price\": \"$1000\"\n                },\n                \"justification\":
-        \"The invoice lists ''Branding Design'' with quantity 1 and price $1000 under
-        ITEM DESCRIPTION, QTY, and PRICE columns.\"\n            },\n            {\n                \"value\":
-        {\n                    \"service_name\": \"Web Design\",\n                    \"quantity\":
-        1,\n                    \"price\": \"$3000\"\n                },\n                \"justification\":
-        \"The invoice lists ''Web Design'' with quantity 1 and price $3000 under ITEM
-        DESCRIPTION, QTY, and PRICE columns.\"\n            },\n            {\n                \"value\":
-        {\n                    \"service_name\": \"Brochure\",\n                    \"quantity\":
-        1,\n                    \"price\": \"$800\"\n                },\n                \"justification\":
-        \"The invoice lists ''Brochure'' with quantity 1 and price $800 under ITEM
-        DESCRIPTION, QTY, and PRICE columns.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1745186596, "id": "chatcmpl-DUMMY",
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
+        [\n      {\n        \"value\": {\n          \"service_name\": \"Branding Design\",\n          \"quantity\":
+        1,\n          \"price\": \"$1000\"\n        },\n        \"justification\":
+        \"The invoice lists ''Branding Design'' as a service with quantity 1 and price
+        $1000.\"\n      },\n      {\n        \"value\": {\n          \"service_name\":
+        \"Web Design\",\n          \"quantity\": 1,\n          \"price\": \"$3000\"\n        },\n        \"justification\":
+        \"The invoice lists ''Web Design'' as a service with quantity 1 and price
+        $3000.\"\n      },\n      {\n        \"value\": {\n          \"service_name\":
+        \"Brochure\",\n          \"quantity\": 1,\n          \"price\": \"$800\"\n        },\n        \"justification\":
+        \"The invoice lists ''Brochure'' as a service with quantity 1 and price $800.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1746726564, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
@@ -604,13 +599,13 @@ interactions:
         "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
         false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
         []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
-        229, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        208, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         2411, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 2640}}'
+        "total_tokens": 2619}}'
     headers:
       Content-Length:
-      - '2548'
+      - '2249'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -624,15 +619,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 2bb4c15d-707f-44ef-bead-c1df6ff727ca
+      - 1f3c0c6d-7f7b-4f14-a618-379430277866
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2906'
+      - '3295'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -798,19 +791,19 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": 4800.0,\n                \"justification\":
-        \"The invoice shows a total amount of $4800 under the ''Total'' and ''Sub
-        Total'' sections.\"\n            }\n        ]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1745186600, "id": "chatcmpl-DUMMY", "model":
-        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
+        4800.0,\n                \"justification\": \"The invoice shows a total amount
+        of $4800 under the ''Total'' and ''Sub Total'' labels.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1746726568, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
         {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
@@ -824,7 +817,7 @@ interactions:
         "total_tokens": 2412}}'
     headers:
       Content-Length:
-      - '1511'
+      - '1526'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -838,15 +831,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 88d326e9-efe9-455e-bf65-382c6c02155a
+      - a747725a-d09c-45c4-998f-5d04045ca96f
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1962'
+      - '2150'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -1012,18 +1003,18 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": \"#1234\",\n                \"justification\":
-        \"The invoice number is explicitly stated as ''Invoice Number: #1234'' in
-        the top right section of the invoice.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1745186600, "id": "chatcmpl-DUMMY",
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
+        \"#1234\",\n                \"justification\": \"The invoice number is explicitly
+        stated as ''Invoice Number: #1234'' in the top right section of the invoice.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1746726568, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
@@ -1034,11 +1025,11 @@ interactions:
         []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
         67, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2343, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 2410}}'
+        2343, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        2410}}'
     headers:
       Content-Length:
-      - '1536'
+      - '1550'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -1052,15 +1043,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - f6a1e53b-1a7b-401a-b4c3-c3b6a771a3df
+      - 1aaccf6a-e188-4788-9ac0-91ed8cbc67fb
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2155'
+      - '2187'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -1216,7 +1205,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1224,27 +1213,28 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\": [\n            {\"amount\":
-        \"$1000\", \"line\": \"Branding Design\"},\n            {\"amount\": \"$3000\",
-        \"line\": \"Web Design\"},\n            {\"amount\": \"$800\", \"line\": \"Brochure\"},\n            {\"amount\":
-        \"$4800\", \"line\": \"Total\"},\n            {\"amount\": \"$4800\", \"line\":
-        \"Sub Total\"}\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1745186600, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_result": {"jailbreak": {"filtered": false, "detected": false},
-        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
-        1, "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
-        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "custom_blocklists": {"filtered": false, "details": []}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 99, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2216, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2315}}'
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\"amount\": \"$1000\", \"line\": \"Branding Design\"},\n            {\"amount\":
+        \"$3000\", \"line\": \"Web Design\"},\n            {\"amount\": \"$800\",
+        \"line\": \"Brochure\"},\n            {\"amount\": \"$4800\", \"line\": \"Total\"},\n            {\"amount\":
+        \"$4800\", \"line\": \"Sub Total\"}\n        ]\n    }\n]", "refusal": null,
+        "role": "assistant"}}], "created": 1746726568, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
+        "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
+        {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
+        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
+        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
+        []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
+        99, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        2216, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
+        "total_tokens": 2315}}'
     headers:
       Content-Length:
-      - '1758'
+      - '1775'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -1258,15 +1248,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - d4f01ead-2800-4dd2-bff4-194c5019db1c
+      - cde0e971-6480-4899-a1cf-e7f2a8dab295
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2289'
+      - '3120'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -1435,7 +1423,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1443,19 +1431,22 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        {\n                    \"service_name\": \"Branding Design\",\n                    \"quantity\":
-        1,\n                    \"price\": \"$1000\"\n                },\n                \"justification\":
-        \"The invoice lists ''Branding Design'' as a service with quantity 1 and price
-        $1000.\"\n            },\n            {\n                \"value\": {\n                    \"service_name\":
-        \"Web Design\",\n                    \"quantity\": 1,\n                    \"price\":
-        \"$3000\"\n                },\n                \"justification\": \"The invoice
-        lists ''Web Design'' as a service with quantity 1 and price $3000.\"\n            },\n            {\n                \"value\":
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": {\n                    \"service_name\":
+        \"Branding Design\",\n                    \"quantity\": 1,\n                    \"price\":
+        \"$1000\"\n                },\n                \"justification\": \"The invoice
+        lists ''Branding Design'' with quantity 1 and price $1000 under ITEM DESCRIPTION,
+        QTY, and PRICE columns.\"\n            },\n            {\n                \"value\":
+        {\n                    \"service_name\": \"Web Design\",\n                    \"quantity\":
+        1,\n                    \"price\": \"$3000\"\n                },\n                \"justification\":
+        \"The invoice lists ''Web Design'' with quantity 1 and price $3000 under ITEM
+        DESCRIPTION, QTY, and PRICE columns.\"\n            },\n            {\n                \"value\":
         {\n                    \"service_name\": \"Brochure\",\n                    \"quantity\":
         1,\n                    \"price\": \"$800\"\n                },\n                \"justification\":
-        \"The invoice lists ''Brochure'' as a service with quantity 1 and price $800.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1745186600, "id": "chatcmpl-DUMMY",
+        \"The invoice lists ''Brochure'' with quantity 1 and price $800 under ITEM
+        DESCRIPTION, QTY, and PRICE columns.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1746726567, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
@@ -1464,13 +1455,13 @@ interactions:
         "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
         false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
         []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
-        208, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        229, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2411, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 2619}}'
+        2411, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2304},
+        "total_tokens": 2640}}'
     headers:
       Content-Length:
-      - '2446'
+      - '2565'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -1484,15 +1475,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 785926c7-8797-4986-905f-bc1b580647eb
+      - bc9c4fdf-0bf9-4e5e-9032-984274dbdf16
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '3202'
+      - '3478'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:

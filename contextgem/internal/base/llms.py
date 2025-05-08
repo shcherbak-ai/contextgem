@@ -68,6 +68,7 @@ from contextgem.internal.utils import (
     _group_instances_by_fields,
     _llm_call_result_is_valid,
     _parse_llm_output_as_json,
+    _remove_thinking_content_from_llm_output,
     _run_async_calls,
     _run_sync,
     _validate_parsed_llm_output,
@@ -1311,7 +1312,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             )
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
             extracted_data = _validate_parsed_llm_output(
-                _parse_llm_output_as_json(extracted_data),
+                _parse_llm_output_as_json(
+                    _remove_thinking_content_from_llm_output(extracted_data)
+                ),
                 extracted_item_type=extracted_item_type,
                 justification_provided=add_justifications,
                 references_provided=add_references,
