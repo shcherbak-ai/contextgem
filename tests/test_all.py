@@ -3439,6 +3439,17 @@ class TestAll(TestUtils):
             advanced_aspects_with_concepts,
             advanced_multiple_docs_pipeline,
         )
+        from dev.usage_examples.docs.llm_config import (
+            cost_tracking,
+            detailed_usage,
+            fallback_llm,
+            llm_api,
+            llm_group,
+            llm_local,
+            o1_o4,
+            tracking_usage_and_cost,
+        )
+        from dev.usage_examples.docs.llms import llm_api, llm_local
         from dev.usage_examples.docs.optimizations import (
             optimization_accuracy,
             optimization_choosing_llm,

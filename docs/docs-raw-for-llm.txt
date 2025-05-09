@@ -4554,6 +4554,417 @@ intentional:
   represent them in text format.
 
 
+# ==== llms/supported_llms ====
+
+Supported LLMs
+**************
+
+ContextGem supports all LLM providers and models available through the
+LiteLLM integration. This means you can use models from major cloud
+providers like OpenAI, Anthropic, Google, and Azure, as well as run
+local models through providers like Ollama and LM Studio.
+
+ContextGem works with both types of LLM architectures:
+
+* Reasoning/CoT-capable models (e.g., "openai/o4-mini",
+  "ollama/deepseek-r1:32b")
+
+* Non-reasoning models (e.g., "openai/gpt-4.1", "ollama/llama3.1:8b")
+
+For a complete list of supported providers, see the LiteLLM Providers
+documentation.
+
+
+☁️ Cloud-based LLMs
+===================
+
+You can initialize cloud-based LLMs by specifying the provider and
+model name in the format "<provider>/<model_name>":
+
+Using cloud LLM providers
+
+   from contextgem import DocumentLLM
+
+   # Pattern for using any cloud LLM provider
+   llm = DocumentLLM(
+       model="<provider>/<model_name>",
+       api_key="<api_key>",
+   )
+
+   # Example - Using OpenAI LLM
+   llm_openai = DocumentLLM(
+       model="openai/gpt-4.1-mini",
+       api_key="<api_key>",
+       # see DocumentLLM API reference for all configuration options
+   )
+
+   # Example - Using Azure OpenAI LLM
+   llm_azure_openai = DocumentLLM(
+       model="azure/o4-mini",
+       api_key="<api_key>",
+       api_version="<api_version>",
+       api_base="<api_base>",
+       # see DocumentLLM API reference for all configuration options
+   )
+
+
+💻 Local LLMs
+=============
+
+For local LLMs, you'll need to specify the provider, model name, and
+the appropriate API base URL:
+
+Using local LLM providers
+
+   from contextgem import DocumentLLM
+
+   local_llm = DocumentLLM(
+       model="ollama/<model_name>",
+       api_base="http://localhost:11434",  # Default Ollama endpoint
+   )
+
+   # Example - Using Llama 3.1 LLM via Ollama
+   llm_llama = DocumentLLM(
+       model="ollama/llama3.1:8b",
+       api_base="http://localhost:11434",
+       # see DocumentLLM API reference for all configuration options
+   )
+
+   # Example - Using DeepSeek R1 reasoning model via Ollama
+   llm_deepseek = DocumentLLM(
+       model="ollama/deepseek-r1:32b",
+       api_base="http://localhost:11434",
+       # see DocumentLLM API reference for all configuration options
+   )
+
+For a complete list of configuration options available when
+initializing DocumentLLM instances, see the next section Configuring
+LLM(s).
+
+
+# ==== llms/llm_config ====
+
+Configuring LLM(s)
+******************
+
+This guide explains how to configure "DocumentLLM" instances to
+process documents using various LLM providers. ContextGem uses LiteLLM
+under the hood, providing uniform access to a wide range of models.
+For more information on supported LLMs, see Supported LLMs.
+
+
+🚀 Basic Configuration
+======================
+
+The minimum configuration for a cloud-based LLM requires the "model"
+parameter and an "api_key":
+
+Using a cloud-based LLM
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM(
+       model="openai/gpt-4o-mini",  # Format: <provider>/<model_name>
+       api_key="<your-api-key>",
+   )
+
+For local models, usually you need to specify the "api_base" instead
+of the API key:
+
+Using a local LLM
+
+   from contextgem import DocumentLLM
+
+   local_llm = DocumentLLM(
+       model="ollama/llama3.1:8b",
+       api_base="http://localhost:11434",  # Default Ollama endpoint
+   )
+
+
+📝 Configuration Parameters
+===========================
+
+The "DocumentLLM" class accepts the following parameters:
+
++----------------------+----------------------+--------------------------------------------------------------+
+| Parameter            | Default Value        | Description                                                  |
+|======================|======================|==============================================================|
+| "model"              | (Required)           | Model identifier in format "<provider>/<model_name>". See    |
+|                      |                      | LiteLLM Providers for all supported providers.               |
++----------------------+----------------------+--------------------------------------------------------------+
+| "api_key"            | "None"               | API key for authentication. Required for most cloud          |
+|                      |                      | providers but not for local models.                          |
++----------------------+----------------------+--------------------------------------------------------------+
+| "api_base"           | "None"               | Base URL of the API endpoint. Required for local models and  |
+|                      |                      | some cloud providers (e.g. Azure OpenAI).                    |
++----------------------+----------------------+--------------------------------------------------------------+
+| "deployment_id"      | "None"               | Deployment ID for the model. Primarily used with Azure       |
+|                      |                      | OpenAI.                                                      |
++----------------------+----------------------+--------------------------------------------------------------+
+| "api_version"        | "None"               | API version. Primarily used with Azure OpenAI.               |
++----------------------+----------------------+--------------------------------------------------------------+
+| "role"               | ""extractor_text""   | Role type for the LLM. Values: ""extractor_text"",           |
+|                      |                      | ""reasoner_text"", ""extractor_vision"",                     |
+|                      |                      | ""reasoner_vision"". The role parameter is an abstraction    |
+|                      |                      | that can be explicitly assigned to extraction components     |
+|                      |                      | (aspects and concepts) in the pipeline. ContextGem then      |
+|                      |                      | routes extraction tasks based on these assigned roles,       |
+|                      |                      | matching components with LLMs of the same role. This allows  |
+|                      |                      | you to structure your pipeline with different models for     |
+|                      |                      | different tasks (e.g., using simpler models for basic        |
+|                      |                      | extractions and more powerful models for complex reasoning). |
+|                      |                      | Note that roles don't imply specific model architectures -   |
+|                      |                      | they're simply a way for you to organize your workflow by    |
+|                      |                      | mapping less advanced and more advanced LLMs as needed. For  |
+|                      |                      | more details, see 🏷️ LLM Roles.                              |
++----------------------+----------------------+--------------------------------------------------------------+
+| "system_message"     | "None"               | By default, ContextGem sets a default system message that    |
+|                      |                      | primes the LLM for extraction tasks. This default system     |
+|                      |                      | message can be found here in the source code. Overriding     |
+|                      |                      | this is typically only necessary for advanced use cases.     |
++----------------------+----------------------+--------------------------------------------------------------+
+| "temperature"        | "0.3"                | Sampling temperature (0.0 to 1.0) controlling response       |
+|                      |                      | creativity. Lower values produce more predictable outputs,   |
+|                      |                      | higher values generate more varied responses.                |
++----------------------+----------------------+--------------------------------------------------------------+
+| "max_tokens"         | "4096"               | Maximum tokens in the generated response (applicable to most |
+|                      |                      | models).                                                     |
++----------------------+----------------------+--------------------------------------------------------------+
+| "max_completion_tok  | "16000"              | Maximum tokens for output completions in OpenAI o1/o3/o4     |
+| ens"                 |                      | models.                                                      |
++----------------------+----------------------+--------------------------------------------------------------+
+| "reasoning_effort"   | "None"               | Reasoning effort for o1/o3/o4 models. Values: ""low"",       |
+|                      |                      | ""medium"", ""high"".                                        |
++----------------------+----------------------+--------------------------------------------------------------+
+| "top_p"              | "0.3"                | Nucleus sampling value (0.0 to 1.0) controlling output       |
+|                      |                      | focus/randomness. Lower values make output more              |
+|                      |                      | deterministic, higher values produce more diverse outputs.   |
++----------------------+----------------------+--------------------------------------------------------------+
+| "timeout"            | "120"                | Timeout in seconds for LLM API calls.                        |
++----------------------+----------------------+--------------------------------------------------------------+
+| "num_retries_failed  | "3"                  | Number of retries when LLM request fails.                    |
+| _request"            |                      |                                                              |
++----------------------+----------------------+--------------------------------------------------------------+
+| "max_retries_failed  | "0"                  | LLM provider-specific retry count for failed requests.       |
+| _request"            |                      |                                                              |
++----------------------+----------------------+--------------------------------------------------------------+
+| "max_retries_invali  | "3"                  | Number of retries when LLM request succeeds but returns      |
+| d_data"              |                      | invalid data (JSON parsing and validation fails).            |
++----------------------+----------------------+--------------------------------------------------------------+
+| "pricing_details"    | "None"               | "LLMPricing" object with pricing details for cost            |
+|                      |                      | calculation.                                                 |
++----------------------+----------------------+--------------------------------------------------------------+
+| "is_fallback"        | "False"              | Indicates whether the LLM is a fallback model. Fallback LLMs |
+|                      |                      | are optionally assigned to the primary LLM instance and are  |
+|                      |                      | used when the primary LLM fails.                             |
++----------------------+----------------------+--------------------------------------------------------------+
+| "fallback_llm"       | "None"               | "DocumentLLM" to use as fallback if current one fails. Must  |
+|                      |                      | have the same role as the primary LLM.                       |
++----------------------+----------------------+--------------------------------------------------------------+
+| "output_language"    | ""en""               | Language for output text. Values: ""en"" or ""adapt""        |
+|                      |                      | (adapts to document language). Setting value to ""adapt""    |
+|                      |                      | ensures that the text output (e.g. justifications,           |
+|                      |                      | conclusions, explanations) is in the same language as the    |
+|                      |                      | document. This is particularly useful when working with non- |
+|                      |                      | English documents. For example, if you're extracting         |
+|                      |                      | anomalies from a contract in Spanish, setting                |
+|                      |                      | "output_language="adapt"" ensures that anomaly               |
+|                      |                      | justifications are also in Spanish, making them immediately  |
+|                      |                      | understandable by local end users reviewing the document.    |
++----------------------+----------------------+--------------------------------------------------------------+
+| "seed"               | "None"               | Seed for random number generation to help produce more       |
+|                      |                      | consistent outputs across multiple runs. When set to a       |
+|                      |                      | specific integer value, the LLM will attempt to use this     |
+|                      |                      | seed for sampling operations. However, deterministic output  |
+|                      |                      | is still not guaranteed even with the same seed, as other    |
+|                      |                      | factors may influence the model's response.                  |
++----------------------+----------------------+--------------------------------------------------------------+
+| "async_limiter"      | "AsyncLimiter(3,     | Relevant when concurrency is enabled for extraction tasks.   |
+|                      | 10)"                 | Controls frequency of async LLM API requests for concurrent  |
+|                      |                      | tasks. Defaults to allowing 3 acquisitions per 10-second     |
+|                      |                      | period to prevent rate limit issues. See aiolimiter          |
+|                      |                      | documentation for AsyncLimiter configuration details. See    |
+|                      |                      | Optimizing for Speed for an example of how to easily set up  |
+|                      |                      | concurrency for extraction.                                  |
++----------------------+----------------------+--------------------------------------------------------------+
+
+
+💡 Advanced Configuration Examples
+==================================
+
+
+🔄 Configuring a Fallback LLM
+-----------------------------
+
+You can set up a fallback LLM that will be used if the primary LLM
+fails:
+
+Configuring a fallback LLM
+
+   from contextgem import DocumentLLM
+
+   # Primary LLM
+   primary_llm = DocumentLLM(
+       model="openai/gpt-4o-mini",
+       api_key="<your-openai-api-key>",
+       role="extractor_text",  # default role
+   )
+
+   # Fallback LLM
+   fallback_llm = DocumentLLM(
+       model="anthropic/claude-3-5-haiku",
+       api_key="<your-anthropic-api-key>",
+       role="extractor_text",  # Must match the primary LLM's role
+       is_fallback=True,
+   )
+
+   # Assign fallback LLM to primary
+   primary_llm.fallback_llm = fallback_llm
+
+   # Then use the primary LLM as usual
+   # document = primary_llm.extract_all(document)
+
+
+💰 Setting Up Cost Tracking
+---------------------------
+
+You can configure pricing details to track costs:
+
+Setting up LLM cost tracking
+
+   from contextgem import DocumentLLM, LLMPricing
+
+   llm = DocumentLLM(
+       model="openai/gpt-4o-mini",
+       api_key="<your-openai-api-key>",
+       pricing_details=LLMPricing(
+           input_per_1m_tokens=0.150,  # Cost per 1M input tokens
+           output_per_1m_tokens=0.600,  # Cost per 1M output tokens
+       ),
+   )
+
+   # Perform some extraction tasks
+
+   # Later, you can check the cost
+   cost_info = llm.get_cost()
+
+
+🧠 Using Model-Specific Parameters
+----------------------------------
+
+For OpenAI's reasoning models (o1/o3/o4), you can set reasoning-
+specific parameters:
+
+Using model-specific parameters
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM(
+       model="openai/o3-mini",
+       api_key="<your-openai-api-key>",
+       max_completion_tokens=8000,  # Specific to o1/o3/o4 models
+       reasoning_effort="medium",  # Optional: "low", "medium", "high"
+   )
+
+
+🤖🤖 LLM Groups
+===============
+
+For complex document processing, you can organize multiple LLMs with
+different roles into a group:
+
+Using LLM group
+
+   from contextgem import DocumentLLM, DocumentLLMGroup
+
+   # Create LLMs with different roles
+   text_extractor = DocumentLLM(
+       model="openai/gpt-4o-mini",
+       api_key="<your-openai-api-key>",
+       role="extractor_text",
+       output_language="adapt",
+   )
+
+   text_reasoner = DocumentLLM(
+       model="openai/o3-mini",
+       api_key="<your-openai-api-key>",
+       role="reasoner_text",
+       max_completion_tokens=16000,
+       reasoning_effort="high",
+       output_language="adapt",
+   )
+
+   # Create a group
+   llm_group = DocumentLLMGroup(
+       llms=[text_extractor, text_reasoner],
+       output_language="adapt",  # All LLMs in the group must share the same output language setting
+   )
+
+   # Then use the group as usual
+   # document = llm_group.extract_all(document)
+
+See a practical example of using an LLM group in 🔄 Using a Multi-LLM
+Pipeline to Extract Data from Several Documents.
+
+
+📊 Accessing Usage and Cost Statistics
+======================================
+
+You can track input/output token usage and costs:
+
+Tracking usage and cost
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM(
+       model="anthropic/claude-3-5-haiku",
+       api_key="<your-anthropic-api-key>",
+   )
+
+   # Perform some extraction tasks
+
+   # Get usage statistics
+   usage_info = llm.get_usage()
+
+   # Get cost statistics
+   cost_info = llm.get_cost()
+
+   # Reset usage and cost statistics
+   llm.reset_usage_and_cost()
+
+   # The same methods are available for LLM groups, with optional filtering by LLM role
+   # usage_info = llm_group.get_usage(llm_role="extractor_text")
+   # cost_info = llm_group.get_cost(llm_role="extractor_text")
+   # llm_group.reset_usage_and_cost(llm_role="extractor_text")
+
+The usage statistics include not only token counts but also detailed
+information about each individual call made to the LLM. You can access
+the call history, including prompts, responses, and timestamps:
+
+Accessing detailed usage information
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM(
+       model="openai/gpt-4.1",
+       api_key="<your-openai-api-key>",
+   )
+
+   # Perform some extraction tasks
+
+   usage_info = llm.get_usage()
+
+   # Access the first usage container in the list (for the primary LLM)
+   llm_usage = usage_info[0]
+
+   # Get detailed call information
+   for call in llm_usage.usage.calls:
+       print(f"Prompt: {call.prompt}")
+       print(f"Response: {call.response}")  # original, unprocessed response
+       print(f"Sent at: {call.timestamp_sent}")
+       print(f"Received at: {call.timestamp_received}")
+
+
 # ==== optimizations/optimization_choosing_llm ====
 
 Choosing the Right LLM(s)
@@ -8734,8 +9145,8 @@ class contextgem.public.llms.DocumentLLM(**data)
         completions in o1/o3/o4 models. Defaults to 16000.
 
       * **reasoning_effort** -- The effort level for the LLM to reason
-        about the input. Defaults to None. Relevant for o1/o3/o4
-        models.
+        about the input. Can be set to ""low"", ""medium"", or
+        ""high"". Relevant for o1/o3/o4 models. Defaults to None.
 
       * **top_p** -- Nucleus sampling value (0.0 to 1.0) controlling
         output focus/randomness. Lower values make output more

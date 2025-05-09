@@ -15,6 +15,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+:og:description: ContextGem: Choosing the Right LLM(s)
 
 Choosing the Right LLM(s)
 ==========================
@@ -35,6 +36,9 @@ Since ContextGem specializes in deep single-document analysis, models with large
      - Concept Extraction
    * - A **smaller/distilled non-reasoning model** capable of identifying relevant document sections (e.g., ``gpt-4o-mini``). This extraction resembles multi-label classification. Complex aspects may occasionally require larger or reasoning models.
      - For *basic concepts* (e.g., titles, payment amounts, dates), the same **smaller/distilled non-reasoning model** is often sufficient (e.g., ``gpt-4o-mini``). For *complex concepts* requiring nuanced understanding within specific aspects or the entire document, consider a **larger non-reasoning model** (e.g., ``gpt-4o``). For concepts requiring advanced understanding or complex reasoning (e.g., logical deductions, evaluation), a **reasoning model** like ``o3-mini`` may be appropriate.
+
+
+.. _llm-roles-label:
 
 🏷️ LLM Roles
 --------------

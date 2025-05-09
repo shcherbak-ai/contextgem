@@ -15,6 +15,8 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+:og:description: ContextGem: Advanced Usage Examples
+
 Advanced usage examples
 =======================
 
@@ -58,6 +60,8 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>
 
+
+.. _multi-llm-pipeline-label:
 
 🔄 Using a Multi-LLM Pipeline to Extract Data from Several Documents
 ---------------------------------------------------------------------
