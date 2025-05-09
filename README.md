@@ -307,6 +307,8 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. o4-mini) and non-reasoning models (e.g. gpt-4.1)
 - **Simple API**: Unified interface for all LLMs with easy provider switching
 
+Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html) and how to [configure LLMs](https://contextgem.dev/llms/llm_config.html) in the documentation.
+
 
 ## ⚡ Optimizations
 

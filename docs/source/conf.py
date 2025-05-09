@@ -67,6 +67,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx_design",
     "sphinxext.opengraph",
+    "sphinx_sitemap",
 ]
 
 # Intersphinx mapping
@@ -91,9 +92,10 @@ exclude_patterns = []
 
 # Additional settings
 html_title = f"{project} {release} Documentation"
+html_baseurl = "https://contextgem.dev/"
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
-html_extra_path = ["../../dev/usage_examples/docstrings/"]
+html_extra_path = ["robots.txt"]
 html_favicon = "_static/favicon.ico"
 html_logo = "_static/favicon.ico"
 html_css_files = ["custom.css"]

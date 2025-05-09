@@ -89,6 +89,7 @@ from contextgem.internal.utils import (
     _is_json_serializable,
     _llm_call_result_is_valid,
     _parse_llm_output_as_json,
+    _remove_thinking_content_from_llm_output,
     _run_async_calls,
     _run_sync,
     _setup_jinja2_template,
@@ -164,6 +165,7 @@ __all__ = [
     "_is_json_serializable",
     "_get_sat_model",
     "_setup_jinja2_template",
+    "_remove_thinking_content_from_llm_output",
     # Converters
     # DOCX
     "WORD_XML_NAMESPACES",

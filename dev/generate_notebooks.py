@@ -31,7 +31,7 @@ import nbformat
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 
 # Directories to exclude from notebook generation
-EXCLUDE_DIRS = ["optimizations", "serialization"]
+EXCLUDE_DIRS = ["optimizations", "serialization", "llms", "llm_config"]
 
 
 def extract_first_comment(file_path: str | Path) -> Optional[str]:

@@ -89,7 +89,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -97,21 +97,21 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "The result of 2 + 2 is 4.", "refusal": null, "role": "assistant"}}], "created":
-        1745186602, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_c8225066ea", "usage":
-        {"completion_tokens": 13, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 700, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 713}}'
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "The result of 2 + 2 is 4.", "refusal": null, "role": "assistant"}}],
+        "created": 1746726570, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_c8225066ea", "usage": {"completion_tokens": 13, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 700, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 713}}'
     headers:
       Content-Length:
-      - '1222'
+      - '1239'
       Content-Type:
       - application/json
       Date:
@@ -123,17 +123,15 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '207'
+      - '210'
       ms-azureml-model-time:
-      - '225'
+      - '222'
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '228'
+      - '223'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -245,7 +243,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -253,23 +251,24 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "The type of this document is an Invoice.", "refusal": null, "role": "assistant"}}],
-        "created": 1745186605, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_result": {"jailbreak": {"filtered": false, "detected": false},
-        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
-        1, "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
-        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "custom_blocklists": {"filtered": false, "details": []}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 10, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 1515, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 1525}}'
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "The type of this document is an Invoice.", "refusal": null,
+        "role": "assistant"}}], "created": 1746726572, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
+        "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
+        {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
+        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
+        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
+        []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
+        10, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        1515, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        1525}}'
     headers:
       Content-Length:
-      - '1386'
+      - '1403'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -283,15 +282,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 0311b438-6bfc-413d-9d87-deed3f12e887
+      - 27e99e82-5a59-4052-808b-f57684888a2d
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1738'
+      - '1796'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:
@@ -403,7 +400,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2024-12-01-preview
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -411,21 +408,21 @@ interactions:
         false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"content":
-        "The result of 2 + 2 is 4.", "refusal": null, "role": "assistant"}}], "created":
-        1745186606, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_c8225066ea", "usage":
-        {"completion_tokens": 13, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 700, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 713}}'
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "The result of 2 + 2 is 4.", "refusal": null, "role": "assistant"}}],
+        "created": 1746726573, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_c8225066ea", "usage": {"completion_tokens": 13, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 700, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 713}}'
     headers:
       Content-Length:
-      - '1222'
+      - '1239'
       Content-Type:
       - application/json
       Date:
@@ -437,17 +434,15 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '215'
+      - '284'
       ms-azureml-model-time:
-      - '234'
+      - '297'
       x-accel-buffering:
       - 'no'
-      x-aml-cluster:
-      - DUMMY
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '244'
+      - '298'
       x-ms-client-request-id:
       - DUMMY
       x-ms-deployment-name:

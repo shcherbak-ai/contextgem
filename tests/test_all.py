@@ -370,10 +370,10 @@ class TestAll(TestUtils):
                 TestNoRequiredAttrs()  # initialized with no required attributes
 
     @pytest.mark.vcr()
-    def test_init_local_llm(self):
+    def test_local_llms(self):
         """
-        Tests for initialization of and getting a response from a local LLM,
-        e.g. a model run on Ollama local server.
+        Tests for initialization of and getting a response from local LLMs,
+        e.g. models run on Ollama local server.
         """
         document = Document(
             raw_text="Non-disclosure agreement\n\n"
@@ -383,21 +383,34 @@ class TestAll(TestUtils):
             name="Contract title", description="The title of the contract."
         )
         document.add_concepts([concept])
-        llm = DocumentLLM(
+
+        def extract_with_local_llm(llm: DocumentLLM):
+            self.config_llm_async_limiter_for_mock_responses(llm)
+            extracted_concepts = llm.extract_concepts_from_document(
+                document, overwrite_existing=True
+            )
+            self.log_extracted_items_for_instance(extracted_concepts[0])
+            extracted_items = extracted_concepts[0].extracted_items
+            if extracted_items:
+                logger.debug(f"Extracted by local LLM: {extracted_items}")
+            else:
+                warnings.warn("Local LLM did not return any extracted items.")
+
+        # Non-reasoning LLM
+        llm_non_reasoning = DocumentLLM(
             model="ollama/llama3.1:8b",
             api_base="http://localhost:11434",
             seed=123,
         )
+        extract_with_local_llm(llm_non_reasoning)
 
-        self.config_llm_async_limiter_for_mock_responses(llm)
-
-        extracted_concepts = llm.extract_concepts_from_document(document)
-        self.log_extracted_items_for_instance(extracted_concepts[0])
-        extracted_items = extracted_concepts[0].extracted_items
-        if extracted_items:
-            logger.debug(f"Extracted by local LLM: {extracted_items}")
-        else:
-            warnings.warn("Local LLM did not return any extracted items.")
+        # Reasoning LLM (response may begin with <think> tags)
+        llm_reasoning = DocumentLLM(
+            model="ollama/deepseek-r1:32b",
+            api_base="http://localhost:11434",
+            seed=123,
+        )
+        extract_with_local_llm(llm_reasoning)
 
     def test_init_api_llm(self):
         """
@@ -3426,6 +3439,17 @@ class TestAll(TestUtils):
             advanced_aspects_with_concepts,
             advanced_multiple_docs_pipeline,
         )
+        from dev.usage_examples.docs.llm_config import (
+            cost_tracking,
+            detailed_usage,
+            fallback_llm,
+            llm_api,
+            llm_group,
+            llm_local,
+            o1_o4,
+            tracking_usage_and_cost,
+        )
+        from dev.usage_examples.docs.llms import llm_api, llm_local
         from dev.usage_examples.docs.optimizations import (
             optimization_accuracy,
             optimization_choosing_llm,

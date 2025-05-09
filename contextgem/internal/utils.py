@@ -426,7 +426,49 @@ def _llm_call_result_is_valid(res: tuple[Any, _LLMUsage] | None) -> bool:
     return True
 
 
-def _parse_llm_output_as_json(output_str: str | dict | list) -> dict | list | None:
+def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | None:
+    """
+    Removes thinking content enclosed in <think></think> tags from the beginning of LLM outputs.
+
+    When using local reasoning LLMs (e.g. DeepSeek R1 in Ollama), the output may include
+    thinking steps enclosed in <think></think> tags at the beginning. This function removes those tags
+    and their content only if they appear at the start of the string, then strips any remaining whitespace.
+
+    This preserves any <think></think> tags that might appear later in the content as part of the
+    actual response.
+
+    :param output_str: The output string from an LLM that may contain thinking content, can be None
+                      if LLM outputs invalid content
+    :type output_str: str | None
+
+    :return: The cleaned string without initial thinking content and extra whitespace, or None if
+             the input was None or an error occurred during processing
+    :rtype: str | None
+    """
+    if output_str is None:
+        return None
+
+    try:
+        # Check if the string starts with <think> tag
+        if output_str.strip().startswith("<think>"):
+            # Find the first closing </think> tag
+            end_tag_pos = output_str.find("</think>")
+            if end_tag_pos != -1:
+                # Remove everything from start to the end of </think> tag
+                cleaned_str = output_str[end_tag_pos + len("</think>") :]
+                # Strip any remaining whitespace
+                cleaned_str = cleaned_str.strip()
+                assert len(cleaned_str) > 0, "Cleaned string is empty"
+                return cleaned_str
+
+        return output_str.strip()
+    except (AssertionError, AttributeError):
+        return None
+
+
+def _parse_llm_output_as_json(
+    output_str: str | dict | list | None,
+) -> dict | list | None:
     """
     Parses the provided LLM-generated output into a JSON-compatible Python object.
 
@@ -436,8 +478,9 @@ def _parse_llm_output_as_json(output_str: str | dict | list) -> dict | list | No
     ` ```json` code block, removing them before parsing.
 
     :param output_str: The output string to parse. It may already be a JSON-parsed Python object,
-        a JSON string, or a string containing a JSON code block marked with ` ```json`.
-    :type output_str: str | dict | list
+        a JSON string, or a string containing a JSON code block marked with ` ```json`. Can be None
+        if LLM outputs invalid content.
+    :type output_str: str | dict | list | None
 
     :return: A dictionary, a list, or `None` if parsing fails or the `output_str` type is invalid.
     :rtype: dict | list | None
@@ -448,8 +491,19 @@ def _parse_llm_output_as_json(output_str: str | dict | list) -> dict | list | No
 
     except json.JSONDecodeError:
         try:
-            # Strip of surrounding ```json, if any
-            answer = output_str.lstrip(r"```json").rstrip(r"```")
+            # Handle markdown code blocks using regex
+
+            answer = output_str.strip()
+
+            # Pattern to match content between ```json
+            # (at string start) and ``` (at string end) markers
+            json_block_pattern = r"^```json\s*([\s\S]*?)\s*```$"
+            match = re.match(json_block_pattern, answer)
+
+            if match:
+                # Get the content between the markers
+                answer = match.group(1).strip()
+
             return json.loads(answer)
         except json.JSONDecodeError:
             return None

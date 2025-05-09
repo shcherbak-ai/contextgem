@@ -312,8 +312,8 @@ class DocumentLLM(_GenericLLMProcessor):
     :ivar max_completion_tokens: Maximum token size for output completions in o1/o3/o4 models.
         Defaults to 16000.
     :type max_completion_tokens: Optional[int]
-    :ivar reasoning_effort: The effort level for the LLM to reason about the input. Defaults to None.
-        Relevant for o1/o3/o4 models.
+    :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
+        ``"low"``, ``"medium"``, or ``"high"``. Relevant for o1/o3/o4 models. Defaults to None.
     :type reasoning_effort: Optional[ReasoningEffort]
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
@@ -946,7 +946,9 @@ class DocumentLLM(_GenericLLMProcessor):
                     chat_completion = await task
             else:
                 chat_completion = await task
-            answer = chat_completion.choices[0].message.content.strip()
+            answer = chat_completion.choices[
+                0
+            ].message.content  # str, or None if invalid response
             usage.input = chat_completion.usage.prompt_tokens
             usage.output = chat_completion.usage.completion_tokens
             llm_call_obj._record_response_timestamp()

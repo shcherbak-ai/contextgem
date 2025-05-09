@@ -86,7 +86,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             :expand:
             
             Explore
-    
+
     .. grid-item-card:: 🔄 Document Converters
         :link: converters/docx
         :link-type: doc
@@ -103,6 +103,23 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             :expand:
 
             Convert Files
+
+    .. grid-item-card:: 🤖 Large Language Models
+        :link: llms/supported_llms
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+        
+        Learn about supported cloud LLM providers and local models, and how to configure them.
+        
+        +++
+        .. button-ref:: llms/supported_llms
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+            
+            Explore LLMs
 
     .. grid-item-card:: ⚙️ Optimization Guide
         :link: optimizations/optimization_choosing_llm
@@ -196,6 +213,14 @@ Indices and tables
    :hidden:
    
    converters/docx
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Large Language Models
+   :hidden:
+   
+   llms/supported_llms
+   llms/llm_config
 
 .. toctree::
    :maxdepth: 2
