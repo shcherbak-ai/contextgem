@@ -31,7 +31,14 @@ from contextgem.internal.typings.aliases import (
     SaTModelId,
 )
 from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
+from contextgem.internal.typings.typed_class_utils import (
+    _get_model_fields,
+    _is_typed_class,
+    _raise_dict_class_type_error,
+)
+from contextgem.internal.typings.types_normalization import _normalize_type_annotation
 from contextgem.internal.typings.types_to_strings import (
+    _format_dict_structure,
     _format_type,
     _is_json_serializable_type,
     _JsonObjectItemStructure,
@@ -62,6 +69,13 @@ __all__ = [
     "_format_type",
     "_JsonObjectItemStructure",
     "_serialize_type_hint",
+    "_format_dict_structure",
     # User type hints validation
     "_dynamic_pydantic_model",
+    # Typed class utils
+    "_is_typed_class",
+    "_get_model_fields",
+    "_raise_dict_class_type_error",
+    # Types normalization
+    "_normalize_type_annotation",
 ]

@@ -174,7 +174,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            3\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1746726634, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1747651376, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -183,7 +183,7 @@ interactions:
         "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 29,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1955, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
+        1955, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
         "total_tokens": 1984}}'
     headers:
       Content-Length:
@@ -199,20 +199,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '405'
-      ms-azureml-model-time:
-      - '415'
+      - '577'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '417'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -371,7 +363,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n  {\n    \"concept_id\":
         \"C0\",\n    \"extracted_items\": [\n      \"$4800\"\n    ]\n  }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1746726636, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1747651378, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
@@ -399,16 +391,16 @@ interactions:
       - DUMMY
       azureml-model-session:
       - DUMMY
+      cmp-upstream-response-duration:
+      - '1035'
       request-id:
-      - fd590a69-92c0-4d78-8e10-2fbc013cad41
+      - 67dc603b-24a6-4ab3-95bb-f2612613e1d5
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1539'
-      x-ms-client-request-id:
-      - DUMMY
+      - '1890'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -583,7 +575,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1746726636, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1747651379, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -607,20 +599,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '315'
-      ms-azureml-model-time:
-      - '328'
+      - '535'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '330'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -789,20 +773,21 @@ interactions:
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [1]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1746726637, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 25, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 1523, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 1548}}'
+        \"C0\",\n        \"extracted_items\": [\n            1\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1747651379, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 29,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        1523, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
+        "total_tokens": 1552}}'
     headers:
       Content-Length:
-      - '1180'
+      - '1204'
       Content-Type:
       - application/json
       Date:
@@ -814,20 +799,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '423'
-      ms-azureml-model-time:
-      - '435'
+      - '558'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '437'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -989,7 +966,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1746726637, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1747651380, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -1013,20 +990,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '335'
-      ms-azureml-model-time:
-      - '362'
+      - '749'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '365'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -1187,7 +1156,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            2\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1746726638, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1747651381, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1212,20 +1181,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1286'
-      ms-azureml-model-time:
-      - '1301'
+      - '838'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '1302'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -1384,7 +1345,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n  {\n    \"concept_id\":
         \"C0\",\n    \"extracted_items\": [\n      \"$4800\"\n    ]\n  }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1746726641, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1747651383, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
@@ -1395,11 +1356,11 @@ interactions:
         []}}}], "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens":
         30, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2193, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
-        "total_tokens": 2223}}'
+        2193, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        2223}}'
     headers:
       Content-Length:
-      - '1337'
+      - '1334'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -1412,16 +1373,16 @@ interactions:
       - DUMMY
       azureml-model-session:
       - DUMMY
+      cmp-upstream-response-duration:
+      - '1149'
       request-id:
-      - c6e511a3-77ef-4966-9a53-cea092e85c41
+      - 752cbca5-3fda-4946-82e0-4286838186a5
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2176'
-      x-ms-client-request-id:
-      - DUMMY
+      - '2341'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -1747,7 +1708,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P35\",\n            \"P36\",\n            \"P37\",\n            \"P38\",\n            \"P39\",\n            \"P40\",\n            \"P41\",\n            \"P42\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1746726642, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1747651385, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1772,20 +1733,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '735'
-      ms-azureml-model-time:
-      - '747'
+      - '1563'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '749'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -2308,7 +2261,7 @@ interactions:
         \"P41-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
         \"P42\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
         \"P42-S0\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1746726643, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1747651387, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -2333,20 +2286,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3071'
-      ms-azureml-model-time:
-      - '3089'
+      - '7738'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '3091'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY

@@ -33,6 +33,7 @@ from contextgem.public import (
     DocumentPipeline,
     DocxConverter,
     Image,
+    JsonObjectClassStruct,
     JsonObjectConcept,
     JsonObjectExample,
     LLMPricing,
@@ -79,6 +80,7 @@ __all__ = [
     # Utils
     "image_to_base64",
     "reload_logger_settings",
+    "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
 ]

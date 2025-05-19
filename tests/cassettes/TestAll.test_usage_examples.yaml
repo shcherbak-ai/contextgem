@@ -152,15 +152,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFNNj5swEL3zK6w5h4pkESG5dQ97rFppu5UaIuTYA7g1tmUPVapV/ntl
-        yAbSdjkAmvfBzBvzmjAGSsKegeg4id7p9PGlNM/fXr54s9udzu2nnJ6+N1/9sz5rXsAqKuzpBwp6
-        U30QtncaSVkzwcIjJ4yu621ebIt1UT6MQG8l6ihrHaW5TTfZJk+zMs2uvqKzSmCAPTskjDH2Ot5j
-        i0biGfYsW71VegyBtwj7G4kx8FbHCvAQVCBuCFYzKKwhNGPXh8qM9tMjXhXw4FBQrWQFe1bBx6yC
-        1RJ33PPWc9fVSobIOczoxPi83t1prtVNVsFcPE6vl8ocl815bIbAYzZm0HoBcGMs8ZjtGMvxilxu
-        QWjbOm9P4S8pNMqo0NUeebAmDh3IOhjRS8LYcQx8uMsQnLe9o5rsTxw/t96WxWQI845n+CG/gmSJ
-        64Ws3FwXde9YSySudFgsDQQXHcqFtijy2wx8kMrOWJYsRv+3o//ZT+Mr0y5c3rWfASHQEcraeZRK
-        3E890zzG3+A92i3qsWEI6H8pgTUp9HEdEhs+6OmEQvgdCPu6UaZF77yajmnjalmWRd6Up+IEySX5
-        AwAA//8DAEdC3UavAwAA
+        H4sIAAAAAAAAA4yT246bMBCG73kKa66hApLmwN2u1Juu1JO0raoQIccewF2wLXuyPazy7pUhG0i7
+        lcoFoPnmH2b+MU8RY6AkFAxEy0n0tktuv/o3d1t623+/f/f+1/2t+SIXn28ePt59co8W4qAwh28o
+        6Fn1SpjedkjK6BELh5wwVM3Wy/XqdbbI8gH0RmIXZI2lZGmSPM2XSbpJ0tVZ2Bol0EPBdhFjjD0N
+        99CilvgDCpbGz5EevecNQnFJYgyc6UIEuPfKE9cE8QSF0YR66HpX6qH8+AhXCdxbFFQpWULBSrhJ
+        S4jn3HLHG8dtWynpQ85uomPGh2x7pTlH87SEKbgfX0+l3s+bc1gfPQ/e6GPXzQDX2hAP3g627M/k
+        dDGiM4115uD/kEKttPJt5ZB7o8PQnoyFgZ4ixvaD4ccrD8E601uqyDzg8LlsvVmNBWHa8YQXizMk
+        Q7ybyTbZNn6hYiWRuOr8bGkguGhRTtppw/wolZmBaDb33+28VHucXenmf8pPQAi0hLKyDqUS1yNP
+        aQ7DP/CvtIvPQ8Pg0T0qgRUpdGEXEmt+7MbjCf6nJ+yrWukGnXVqPKO1rbYHKWvBV5hDdIp+AwAA
+        //8DAEjSBg6sAwAA
     headers:
       CF-RAY:
       - DUMMY
@@ -189,227 +189,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1521'
+      - '637'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1543'
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-ratelimit-reset-requests:
-      - 20ms
-      x-ratelimit-reset-tokens:
-      - 560ms
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
-      the extraction, analysis, and interpretation of data within various types of
-      documents. Your role is to carefully process the information and provide accurate,
-      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
-      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
-      written or visual content. Documents can vary in type and purpose, including
-      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
-      Invoices: Financial documents detailing transactions and payments.\n- Curricula
-      Vitae (CVs): Resumes outlining an individual''s professional experience and
-      qualifications.\n- General Documents: Any other types of files that may contain
-      text, tables, images, or mixed formats.\nNote that occasionally you may be working
-      with document fragments rather than complete documents. These fragments represent
-      portions of a larger document and should be analyzed within their limited context.
-      When working with fragments, focus on extracting information from the available
-      content without making assumptions about missing parts.\n\n2. Aspect: A defined
-      area or topic within a document that requires focused attention. Each aspect
-      corresponds to a specific subject or theme described in the task. For example:\n-
-      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
-      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
-      Work experience, education, or skills.\nYou will analyze aspects as instructed,
-      considering their relevance and context within the document.\n\n3. Concept:
-      A unit of information or an entity relevant to the task. Concepts may be derived
-      from an aspect or the broader document context. They represent a wide range
-      of data points and insights, from simple entities (names, dates, monetary values)
-      to complex evaluations, conclusions, and answers to specific questions. Concepts
-      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
-      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
-      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
-      Reasoned conclusions: Such as determining whether a document meets specific
-      criteria or answers particular questions.\n- Interpretative judgments: Such
-      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
-      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
-      you comprehend the nature of the document and the aspects or concepts you need
-      to focus on.\n- Follow specific instructions: Each task will include detailed
-      instructions, such as which aspects or concepts to focus on and how the data
-      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
-      ensuring your outputs align with the document''s intent and context.\n- Adapt
-      to variability: Documents may differ in structure, language, or formatting.
-      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
-      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
-      based on the task requirements.\n- Explanations (when required): When required
-      by the instructions, include justifications or reasoning for your interpretations.\n-
-      Insights (when required): When required by the instructions, highlight trends,
-      patterns, or noteworthy findings that could add value to the task.\n- References
-      (when required): When required by the instructions, output references based
-      on which you extracted data, provided insights, or made conclusions during the
-      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
-      performance across diverse document analysis tasks."},{"role":"user","content":"Below
-      you will find a list of consecutively ordered paragraphs from a document and
-      a list of aspects. Your task is to:\n\n1. Read and understand the aspects\n-
-      Each aspect is identified by an Aspect ID (for example, \"A0\", \"A1\", etc.),
-      includes a name, and has a description.\n- Aspects describe themes, topics,
-      or criteria that might be addressed in the paragraphs.\n\n2. Examine each paragraph\n-
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.), followed by the full text of the paragraph and, optionally, additional
-      information about the paragraph, which may be helpful during your analysis.\n-
-      Note that paragraphs are listed in the same order they appear in the original
-      document; therefore, context from surrounding paragraphs may influence whether
-      a particular paragraph is relevant to an aspect.\n\n3. Map paragraphs to aspects\n-
-      A paragraph can address one, multiple, or none of the aspects.\n- If a paragraph
-      clearly relates to an aspect (based on the aspect''s name and description),
-      include that paragraph''s ID under the aspect''s list of paragraph IDs.\n- If
-      a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n\n4. Produce the final answer in the specified JSON format\n- Your output
-      must be a JSON array of objects, each object corresponding to a single aspect.\n-
-      For each aspect (in the order they are provided), include:\n    -- aspect_id:
-      The aspect''s unique identifier, e.g., \"A0\".\n    -- paragraph_ids: An array
-      of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\", \"P2\"].\n    --
-      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
-      array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n\nUse the following answer format as a guide
-      for your final answer (remember: no surrounding text or ```json delimiters should
-      be included).\n\n===\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
-      str,\n        \"paragraph_ids: [\n            str,\n            ...\n        ]\n    },\n    ...\n]\n===\n\n___\nDOCUMENT
-      ASPECTS:\n```\n- Aspect ID: A0\nAspect name: Data Subject Rights\nAspect description:\nInformation
-      about the rights users have regarding their data\n```\n\n___\n\n---\nDOCUMENT
-      PARAGRAPHS:\n''''''\n- Paragraph ID: P0\nParagraph text: Privacy Policy\n''''''\n\n''''''\n-
-      Paragraph ID: P1\nParagraph text: Last Updated: March 15, 2024\n''''''\n\n''''''\n-
-      Paragraph ID: P2\nParagraph text: 1. Data Collection\n''''''\n\n''''''\n- Paragraph
-      ID: P3\nParagraph text: We collect various types of information from our users,
-      including:\n''''''\n\n''''''\n- Paragraph ID: P4\nParagraph text: - Personal
-      information (name, email address, phone number)\n''''''\n\n''''''\n- Paragraph
-      ID: P5\nParagraph text: - Device information (IP address, browser type, operating
-      system)\n''''''\n\n''''''\n- Paragraph ID: P6\nParagraph text: - Usage data
-      (pages visited, time spent on site)\n''''''\n\n''''''\n- Paragraph ID: P7\nParagraph
-      text: - Location data (with your consent)\n''''''\n\n''''''\n- Paragraph ID:
-      P8\nParagraph text: 2. Data Usage\n''''''\n\n''''''\n- Paragraph ID: P9\nParagraph
-      text: We use your information to:\n''''''\n\n''''''\n- Paragraph ID: P10\nParagraph
-      text: - Provide and improve our services\n''''''\n\n''''''\n- Paragraph ID:
-      P11\nParagraph text: - Send you marketing communications (if you opt-in)\n''''''\n\n''''''\n-
-      Paragraph ID: P12\nParagraph text: - Analyze website performance\n''''''\n\n''''''\n-
-      Paragraph ID: P13\nParagraph text: - Comply with legal obligations\n''''''\n\n''''''\n-
-      Paragraph ID: P14\nParagraph text: 3. Data Sharing\n''''''\n\n''''''\n- Paragraph
-      ID: P15\nParagraph text: We may share your information with:\n''''''\n\n''''''\n-
-      Paragraph ID: P16\nParagraph text: - Service providers (for processing payments
-      and analytics)\n''''''\n\n''''''\n- Paragraph ID: P17\nParagraph text: - Law
-      enforcement (when legally required)\n''''''\n\n''''''\n- Paragraph ID: P18\nParagraph
-      text: - Business partners (with your explicit consent)\n''''''\n\n''''''\n-
-      Paragraph ID: P19\nParagraph text: 4. Data Retention\n''''''\n\n''''''\n- Paragraph
-      ID: P20\nParagraph text: We retain personal data for 24 months after your last
-      interaction with our services. Analytics data is kept for 36 months.\n''''''\n\n''''''\n-
-      Paragraph ID: P21\nParagraph text: 5. User Rights\n''''''\n\n''''''\n- Paragraph
-      ID: P22\nParagraph text: You have the right to:\n''''''\n\n''''''\n- Paragraph
-      ID: P23\nParagraph text: - Access your personal data\n''''''\n\n''''''\n- Paragraph
-      ID: P24\nParagraph text: - Request data deletion\n''''''\n\n''''''\n- Paragraph
-      ID: P25\nParagraph text: - Opt-out of marketing communications\n''''''\n\n''''''\n-
-      Paragraph ID: P26\nParagraph text: - Lodge a complaint with supervisory authorities\n''''''\n\n''''''\n-
-      Paragraph ID: P27\nParagraph text: 6. Contact Information\n''''''\n\n''''''\n-
-      Paragraph ID: P28\nParagraph text: For privacy-related inquiries, contact our
-      Data Protection Officer at privacy@example.com\n''''''\n\n---"}],"model":"gpt-4o","max_tokens":4096,"temperature":0.3,"top_p":0.3}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate, zstd
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '8836'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncOpenAI/Python 1.75.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.75.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://api.openai.com/v1/chat/completions
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFNNc5swFLzzKzTvbDoYY0x8a3JrD+2h7cV4GCE9sBIhaSTRaZrxf+8I
-        bINTwkEwu29X74u3iBAQHPYE2Il61hkZP/4q1I9d/bVpi039/PPp2yvL5d8n+uXhJX+EVVDo+hmZ
-        v6o+Md0ZiV5oNdLMIvUYXNe7LN/l67zYDESnOcoga42PMx2nSZrFSREn+UV40oKhgz05RIQQ8jac
-        IUXF8Q/sSbK6Ih06R1uE/S2IELBaBgSoc8J5qjysJpJp5VENWR9KNdiPr/CUQJ1B5ivBS9iTEj4n
-        JazmvKGWtpaaUyW4CzGHiR0jvqfrO80VTRfRzSKaLaLbRTQvYQKP4+e5VMd50Rab3tHQc9VLOSOo
-        UtrTMLOh3ccLc741WOrWWF27d1JohBLuVFmkTqvQTOe1gYE9R4Qch0H2d7MBY3VnfOX1Cw7XrXfF
-        djSEaXcmeptdSK89lTNZsXlYLThWHD0V0s2WARhlJ+QzbZJmtxpoz4WeuCSalf5/Rkv2Y/lCtTOX
-        D+0ngjE0HnllLHLB7quewiyG3+ujsFurh4TBof0tGFZeoA3j4NjQXo6bD+7VeeyqRqgWrbFiXP/G
-        VLwo8qwp6ryG6Bz9AwAA//8DAI9DCKgHBAAA
-    headers:
-      CF-RAY:
-      - DUMMY
-      Connection:
-      - keep-alive
-      Content-Encoding:
-      - gzip
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Server:
-      - cloudflare
-      Set-Cookie:
-      - DUMMY
-      Transfer-Encoding:
-      - chunked
-      X-Content-Type-Options:
-      - nosniff
-      access-control-expose-headers:
-      - X-Request-ID
-      alt-svc:
-      - h3=":443"; ma=86400
-      cf-cache-status:
-      - DYNAMIC
-      openai-organization:
-      - DUMMY
-      openai-processing-ms:
-      - '2114'
-      openai-version:
-      - '2020-10-01'
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
-      x-envoy-upstream-service-time:
-      - '2120'
+      - '641'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -580,15 +366,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFNNj5swFLzzK6x3hopkgbDcuq16q7SHdrVSiJBjP8At2F7bRG1X+e+V
-        IRtIy3IwaObN+H3xGhACgkNBgLXUsV530cNTLr8//9nev5ye4hfWP9rTt+evn7/06UP6CUKvUMcf
-        yNyb6gNTve7QCSUnmhmkDr3rZpdku2yT5clI9Ipj52WNdlGiom28TaI4j+LsImyVYGihIPuAEEJe
-        x9OnKDn+goLE4RvSo7W0QSiuQYSAUZ1HgForrKPSQTiTTEmHcsx6X8rRfnr5pwRqNTJXCV5CQUr4
-        GJcQLnlNDW0M1W0luPUx+5mdIh63N5ILeLcGJmtgugZma+CuhBk7TJ/nUh6W5RqsB0t9t+XQdQuC
-        Sqkc9dMaG324MOdrazvVaKOO9h8p1EIK21YGqVXSt9E6pWFkzwEhh3GEw81UQBvVa1c59RPH6za7
-        PJ0MYd6amU6TC+mUo91Clt/dhyuOFUdHRWcXawCMshb5QptlybUGOnChZi4OFqX/n9Ga/VS+kM3C
-        5V37mWAMtUNeaYNcsNuq5zCD/sd6L+za6jFhsGhOgmHlBBo/Do41Hbpp58H+tg77qhayQaONmBa/
-        1hXP8yyp82N2hOAc/AUAAP//AwBkHf0LAQQAAA==
+        H4sIAAAAAAAAAwAAAP//dFPLjpswFN3zFdZdh4oAeZRdphqpaqWqy05DhBz7Ap4xtmU7baNR/r0y
+        ZAJpGRYGnXPP8X3xGhECgkNBgLXUs87I+OHJPX79/JR/Op9/py/y57f8ofO7L7vzD4YZLIJCH5+R
+        +TfVB6Y7I9ELrQaaWaQeg+tyk2/Wq2W2THui0xxlkDXGx7mO0yTN42QbJ+ursNWCoYOC7CNCCHnt
+        z5Ci4vgHCpIs3pAOnaMNQnELIgSslgEB6pxwnioPi5FkWnlUfdb7UvX2wys8JVBnkPlK8BIKUsIu
+        KWEx5Q21tLHUtJXgLsTsR3aI+J7eSa5gNgfmc+BqDlzPgZsSRuwwfF5KdZiWa7E+ORq6rU5STgiq
+        lPY0TKtv9OHKXG6tlboxVh/dP1KohRKurSxSp1Voo/PaQM9eIkIO/QhPd1MBY3VnfOX1C/bXLTfb
+        1WAI49aM9Cq7kl57KieybbZdzDhWHD0V0k3WABhlLfKJNknzWw30xIUeuSSalP5/RnP2Q/lCNROX
+        d+1HgjE0HnllLHLB7qsewyyGH+u9sFur+4TBof0lGFZeoA3j4FjTkxx2HtzZeeyqWqgGrbFiWPza
+        VB+PnNeMrjGF6BL9BQAA//8DAPhai5UBBAAA
     headers:
       CF-RAY:
       - DUMMY
@@ -617,13 +403,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1944'
+      - '837'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2178'
+      - '846'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -635,121 +421,123 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 748ms
+      - 551ms
       x-request-id:
       - DUMMY
     status:
       code: 200
       message: OK
 - request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array. If the concept is not found or there are no items to extract,
-      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
-      of extracted items for the concept is specified under \\\"Amount of extracted
-      items\\\". Each extracted item, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
-      structure is provided for a concept under \u201CExpected structure,\u201D you
-      must follow that structure for all extracted items corresponding to that concept.\\n
-      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
-      the extracted item value must be within that scale.\\n    -- If there are example
-      items (\u201CExtracted concept examples\u201D), try to follow the same style
-      and formatting for your extracted items.\\n    -- When extracting string values,
-      translate them in English if the original language of the document is not English.\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure your extracted
-      items strictly match that type. Python types are provided (e.g., str for string,
-      int for integer, float for floating-point number, dict for object, etc.).\\n
-      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
-      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
-      all, your output should still contain an entry for that concept with an empty
-      \\\"extracted_items\\\" array.\\n    -- If multiple items are found for a concept,
-      include each as a separate entry within the \\\"extracted_items\\\" array.\\n\\n-
-      No additional text:\\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
-      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
-      Concept ID: C0\\nConcept name: Last Updated Date\\n\\nConcept description:\\nThe
-      date when the privacy policy was last updated\\n\\nAmount of extracted items:
-      This concept may have zero or one extracted item, never multiple items.\\n\\nConcept
-      extracted item type: str (in 'DD-MM-YYYY' format)\\n```\\n\\n___\\n\\n---\\nDOCUMENT
-      TEXT:\\nPrivacy Policy\\n\\nLast Updated: March 15, 2024\\n\\n1. Data Collection\\nWe
-      collect various types of information from our users, including:\\n- Personal
-      information (name, email address, phone number)\\n- Device information (IP address,
-      browser type, operating system)\\n- Usage data (pages visited, time spent on
-      site)\\n- Location data (with your consent)\\n\\n2. Data Usage\\nWe use your
-      information to:\\n- Provide and improve our services\\n- Send you marketing
-      communications (if you opt-in)\\n- Analyze website performance\\n- Comply with
-      legal obligations\\n\\n3. Data Sharing\\nWe may share your information with:\\n-
-      Service providers (for processing payments and analytics)\\n- Law enforcement
-      (when legally required)\\n- Business partners (with your explicit consent)\\n\\n4.
-      Data Retention\\nWe retain personal data for 24 months after your last interaction
-      with our services. Analytics data is kept for 36 months.\\n\\n5. User Rights\\nYou
-      have the right to:\\n- Access your personal data\\n- Request data deletion\\n-
-      Opt-out of marketing communications\\n- Lodge a complaint with supervisory authorities\\n\\n6.
-      Contact Information\\nFor privacy-related inquiries, contact our Data Protection
-      Officer at privacy@example.com\\n---\\n\"}],\"model\":\"gpt-4o\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\nNote that occasionally you may be working
+      with document fragments rather than complete documents. These fragments represent
+      portions of a larger document and should be analyzed within their limited context.
+      When working with fragments, focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n2. Aspect: A defined
+      area or topic within a document that requires focused attention. Each aspect
+      corresponds to a specific subject or theme described in the task. For example:\n-
+      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
+      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
+      Work experience, education, or skills.\nYou will analyze aspects as instructed,
+      considering their relevance and context within the document.\n\n3. Concept:
+      A unit of information or an entity relevant to the task. Concepts may be derived
+      from an aspect or the broader document context. They represent a wide range
+      of data points and insights, from simple entities (names, dates, monetary values)
+      to complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
+      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
+      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
+      Reasoned conclusions: Such as determining whether a document meets specific
+      criteria or answers particular questions.\n- Interpretative judgments: Such
+      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
+      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
+      you comprehend the nature of the document and the aspects or concepts you need
+      to focus on.\n- Follow specific instructions: Each task will include detailed
+      instructions, such as which aspects or concepts to focus on and how the data
+      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
+      ensuring your outputs align with the document''s intent and context.\n- Adapt
+      to variability: Documents may differ in structure, language, or formatting.
+      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks."},{"role":"user","content":"Below
+      you will find a list of consecutively ordered paragraphs from a document and
+      a list of aspects. Your task is to:\n\n1. Read and understand the aspects\n-
+      Each aspect is identified by an Aspect ID (for example, \"A0\", \"A1\", etc.),
+      includes a name, and has a description.\n- Aspects describe themes, topics,
+      or criteria that might be addressed in the paragraphs.\n\n2. Examine each paragraph\n-
+      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
+      etc.), followed by the full text of the paragraph and, optionally, additional
+      information about the paragraph, which may be helpful during your analysis.\n-
+      Note that paragraphs are listed in the same order they appear in the original
+      document; therefore, context from surrounding paragraphs may influence whether
+      a particular paragraph is relevant to an aspect.\n\n3. Map paragraphs to aspects\n-
+      A paragraph can address one, multiple, or none of the aspects.\n- If a paragraph
+      clearly relates to an aspect (based on the aspect''s name and description),
+      include that paragraph''s ID under the aspect''s list of paragraph IDs.\n- If
+      a paragraph does not relate to an aspect, do not include it under that aspect''s
+      list.\n\n4. Produce the final answer in the specified JSON format\n- Your output
+      must be a JSON array of objects, each object corresponding to a single aspect.\n-
+      For each aspect (in the order they are provided), include:\n    -- aspect_id:
+      The aspect''s unique identifier, e.g., \"A0\".\n    -- paragraph_ids: An array
+      of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\", \"P2\"].\n    --
+      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
+      array ([]).\n- Do not add extra commentary, code block markers, or any other
+      formatting beyond the JSON array.\n\nUse the following answer format as a guide
+      for your final answer (remember: no surrounding text or ```json delimiters should
+      be included).\n\n===\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraph_ids: [\n            str,\n            ...\n        ]\n    },\n    ...\n]\n===\n\n___\nDOCUMENT
+      ASPECTS:\n```\n- Aspect ID: A0\nAspect name: Data Subject Rights\nAspect description:\nInformation
+      about the rights users have regarding their data\n```\n\n___\n\n---\nDOCUMENT
+      PARAGRAPHS:\n''''''\n- Paragraph ID: P0\nParagraph text: Privacy Policy\n''''''\n\n''''''\n-
+      Paragraph ID: P1\nParagraph text: Last Updated: March 15, 2024\n''''''\n\n''''''\n-
+      Paragraph ID: P2\nParagraph text: 1. Data Collection\n''''''\n\n''''''\n- Paragraph
+      ID: P3\nParagraph text: We collect various types of information from our users,
+      including:\n''''''\n\n''''''\n- Paragraph ID: P4\nParagraph text: - Personal
+      information (name, email address, phone number)\n''''''\n\n''''''\n- Paragraph
+      ID: P5\nParagraph text: - Device information (IP address, browser type, operating
+      system)\n''''''\n\n''''''\n- Paragraph ID: P6\nParagraph text: - Usage data
+      (pages visited, time spent on site)\n''''''\n\n''''''\n- Paragraph ID: P7\nParagraph
+      text: - Location data (with your consent)\n''''''\n\n''''''\n- Paragraph ID:
+      P8\nParagraph text: 2. Data Usage\n''''''\n\n''''''\n- Paragraph ID: P9\nParagraph
+      text: We use your information to:\n''''''\n\n''''''\n- Paragraph ID: P10\nParagraph
+      text: - Provide and improve our services\n''''''\n\n''''''\n- Paragraph ID:
+      P11\nParagraph text: - Send you marketing communications (if you opt-in)\n''''''\n\n''''''\n-
+      Paragraph ID: P12\nParagraph text: - Analyze website performance\n''''''\n\n''''''\n-
+      Paragraph ID: P13\nParagraph text: - Comply with legal obligations\n''''''\n\n''''''\n-
+      Paragraph ID: P14\nParagraph text: 3. Data Sharing\n''''''\n\n''''''\n- Paragraph
+      ID: P15\nParagraph text: We may share your information with:\n''''''\n\n''''''\n-
+      Paragraph ID: P16\nParagraph text: - Service providers (for processing payments
+      and analytics)\n''''''\n\n''''''\n- Paragraph ID: P17\nParagraph text: - Law
+      enforcement (when legally required)\n''''''\n\n''''''\n- Paragraph ID: P18\nParagraph
+      text: - Business partners (with your explicit consent)\n''''''\n\n''''''\n-
+      Paragraph ID: P19\nParagraph text: 4. Data Retention\n''''''\n\n''''''\n- Paragraph
+      ID: P20\nParagraph text: We retain personal data for 24 months after your last
+      interaction with our services. Analytics data is kept for 36 months.\n''''''\n\n''''''\n-
+      Paragraph ID: P21\nParagraph text: 5. User Rights\n''''''\n\n''''''\n- Paragraph
+      ID: P22\nParagraph text: You have the right to:\n''''''\n\n''''''\n- Paragraph
+      ID: P23\nParagraph text: - Access your personal data\n''''''\n\n''''''\n- Paragraph
+      ID: P24\nParagraph text: - Request data deletion\n''''''\n\n''''''\n- Paragraph
+      ID: P25\nParagraph text: - Opt-out of marketing communications\n''''''\n\n''''''\n-
+      Paragraph ID: P26\nParagraph text: - Lodge a complaint with supervisory authorities\n''''''\n\n''''''\n-
+      Paragraph ID: P27\nParagraph text: 6. Contact Information\n''''''\n\n''''''\n-
+      Paragraph ID: P28\nParagraph text: For privacy-related inquiries, contact our
+      Data Protection Officer at privacy@example.com\n''''''\n\n---"}],"model":"gpt-4o","max_tokens":4096,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -760,11 +548,9 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '8520'
+      - '8836'
       content-type:
       - application/json
-      cookie:
-      - DUMMY
       host:
       - DUMMY
       user-agent:
@@ -794,15 +580,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJJBb5wwEIXv/AprzlBBlrCIY3qp2kOlHJrDskJeewCnYFv2UKWK9r9X
-        hgRImnAAxDfvMW/GzxFjoCRUDETPSYx2SO5+lfqBvv9oVZ49+Pv+590xO9xj/+3RKwdxUJjLIwp6
-        VX0RZrQDkjJ6wcIhJwyu2TEvjkVWlMUMRiNxCLLOUpKb5Ca9yZO0TNLiRdgbJdBDxU4RY4w9z/fQ
-        opb4BBVL49cvI3rPO4RqLWIMnBnCF+DeK09cE8QbFEYT6rnrU61n++URrjpggZYaJWuoWA1f0xri
-        fQE+keOCUDaKcPSh6rTxpSa7TdLDHKuGjZ2X12utz/uGHLaT52EeehqGHeBaG+JhnvMozi/kuoYf
-        TGedufh3UmiVVr5vHHJvdAjqyViY6TVi7DwPeXozN7DOjJYaMr9x/l1WHPLFELa9bniFZIgPe1lR
-        xh84NhKJq8HvFgWCix7lTnt7KNYMfJLKbCyNdtH/7+gj+yW+0t3O5VP7DYiwfpSNdSiVeJt6K3MY
-        jv5nZeuo54bBo/ujBDak0IV1SGz5NCynEvxfTzg2rdIdOuvUcjRb28iyLPK2vBQXiK7RPwAAAP//
-        AwDk8qBtowMAAA==
+        H4sIAAAAAAAAAwAAAP//dFNNj5swFLzzK6x3hgoISVhurbrdw6pSVamHNkTIsR/gLdiW7XS7WuW/
+        V4YkkC3LwaCZN+P3xWtACAgOBQHWUsd63UWfftr7x8fmLn3WL58fVP386yt7+K5/8Psv+ROEXqEO
+        T8jcRfWBqV536ISSI80MUofeNdlm2806WSXpQPSKY+dljXZRpqI0TrMozqN4cxa2SjC0UJBdQAgh
+        r8PpU5Qc/0JB4vCC9GgtbRCKaxAhYFTnEaDWCuuodBBOJFPSoRyy3pVysB9f/imBWo3MVYKXUJAS
+        PsYlhHNeU0MbQ3VbCW59zG5ix4hvaXKjuaDpIrpaRLNFdL2IbkqYwP34eSrlfl60wfpoqe+5PHbd
+        jKBSKkf9zIZ278/M6drgTjXaqIN9I4VaSGHbyiC1SvpmWqc0DOwpIGQ/DPJ4MxvQRvXaVU79xuG6
+        ZJuvR0OYdmei16sz6ZSj3UyWr/JwwbHi6Kjo7GwZgFHWIp9p4zS71kCPXKiJi4NZ6f9ntGQ/li9k
+        M3N5134iGEPtkFfaIBfstuopzKD/vd4Lu7Z6SBgsmj+CYeUEGj8OjjU9duPmg32xDvuqFrJBo40Y
+        17/W1d2B85rRDaYQnIJ/AAAA//8DAFpbhxIHBAAA
     headers:
       CF-RAY:
       - DUMMY
@@ -816,6 +602,8 @@ interactions:
       - DUMMY
       Server:
       - cloudflare
+      Set-Cookie:
+      - DUMMY
       Transfer-Encoding:
       - chunked
       X-Content-Type-Options:
@@ -829,13 +617,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '903'
+      - '889'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '907'
+      - '894'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -845,9 +633,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 26ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 942ms
+      - 811ms
       x-request-id:
       - DUMMY
     status:
@@ -1005,15 +793,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFLBbqMwEL3zFdacyYpkKaHc2qqn3cOqh660IUKOPSRujW3ZQzerKv++
-        MqSB7rY+AJo37zHvjV8TxkBJqBiIAyfROb24fSzNz+vHh5eb779u1+3zw83Bru9/LH8/Hb91kEaG
-        3T2hoDfWF2E7p5GUNSMsPHLCqLpc58W6WBZlMQCdlagjbe9okdvFKlvli6xcZMWZeLBKYICKbRLG
-        GHsdnnFEI/EIFcvSt0qHIfA9QnVpYgy81bECPAQViBuCdAKFNYRmmHpTm0F+fMVTR1igo0bJGipW
-        w11WQzpvwCN5Lghlowi7ELs2Ex4P+R6nynb8PNVmOx/DY9sHHlMwvdYzgBtjiccUhwC2Z+R0sazt
-        3nm7C/9QoVVGhUPjkQdror1A1sGAnhLGtkO0/bu0wHnbOWrIPuPwu2WxykdBmLY5wavyDJIlrue0
-        q1X6gWIjkbjSYbYeEFwcUM64V1+LiwfeS2UnLEtm1v+f6CP50b4y+5nKp/ITIOLSUTbOo1Tiveup
-        zWO88J+1XaIeBoaA/kUJbEihj+uQ2PJej3cRwp9A2DWtMnv0zqvxQraukWVZ5G25K3aQnJK/AAAA
-        //8DAMSCN1WZAwAA
+        H4sIAAAAAAAAAwAAAP//jJJNb5wwEIbv/AprzlAB2Y8ux7a5VFHVQ9oqXVbIaw/gFmzLHqqtov3v
+        lWGzkDSV6gOgeeZ9mQ8/RoyBklAwEC0n0dsueffgb+8+fPzU3n67v3s4bdeOf5bf73fr3VfzBeKg
+        MMcfKOhJ9UaY3nZIyugJC4ecMLhm29V2s85uspsR9EZiF2SNpWRlkjzNV0n6Nkk3F2FrlEAPBdtH
+        jDH2OD5DiVriCQqWxk+RHr3nDUJxTWIMnOlCBLj3yhPXBPEMhdGEeqx6X+rRfnqFUwYs0FKlZAkF
+        K+F9WkK8TMATOS4IZaUIex+y9jMPh9yAc+QwfZ5LfViW4bAePA9T0EPXLQDX2hAPUxwHcLiQ87Xl
+        zjTWmaN/IYVaaeXbyiH3Rof2PBkLIz1HjB3G0Q7PpgXWmd5SReYnjr/LNvlqMoR5mzPOtxdIhni3
+        lK2z+BXHSiJx1fnFekBw0aKctfMu+SCVWYBo0fff5bzmPfWudPM/9jMQYeMoK+tQKvG85TnNYbjt
+        /0q7znksGDy6X0pgRQpd2IXEmg/ddBHB//aEfVUr3aCzTk23sbbV7ihlLfgGc4jO0R8AAAD//wMA
+        oEWYFpYDAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -1040,13 +828,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1064'
+      - '512'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1069'
+      - '522'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1056,9 +844,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 36ms
+      - 17ms
       x-ratelimit-reset-tokens:
-      - 1.213s
+      - 1.04s
       x-request-id:
       - DUMMY
     status:
@@ -1284,16 +1072,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA3xUS2+jMBC+8yssn8OKoBRITqu2l/ZUabWbQ4iQYw/grrG9tolSVfnvK0MaSErC
-        ASR/j3l4hs8AIcwZXiFMa+Joo0X4+CeTa/pMFkw+/X5frtdR/Zzqx3+vD/QlxjOvULt3oO5L9YOq
-        RgtwXMkepgaIA+86TxdJmsyTLOmARjEQXlZpFy5UGEfxIoyyMEpOwlpxChav0CZACKHP7u1TlAwO
-        eIWi2ddJA9aSCvDqTEIIGyX8CSbWcuuIdHg2gFRJB7LLepPLzr7/+Cf3MAXtCs5yvEI5fopyPBsT
-        4OAMoQ5YwR001rM2A37lN8j2RLTQW2rD94R+/IQD8Q3zfbuIMYgMlGBAUig0MaQyRNdTAe8Evut1
-        LvItziYzmFJb8P2jUHB2L5dB+hZn4a8ox7d522no+P34ijlinJBjLrfj2zZQtpb4YZOtECOASKkc
-        8cPazdn2hBzPkyVUpY3a2SspLrnkti4MEKuknyLrlMYdegwQ2nYT3F4MJdZGNdoVTv2FLlycpVlv
-        iIelGeB0eQKdckSMZMuHdDbhWDBwhAs72gJMCa2BjUPOk3MNpGVcDVgUjEr/ntGUfV8+l9XI5ab9
-        AFC/W8AKbYBxeln1QDPg/yu3aOdWdwljC2bPKRSOg/HXwaAkrehXHtsP66ApSi4rMNrwfu9LXbAs
-        SxZltkt2ODgG/wEAAP//AwBdDFiJAAUAAA==
+        H4sIAAAAAAAAAwAAAP//fFRLb6MwEL7zKyyfw4rQlKScql3toaseuo9LFSLk2AO4C7Zlm2yiKv99
+        ZUgxSUk4gOTvMQ/P8B4ghDnDKcK0IpY2qg6/vprvz0k5r56Tw8/K/loun173P96ip+2f8h+eOYXc
+        vgG1H6ovVDaqBsul6GGqgVhwrvPlYpncz+/mdx3QSAa1k5XKhgsZxlG8CKNVGCUnYSU5BYNTtA4Q
+        Qui9e7sUBYM9TlE0+zhpwBhSAk4HEkJYy9qdYGIMN5YIi2cepFJYEF3W60x09v3HPZmDKSibc5bh
+        FGX4W5Th2ZgAe6sJtcBybqExjrX2+IWfl+1I3UJvqTTfEXp4hD1xDXN9O4vhRRoK0CAo5IpoUmqi
+        qqmANwLf9BqKfIlXkxlMqQ24/lHIObuVi5e+xKvwd5Th67zNNHT8fHzBHDFOyDETm/FtayhaQ9yw
+        ibauRwARQlrihrWbs80JOQ6TVctSabk1F1JccMFNlWsgRgo3RcZKhTv0GCC06Sa4PRtKrLRslM2t
+        /AtduHi1XPWG2C+NhwfQSkvqkezhPplNOOYMLOG1GW0BpoRWwLx2niSLoQbSMi49FgWj0j9nNGXf
+        l89FOXK5au8B6nYLWK40ME7Pq/Y0De6/co02tLpLGBvQO04htxy0uw4GBWnrfuWxORgLTV5wUYJW
+        mvd7X6j8YctYQUkCMQ6OwX8AAAD//wMAyqSygwAFAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -1320,13 +1108,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1364'
+      - '812'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1371'
+      - '824'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1336,9 +1124,221 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 35ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 1.957s
+      - 442ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \u201CExpected structure,\u201D you
+      must follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If there are example
+      items (\u201CExtracted concept examples\u201D), try to follow the same style
+      and formatting for your extracted items.\\n    -- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n\\n-
+      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
+      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure your extracted
+      items strictly match that type. Python types are provided (e.g., str for string,
+      int for integer, float for floating-point number, dict for object, etc.).\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- If multiple items are found for a concept,
+      include each as a separate entry within the \\\"extracted_items\\\" array.\\n\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Last Updated Date\\n\\nConcept description:\\nThe
+      date when the privacy policy was last updated\\n\\nAmount of extracted items:
+      This concept may have zero or one extracted item, never multiple items.\\n\\nConcept
+      extracted item type: str (in 'DD-MM-YYYY' format)\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      TEXT:\\nPrivacy Policy\\n\\nLast Updated: March 15, 2024\\n\\n1. Data Collection\\nWe
+      collect various types of information from our users, including:\\n- Personal
+      information (name, email address, phone number)\\n- Device information (IP address,
+      browser type, operating system)\\n- Usage data (pages visited, time spent on
+      site)\\n- Location data (with your consent)\\n\\n2. Data Usage\\nWe use your
+      information to:\\n- Provide and improve our services\\n- Send you marketing
+      communications (if you opt-in)\\n- Analyze website performance\\n- Comply with
+      legal obligations\\n\\n3. Data Sharing\\nWe may share your information with:\\n-
+      Service providers (for processing payments and analytics)\\n- Law enforcement
+      (when legally required)\\n- Business partners (with your explicit consent)\\n\\n4.
+      Data Retention\\nWe retain personal data for 24 months after your last interaction
+      with our services. Analytics data is kept for 36 months.\\n\\n5. User Rights\\nYou
+      have the right to:\\n- Access your personal data\\n- Request data deletion\\n-
+      Opt-out of marketing communications\\n- Lodge a complaint with supervisory authorities\\n\\n6.
+      Contact Information\\nFor privacy-related inquiries, contact our Data Protection
+      Officer at privacy@example.com\\n---\\n\"}],\"model\":\"gpt-4o\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, zstd
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '8520'
+      content-type:
+      - application/json
+      cookie:
+      - DUMMY
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncOpenAI/Python 1.75.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.75.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//dJJdb5swFIbv+RXWuYYJEpq03K1TpWnStO6uU4iQYx8SZ8a27MPWrsp/
+        nwxpoFvLBVh+zvtyvp4TxkBJqBiIAyfROZ3d/gh3Xx+ePt/6tf5933/5dnN80MeP4f7PXfkd0qiw
+        uyMKelF9ELZzGklZM2LhkRNG12JdrldXxbIoB9BZiTrK9o6y0maLfFFm+XWWr87Cg1UCA1RskzDG
+        2PPwjikaiY9QsTx9uekwBL5HqC5BjIG3Ot4AD0EF4oYgnaCwhtAMWW9qM9iPn/jUEQt01ChZQ8Vq
+        +JTXkM4D8JE8F4SyUYRdiFGbiY8xxVWWL4eyapjYdjyearOdJ+Sx7QOP/TC91jPAjbHEYz+HVmzP
+        5HQpXtu983YX/pFCq4wKh8YjD9bEQgNZBwM9JYxthyb3r/oGztvOUUP2Jw6/K1bLcjSEaa4TXi7P
+        kCxxPZet1ukbjo1E4kqH2aBAcHFAOdMurqfB8l4qO7E8mZX+f0Zv2Y/lK7OfubxrPwERx4+ycR6l
+        Eq+rnsI8xtV/L+zS6iFhCOh/KYENKfRxHBJb3utxKyE8BcKuaZXZo3dejavZuuZmJ2Ur+AoXkJyS
+        vwAAAP//AwCw24q1owMAAA==
+    headers:
+      CF-RAY:
+      - DUMMY
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1175'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '1182'
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 25ms
+      x-ratelimit-reset-tokens:
+      - 1.948s
       x-request-id:
       - DUMMY
     status:
@@ -1464,16 +1464,16 @@ interactions:
       \                   ...\\n                ]\\n            },\\n            ...\\n
       \       ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n- Concept
       ID: C0\\nConcept name: Retention Periods\\n\\nConcept description:\\nThe durations
-      for which different types of data are retained\\n\\nExpected structure:\\n{'personal_info':
-      str | None,\\n 'technical_info': str | None,\\n 'usage_info': str | None}\\n\\nAmount
-      of extracted items: This concept may have zero or one extracted item, never
-      multiple items.\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\\n```\\n- Paragraph ID: P0\\nParagraph sentences:\\n
-      \   -- Sentence ID: P0-S0\\n    Sentence text: 4. Data Retention\\n```\\n\\n```\\n-
-      Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
-      text: We retain personal data for 24 months after your last interaction with
-      our services.\\n    -- Sentence ID: P1-S1\\n    Sentence text: Analytics data
-      is kept for 36 months.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4o\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
+      for which different types of data are retained\\n\\nExpected structure:\\n{\\n
+      \ \\\"personal_info\\\": str or null,\\n  \\\"technical_info\\\": str or null,\\n
+      \ \\\"usage_info\\\": str or null\\n}\\n\\nAmount of extracted items: This concept
+      may have zero or one extracted item, never multiple items.\\n\\nConcept extracted
+      item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT PARAGRAPHS INCLUDING SENTENCES:\\n```\\n-
+      Paragraph ID: P0\\nParagraph sentences:\\n    -- Sentence ID: P0-S0\\n    Sentence
+      text: 4. Data Retention\\n```\\n\\n```\\n- Paragraph ID: P1\\nParagraph sentences:\\n
+      \   -- Sentence ID: P1-S0\\n    Sentence text: We retain personal data for 24
+      months after your last interaction with our services.\\n    -- Sentence ID:
+      P1-S1\\n    Sentence text: Analytics data is kept for 36 months.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4o\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -1484,7 +1484,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '10148'
+      - '10165'
       content-type:
       - application/json
       cookie:
@@ -1518,17 +1518,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//hFRNj5swEL3zKyyfQwVZRNgc06hSK7VaaaXuYYmQYw/g1tiubVZpV/nv
-        lSEJJCFZDiD5fXg85s17gBDmDC8RpjVxtNEiXP3M5Mu3L7uvqxf94w+1qwT+8efVer34nq3xzCvU
-        9hdQd1R9oqrRAhxXsoepAeLAu8aLJF2kcZqlHdAoBsLLKu3CRIXzaJ6EURZG6UFYK07B4iV6DRBC
-        6L17+xIlgx1eomh2XGnAWlIBXp5ICGGjhF/BxFpuHZEOzwaQKulAdlW/5rKz7z/+yT1MQbuCsxwv
-        UY4/RzmejQmwc4ZQB6zgDhrrWa8DfuE3yN6IaMGTJ9CeocFYJYkouCxVv/k8QY2SrrZnNZzLHNBa
-        cnqme0g/1rW+byeNbIW4Zu5nU0cxUIIBSaHQxJDKEF1PteFOO+56nVr/FN8s/1JswV8qhYKze6UM
-        0qc4fI7u2g+8OMe3aZtpaH+9fMEcMQ7IPpeb8Z9qoGwtEYfbGQFESuWID1qXkU1wvK1jKoSqtFFb
-        eyHFJZfc1oUBYpX0CbBOadyh+wChTZe+9ixQWBvVaFc49Ru67eLHh6w3xEPgR3D0eECdckQMwDxK
-        FrMJy4KBI1zYUYQxJbQGNt5zPkSetIyrAYuC0dmvS5qy78/PZTVyuWk/ANQPBmCFNsA4PT/2QDPg
-        h+It2qnXXcHYgnnjFArHwfj7YFCSVvTzCtu/1kFTlFxWYLTh/dAqdcGyLE3KbJtucbAP/gMAAP//
-        AwB/O69AvQUAAA==
+        H4sIAAAAAAAAAwAAAP//jFTLjpswFN3zFZbXUPHIa7JrO+2qi5GqSq2SCHnsC3hqbMs2o0Sj/Htl
+        CIEkJCoLkHwevvea448AIcwZXiNMK+JorUX05Y/99uNg3g7ke1pky2z//LtczH+ln5+1ojj0CvX6
+        BtT1qk9U1VqA40p2MDVAHHjXZDlbLuZJlmQtUCsGwstK7aKZitI4nUXxKooXJ2GlOAWL12gTIITQ
+        R/v2JUoGe7xGcdiv1GAtKQGvzySEsFHCr2BiLbeOSIfDAaRKOpBt1ZutbO27j3+2HqagXc7ZFq/R
+        Fn+NtzgcE2DvDKEOWM4d1NazNgN+5TfI3olowJMn0I6hwVglici5LFS3eTpDtZKushc1XMoc0Epy
+        OtLJRoi79MaPa7RFtjhvcSs5hlOtGCjAgKSQa2JIaYiupsbwYBwPvc6jf0nutn0ttuAPlULO2aNS
+        BulLEv2MH9oPvGRqNP2zm4aOt8tXzBHjhBy3cjf+Uw0UjSWiP9EBIFIqR3zQ2ozsgv60+lQIVWqj
+        Xu2VFBdcclvlBohV0ifAOqVxix4DhHZt+pqLQGFtVK1d7tRfaLdLnmZZZ4iHwI/geHVCnXJEDEAa
+        z5NwwjJn4AgXdhRhTAmtgA3aIe+kYVyNgGDU+G09U95d81yW/2M/ANTfCsBybYBxetnzQDPgb8R7
+        tPOg24KxBfPOKeSOg/GHwaAgjeguK2wP1kGdF1yWYLTh3Y1V6Hw+Z6sVIUVa4OAY/AMAAP//AwAC
+        cuwjugUAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -1555,13 +1555,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2454'
+      - '1311'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2457'
+      - '1315'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1571,9 +1571,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 37ms
+      - 33ms
       x-ratelimit-reset-tokens:
-      - 1.528s
+      - 1.695s
       x-request-id:
       - DUMMY
     status:
@@ -1699,14 +1699,15 @@ interactions:
       \                   ...\\n                ]\\n            },\\n            ...\\n
       \       ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n- Concept
       ID: C0\\nConcept name: Collected Data Types\\n\\nConcept description:\\nList
-      of different types of data collected from users\\n\\nExpected structure:\\n{'personal_info':
-      list[str],\\n 'technical_info': list[str],\\n 'usage_info': list[str]}\\n\\nAmount
-      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
-      extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT PARAGRAPHS INCLUDING
-      SENTENCES:\\n```\\n- Paragraph ID: P0\\nParagraph sentences:\\n    -- Sentence
-      ID: P0-S0\\n    Sentence text: 1. Data Collection\\n```\\n\\n```\\n- Paragraph
-      ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence text:
-      We collect various types of information from our users, including:\\n```\\n\\n```\\n-
+      of different types of data collected from users\\n\\nExpected structure:\\n{\\n
+      \ \\\"personal_info\\\": [\\n    str,\\n    ...\\n  ],\\n  \\\"technical_info\\\":
+      [\\n    str,\\n    ...\\n  ],\\n  \\\"usage_info\\\": [\\n    str,\\n    ...\\n
+      \ ]\\n}\\n\\nAmount of extracted items: This concept may have zero, one, or
+      multiple extracted items.\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\\n```\\n- Paragraph ID: P0\\nParagraph sentences:\\n
+      \   -- Sentence ID: P0-S0\\n    Sentence text: 1. Data Collection\\n```\\n\\n```\\n-
+      Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
+      text: We collect various types of information from our users, including:\\n```\\n\\n```\\n-
       Paragraph ID: P2\\nParagraph sentences:\\n    -- Sentence ID: P2-S0\\n    Sentence
       text: - Personal information (name, email address, phone number)\\n```\\n\\n```\\n-
       Paragraph ID: P3\\nParagraph sentences:\\n    -- Sentence ID: P3-S0\\n    Sentence
@@ -1725,7 +1726,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '10642'
+      - '10704'
       content-type:
       - application/json
       cookie:
@@ -1759,18 +1760,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//zFZBb9MwGL3nV1g+pyjrQhZ6ZAfggDQJBELrFLn2l8QjsY39pd009b8j
-        J2uTrsk6QJPooZX83vf6nuv65SEghEpBF4TykiGvTTV7/y1V39cWNz82l3e/vn64qO7ffdzcus9w
-        +X1NQz+hV7fAcTf1huvaVIBSqw7mFhiCVz27iJOL5CxJkxaotYDKjxUGZ7GezaN5PIvSWZQ8DpZa
-        cnB0Qa4DQgh5aN+9RSXgji5IFO5WanCOFUAXexIh1OrKr1DmnHTIFNKwB7lWCKp1fb1UrXz34V9L
-        D3MwmEmxpAuypJfRkoZDAtyhZRxBZBKhdp513eNP9PqxNasa8OQRtGMYsE4rVmVS5XpE9pCtWA0H
-        zo4pUDNZESaEBedOcE2pFRDV1CuwSzrOvAmnrCPwUkn+Uu+frl7oamX1xoEleG9OhdUGLEOpCuLu
-        HUL95yEaf5BeFsCwAhxZSycRxAljKGsgzoBCohXxE5PWjpe34dhZspCDBcUhM8yywjJTumc8Pzxn
-        b0Rrf/av5iey9cMO/L+KQyaFO7F93ejVfPYlmtqJid2Y2pF/C3n+iiHP/5eQ8SuGjP8y5PHyE+aA
-        8Yhsl+pmeJlbyBvHfJeopqoGAFNKI/Nd1NbITbDb2F1xVLowVq/ck1GaSyVdmVlgTitfEg61oS26
-        Dfz14QuqOegcaqyuDWaof0L7dfMoOe8Ead+JQ/jtI4oaWTUA5kkajkhmApDJyg1ajnLGSxBD0Tjd
-        h2CNkLrHomCQ/djSmHyXX6pioDIp3wPcdyeIzFgQkh/G7mkW/HPDFG2/161h6sCuJYcMJVj/ewjI
-        WVN1lU67uz7LpSrAGiu7Xs9NJtI0ifN0laxosA1+AwAA//8DAL+SN5TgCAAA
+        H4sIAAAAAAAAAwAAAP//zFbRbpswFH3nKyw/k4kQlrZ5W6dtmlZplappm5oKOfYF3IFt+ZquXZV/
+        nwxNIA003aZKywORfM69nHMxPtwHhFAp6IJQXjDHK1NOTr/ju7P686fZBzwxp19Ors9+6fdvLpJV
+        cvrtKw19hV5dA3ebqldcV6YEJ7VqYW6BOfBdp0fJ0fz1dDadNUClBZS+LDdukuhJHMXJJDqeRPOH
+        wkJLDkgX5DIghJD75uolKgG3dEGicLNSASLLgS62JEKo1aVfoQxRomPK0bADuVYOVKP6cqma9u2f
+        /y09zMG4VIolXZAlfRstadgnwK2zjDsQqXRQoWdddvijfl3ZDStr8OQBtGUYsKgVK1OpMj3Qdpet
+        WAU7yvYpUDFZEiaEBcQDXFNoBUTV1Qrskg4zr8Ix6Q54oSR/rvaP589UtbL6J4Il7s4cMqsNWOak
+        ygneoYPqz03UfiM9z4BhOSC5kSgdiAPCnKyAoAHliFbEV4xK219eh0N7yUIGFhSH1DDLcstMgU9o
+        vn9K3kCv7d4/jw9464oR/FvFIZUCD4yvLT2PJxfR2CRGpjE2kX8zOXtBk7P/xWTygiaTvzS5v/yI
+        2WM8IOuluuof5hayGpnPElWXZQ9gSmnHfBY1MXIVbAa7CY5S58bqFT4qpZlUEovUAkOtfEig04Y2
+        6Drwx4cPqHonc6ixujIudfoHNLeLo+O4bUi7TOzDyQPqtGNlD4iP5+FAy1SAY7LEXspRzngBoqud
+        zufJ1gSrhdQdFgU97/uShtq3/qXKe11G23cA99kJIjUWhOS7tjuaBf/dMEbbzroRTBHsjeSQOgnW
+        Pw8BGavLNtJpe9anmVQ5WGNlm+uZSU9WQmSczSGmwTr4DQAA//8DAF9eDUHgCAAA
     headers:
       CF-RAY:
       - DUMMY
@@ -1797,13 +1798,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2802'
+      - '1616'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2805'
+      - '1627'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1813,9 +1814,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 23ms
       x-ratelimit-reset-tokens:
-      - 342ms
+      - 785ms
       x-request-id:
       - DUMMY
     status:
@@ -1998,18 +1999,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//zFbLTuMwFN3nKyyvm1EaQgjdzbCd0TAPMQtSRa59kxgS29g3DAX130dO
-        WhKgIM2igiwa1eee4/uoe/wQEEKloAtCec2Qt6YJv1xk6s/Z/c3FiWPiqLlfld/KdZakv39cGaAz
-        z9CrK+C4Y33iujUNoNRqgLkFhuBV5ydJepLO0yztgVYLaDytMhgmOoyjOAmjLIzSLbHWkoOjC3IZ
-        EELIQ//pU1QC7uiCRLPdSgvOsQro4jGIEGp141coc046ZArpbAS5Vgiqz/oyV7388PJP7mEOBgsp
-        crogOT2LcjqbBsAdWsYRRCERWuejLkf8md5Iu2VNB4PkZ87BObLWnSUGrNOKNUQwZE92GqkWSrCg
-        OBSGWVZZZup9276x/Ztaj6Wex3sT2Ed24JvIoZDirVRG6nkc/opy+nrYcj+0ebn8LHIz+7/u/4Sb
-        Dhz2DScChh/se3f+6ICdP/oonf9uMNQdEl2SltlrQKkqwnXbdkpy5sfg3nsOyQHnkHyUOXzVogLC
-        SP9/zaRC8ldiTVxnwN5Kp+2asA5rbSVKePeRHB9wJMcHG8n4dYtscrWc2pCFsnPMu6DqmmYCMKU0
-        DqfB17AMdkPeWV6jK2P1yj2j0lIq6erCAnNaeXtzqA3t0U1AyLK31u6JW1JjdWuwQH0N/XZxNJ8P
-        gnR08wmcZFsUNbJmAsTHp7M9koUAZLJxE3+mnPEaxMidn8ajn7NOSD1iUTCp/WVK++SH+qWqJiqv
-        yo8A964PojAWhORPyx7DLPgbz2thj73uE6bOHycOBUqwfh4CStY1w2WEurVDaItSqgqssXK4kZSm
-        EFmWJmW2Slc02AT/AAAA//8DABFI4ROaCQAA
+        H4sIAAAAAAAAA8xWy27bMBC86ysInq1Cfqe+tU0vbdoELVAgsAxhTa5kNhLJkqs8EPjfC0pxpCRO
+        0B6MRAcL5uwsd3dMD28jxriSfMG42ACJypbxx3P/+WSNOEvs1dmX0++X3+ZXX4/nx+dzVfzig8Aw
+        698oaMd6J0xlSyRldAsLh0AYsg7nk/lsOhwPxw1QGYlloBWW4omJR8loEidHcTK7I26MEuj5gi0j
+        xhi7bT5DiVriNV+wZLBbqdB7KJAv7oMY486UYYWD98oTaOKDDhRGE+qm6mWqm/TtKzxpgAVaypRM
+        +YKl/FOS8kE/AK/JgSCUmSKsfIhadvijfB3tEsoa25QfhEDv2Y2pHbPovNFQMgkED3bqqA5zdKgF
+        ZhYcFA7sZt+2L2z/Yq77Vs9GewvYR/YYhigwU/KlUjrq2Sj+maT8+bDVfmj7dPlR5Hbwf9P/gX9q
+        9NQMnElsf7CvPfnxASc/fiuTP7UUm5qYyVkF7gJJ6YIJU1W1VgKCDP61dZgcUIfJW9HhxMgCGbDm
+        /xqUJnalaMN8bdFdKm/cDYOaNsYpUvjqkkwPKMn0YJJ0X++QbapXfRtymNceggvquix7AGhtqD0N
+        oYdVtBN5Z3mlKawza/+IynOlld9kDsEbHezNk7G8QbcRY6vGWusHbsmtM5WljMwFNtuNkuGwTcg7
+        N+/Bk/kdSoag7AGj6dFgT8pMIoEqfc+fuQCxQdlxOzOHWirTA6Je40/r2Ze7bV7p4l/Sd4AIlo8y
+        sw6lEg977sIchuvOc2H3g24K5j6cJYEZKXRBDIk51GV7E+H+xhNWWa50gc461V5Hcpu9X0uZC5jh
+        iEfb6C8AAAD//wMAGpM4u5cJAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -2036,13 +2037,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2963'
+      - '1836'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2967'
+      - '1840'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2052,9 +2053,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 19ms
+      - 29ms
       x-ratelimit-reset-tokens:
-      - 673ms
+      - 1.376s
       x-request-id:
       - DUMMY
     status:
@@ -2215,15 +2216,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFPBrpswELzzFdaeoSIRBcItbaW2t7aHSm2IkGMv4D5ju7Z5avuUf68M
-        eYG0eRwAzewMu7PmKSIEBIeKAOupZ4ORyZuvpfr+8V3+Rajt+P5b9tB/3u8ff35wf7B/C3FQ6NMP
-        ZP5Z9YrpwUj0QquZZhapx+C6KbK8yDd5uZuIQXOUQdYZn2Q62abbLEnLJM0vwl4Lhg4qcogIIeRp
-        uocWFcdfUJE0fkYGdI52CNW1iBCwWgYEqHPCeao8xAvJtPKopq4PtZrs50e4aqDOIPON4DVUpIZ9
-        WkO85g21tLPU9I3gLtQcFnau+JTfSC5gcQ8s74G7GhbsOL+ea3VcD2GxHR0NGapRyhVBldKehh1M
-        8R0vzPkamNSdsfrk/pFCK5RwfWOROq1COM5rAxN7jgg5TosZb7IGY/VgfOP1A06f25RpMRvCchYW
-        OssupNeeyrXs9Sa+49hw9FRIt1ouMMp65CttsdteZ6AjF3rh0mg1+v8d3bOfxxeqW7m8aL8QjKHx
-        yBtjkQt2O/VSZjH8Li+VXaOeGgaH9lEwbLxAG9bBsaWjnE8yuN/O49C0QnVojRXzcW5Nw8syz9ry
-        lJ8gOkd/AQAA//8DAMh0ARfXAwAA
+        H4sIAAAAAAAAA3RTXY+bMBB851dY+xwqk5CQ4+1a9UuVTlX7cKpChBx7AbdgW7apejrlv1cGLpA2
+        xwOgmZ1hd9Y8R4SAFJAT4A3zvDNt/PaHe/9A7z+wd/RT8vD07XGTndTn7kv3Mf3+CKug0KefyP2L
+        6g3XnWnRS61GmltkHoNrkqXZbptsku1AdFpgG2S18XGq4zVdpzHdx3Q3CRstOTrIySEihJDn4R5a
+        VAL/QE7o6gXp0DlWI+SXIkLA6jYgwJyTzjPlYTWTXCuPauj6UKjBfnyEqwDmDHJfSlFATgq4pwWs
+        lrxhltWWmaaUwoWaw8yOFV93V5IJzG6B+1vgXQEzdhxfz4U6LoewWPWOhQxV37YLgimlPQs7GOI7
+        Tsz5Elira2P1yf0jhUoq6ZrSInNahXCc1wYG9hwRchwW019lDcbqzvjS6184fC7Z02w0hPkszHS6
+        mUivPWuXsu200GvHUqBnsnWL5QJnvEGx0NJ1epmB9ULqmaPRYvT/O7plP44vVb1wedV+JjhH41GU
+        xqKQ/Hrqucxi+F1eK7tEPTQMDu1vybH0Em1Yh8CK9e14ksE9OY9dWUlVozVWjse5MuXdSYiKsx2u
+        ITpHfwEAAP//AwBr73b31wMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -2252,13 +2253,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1877'
+      - '863'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1883'
+      - '867'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2471,19 +2472,20 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//7FbLbtswELz7Kxa8pAXswi/Ij1ub5hKgTYAUaYHYENbUymJLkQq5cuwG
-        /vdCUmw5ieNLkzaH6GBBnJ3xkiNSc9sAECoSYxAyQZZpplufLodGLn5cmuh0+XvZOx19PUvOPqPs
-        n1x//yKaBcPOfpLkDeuDtGmmiZU1FSwdIVOh2hn0g0HQCUbdEkhtRLqgzTNu9W2r2+72W+1hqx3c
-        EROrJHkxhqsGAMBt+Vu0aCJaijG0m5uRlLzHOYnxtghAOKuLEYHeK89oWDRrUFrDZMquryamlK9u
-        xTUpYEkZhyqaiDFMxHF7Ipq7BbRkh5IpChVT6ouqqxp/oFfTFqhzqiS/kUuVwWKhILYOUmRyCjXM
-        HKFMwMbAifLwce6IUjJ8r4Na0lFMjoykMEOHc4dZsq+dA20d1NouwXlnbwP7yJ6KxZUUquhQKzX1
-        vNO6OCxf13Un4umy6X5o/Xj4QeW6+XfuSWsWSpaPNgaEmLQ1qzfLXrFlN0rrONeQKi+tiXLJwAky
-        SMw9+Xo/JuhSYAucEBzbNMM3X1/W1/rxDtk4ffiI7jz7Ed1rQ4QrfwQ3TjGTAWNZSfrf7ndf0P1u
-        6f4rcrX77K5e0IIcGkmQ4QroOkddbG+vlvAueA+pNZz46vNLcJJm2q6IjjzM0BN41Oj++/7vveAb
-        0PuHb8DETHdDmaM491hkQpNrvQOgMZbLk7uMg9PG5guwCYDazjNnZ/4BVcTKKJ+EjtBbU4Q9zzYT
-        JbpuAEzLoJnfy44iczbNOGT7i8q/6/bag0pQ1Nm2hntVnAUQbBn1Di8YjZp7JMOIGJX2O2lVSJQJ
-        RTvcziDYTgLzSNkaazd25v64pX3y1fyVme+oPClfA7LYihSFmaOoCjf7yhwV+f+psu1alw0LT26h
-        JIWsyBV+RBRjrqtoLvzKM6VhrMycXOZUlc/jLIyGw6AfD2fBTDTWjT8AAAD//wMAp+m3ZqgMAAA=
+        H4sIAAAAAAAAA+xXXW/TShB9z68Y7QsgJcj5IIG8QcUV3CukShQk1FTWZD2Ol7tf7I7bRqj/Ha3d
+        1G5JK4EoIEQeEmfPnPGsj3fn7OcBgFCFWIKQFbI0Xo9efIgvD1+dZQfTf/97/2w7/2dx9M7F52t1
+        dPjmtRgmhlt/JMk71mPpjNfEytkWloGQKWUdL2aL+ZPxdLxoAOMK0om28TyaudEkm8xG2dNRNr8k
+        Vk5JimIJxwMAgM/NdyrRFnQulpANdyOGYsQNieVVEIAITqcRgTGqyGhZDDtQOstkm6qPV7ZJ3/6k
+        zyrBkjznqliJJazEQbYSw34AnXNAyVTkisnEFHXc4TfydbRT1DW1KY8qggNnPNotGNwCUzDKIhNw
+        RfDSeO22RA8iUHNpyDKULsAB1pEAGRKRlSGovbNwFhQzWbCOlaTH18rt7h+opEBWUu4x4Cagr/bV
+        fscc7sx19bwOx3sL2EeOlJSQlKvirlI66uF49Ha8EreHneyHLr4evhF5Mfw2CXsiGWQKCjWsA6Gs
+        wJXAlYrwfBOIknZ/uCCT300Q6eypkmkbSloglKSd3f5V4eeqcKa0LmsNRkXpbFFLBq6QQaZNrLdq
+        KgwG2DVb3+Wm+Feq75Gq+3uJ7MS7u72Nf3h7m2ZQ4DY+uNGYfrWqk3tUdXJvfek7VZ38cFUjnVJA
+        Kwk8boE+1ajTso3qHB7OH4FxlqvYNr9rHmaNkSCixvDL1/X0Ht+A6U98A1b2pG9oA5V1xOSnba11
+        D0BrHWNqhI2VPhnsNvWdedZu44NbxxtUUSqrYpUHwuhsMsqRnRcNejEAOGlMen3NdwsfnPGcs/uf
+        mttNptmiTSi6c0EHz6Y7lB2j7vEWs9lwT8q8IEalY8/pC4myoqLjjufz2dUksC6U67Bs0Jv71yXt
+        S9/OX9lNL8ut6TtApqVIRe4DFa0P2RcWKJ2dbgu7etZNwSJSOFWSclYUkh4FlVjr9lgj4jYymbxU
+        dkPBB9WebUqfP1sXRSlxThMxuBh8AQAA//8DAFJl7BjkDQAA
     headers:
       CF-RAY:
       - DUMMY
@@ -2510,13 +2512,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '7092'
+      - '5294'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '7350'
+      - '5310'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2529,200 +2531,6 @@ interactions:
       - 12ms
       x-ratelimit-reset-tokens:
       - 380ms
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
-      the extraction, analysis, and interpretation of data within various types of
-      documents. Your role is to carefully process the information and provide accurate,
-      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
-      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
-      written or visual content. Documents can vary in type and purpose, including
-      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
-      Invoices: Financial documents detailing transactions and payments.\n- Curricula
-      Vitae (CVs): Resumes outlining an individual''s professional experience and
-      qualifications.\n- General Documents: Any other types of files that may contain
-      text, tables, images, or mixed formats.\nNote that occasionally you may be working
-      with document fragments rather than complete documents. These fragments represent
-      portions of a larger document and should be analyzed within their limited context.
-      When working with fragments, focus on extracting information from the available
-      content without making assumptions about missing parts.\n\n2. Aspect: A defined
-      area or topic within a document that requires focused attention. Each aspect
-      corresponds to a specific subject or theme described in the task. For example:\n-
-      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
-      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
-      Work experience, education, or skills.\nYou will analyze aspects as instructed,
-      considering their relevance and context within the document.\n\n3. Concept:
-      A unit of information or an entity relevant to the task. Concepts may be derived
-      from an aspect or the broader document context. They represent a wide range
-      of data points and insights, from simple entities (names, dates, monetary values)
-      to complex evaluations, conclusions, and answers to specific questions. Concepts
-      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
-      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
-      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
-      Reasoned conclusions: Such as determining whether a document meets specific
-      criteria or answers particular questions.\n- Interpretative judgments: Such
-      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
-      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
-      you comprehend the nature of the document and the aspects or concepts you need
-      to focus on.\n- Follow specific instructions: Each task will include detailed
-      instructions, such as which aspects or concepts to focus on and how the data
-      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
-      ensuring your outputs align with the document''s intent and context.\n- Adapt
-      to variability: Documents may differ in structure, language, or formatting.
-      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
-      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
-      based on the task requirements.\n- Explanations (when required): When required
-      by the instructions, include justifications or reasoning for your interpretations.\n-
-      Insights (when required): When required by the instructions, highlight trends,
-      patterns, or noteworthy findings that could add value to the task.\n- References
-      (when required): When required by the instructions, output references based
-      on which you extracted data, provided insights, or made conclusions during the
-      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
-      performance across diverse document analysis tasks."},{"role":"user","content":"Below
-      you will find a list of consecutively ordered paragraphs from a document and
-      a list of aspects. Your task is to:\n\n1. Read and understand the aspects\n-
-      Each aspect is identified by an Aspect ID (for example, \"A0\", \"A1\", etc.),
-      includes a name, and has a description.\n- Aspects describe themes, topics,
-      or criteria that might be addressed in the paragraphs.\n\n2. Examine each paragraph\n-
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.), followed by the full text of the paragraph and, optionally, additional
-      information about the paragraph, which may be helpful during your analysis.\n-
-      Note that paragraphs are listed in the same order they appear in the original
-      document; therefore, context from surrounding paragraphs may influence whether
-      a particular paragraph is relevant to an aspect.\n\n3. Map paragraphs to aspects\n-
-      A paragraph can address one, multiple, or none of the aspects.\n- If a paragraph
-      clearly relates to an aspect (based on the aspect''s name and description),
-      include that paragraph''s ID under the aspect''s list of paragraph IDs.\n- If
-      a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n\n4. Produce the final answer in the specified JSON format\n- Your output
-      must be a JSON array of objects, each object corresponding to a single aspect.\n-
-      For each aspect (in the order they are provided), include:\n    -- aspect_id:
-      The aspect''s unique identifier, e.g., \"A0\".\n    -- paragraph_ids: An array
-      of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\", \"P2\"].\n    --
-      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
-      array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n\nUse the following answer format as a guide
-      for your final answer (remember: no surrounding text or ```json delimiters should
-      be included).\n\n===\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
-      str,\n        \"paragraph_ids: [\n            str,\n            ...\n        ]\n    },\n    ...\n]\n===\n\n___\nDOCUMENT
-      ASPECTS:\n```\n- Aspect ID: A0\nAspect name: Term\nAspect description:\nClauses
-      defining the term of the agreement\n```\n\n___\n\n---\nDOCUMENT PARAGRAPHS:\n''''''\n-
-      Paragraph ID: P0\nParagraph text: Consultancy Agreement\n''''''\n\n''''''\n-
-      Paragraph ID: P1\nParagraph text: This agreement between Company A (Supplier)
-      and Company B (Customer)...\n''''''\n\n''''''\n- Paragraph ID: P2\nParagraph
-      text: The term of the agreement is 1 year from the Effective Date...\n''''''\n\n''''''\n-
-      Paragraph ID: P3\nParagraph text: The Supplier shall provide consultancy services
-      as described in Annex 2...\n''''''\n\n''''''\n- Paragraph ID: P4\nParagraph
-      text: The Customer shall pay the Supplier within 30 calendar days of receiving
-      an invoice...\n''''''\n\n''''''\n- Paragraph ID: P5\nParagraph text: All intellectual
-      property created during the provision of services shall belong to the Customer...\n''''''\n\n''''''\n-
-      Paragraph ID: P6\nParagraph text: This agreement is governed by the laws of
-      Norway...\n''''''\n\n''''''\n- Paragraph ID: P7\nParagraph text: Annex 1: Data
-      processing agreement...\n''''''\n\n''''''\n- Paragraph ID: P8\nParagraph text:
-      Annex 2: Statement of Work...\n''''''\n\n''''''\n- Paragraph ID: P9\nParagraph
-      text: Annex 3: Service Level Agreement...\n''''''\n\n---"}],"model":"gpt-4o-mini","max_tokens":4096,"temperature":0.3,"top_p":0.3}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate, zstd
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '7267'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncOpenAI/Python 1.75.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.75.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://api.openai.com/v1/chat/completions
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jJJNb5wwEIbv/AprzlABQcsut/RU9VBVrdSqWlbIsQdwArZrD1WqaP97
-        ZdgsJE2lcgBrnnlf5sNPEWOgJFQMRM9JjHZI3n/b6/vi6yOJXfnpx09jJ377UOLH/fT9yweIg8Lc
-        3aOgZ9U7YUY7ICmjFywccsLgmpXFrtxlu8NhBqOROARZZykpTDIqrZI8zYskLZNsf1H3Rgn0ULFj
-        xBhjT/M71KklPkLF0vg5MqL3vEOorkmMgTNDiAD3XnnimiBeoTCaUM+lH2s92y+f8NTAvUVBjZI1
-        VKyG27SGeMstd7xz3PaNkj7kHFe6ZHzOa1hjp+V4rvVpW4XDdvI8TEJPw7ABXGtDPExy7v90Iedr
-        x4PprDN3/pUUWqWV7xuH3BsduvNkLMz0HDF2mic7vRgWWGdGSw2ZB5x/lxVZsRjCutEV54cLJEN8
-        2MqKm/gNx0YicTX4zXZAcNGjXLXrKvkkldmAaNP33+W85b30rnT3P/YrEAItoWysQ6nEy5bXNIfh
-        xv8r7TrnuWDw6H4pgQ0pdGEXEls+Dcs9BP/bE45Nq3SHzjq1XMbWNunNId/neXpIITpHfwAAAP//
-        AwDiZN8zmgMAAA==
-    headers:
-      CF-RAY:
-      - DUMMY
-      Connection:
-      - keep-alive
-      Content-Encoding:
-      - gzip
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Server:
-      - cloudflare
-      Set-Cookie:
-      - DUMMY
-      Transfer-Encoding:
-      - chunked
-      X-Content-Type-Options:
-      - nosniff
-      access-control-expose-headers:
-      - X-Request-ID
-      alt-svc:
-      - h3=":443"; ma=86400
-      cf-cache-status:
-      - DYNAMIC
-      openai-organization:
-      - DUMMY
-      openai-processing-ms:
-      - '764'
-      openai-version:
-      - '2020-10-01'
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
-      x-envoy-upstream-service-time:
-      - '776'
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-ratelimit-reset-requests:
-      - 12ms
-      x-ratelimit-reset-tokens:
-      - 52ms
       x-request-id:
       - DUMMY
     status:
@@ -2861,15 +2669,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJJRb5swFIXf+RXWfQ6ToSQkeVsrTds0adMe8hIi5NoXcAu2a5tqU5X/
-        PtlkgW4tD2D5u+dwz7VfEkJACtgT4B3zfDB9envYqsenb0+Hnzfld1x//bTe3G7s5+fDl/KOwSoo
-        9P0Dcv9X9YHrwfTopVYT5haZx+CalcWm3GQlpREMWmAfZK3xaaHTQSqZ5jQvUlqm2fai7rTk6GBP
-        jgkhhLzEd+hTCfwFexK94s6AzrEWYX8tIgSs7sMOMOek80x5WM2Qa+VRxdaPlYr20yc8FTBnkPta
-        igr2pIKPtILVkhtmWWuZ6WopXKg5znSq+JFVMO+dpuW5UqdlFxab0bEwCTX2/QIwpbRnYZIx/+lC
-        ztfEvW6N1ffuHyk0UknX1RaZ0yqkc14biPScEHKKkx1fDQuM1YPxtdePGH+XFdl6MoT5RGec7y7Q
-        a8/6pawoVm841gI9k71bnA5wxjsUCy3Ni2sGNgqpZ0aTRfT/O3rLfoovVbtwedd+Bpyj8ShqY1FI
-        /jr1XGYxXPr3yq6jjg2DQ/ssOdZeog3HIbBhYz9dRXC/ncehbqRq0Rorp/vYmJre7PJtntMdheSc
-        /AEAAP//AwBoGGQFnQMAAA==
+        H4sIAAAAAAAAA4ySXW+bMBSG7/kV1rmGKSSk6bhrtkqtqkm7qDJtIUKOfQA3xrZsUy2q8t8nQxro
+        1knlAqzznPflfPglIgQEh5wAa6hnrZHJ+qe73Tzdi9sf68Mvdvi60Q+Pm+P9l6O9W3+DOCj0/gmZ
+        f1V9Yro1Er3QasDMIvUYXNNVtrpapov5oget5iiDrDY+yXTSCiWS+WyeJbNVkl6f1Y0WDB3kZBsR
+        QshL/w51Ko6/ISez+DXSonO0RsgvSYSA1TJEgDonnKfKQzxCppVH1Ze+LVRvP3zCUwB1BpkvBS8g
+        JwXczAqIp9xQS2tLTVMK7kLOdqRDxve0gDG2G46nQu2mVVisOkfDJFQn5QRQpbSnYZJ9/7szOV06
+        lro2Vu/dX1KohBKuKS1Sp1XoznltoKeniJBdP9nuzbDAWN0aX3p9wP53aZYuB0MYNzri+fUZeu2p
+        nMqyRfyOY8nRUyHdZDvAKGuQj9pxlbTjQk9ANOn733Le8x56F6r+iP0IGEPjkZfGIhfsbctjmsVw
+        4/+XdplzXzA4tM+CYekF2rALjhXt5HAPwR2dx7ashKrRGiuGy1iZcpnhPtvzq88LiE7RHwAAAP//
+        AwDEg5pxmgMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -2898,13 +2706,207 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '773'
+      - '803'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '779'
+      - '808'
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 92ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\nNote that occasionally you may be working
+      with document fragments rather than complete documents. These fragments represent
+      portions of a larger document and should be analyzed within their limited context.
+      When working with fragments, focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n2. Aspect: A defined
+      area or topic within a document that requires focused attention. Each aspect
+      corresponds to a specific subject or theme described in the task. For example:\n-
+      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
+      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
+      Work experience, education, or skills.\nYou will analyze aspects as instructed,
+      considering their relevance and context within the document.\n\n3. Concept:
+      A unit of information or an entity relevant to the task. Concepts may be derived
+      from an aspect or the broader document context. They represent a wide range
+      of data points and insights, from simple entities (names, dates, monetary values)
+      to complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
+      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
+      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
+      Reasoned conclusions: Such as determining whether a document meets specific
+      criteria or answers particular questions.\n- Interpretative judgments: Such
+      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
+      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
+      you comprehend the nature of the document and the aspects or concepts you need
+      to focus on.\n- Follow specific instructions: Each task will include detailed
+      instructions, such as which aspects or concepts to focus on and how the data
+      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
+      ensuring your outputs align with the document''s intent and context.\n- Adapt
+      to variability: Documents may differ in structure, language, or formatting.
+      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks."},{"role":"user","content":"Below
+      you will find a list of consecutively ordered paragraphs from a document and
+      a list of aspects. Your task is to:\n\n1. Read and understand the aspects\n-
+      Each aspect is identified by an Aspect ID (for example, \"A0\", \"A1\", etc.),
+      includes a name, and has a description.\n- Aspects describe themes, topics,
+      or criteria that might be addressed in the paragraphs.\n\n2. Examine each paragraph\n-
+      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
+      etc.), followed by the full text of the paragraph and, optionally, additional
+      information about the paragraph, which may be helpful during your analysis.\n-
+      Note that paragraphs are listed in the same order they appear in the original
+      document; therefore, context from surrounding paragraphs may influence whether
+      a particular paragraph is relevant to an aspect.\n\n3. Map paragraphs to aspects\n-
+      A paragraph can address one, multiple, or none of the aspects.\n- If a paragraph
+      clearly relates to an aspect (based on the aspect''s name and description),
+      include that paragraph''s ID under the aspect''s list of paragraph IDs.\n- If
+      a paragraph does not relate to an aspect, do not include it under that aspect''s
+      list.\n\n4. Produce the final answer in the specified JSON format\n- Your output
+      must be a JSON array of objects, each object corresponding to a single aspect.\n-
+      For each aspect (in the order they are provided), include:\n    -- aspect_id:
+      The aspect''s unique identifier, e.g., \"A0\".\n    -- paragraph_ids: An array
+      of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\", \"P2\"].\n    --
+      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
+      array ([]).\n- Do not add extra commentary, code block markers, or any other
+      formatting beyond the JSON array.\n\nUse the following answer format as a guide
+      for your final answer (remember: no surrounding text or ```json delimiters should
+      be included).\n\n===\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraph_ids: [\n            str,\n            ...\n        ]\n    },\n    ...\n]\n===\n\n___\nDOCUMENT
+      ASPECTS:\n```\n- Aspect ID: A0\nAspect name: Term\nAspect description:\nClauses
+      defining the term of the agreement\n```\n\n___\n\n---\nDOCUMENT PARAGRAPHS:\n''''''\n-
+      Paragraph ID: P0\nParagraph text: Consultancy Agreement\n''''''\n\n''''''\n-
+      Paragraph ID: P1\nParagraph text: This agreement between Company A (Supplier)
+      and Company B (Customer)...\n''''''\n\n''''''\n- Paragraph ID: P2\nParagraph
+      text: The term of the agreement is 1 year from the Effective Date...\n''''''\n\n''''''\n-
+      Paragraph ID: P3\nParagraph text: The Supplier shall provide consultancy services
+      as described in Annex 2...\n''''''\n\n''''''\n- Paragraph ID: P4\nParagraph
+      text: The Customer shall pay the Supplier within 30 calendar days of receiving
+      an invoice...\n''''''\n\n''''''\n- Paragraph ID: P5\nParagraph text: All intellectual
+      property created during the provision of services shall belong to the Customer...\n''''''\n\n''''''\n-
+      Paragraph ID: P6\nParagraph text: This agreement is governed by the laws of
+      Norway...\n''''''\n\n''''''\n- Paragraph ID: P7\nParagraph text: Annex 1: Data
+      processing agreement...\n''''''\n\n''''''\n- Paragraph ID: P8\nParagraph text:
+      Annex 2: Statement of Work...\n''''''\n\n''''''\n- Paragraph ID: P9\nParagraph
+      text: Annex 3: Service Level Agreement...\n''''''\n\n---"}],"model":"gpt-4o-mini","max_tokens":4096,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, zstd
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '7267'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncOpenAI/Python 1.75.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.75.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//dJJBb5wwEIXv/AprzlABS7IJt1RqpTatlKpNpGhZIa89gFNjO7aJ0kb7
+        3yPDZiFtwgEsf/Me88Z+iggBwaEkwDrqWW9k8vHWfbrpH79/ERdff10+fPv72Vzf8x/Xd+rn5TnE
+        QaF3d8j8i+oD072R6IVWE2YWqcfgmq2L9elJtspXI+g1RxlkrfFJoZNeKJHkaV4k6TrJzg7qTguG
+        DkqyiQgh5Gl8hz4Vx0coSRq/7PToHG0RymMRIWC1DDtAnRPOU+UhniHTyqMaW99UarSfPuGpgDqD
+        zNeCV1CSCi7SCuIlN9TS1lLT1YK7ULOZ6VRxlVcw722n5b5S22UXFpvB0TAJNUi5AFQp7WmY5Jh/
+        eyD7Y2KpW2P1zv0jhUYo4braInVahXTOawMj3UeEbMfJDq+GBcbq3vja6984/i4rsmIyhPlEZ5yf
+        HaDXnsqlrMjjNxxrjp4K6RanA4yyDvlCm+bFMQMduNAzS6NF9P87est+ii9Uu3B5134GjKHxyGtj
+        kQv2OvVcZjFc+vfKjqMeGwaH9kEwrL1AG46DY0MHOV1FcH+cx75uhGrRGium+9iY+qTAXbHjp+cr
+        iPbRMwAAAP//AwD9gNB8nQMAAA==
+    headers:
+      CF-RAY:
+      - DUMMY
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - DUMMY
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '998'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '1008'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3066,15 +3068,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFJNT+MwEL3nV1hzTlZp6NI2RxYOe1xpWYSaKnLtSWpwbMueACvU/75y
-        UprAQg6O5PfheTPzmjAGSkLJQBw4ic7p7OrP2mhNv36u7vun69v757vnh6tuf3NzJ3/fQhoVdv+A
-        gt5U34TtnEZS1oyw8MgJo+titbxcXS5W+WIAOitRR1nrKFvarFNGZUVeLLN8lS3WJ/XBKoEBSrZN
-        GGPsdThjnUbiC5QsT99uOgyBtwjlmcQYeKvjDfAQVCBuCNIJFNYQmqH0bWUG+/EXvyrCAh3VSlZQ
-        sgp+5BWkcwK+kOeCUNaKsAuRtd2NhGNldvOnPDZ94DGu6bWeAdwYSzy2awi5OyHHcyxtW+ftPnyQ
-        QqOMCofaIw/WxAiBrIMBPSaM7Yb29e86As7bzlFN9hGH5xbLzWY0hGlsE1xcnECyxPVM9r0o0k8c
-        a4nElQ6zEYDg4oBypi3W08h4L5WdsDyZRf+/os/sx/jKtDOXL+0nQMTBoqydR6nE+9QTzWPc7K9o
-        51YPBUNA/6QE1qTQx3FIbHivx32D8DcQdnWjTIveeTUuXePq/GJTrIsi3+SQHJN/AAAA//8DAAh0
-        rHGCAwAA
+        H4sIAAAAAAAAAwAAAP//dFJNb5wwEL3zK6w5QwWE3c1ybJtTpF56iKJlhYw9sG7Adu2hShTtf68M
+        m4W0CQcj+X143sy8RoyBklAyECdOYrB98vXR3z383D/9vk9/dK3a3L1sHzPx/YE3YriHOChM8wsF
+        vam+CDPYHkkZPcPCIScMrtmu2G032U1eTMBgJPZB1llKCpMMSqskT/MiSXdJdntRn4wS6KFkh4gx
+        xl6nM9SpJT5DydL47WZA73mHUF5JjIEzfbgB7r3yxDVBvIDCaEI9lX6o9GQ//8JXBVigpVrJCkpW
+        wbe0gnhNwGdyXBDKWhEOPrAOx5lwrvRx/ZTDdvQ8xNVj368ArrUhHto1hTxekPM1Vm8660zj/5FC
+        q7Typ9oh90aHCJ6MhQk9R4wdp/aN7zoC1pnBUk3mCafnsmK/nw1hGdsC5/kFJEO8X8k2eRZ/4FhL
+        JK56vxoBCC5OKFfa/HYZGR+lMguWRqvo/1f0kf0cX+lu5fKp/QKIMFiUtXUolXifeqE5DJv9Ge3a
+        6qlg8Oj+KIE1KXRhHBJbPvbzvoF/8YRD3SrdobNOzUvX2npTYFM0cru/gegc/QUAAP//AwCmk6wF
+        ggMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -3101,13 +3103,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '960'
+      - '790'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '963'
+      - '794'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3117,9 +3119,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 26ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 207ms
+      - 102ms
       x-request-id:
       - DUMMY
     status:
@@ -3269,15 +3271,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFJNb9swDL37Vwg8x4PtZnGSY9tTi/ZQDMOAODAUiXHUypIgMVuDIv99
-        kJ3ETrcB88EW+D5MPuojYQyUhCUDseMkWqfT2+9zo+XTw/zl292rEc+3j/c/Dg/lfPP08jiDSVTY
-        zSsKOqu+CNs6jaSs6WHhkRNG17yczspZXmZ5B7RWoo6yxlE6tWmrjEqLrJimWZnm85N6Z5XAAEu2
-        Shhj7KN7xz6NxHdYsmxyrrQYAm8QlhcSY+CtjhXgIahA3BBMBlBYQ2i61leV6ez7T3yqCAt0VCtZ
-        wZJVcJdVMBkT8J08F4SyVoRtiKzVgPecZ+t/8UMFQ33dH4+VWY+b8bjdBx4DMXutRwA3xhKPgXYx
-        rE/I8TK4to3zdhM+SWGrjAq72iMP1sQhA1kHHXpMGFt3Ae+vMgPnbeuoJvuG3e/y6SLvDWFY7ADf
-        nOIHssT1SPa1OMuuHGuJxJUOoyWB4GKHctAOG+V7qewISEZz/9nO37z72ZVp/sd+AETcO8raeZRK
-        XI880DzGi/8v2iXnrmEI6H8qgTUp9HEXErd8r/vrCOEQCNt6q0yD3nnV38mtq7ObRTEvimyRQXJM
-        fgMAAP//AwDBn2CfoQMAAA==
+        H4sIAAAAAAAAA4xSTa+bMBC88yusPYcq8MhLk1tbtYceekybhggZeyFujW3Zy/vQU/57ZcgLpB9S
+        OYC1M7PszvglYQyUhC0DceIkOqfT9/vw8WvdrB5V8aD3u13/WX37/k7zvTO7T7CIClv/QEGvqjfC
+        dk4jKWtGWHjkhLFrti7W96vsLi8GoLMSdZS1jtLCpp0yKs2XeZEu12n29qI+WSUwwJYdEsYYexne
+        cU4j8Qm2bLl4rXQYAm8RtlcSY+CtjhXgIahA3BAsJlBYQ2iG0Q+lGdqPn/iUERboqFKyhC0r4cOy
+        hMWcgE/kuSCUlSLsQmQdJnzkfLH+kT+XMNWP4/FcmuN8GI9NH3g0xPRazwBujCUeDR1sOF6Q83Vx
+        bVvnbR1+k0KjjAqnyiMP1sQlA1kHA3pOGDsOBvc3noHztnNUkf2Jw++yYpONDWEKdoLzzQUkS1zP
+        ZKv8Esxtx0oicaXDLCQQXJxQTtopUd5LZWdAMtv7z3H+1nvcXZn2f9pPgIi5o6ycR6nE7coTzWO8
+        +P+iXX0eBoaA/kEJrEihj1lIbHivx+sI4TkQdlWjTIveeTXeycZVqwLropb3mztIzskvAAAA//8D
+        AFDQAcShAwAA
     headers:
       CF-RAY:
       - DUMMY
@@ -3304,13 +3306,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1054'
+      - '1004'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1057'
+      - '1016'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3320,9 +3322,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 14ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 150ms
+      - 180ms
       x-request-id:
       - DUMMY
     status:
@@ -3467,15 +3469,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFNLb5tAEL7zK1Z7SiUTge0G27fYh556aNP2UGOh9e4YttmXdofWUeT/
-        Xi04BreJFA6A9nsw883wnBBCpaArQnnDkGun0vWPhVGbe7vWxfHb52KxN+vmy5/Hn18/ffcPdBIV
-        dv8LOL6obrnVTgFKa3qYe2AI0TUv5nfFXV5keQdoK0BFWe0wndtUSyPTaTadp1mR5ouzurGSQ6Ar
-        sk0IIeS5u8c6jYAjXZFs8nKiIQRWA11dSIRQb1U8oSwEGZAZpJMB5NYgmK70bWk6+/4RrzLCHBxW
-        UpR0RUq6yUo6GRPgiJ5xBFFJBB0iazvgPWdjtWPmidyTm4fWOSXBf7iyuaatyc2mDWh1RxtYu/71
-        VJrduAMPhzawmKJplRoBzBiLLE6hy253Rk6XtJStnbf78I+UHqSRoak8sGBNTCagdbRDTwkhu24q
-        7VXQ1HmrHVZoH6H7XD7P570hHbZhgGfLM4gWmRrLPs4mrzhWApBJFUaTpZzxBsSgHdaAtULaEZCM
-        +v6/nNe8+96lqd9jPwA8LguIynkQkl+3PNA8xL/lLdol565gGsD/lhwqlODjLAQcWKv6HabhKSDo
-        6iBNDd552S/ywVXZbDldTKfZMqPJKfkLAAD//wMALmZUS9YDAAA=
+        H4sIAAAAAAAAA3RTS2/bMAy++1cIOnVAXOThNGluadAddhmwbiiKODAUibHVyaIg0UOLIv99kJ3G
+        ztb6YBv6HiY/0m8JY1wrvmJcVoJk7Ux69xTuH9eLx1nzbf3z/jtuvmL1VC4fflS/spKPogL3zyDp
+        XXUtsXYGSKPtYOlBEETXySJb3Mwns2nWAjUqMFFWOkozTGttdTodT7N0vEgny5O6Qi0h8BXbJowx
+        9tbeY51WwQtfsfHo/aSGEEQJfHUmMcY9mnjCRQg6kLDERz0o0RLYtvRtblv77hGvPMISHBVa5XzF
+        cr4Z53w0JMALeSEJVKEJ6hBZ2x7vOBusnbCvbM2uHhrnjAb/5cLmknbHrjZNIKxbWs/ada/H3O6G
+        HXg4NEHEFG1jzAAQ1iKJOIU2u90JOZ7TMlg6j/vwj5QftNWhKjyIgDYmEwgdb9FjwtiunUpzETR3
+        HmtHBeFvaD83ySZZZ8j7bejh2fIEEpIwQ9l8OvrAsVBAQpswmCyXQlagBtrpst8E0SiNPTZOBq3/
+        X9FH9l372pYDl0/te0DGfQFVOA9Ky8uue5qH+MN8RjtH3RbMA/g/WkJBGnwch4KDaEy3xjy8BoK6
+        OGhbgnded7t8cMU8g322Vze3M54ck78AAAD//wMAZspRmdkDAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -3502,13 +3504,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1480'
+      - '1125'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1486'
+      - '1133'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3518,9 +3520,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 20ms
       x-ratelimit-reset-tokens:
-      - 53ms
+      - 199ms
       x-request-id:
       - DUMMY
     status:
@@ -3679,15 +3681,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jJNNj9sgEIbv/hVoznFlu9l8HVtV6vZDai/tIY4QC2ObLgYEONp2lf9e
-        4Xzg7KZSfbAFz7zjYd7hOSMEpIANAd6xwHur8nc/Vlp9Hu7x0Vf6q/1Z3H3/9Oe+W++/sA8fYRYV
-        5uEX8nBWveGmtwqDNPqIuUMWMGYtl/PFclEui3IEvRGooqy1IZ+bvJda5lVRzfNimZerk7ozkqOH
-        DdlmhBDyPL5jnVrgE2xIMTvv9Og9axE2lyBCwBkVd4B5L31gOsAsQW50QD2Wvq31mP74iU8dMUcb
-        qBQ1bEgN74saZtMAfAqO8YCCyoC9j1HbxF/kS7I9UwPG4HJ2Czts0KHmSC1zrHXMdlSKW9mT5ltR
-        w2u2u946pOWJHGq9mzbEYTN4Fk3Rg1ITwLQ2gUVTRyt2J3K4NF+Z1jrz4F9IoZFa+o46ZN7o2Ggf
-        jIWRHjJCdqPJw5VvYJ3pbaDBPOL4u3JRnlyGNFwJ35UnGExgaipbnMlVRiowMKn8ZFCAM96hSNo0
-        VWwQ0kxANjn363Ju5T6eXer2f9InwOPsoaDWoZD8+sgpzGG8fP8Ku/R5LBg8ur3kSINEF70Q2LBB
-        Ha8E+N8+YE8bqVt01snjvWgsLd6uq1VVFesCskP2FwAA//8DAN5R/MolBAAA
+        H4sIAAAAAAAAAwAAAP//jJNNb9swDIbv/hUCz/FgJ2lS5Ni1QIFehg3DPuJAYCTa0WZLgiQXHYr8
+        90HOh5w2A+aDDenhS1N8qdeMMVASVgzEDoPobJvf/fAP3x6kLD4/zr4/4U+6v33czr6qpy/z+w4m
+        UWG2v0iEk+qDMJ1tKSijD1g4wkAxa7mcLxc35Ww6H0BnJLVR1tiQz03eKa3yaTGd58UyL2+P6p1R
+        gjys2DpjjLHX4R3r1JJeYMWKyWmnI++xIVidgxgDZ9q4A+i98gF1gEmCwuhAeih9Xekh/eETnypi
+        QTZwJStYsQo+FhVMxgH0EhyKQJKrQJ2PUevE3+RLsmdse4rB5eQadlSTIy2IW3TYOLQ7ruS17Enz
+        qajgPdtcbu3T8kj2ld6MG+Ko7j1GU3TftiOAWpuA0dTBis2R7M/Nb01jndn6N1KolVZ+xx2hNzo2
+        2gdjYaD7jLHNYHJ/4RtYZzobeDC/afhduSiPLkMaroRvTjCYgO1YtjiRi4xcUkDV+tGggECxI5m0
+        aaqwl8qMQDY69/tyruU+nF3p5n/SJyDi7JHk1pFU4vLIKcxRvHz/Cjv3eSgYPLlnJYgHRS56IanG
+        vj1cCfB/fKCO10o35KxTh3tRWy63KHBRyLqAbJ/9BQAA//8DABOyo7glBAAA
     headers:
       CF-RAY:
       - DUMMY
@@ -3714,13 +3716,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1698'
+      - '1669'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1702'
+      - '1679'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3730,9 +3732,216 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 26ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 117ms
+      - 61ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \u201CExpected structure,\u201D you
+      must follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If there are example
+      items (\u201CExtracted concept examples\u201D), try to follow the same style
+      and formatting for your extracted items.\\n    -- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n\\n-
+      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
+      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure your extracted
+      items strictly match that type. Python types are provided (e.g., str for string,
+      int for integer, float for floating-point number, dict for object, etc.).\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- If multiple items are found for a concept,
+      include each as a separate entry within the \\\"extracted_items\\\" array.\\n\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Attachments\\n\\nConcept description:\\nThe titles
+      and concise descriptions of the attachments to the agreement\\n\\nExpected structure:\\n{\\n
+      \ \\\"title\\\": str,\\n  \\\"description\\\": str or null\\n}\\n\\nAmount of
+      extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nExtracted
+      concept examples:\\n- custom_data={} content={'title': 'Appendix A', 'description':
+      'Code of conduct'}\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      TEXT:\\nConsultancy Agreement\\nThis agreement between Company A (Supplier)
+      and Company B (Customer)...\\nThe term of the agreement is 1 year from the Effective
+      Date...\\nThe Supplier shall provide consultancy services as described in Annex
+      2...\\nThe Customer shall pay the Supplier within 30 calendar days of receiving
+      an invoice...\\nAll intellectual property created during the provision of services
+      shall belong to the Customer...\\nThis agreement is governed by the laws of
+      Norway...\\nAnnex 1: Data processing agreement...\\nAnnex 2: Statement of Work...\\nAnnex
+      3: Service Level Agreement...\\n---\\n\"}],\"model\":\"gpt-4o-mini\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, zstd
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '8078'
+      content-type:
+      - application/json
+      cookie:
+      - DUMMY
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncOpenAI/Python 1.75.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.75.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//rFRNj9owEL3nV1g+k4pAgMJtl1Z76Eo99IAqgiJjTxJ3HduyB8pqxX+v
+        nMAm2e1KqGoO+fCb92bGeeOXiBAqBV0RyiuGvLYqvv/pv26O+4ek+i7WsK4m/PnxG79fPmyK35qO
+        AsPsfwHHK+sTN7VVgNJcYO6AIQTVZJEu5rNkOkkboDYCVKCVFuPUxLXUMp6MJ2k8XsTJ5wu7MpKD
+        pyuyjQgh5KW5hzq1gBNdkfHoulKD96wEunoNIoQ6o8IKZd5Lj0wjHXUgNxpBN6VvM93It49wZQHm
+        YDGXIqMrktH1OKOjfgCc0DGOIHKJUPsQte3wN3odDSUqaCXvtIYTSQa6XaAAz520YS/b8C8MGbHO
+        cPBe6pKw0gHUoDGjQ/559C91TG6t4wcybPISU5CNcU//J//05vzgjpIDeYQjKHL34S50n7v29Zzp
+        Xd8BDoqDZ8GF+qBUD2BaG2QhY+O9XXTt6+o2ZUrrzN6/odJCaumr3AHzRgdneTSWNug5ImTXuPow
+        MCq1ztQWczRP0KRLZunF1rSbpg5eTi8gGmSqR5tPr8hAMReATCrfmwzKGa9AdNxujNhBSNMDol7f
+        78v5m3bbu9TlLfIdwMOwgcitAyH5sOUuzEE4bT4Ke93npmDqW5/kKMGFfyGgYAfVngHUP3uEOi+k
+        LsFZJ9uDoLD5LIV9uhfz5ZRG5+gPAAAA//8DAMaSxvwWBQAA
+    headers:
+      CF-RAY:
+      - DUMMY
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2155'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '2157'
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 16ms
+      x-ratelimit-reset-tokens:
+      - 153ms
       x-request-id:
       - DUMMY
     status:
@@ -3882,15 +4091,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA3SST2+cMBDF73wKa85QwS77p9zSVEovVQ5Rq7bLCrn2sOvW2JY9tBtF+90rw2Yh
-        asIBkH9vnmbe+ClhDJSEioE4chKd09mHr1uj7//qLw7p5mH52Zb3Hx8+3X07/dB33yGNFfbnLxT0
-        XPVO2M5pJGXNiIVHThhdi0253qyLTV4MoLMSdSyzy6xTRmWLfLHK8iJbFpfKo1UCA1RslzDG2NPw
-        jj0aiSeoWJ4+n3QYAj8gVFcRY+CtjifAQ1CBuCFIJyisITRD27vaDPbjJz51xAIdNUrWULEabvMa
-        0rkAT+S5IJSNIuxCVO0mPmpurQm9Jm7EI7s5eMQODdUwyfbj77k2+3lvHts+8JiN6bWeAW6MJR6z
-        HVLZX8j5mkOrjArHxiMP1sTZAlkHAz0njO2HXPsXUYHztnPUkP2Ng21RbjejIUy7nOF8daFkiesZ
-        WL1fpK9YNhKJKx1mywHBxRHlVDttkvdS2RlIZgP+389r3uPwyhwml3X5pv8ERFw4ysZ5lEq8HHqS
-        eYy3/S3ZNemhYwjo/yiBDSn0cRsSW97r8R5CeAyEXdMqc0DvvBovY+uaJZZyu17wfAvJOfkHAAD/
-        /wMAHryK/5YDAAA=
+        H4sIAAAAAAAAAwAAAP//dJLdbpwwEIXveQprrqEC9gfCXZu0UlRVqtqmVbSskGsPi1uwiT1UiaJ9
+        98iwWYiacAGWvzPDzJl5DBgDJaFgIBpOouvb6MOt+/irubv6efP9+vPNbXY9/Pgq77bfPn1J8QpC
+        H2F+/0FBz1HvhOn6FkkZPWFhkRP6rEm2zrabZJWuR9AZia0PM6uoU1pFaZxuojiJVskpsjFKoIOC
+        7QLGGHsc375GLfEeChaHzzcdOscPCMVZxBhY0/ob4M4pR1wThDMURhPqsexdqcf008c/pccCe6qU
+        LKFgJVzGJYRLAd6T5YJQVoqwc161m/mkuTTaDS1xLR7Y+4NF7FBTCbNsPx2Ppd4va7NYD457b/TQ
+        tgvAtTbEvbejK/sTOZ59qJVWrqkscme0782R6WGkx4Cx/ejr8MIq6K3peqrI/MUxbbLOsykhzLNc
+        4Cw5UTLE2wXYbvLwlZSVROKqdYvhgOCiQTnHzpPkg1RmAYJFg//X81ruqXmlD4vS0vzNH8xA+Imj
+        rHqLUomXXc8yi37d35KdrR5LBof2nxJYkULrxyGx5kM7LSK4B0fYVbXSB7S9VdM21n2V50l8cZEm
+        qxiCY/AEAAD//wMAc81R0JcDAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -3917,13 +4126,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1942'
+      - '2712'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1949'
+      - '2715'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3933,215 +4142,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 23ms
+      - 21ms
       x-ratelimit-reset-tokens:
-      - 120ms
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array. If the concept is not found or there are no items to extract,
-      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
-      of extracted items for the concept is specified under \\\"Amount of extracted
-      items\\\". Each extracted item, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
-      structure is provided for a concept under \u201CExpected structure,\u201D you
-      must follow that structure for all extracted items corresponding to that concept.\\n
-      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
-      the extracted item value must be within that scale.\\n    -- If there are example
-      items (\u201CExtracted concept examples\u201D), try to follow the same style
-      and formatting for your extracted items.\\n    -- When extracting string values,
-      translate them in English if the original language of the document is not English.\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure your extracted
-      items strictly match that type. Python types are provided (e.g., str for string,
-      int for integer, float for floating-point number, dict for object, etc.).\\n
-      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
-      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
-      all, your output should still contain an entry for that concept with an empty
-      \\\"extracted_items\\\" array.\\n    -- If multiple items are found for a concept,
-      include each as a separate entry within the \\\"extracted_items\\\" array.\\n\\n-
-      No additional text:\\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
-      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
-      Concept ID: C0\\nConcept name: Attachments\\n\\nConcept description:\\nThe titles
-      and concise descriptions of the attachments to the agreement\\n\\nExpected structure:\\n{'description':
-      str | None, 'title': <class 'str'>}\\n\\nAmount of extracted items: This concept
-      may have zero, one, or multiple extracted items.\\n\\nExtracted concept examples:\\n-
-      custom_data={} content={'title': 'Appendix A', 'description': 'Code of conduct'}\\n\\nConcept
-      extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nConsultancy
-      Agreement\\nThis agreement between Company A (Supplier) and Company B (Customer)...\\nThe
-      term of the agreement is 1 year from the Effective Date...\\nThe Supplier shall
-      provide consultancy services as described in Annex 2...\\nThe Customer shall
-      pay the Supplier within 30 calendar days of receiving an invoice...\\nAll intellectual
-      property created during the provision of services shall belong to the Customer...\\nThis
-      agreement is governed by the laws of Norway...\\nAnnex 1: Data processing agreement...\\nAnnex
-      2: Statement of Work...\\nAnnex 3: Service Level Agreement...\\n---\\n\"}],\"model\":\"gpt-4o-mini\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate, zstd
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '8074'
-      content-type:
-      - application/json
-      cookie:
-      - DUMMY
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncOpenAI/Python 1.75.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.75.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://api.openai.com/v1/chat/completions
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFNNj5swEL3zK6w5kwpImq/btlUv7aWq1KobIuSYgbhrbMseoqxW+e+V
-        IQlk22jLAZDfvOf5ePMSMQayhDUDseckGqsmH34stfoiH3dLWdefH9W8/fbMf81nhyn5PcSBYXa/
-        UdCF9U6YxiokaXQPC4ecMKimi9l8MU8XSdoBjSlRBVptaTIzk0ZqOcmSbDZJFpN0eWbvjRToYc02
-        EWOMvXTvkKcu8QhrlsSXkwa95zXC+hrEGDijwglw76UnrgniARRGE+ou9U2uO/n+E548wAItFbLM
-        Yc1y+JjkEI8D8EiOC8KykISND1GbAe/1oEQvnLShIb3MJ06cWWcEei91zXjtEBvUlEPMciBJCvvI
-        B63xyNIcTvHbst+JUyfDTMV+Gvd0Ry77Tzl0BymQfcUDKvbwRo7THE6D5rb/PeV6O263w6r1PIxc
-        t0qNAK61IR7u7ga9PSOn62iVqa0zO/+KCpXU0u8Lh9wbHcboyVjo0FPE2LazUHvjCrDONJYKMk/Y
-        XZe+n509BIN1B3ixOoNkiKsRbZ5ekBvFokTiUvmRDUFwscdyxM2Wg215W0ozYEk0Kv3vjP4l35cv
-        dT1SuSs/ACKYG8vCOiyluK16CHMYtvte2LXVXcLge9MUJNGFcZRY8Vb1Owf+2RM2RSV1jc462S9e
-        ZYtkusqWWZasEohO0R8AAAD//wMA1BlYYYYEAAA=
-    headers:
-      CF-RAY:
-      - DUMMY
-      Connection:
-      - keep-alive
-      Content-Encoding:
-      - gzip
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Server:
-      - cloudflare
-      Transfer-Encoding:
-      - chunked
-      X-Content-Type-Options:
-      - nosniff
-      access-control-expose-headers:
-      - X-Request-ID
-      alt-svc:
-      - h3=":443"; ma=86400
-      cf-cache-status:
-      - DYNAMIC
-      openai-organization:
-      - DUMMY
-      openai-processing-ms:
-      - '2336'
-      openai-version:
-      - '2020-10-01'
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
-      x-envoy-upstream-service-time:
-      - '2347'
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-ratelimit-reset-requests:
-      - 34ms
-      x-ratelimit-reset-tokens:
-      - 262ms
+      - 118ms
       x-request-id:
       - DUMMY
     status:
@@ -4303,16 +4306,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA3STS2+cMBDH7/spRj6zEewj+zgmpx4q9ZC2UsMKTewBJjU2sk0ejfa7VzZJ2LQb
-        DmD8m/l7Xn6ZAQhWYg9Cthhk1+v51Y+t0UjNDZqvP6+7x6vm25fvS7r7Y3+5lciih727JxnevC6k
-        7XpNga0ZsXSEgaJqsVldbi6LTV4k0FlFOrrZ5bxjw/NFvljP82K+LF49W8uSvNjD7QwA4CW9Y4xG
-        0ZPYQ5697XTkPTYk9u9GAMJZHXcEes8+oAkim6C0JpBJYd+WJsmPn/iUEUvqQ8WqFHsoxXVeiuzU
-        gJ6CQxlIVRyo89HqduL/6E1uD6gHisbb7By+H3zgmiXG+o0n37QE2DiijkwA35PkmskDgjU0fyZ0
-        oAaXHDJ4bFm2wB5ivgqdAjYgrfGDDmjkc1ynuD2gUYCaG+PhkUMLd+QD9JHFokNtHfhBtkCmwSYd
-        7i9K8THo4/R7GJfH0hxOy+yoHjzGNptB6xOAxtiQok4NPryS43tLazbs28oRemtim3ywvUj0OAM4
-        pBEZPnRd9M52faiC/U1JtrjcLEZBMY3lhNeL5SsNNqCewKLYrbMzkpWigKz9yZwJibIlNflOQ4mD
-        YnsCZicJ/h/POe0xeTbNpLJabT89YAIyDi+pqnekWH7MejJzFG/uZ2bvpU4hC0/ugSVVgcnFdiiq
-        cdDjnRL+2QfqqppNQ653PF6suq+22yLf7RbFMhez4+wvAAAA//8DAPs2Nv9iBAAA
+        H4sIAAAAAAAAA3STwW7bMAyG73kKQuekiOPEaXPcMAzrDjuswDrUgaFIdMxOlgyJbpMVefdBdhon
+        XeuDLesjf5Ii9TICEKTFCoSqJKu6MZNPv8OXX3Wa/MiaG39ffd/9vbsO39zX25+39xsxjh5u84iK
+        X72ulKsbg0zO9lh5lIxRNVnOl9kiSWfzDtROo4luLp3UZGkym84Wk2kySZOjZ+VIYRAreBgBALx0
+        75ij1bgTK5iOX3dqDEFuUaxORgDCOxN3hAyBAkvLYjxA5Syj7dJ+yG0n33/ik0essOGCdC5WkIvP
+        01yMzw1wx14qRl0QYx2i1cPA3+gNbk/StBiNl+P38GMbmEpSMp5fH/muQpBbj1ijZQgNKioJA0hI
+        JnuUHhh9DaXzIEE5G1rD0qo9BPRPpHAMzxWpCih0vK6dBd36LgCQBa4QyOo2sN+DtBq2aNFLY/Yg
+        DW1tgGfiCjYYGJpYcWzJVS4usz8Mv+t+ecjt+vy8PZZtkLHftjXmDEhrHXfpdJ1eH8nh1NuSLIWq
+        8CiDs7FfgV0jOnoYAay7WWkv2i8a7+qGC3Z/sJNNsuWsFxTDfA44W1wfKTuWZgCzND0O2aVkoZEl
+        mXA2cEJJVaE+j5nNT0XIVpMb2HR0VuP/Kb0n39dPdjuoLJbZhwEGoOIgoy4aj5rUZeGDmcd4iz8y
+        O512l7I4zlbBhD52RGMpW9PfLxH2gbEuSrJb9I2n/pKVTVEuZun1ZprdSDE6jP4BAAD//wMA2Arf
+        SG4EAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -4339,13 +4343,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '7082'
+      - '5898'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '7089'
+      - '5903'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4496,15 +4500,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJJPb5wwEMXvfAprzlB52f97a6TcoqiV2l6WFfLaA7gB27Vnq02j/e6V
-        YbOQNuEAln/zHvPGfkkYA61gx0A2gmTn2uzux8aEhz/+eaPP32j1uDzP7493X3/d0/cHDmlU2ONP
-        lPSq+iRt51okbc2ApUdBGF1n68VqvZqt+aYHnVXYRlntKFvYrNNGZznPFxlfZ7PNVd1YLTHAju0T
-        xhh76d+xT6PwDDvG09edDkMQNcLuVsQYeNvGHRAh6EDCEKQjlNYQmr71fWF6++ETnwJEcCip1KqA
-        HSvgMy8gnXInvKi9cE2pVYg1+5EOFV/yAsa9w7C8FOYw7cJjdQoiTsKc2nYChDGWRJxkn/9wJZdb
-        4tbWzttj+EcKlTY6NKVHEayJ6QJZBz29JIwd+sme3gwLnLedo5LsE/a/my3yxWAI44mOON9eIVkS
-        7VS2nKfvOJYKSeg2TE4HpJANqol2tsxvGcRJaTsynkyi/9/Re/ZDfG3qicuH9iOQEh2hKp1HpeXb
-        1GOZx3jpPyq7jbpvGAL631piSRp9PA6FlTi1w1WE8BwIu7LSpkbvvB7uY+VKPt/mmzznWw7JJfkL
-        AAD//wMAp0PShZ0DAAA=
+        H4sIAAAAAAAAA4ySTYvbMBCG7/4VYs5xSRxnk/jWQOm1UCiUOBhZGtvaypKQ5JJlyX8vktPI226h
+        Pthinnlfz4deM0JAcKgIsIF6NhqZn767T+yonw+n63UY+9Pp+M195S+twK7/DKug0O0zMv9b9YHp
+        0Uj0QqsZM4vUY3Dd7Mv9026z3a4jGDVHGWS98Xmp81EokRfroszX+3xzuKsHLRg6qMg5I4SQ1/gO
+        dSqOV6hI9IqREZ2jPUL1SCIErJYhAtQ54TxVHlYJMq08qlj6uVbRfv6EpwbqDDLfCF5DRWr4uK5h
+        teSGWtpbaoZGcBdyzonOGV+KGlLsMh9vtbosq7DYTY6GSahJygWgSmlPwyRj/5c7uT06lro3Vrfu
+        Dyl0Qgk3NBap0yp057w2EOktI+QSJzu9GRYYq0fjG69/YPzdpizK2RDSRhMuDnfotadyKdsVq3cc
+        G46eCukW2wFG2YA8adMq6cSFXoBs0fff5bznPfcuVP8/9gkwhsYjb4xFLtjbllOaxXDj/5X2mHMs
+        GBzan4Jh4wXasAuOHZ3kfA/BvTiPY9MJ1aM1VsyXsTPNrsS2bPnTcQvZLfsFAAD//wMA/OsQHpoD
+        AAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -4533,13 +4537,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1029'
+      - '910'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1036'
+      - '916'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4549,9 +4553,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 22ms
       x-ratelimit-reset-tokens:
-      - 52ms
+      - 103ms
       x-request-id:
       - DUMMY
     status:
@@ -4690,15 +4694,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJJPb5wwEMXvfAprzlABZbMst/65pVJbKUrVLivktQdwa2zXNlVX0X73
-        yrBZSJpwAMu/eY95Yz9EhIDgUBFgPfVsMDJ5f18qx8vj6eu3U0c/+f729+3d8e7+++cPPz5CHBT6
-        +BOZf1S9YXowEr3QasbMIvUYXLNtcbO9ybZpOYFBc5RB1hmfFDoZhBJJnuZFkm6TrLyoey0YOqjI
-        PiKEkIfpHfpUHP9CRdL4cWdA52iHUF2LCAGrZdgB6pxwnioP8QKZVh7V1Pq+VpP9/AlPDdQZZL4R
-        vIaK1PAurSFec0Mt7Sw1fSO4CzX7hc4VX7Ialr3DvDzX6rDuwmI7OhomoUYpV4AqpT0Nk5zyHy7k
-        fE0sdWesPrpnUmiFEq5vLFKnVUjnvDYw0XNEyGGa7PhkWGCsHoxvvP6F0++yIt/MhrCc6ILz3QV6
-        7alcyzZF/IJjw9FTId3qdIBR1iNfabNNfs1ARy70wtJoFf3/jl6yn+ML1a1cXrVfAGNoPPLGWOSC
-        PU29lFkMl/61suuop4bBof0jGDZeoA3HwbGlo5yvIriT8zg0rVAdWmPFfB9b06Rvd3mZ5+kuhegc
-        /QMAAP//AwBZqDIqnQMAAA==
+        H4sIAAAAAAAAAwAAAP//dJJPj5swEMXvfAprzqECQpJdbq20Vav2UFXqVlWIkGMP4K2xLdukf1b5
+        7pVNGth2lwNY/s17zBv7MSEEBIeKAOupZ4OR6Ztv7o75+9/3/ZcfJ/NVvP/4dtR3H7afH07vRlgF
+        hT4+IPN/Va+YHoxEL7SaMLNIPQbXfFfutpt8vc4iGDRHGWSd8Wmp00EokRZZUabZLs1vLupeC4YO
+        KrJPCCHkMb5Dn4rjT6hI9Io7AzpHO4TqWkQIWC3DDlDnhPNUeVjNkGnlUcXW97WK9tMnPDVQZ5D5
+        RvAaKlLD66yG1ZIbamlnqekbwV2o2c90qviU1zDvHabluVaHZRcW29HRMAk1SrkAVCntaZhkzH+4
+        kPM1sdSdsfro/pFCK5RwfWOROq1COue1gUjPCSGHONnxybDAWD0Y33j9HePv8rLYTIYwn+iMi5sL
+        9NpTuZRt1qtnHBuOngrpFqcDjLIe+UKbb4prBjpyoWeWJYvo/3f0nP0UX6hu4fKi/QwYQ+ORN8Yi
+        F+xp6rnMYrj0L5VdRx0bBof2JBg2XqANx8GxpaOcriK4X87j0LRCdWiNFdN9bE2zKfFYHvn2dg3J
+        OfkDAAD//wMAGAewd50DAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -4727,13 +4731,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1052'
+      - '1626'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1056'
+      - '1635'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4743,9 +4747,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 25ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 106ms
+      - 52ms
       x-request-id:
       - DUMMY
     status:
@@ -4890,15 +4894,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFNLb9swDL77Vwg8tUA8OE5WJ7ltObQ9rcCGdUAcGIrExGplSZCYPlDk
-        vw+y09jZWh9sQ9/D5Ef6LWEMlIQFA1FzEo3T6fffM0Pfirp4vL1rwvPrH3t983Dz+nz/8wfdwygq
-        7OYBBb2rvgjbOI2krOlg4ZETRtdxMb0qrsZFNm+BxkrUUbZzlE5t2iij0jzLp2lWpOPZUV1bJTDA
-        gq0Sxhh7a++xTiPxBRYsG72fNBgC3yEsTiTGwFsdT4CHoAJxQzDqQWENoWlLX5Wmte8e8SojLNBR
-        pWQJC1bCMithNCTgC3kuCGWlCJsQWase7zi/UNRL6x27uPP2SUn0l2cuHeta2w3Xt0awi6VWaOiy
-        hJ6z7l4PpVkPy/e43QceIzR7rQcAN8YSjyNog1sfkcMpKm13zttN+EcKW2VUqCuPPFgTYwlkHbTo
-        IWFs3Y5kf5YyOG8bRxXZR2w/N56Op50h9KvQw5P5ESRLXA9lXyejDxwricSVDoOxguCiRjnQ5rN+
-        DfheKttjWTJo/f+KPrLv2ldmN3D51L4HRFwWlJXzKJU477qneYx/y2e0U9RtwRDQPymBFSn0cRwS
-        t3yvux2G8BoIm2qrzA6986pb5K2rssk8n+V5Ns8gOSR/AQAA//8DAH19XSXWAwAA
+        H4sIAAAAAAAAA4xT32vbMBB+918h7qmFuNiJ24S8dSGMvowNxsqIg1Gkc6JUljTpUjpK/vchO42d
+        rYP6wTb6fvjuu/NrwhgoCXMGYsdJNE6nn36GJS7zSfG4f9h/efrhlrNH++teNt+aPIdRVNjNHgW9
+        qW6EbZxGUtZ0sPDICaNrPi2md7f5ZDJugcZK1FG2dZQWNm2UUek4GxdpNk3z2Um9s0pggDlbJYwx
+        9treY51G4gvMWTZ6O2kwBL5FmJ9JjIG3Op4AD0EF4oZg1IPCGkLTlr4qTWvfPeJVRligo0rJEuas
+        hEVWwmhIwBfyXBDKShE2IbJWPd5xvqPYLax37Oqrt89Kor++cOlYn7XdcP1gBLtaaIWGrkvoOevu
+        9Via9bB8j/Uh8BihOWg9ALgxlngcQRvc+oQcz1Fpu3XebsJfUqiVUWFXeeTBmhhLIOugRY8JY+t2
+        JIeLlMF52ziqyD5h+7m8yIvOEPpV6OHJ7ASSJa6Hstvx6B3HSiJxpcNgrCC42KHstf0O8INUdgAk
+        g77/Lec97653ZbYfse8BETcFZeU8SiUuW+5pHuOv8j/aOee2YAjon5XAihT6OAuJNT/oboEh/A6E
+        TVUrs0XvvOq2uHaV3HDB7zJZZ5Ackz8AAAD//wMA9u1ygNMDAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -4925,13 +4929,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '828'
+      - '882'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '831'
+      - '887'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5094,15 +5098,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJLLjtMwFIb3eQrrrBuUhNLbkrJgA2y4CDVV5NonqcGxjX0yDBr13ZGd
-        TpOBmSwSy9/5/5zbQ8YYKAk7BuLMSfRO52+/bsxQ0un3l7v98vPH7tP77x/Cr+pd136jARZRYU8/
-        UNCj6pWwvdNIypoRC4+cMLqW6+VqvSrXZZFAbyXqKOsc5Uub98qovCqqZV6s83JzVZ+tEhhgxw4Z
-        Y4w9pHfM00i8hx1LXummxxB4h7C7BTEG3up4AzwEFYgbgsUEhTWEJqV+qE2yHz/xqSMW6KhRsoYd
-        q2Ff1LCYB+A9eS4IZaMI+xCjDhMfY/Zcq9Z6o3gNEzuOx0ttjvOEPLZD4LEpZtB6BrgxlnhsamrF
-        8Uout+K17Zy3p/CPFFplVDg3HnmwJhYayDpI9JIxdkxNHp70DZy3vaOG7E9MvyuX2/VoCNNwJ1xt
-        r5AscT2TvalWi2ccG4nElQ6zQYHg4oxypq0202D5IJWdWJHNSv8/o+fsx/KV6WYuL9pPQMTxo2yc
-        R6nE06qnMI9x/18Ku7U6JQwB/Z0S2JBCH8chseWDHrcSwp9A2DetMh1659W4mq1ritfbalNVxbaA
-        7JL9BQAA//8DAPo2mO6oAwAA
+        H4sIAAAAAAAAAwAAAP//dJJda9swFIbv/SvEuY5H7DhNm8uGsg12NcZgxMEo0nFyOlkS0sloKfnv
+        Q3Yau1vrC1voOe/r8/WSCQGkYS1AHSWrzpv8/ld8wHv18xs+tt9JFyFuPj+33Y8vD1+xgFlSuP0j
+        Kn5VfVKu8waZnB2wCigZk2uxqlY3y2KxKHvQOY0myQ6e88rlHVnKy3lZ5fNVXtxe1EdHCiOsxTYT
+        QoiX/p3ytBqfYC3ms9ebDmOUB4T1NUgICM6kG5AxUmRpGWYjVM4y2j71bW17++GTnjphhZ4b0jWs
+        RQ2beQ2zaQA+cZCKUTfE2MUUtR35ELORhloXLMkaRrYbjufa7qYJBWxPUaam2JMxEyCtdSxTU/tW
+        7C7kfC3euIMPbh//kUJLluKxCSijs6nQyM5DT8+ZELu+yac3fQMfXOe5Yfcb+98V1d1qMIRxuCMu
+        by+QHUszkS3L5ewdx0YjSzJxMihQUh1RT7Tl7ThYedLkRjbPJqX/n9F79kP5ZA8Tlw/tR6DS+FE3
+        PqAm9bbqMSxg2v+Pwq6t7hOGiOEPKWyYMKRxaGzlyQxbCfE5MnZNS/aAwQcaVrP1zbLCfbXXN3cL
+        yM7ZXwAAAP//AwBmWi60qAMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -5129,13 +5133,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '799'
+      - '871'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '805'
+      - '887'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5145,9 +5149,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 205ms
+      - 141ms
       x-request-id:
       - DUMMY
     status:
@@ -5298,15 +5302,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJJNb5wwEIbv/Aprzktl2M1+3Zqqh/RU9ZCmCivk2APrFGzHHqpU0f73
-        yma7kDbhAJafeV/m6yVjDLSCPQN5FCR71+XXt1sztNc37gf/+nS3br4/4ebm9uPd58cv3yQsosI+
-        PKKkv6oP0vauQ9LWjFh6FITRtdis1pt1sSl4Ar1V2EVZ6yhf2bzXRuclL1c53+TF9qw+Wi0xwJ7d
-        Z4wx9pLeMU+j8Bn2LHmlmx5DEC3C/hLEGHjbxRsQIehAwhAsJiitITQp9fvKJPvxE58qYomOaq0q
-        2LMKPvEKFvMAfCYvJKGqNWEfYtT9xMcYXuS8iGUtK5jYYTyeKnOYJ+SxGYKITTFD182AMMaSiE1N
-        rTicyelSfGdb5+1D+EcKjTY6HGuPIlgTCw1kHSR6yhg7pCYPr/oGztveUU32J6bfFVf8ajSEabgT
-        Xq7OkCyJbi5b7hZvONYKSeguzAYFUsgjqpm23E6DFYPSdmI8m5X+f0Zv2Y/la9POXN61n4CM40dV
-        O49Ky9dVT2Ee4/6/F3ZpdUoYAvpfWmJNGn0ch8JGDN24lRB+B8K+brRp0Tuvx9VsXM2Xu3JblnzH
-        ITtlfwAAAP//AwAS+uvmqAMAAA==
+        H4sIAAAAAAAAA3SSXW+bMBSG7/kV1rmGCULSpNy106Sp09TddVOIkGMfwCvYln3SZavy3ydDGujW
+        cgGWn/O+nK/niDFQEgoGouUketsltz/8J3y4y9rjI36/zz7ffLu7X/+5fvhCT7++QhwUZv8TBb2o
+        PgjT2w5JGT1i4ZATBtdsvVxfrbI8XwygNxK7IGssJUuT9EqrZJEulkm6TrLNWd0aJdBDwbYRY4w9
+        D++Qp5Z4hIKl8ctNj97zBqG4BDEGznThBrj3yhPXBPEEhdGEekh9W+rBfvyEpwxYoKVKyRIKVsLH
+        tIR4HoBHclwQykoR9j5EbSc+xqRZkmahrLyEie3G46nUu3lCDuuD56Ep+tB1M8C1NsRDU4dW7M7k
+        dCm+M411Zu//kUKttPJt5ZB7o0OhnoyFgZ4ixnZDkw+v+gbWmd5SReYRh99lq3Q1GsI03Ann+RmS
+        Id7NZfkmfsOxkkhcdX42KBBctChn2sVmGiw/SGUmlkaz0v/P6C37sXylm5nLu/YTEGH8KCvrUCrx
+        uuopzGHY//fCLq0eEgaP7kkJrEihC+OQWPNDN24l+N+esK9qpRt01qlxNWtbyT0X/CqVdQrRKfoL
+        AAD//wMAf5zfFagDAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -5333,13 +5337,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '855'
+      - '946'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '860'
+      - '950'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5349,9 +5353,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 14ms
+      - 34ms
       x-ratelimit-reset-tokens:
-      - 151ms
+      - 256ms
       x-request-id:
       - DUMMY
     status:
@@ -5510,15 +5514,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dJPNbqMwFIX3PIV11zACmpA0y3bRXTvSSB2NQmQ59oW4Y2yPbaqOqrz7
-        yJAJpE1ZgOzvnsP9sd8TQkAK2BDgBxZ4Z1V297zW/Y9lo9zLn4ef8vHX/vHpmT+gfyrv1pBGhdm/
-        IA//Vd+46azCII0eMXfIAkbXYrWoVlWxKvIBdEagirLWhmxhsk5qmZV5ucjyVVaczPnBSI4eNmSb
-        EELI+/COeWqBb7Ahg9ew06H3rEXYnIMIAWdU3AHmvfSB6QDpBLnRAfWQ+rbWg/34iU8dMUcbqBQ1
-        bEgN93kN6TwA34JjPKCgMmDnY9R24h/8JtkrUz3G4DK9hh026FBzpJY51jpmD1SKa+6T5ntew2e2
-        u9w6TssTOdZ6N2+Iw6b3LA5F90rNANPaBBaHOoxidyLHc/OVaa0ze/9BCo3U0h+oQ+aNjo32wVgY
-        6DEhZDcMub+YG1hnOhtoML9x+F1RFcvREKbDNeFlcYLBBKbmsqpKrzhSgYFJ5WcHBTjjBxQz7fKm
-        OtfAeiHNxPJkVvrnjK7Zj+VL3c5cvrSfAI/HDwW1DoXkl1VPYQ7j/fsq7NzqIWHw6F4lRxokujgO
-        gQ3r1XgrwP/1ATvaSN2is06OV6OxNL+5Lddlmd/mkByTfwAAAP//AwBhHQHtKAQAAA==
+        H4sIAAAAAAAAAwAAAP//dJNNj5swEIbv/AprzqEiHyRtjk23ak+tVFVVtURoYg/grrEt26x2tcp/
+        rwxJILtZDkH4mffNfPklYQykgC0D3mDgrVXp57/+jvLvzZfff/JFs/u1w2/Np+fOf8W7Hw8wiwpz
+        +Ec8nFUfuGmtoiCNHjB3hIGi63yz2qzz+XK56EFrBKkoq21IVyZtpZbpIlus0myTzj+e1I2RnDxs
+        2X3CGGMv/W/MUwt6gi3LZueTlrzHmmB7CWIMnFHxBNB76QPqALMRcqMD6T71+0L39sMrPkXEnGwo
+        pShgywrYZQXMpgH0FBzyQKKUgVofo+5H/spvlD2i6igGL2a3sKOKHGlOpUWHtUPblFLcch81P7MC
+        3rL99dFx/DyRY6H304Y4qjqPcSi6U2oCUGsTMA61H8X+RI6X5itTW2cO/pUUKqmlb0pH6I2OjfbB
+        WOjpMWFs3w+5u5obWGdaG8pgHqj/u/l6ng+GMC7XiPPTCkAwAdVUtj7LrhxLQQGl8pNFAY68ITHR
+        5sv1pQbshDQjy5JJ6W8zumU/lC91PXF5134EPK4fidI6EpJfVz2GOYr3772wS6v7hMGTe5ScyiDJ
+        xXEIqrBTw60A/+wDtWUldU3OOjlcjcqW4oAc15moMkiOyX8AAAD//wMA24XyTygEAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -5545,13 +5549,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1222'
+      - '989'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1325'
+      - '993'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5561,9 +5565,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 23ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 114ms
+      - 101ms
       x-request-id:
       - DUMMY
     status:
@@ -5659,19 +5663,19 @@ interactions:
       \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
       \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
       Concept ID: C0\\nConcept name: Attachments\\n\\nConcept description:\\nThe titles
-      and concise descriptions of the attachments to the agreement\\n\\nExpected structure:\\n{'description':
-      str | None, 'title': <class 'str'>}\\n\\nAmount of extracted items: This concept
-      may have zero, one, or multiple extracted items.\\n\\nExtracted concept examples:\\n-
-      custom_data={} content={'title': 'Appendix A', 'description': 'Code of conduct'}\\n\\nConcept
-      extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nService
-      Level Agreement\\nThis agreement between TechCorp (Provider) and GlobalInc (Client)...\\nThe
-      agreement shall commence on January 1, 2023 and continue for 2 years...\\nThe
-      Provider shall deliver IT support services as outlined in Schedule A...\\nThe
-      Client shall make monthly payments of $5,000 within 15 days of invoice receipt...\\nThe
-      Provider guarantees [99.9%] uptime for all critical systems...\\nEither party
-      may terminate with 60 days written notice...\\nThis agreement is governed by
-      the laws of California...\\nSchedule A: Service Descriptions...\\nSchedule B:
-      Response Time Requirements...\\n---\\n\"}],\"model\":\"gpt-4o-mini\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
+      and concise descriptions of the attachments to the agreement\\n\\nExpected structure:\\n{\\n
+      \ \\\"title\\\": str,\\n  \\\"description\\\": str or null\\n}\\n\\nAmount of
+      extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nExtracted
+      concept examples:\\n- custom_data={} content={'title': 'Appendix A', 'description':
+      'Code of conduct'}\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      TEXT:\\nService Level Agreement\\nThis agreement between TechCorp (Provider)
+      and GlobalInc (Client)...\\nThe agreement shall commence on January 1, 2023
+      and continue for 2 years...\\nThe Provider shall deliver IT support services
+      as outlined in Schedule A...\\nThe Client shall make monthly payments of $5,000
+      within 15 days of invoice receipt...\\nThe Provider guarantees [99.9%] uptime
+      for all critical systems...\\nEither party may terminate with 60 days written
+      notice...\\nThis agreement is governed by the laws of California...\\nSchedule
+      A: Service Descriptions...\\nSchedule B: Response Time Requirements...\\n---\\n\"}],\"model\":\"gpt-4o-mini\",\"max_tokens\":4096,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -5682,7 +5686,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '8090'
+      - '8094'
       content-type:
       - application/json
       cookie:
@@ -5716,16 +5720,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFNNj9MwEL3nV1hzTlD6ve1tFwmEEAi2wKWpIteetAbHNvYELazy31dO
-        SpOFXUEOSeQ373k+3twnjIGSsGEgTpxE7XR28+XKNNx9rK/fHbZvD7+q2w9bejV7zd9/ni0gjQx7
-        +IqCfrNeCFs7jaSs6WHhkRNG1clqvlwtJ6tJ3gG1lagj7egom9usVkZl03w6z/JVNrk6s09WCQyw
-        YbuEMcbuu3fM00i8gw3rtLqTGkPgR4TNJYgx8FbHE+AhqEDcEKQDKKwhNF3qu8J08v0nPkWEBToq
-        lSxgwwp4mReQjgPwjjwXhLJUhHWIUbsB7/VAYhBeudiQXmaL/ocSyEZAYJX17M0nFhrnrKcCUlYA
-        KdJ45ogTykYjuy6gTf99xy0GZ01ARqpG5vF7ozzWaCg8L31TQDso7/vftjD7ccs8Vk3gcWym0XoE
-        cGMs8a6Y2Ib9GWkv49H26Lw9hD+oUCmjwqn0yIM1cRSBrIMObRPG9p0NmkeTBedt7agk+w276yaL
-        +bIXhMF+A7xYn0GyxPWItswX6ROKpUTiSoeRlUDw2KeBO/iON1LZEZCM6v47nae0+9qVOf6P/ACI
-        6E6UpfMolXhc8hDmMa7nc2GXPncJQ+i9WZJCH2chseKN7pcGws9AWJeVMkf0zqt+cypX5rP19Go6
-        zdc5JG3yAAAA//8DAHKJFHZHBAAA
+        H4sIAAAAAAAAAwAAAP//nFPLbtswELzrKwiepUK2ZTnxLW4L9FSgbi9FZAg0uZLZUiRLruoEgf+9
+        oBSHch5AUB304OyM9jH7kBBCpaBrQvmBIe+syjY//WcQPldH1h7LrftyVN+uvzab7Y3Y3tM0MMz+
+        F3A8sz5w01kFKI0eYe6AIQTV2apYlcvZYjEfgM4IUIHWWswKk3VSy2yez4ssX2Wzq0f2wUgOnq7J
+        bUIIIQ/DPeSpBdzRNcnT80kH3rMW6PopiBDqjAonlHkvPTKNNI0gNxpBD6nfVnqQHx/hqgLMwWIt
+        RUXXpKIf84qm0wC4Q8c4gqglQudD1G3En+lFGkpUMEp+5wcQvQJycyEdYwV47qQN7XxkgPsrOZBP
+        EfAVvaSe0v/MYvPeLLbgrdEeyA/ZAdnCn1466EDjy1zi5258PVV6N52Cg6b3LDhB90pNAKa1QTZU
+        GDq7S87VnSeuTGud2ftnVNpILf2hdsC80WG6Ho2lA3pKCNkNzuovzEKtM53FGs1vGH43WxblKEij
+        oyNcnkE0yNSEVs7m6SuKtQBkUvmJOylnoe8T7vwqupn1QpqI5cmk9JcZvSY/li91O1F5Uz4CPHge
+        RG0dCMkvq45hDsLSvxX21OohYepHz9YowYVxCGhYr8ZVpP7eI3R1I3ULzjo57mNj62UB+2IvyusF
+        TU7JPwAAAP//AwAL/ISRnQQAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -5752,13 +5756,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1592'
+      - '1637'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1598'
+      - '1652'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5768,9 +5772,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 29ms
+      - 22ms
       x-ratelimit-reset-tokens:
-      - 257ms
+      - 198ms
       x-request-id:
       - DUMMY
     status:
@@ -5920,15 +5924,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//dFJBbtswELzrFcSerUKSHdvRrWmLXnpoESBGYRkCQ64s1hQpkKsgReC/
-        F6QcS0ETHSSCMzuand2XhDFQEkoGouUkul6ndw9bM/DfYtB3u/vd11Ox0zffTu2vx5/dw3dYhAr7
-        +AcFvVZ9ErbrNZKyZoSFQ04YVPPNar1Z55s8i0BnJepQZpdpp4xKi6y4SbM8XeaXytYqgR5Ktk8Y
-        Y+wlvoNHI/EZShZ14k2H3vMjQnklMQbO6nAD3HvliRuCxQQKawhNtL2vTJQfP+GpAiywp1rJCkpW
-        wZesgsWcgM/kuCCUtSLsfGDtJ3zk3KN7UgLZD3xCzT4fHWKHhiqYiIfxeK7MYe7OYTN4HtIxg9Yz
-        gBtjiYd0Yy6HC3K+JtEoo3xbO+TemtCdJ9tDRM8JY4eY7PAmLOid7XqqyZ4wyuar2+UoCNM0Z/D6
-        9oKSJa7nwLpYvCNZSySutJ+NBwQXLcqpdpolH6SyMyCZNfi/n/e0x+aVOc6sFdsPfzABIswcZd07
-        lEq87XqiOQwL/xHtGnW0DH7cgZoUujAOiQ0f9LiK4P96wq5ulDmi650a97Hp6yWu5HZd8GwLyTn5
-        BwAA//8DAKeXqjaZAwAA
+        H4sIAAAAAAAAA3SSTW/bMAyG7/4VAs/24I/EaX3bht2CDsWwAUMcGKpEO1plyZOYrmuR/z7ITmMX
+        a32wDT0vKfIlnyPGQEmoGIgDJ9EPOvn0039B+7t8cvfl99suu3nqtrfZ9s+PrzdrDnGIsHe/UNBL
+        1Adh+0EjKWsmLBxywpA126w25TorinwEvZWoQ5gtkl4ZleRpvk7SLCmyc+TBKoEeKraLGGPseXyH
+        Go3ER6hYGr+c9Og97xCqi4gxcFaHE+DeK0/cEMQzFNYQmrHsXW3G9NMnPHXAAgdqlKyhYjV8TmuI
+        lwJ8JMcFoWwUYe+DajfzSfMN3YMSyLb4gJp97Bxij4ZqmIX76fdUm/2yOoft0fPgjjlqvQDcGEs8
+        uDv6sj+T08WJVhnlD41D7q0J3XmyA4z0FDG2H509vjILBmf7gRqy9zimzVbXxZQQ5mku8CY7U7LE
+        9QKU5Sp+I2UjkbjSfjEeEFwcUC7vTK8uTfCjVHZmabTo8f+S3ko/9a9Mt7ghf/+CGYgwdpTN4FAq
+        8brxWeYw7Px7sovbY8ngpzVoSKELE5HY8qOethH8X0/YN60yHbrBqWkl26Fp13lxdZeW1xyiU/QP
+        AAD//wMAfvKzkJwDAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -5955,13 +5959,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2980'
+      - '2342'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2987'
+      - '2350'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5971,9 +5975,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 22ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 119ms
+      - 56ms
       x-request-id:
       - DUMMY
     status:
@@ -6136,16 +6140,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA3STTW/bMAyG7/kVhM5JEadtkuXYnTZgu6zoNtSBoUh0zM6WNIlqGxT574PkLHa3
-        1gd/PeQrUnz1MgEQpMUGhGokq861s5u7tYnf9GEdvnyONz+b7/uvd7fmsWh/PNU7MU0ZdveAiv9m
-        XSjbuRaZrOmx8igZk2qxulqulsWqmGfQWY1tSrOXs44MzRbzxfVsXswui1NmY0lhEBu4nwAAvOR7
-        qtFofBYbyDr5T4chyD2KzTkIQHjbpj9ChkCBpWExHaCyhtHksu9Lk+X7R7rKhBU6rkiXYgOl+Dgv
-        xXQcgM/spWLUFTF2IUXdD/wfvSHtUbYRU/Bq+hZ+iIGpJiXT/vUr3zYIcu8ROzQMwaGimjCABH6y
-        swNKDzr6nDCFp4ZUAxSAD46UbEEaDcqaQBo9apAaf0fJCLX18OkWQnTOeoaA/pHUaKEAOxlQgzVA
-        RsfA/gA7DAwudZ3GclGK1x0ch89t/3oszXa85x7rGGSauYltOwLSGMu5hTzt7Ykcz/OtyVBoKo8y
-        WJNmFtg6kelxArDNfomvLCCct53jiu0vzLLFcrXuBcXg0QFfrz+cKFuW7QAWi+Vq+oZkpZEltWFk
-        OqGkalAPuYNDZdRkR2AyavD/et7S7psnsx/VXCzeXWAAKjkZdeU8alKvux7CPKZj/F7YeatzyeLk
-        l4oJfRqHxlrGtj9gIhwCY1fVZPbonaf+lNWuusQrvV4u5HwtJsfJHwAAAP//AwBGRcDvbwQAAA==
+        H4sIAAAAAAAAA3RTwW7bMAy95ysIXXZxCsdO0jTHbjt0GNANKDBsdWAoEm2rkyVNorMEQ/59kJ3G
+        6db6YMt6j08kH/VnAsCUZGtgouEkWqent9/DR/zyzd7ufP41rbeftvef7+67xYfwY79nSYyw2ycU
+        9Bx1JWzrNJKyZoCFR04YVWfX8+vlYpbnWQ+0VqKOYTaftsqoaZZmi2k6m+azU2RjlcDA1vA4AQD4
+        079jjkbinq0hTZ53WgyB18jWZxIA81bHHcZDUIG4IZaMoLCG0PRpPxamlx8+8SkiLNBRqWTB1lCw
+        92nBkksC7slzQShLRdiGyHoc8X/0xrAd1x1G8ip5DX7qAqlKCR77N5z80CDw2iO2aOhdgGx6QO5B
+        dr4nAdeqNgF+K2qADk4JriGg3ymBoHGHeowOUFkPdw8QOuespwRCV9cYSJkauMRfHRcH2PKAEqwB
+        ahBC17sLLSdCD9xIiK2U3EtwsQHRoauCvSzmOP5uhuWxMJvL9nususCj/abT+gLgxljqK+uN35yQ
+        49nqShkVmtIjD9ZE+wJZx3r0OAHY9KPTvZgG5rxtHZVkf2IvO1terwZBNo7rCC/y2QklS1yPQJal
+        N8krkqVE4kqHi/ljgosG5eWZy/m5CN5JZUcsnVzU+H9Kr8kP9StTjyrz+erNA0ZAxLlGWTqPUomX
+        hY80j9H2t2jnbvcps9O4laTQR0ckVrzTw3Vj4RAI27JSpkbvvBruXOXKapHlq226vOFscpz8BQAA
+        //8DAKquhCh9BAAA
     headers:
       CF-RAY:
       - DUMMY
@@ -6172,13 +6177,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6245'
+      - '4719'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '6297'
+      - '4724'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -6191,197 +6196,6 @@ interactions:
       - 12ms
       x-ratelimit-reset-tokens:
       - 64ms
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - identity
-      Connection:
-      - keep-alive
-      X-Amzn-Trace-Id:
-      - 6b18a2ec-a057-4a35-953a-6cba77f5712d
-      user-agent:
-      - unknown/None; hf_hub/0.31.1; python/3.13.2; torch/2.7.0; transformers/4.48.3;
-        session_id/456c3e392e0c471199e93f0be405adc5
-    method: HEAD
-    uri: https://huggingface.co/facebookAI/xlm-roberta-base/resolve/main/tokenizer_config.json
-  response:
-    body:
-      string: ''
-    headers:
-      Access-Control-Allow-Origin:
-      - https://huggingface.co
-      Access-Control-Expose-Headers:
-      - X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '98'
-      Content-Type:
-      - text/plain; charset=utf-8
-      Date:
-      - DUMMY
-      Location:
-      - /FacebookAI/xlm-roberta-base/resolve/main/tokenizer_config.json
-      Referrer-Policy:
-      - strict-origin-when-cross-origin
-      Vary:
-      - Origin, Accept
-      Via:
-      - 1.1 db0992ba349fc51d5151ec8330e36c28.cloudfront.net (CloudFront)
-      X-Amz-Cf-Id:
-      - 6nj0sOb2tYl0FOpsL3FCdZg64rAnxit8h1m4IlmAaUCQ83tZ5P0TXg==
-      X-Amz-Cf-Pop:
-      - OSL50-P1
-      X-Cache:
-      - Miss from cloudfront
-      X-Powered-By:
-      - huggingface-moon
-      X-Request-Id:
-      - Root=1-681d77f4-0aa9c1807d5f009e03c038a1;6b18a2ec-a057-4a35-953a-6cba77f5712d
-      cross-origin-opener-policy:
-      - same-origin
-      x-request-id:
-      - DUMMY
-    status:
-      code: 307
-      message: Temporary Redirect
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - identity
-      Connection:
-      - keep-alive
-      X-Amzn-Trace-Id:
-      - 1d83695b-210e-4056-9166-d9214db6145a
-      user-agent:
-      - unknown/None; hf_hub/0.31.1; python/3.13.2; torch/2.7.0; transformers/4.48.3;
-        session_id/456c3e392e0c471199e93f0be405adc5
-    method: HEAD
-    uri: https://huggingface.co/FacebookAI/xlm-roberta-base/resolve/main/tokenizer_config.json
-  response:
-    body:
-      string: ''
-    headers:
-      Accept-Ranges:
-      - bytes
-      Access-Control-Allow-Origin:
-      - https://huggingface.co
-      Access-Control-Expose-Headers:
-      - X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash
-      Connection:
-      - keep-alive
-      Content-Disposition:
-      - inline; filename*=UTF-8''tokenizer_config.json; filename="tokenizer_config.json";
-      Content-Length:
-      - '25'
-      Content-Security-Policy:
-      - default-src 'none'; sandbox
-      Content-Type:
-      - text/plain; charset=utf-8
-      Date:
-      - DUMMY
-      ETag:
-      - '"34ddbd64a4cd3f2d9d8a9120d3662d0bf91baead"'
-      Referrer-Policy:
-      - strict-origin-when-cross-origin
-      Vary:
-      - Origin
-      Via:
-      - 1.1 04c4f064943f75498361739eb063cb7a.cloudfront.net (CloudFront)
-      X-Amz-Cf-Id:
-      - xDkKzVfWSdur5uEdIuOBul_5Jgaq4HSw0s6W1fjKspasJYKSqnNCZA==
-      X-Amz-Cf-Pop:
-      - OSL50-P1
-      X-Cache:
-      - Miss from cloudfront
-      X-Hub-Cache:
-      - HIT
-      X-Powered-By:
-      - huggingface-moon
-      X-Repo-Commit:
-      - e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
-      X-Request-Id:
-      - Root=1-681d77f5-5e7d0bf1031bafb322f4d46c;1d83695b-210e-4056-9166-d9214db6145a
-      cross-origin-opener-policy:
-      - same-origin
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - identity
-      Connection:
-      - keep-alive
-      X-Amzn-Trace-Id:
-      - b68b33d1-66bb-4523-b151-b028e09c0aa9
-      user-agent:
-      - unknown/None; hf_hub/0.31.1; python/3.13.2; torch/2.7.0; transformers/4.48.3;
-        session_id/456c3e392e0c471199e93f0be405adc5
-    method: HEAD
-    uri: https://huggingface.co/segment-any-text/sat-6l-sm/resolve/main/config.json
-  response:
-    body:
-      string: ''
-    headers:
-      Accept-Ranges:
-      - bytes
-      Access-Control-Allow-Origin:
-      - https://huggingface.co
-      Access-Control-Expose-Headers:
-      - X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash
-      Connection:
-      - keep-alive
-      Content-Disposition:
-      - inline; filename*=UTF-8''config.json; filename="config.json";
-      Content-Length:
-      - '965'
-      Content-Security-Policy:
-      - default-src 'none'; sandbox
-      Content-Type:
-      - text/plain; charset=utf-8
-      Date:
-      - DUMMY
-      ETag:
-      - '"0ca1dfc9a20f39b33bf669a70648929b8e24f693"'
-      Referrer-Policy:
-      - strict-origin-when-cross-origin
-      Vary:
-      - Origin
-      Via:
-      - 1.1 9d4a908d41124cba1276d6cef8f00c60.cloudfront.net (CloudFront)
-      X-Amz-Cf-Id:
-      - Qy401OCxyujaW1nqESIbfp-FreV3UJBAWdxWZ3VhXEkY0G-ZL4yPmA==
-      X-Amz-Cf-Pop:
-      - OSL50-P1
-      X-Cache:
-      - Miss from cloudfront
-      X-Hub-Cache:
-      - MISS
-      X-Powered-By:
-      - huggingface-moon
-      X-Repo-Commit:
-      - d85d2b6ddfb19036c4c8e8b3b7ca45da684b0905
-      X-Request-Id:
-      - Root=1-681d77f6-370d46f2002fbe860be33dd0;b68b33d1-66bb-4523-b151-b028e09c0aa9
-      cross-origin-opener-policy:
-      - same-origin
       x-request-id:
       - DUMMY
     status:
@@ -6533,16 +6347,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFPLjpswFN3zFZY3s4FRXiVMdk27q1qpVdUuQoQc+wJOjW3Zl+lMR/n3
-        yiYTyHRGKgswPvec+35KCKFS0A2hvGXIO6uy7Y/CLOqFFtvlJ/i5/oxfm7uj4/kfBd+2NA0MczgC
-        x2fWLTedVYDS6AHmDhhCUJ2vV/k6n6/nRQQ6I0AFWmMxW5lsMVusslmRzfIzsTWSg6cbsksIIeQp
-        vkOIWsAD3ZBZ+nzTgfesAbq5GBFCnVHhhjLvpUemkaYjyI1G0DHqXamj/PAJTxlgDhYrKUq6ISX9
-        MCtpOjWAB3SMI4hKInQ+WO1G/IXeSLtnqodB8ovR2UfpuTK+d0DeNw6gA41Xjkbmsfcoa8lZqOyg
-        8L0FIgzvA4scoJHak98SW4ItEJSogNy85eUmJVKLKKebgfBogZj6onhb0us4TuPvfjieSr2fFtVB
-        3XsWeqp7pSYA09pgjDy2c39GTpcGKtNYZw7+BZXWUkvfVg6YNzo0y6OxNKKnhJB9HJT+qvfUOtNZ
-        rND8guhu/m45HwTpOJsjnC/PIBpkakq7W6WvKFYCkEnlJ8NGOeMtiJE7TibrhTQTIJnk/W84r2kP
-        uUvd/I/8CPAwvyAq60BIfp3yaOYg7O5bZpc6x4CpB3cvOVQowYVeCKhZr4a1ov7RI3RVLXUDzjo5
-        7FZtK1EU+aouDvmBJqfkLwAAAP//AwChb11eZAQAAA==
+        H4sIAAAAAAAAAwAAAP//jFPJbtswEL3rKwhecpEDb3ES35ouQIGiddFeXMsQaHIkMaE4BDlKEwT+
+        94CSY8lpAlQHieKb92Z/ShjjWvEl47ISJGtnRjfr8Pmu/gM3Yf0Nv8Bqsjb46+fXFa5q9YOnkYG7
+        W5D0wjqXWDsDpNF2sPQgCKLq5HJ+ubiYzGZXLVCjAhNppaPRHEfT8XQ+Gl+NxosDsUItIfAl2ySM
+        MfbUvmOIVsEDX7Jx+nJTQwiiBL48GjHGPZp4w0UIOpCwxNMelGgJbBv1JrOtfPeJTxZhCY5yrTK+
+        ZBn/OM54OjSAB/JCEqhcE9QhWm16/JVeT7sXpoFO8jva0ScdpMHQeGAfSg9Qg6UTRz3ztgmkCy1F
+        rGyn8LsCplA2kcV2UGob2F9NFaMKGGkywM7e83KWMm1VK2fLjvDogGFxVDzP+Gkc+/532x33md0O
+        i+qhaIKIPbWNMQNAWIvURt62c3tA9scGGiydx114ReWFtjpUuQcR0MZmBULHW3SfMLZtB6U56T13
+        HmtHOeEdtO4mF7NJJ8j72ezhxfQAEpIwQ9r1LH1DMVdAQpswGDYuhaxA9dx+MkWjNA6AZJD3v+G8
+        pd3lrm35P/I9IOP8gsqdB6Xlacq9mYe4u++ZHevcBswD+HstIScNPvZCQSEa060VD4+BoM4LbUvw
+        zututwqXX++UKqRYwJQn++QZAAD//wMAQHDP1mQEAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -6571,13 +6385,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1975'
+      - '1088'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1983'
+      - '1098'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -6738,15 +6552,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFPNjpswEL7zFNacQwU0BDa3bdVzK1XqoSFCjj2Au2C7tmm7WvHulSEJ
-        sEmr5WCk+X5mxjN+CQgBwWFPgDXUsU634YdvuUp/i5/p9zhP61P88TmLe4r0s3r6FMHGK9TpBzJ3
-        Ub1jqtMtOqHkBDOD1KF3jbPtLtvFWRKPQKc4tl5WaxduVdgJKcIkSrZhlIVxflY3SjC0sCeHgBBC
-        XsbT1yk5/oE9iTaXSIfW0hphfyURAka1PgLUWmEdlQ42M8iUdCjH0g+FHO2nn/8KoFYjc6XgBexJ
-        AY9RAZslrqmhtaG6sZ5wmKFXTncUV9Mv6cp0plr0tTG85/2fHLcGi1Th16iA+5rhNnxchxaMMzIU
-        8ri8ToNVb6kfqezbdgFQKZWjfiXGQR7PyHAdXatqbdTJvpJCJaSwTWmQWiX9mKxTGkZ0CAg5jivS
-        r6YO2qhOu9KpJxzTxWmeT4Ywr+YM784LBE452i5ku+1FtnIsOToqWrtYM2CUNchn7byTtOdCLYBg
-        0fdtOfe8p96FrN9iPwOMoXbIS22QC7ZueaYZ9E/3X7TrPY8Fg0XzSzAsnUDjZ8Gxon07PSiwz9Zh
-        V1ZC1mi0EdOrqnQZvX9I8iSJHiIIhuAvAAAA//8DALltAKRjBAAA
+        H4sIAAAAAAAAA4yTwY7TMBCG73kKa84NaneTttsbCMQVgTiwTRW59jQxOLZlT1aLVn13ZKc06baL
+        yMGR5pv/99gzfskYAyVhw0C0nETndP7hR/jUFe26N4/fV0VJ+kly7z7j14/0/AizqLD7nyjor+qd
+        sJ3TSMqaAQuPnDC6LlbFalku7ot5Ap2VqKOscZQXNu+UUfnd/K7I56t8sT6pW6sEBtiwbcYYYy9p
+        jXUaic+wYckrRToMgTcIm3MSY+CtjhHgIahA3BDMRiisITSp9G1lkv3wi18FPDgUVCtZwYZV8H5e
+        wWzKHfe88dy1ISZsR/TK6YbibPqlvDAdUwPG2gTe8v7HHtcGk63yb/MKbmuO1+HdZWiScSLHyuym
+        1+nx0AceW2p6rSeAG2OJx5FIjdydyPHcOm0b5+0+vJLCQRkV2tojD9bENgWyDhI9Zozt0oj0F10H
+        523nqCb7C9N2i3K9HgxhHM0Rlw8nSJa4nsiWxWp2w7GWSFzpMBkzEFy0KEftOJO8l8pOQDY593U5
+        t7yHsyvT/I/9CIRARyhr51EqcXnkMc1jfLpvpZ3vORUMAf2TEliTQh97IfHAez08KAi/A2FXH5Rp
+        0Duvhld1cHVZ4L7Yy+XDPWTH7A8AAAD//wMAz6fgfGMEAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -6775,13 +6589,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1485'
+      - '1261'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1490'
+      - '1268'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -6946,16 +6760,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//vFTBbqMwEL3zFdacYUVoCklu2/2BqCvlEiLkmgHcgu21J6tWVf59ZUgC
-        adIedqXlAPK8ec8z5o3fA8ZAlrBiIBpOojNt9LBZ6OxXJvXj6wut10lFj6n88bZMN5uHZwg9Qz89
-        o6AT65vQnWmRpFYDLCxyQq86y+Zpls6y5K4HOl1i62m1oWiuo04qGSVxMo/iLJotjuxGS4EOVmwb
-        MMbYe//2daoSX2HF4vAU6dA5XiOszkmMgdWtjwB3TjriiiAcQaEVoepL3+aqlx8+/smBO4OCClnm
-        sGI5fI9zCKe44ZbXlpvG+YTtCH1QusE4i67nF6JjqkNfm8Bb2l/scS0w2Sr6Gedwm3O4Du8uQ4fw
-        7xq8/38N3v9bg+PyiBxytZv6xWK1d9x7Vu3bdgJwpTRx7/neqbvgdGQnb7a6NlY/uQ9UqKSSriks
-        cqeV96EjbaBHDwFju34G9he2BmN1Z6gg/YL9drM0SwZBGGdvhJfpESRNvJ3QsnQR3lAsSiQuWzeZ
-        IxBcNFhOuMlinDu+L6UesTiYtH5d0S35oX2p6onKp/IjIAQawrIwFkspLrse0yz66+mztPNR9wWD
-        Q/tbCixIovW/o8SK79vh0gD35gi7opKqRmusHG6OyhTx3TJZJEm8jCE4BH8AAAD//wMA3tdPq0cF
-        AAA=
+        H4sIAAAAAAAAAwAAAP//vFRNj5swEL3zK6w5Q0WyBJrctupW6q1SpX4oRMixB/AGbMs21Var/PfK
+        kASyoauqlcoB5HnznmfMGz8HhIDgsCHAaupYq5vo3Xf7oNZPbPn+wzf+9fDxYO7NnVl/eUgf2xRC
+        z1D7R2TuzHrDVKsbdELJAWYGqUOvusiSLF0t7pJlD7SKY+NplXZRoqJWSBEt42USxVm0eHti10ow
+        tLAh24AQQp77t69TcnyCDYnDc6RFa2mFsLkkEQJGNT4C1FphHZUOwhFkSjqUfenbXPbyw8c/OVCr
+        kblC8Bw2JIf7OIdwimtqaGWorq1P2I7QC6UZxkX0U3IlOqZa9LUxnNN+ZY9bgclW0ec4h3nO8Ta8
+        uw4dw79rcPX/Glz9W4Pj8oQcc7mb+sVg2VnqPSu7ppkAVErlqPd879RdcD6yszcbVWmj9vYFFUoh
+        ha0Lg9Qq6X1ondLQo8eAkF0/A92VrUEb1WpXOHXAfrtFmi0HQRhnb4TXqxPolKPNhJalWTijWHB0
+        VDR2MkfAKKuRj9xx6GjHhZoAwaTv23LmtIfehaz+RH4EGEPtkBfaIBfsuuUxzaC/m36XdjnnvmCw
+        aH4IhoUTaPy/4FjSrhluDLA/rcO2KIWs0Ggjhmuj1AXfU0bTmJcxBMfgFwAAAP//AwAbl4xrRAUA
+        AA==
     headers:
       CF-RAY:
       - DUMMY
@@ -6984,13 +6798,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2354'
+      - '3660'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2357'
+      - '3667'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -7180,16 +6994,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFRfb5swEH/nU1jWHmEyNEsgb9u0vW3rNGnaGiLk2gfxBrZnm6pVle9e
-        GdKYpDQaDyDd78/d2Xc8RghhwfEaYbajjnW6TT78zFXx/tOiXt58vrr5Yr7+/tV/zxf1N/avMDj2
-        CnX7B5h7Vr1lqtMtOKHkCDMD1IF3TVeL5WqZrrJ3A9ApDq2XNdolC5V0QookI9kiIaskzQ/qnRIM
-        LF6jTYQQQo/D29cpOdzjNSLxc6QDa2kDeH0kIYSNan0EU2uFdVQ6HAeQKelADqVvSjnYjx//lB5m
-        oF0leInXqMQfSYnjKQHunaHMAa+Eg8561ibgZ35BdkfbHkbLN2lGYkII0mDQA1BzkiFIDNRgQDKo
-        NDW0MVTv5tJdSHvR69jiNZktYE5swR8eg0rwS6UE6TVJfpASv07bzkP7l+Ez5oRxQPal3E5v2kDd
-        W+qnTfZtOwGolMpRP63DjG0PyP44Va1qtFG39kyKayGF3VUGqFXST5B1SuMB3UcIbYfp7U8GEmuj
-        Ou0qp/7CkC4tyHI0xGFrApynB9ApR9upLF/FM44VB0dFaycbgBllO+BBG9aF9lyoCRBN+n5Zzpz3
-        2LuQzf/YB4D5pQJeaQNcsNOWA82A/6u8Rjue81AwtmDuBIPKCTD+LjjUtG/HXcf2wTroqlrIBow2
-        Ylz4WlfkqsjyLCMFwdE+egIAAP//AwD5mvwh/gQAAA==
+        H4sIAAAAAAAAAwAAAP//jFRdb9owFH3Pr7Cu9kgmQwOlPHabJk17YJs0bSIoMvZN4i2xXdvpiir+
+        e+UESKAULQ+J5PNxr+1z8xwRAlLAggAvmee1qeL73+6TfXj4nCTL779qZablv/ufX+m3L7Ot+wij
+        oNCbP8j9QfWe69pU6KVWHcwtMo/BdXyb3M6m45tk2gK1FlgFWWF8nOi4lkrGEzpJYnobj+d7dakl
+        RwcLsooIIeS5fYc+lcAnWBA6OqzU6BwrEBZHEiFgdRVWgDknnWfKw6gHuVYeVdv6KlWtffcJTxpg
+        jsZnUqSwICl8oCmMhgR88pZxjyKTHmsXWKseP/PrZY+sarCzfDee0BGllBi0ZIvMnlToJRZztKg4
+        ZoZZVlhmykvlrpS96nXc4pJebOCS2GE4PI6ZFNda6aVLGv+gKbxNW1+Gdq+Xz5gDxh7ZpWo9vGmL
+        eeNYSJtqqmoAMKW0ZyGtbcbWe2R3TFWlC2P1xp1JIZdKujKzyJxWIUHOawMtuosIWbfpbU4CCcbq
+        2vjM67/Ylhvf0VlnCP3U9PB8n23w2rNqKJsfZCeOmUDPZOUGEwCc8RJFr+3HhTVC6gEQDfb9up1L
+        3t3epSr+x74HeBgqFJmxKCQ/3XJPsxj+Km/RjufcNgwO7aPkmHmJNtyFwJw1VTfr4LbOY53lUhVo
+        jZXdwOcmmya4STZidncD0S56AQAA//8DAJnXJ4j+BAAA
     headers:
       CF-RAY:
       - DUMMY
@@ -7216,13 +7030,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2227'
+      - '1456'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2233'
+      - '1460'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -7345,9 +7159,9 @@ interactions:
       \                   ...\\n                ]\\n            },\\n            ...\\n
       \       ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n- Concept
       ID: C0\\nConcept name: Project Details\\n\\nConcept description:\\nKey project
-      information including timeline, deliverables, and budget\\n\\nExpected structure:\\n{'budget':
-      <class 'str'>,\\n 'client': <class 'str'>,\\n 'contractor': <class 'str'>,\\n
-      'payment_terms': <class 'str'>,\\n 'project_name': <class 'str'>}\\n\\nAmount
+      information including timeline, deliverables, and budget\\n\\nExpected structure:\\n{\\n
+      \ \\\"project_name\\\": str,\\n  \\\"client\\\": str,\\n  \\\"contractor\\\":
+      str,\\n  \\\"budget\\\": str,\\n  \\\"payment_terms\\\": str\\n}\\n\\nAmount
       of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
       extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT PARAGRAPHS:\\n```\\n-
       Paragraph ID: P0\\nParagraph text: Statement of Work\\n```\\n\\n```\\n- Paragraph
@@ -7377,7 +7191,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '9880'
+      - '9850'
       content-type:
       - application/json
       host:
@@ -7409,18 +7223,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA3xUX0/bMBB/76ewrPHWIicNtPRtYy9sMCENbdJIFRn7knpzbMu+IBDqd5+ctCSF
-        kjwkin9/fHe+88uEEKokXREqNhxF7fTsy6+lvTTX9vrb3Z+b37r+8TXNvkN2U/LyuaHTqLAPf0Hg
-        XnUqbO00oLKmg4UHjhBdk0V2vjhPFumyBWorQUdZ5XCW2VmtjJqlLM1mbDFLljv1xioBga7I/YQQ
-        Ql7ad4zTSHiiK8Km+5UaQuAV0NUriRDqrY4rlIegAnKDdNqDwhoE04Z+n5vWvvvEJ4+wAIeFkjld
-        kZxespxOhwR4Qs8FgiwUQh0i677H3/j1skeuG4jkI2jHeGhkBdjt+ik9Y1PGDvc+pAutwOzon0UN
-        5NJ6Zz2PhzAms6aN3/pOegdi89PqJsoCuTLidETs+HMNBgsE32We05SdkMaV3hqckjk7IRxJraSz
-        Ki6ctag1pG+QMXtvY1cVhtewq762jSQ3quryIldGoeKoHiGn712202OV91CCByOgcNzzynO3KZQ8
-        dnC95jYZCfM2HQPnY2AyjmbHslofLm373x2yzc162OEeyibwOGWm0XoAcGMstoVsZ2s92ZdtP03a
-        Vs7bh/BGSktlVNgUHniwJk5OQOtoi24nhKzbqW0OBjEeZu2wQPsP2u1Sxi46Q9o3Qw8n82SHokWu
-        B7ok2437oWUhAbnSYTD6VHCxATkwzdjyNQneSGV7jE0Gub8P6Zh9l78y1cDlQ/seEPFCAVk4D1KJ
-        w7R7mofY+x/RXmvdBkwD+EcloEAFPp6HhJI3urvnaHgOCHVRKlOBd151l13pCja/SJdpyi4YnWwn
-        /wEAAP//AwDcRHav+gUAAA==
+        H4sIAAAAAAAAAwAAAP//jFRda9swFH33rxBifXOKv5K2eevKoGGMlbWwjToYRbp21NqSkK5LS8l/
+        L7KT2mmzMD/YWOeeo3uvdO5rQAiVgs4J5WuGvDH15Otf9619uLx70ed3Nz9/Paa313z25/fie3r9
+        sKChZ+jVA3DcsU65bkwNKLXqYW6BIXjV+Cw7m03jNDvvgEYLqD2tMjjJ9KSRSk6SKMkm0dkkPt+y
+        11pycHRO7gNCCHnt3j5PJeCZzkkU7lYacI5VQOfvQYRQq2u/Qplz0iFTSMMB5FohqC71+1x18v3H
+        P7mHORgspMjpnOT0KsppOA6AZ7SMI4hCIjTOR90P+Ae9gfbE6hZ88AG0jzBW+54WijWw3bvWrSA/
+        ZGWZby1ZKImSoXyCvZz2ZXgtQWEvcMkbIFfaGt0rHKNp1dWlbU+9A76+1XXraY4sFD89Ql61ooLt
+        nl+SaRRGUXQk3LCXBhQWCLZvYE6T6IS0prRaYUjS6IQwJI0URku/MO1Qrchwz3L6WX0THuq8hRIs
+        KA6FYZZVlpl1IcWhgxs4N/GR9G+SY2B6DIyPo9mhqpb7S5vhd4tscrUc33ALZeuYd5lq63oEMKU0
+        dheh89Yy2LVt56ZaV8bqlftApaVU0q0LC8xp5Z3jUBvaoZuAkGXn2nbPiP46NwYL1I/QbRdfXMx6
+        QTqc4ghOt6amqJHVA5DEyY63J1kIQCZrN7I+5YyvQQzcYU6wVkg9AoJR4Z/zOaTdFy9V9T/yA8D9
+        NAFRGAtC8v2ahzAL3vr/CntvdJcwdWCfJIcCJVh/GAJK1tb9kKPuxSE0RSlVBdZY2U+60hTTDFbZ
+        SswuUhpsgjcAAAD//wMAx73ks/cFAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -7449,13 +7263,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2420'
+      - '2596'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2425'
+      - '2684'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -7467,7 +7281,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 71ms
+      - 70ms
       x-request-id:
       - DUMMY
     status:
@@ -7608,15 +7422,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA4ySTY+bMBCG7/wKa85hBYSGJMdW1Vbb+6ptiJBjD8StsS17Um13lf9eGbKBtFup
-        PgCaZ96X+fBLwhgoCVsG4shJ9E6n7x/X9l5+rdaHj8/+/plvHotPn5dfHh5E++4bLKLCHr6joFfV
-        nbC900jKmhELj5wwuuZVuapWebUsBtBbiTrKOkdpadNeGZUWWVGmWZXm64v6aJXAAFu2Sxhj7GV4
-        xjqNxCfYsmzxGukxBN4hbK9JjIG3OkaAh6ACcUOwmKCwhtAMpe9qM9iPr3jqiAU6apSsYctq+JDV
-        sJgn4BN5Lghlowj7ELN2E4+nXGfZXTbF9uPnuTb7eSEe21PgcRjmpPUMcGMs8TjMYQT7Czlfm9a2
-        c94ewh9SaJVR4dh45MGa2GAg62Cg54Sx/TDc0828wHnbO2rI/sDhd8t1kVejI0xbnfHiAskS1ze6
-        crN4w7ORSFzpMFsRCC6OKCfxtE9+ksrOQDLr/O963vIeu1em+x/7CYi4dZSN8yiVuO15SvMYr/2/
-        0q6THgqGgP6nEtiQQh+3IbHlJz1eRgi/AmHftMp06J1X441sXZPlclVuRMsLSM7JbwAAAP//AwD4
-        d/plnwMAAA==
+        H4sIAAAAAAAAA4ySTY+bMBCG7/wKa85hBSQpKbftx6U9rCr1sG2IkNeeELfG9tpDu6tV/ntlyAbS
+        7kr1AdA8877Mh58SxkBJqBiIAyfROZ2++xY+Psrv5b3t1Kfbz2J90369/3Cb9ddfft/AIirs3Q8U
+        9Ky6ErZzGklZM2LhkRNG17xclW/W+XJdDKCzEnWUtY7SlU07ZVRaZMUqzco035zUB6sEBqjYNmGM
+        safhGes0Eh+gYtniOdJhCLxFqM5JjIG3OkaAh6ACcUOwmKCwhtAMpW9rM9iPr3jqiAU6apSsoWI1
+        vM9qWMwT8IE8F4SyUYRdiFnbicez2mTZVTbFduPnsTa7eSEe933gcRim13oGuDGWeBzmMILdiRzP
+        TWvbOm/vwl9S2CujwqHxyIM1scFA1sFAjwlju2G4/cW8wHnbOWrI/sThd8tNkZejI0xbnfH8BMkS
+        1xe61WbxgmcjkbjSYbYiEFwcUE7iaZ+8l8rOQDLr/N96XvIeu1em/R/7CYi4dZSN8yiVuOx5SvMY
+        r/1raedJDwVDQP9LCWxIoY/bkLjnvR4vI4THQNg1e2Va9M6r8UbuXfO2wGxZltkmh+SY/AEAAP//
+        AwBIgWwwnwMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -7645,13 +7459,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2011'
+      - '1840'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1826'
+      - '1640'
       x-ratelimit-limit-input-images:
       - '50000'
       x-ratelimit-limit-requests:
@@ -7812,15 +7626,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFPBjpswEL3zFdacQ0UICwm37UpVq162h0aVQoS89oS4NbZrm22rVf69
-        MrCBtFQqB7DemzfM+M28RISA4FASYGfqWWtk/Ha/1R8+PbbvHz7LH2pH/bv9/Xf58WH/vP2SwSoo
-        9NNXZP5V9Ybp1kj0QquBZhapx5B1XWR5ka+LTdYTreYog6wxPs503Aol4jRJszgp4vV2VJ+1YOig
-        JIeIEEJe+neoU3H8CSVJVq9Ii87RBqG8BhECVsuAAHVOOE+Vh9VEMq08qr70Q6X69MMnPBVQZ5D5
-        WvAKSlLBfVLBas4bamljqTnXgrsQc5jYIeIxvZGM4GYJzJbAuyUwXwKLJXC7BO4qmLDjcLxU6ji/
-        GIunztFgjuqknBFUKe1pMLe35Dgyl6sJUjfG6if3hxROQgl3ri1Sp1W4cOe1gZ69RIQce7O7G//A
-        WN0aX3v9Dfvfre+SfEgI05BNdJ6NpNeeyrmsGIfkNmPN0VMh3WxggFF2Rj5pp+miHRd6RkSzvv8u
-        Zyn30LtQzf+knwjG0HjktbHIBbtteQqzGJbwX2HXe+4LBof2WTCsvUAbvOB4op0cVgPcL+exrU9C
-        NWiNFcN+nEydbHbpNk2TXQLRJfoNAAD//wMAUNiwFi0EAAA=
+        H4sIAAAAAAAAAwAAAP//dFPBjpswFLzzFdY7h4oEQhJuW6lV271kVXXVVYiQYz+IW2NbtlO1u8q/
+        V4ZsIC3LAayZN8N7HvslIgQEh4IAO1LPWiPj90/uw/PD9tk+fv2+2N59oWuUj9/uP95/5p8eYBYU
+        +vADmX9VvWO6NRK90KqnmUXqMbjOV9kqX87TZdoRreYog6wxPs503Aol4kWyyOJkFc/XF/VRC4YO
+        CrKLCCHkpXuHPhXH31CQZPaKtOgcbRCKaxEhYLUMCFDnhPNUeZgNJNPKo+pa35Wqs+8/4SmBOoPM
+        V4KXUJAS7pISZmPeUEsbS82xEtyFmt3A9hXbxY3kAqZTYDYFLqfAfApcTYHrKXBTwoDt++W5VPvx
+        xlisT46GcNRJyhFBldKehnC7SPYX5nwNQerGWH1w/0ihFkq4Y2WROq3ChjuvDXTsOSJk34V9uskP
+        jNWt8ZXXP7H73XyZ5L0hDIdsoPP0QnrtqRzL8s1swrHi6KmQbnRggFF2RD7SJovsOgM9caEHLolG
+        o//f0ZR9P75QzcjlTfuBYAyNR14Zi1yw26mHMovhHr5Vdt3qrmFwaH8JhpUXaEMcHGt6kv3tAPfH
+        eWyrWqgGrbGivyK1qZYZHrIDzzcpROfoLwAAAP//AwB/Yv37MAQAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -7849,13 +7663,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1253'
+      - '2595'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1257'
+      - '2602'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -7867,7 +7681,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 602ms
+      - 530ms
       x-request-id:
       - DUMMY
     status:
@@ -8013,15 +7827,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//nFRNj5swFLzzK6x3hgoI+eLWHnroHtpKVaUqRMhrP4i3xnZtp9tqlf9e
-        GZJAtqzULQdAb96M5+ExTxEhIDiUBNiBetYZmbz7utF3H98vi7tvmvMPXDTLH1/kA2Xbx8+PEAeG
-        vn9A5i+sN0x3RqIXWg0ws0g9BtVsXazWq2y9WPVApznKQGuNTwqddEKJJE/zIknXSbY5sw9aMHRQ
-        kl1ECCFP/T34VBx/QUnS+FLp0DnaIpTXJkLAahkqQJ0TzlPlIR5BppVH1VvfVaqXHx7hqoA6g8zX
-        gldQkgrephXEU9xQS1tLzaEW3IWe3YgOHZ+yG8q5mM8VFxWMtf3weor/wVX2elfFnIHl/xrIX29g
-        NWdgPWegUvvpjllsjo6G1KijlBOAKqU9Danrs7I/I6drOqRujdX37hkVGqGEO9QWqdMqJMF5baBH
-        TxEh+z6Fx5tggbG6M772+jv2y2XLvBgEYUz/BE6zM+q1p3ICrPJlPCNZc/RUSDeJMjDKDsinopc1
-        w/RHLvSIpdFk9r8tzckP8wvVTlRelB8BxtB45LWxyAW7HXtssxj+EC+1Xb91bxgc2p+CYe0F2rAf
-        HBt6lMO5BffbeezqRqgWrbFiOLyNqdPFNt/kebpNITpFfwAAAP//AwCtJFpAygQAAA==
+        H4sIAAAAAAAAAwAAAP//nFTBjpswFLzzFdY7hwoIIS23bquV2kO76q0NEXLsB7g1tmubqtUq/14Z
+        kkDarNQtB0Bv3gzz8NiPESEgOJQEWEc9642M7z67++zLu/efvpu3H9/cPdwjzRqx7uQH1whYBYY+
+        fEXmz6wXTPdGohdaTTCzSD0G1XSbb4tNut4UI9BrjjLQWuPjXMe9UCLOkiyPk22cvjyxOy0YOijJ
+        LiKEkMfxHnwqjj+hJMnqXOnROdoilJcmQsBqGSpAnRPOU+VhNYNMK49qtL6r1Cg/PcJVAXUGma8F
+        r6AkFbxOKlgtcUMtbS01XS24Cz27GZ06HtIryqmY3SquK5hr++n1uPoHV+nzXeW3DGz+10D2fAPF
+        LQPbWwYqtV+umMVmcDSkRg1SLgCqlPY0pG7Myv6EHC/pkLo1Vh/cH1RohBKuqy1Sp1VIgvPawIge
+        I0L2YwqHq2CBsbo3vvb6G46fSzdZPgnCnP4FnJxCCl57KhdAceFdSdYcPRXSLaIMjLIO+VL0zA3T
+        D1zoGUuixex/W7olP80vVLtQeVJ+BhhD45HXxiIX7Hrsuc1iOCGearv869EwOLQ/BMPaC7RhPTg2
+        dJDTvgX3y3ns60aoFq2xYtq8jak3OR7yAy9erSE6Rr8BAAD//wMA4UKtb8oEAAA=
     headers:
       CF-RAY:
       - DUMMY
@@ -8048,13 +7862,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1909'
+      - '2447'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '1920'
+      - '2450'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -8396,7 +8210,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P19\",\n            \"P20\",\n            \"P21\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1746761739, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1747651360, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -8421,20 +8235,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '460'
-      ms-azureml-model-time:
-      - '472'
+      - '661'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '474'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -8622,7 +8428,7 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"oral\",\n            \"written\",\n            \"electronic\",\n            \"other
         form or media\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1746761739, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1747651360, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -8631,10 +8437,10 @@ interactions:
         "fp_c8225066ea", "usage": {"completion_tokens": 45, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 1775, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 1820}}'
+        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 1820}}'
     headers:
       Content-Length:
-      - '1301'
+      - '1304'
       Content-Type:
       - application/json
       Date:
@@ -8646,20 +8452,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '534'
-      ms-azureml-model-time:
-      - '547'
+      - '750'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '549'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -8926,7 +8724,7 @@ interactions:
         false,\n                \"justification\": \"The agreement defines distinct
         roles of Disclosing Party and Receiving Party, indicating it is not mutual
         as only one party discloses and the other receives confidential information.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1746761740, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1747651361, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -8935,7 +8733,7 @@ interactions:
         "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 73,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2921, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2816},
+        2921, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
         "total_tokens": 2994}}'
     headers:
       Content-Length:
@@ -8951,20 +8749,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '774'
-      ms-azureml-model-time:
-      - '791'
+      - '1113'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '793'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -9072,15 +8862,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFLBjtMwEL3nKwafW9SWkHR7QdoDdCUOcEEgtIpce9J4cTzGnlC6q/47
-        ctJtsuwicYmUefOe35uZhwxAGC02IFQjWbXezq+/rOnT5w/f7q+3d/GmvmoO8X3DX3+++Vjet2KW
-        GLS7Q8WPrNeKWm+RDbkBVgElY1JdlnlRFssyX/ZASxptou09z3OarxarfL5YzxfFmdiQURjFBr5n
-        AAAP/TdZdBp/iw0sZo+VFmOUexSbSxOACGRTRcgYTWTpWMxGUJFjdL3rLVpLr2BLB1DSwQ0MBDhS
-        B0xaHuFguEm/ATSprkXHIJ20x2giOEQd302lA9ZdlCmZ66ydANI5Ypkm04e6PSOnSwxLex9oF/+i
-        ito4E5sqoIzkkuXI5EWPnjKA235c3ZMJCB+o9Vwx/cD+ueJqNeiJcUEjunx7BplY2rFeLsrZC3qV
-        RpbGxsnAhZKqQT1Sx+3IThuaANkk9XM3L2kPyY3b/4/8CCiFnlFXPqA26mnisS1gut9/tV2m3BsW
-        EcMvo7BigyFtQmMtOzuclojHyNhWtXF7DD6Y4b5qX+n1usjr9a7YieyU/QEAAP//AwDaTg7/aAMA
-        AA==
+        H4sIAAAAAAAAA4xSwY7TMBC95ysGnxuUZku67QWJAyyCA1ohIYRWkWtPEoPjsezJlrLqvyMn3aYL
+        i8QlUubNe35vZh4yAGG02IJQnWTVe5u/+Rrfbj583n/8Ut6qW/Pufr/T0f1aF5/w2opFYtDuOyp+
+        ZL1U1HuLbMhNsAooGZPqcr1aV6+WV9XVCPSk0SZa6zlfUV4W5SovrvOiOhE7Mgqj2MK3DADgYfwm
+        i07jT7GFYvFY6TFG2aLYnpsARCCbKkLGaCJLx2Ixg4ocoxtd36C19AJuaA9KOngPEwEONACTlgfY
+        G+7SbwBNaujRMUgn7SGaCA5Rx9eX0gGbIcqUzA3WXgDSOWKZJjOGujshx3MMS60PtIt/UEVjnIld
+        HVBGcslyZPJiRI8ZwN04ruHJBIQP1HuumX7g+Fy1KSc9MS9oRperE8jE0s71dVEtntGrNbI0Nl4M
+        XCipOtQzdd6OHLShCyC7SP23m+e0p+TGtf8jPwNKoWfUtQ+ojXqaeG4LmO73X23nKY+GRcRwbxTW
+        bDCkTWhs5GCn0xLxEBn7ujGuxeCDme6r8fVmp3WjZIWlyI7ZbwAAAP//AwA8rRjgaAMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -9109,13 +8898,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '696'
+      - '569'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '700'
+      - '582'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -9260,15 +9049,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jJJNb5wwEIbv/AprzlCxXhoWbsmpqlQ1lar2sKyQYw/g1NiWbaq20f73
-        yrBZSJtK5QDWPPO+zIefEkJACqgJ8IEFPlqV3X05mE/V7Ydfd125l0xP9r766j4/qo/v9TtIo8I8
-        PCIPz6o33IxWYZBGL5g7ZAGj664sbsqbXVnQGYxGoIqy3oasMNkotcxoTossL7Pd4aIejOTooSbH
-        hBBCnuZ3rFML/AE1ydPnyIjesx6hviYRAs6oGAHmvfSB6QDpCrnRAfVc+rHRs/3yiU8DzFvkoZWi
-        gZo0cJs3kG65ZY71jtmhlcLHnONKl4x72sAaOy3Hc6NP2yocdpNncRJ6UmoDmNYmsDjJuf/ThZyv
-        HSvTW2ce/B9S6KSWfmgdMm907M4HY2Gm54SQ0zzZ6cWwwDoz2tAG8w3n3+32tFgMYd3oiml1gcEE
-        prayt/v0FcdWYGBS+c12gDM+oFi16yrZJKTZgGTT99/lvOa99C51/z/2K+AcbUDRWodC8pctr2kO
-        443/V9p1znPB4NF9lxzbINHFXQjs2KSWewj+pw84tp3UPTrr5HIZO9vm+4oeKM2rHJJz8hsAAP//
-        AwDD9W1XmgMAAA==
+        H4sIAAAAAAAAA4ySXW+bMBSG7/kV1rmGiVCSdLlrK2UXW6XdVFMVInRiH8AL2JZtok1V/vtkSAPd
+        OqlcgHWe876cD79EjIEUsGHAG/S8M21y/+y2d+mX02n5tP16fDxWpx9P9HD/7TM9bp8hDgp9+Enc
+        v6o+cd2ZlrzUasTcEnoKrot1vl4tFzerfACdFtQGWW18kuukk0omWZrlSbpOFrcXdaMlJwcbtosY
+        Y+xleIc6laBfsGFp/BrpyDmsCTbXJMbA6jZEAJ2TzqPyEE+Qa+VJDaXvCjXYj5/wFIDOEPelFAVs
+        WAF3aQHxnBu0WFs0TSmFCzm7iY4Z37MCpth+PJ4LtZ9XYanqHYZJqL5tZwCV0h7DJIf+9xdyvnbc
+        6tpYfXB/SaGSSrqmtIROq9Cd89rAQM8RY/thsv2bYYGxujO+9PpIw+8WN1k+GsK00Qlntxfotcd2
+        Lltm8TuOpSCPsnWz7QBH3pCYtNMqsRdSz0A06/vfct7zHnuXqv6I/QQ4J+NJlMaSkPxty1OapXDj
+        /5d2nfNQMDiyJ8mp9JJs2IWgCvt2vIfgfjtPXVlJVZM1Vo6XsTKlOCDHVSqqFKJz9AcAAP//AwCK
+        UNabmgMAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -9297,13 +9086,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '965'
+      - '856'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '969'
+      - '860'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -9506,18 +9295,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//fFRLT+MwEL73V4x8blEaCi097p5Xi8RqV7u0igZ7khicsWU7QIX631dO
-        H0mhkEOj+nv4m3HGbyMAoZVYgpA1Rtk4M/n2e2Hv8h9Ss/+Th8W/JjzNZxServ/+fNmIcVLYh0eS
-        8aC6kLZxhqK2vIOlJ4yUXKfz2fX8ejqfzTqgsYpMklUuTmZ20mjWkzzLZ5NsPpku9uraaklBLOF+
-        BADw1v2mnKzoVSwhGx9WGgoBKxLLIwlAeGvSisAQdIjIUYx7UFqOxF30+xV39rtXelYJluRiodVK
-        LGElvmcrMR4S6DV6lJFUoSM1IbHue/ydXy97RtPSzvJXTeBa7wwBGXI1cgSFLElB5VFS2RqzAcsQ
-        a4LGWoaXWicyRs0VaEmQ+ttcnCTrt3psQ9SllpjO47ClDhAoVZ7UliNqDoAMLbehRQPICthyIA5a
-        ooEgidFrC7HGCIqeNUYKUHrbdLno1VHqApTWN2hg31awJWD6E1oTkeUGsPJEDXEcg2bVpeIq7Yxs
-        GzQb0LtClZVton1WlaeSfIpfOPRYeXT1ueZ/cQhfeh0P/PbqbIBz4kNDC62+itJLb68md9lKfE5b
-        n4e2H5ffMQeMPbJd8Xr43Xsq24Bp9rg1ZgAgs43dt9JN3HqPbI8zZmzlvH0I76Si1KxDXXjCYDnN
-        U4jWiQ7djgDW3Sy3J+MpnLeNi0W0T9Rtl08X+2EW/R3Sw9N8tkejjWgGusvsgJxYFooiahMGF4KQ
-        KGtSA9Ps4Jqqb5W2PZaNBrV/jHTOfle/5mrg8ql9D8h0zZAqnCel5WnZPc3TYzdm52nHXneBRSD/
-        rCUVUZNP56GoxNbsbj8RNiFSU5SaK/LO690VWLoiu7zJF3me3WRitB39BwAA//8DAOsyJp8QBgAA
+        H4sIAAAAAAAAAwAAAP//fFTJbtswEL37KwY824HsOEt9bNpeEzS9pLEhjMmRxJQcEiSVJij87wXl
+        RXLiRAcL5lv4ZqjhvxGA0EosQMgGk7TeTL4+xB83d9fWVrcPN7dXs4f2971bv1x/+37z04lxVrj1
+        E8m0V51JZ72hpB1vYRkIE2XX6dX86vJien552QHWKTJZVvs0mbuJ1awns2I2nxRXk+n1Tt04LSmK
+        BTyOAAD+db85Jyt6EQsoxvsVSzFiTWJxIAGI4ExeERijjgk5iXEPSseJuIv+uOTOfvvKzzLDknwq
+        tVqKBSzFTbEU4yGBXlJAmUiVOpGNmfXY42/8etkzmpa2lr8aAt8GbwjIkG+QEyhkSQrqgJKq1phX
+        cAypIbDOMfxtdCZj0lyDlgS5v/bsKFm/1VMbk660xHwe+y11hEi58qx2nFBzBGRouY0tGkBWwI4j
+        cdQSDURJjEE7SA0mUPSsMVGEKjjb5aIXT7kLULlg0cCureAqwPwntiYhy1fAOhBZ4jQGzapLxXXe
+        GdlZNK+gt4UqJ9tM+6iqQBWFHL/0GLAO6JtTzf/kED71Ohz43cXJAKfE+4aWWn0WpZfeXUzui6X4
+        mLY6DW3eL79hDhg7ZLPk1fC7D1S1EfPscWvMAEBml7pvpZu41Q7ZHGbMuNoHt45vpKLSrGNTBsLo
+        OM9TTM6LDt2MAFbdLLdH4yl8cNanMrk/1G03m17vhln0d0gPT2fnOzS5hGagOy/2yJFlqSihNnFw
+        IQiJsiE1MC1m80MR2CrteqwYDWp/H+mU/bZ+zfXA5UP7HpD5miFV+kBKy+Oye1qgp27MTtMOve4C
+        i0jhWUsqk6aQz0NRha3Z3n4ivsZEtqw01xR80NsrsPLlxZzW87W6/HIuRpvRfwAAAP//AwCgKWNt
+        EAYAAA==
     headers:
       CF-RAY:
       - DUMMY
@@ -9546,13 +9336,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2841'
+      - '2724'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '2847'
+      - '2731'
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:

@@ -26,7 +26,7 @@ serialization requirements, and ensuring type consistency across the application
 """
 
 from types import GenericAlias, UnionType
-from typing import Union, get_args, get_origin, get_type_hints
+from typing import Union, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, create_model
 
@@ -34,42 +34,28 @@ from contextgem.internal.typings.types_to_strings import _is_json_serializable_t
 
 
 def _extract_mapper(
-    user_mapper: type | dict[str, type | GenericAlias | UnionType],
-) -> dict[str, type | GenericAlias | UnionType]:
+    user_mapper: dict[str, type | GenericAlias | UnionType | dict | list],
+) -> dict[str, type | GenericAlias | UnionType | dict | list]:
     """
-    Extracts a dictionary mapping field names to their corresponding type hints from a
-    provided user_mapper. This utility supports two forms of input for the user_mapper:
+    Validates and returns a dictionary mapping field names to their corresponding type hints.
 
-    1. A class containing type-annotated attributes.
-    2. A dictionary where keys are field names and values represent type hints.
+    The user_mapper should be a dictionary where keys are field names and values represent
+    type hints, nested dictionaries, or lists of dictionaries for array items.
 
-    Raises an error if the provided user_mapper does not adhere to these forms.
+    :param user_mapper: A dictionary mapping string field names to type hints,
+        nested dictionaries, or lists.
+    :type user_mapper: dict[str, type | GenericAlias | UnionType | dict | list]
 
-    :param user_mapper: A user_mapper defined either as a type-annotated class or a
-        dictionary mapping string field names to type hints.
-    :type user_mapper: type | dict[str, type | GenericAlias | UnionType]
+    :return: The validated dictionary mapping field names to type hints, nested dictionaries,
+        or lists.
+    :rtype: dict[str, type | GenericAlias | UnionType | dict | list]
 
-    :return: A dictionary mapping field names to type hints, derived from the input user_mapper.
-    :rtype: dict[str, type | GenericAlias | UnionType]
-
-    :raises ValueError: If the input user_mapper is neither a dictionary nor a class
-        containing type-annotated attributes.
+    :raises ValueError: If the input user_mapper is not a dictionary.
     """
-
-    if isinstance(user_mapper, type):
-        # Use get_type_hints to resolve annotations, handling forward references.
-        type_hints = get_type_hints(user_mapper)
-        if not type_hints:
-            raise ValueError(
-                "user_mapper must contain at least one type-annotated attribute."
-            )
-        return type_hints
-
-    elif isinstance(user_mapper, dict):
+    if isinstance(user_mapper, dict):
         return user_mapper
-
     else:
-        raise ValueError("user_mapper must be a dict or a class with type annotations.")
+        raise ValueError("`user_mapper` must be a dict.")
 
 
 def _is_optional(type_hint: type | GenericAlias | UnionType) -> bool:
@@ -92,7 +78,7 @@ def _is_optional(type_hint: type | GenericAlias | UnionType) -> bool:
 
 
 def _dynamic_pydantic_model(
-    user_mapper: type | dict[str, type | GenericAlias | UnionType],
+    user_mapper: dict[str, type | GenericAlias | UnionType | dict | list],
 ) -> type[BaseModel]:
     """
     Dynamically generates a pydantic model class based on a provided mapping of field names
@@ -100,10 +86,11 @@ def _dynamic_pydantic_model(
     data structures are defined dynamically or at runtime, allowing the user to construct
     strictly-typed schema without manually creating pydantic models for every variation.
 
-    :param user_mapper: A class with type annotations or a dictionary where keys are the field names
-        (str) and the values are valid type hints (e.g., int, float, str | None, etc.). These hints
-        dictate the types of the fields included in the generated model.
-    :type user_mapper: type | dict[str, type | GenericAlias | UnionType]
+    :param user_mapper: A dictionary where keys are the field names (str) and the values are
+        valid type hints (e.g., int, float, str | None, etc.). These hints dictate the types
+        of the fields included in the generated model. Can also contain nested dictionaries
+        to represent nested object structures or lists of dictionaries for array items.
+    :type user_mapper: dict[str, type | GenericAlias | UnionType | dict | list]
 
     :return: A dynamically created subclass of pydantic's BaseModel that adheres to the
         type constraints and field definitions supplied in the user_mapper.
@@ -115,6 +102,26 @@ def _dynamic_pydantic_model(
     for field_name, field_type in _extract_mapper(user_mapper).items():
         if field_name.startswith("_"):
             raise ValueError(f"Field {field_name} cannot start with '_'")
+
+        # Handle nested dictionaries as nested models
+        if isinstance(field_type, dict):
+            # Recursively create a nested model for this field
+            nested_model = _dynamic_pydantic_model(field_type)
+            fields[field_name] = (nested_model, ...)
+            continue
+
+        # Handle lists of dictionaries
+        if (
+            isinstance(field_type, list)
+            and len(field_type) == 1
+            and isinstance(field_type[0], dict)
+        ):
+            # Create a nested model for the list item
+            nested_model = _dynamic_pydantic_model(field_type[0])
+            # Create a list of that model type
+            fields[field_name] = (list[nested_model], ...)
+            continue
+
         # Check that the mapper value is a valid type hint.
         if not (isinstance(field_type, type) or get_origin(field_type) is not None):
             raise ValueError(
@@ -127,7 +134,7 @@ def _dynamic_pydantic_model(
                 f"Field '{field_name}' has an invalid type hint: {field_type!r}. "
                 "It must be a JSON-serializable type or a Union thereof."
             )
-        # If the type includes None, assume it’s optional and give it a default of None.
+        # If the type includes None, assume it's optional and give it a default of None.
         if _is_optional(field_type):
             fields[field_name] = (field_type, None)
         else:
@@ -136,6 +143,7 @@ def _dynamic_pydantic_model(
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
+        strict=True,
     )
     try:
         DynamicModel = create_model("DynamicModel", __config__=model_config, **fields)

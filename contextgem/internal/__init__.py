@@ -74,9 +74,14 @@ from contextgem.internal.typings import (
     SaTModelId,
     _deserialize_type_hint,
     _dynamic_pydantic_model,
+    _format_dict_structure,
     _format_type,
+    _get_model_fields,
     _is_json_serializable_type,
+    _is_typed_class,
     _JsonObjectItemStructure,
+    _normalize_type_annotation,
+    _raise_dict_class_type_error,
     _serialize_type_hint,
 )
 from contextgem.internal.utils import (
@@ -131,6 +136,11 @@ __all__ = [
     "_JsonObjectItemStructure",
     "_serialize_type_hint",
     "_dynamic_pydantic_model",
+    "_format_dict_structure",
+    "_is_typed_class",
+    "_get_model_fields",
+    "_raise_dict_class_type_error",
+    "_normalize_type_annotation",
     # Data models
     "_LLMCall",
     "_LLMUsage",

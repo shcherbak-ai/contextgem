@@ -34,7 +34,11 @@ from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
 from contextgem.public.paragraphs import Paragraph
 from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.sentences import Sentence
-from contextgem.public.utils import image_to_base64, reload_logger_settings
+from contextgem.public.utils import (
+    JsonObjectClassStruct,
+    image_to_base64,
+    reload_logger_settings,
+)
 
 __all__ = [
     # Aspects
@@ -68,6 +72,7 @@ __all__ = [
     # Utils
     "image_to_base64",
     "reload_logger_settings",
+    "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
 ]
