@@ -4267,7 +4267,10 @@ class TestAll(TestUtils):
         from dev.usage_examples.docstrings.paragraphs import def_paragraph
         from dev.usage_examples.docstrings.pipelines import def_pipeline
         from dev.usage_examples.docstrings.sentences import def_sentence
-        from dev.usage_examples.docstrings.utils import reload_logger_settings
+        from dev.usage_examples.docstrings.utils import (
+            json_object_cls_struct,
+            reload_logger_settings,
+        )
 
     @pytest.mark.parametrize("raw_text_to_md", [True, False])
     @pytest.mark.parametrize("strict_mode", [True, False])

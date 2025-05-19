@@ -15,10 +15,10 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-:og:description: ContextGem: Utility functions
+:og:description: ContextGem: Utility functions and classes
 
-Utility functions
-==================
+Utility functions and classes
+==============================
 
 .. automodule:: contextgem.public.utils
    :members:

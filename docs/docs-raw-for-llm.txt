@@ -9940,8 +9940,8 @@ class contextgem.public.data_models.RatingScale(**data)
 
 # ==== api/utils ====
 
-Utility functions
-*****************
+Utility functions and classes
+*****************************
 
 Module defining public utility functions and classes of the framework.
 
@@ -10012,11 +10012,19 @@ class contextgem.public.utils.JsonObjectClassStruct
    class in all parts of your class structure.
 
    Example:
+      Using JsonObjectClassStruct for class hierarchies
+
+         from dataclasses import dataclass
+
+         from contextgem import JsonObjectClassStruct, JsonObjectConcept
+
+
          @dataclass
          class Address(JsonObjectClassStruct):
              street: str
              city: str
              country: str
+
 
          @dataclass
          class Contact(JsonObjectClassStruct):
@@ -10024,14 +10032,19 @@ class contextgem.public.utils.JsonObjectClassStruct
              phone: str
              address: Address
 
+
          @dataclass
          class Person(JsonObjectClassStruct):
              name: str
              age: int
              contact: Contact
 
+
          # Use the class structure with JsonObjectConcept
-         JsonObjectConcept(..., structure=Person)
+         # JsonObjectClassStruct enables automatic conversion of typed class hierarchies
+         # into the dictionary structure required by JsonObjectConcept, preserving the
+         # type information and nested relationships between classes.
+         JsonObjectConcept(name="person", description="Person information", structure=Person)
 
 
 # ==== api/images ====

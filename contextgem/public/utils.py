@@ -78,28 +78,9 @@ class JsonObjectClassStruct:
     class structure.
 
     Example:
-        .. code-block:: python
-
-            @dataclass
-            class Address(JsonObjectClassStruct):
-                street: str
-                city: str
-                country: str
-
-            @dataclass
-            class Contact(JsonObjectClassStruct):
-                email: str
-                phone: str
-                address: Address
-
-            @dataclass
-            class Person(JsonObjectClassStruct):
-                name: str
-                age: int
-                contact: Contact
-
-            # Use the class structure with JsonObjectConcept
-            JsonObjectConcept(..., structure=Person)
+        .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/json_object_cls_struct.py
+            :language: python
+            :caption: Using JsonObjectClassStruct for class hierarchies
     """
 
     # Registry to store all subclasses for type resolution during structure generation:
