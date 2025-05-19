@@ -182,7 +182,7 @@ def _format_type(
         for arg in get_args(typ):
             if isinstance(arg, str):
                 # Escape quotes in strings and wrap in quotes
-                literal_values.append(f'"{arg.replace("\"", "\\\"")}"')
+                literal_values.append('"' + arg.replace('"', '\\"') + '"')
             else:
                 # For non-string literals, just convert to string
                 literal_values.append(str(arg))
@@ -350,7 +350,7 @@ def _serialize_type_hint(tp: type | GenericAlias | UnionType) -> str:
         for arg in args:
             if isinstance(arg, str):
                 # Escape quotes in strings and wrap in quotes
-                literal_values.append(f'"{arg.replace("\"", "\\\"")}"')
+                literal_values.append('"' + arg.replace('"', '\\"') + '"')
             else:
                 # For non-string literals, just convert to string
                 literal_values.append(str(arg))
