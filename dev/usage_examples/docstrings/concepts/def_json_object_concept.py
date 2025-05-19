@@ -1,3 +1,5 @@
+from typing import Literal
+
 from contextgem import JsonObjectConcept
 
 # Define a JSON object concept for capturing address information
@@ -13,5 +15,6 @@ address_info_concept = JsonObjectConcept(
         "state": str | None,
         "postal_code": str | None,
         "country": str | None,
+        "address_type": Literal["residential", "business"] | None,
     },
 )

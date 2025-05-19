@@ -52,7 +52,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "Hello! I''m ContextGem. How can I assist you today?", "refusal":
-        null, "role": "assistant"}}], "created": 1746725697, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1747650076, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -77,20 +77,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '261'
-      ms-azureml-model-time:
-      - '272'
+      - '262'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '274'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -154,24 +146,26 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "I\u2019m ContextGem, here
-        to assist you with any questions you have!", "refusal": null, "role": "assistant"}}],
-        "created": 1746725698, "id": "chatcmpl-DUMMY", "model": "o1-2024-12-17", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_ded0d14823", "usage":
-        {"completion_tokens": 27, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 23, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 50}}'
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "I\u2019m ContextGem, your AI assistant. How can I help you
+        today?", "refusal": null, "role": "assistant"}}], "created": 1747650078, "id":
+        "chatcmpl-DUMMY", "model": "o1-2024-12-17", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_ded0d14823", "usage": {"completion_tokens": 91,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 64, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        23, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        114}}'
     headers:
       Content-Length:
-      - '1143'
+      - '1266'
       Content-Type:
       - application/json
       Date:
@@ -183,20 +177,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '987'
-      ms-azureml-model-time:
-      - '767'
+      - '1894'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '769'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -265,20 +251,21 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "I''m ContextGem.", "refusal": null, "role": "assistant"}}],
-        "created": 1746725699, "id": "chatcmpl-DUMMY", "model": "o3-mini-2025-01-31",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_ded0d14823", "usage": {"completion_tokens": 335, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 320,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 23, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 358}}'
+        [], "content": "I''m ContextGem. How can I help you today?", "refusal": null,
+        "role": "assistant"}}], "created": 1747650080, "id": "chatcmpl-DUMMY", "model":
+        "o3-mini-2025-01-31", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_ded0d14823", "usage": {"completion_tokens": 214,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 192, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        23, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        237}}'
     headers:
       Content-Length:
-      - '1226'
+      - '1252'
       Content-Type:
       - application/json
       Date:
@@ -290,20 +277,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2572'
-      ms-azureml-model-time:
-      - '2601'
+      - '1953'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '2603'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -372,8 +351,8 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "My name is ContextGem. How can I assist you today?", "refusal":
-        null, "role": "assistant"}}], "created": 1746725702, "id": "chatcmpl-DUMMY",
+        [], "content": "My name is ContextGem. How can I help you today?", "refusal":
+        null, "role": "assistant"}}], "created": 1747650083, "id": "chatcmpl-DUMMY",
         "model": "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -385,7 +364,7 @@ interactions:
         {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 119}}'
     headers:
       Content-Length:
-      - '1248'
+      - '1246'
       Content-Type:
       - application/json
       Date:
@@ -397,20 +376,12 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3320'
-      ms-azureml-model-time:
-      - '3367'
+      - '4241'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
-      x-envoy-upstream-service-time:
-      - '3369'
-      x-ms-client-request-id:
-      - DUMMY
       x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY

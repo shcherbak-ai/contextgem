@@ -26,12 +26,12 @@ conversion between type annotations and their string representations.
 """
 
 from types import GenericAlias, UnionType
-from typing import Union
+from typing import Literal, Union
 
-from contextgem.internal.typings.types_to_strings import JSON_OBJECT_STRUCTURE_TYPES_MAP
+from contextgem.internal.typings.types_to_strings import PRIMITIVE_TYPES_STRING_MAP
 
-JSON_OBJECT_STRUCTURE_TYPES_MAP_REVERSED = {
-    v: k for k, v in JSON_OBJECT_STRUCTURE_TYPES_MAP.items()
+PRIMITIVE_TYPES_STRING_MAP_REVERSED = {
+    v: k for k, v in PRIMITIVE_TYPES_STRING_MAP.items()
 }
 
 
@@ -86,9 +86,9 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
 
     The function takes a serialized string representing type hints and an optional starting
     index. It identifies and parses the type hint structure including basic types,
-    generics such as `list` and `dict`, and unions. The function will validate the structure
-    of the serialized input and return the corresponding type hint along with the new index
-    position for further parsing.
+    generics such as `list` and `dict`, unions, and literal types. The function will validate
+    the structure of the serialized input and return the corresponding type hint along
+    with the new index position for further parsing.
 
     :param s: The serialized string representing the type hints.
     :param i: The starting index in the string for parsing the type hints.
@@ -104,8 +104,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
     ident, i = _parse_identifier(s, i)
 
     # If it is one of our base types, return it.
-    if ident in JSON_OBJECT_STRUCTURE_TYPES_MAP_REVERSED:
-        return JSON_OBJECT_STRUCTURE_TYPES_MAP_REVERSED[ident], i
+    if ident in PRIMITIVE_TYPES_STRING_MAP_REVERSED:
+        return PRIMITIVE_TYPES_STRING_MAP_REVERSED[ident], i
 
     # Now check for generics (list, dict, union)
     i = _skip_whitespace(s, i)
@@ -113,7 +113,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
         raise ValueError(f"Expected '[' after {ident} at position {i} in {s!r}")
     i += 1  # skip '['
 
-    if ident == "list":
+    if ident.lower() == "list":
         # list[<type>]
         inner_type, i = _parse_type_hint(s, i)
         i = _skip_whitespace(s, i)
@@ -122,7 +122,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
         i += 1  # skip ']'
         return list[inner_type], i
 
-    elif ident == "dict":
+    elif ident.lower() == "dict":
         # dict[<key type>, <value type>]
         key_type, i = _parse_type_hint(s, i)
         i = _skip_whitespace(s, i)
@@ -140,7 +140,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
         i += 1  # skip ']'
         return dict[key_type, value_type], i
 
-    elif ident == "union":
+    elif ident.lower() == "union":
         # union[<type1>, <type2>, ...]
         types_list = []
         while True:
@@ -168,6 +168,121 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
             args = (types_list[0], types_list[1]) + tuple(types_list[2:])
             union_type = Union.__getitem__(args)
             return union_type, i
+
+    elif ident.lower() == "optional":
+        # optional[<type>] is equivalent to union[<type>, null]
+        inner_type, i = _parse_type_hint(s, i)
+
+        # Check for union operator '|'
+        i = _skip_whitespace(s, i)
+        if i < len(s) and s[i] == "|":
+            # We have a union inside the optional, like Optional[X | Y]
+            # Parse it as a union
+            union_types = [inner_type]
+
+            while i < len(s) and s[i] == "|":
+                i += 1  # skip '|'
+                i = _skip_whitespace(s, i)
+                next_type, i = _parse_type_hint(s, i)
+                union_types.append(next_type)
+                i = _skip_whitespace(s, i)
+
+            # Create union from the collected types
+            args = tuple(union_types)
+            inner_type = Union.__getitem__(args)
+
+        i = _skip_whitespace(s, i)
+        if i >= len(s) or s[i] != "]":
+            raise ValueError(
+                f"Expected ']' after optional type at position {i} in {s!r}"
+            )
+        i += 1  # skip ']'
+        return Union[inner_type, type(None)], i
+
+    elif ident.lower() == "literal":
+        # literal[<value1>, <value2>, ...]
+        values = []
+        while True:
+            i = _skip_whitespace(s, i)
+
+            # Parse the literal value (string or other)
+            if i < len(s) and s[i] == '"':
+                # Parse string literal
+                i += 1  # skip opening quote
+                start = i
+                # Find the closing quote, accounting for escaped quotes
+                while i < len(s):
+                    if s[i] == '"' and (i == 0 or s[i - 1] != "\\"):
+                        break
+                    i += 1
+
+                if i >= len(s):
+                    raise ValueError(
+                        f"Unterminated string literal in literal type at position {start} in {s!r}"
+                    )
+
+                # Get the string value and unescape quotes
+                string_value = s[start:i].replace('\\"', '"')
+                values.append(string_value)
+                i += 1  # skip closing quote
+
+            else:
+                # Parse numeric or boolean literals
+                start = i
+                while i < len(s) and s[i] not in [",", "]"]:
+                    i += 1
+
+                if start == i:
+                    raise ValueError(f"Expected literal value at position {i} in {s!r}")
+
+                literal_str = s[start:i].strip()
+
+                # Convert to appropriate type
+                if literal_str == "true":
+                    values.append(True)
+                elif literal_str == "false":
+                    values.append(False)
+                elif literal_str == "null" or literal_str == "None":
+                    values.append(None)
+                else:
+                    # Try to convert to number
+                    try:
+                        if "." in literal_str:
+                            values.append(float(literal_str))
+                        else:
+                            values.append(int(literal_str))
+                    except ValueError:
+                        # Check if this is a string without quotes
+                        # (This can happen for single-quoted values or unquoted identifiers)
+                        if (
+                            literal_str.startswith("'")
+                            and literal_str.endswith("'")
+                            and len(literal_str) >= 2
+                        ):
+                            # Remove the single quotes
+                            values.append(literal_str[1:-1].replace("\\'", "'"))
+                        else:
+                            # Keep as string if can't convert
+                            values.append(literal_str)
+
+            # Check for comma or closing bracket
+            i = _skip_whitespace(s, i)
+            if i < len(s) and s[i] == ",":
+                i += 1  # skip comma
+                continue
+            elif i < len(s) and s[i] == "]":
+                i += 1  # skip closing bracket
+                break
+            else:
+                raise ValueError(
+                    f"Expected ',' or ']' in literal at position {i} in {s!r}"
+                )
+
+        # Create Literal type with the values
+        if values:
+            return Literal.__getitem__(tuple(values)), i
+        else:
+            raise ValueError(f"Empty literal type at position {i} in {s!r}")
 
     else:
         raise ValueError(f"Unknown type identifier: {ident}")

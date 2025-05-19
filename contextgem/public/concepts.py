@@ -33,7 +33,7 @@ and references to the source text.
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Any, List, Literal, Union, get_args
 
 from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 
@@ -48,7 +48,14 @@ from contextgem.internal.items import (
     _StringItem,
 )
 from contextgem.internal.typings.aliases import NonEmptyStr, Self
+from contextgem.internal.typings.typed_class_utils import (
+    _get_model_fields,
+    _is_typed_class,
+    _raise_dict_class_type_error,
+)
+from contextgem.internal.typings.types_normalization import _normalize_type_annotation
 from contextgem.internal.typings.types_to_strings import (
+    JSON_PRIMITIVE_TYPES,
     _format_type,
     _JsonObjectItemStructure,
 )
@@ -340,12 +347,29 @@ class JsonObjectConcept(_Concept):
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :type description: NonEmptyStr
     :ivar structure: JSON object schema as a class with type annotations or dictionary where keys
-        are field names and values are type annotations. Supports generic aliases and union types.
-        All annotated types must be JSON-serializable. Example: ``{"item": str, "amount": int | float}``.
-        **Tip**: do not overcomplicate the structure to avoid prompt overloading. If you need to enforce
-        a nested structure (e.g. an object within an object), use type hints together with examples
-        that will guide the output format. E.g. structure ``{"item": dict[str, str]}`` and
-        example ``{"item": {"name": "item1", "description": "description1"}}``.
+        are field names and values are type annotations. All dictionary keys must be strings.
+        Supports generic aliases, union types, nested dictionaries for complex hierarchical structures,
+        lists of dictionaries for array items, Literal types, and classes with type annotations
+        (Pydantic models, dataclasses, etc.) for nested structures. All annotated types must be
+        JSON-serializable.
+        Examples:
+
+        - Simple structure: ``{"item": str, "amount": int | float}``
+        - Nested structure: ``{"item": str, "details": {"price": float, "quantity": int}}``
+        - List of objects: ``{"items": [{"name": str, "price": float}]}``
+        - Literal values: ``{"status": Literal["pending", "completed", "failed"]}``
+        - With type annotated classes: ``{"address": AddressModel}`` where AddressModel can be a
+          Pydantic model, dataclass, or any class with type annotations
+
+        **Note**: Class types cannot be used as dictionary keys or values. For example,
+        ``dict[str, Address]`` is not allowed. Use alternative structures like nested objects
+        or lists of objects instead.
+
+        **Note**: When using classes that contain other classes as type hints, inherit from
+        ``JsonObjectClassStruct`` in all parts of the class hierarchy, to ensure proper conversion
+        of nested class hierarchies to dictionary representations for serialization.
+
+        **Tip**: do not overcomplicate the structure to avoid prompt overloading.
     :type structure: type | dict[NonEmptyStr, Any]
     :ivar examples: Example JSON objects illustrating the concept usage.
     :type examples: list[JsonObjectExample]
@@ -391,6 +415,18 @@ class JsonObjectConcept(_Concept):
     def _item_class(self) -> type[_JsonObjectItem]:
         return _JsonObjectItem
 
+    def _format_structure_in_prompt(self) -> str:
+        """
+        Formats the structure for use in prompts, ensuring consistency
+        regardless of how the structure was originally defined.
+
+        :return: A string representation of the structure for prompts.
+        :rtype: str
+        """
+        # Use the JsonObjectItemStructure to format the structure consistently
+        formatter = _JsonObjectItemStructure(self.structure)
+        return formatter._to_prompt_string()
+
     def _get_structure_validator(self) -> type[BaseModel]:
         """
         Creates a dynamic pydantic model from the user-provided type structure.
@@ -399,36 +435,6 @@ class JsonObjectConcept(_Concept):
         :rtype: type[BaseModel]
         """
         return _dynamic_pydantic_model(self.structure)
-
-    @field_validator("structure")
-    @classmethod
-    def _validate_structure(
-        cls, structure: type | dict[str, Any]
-    ) -> type | dict[str, Any]:
-        """
-        Validates that the structure adheres to required format and can be properly rendered.
-
-        :param structure: Class or dictionary defining the JSON structure.
-        :type structure: type | dict[str, Any]
-        :return: Validated structure if no errors are raised.
-        :rtype: type | dict[str, Any]
-        :raises ValueError: If structure format is invalid or cannot be properly processed.
-        """
-        if isinstance(structure, dict):
-            if not structure:
-                raise ValueError(
-                    f"Invalid structure for concept `{cls.__name__}`: empty dictionary"
-                )
-        try:
-            # Check that the prompt types can be rendered in a prompt-compatible string
-            _JsonObjectItemStructure(structure)._to_prompt_string()
-            # Check that the structure dynamic validation model is created properly
-            _dynamic_pydantic_model(structure)
-        except (TypeError, ValueError, RuntimeError) as e:
-            raise ValueError(
-                f"Invalid structure for concept `{cls.__name__}`: {e}"
-            ) from e
-        return structure
 
     def _process_item_value(self, value: dict[str, Any]) -> dict[str, Any]:
         """
@@ -445,6 +451,251 @@ class JsonObjectConcept(_Concept):
         """
         self._get_structure_validator().model_validate(value)
         return value
+
+    @classmethod
+    def _convert_structure_to_dict(
+        cls, structure: type | dict[str, Any]
+    ) -> dict[str, Any]:
+        """
+        Converts the structure (class or dictionary) to a standardized dictionary format
+        with serializable type hints for consistent processing and serialization.
+
+        :param structure: Class or dictionary defining the JSON structure.
+        :type structure: type | dict[str, Any]
+        :return: Dictionary representation of the structure.
+        :rtype: dict[str, Any]
+        :raises ValueError: If conversion fails.
+        """
+        # Normalize any type hints including typing module generics
+        structure = _normalize_type_annotation(structure)
+
+        # Convert class-based structures to dictionaries
+        if not isinstance(structure, dict) and _is_typed_class(structure):
+            try:
+                # Handle classes that inherit from JsonObjectClassStruct
+                # (classes with _as_dict_structure method)
+                if hasattr(structure, "_as_dict_structure"):
+                    structure = structure._as_dict_structure()
+                # Handle other typed classes (such as Pydantic models, dataclasses)
+                else:
+                    structure = _get_model_fields(structure)
+
+                # Normalize the result to ensure consistent type representation
+                structure = {
+                    k: _normalize_type_annotation(v) for k, v in structure.items()
+                }
+            except Exception as e:
+                raise ValueError(
+                    f"Invalid structure for concept `{cls.__name__}`: {e}"
+                ) from e
+
+        # Ensure we have a dictionary at this point
+        if not isinstance(structure, dict):
+            raise ValueError(
+                f"Invalid structure for concept `{cls.__name__}`: "
+                f"Processed structure must be a dict."
+            )
+
+        if not structure:
+            raise ValueError(
+                f"Invalid structure for concept `{cls.__name__}`: empty dictionary"
+            )
+
+        # Recursively process dictionary to handle nested classes and special types
+        processed_structure = {}
+        for key, value in structure.items():
+            processed_structure[key] = cls._process_structure_value(value, f"{key}")
+
+        return processed_structure
+
+    @classmethod
+    def _process_structure_value(cls, value: Any, path: str = "") -> Any:
+        """
+        Recursively processes a structure value, handling all nested scenarios.
+
+        :param value: The value to process (class, dict, list, or other type).
+        :param path: Current path in the structure for error reporting.
+        :return: Processed value with all nested classes converted to dictionaries.
+        :raises ValueError: If processing fails for any nested component.
+        """
+
+        # Normalize the type annotation for consistent representation
+        value = _normalize_type_annotation(value)
+
+        # Handle class with _as_dict_structure method
+        if hasattr(value, "_as_dict_structure"):
+            try:
+                dict_structure = value._as_dict_structure()
+                # Process each item in the dictionary
+                return {
+                    k: cls._process_structure_value(v, f"{path}.{k}")
+                    for k, v in dict_structure.items()
+                }
+            except Exception as e:
+                raise ValueError(
+                    f"Invalid structure at `{path}` in concept `{cls.__name__}`: {e}"
+                ) from e
+
+        # Handle other typed classes
+        elif _is_typed_class(value):
+            try:
+                fields = _get_model_fields(value)
+                return {
+                    k: cls._process_structure_value(v, f"{path}.{k}")
+                    for k, v in fields.items()
+                }
+            except Exception as e:
+                raise ValueError(
+                    f"Invalid structure at `{path}` in concept `{cls.__name__}`: {e}"
+                ) from e
+
+        # Handle list type hint (must have exactly one element for type annotation)
+        elif isinstance(value, list):
+            if not value or len(value) != 1:
+                raise ValueError(
+                    f"Invalid list at `{path}` in concept `{cls.__name__}`: "
+                    f"List must contain exactly one element representing the item type"
+                )
+
+            # Process the single item in the list (type annotation)
+            processed_item = cls._process_structure_value(value[0], f"{path}[0]")
+            return [processed_item]
+
+        # Handle nested dictionary
+        elif isinstance(value, dict):
+            processed_dict = {}
+            for k, v in value.items():
+                # Validate that the key is a string
+                if not isinstance(k, str):
+                    raise ValueError(
+                        f"Invalid dictionary key at `{path}`: {k}. "
+                        f"Dictionary keys must be strings, got {type(k).__name__}"
+                    )
+                processed_dict[k] = cls._process_structure_value(v, f"{path}.{k}")
+            return processed_dict
+
+        # Handle special generic types like list[TypedClass]
+        elif hasattr(value, "__origin__") and getattr(value, "__origin__", None) in (
+            list,
+            List,
+        ):
+            if len(value.__args__) > 1:
+                raise ValueError(
+                    f"Invalid list type annotation at `{path}` in concept `{cls.__name__}`: "
+                    f"List must have exactly one type argument, got {len(value.__args__)}"
+                )
+            if len(value.__args__) == 1:
+                arg_type = value.__args__[0]
+                # Normalize the argument type
+                arg_type = _normalize_type_annotation(arg_type)
+
+                if _is_typed_class(arg_type):
+                    if hasattr(arg_type, "_as_dict_structure"):
+                        dict_structure = arg_type._as_dict_structure()
+                        return [dict_structure]
+                    else:
+                        fields = _get_model_fields(arg_type)
+                        processed_fields = {
+                            k: cls._process_structure_value(v, f"{path}[0].{k}")
+                            for k, v in fields.items()
+                        }
+                        return [processed_fields]
+                else:
+                    # For basic types, ensure we're using built-in list
+                    return list[arg_type]
+
+        # Handle Optional type hints and ensure they only contain primitive types
+        elif (
+            hasattr(value, "__origin__") and getattr(value, "__origin__", None) is Union
+        ):
+            # Check if it's an Optional (Union with None)
+            args = get_args(value)
+            is_optional = type(None) in args
+
+            if is_optional:
+                # For each type argument (except None), check if it's a primitive type or Literal
+                for arg in args:
+                    if arg is not type(None):
+                        # Allow Literal types in Optional
+                        if getattr(arg, "__origin__", None) is Literal:
+                            # Ensure all literal values are JSON serializable
+                            for literal_arg in get_args(arg):
+                                if not isinstance(literal_arg, JSON_PRIMITIVE_TYPES):
+                                    raise ValueError(
+                                        f"Invalid Literal value in Optional[Literal] at `{path}` "
+                                        f"in concept `{cls.__name__}`: "
+                                        f"Literal value '{literal_arg}' is not a JSON primitive type."
+                                    )
+                        # For non-Literal types, check for primitive types
+                        elif arg not in JSON_PRIMITIVE_TYPES:
+                            raise ValueError(
+                                f"Invalid Optional type at `{path}` in concept `{cls.__name__}`: "
+                                f"Optional[{arg.__name__}] is not allowed. "
+                                f"Optional[] can only be used with primitive types "
+                                f"(str, int, float, bool) or Literal types, "
+                                f"not with classes or complex types. "
+                                f"Use basic types or restructure your model to avoid "
+                                f"Optional with non-primitive types."
+                            )
+
+            # Return the original value after validation
+            return value
+
+        # Handle dictionary type hints
+        elif (
+            hasattr(value, "__origin__") and getattr(value, "__origin__", None) is dict
+        ):
+            if len(value.__args__) == 2:
+                key_type, val_type = value.__args__
+
+                # Check if key or value types are class types (which should be disallowed)
+                for type_arg, type_name in [(key_type, "key"), (val_type, "value")]:
+                    # Check if the type is a class (either directly or through a string reference)
+                    if _is_typed_class(type_arg) or (
+                        isinstance(type_arg, str)
+                        and hasattr(globals().get(type_arg, None), "__annotations__")
+                    ):
+                        # Use ValueError here because we're in a structure validation context
+                        # but reuse the error message structure from the shared function
+                        try:
+                            _raise_dict_class_type_error(type_name, path, type_arg)
+                        except TypeError as e:
+                            # Convert to ValueError to maintain consistent error type
+                            raise ValueError(str(e))
+
+            return value
+
+        # All other types remain normalized
+        return value
+
+    @field_validator("structure")
+    @classmethod
+    def _validate_structure(
+        cls, structure: type | dict[str, Any]
+    ) -> type | dict[str, Any]:
+        """
+        Validates that the structure adheres to required format and can be properly rendered.
+        Converts all structure types (including classes) to a standardized dictionary format
+        with serializable type hints.
+
+        :param structure: Class or dictionary defining the JSON structure.
+        :type structure: type | dict[str, Any]
+        :return: Validated structure converted to a dictionary representation.
+        :rtype: dict[str, Any]
+        :raises ValueError: If structure format is invalid or cannot be properly processed.
+        """
+        processed_structure = cls._convert_structure_to_dict(structure)
+
+        try:
+            # Check that the prompt types can be rendered in a prompt-compatible string
+            _JsonObjectItemStructure(processed_structure)._to_prompt_string()
+            # Check that the structure dynamic validation model is created properly
+            _dynamic_pydantic_model(processed_structure)
+        except (TypeError, ValueError, RuntimeError) as e:
+            raise ValueError(
+                f"Invalid structure for concept `{cls.__name__}`: {e}"
+            ) from e
+        return processed_structure
 
     @model_validator(mode="after")
     def _validate_json_object_post(self) -> Self:

@@ -7890,17 +7890,45 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
       * **description** -- A brief description of the concept (non-
         empty string, stripped).
 
-      * **structure** -- JSON object schema as a class with type
-        annotations or dictionary where keys are field names and
-        values are type annotations. Supports generic aliases and
-        union types. All annotated types must be JSON-serializable.
-        Example: "{"item": str, "amount": int | float}". **Tip**: do
-        not overcomplicate the structure to avoid prompt overloading.
-        If you need to enforce a nested structure (e.g. an object
-        within an object), use type hints together with examples that
-        will guide the output format. E.g. structure "{"item":
-        dict[str, str]}" and example "{"item": {"name": "item1",
-        "description": "description1"}}".
+      * **structure** --
+
+        JSON object schema as a class with type annotations or
+        dictionary where keys are field names and values are type
+        annotations. All dictionary keys must be strings. Supports
+        generic aliases, union types, nested dictionaries for complex
+        hierarchical structures, lists of dictionaries for array
+        items, Literal types, and classes with type annotations
+        (Pydantic models, dataclasses, etc.) for nested structures.
+        All annotated types must be JSON-serializable. Examples:
+
+        * Simple structure: "{"item": str, "amount": int | float}"
+
+        * Nested structure: "{"item": str, "details": {"price": float,
+          "quantity": int}}"
+
+        * List of objects: "{"items": [{"name": str, "price":
+          float}]}"
+
+        * Literal values: "{"status": Literal["pending", "completed",
+          "failed"]}"
+
+        * With type annotated classes: "{"address": AddressModel}"
+          where AddressModel can be a Pydantic model, dataclass, or
+          any class with type annotations
+
+        **Note**: Class types cannot be used as dictionary keys or
+        values. For example, "dict[str, Address]" is not allowed. Use
+        alternative structures like nested objects or lists of objects
+        instead.
+
+        **Note**: When using classes that contain other classes as
+        type hints, inherit from "JsonObjectClassStruct" in all parts
+        of the class hierarchy, to ensure proper conversion of nested
+        class hierarchies to dictionary representations for
+        serialization.
+
+        **Tip**: do not overcomplicate the structure to avoid prompt
+        overloading.
 
       * **examples** -- Example JSON objects illustrating the concept
         usage.
@@ -7964,6 +7992,8 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
    Example:
       JSON object concept definition
 
+         from typing import Literal
+
          from contextgem import JsonObjectConcept
 
          # Define a JSON object concept for capturing address information
@@ -7979,6 +8009,7 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
                  "state": str | None,
                  "postal_code": str | None,
                  "country": str | None,
+                 "address_type": Literal["residential", "business"] | None,
              },
          )
 
@@ -9909,10 +9940,10 @@ class contextgem.public.data_models.RatingScale(**data)
 
 # ==== api/utils ====
 
-Utility functions
-*****************
+Utility functions and classes
+*****************************
 
-Module defining public utility functions of the framework.
+Module defining public utility functions and classes of the framework.
 
 contextgem.public.utils.image_to_base64(image_path)
 
@@ -9966,6 +9997,54 @@ contextgem.public.utils.reload_logger_settings()
          # You can re-enable the logger by setting CONTEXTGEM_DISABLE_LOGGER to "False"
          # os.environ["CONTEXTGEM_DISABLE_LOGGER"] = "False"
          # reload_logger_settings()
+
+class contextgem.public.utils.JsonObjectClassStruct
+
+   Bases: "object"
+
+   A base class that automatically converts class hierarchies to
+   dictionary representations.
+
+   This class enables the use of existing class hierarchies (such as
+   dataclasses or Pydantic models) with nested type hints as a
+   structure definition for JsonObjectConcept. When you need to use
+   typed class hierarchies with JsonObjectConcept, inherit from this
+   class in all parts of your class structure.
+
+   Example:
+      Using JsonObjectClassStruct for class hierarchies
+
+         from dataclasses import dataclass
+
+         from contextgem import JsonObjectClassStruct, JsonObjectConcept
+
+
+         @dataclass
+         class Address(JsonObjectClassStruct):
+             street: str
+             city: str
+             country: str
+
+
+         @dataclass
+         class Contact(JsonObjectClassStruct):
+             email: str
+             phone: str
+             address: Address
+
+
+         @dataclass
+         class Person(JsonObjectClassStruct):
+             name: str
+             age: int
+             contact: Contact
+
+
+         # Use the class structure with JsonObjectConcept
+         # JsonObjectClassStruct enables automatic conversion of typed class hierarchies
+         # into the dictionary structure required by JsonObjectConcept, preserving the
+         # type information and nested relationships between classes.
+         JsonObjectConcept(name="person", description="Person information", structure=Person)
 
 
 # ==== api/images ====

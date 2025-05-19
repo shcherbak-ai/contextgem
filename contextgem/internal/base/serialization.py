@@ -37,6 +37,9 @@ from aiolimiter import AsyncLimiter
 from pydantic import BaseModel, field_validator
 
 from contextgem.internal.loggers import logger
+from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
+from contextgem.internal.typings.types_normalization import _normalize_type_annotation
+from contextgem.internal.typings.types_to_strings import _serialize_type_hint
 
 if TYPE_CHECKING:
     from contextgem.internal.base.concepts import _Concept
@@ -101,7 +104,6 @@ class _InstanceSerializer(BaseModel):
         """
 
         from contextgem.internal.data_models import _LLMCost, _LLMUsage
-        from contextgem.internal.typings.types_to_strings import _serialize_type_hint
         from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
 
         if isinstance(self, (DocumentLLM, DocumentLLMGroup)):
@@ -128,9 +130,8 @@ class _InstanceSerializer(BaseModel):
                 base_dict[key] = [i.to_dict() for i in val]
 
             elif key == KEY_STRUCTURE_PUBLIC:
-                # json object concept
-                # Convert each item in the structure dict using the type-hint serializer
-                base_dict[key] = {k: _serialize_type_hint(v) for k, v in val.items()}
+                # Handle structure serialization for JsonObjectConcept structure
+                base_dict[key] = self._serialize_structure_dict(val)
 
             elif key == KEY_RATING_SCALE_PUBLIC:
                 base_dict[key] = val.to_dict()
@@ -182,6 +183,45 @@ class _InstanceSerializer(BaseModel):
         base_dict[KEY_CLASS_PRIVATE] = self.__class__.__name__
 
         return {**base_dict}
+
+    def _serialize_structure_dict(
+        self, structure_dict: dict[str, Any]
+    ) -> dict[str, Any]:
+        """
+        Relevant for JsonObjectConcept structure serialization.
+
+        Recursively serializes a dictionary containing type hints to ensure proper serialization.
+        Handles nested dictionaries, lists of dictionaries, and various type hints.
+
+        :param structure_dict: Dictionary containing type hints to serialize
+        :type structure_dict: dict[str, Any]
+        :return: Dictionary with serialized type hints
+        :rtype: dict[str, Any]
+        """
+        result = {}
+        for key, value in structure_dict.items():
+            # Normalize the value for consistent type representation
+            value = _normalize_type_annotation(value)
+
+            # Handle nested dictionaries
+            if isinstance(value, dict):
+                # Class structs (if passed) are already converted to a dict structure
+                # during JsonObjectConcept initialization.
+                result[key] = self._serialize_structure_dict(value)
+            # Handle list of dictionaries (only need to serialize the first item)
+            elif (
+                isinstance(value, list)
+                and len(value) == 1
+                and isinstance(value[0], dict)
+            ):
+                # Class structs (if passed) are already converted to a dict structure
+                # during JsonObjectConcept initialization.
+                result[key] = [self._serialize_structure_dict(value[0])]
+            # Other cases
+            else:
+                result[key] = _serialize_type_hint(value)
+
+        return result
 
     def _convert_decimal_to_float(self, obj: Any) -> Any:
         """
@@ -288,7 +328,6 @@ class _InstanceSerializer(BaseModel):
         import contextgem.public.examples as cg_examples
         from contextgem import Image
         from contextgem.internal.data_models import _LLMUsage
-        from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
         from contextgem.public.aspects import Aspect
         from contextgem.public.data_models import LLMPricing, RatingScale
         from contextgem.public.llms import DocumentLLM
@@ -324,6 +363,47 @@ class _InstanceSerializer(BaseModel):
                 for d in val
             ]
 
+        def _deserialize_structure_dict(
+            structure_dict: dict[str, Any],
+        ) -> dict[str, Any]:
+            """
+            Relevant for JsonObjectConcept structure deserialization.
+
+            Recursively deserializes a dictionary containing string representations of type hints
+            into actual Python type objects. Handles nested dictionaries, lists of dictionaries,
+            and various type hint formats.
+
+            :param structure_dict: Dictionary containing serialized type hints to deserialize
+            :type structure_dict: dict[str, Any]
+            :return: Dictionary with deserialized type hints
+            :rtype: dict[str, Any]
+            """
+
+            result = {}
+            for k, v in structure_dict.items():
+                # Class structs (if passed) are already converted to a dict structure
+                # during JsonObjectConcept initialization.
+                if isinstance(v, dict):
+                    result[k] = _deserialize_structure_dict(v)
+                elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], dict):
+                    result[k] = [_deserialize_structure_dict(v[0])]
+                elif isinstance(v, str):
+                    try:
+                        # Deserialize the type hint
+                        type_hint = _deserialize_type_hint(v)
+
+                        # Normalize the type hint for consistent representation
+                        # This converts between typing module generics and built-in equivalents
+                        normalized_type = _normalize_type_annotation(type_hint)
+
+                        result[k] = normalized_type
+                    except ValueError:
+                        # Keep as string if can't deserialize
+                        result[k] = v
+                else:
+                    result[k] = v
+            return result
+
         # Create a map for known keys → reconstruction logic
         rebuild_map: dict[str, Callable[[Any], Any]] = {
             # Public attrs
@@ -333,9 +413,10 @@ class _InstanceSerializer(BaseModel):
             KEY_PARAGRAPHS_PUBLIC: lambda_list_val(instance_cls=Paragraph),
             KEY_SENTENCES_PUBLIC: lambda_list_val(instance_cls=Sentence),
             KEY_IMAGES_PUBLIC: lambda_list_val(instance_cls=Image),
-            KEY_STRUCTURE_PUBLIC: lambda val: {
-                k: _deserialize_type_hint(v) for k, v in val.items()
-            },
+            KEY_STRUCTURE_PUBLIC: lambda val: (
+                # JsonObjectConcept structure is always converted to a dict
+                _deserialize_structure_dict(val)
+            ),
             KEY_RATING_SCALE_PUBLIC: lambda val: RatingScale.from_dict(val),
             # LLM attrs
             KEY_LLM_PRICING_PUBLIC: lambda val: (

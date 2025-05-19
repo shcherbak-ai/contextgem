@@ -20,7 +20,7 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.2.4"
+__version__ = "0.3.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
@@ -33,6 +33,7 @@ from contextgem.public import (
     DocumentPipeline,
     DocxConverter,
     Image,
+    JsonObjectClassStruct,
     JsonObjectConcept,
     JsonObjectExample,
     LLMPricing,
@@ -79,6 +80,7 @@ __all__ = [
     # Utils
     "image_to_base64",
     "reload_logger_settings",
+    "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
 ]

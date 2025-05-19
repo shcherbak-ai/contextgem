@@ -254,6 +254,18 @@ class TestUtils:
             ):
                 assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
 
+        # To / from json
+        instance_json = instance.to_json()
+        new_instance = instance.__class__.from_json(instance_json)
+        assert new_instance.__dict__ == instance.__dict__
+        assert new_instance == instance
+        for attr_name in attrs_to_recheck:
+            if (
+                hasattr(instance, attr_name)
+                or attr_name in instance.__private_attributes__
+            ):
+                assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
+
         # Saving to disk / loading from disk
         disk_path = f"instance_{str(uuid4())}.json"
         instance.to_disk(disk_path)

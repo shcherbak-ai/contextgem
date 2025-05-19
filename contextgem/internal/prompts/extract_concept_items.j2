@@ -226,7 +226,7 @@ Concept description:
     {% if concept_data.structure %}
 
 Expected structure:
-{{ concept_data.structure | pprint }}
+{{ concept_data._format_structure_in_prompt() }}
     {% endif %}
     {% if concept_data.rating_scale %}
 

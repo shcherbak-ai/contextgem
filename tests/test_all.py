@@ -28,15 +28,16 @@ import warnings
 import xml.etree.ElementTree as ET
 import zipfile
 from copy import deepcopy
+from dataclasses import dataclass, field
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Literal
+from typing import Any, Dict, List, Literal, Optional
 
 import pytest
-from _pytest.nodes import Item
+from _pytest.nodes import Item as PytestItem
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from contextgem import *
 from contextgem.internal.base.attrs import (
@@ -71,6 +72,7 @@ from contextgem.internal.loggers import (
     logger,
 )
 from contextgem.internal.utils import _split_text_into_paragraphs
+from contextgem.public.utils import JsonObjectClassStruct
 from tests.utils import (
     VCR_FILTER_HEADERS,
     TestUtils,
@@ -364,7 +366,7 @@ class TestAll(TestUtils):
 
                 @property
                 def _item_class(self) -> type:
-                    return Item
+                    return PytestItem
 
             with pytest.raises(AttributeError):
                 TestNoRequiredAttrs()  # initialized with no required attributes
@@ -1162,71 +1164,652 @@ class TestAll(TestUtils):
                 add_references=True,
                 # references are not supported in vision concepts
             )
-        # From dict with type hints
+
+        # Define all structures to test
+        # 1. Simple dictionary structure
         dict_struct = {
             "category": str,
-            "descriptions": list[str],
+            "descriptions": List[str],
         }
 
-        # Class struct
+        # 2. Class structure
         class Struct:
             category: str
             descriptions: list[str]
 
-        # Pydantic struct
+        # 3. Pydantic structure
         class PydanticStruct(BaseModel):
             category: str
             descriptions: list[str]
 
-        for struct in [dict_struct, Struct, PydanticStruct]:
-            concept = JsonObjectConcept(
-                name="Business Information",
-                description="Categories of Business Information",
-                structure=struct,
-                examples=[
-                    JsonObjectExample(
-                        content={
-                            "category": "test",
-                            "descriptions": ["test", "test", "test"],
-                        }
-                    )
+        # 4. Structure with optional types
+        optional_struct = {
+            "required_field": str,
+            "optional_str": Optional[str],
+            "optional_int": Optional[int],
+            "optional_float": Optional[float],
+            "optional_bool": Optional[bool],
+            "union_syntax": str | None,
+        }
+
+        # 5. Structure with literal types
+        literal_struct = {
+            "status": Literal["active", "inactive", "pending"],
+            "role": Literal["admin", "user", "guest"],
+            "priority": Literal[1, 2, 3],
+        }
+
+        # 6. Nested dictionary structure
+        nested_dict_struct = {
+            "name": str,
+            "age": int,
+            "contact": {
+                "email": str,
+                "phone": str,
+                "address": {"street": str, "city": str, "country": str},
+            },
+        }
+
+        # 7. Structure with list of dictionaries
+        list_of_dicts_struct = {
+            "name": str,
+            "skills": [{"name": str, "level": int}],
+        }
+
+        # 8. Classes with type annotations for nested structures
+        # We also add fields to test warnings (field logic will be discarded)
+        @dataclass
+        class Address(JsonObjectClassStruct):
+            street: str = field(metadata={"description": "Street address"})
+            city: str = field(repr=True)
+            country: str = field(compare=True)
+
+        @dataclass
+        class Contact(JsonObjectClassStruct):
+            email: str = field(metadata={"description": "test"})
+            phone: str = field(metadata={"format": "international"})
+            address: Address = field(repr=False)
+            contact_type: Optional[
+                Literal["primary", "secondary", "emergency", None]
+                | Literal["union", "literal", None]
+            ] = field(
+                default=None
+            )  # intentionally messed up type hint for testing
+
+        @dataclass
+        class Person(JsonObjectClassStruct):
+            name: str = field(compare=True)
+            age: int = field(metadata={"min": 0, "max": 120})
+            contact: Contact = field(repr=False)
+
+        # 9. Pydantic models for nested structures
+        class AddressModel(BaseModel, JsonObjectClassStruct):
+            street: str
+            city: str
+            country: str
+
+        class ContactModel(BaseModel, JsonObjectClassStruct):
+            email: str
+            phone: str
+            address: AddressModel
+
+        class PersonModel(BaseModel, JsonObjectClassStruct):
+            name: str
+            age: int
+            contact: ContactModel
+
+        # 10. Super complex structure combining everything
+        super_complex_struct = {
+            "user": PersonModel,
+            "status": Literal["active", "inactive"],
+            "permissions": [
+                {"resource": str, "access": Literal["read", "write", "admin"]}
+            ],
+            "settings": {
+                "theme": str,
+                "notifications": {
+                    "email": bool,
+                    "sms": bool,
+                    "frequency": Literal["daily", "weekly", "monthly"],
+                },
+            },
+        }
+
+        # 11. Structure with list[cls]
+        @dataclass
+        class Item(JsonObjectClassStruct):
+            id: int
+            name: str
+            active: bool
+
+        list_of_class_struct = {"title": str, "items": list[Item]}
+
+        # Class structure containing a list[cls] type hint
+        @dataclass
+        class ClassWithListOfClasses(JsonObjectClassStruct):
+            name: str
+            description: str
+            items: list[Item]
+
+        # 12. Structure with Dict mapping
+        dict_mapping_struct = {
+            "name": str,
+            "scores": Dict[str, int],
+        }
+
+        # 13. Pydantic model with Field() validations
+        # We add fields to test warnings (field logic will be discarded)
+        class ValidatedModel(BaseModel, JsonObjectClassStruct):
+            name: str = Field(..., min_length=3, max_length=50)
+            age: int = Field(..., ge=18, le=100)
+            email: str = Field(
+                ..., pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+            )
+            tags: list[str] = Field(default_factory=list, max_length=5)
+            score: float = Field(default=0.0, ge=0.0, le=10.0)
+
+        validated_model_struct = ValidatedModel
+
+        # 14. Nested structure with dict having union type values
+        @dataclass
+        class ConfigSettings(JsonObjectClassStruct):
+            enabled: bool
+            values: dict[
+                str, int | float | str | bool | None
+            ]  # Union type as dict value
+            description: str
+
+        @dataclass
+        class AppConfiguration(JsonObjectClassStruct):
+            app_name: str
+            version: str
+            settings: ConfigSettings
+
+        # 15. Pydantic model with field validators
+        class UserProfile(BaseModel, JsonObjectClassStruct):
+            name: str
+            email: str
+            age: int
+
+            @field_validator("email")
+            def validate_email(cls, v):
+                if "@" not in v:
+                    raise ValueError("Email must contain @ symbol")
+                return v
+
+            @field_validator("age")
+            def validate_age(cls, v):
+                if v < 0 or v > 120:
+                    raise ValueError("Age must be between 0 and 120")
+                return v
+
+        # Define valid examples for each structure
+        valid_examples = {
+            "ClassWithListOfClasses": {
+                "name": "Collection of Items",
+                "description": "A collection of multiple items",
+                "items": [
+                    {"id": 1, "name": "First Item", "active": True},
+                    {"id": 2, "name": "Second Item", "active": False},
+                    {"id": 3, "name": "Third Item", "active": True},
                 ],
+            },
+            "dict_struct": {
+                "category": "test",
+                "descriptions": ["test1", "test2", "test3"],
+            },
+            "Struct": {
+                "category": "test",
+                "descriptions": ["test1", "test2", "test3"],
+            },
+            "PydanticStruct": {
+                "category": "test",
+                "descriptions": ["test1", "test2", "test3"],
+            },
+            "optional_struct": {
+                "required_field": "value",
+                "optional_str": "string value",
+                "optional_int": 123,
+                "optional_float": 45.67,
+                "optional_bool": True,
+                "union_syntax": None,
+            },
+            "literal_struct": {
+                "status": "active",
+                "role": "admin",
+                "priority": 1,
+            },
+            "nested_dict_struct": {
+                "name": "John Doe",
+                "age": 30,
+                "contact": {
+                    "email": "john@example.com",
+                    "phone": "123-456-7890",
+                    "address": {
+                        "street": "123 Main St",
+                        "city": "Anytown",
+                        "country": "USA",
+                    },
+                },
+            },
+            "list_of_dicts_struct": {
+                "name": "Jane Smith",
+                "skills": [
+                    {"name": "Python", "level": 5},
+                    {"name": "JavaScript", "level": 4},
+                ],
+            },
+            "Person": {
+                "name": "Alice Johnson",
+                "age": 28,
+                "contact": {
+                    "email": "alice@example.com",
+                    "phone": "987-654-3210",
+                    "address": {
+                        "street": "456 Oak Ave",
+                        "city": "Somewhere",
+                        "country": "Canada",
+                    },
+                    "contact_type": "primary",
+                },
+            },
+            "PersonModel": {
+                "name": "Bob Brown",
+                "age": 35,
+                "contact": {
+                    "email": "bob@example.com",
+                    "phone": "555-123-4567",
+                    "address": {
+                        "street": "789 Pine St",
+                        "city": "Elsewhere",
+                        "country": "UK",
+                    },
+                },
+            },
+            "super_complex_struct": {
+                "user": {
+                    "name": "Charlie Davis",
+                    "age": 42,
+                    "contact": {
+                        "email": "charlie@example.com",
+                        "phone": "111-222-3333",
+                        "address": {
+                            "street": "101 Maple Dr",
+                            "city": "Nowhere",
+                            "country": "Australia",
+                        },
+                    },
+                },
+                "status": "active",
+                "permissions": [
+                    {"resource": "files", "access": "read"},
+                    {"resource": "users", "access": "admin"},
+                ],
+                "settings": {
+                    "theme": "dark",
+                    "notifications": {
+                        "email": True,
+                        "sms": False,
+                        "frequency": "weekly",
+                    },
+                },
+            },
+            "list_of_class_struct": {
+                "title": "My Item Collection",
+                "items": [
+                    {"id": 1, "name": "First Item", "active": True},
+                    {"id": 2, "name": "Second Item", "active": False},
+                ],
+            },
+            "dict_mapping_struct": {
+                "name": "Student Results",
+                "scores": {"math": 95, "science": 87, "history": 78},
+            },
+            "ValidatedModel": {
+                "name": "John Doe",
+                "age": 35,
+                "email": "john.doe@example.com",
+                "tags": ["developer", "python"],
+                "score": 8.5,
+            },
+            "AppConfiguration": {
+                "app_name": "TestApp",
+                "version": "1.0.0",
+                "settings": {
+                    "enabled": True,
+                    "values": {
+                        "timeout": 30,
+                        "rate_limit": 5.5,
+                        "api_key": "abc123",
+                        "debug_mode": False,
+                        "cache": None,
+                    },
+                    "description": "Test configuration settings",
+                },
+            },
+            "UserProfile": {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "age": 30,
+            },
+        }
+
+        # Define invalid examples for each structure
+        invalid_examples = {
+            "ClassWithListOfClasses": [
+                {"name": "Test"},  # Missing required fields
+                {"name": "Test", "description": "Test"},  # Missing items field
+                {"name": "Test", "items": []},  # Missing description field
+                {
+                    "name": "Test",
+                    "description": "Test",
+                    "items": {},
+                },  # Wrong type for items
+                {
+                    "name": "Test",
+                    "description": "Test",
+                    "items": [{"id": "1", "name": "Test", "active": True}],
+                },  # Wrong type for id (must be int)
+                {
+                    "name": "Test",
+                    "description": "Test",
+                    "items": [{"name": "Test", "active": True}],
+                },  # Missing required field in item
+            ],
+            "dict_struct": [
+                {"category": None},  # Missing required field
+                {"descriptions": ["test"]},  # Missing required field
+                {"category": "test", "descriptions": "not a list"},  # Wrong type
+                [],  # Not a dict
+            ],
+            "Struct": [
+                {"category": None},  # Missing required field
+                {"descriptions": ["test"]},  # Missing required field
+                {"category": "test", "descriptions": "not a list"},  # Wrong type
+                [],  # Not a dict
+            ],
+            "PydanticStruct": [
+                {"category": None},  # Missing required field
+                {"descriptions": ["test"]},  # Missing required field
+                {"category": "test", "descriptions": "not a list"},  # Wrong type
+                [],  # Not a dict
+            ],
+            "optional_struct": [
+                {},  # Missing required field
+                {"optional_str": "test"},  # Missing required field
+                {"required_field": 123},  # Wrong type for required field
+                {
+                    "required_field": "value",
+                    "optional_str": 123,
+                },  # Wrong type for optional field
+            ],
+            "literal_struct": [
+                {"status": "unknown"},  # Invalid literal value
+                {"role": "superuser"},  # Invalid literal value
+                {"priority": 4},  # Invalid literal value
+                {
+                    "status": "active",
+                    "role": "admin",
+                    "priority": "1",
+                },  # Wrong type for literal
+            ],
+            "nested_dict_struct": [
+                {"name": "John", "contact": {}},  # Missing required field
+                {"name": "John", "age": "30"},  # Wrong type
+                {
+                    "name": "John",
+                    "age": 30,
+                    "contact": {"email": "john@example.com"},
+                },  # Incomplete nested structure
+            ],
+            "list_of_dicts_struct": [
+                {"name": "Jane", "skills": "Python"},  # Wrong type for list
+                {
+                    "name": "Jane",
+                    "skills": [{"name": "Python"}],
+                },  # Missing required field in list item
+                {
+                    "name": "Jane",
+                    "skills": [{"level": 5}],
+                },  # Missing required field in list item
+            ],
+            "Person": [
+                {"name": "Alice", "age": "28"},  # Wrong type
+                {"name": "Alice", "contact": {}},  # Incomplete nested structure
+                {
+                    "name": "Alice",
+                    "age": 28,
+                    "contact": {"email": "alice@example.com"},
+                },  # Incomplete nested structure
+            ],
+            "PersonModel": [
+                {"name": "Bob", "age": "35"},  # Wrong type
+                {"name": "Bob", "contact": {}},  # Incomplete nested structure
+                {
+                    "name": "Bob",
+                    "age": 35,
+                    "contact": {"email": "bob@example.com"},
+                },  # Incomplete nested structure
+            ],
+            "super_complex_struct": [
+                {"user": {}, "status": "active"},  # Incomplete user structure
+                {
+                    "user": {"name": "Charlie", "age": 42},
+                    "status": "unknown",
+                },  # Invalid literal value
+                {
+                    "user": {"name": "Charlie", "age": 42, "contact": {}},
+                    "status": "active",
+                },  # Incomplete contact
+            ],
+            "list_of_class_struct": [
+                {"title": "Collection"},  # Missing items field
+                {"items": []},  # Missing title field
+                {"title": "Collection", "items": {}},  # Wrong type for items
+                {
+                    "title": "Collection",
+                    "items": [{"id": "1", "name": "Item", "active": True}],
+                },  # Wrong type for id (must be int)
+                {
+                    "title": "Collection",
+                    "items": [{"name": "Item", "active": True}],
+                },  # Missing required field in item
+            ],
+            "dict_mapping_struct": [
+                {"name": "Results"},  # Missing required fields
+                {"name": "Results", "scores": []},  # Wrong type for scores
+                {
+                    "name": "Results",
+                    "scores": {"math": "A"},
+                },  # Wrong value type in scores
+            ],
+            "ValidatedModel": [
+                {
+                    "name": "John Doe",
+                    "age": 35,
+                    "email": "john.doe@example.com",
+                },  # some fields are missing
+                {
+                    "name": 1,
+                    "age": 17,
+                    "email": "john.doe@example.com",
+                    "tags": ["one", "two", "three", "four", "five", "six"],
+                    "score": 11.0,
+                },  # name field is of wrong type
+            ],
+            "AppConfiguration": [
+                {
+                    "app_name": "TestApp",
+                    "version": "1.0.0",
+                },  # Incomplete nested structure, missing fields
+                {
+                    "app_name": "TestApp",
+                    "version": "1.0.0",
+                    "settings": {
+                        "enabled": True,
+                        "description": "Test settings",
+                    },
+                },  # Missing values dict
+            ],
+            "UserProfile": [
+                {"name": "John", "age": 30},  # Missing email
+            ],
+        }
+
+        # Map structure objects to their names
+        structure_map = {
+            "dict_struct": dict_struct,
+            "Struct": Struct,
+            "PydanticStruct": PydanticStruct,
+            "optional_struct": optional_struct,
+            "literal_struct": literal_struct,
+            "nested_dict_struct": nested_dict_struct,
+            "list_of_dicts_struct": list_of_dicts_struct,
+            "Person": Person,
+            "PersonModel": PersonModel,
+            "super_complex_struct": super_complex_struct,
+            "list_of_class_struct": list_of_class_struct,
+            "ClassWithListOfClasses": ClassWithListOfClasses,
+            "dict_mapping_struct": dict_mapping_struct,
+            "ValidatedModel": validated_model_struct,
+            "AppConfiguration": AppConfiguration,
+            "UserProfile": UserProfile,
+        }
+
+        # Utility function to test a structure
+        def test_structure(struct_name, structure):
+            # Create concept with the structure
+            concept = JsonObjectConcept(
+                name=f"{struct_name} Concept",
+                description=f"Testing {struct_name} structure",
+                structure=structure,
+                examples=[JsonObjectExample(content=valid_examples[struct_name])],
                 llm_role="extractor_text",
             )
-            # Validate assignment
-            concept.name = "b2b information"
+
+            # Test instance serialization and cloning
+            self.check_instance_serialization_and_cloning(concept)
+
+            # Test custom data serialization
+            self.check_custom_data_json_serializable(concept)
+
+            # Test valid extracted data
+            validator = concept._get_structure_validator()
+            valid_data = validator.model_validate(valid_examples[struct_name])
+            assert valid_data is not None
+
+            # Test invalid extracted data
+            for invalid_example in invalid_examples[struct_name]:
+                with pytest.raises(ValueError):
+                    validator.model_validate(invalid_example)
+
+            # Test name assignment
+            concept.name = f"Updated {struct_name}"
             with pytest.raises(ValueError):
                 concept.name = True
-            assert concept.name == "b2b information"
-            valid_extracted_data = {
-                "category": "test",
-                "descriptions": [
-                    "desc 1",
-                    "desc 2",
-                ],
-            }
-            invalid_extracted_data_1 = {
-                "category": None,
-            }
-            invalid_extracted_data_2 = []
-            invalid_extracted_data_3 = {
-                "category": "test",
-                "descriptions": True,
-            }
-            concept._get_structure_validator().model_validate(valid_extracted_data)
-            for invalid_extracted_data in [
-                invalid_extracted_data_1,
-                invalid_extracted_data_2,
-                invalid_extracted_data_3,
-            ]:
-                with pytest.raises(ValueError):
-                    concept._get_structure_validator().model_validate(
-                        invalid_extracted_data
-                    )
+            assert concept.name == f"Updated {struct_name}"
 
-        concept = JsonObjectConcept(
-            name="Business Information",
-            description="Categories of Business Information in the following JSON format: ...",
+            # Test invalid extracted items
+            with pytest.raises(ValueError):
+                concept.extracted_items = [1, True]
+
+            return concept
+
+        # Test each structure
+        for struct_name, structure in structure_map.items():
+            test_structure(struct_name, structure)
+
+        # Test invalid structure cases
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Structure",
+                description="Testing invalid structure",
+                structure={str: str},  # invalid mapping
+                llm_role="extractor_text",
+            )
+
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Structure",
+                description="Testing invalid structure",
+                structure={int: "integer"},  # invalid mapping
+                llm_role="extractor_text",
+            )
+
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Structure",
+                description="Testing invalid structure",
+                structure={},  # empty mapping
+                llm_role="extractor_text",
+            )
+
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Structure",
+                description="Testing invalid structure",
+                structure={"random": Exception},  # invalid value type
+                llm_role="extractor_text",
+            )
+
+        # Test with invalid type hints as structure values
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Optional Type",
+                description="Test with invalid Optional type",
+                structure={"field": Optional[Person]},
+            )
+
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Dict Type",
+                description="Test with invalid dict type",
+                structure={"field": dict[str, Item]},  # cls as value
+            )
+
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Invalid Dict Type",
+                description="Test with invalid dict type",
+                structure={"field": dict[Item, str]},  # cls as key
+            )
+
+        # Test with vision extractor and references (should fail)
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Vision Concept with References",
+                description="Testing vision concept with references",
+                structure={"test": str},
+                llm_role="extractor_vision",
+                add_references=True,
+            )
+
+        # Test with Any type (should fail)
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Any Concept",
+                description="Testing Any type",
+                structure={"test": Any},  # unclear type
+            )
+
+        # Test with raw list and dicts (should fail)
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Raw List and Dicts Concept",
+                description="Testing raw list and dicts",
+                structure={"test": list},  # unclear type
+            )
+        with pytest.raises(ValueError):
+            JsonObjectConcept(
+                name="Raw List and Dicts Concept",
+                description="Testing raw list and dicts",
+                structure={"test": dict},  # unclear type
+            )
+
+        # Test with vision extractor and justifications (should work)
+        vision_concept = JsonObjectConcept(
+            name="Vision Concept with Justifications",
+            description="Testing vision concept with justifications",
             structure={
                 "category": str,
                 "description": str,
@@ -1235,46 +1818,221 @@ class TestAll(TestUtils):
             llm_role="extractor_vision",
             add_justifications=True,
         )
-        self.check_custom_data_json_serializable(concept)
-        # Invalid extracted items
-        with pytest.raises(ValueError):
-            concept.extracted_items = [1, True]
-        with pytest.raises(ValueError):
-            JsonObjectConcept(
-                name="Business Information",
-                description="Categories of Business Information in the following JSON format: ...",
-                structure={
-                    str: str,
-                },  # invalid mapping
-                llm_role="extractor_text",
-            )
-        with pytest.raises(ValueError):
-            JsonObjectConcept(
-                name="Business Information",
-                description="Categories of Business Information in the following JSON format: ...",
-                structure={
-                    int: "integer",
-                },  # invalid mapping
-                llm_role="extractor_text",
-                add_justifications=True,
-            )
-        with pytest.raises(ValueError):
-            JsonObjectConcept(
-                name="Business Information",
-                description="Categories of Business Information in the following JSON format: ...",
-                structure={},  # empty mapping
-                llm_role="extractor_text",
-            )
-        with pytest.raises(ValueError):
-            JsonObjectConcept(
-                name="Business Information",
-                description="Categories of Business Information in the following JSON format: ...",
-                structure={
-                    "random": Exception,
-                },  # invalid value that cannot be represented in text format
-                llm_role="extractor_text",
-                add_justifications=True,
-            )
+        self.check_custom_data_json_serializable(vision_concept)
+
+    @pytest.mark.vcr()
+    def test_extract_complex_json_object_concept(self):
+        """
+        Tests the extraction of a complex JsonObjectConcept from a text file, validating
+        that the structure representation is properly included in the prompt and that
+        the concept is correctly extracted.
+        """
+
+        @dataclass
+        class Address(JsonObjectClassStruct):
+            street: str
+            city: str
+            country: str
+
+        @dataclass
+        class Contact(JsonObjectClassStruct):
+            email: str
+            phone: str
+            address: Address
+            contact_type: Optional[
+                Literal["primary", "secondary", "emergency"]
+                | Literal["union", "literal"]
+            ]  # intentionally messed up type hint for testing
+
+        @dataclass
+        class PersonModel(JsonObjectClassStruct):
+            name: str
+            age: int
+            contact: Contact
+
+        # Define an Item class for use in list[cls]
+        @dataclass
+        class UserItem(JsonObjectClassStruct):
+            id: int
+            name: str
+            description: str
+            is_active: bool
+
+        # Define the complex structure
+        super_complex_struct = {
+            "user": PersonModel,
+            "status": Literal["active", "inactive"],
+            "permissions": [
+                {"resource": str, "access": Literal["read", "write", "admin"]}
+            ],
+            "settings": {
+                "theme": str,
+                "notifications": {
+                    "email": bool,
+                    "sms": bool,
+                    "frequency": Literal["daily", "weekly", "monthly"],
+                },
+            },
+            "related_items": list[UserItem],  # Add list[cls] nested structure
+            "security_level": Optional[Literal["Basic", "Advanced", "Enterprise"]],
+        }
+
+        # Create a JsonObjectConcept with this structure
+        complex_concept = JsonObjectConcept(
+            name="User System Profile",
+            description="Comprehensive user profile with system access permissions and settings",
+            structure=super_complex_struct,
+            examples=[
+                JsonObjectExample(
+                    content={
+                        "user": {
+                            "name": "Charlie Davis",
+                            "age": 42,
+                            "contact": {
+                                "email": "charlie@example.com",
+                                "phone": "111-222-3333",
+                                "address": {
+                                    "street": "101 Maple Dr",
+                                    "city": "Nowhere",
+                                    "country": "Australia",
+                                },
+                                "contact_type": "primary",
+                            },
+                        },
+                        "status": "active",
+                        "permissions": [
+                            {"resource": "files", "access": "read"},
+                            {"resource": "users", "access": "admin"},
+                        ],
+                        "settings": {
+                            "theme": "dark",
+                            "notifications": {
+                                "email": True,
+                                "sms": False,
+                                "frequency": "weekly",
+                            },
+                        },
+                        "related_items": [
+                            {
+                                "id": 1,
+                                "name": "Document Review",
+                                "description": "Annual document review task",
+                                "is_active": True,
+                            },
+                            {
+                                "id": 2,
+                                "name": "Access Audit",
+                                "description": "System access verification",
+                                "is_active": False,
+                            },
+                        ],
+                        "security_level": "Advanced",
+                    }
+                )
+            ],
+            llm_role="extractor_text",
+        )
+
+        # Load the test text file as a Document
+        with open(
+            os.path.join(
+                get_project_root_path(),
+                "tests",
+                "other_files",
+                "complex_user_profile.txt",
+            ),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            text_content = f.read()
+
+        # Create a Document from the text content and add the complex concept
+        document = Document(raw_text=text_content)
+        document.concepts = [complex_concept]
+
+        # Get the structure representation that should be included in the prompt
+        structure_str = complex_concept._format_structure_in_prompt()
+
+        # Verify that the structure representation contains key elements
+        assert '"user"' in structure_str
+        assert '"name": str' in structure_str
+        assert '"age": int' in structure_str
+        assert '"status": "active" or "inactive"' in structure_str
+        assert '"permissions"' in structure_str
+        assert '"resource": str' in structure_str
+        assert '"access": "read" or "write" or "admin"' in structure_str
+        assert '"theme": str' in structure_str
+        assert '"email": bool' in structure_str
+        assert '"frequency": "daily" or "weekly" or "monthly"' in structure_str
+        assert (
+            '"security_level": "Basic" or "Advanced" or "Enterprise" or null'
+            in structure_str
+        )
+        assert (
+            '"contact_type": "primary" or "secondary" or "emergency" or "union" or "literal" or null'
+            in structure_str
+        )
+
+        # Verify the list[cls] structure representation
+        assert '"related_items"' in structure_str
+        assert '"id": int' in structure_str
+        assert '"description": str' in structure_str
+        assert '"is_active": bool' in structure_str
+
+        # Configure the LLM for testing
+        llm = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            role="extractor_text",
+        )
+
+        # Extract the concept
+        extracted_concepts = llm.extract_concepts_from_document(document)
+
+        # Verify prompt content from the LLM call log
+        prompt_string = llm.get_usage()[0].usage.calls[-1].prompt
+        assert structure_str in prompt_string
+
+        # Validate extraction results
+        assert len(extracted_concepts) == 1
+        extracted_concept = extracted_concepts[0]
+        assert extracted_concept.extracted_items
+        extracted_item = extracted_concept.extracted_items[0]
+        extracted_data = extracted_item.value
+
+        # Validate the extracted data structure
+        assert "user" in extracted_data
+        assert extracted_data["user"]["name"] == "Charlie Davis"
+        assert extracted_data["user"]["age"] == 42
+        assert extracted_data["user"]["contact"]["email"] == "charlie@example.com"
+        assert extracted_data["user"]["contact"]["address"]["city"] == "Nowhere"
+        assert extracted_data["user"]["contact"]["contact_type"] == "primary"
+        assert extracted_data["status"] == "active"
+        assert isinstance(extracted_data["permissions"], list)
+        assert len(extracted_data["permissions"]) >= 1
+        assert "resource" in extracted_data["permissions"][0]
+        assert "access" in extracted_data["permissions"][0]
+        assert "settings" in extracted_data
+        assert "theme" in extracted_data["settings"]
+        assert "notifications" in extracted_data["settings"]
+        assert "email" in extracted_data["settings"]["notifications"]
+        assert "frequency" in extracted_data["settings"]["notifications"]
+        assert "security_level" in extracted_data
+        assert extracted_data["security_level"] == "Advanced"
+
+        # Validate the list[cls] structure in the extracted data
+        assert "related_items" in extracted_data
+        assert isinstance(extracted_data["related_items"], list)
+        assert len(extracted_data["related_items"]) >= 1
+        assert "id" in extracted_data["related_items"][0]
+        assert "name" in extracted_data["related_items"][0]
+        assert "description" in extracted_data["related_items"][0]
+        assert "is_active" in extracted_data["related_items"][0]
+
+        # Log the extracted item for debugging
+        self.log_extracted_items_for_instance(extracted_concept)
 
     def test_init_and_validate_date_concept(self):
         """
@@ -2937,8 +3695,15 @@ class TestAll(TestUtils):
             ),
             JsonObjectConcept(
                 name="Key aspects",
-                description="Names of key aspects covered in the document",
-                structure={"aspect_names": list[str]},
+                description="Names and summaries of key aspects covered in the document",
+                structure={
+                    "aspects_names_and_summaries": [
+                        {
+                            "aspect_name": str,
+                            "aspect_summary": str,
+                        }
+                    ]  # intentionally overcomplicated structure
+                },
                 singular_occurrence=True,
             ),
             RatingConcept(
@@ -3009,6 +3774,9 @@ class TestAll(TestUtils):
         )
         self.log_extracted_items_for_instance(
             document.get_concept_by_name("Invoice number")
+        )
+        self.log_extracted_items_for_instance(
+            document.get_concept_by_name("Key aspects")
         )
 
         # Document serialization and deserialization (post-extraction)
@@ -3499,7 +4267,10 @@ class TestAll(TestUtils):
         from dev.usage_examples.docstrings.paragraphs import def_paragraph
         from dev.usage_examples.docstrings.pipelines import def_pipeline
         from dev.usage_examples.docstrings.sentences import def_sentence
-        from dev.usage_examples.docstrings.utils import reload_logger_settings
+        from dev.usage_examples.docstrings.utils import (
+            json_object_cls_struct,
+            reload_logger_settings,
+        )
 
     @pytest.mark.parametrize("raw_text_to_md", [True, False])
     @pytest.mark.parametrize("strict_mode", [True, False])
