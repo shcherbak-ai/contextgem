@@ -340,6 +340,8 @@ A raw text version of the full documentation is available at [`docs/docs-raw-for
 
 You can also explore the repository through [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem), an AI-powered conversational interface that provides visual architecture maps and natural language Q&A for the codebase.
 
+For a history of changes, improvements, and bug fixes, see the [CHANGELOG](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md).
+
 
 ## 💬 Community
 
