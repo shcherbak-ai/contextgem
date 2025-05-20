@@ -29,6 +29,7 @@ from contextgem.internal.typings.aliases import (
     NonEmptyStr,
     ReferenceDepth,
     SaTModelId,
+    StandardSaTModelId,
 )
 from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
 from contextgem.internal.typings.typed_class_utils import (
@@ -58,6 +59,7 @@ __all__ = [
     "DefaultPromptType",
     "ReferenceDepth",
     "SaTModelId",
+    "StandardSaTModelId",
     "LanguageRequirement",
     "JustificationDepth",
     "AsyncCalsAndKwargs",
