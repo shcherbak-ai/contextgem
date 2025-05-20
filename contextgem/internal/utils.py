@@ -29,7 +29,7 @@ import re
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Literal, TypeVar, get_args
 
 from jinja2 import Environment, Template, nodes
 from wtpsplit import SaT
@@ -51,6 +51,7 @@ from contextgem.internal.typings.aliases import (
     ExtractedInstanceType,
     ReferenceDepth,
     SaTModelId,
+    StandardSaTModelId,
 )
 
 T = TypeVar("T")
@@ -586,17 +587,69 @@ def _validate_parsed_llm_output(
 def _get_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     """
     Retrieves and caches a SaT model to be used for paragraphs and sentence segmentation.
+    Performs validation of the model ID or path before attempting to load the model.
 
     :param model_id:
         The identifier of the SaT model. Defaults to "sat-3l-sm".
+        Can be:
+        - A standard SaT model ID (e.g., "sat-3l-sm")
+        - A local path to a SaT model directory (as a string or Path object)
 
     :return:
         An instance of the SaT model associated with the given `model_id`.
+
+    :raises ValueError:
+        If the provided path doesn't exist or is not a directory.
+    :raises RuntimeError:
+        If the provided path exists but does not contain a valid SaT model.
     """
-    logger.info(f"Loading SaT model {model_id}...")
-    model = SaT(model_id)
-    logger.info(f"SaT model {model_id} loaded.")
-    return model
+    # Convert Path object to string if needed
+    if isinstance(model_id, Path):
+        model_id = str(model_id)
+
+    # Check if it's a standard model ID
+    is_standard_model = False
+    if isinstance(model_id, str):
+        # Get standard models directly from the type definition
+        standard_models = get_args(StandardSaTModelId)
+        is_standard_model = model_id in standard_models
+
+    # Determine if it's a local path (but not a standard model ID)
+    is_local_path = False
+    if isinstance(model_id, str) and not is_standard_model:
+        path = Path(model_id)
+
+        # Validate that the path exists and is a directory
+        if not path.exists() or not path.is_dir():
+            raise ValueError(
+                f"The provided SaT model path '{model_id}' does not exist or is not a directory."
+            )
+
+        is_local_path = True
+
+    # Log appropriate message
+    if is_local_path:
+        logger.info(f"Loading SaT model from local path {model_id}...")
+    else:
+        logger.info(f"Loading SaT model {model_id}...")
+
+    # Attempt to load the model
+    try:
+        model = SaT(model_id)
+        logger.info(f"SaT model loaded successfully.")
+        return model
+    except Exception as e:
+        if is_local_path:
+            # If it's a local path that exists but isn't a valid SaT model
+            logger.error(f"Failed to load SaT model from path '{model_id}': {str(e)}")
+            raise RuntimeError(
+                f"The directory at '{model_id}' exists but does not contain a valid SaT model. "
+                f"Error: {str(e)}"
+            ) from e
+        else:
+            # For standard model IDs or other errors
+            logger.error(f"Failed to load SaT model '{model_id}': {str(e)}")
+            raise
 
 
 def _group_instances_by_fields(

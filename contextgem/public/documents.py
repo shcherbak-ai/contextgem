@@ -39,6 +39,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Literal, Optional
 
 from pydantic import Field, field_validator, model_validator
@@ -81,8 +82,10 @@ class Document(_AssignedInstancesProcessor):
     :ivar paragraph_segmentation_mode: Mode for paragraph segmentation. When set to "sat",
         uses a SaT (Segment Any Text https://arxiv.org/abs/2406.16678) model. Defaults to "newlines".
     :type paragraph_segmentation_mode: Literal["newlines", "sat"]
-    :ivar sat_model_id: SaT model ID for paragraph/sentence segmentation.
-        Defaults to "sat-3l-sm". See https://github.com/segment-any-text/wtpsplit for the list of available models.
+    :ivar sat_model_id: SaT model ID for paragraph/sentence segmentation or a local path to a SaT model.
+        For model IDs, defaults to "sat-3l-sm". See https://github.com/segment-any-text/wtpsplit
+        for the list of available models. For local paths, provide either a string path or a Path
+        object pointing to the directory containing the SaT model.
     :type sat_model_id: SaTModelId
 
     Note:
@@ -284,6 +287,21 @@ class Document(_AssignedInstancesProcessor):
                 )
             seen.add(image.base64_data)
         return images
+
+    @field_validator("sat_model_id")
+    @classmethod
+    def _validate_sat_model_id(cls, sat_model_id: SaTModelId) -> str:
+        """
+        Validates and converts the sat_model_id to ensure it's a string.
+        If a Path object is provided, it's converted to a string representation.
+        This conversion ensures the document remains fully serializable.
+
+        :param sat_model_id: The SaT model ID or path to validate
+        :return: String representation of the model ID or path
+        """
+        if isinstance(sat_model_id, Path):
+            return str(sat_model_id)
+        return sat_model_id
 
     @model_validator(mode="before")
     @classmethod

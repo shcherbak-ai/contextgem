@@ -27,7 +27,8 @@ different Python versions.
 
 import sys
 from decimal import Decimal
-from typing import Annotated, Any, Callable, Coroutine, Literal, TypeVar
+from pathlib import Path
+from typing import Annotated, Any, Callable, Coroutine, Literal, TypeVar, Union
 
 from pydantic import Field, StrictStr, StringConstraints
 
@@ -54,7 +55,8 @@ ExtractedInstanceType = Literal["aspect", "concept"]
 
 ReferenceDepth = Literal["paragraphs", "sentences"]
 
-SaTModelId = Literal[
+# Define standard SaT model IDs as a separate type
+StandardSaTModelId = Literal[
     "sat-1l",
     "sat-1l-sm",
     "sat-3l",
@@ -64,6 +66,13 @@ SaTModelId = Literal[
     "sat-9l",
     "sat-12l",
     "sat-12l-sm",
+]
+
+# Combined type for sat_model_id parameter
+SaTModelId = Union[
+    StandardSaTModelId,
+    str,  # Local path as a string
+    Path,  # Local path as a Path object
 ]
 
 LanguageRequirement = Literal["en", "adapt"]

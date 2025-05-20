@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 import warnings
 import xml.etree.ElementTree as ET
 import zipfile
@@ -71,7 +72,7 @@ from contextgem.internal.loggers import (
     dedicated_stream,
     logger,
 )
-from contextgem.internal.utils import _split_text_into_paragraphs
+from contextgem.internal.utils import _get_sat_model, _split_text_into_paragraphs
 from contextgem.public.utils import JsonObjectClassStruct
 from tests.utils import (
     VCR_FILTER_HEADERS,
@@ -2510,6 +2511,50 @@ class TestAll(TestUtils):
         )
         with pytest.raises(ValueError):
             context.add_concepts([concept, concept])
+
+    def test_local_sat_model(self):
+        """
+        Tests the loading of a local SAT model.
+        """
+
+        # Test nonexistent path
+        with pytest.raises(ValueError) as exc_info:
+            non_existent_path = "/nonexistent/path/to/model"
+            _get_sat_model(non_existent_path)
+            assert "does not exist or is not a directory" in str(exc_info.value)
+            # Document creation should also fail
+            with pytest.raises(ValueError):
+                Document(
+                    raw_text="Sample text",
+                    paragraph_segmentation_mode="sat",
+                    sat_model_id=non_existent_path,
+                )
+
+        # Test file path (not a directory)
+        with tempfile.NamedTemporaryFile() as temp_file:
+            with pytest.raises(ValueError) as exc_info:
+                _get_sat_model(temp_file.name)
+            assert "does not exist or is not a directory" in str(exc_info.value)
+            # Document creation should also fail
+            with pytest.raises(ValueError):
+                Document(
+                    raw_text="Sample text",
+                    paragraph_segmentation_mode="sat",
+                    sat_model_id=temp_file.name,
+                )
+
+        # Test valid path but invalid model
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(RuntimeError) as exc_info:
+                _get_sat_model(temp_dir)
+            assert "does not contain a valid SaT model" in str(exc_info.value)
+            # Document creation should also fail
+            with pytest.raises(RuntimeError):
+                Document(
+                    raw_text="Sample text",
+                    paragraph_segmentation_mode="sat",
+                    sat_model_id=temp_dir,
+                )
 
     @pytest.mark.vcr()
     def test_system_messages(self):

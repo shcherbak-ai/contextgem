@@ -5575,8 +5575,11 @@ class contextgem.public.documents.Document(**data)
         "newlines".
 
       * **sat_model_id** -- SaT model ID for paragraph/sentence
-        segmentation. Defaults to "sat-3l-sm". See https://github.com
-        /segment-any-text/wtpsplit for the list of available models.
+        segmentation or a local path to a SaT model. For model IDs,
+        defaults to "sat-3l-sm". See https://github.com/segment-any-
+        text/wtpsplit for the list of available models. For local
+        paths, provide either a string path or a Path object pointing
+        to the directory containing the SaT model.
 
    Parameters:
       * **custom_data** (*dict*)
