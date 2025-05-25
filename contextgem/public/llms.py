@@ -707,6 +707,9 @@ class DocumentLLM(_GenericLLMProcessor):
                 "Model identifier must be in the form of `{model_provider}/{model_name}`. "
                 "See https://docs.litellm.ai/docs/providers for the list of supported providers."
             )
+        if model.startswith("gemini/"):
+            return model
+        # Add other recognized model prefixes here if necessary
         return model
 
     @field_validator("fallback_llm")
@@ -910,6 +913,13 @@ class DocumentLLM(_GenericLLMProcessor):
                     "`temperature` and `top_p` parameters are ignored for o1/o3/o4 models."
                 )
             # Set reasoning effort if provided. Otherwise uses LiteLLM's default.
+            if self.reasoning_effort:
+                request_dict["reasoning_effort"] = self.reasoning_effort
+        elif self.model.startswith("gemini/"):
+            # Gemini specific parameters
+            request_dict["max_tokens"] = self.max_tokens
+            request_dict["temperature"] = self.temperature
+            request_dict["top_p"] = self.top_p
             if self.reasoning_effort:
                 request_dict["reasoning_effort"] = self.reasoning_effort
         else:

@@ -51,4 +51,24 @@ For local LLMs, you'll need to specify the provider, model name, and the appropr
    :caption: Using local LLM providers
 
 
+.. _gemini_models:
+
+Google Gemini Models
+--------------------
+
+ContextGem also supports Google's Gemini models via LiteLLM. You can use both text-based and vision-capable Gemini models.
+
+Key considerations for Gemini models:
+
+*   **Model Naming**: Specify Gemini models using the ``gemini/`` prefix, for example, ``gemini/gemini-pro`` for text and ``gemini/gemini-pro-vision`` for multimodal tasks.
+*   **API Keys**: Ensure your Google API key is correctly set up as an environment variable. LiteLLM typically looks for ``GOOGLE_API_KEY`` or ``GEMINI_API_KEY``. Refer to the `LiteLLM documentation <https://docs.litellm.ai/docs/providers/gemini>`_ for the most current details on API key configuration.
+*   **Vision Capabilities**: Models like ``gemini/gemini-pro-vision`` can process images. You can provide images to the ``chat`` method as shown in the example.
+
+Here's how you can initialize and use Gemini models:
+
+.. literalinclude:: ../../../dev/usage_examples/docs/llms/gemini_example.py
+   :language: python
+   :caption: Using Google Gemini Models (Text and Vision)
+
+
 For a complete list of configuration options available when initializing DocumentLLM instances, see the next section :doc:`llm_config`.
