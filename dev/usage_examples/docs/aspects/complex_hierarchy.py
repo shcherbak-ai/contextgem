@@ -223,7 +223,7 @@ doc = llm.extract_all(doc)
 print("=== CONTRACT ANALYSIS RESULTS ===\n")
 
 for main_aspect in doc.aspects:
-    print(f"📋 {main_aspect.name.upper()}")
+    print(f"{main_aspect.name.upper()}")
     for item in main_aspect.extracted_items:
         print(f"- {item.value}")
 
@@ -239,7 +239,7 @@ for main_aspect in doc.aspects:
     if main_aspect.aspects:
         print("  Sub-Aspects:")
         for sub_aspect in main_aspect.aspects:
-            print(f"    📝 {sub_aspect.name}")
+            print(f"    {sub_aspect.name}")
             for item in sub_aspect.extracted_items:
                 print(f"    - {item.value}")
 
