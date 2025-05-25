@@ -24,14 +24,28 @@ It simply pastes the entire content of each Python file into a notebook.
 import json
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any, Optional
 
 import nbformat
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 
-# Directories to exclude from notebook generation
-EXCLUDE_DIRS = ["optimizations", "serialization", "llms", "llm_config"]
+# Root directories
+BASE_DIR = Path(__file__).parent
+DOCS_INPUT_DIR = BASE_DIR / "usage_examples" / "docs"
+README_INPUT_DIR = BASE_DIR / "usage_examples" / "readme"
+DOCS_OUTPUT_DIR = BASE_DIR / "notebooks" / "docs"
+README_OUTPUT_DIR = BASE_DIR / "notebooks" / "readme"
+
+# Directories to exclude from notebook generation (full paths)
+EXCLUDE_DIRS = [
+    str(DOCS_INPUT_DIR / "optimizations"),
+    str(DOCS_INPUT_DIR / "serialization"),
+    str(DOCS_INPUT_DIR / "llms" / "llm_init"),
+    str(DOCS_INPUT_DIR / "llm_config"),
+    str(DOCS_INPUT_DIR / "concepts" / "json_object_concept" / "structure"),
+]
 
 
 def extract_first_comment(file_path: str | Path) -> Optional[str]:
@@ -198,10 +212,32 @@ def should_skip_file(file_path: str | Path) -> bool:
     Returns:
         True if the file should be skipped, False otherwise
     """
-    # Check if the file is in any excluded directory
-    path_str = str(file_path)
+    # Check if the file is in any excluded directory (using full paths)
+    file_path_str = str(Path(file_path).resolve())
     for excluded_dir in EXCLUDE_DIRS:
-        if excluded_dir in path_str:
+        excluded_dir_resolved = str(Path(excluded_dir).resolve())
+        if file_path_str.startswith(excluded_dir_resolved):
+            return True
+    return False
+
+
+def should_skip_directory(dir_path: str | Path) -> bool:
+    """
+    Check if the directory should be skipped based on path.
+
+    Args:
+        dir_path: Path to the directory to check
+
+    Returns:
+        True if the directory should be skipped, False otherwise
+    """
+    # Check if the directory matches any excluded directory (using full paths)
+    dir_path_str = str(Path(dir_path).resolve())
+    for excluded_dir in EXCLUDE_DIRS:
+        excluded_dir_resolved = str(Path(excluded_dir).resolve())
+        if dir_path_str == excluded_dir_resolved or dir_path_str.startswith(
+            excluded_dir_resolved + os.sep
+        ):
             return True
     return False
 
@@ -222,9 +258,6 @@ def process_directory(
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
 
-    # Ensure output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-
     # Get all Python files in the input directory
     py_files = list(input_dir.glob(file_pattern))
 
@@ -232,9 +265,8 @@ def process_directory(
         print(f"No {file_pattern} files found in {input_dir}")
         return
 
-    print(f"Processing {len(py_files)} files from {input_dir}")
-
-    # Process each file
+    # Filter out files that should be skipped
+    files_to_process = []
     for py_file in py_files:
         # Skip __init__.py files
         if py_file.name == "__init__.py":
@@ -245,6 +277,19 @@ def process_directory(
             print(f"Skipping file in excluded directory: {py_file}")
             continue
 
+        files_to_process.append(py_file)
+
+    # Only create output directory if we have files to process
+    if not files_to_process:
+        print(f"No files to process in {input_dir} (all skipped)")
+        return
+
+    # Ensure output directory exists only when we have files to process
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"Processing {len(files_to_process)} files from {input_dir}")
+
+    # Process each file
+    for py_file in files_to_process:
         print(f"Processing {py_file}...")
 
         # Extract base name for the output file
@@ -280,8 +325,8 @@ def process_directory_recursively(
     for subdir in [
         d for d in input_dir.iterdir() if d.is_dir() and not d.name.startswith("__")
     ]:
-        # Skip excluded directories
-        if subdir.name in EXCLUDE_DIRS:
+        # Skip excluded directories using full path comparison
+        if should_skip_directory(subdir):
             print(f"Skipping excluded directory: {subdir}")
             continue
 
@@ -290,24 +335,32 @@ def process_directory_recursively(
         process_directory_recursively(subdir, subdir_output, file_pattern)
 
 
+def clean_output_directories() -> None:
+    """
+    Remove all existing notebook output directories to ensure a clean regeneration.
+    """
+    output_dirs = [DOCS_OUTPUT_DIR, README_OUTPUT_DIR]
+
+    for output_dir in output_dirs:
+        if output_dir.exists():
+            print(f"Removing existing directory: {output_dir}")
+            shutil.rmtree(output_dir)
+        else:
+            print(f"Directory does not exist (skipping): {output_dir}")
+
+
 def main() -> None:
     """
     Main entry point for the script.
     """
-    # Define directories
-    base_dir = Path(__file__).parent
+    # Clean up existing notebooks first
+    print("Cleaning up existing notebooks...")
+    clean_output_directories()
 
-    # Input directories
-    docs_input = base_dir / "usage_examples" / "docs"
-    readme_input = base_dir / "usage_examples" / "readme"
-
-    # Output directories
-    docs_output = base_dir / "notebooks" / "docs"
-    readme_output = base_dir / "notebooks" / "readme"
-
-    # Process each directory
-    process_directory_recursively(docs_input, docs_output)
-    process_directory(readme_input, readme_output)
+    # Process each directory using top-level variables
+    print("Generating new notebooks...")
+    process_directory_recursively(DOCS_INPUT_DIR, DOCS_OUTPUT_DIR)
+    process_directory(README_INPUT_DIR, README_OUTPUT_DIR)
 
     print("Notebook generation complete!")
 

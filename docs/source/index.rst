@@ -32,7 +32,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
 
 |
 
-.. grid:: 2 2 3 3
+.. grid:: 1 1 2 2
     :gutter: 3
     :padding: 0
     
@@ -70,22 +70,56 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             
             Get Started
     
-    .. grid-item-card:: 🔍 Advanced Usage
-        :link: advanced_usage
+    .. grid-item-card:: 📋 Extracting Aspects
+        :link: aspects/aspects
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to identify and extract specific document sections like clauses, chapters, or terms using ContextGem's Aspects API.
+
+        +++
+        .. button-ref:: aspects/aspects
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Extract Aspects
+
+    .. grid-item-card:: 🧩 Extracting Concepts
+        :link: concepts/supported_concepts
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to extract and infer structured data like JSON objects, strings, numbers, dates, booleans, and ratings from documents using ContextGem's Concepts API.
+
+        +++
+        .. button-ref:: concepts/supported_concepts
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Extract Concepts
+
+    .. grid-item-card:: 🤖 Large Language Models
+        :link: llms/supported_llms
         :link-type: doc
         :class-card: sd-border-0 sd-shadow-sm sd-card-hover
         
-        Explore advanced features and techniques for extracting data from documents.
+        Learn about supported cloud LLM providers and local models, and how to configure and use them for extraction.
         
         +++
-        .. button-ref:: advanced_usage
+        .. button-ref:: llms/supported_llms
             :ref-type: doc
             :click-parent:
             :color: primary
             :outline:
             :expand:
             
-            Explore
+            Explore LLMs
 
     .. grid-item-card:: 🔄 Document Converters
         :link: converters/docx
@@ -104,22 +138,22 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
 
             Convert Files
 
-    .. grid-item-card:: 🤖 Large Language Models
-        :link: llms/supported_llms
+    .. grid-item-card:: 🔍 Advanced Usage
+        :link: advanced_usage
         :link-type: doc
         :class-card: sd-border-0 sd-shadow-sm sd-card-hover
         
-        Learn about supported cloud LLM providers and local models, and how to configure them.
+        Explore advanced features and techniques for extracting data from documents.
         
         +++
-        .. button-ref:: llms/supported_llms
+        .. button-ref:: advanced_usage
             :ref-type: doc
             :click-parent:
             :color: primary
             :outline:
             :expand:
             
-            Explore LLMs
+            Explore
 
     .. grid-item-card:: ⚙️ Optimization Guide
         :link: optimizations/optimization_choosing_llm
@@ -202,17 +236,23 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
-   :caption: Advanced Usage
+   :caption: Extracting Aspects
    :hidden:
    
-   advanced_usage
+   aspects/aspects
 
 .. toctree::
    :maxdepth: 2
-   :caption: Converters
+   :caption: Extracting Concepts
    :hidden:
    
-   converters/docx
+   concepts/supported_concepts
+   concepts/string_concept
+   concepts/boolean_concept
+   concepts/numerical_concept
+   concepts/date_concept
+   concepts/rating_concept
+   concepts/json_object_concept
 
 .. toctree::
    :maxdepth: 2
@@ -221,6 +261,21 @@ Indices and tables
    
    llms/supported_llms
    llms/llm_config
+   llms/llm_extraction_methods
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Document Converters
+   :hidden:
+   
+   converters/docx
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Advanced Usage
+   :hidden:
+   
+   advanced_usage
 
 .. toctree::
    :maxdepth: 2

@@ -26,7 +26,7 @@ custom types, ensuring consistent string formatting across the framework.
 """
 
 from types import GenericAlias, UnionType
-from typing import Literal, Union, get_args, get_origin
+from typing import Any, Literal, Union, get_args, get_origin
 
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
@@ -44,6 +44,57 @@ PRIMITIVE_TYPES_STRING_MAP = {
     bool: "bool",
     type(None): "null",
 }
+
+
+def _raise_json_serializable_type_error(
+    invalid_type: Any,
+    field_name: str | None = None,
+    context: str | None = None,
+    exception_type: type[Exception] = TypeError,
+    custom_supported_types: str | None = None,
+) -> None:
+    """
+    Raises a standardized error for invalid JSON serializable types.
+
+    :param invalid_type: The type that failed validation
+    :param field_name: The name of the field (optional)
+    :param context: Additional context for the error (optional)
+    :param exception_type: Type of exception to raise (default: TypeError)
+    :param custom_supported_types: Custom supported types description (optional)
+    :raises: The specified exception_type with a standardized error message
+    """
+    # Default supported types list
+    if custom_supported_types is None:
+        supported_types = (
+            "- Basic types: str, int, float, bool, None\n"
+            "- Union types: str | int, Optional[str], etc.\n"
+            "- Collection types: list[T], dict[K, V] where T, K, V are supported types\n"
+            "- Literal types: Literal['value1', 'value2'], Literal[1, 2, 3]\n"
+            "- Classes with type annotations (including dataclasses and Pydantic models)\n"
+            "- Nested dictionaries and lists of dictionaries as structure definitions"
+        )
+    else:
+        supported_types = custom_supported_types
+
+    # Build the error message
+    if field_name and context:
+        error_msg = f"Invalid {context} for field '{field_name}': {invalid_type}."
+    elif field_name:
+        error_msg = f"Invalid type for field '{field_name}': {invalid_type}."
+    elif context:
+        error_msg = f"Invalid {context}: {invalid_type}."
+    else:
+        error_msg = f"Invalid type: {invalid_type}."
+
+    # Add supported types information
+    if context and "list instance" in context.lower():
+        error_msg += f"\nList instances can only contain:\n{supported_types}"
+    else:
+        error_msg += (
+            f"\nMust be one of the following supported types:\n{supported_types}"
+        )
+
+    raise exception_type(error_msg)
 
 
 def _is_json_serializable_type(
@@ -104,6 +155,11 @@ def _is_json_serializable_type(
             return _is_json_serializable_type(item_type)
         elif typ.__origin__ is dict:
             return all(_is_json_serializable_type(arg) for arg in get_args(typ))
+
+    # Handle list instances with primitive types, unions, or literals
+    # (e.g., [str], [int | float], [Literal["a", "b"]])
+    if isinstance(typ, list) and len(typ) == 1 and not isinstance(typ[0], dict):
+        return _is_json_serializable_type(typ[0])
 
     return typ in JSON_PRIMITIVE_TYPES
 
@@ -170,6 +226,14 @@ def _format_type(
         final_indent = "  " * indent_level
         return f"[\n{next_indent}{dict_str},\n{next_indent}...\n{final_indent}]"
 
+    # Handle list instances with primitive types, unions, or
+    # literals (e.g., [str], [int | float], [Literal["a", "b"]])
+    if isinstance(typ, list) and len(typ) == 1 and not isinstance(typ[0], dict):
+        item_type = typ[0]
+        next_indent = "  " * (indent_level + 1)
+        final_indent = "  " * indent_level
+        return f"[\n{next_indent}{_format_type(item_type, indent_level + 1)},\n{next_indent}...\n{final_indent}]"
+
     # Handle unions (both | syntax and typing.Union)
     if isinstance(typ, UnionType) or getattr(typ, "__origin__", None) is Union:
         union_types = [_format_type(arg, indent_level) for arg in get_args(typ)]
@@ -205,7 +269,6 @@ def _format_type(
                 return (
                     f"[\n{next_indent}{item_fields},\n{next_indent}...\n{final_indent}]"
                 )
-            # Otherwise, format it normally
             return f"[\n{next_indent}{_format_type(item_type, indent_level + 1)},\n{next_indent}...\n{final_indent}]"
         elif typ.__origin__ is dict:
             key_type, value_type = typ.__args__
@@ -277,19 +340,26 @@ class _JsonObjectItemStructure:
             # Handle lists of dictionaries
             elif isinstance(typ, list) and len(typ) == 1 and isinstance(typ[0], dict):
                 self._validate_schema(typ[0], f"{full_field_name}[]")
+            # Handle list instances with primitive types, unions, or literals
+            elif (
+                isinstance(typ, list) and len(typ) == 1 and not isinstance(typ[0], dict)
+            ):
+                # Validate that the item type is JSON serializable
+                if not _is_json_serializable_type(typ[0]):
+                    list_instance_supported_types = (
+                        "- Basic types: str, int, float, bool, None\n"
+                        "- Union types: str | int, Optional[str], etc.\n"
+                        "- Literal types: Literal['value1', 'value2'], Literal[1, 2, 3]\n"
+                        "- Typed classes: Pydantic models, dataclasses, etc."
+                    )
+                    _raise_json_serializable_type_error(
+                        typ[0],
+                        field_name=full_field_name,
+                        context="item type in list instance",
+                        custom_supported_types=list_instance_supported_types,
+                    )
             elif not _is_json_serializable_type(typ):
-                supported_types = (
-                    "- Basic types: str, int, float, bool, None\n"
-                    "- Union types: str | int, Optional[str], etc.\n"
-                    "- Collection types: list[T], dict[K, V] where T, K, V are supported types\n"
-                    "- Literal types: Literal['value1', 'value2'], Literal[1, 2, 3]\n"
-                    "- Classes with type annotations (including dataclasses and Pydantic models)\n"
-                    "- Nested dictionaries and lists of dictionaries as structure definitions"
-                )
-                raise TypeError(
-                    f"Invalid type for field '{full_field_name}': {typ}.\n"
-                    f"Must be one of the following supported types:\n{supported_types}"
-                )
+                _raise_json_serializable_type_error(typ, field_name=full_field_name)
 
     def _to_prompt_string(self) -> str:
         """
@@ -318,6 +388,12 @@ def _serialize_type_hint(tp: type | GenericAlias | UnionType) -> str:
 
     :raises ValueError: If serialization fails.
     """
+    # Handle list instances with primitive types, unions, or literals
+    # (e.g., [str], [int | float], [Literal["a", "b"]])
+    if isinstance(tp, list) and len(tp) == 1 and not isinstance(tp[0], dict):
+        item_type = tp[0]
+        return f"list_instance[{_serialize_type_hint(item_type)}]"
+
     # If it's one of the base types, return its string.
     if tp in PRIMITIVE_TYPES_STRING_MAP:
         return PRIMITIVE_TYPES_STRING_MAP[tp]

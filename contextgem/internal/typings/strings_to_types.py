@@ -113,14 +113,21 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
         raise ValueError(f"Expected '[' after {ident} at position {i} in {s!r}")
     i += 1  # skip '['
 
-    if ident.lower() == "list":
-        # list[<type>]
+    if ident.lower() in ("list", "list_instance"):
+        # list[<type>] or list_instance[<type>]
         inner_type, i = _parse_type_hint(s, i)
         i = _skip_whitespace(s, i)
         if i >= len(s) or s[i] != "]":
-            raise ValueError(f"Expected ']' after list type at position {i} in {s!r}")
+            type_name = "list" if ident.lower() == "list" else "list_instance"
+            raise ValueError(
+                f"Expected ']' after {type_name} type at position {i} in {s!r}"
+            )
         i += 1  # skip ']'
-        return list[inner_type], i
+
+        if ident.lower() == "list":
+            return list[inner_type], i
+        else:  # list_instance
+            return [inner_type], i  # Return as list instance format
 
     elif ident.lower() == "dict":
         # dict[<key type>, <value type>]

@@ -70,6 +70,10 @@ extensions = [
     "sphinx_sitemap",
 ]
 
+# Configure autosectionlabel to prefix labels with document name
+# to avoid conflicts with the same section names in different documents
+autosectionlabel_prefix_document = True
+
 # Intersphinx mapping
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),

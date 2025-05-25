@@ -13,6 +13,7 @@ doc = Document(
         "The Supplier shall provide consultancy services as described in Annex 2...\n"
         "The Customer shall pay the Supplier within 30 calendar days of receiving an invoice...\n"
         "The purple elephant danced gracefully on the moon while eating ice cream.\n"  # 💎 anomaly
+        "Time-traveling dinosaurs will review all deliverables before acceptance.\n"  # 💎 another anomaly
         "This agreement is governed by the laws of Norway...\n"
     ),
 )
@@ -46,7 +47,17 @@ llm = DocumentLLM(
 doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(doc)`
 
 # Access extracted information in the document object
-print(
-    doc.concepts[0].extracted_items
-)  # extracted items with references & justifications
-# or `doc.get_concept_by_name("Anomalies").extracted_items`
+anomalies_concept = doc.concepts[0]
+# or `doc.get_concept_by_name("Anomalies")`
+for item in anomalies_concept.extracted_items:
+    print(f"Anomaly:")
+    print(f"  {item.value}")
+    print(f"Justification:")
+    print(f"  {item.justification}")
+    print("Reference paragraphs:")
+    for p in item.reference_paragraphs:
+        print(f"  - {p.raw_text}")
+    print("Reference sentences:")
+    for s in item.reference_sentences:
+        print(f"  - {s.raw_text}")
+    print()

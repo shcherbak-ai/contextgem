@@ -36,7 +36,7 @@ For a complete list of supported providers, see the `LiteLLM Providers documenta
 
 You can initialize cloud-based LLMs by specifying the provider and model name in the format ``<provider>/<model_name>``:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_api.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/llm_api.py
    :language: python
    :caption: Using cloud LLM providers
 
@@ -46,7 +46,7 @@ You can initialize cloud-based LLMs by specifying the provider and model name in
 
 For local LLMs, you'll need to specify the provider, model name, and the appropriate API base URL:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_local.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/llm_local.py
    :language: python
    :caption: Using local LLM providers
 

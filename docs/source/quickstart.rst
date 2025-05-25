@@ -122,6 +122,8 @@ ContextGem follows a simple extraction process:
    </a>
 
 
+.. _vision-concept-extraction-label:
+
 🖼️ Concept Extraction from Document (vision)
 ---------------------------------------------
 
