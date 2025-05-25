@@ -162,8 +162,8 @@ Read more on the project [motivation](https://contextgem.dev/motivation.html) in
 ## 💡 With **minimal code**, you can:
 
 - **Extract structured data** from documents (text, images)
-- **Identify and analyze key aspects** (topics, themes, categories) within documents
-- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents
+- **Identify and analyze key aspects** (topics, themes, categories) within documents ([learn more](https://contextgem.dev/aspects/aspects.html))
+- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents ([learn more](https://contextgem.dev/concepts/supported_concepts.html))
 - **Build complex extraction workflows** through a simple, intuitive API
 - **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
 
@@ -197,6 +197,7 @@ doc = Document(
         "The Supplier shall provide consultancy services as described in Annex 2...\n"
         "The Customer shall pay the Supplier within 30 calendar days of receiving an invoice...\n"
         "The purple elephant danced gracefully on the moon while eating ice cream.\n"  # 💎 anomaly
+        "Time-traveling dinosaurs will review all deliverables before acceptance.\n"  # 💎 another anomaly
         "This agreement is governed by the laws of Norway...\n"
     ),
 )
@@ -230,10 +231,20 @@ llm = DocumentLLM(
 doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(doc)`
 
 # Access extracted information in the document object
-print(
-    doc.concepts[0].extracted_items
-)  # extracted items with references & justifications
-# or `doc.get_concept_by_name("Anomalies").extracted_items`
+anomalies_concept = doc.concepts[0]
+# or `doc.get_concept_by_name("Anomalies")`
+for item in anomalies_concept.extracted_items:
+    print(f"Anomaly:")
+    print(f"  {item.value}")
+    print(f"Justification:")
+    print(f"  {item.justification}")
+    print("Reference paragraphs:")
+    for p in item.reference_paragraphs:
+        print(f"  - {p.raw_text}")
+    print("Reference sentences:")
+    for s in item.reference_sentences:
+        print(f"  - {s.raw_text}")
+    print()
 
 ```
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
@@ -294,7 +305,7 @@ Learn more about [DOCX converter features](https://contextgem.dev/converters/doc
 
 ## 🎯 Focused document analysis
 
-ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on [continuously expanding context capacity](https://arxiv.org/abs/2502.12962), evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
+ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
 
 Read more on [how ContextGem works](https://contextgem.dev/how_it_works.html) in the documentation.
 
@@ -307,7 +318,7 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. o4-mini) and non-reasoning models (e.g. gpt-4.1)
 - **Simple API**: Unified interface for all LLMs with easy provider switching
 
-Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html) and how to [configure LLMs](https://contextgem.dev/llms/llm_config.html) in the documentation.
+Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html), how to [configure LLMs](https://contextgem.dev/llms/llm_config.html), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods.html) in the documentation.
 
 
 ## ⚡ Optimizations

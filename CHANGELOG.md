@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.4.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.4.1) - 2025-05-26
+### Added
+- Comprehensive docs on extracting aspects, extracting concepts, and LLM extraction methods
+
 ## [0.4.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.4.0) - 2025-05-20
 ### Added
 - Support for local SaT model paths in Document's `sat_model_id` parameter

@@ -30,13 +30,13 @@ ContextGem uses LiteLLM under the hood, providing uniform access to a wide range
 
 The minimum configuration for a cloud-based LLM requires the ``model`` parameter and an ``api_key``:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/llm_api.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/llm_api.py
    :language: python
    :caption: Using a cloud-based LLM
 
 For local models, usually you need to specify the ``api_base`` instead of the API key:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/llm_local.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/llm_local.py
    :language: python
    :caption: Using a local LLM
 

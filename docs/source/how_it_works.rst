@@ -24,7 +24,7 @@ How it works
 📏 Leveraging LLM Context Windows
 ----------------------------------
 
-ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy. Unlike RAG approaches that often `struggle with complex concepts and nuanced insights <https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f/>`_, ContextGem is betting on the `continuously expanding context capacity <https://arxiv.org/abs/2502.12962>`_, evolving capabilities of modern LLMs, and constantly decreasing LLM costs. This approach enables direct information extraction from full documents, eliminating retrieval inconsistencies and capturing the complete context necessary for accurate understanding.
+ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy. Unlike RAG approaches that often `struggle with complex concepts and nuanced insights <https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f/>`_, ContextGem is betting on the continuously expanding context capacity, evolving capabilities of modern LLMs, and constantly decreasing LLM costs. This approach enables direct information extraction from full documents, eliminating retrieval inconsistencies and capturing the complete context necessary for accurate understanding.
 
 
 🧩 Core Components

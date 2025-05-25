@@ -30,7 +30,10 @@ from typing import Union, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, create_model
 
-from contextgem.internal.typings.types_to_strings import _is_json_serializable_type
+from contextgem.internal.typings.types_to_strings import (
+    _is_json_serializable_type,
+    _raise_json_serializable_type_error,
+)
 
 
 def _extract_mapper(
@@ -122,6 +125,24 @@ def _dynamic_pydantic_model(
             fields[field_name] = (list[nested_model], ...)
             continue
 
+        # Handle list instances with non-dictionary content
+        # (e.g., [str], [int | float], [Literal["a", "b"]], [SomeClass])
+        if (
+            isinstance(field_type, list)
+            and len(field_type) == 1
+            and not isinstance(field_type[0], dict)
+        ):
+            # Convert list instance to generic list type
+            item_type = field_type[0]
+
+            # Handle nested class types recursively
+            if isinstance(item_type, dict):
+                nested_model = _dynamic_pydantic_model(item_type)
+                fields[field_name] = (list[nested_model], ...)
+            else:
+                fields[field_name] = (list[item_type], ...)
+            continue
+
         # Check that the mapper value is a valid type hint.
         if not (isinstance(field_type, type) or get_origin(field_type) is not None):
             raise ValueError(
@@ -130,9 +151,10 @@ def _dynamic_pydantic_model(
             )
         # Check for JSON-serializability of the type hint
         if not _is_json_serializable_type(field_type):
-            raise ValueError(
-                f"Field '{field_name}' has an invalid type hint: {field_type!r}. "
-                "It must be a JSON-serializable type or a Union thereof."
+            _raise_json_serializable_type_error(
+                field_type,
+                field_name=field_name,
+                exception_type=ValueError,
             )
         # If the type includes None, assume it's optional and give it a default of None.
         if _is_optional(field_type):

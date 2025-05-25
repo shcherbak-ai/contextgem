@@ -83,6 +83,7 @@ from contextgem.internal.typings import (
     _JsonObjectItemStructure,
     _normalize_type_annotation,
     _raise_dict_class_type_error,
+    _raise_json_serializable_type_error,
     _serialize_type_hint,
 )
 from contextgem.internal.utils import (
@@ -137,6 +138,7 @@ __all__ = [
     "_format_type",
     "_JsonObjectItemStructure",
     "_serialize_type_hint",
+    "_raise_json_serializable_type_error",
     "_dynamic_pydantic_model",
     "_format_dict_structure",
     "_is_typed_class",

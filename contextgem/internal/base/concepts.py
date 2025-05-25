@@ -66,8 +66,8 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type.
     :type singular_occurrence: StrictBool
     """
 

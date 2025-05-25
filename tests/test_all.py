@@ -1344,6 +1344,29 @@ class TestAll(TestUtils):
                     raise ValueError("Age must be between 0 and 120")
                 return v
 
+        # 16. Structure with list instances using primitive types
+        list_instance_primitives_struct = {
+            "product_names": [Literal["laptop", "mouse", "keyboard"]],
+            "scores": [int],
+            "prices": [float],
+            "active_flags": [bool],
+            "mixed_numbers": [int | float],
+            "optional_tags": [str | None],
+        }
+
+        # 17. Structure with list instances using classes
+        @dataclass
+        class Product(JsonObjectClassStruct):
+            id: int
+            name: str
+            price: float
+
+        list_instance_classes_struct = {
+            "title": str,
+            "products": [Product],
+            "categories": [Literal["electronics", "books", "clothing"]],
+        }
+
         # Define valid examples for each structure
         valid_examples = {
             "ClassWithListOfClasses": {
@@ -1492,6 +1515,23 @@ class TestAll(TestUtils):
                 "name": "John Smith",
                 "email": "john@example.com",
                 "age": 30,
+            },
+            "list_instance_primitives_struct": {
+                "product_names": ["laptop", "mouse", "keyboard"],
+                "scores": [95, 87, 78],
+                "prices": [999.99, 25.50, 75.00],
+                "active_flags": [True, False, True],
+                "mixed_numbers": [10, 15.5, 20],
+                "optional_tags": ["sale", None, "premium"],
+            },
+            "list_instance_classes_struct": {
+                "title": "Product Catalog",
+                "products": [
+                    {"id": 1, "name": "Laptop", "price": 999.99},
+                    {"id": 2, "name": "Mouse", "price": 25.50},
+                    {"id": 3, "name": "Keyboard", "price": 75.00},
+                ],
+                "categories": ["electronics", "electronics", "electronics"],
             },
         }
 
@@ -1655,6 +1695,39 @@ class TestAll(TestUtils):
             "UserProfile": [
                 {"name": "John", "age": 30},  # Missing email
             ],
+            "list_instance_primitives_struct": [
+                {"product_names": "not a list"},  # Wrong type for list field
+                {"scores": [95, "invalid"]},  # Wrong type in list element
+                {"prices": [999.99, 25.50]},
+                {"active_flags": ["True", False]},  # Wrong type in list element
+                {"mixed_numbers": [10, "invalid"]},  # Wrong type in union
+                {
+                    "product_names": [],
+                    "scores": [],
+                    "prices": [],
+                    "active_flags": [],
+                    "mixed_numbers": [],
+                    "optional_tags": "not a list",
+                },  # Wrong type for optional list
+            ],
+            "list_instance_classes_struct": [
+                {"products": []},  # Missing required fields
+                {"title": "Catalog"},  # Missing required fields
+                {"title": "Catalog", "products": {}},  # Wrong type for products
+                {
+                    "title": "Catalog",
+                    "products": [{"id": "1", "name": "Test", "price": 10.0}],
+                },  # Wrong type for id
+                {
+                    "title": "Catalog",
+                    "products": [{"name": "Test", "price": 10.0}],
+                },  # Missing required field in product
+                {
+                    "title": "Catalog",
+                    "products": [],
+                    "categories": ["invalid"],
+                },  # Invalid literal value
+            ],
         }
 
         # Map structure objects to their names
@@ -1675,6 +1748,8 @@ class TestAll(TestUtils):
             "ValidatedModel": validated_model_struct,
             "AppConfiguration": AppConfiguration,
             "UserProfile": UserProfile,
+            "list_instance_primitives_struct": list_instance_primitives_struct,
+            "list_instance_classes_struct": list_instance_classes_struct,
         }
 
         # Utility function to test a structure
@@ -1807,6 +1882,33 @@ class TestAll(TestUtils):
                 structure={"test": dict},  # unclear type
             )
 
+        # Test with unclear types in dataclasses (should fail)
+        with pytest.raises(ValueError):
+
+            @dataclass
+            class StudentWithUnclearAny(JsonObjectClassStruct):
+                name: str
+                courses: Any  # unclear type - should fail
+
+            JsonObjectConcept(
+                name="Unclear Any Class Concept",
+                description="Testing unclear any type in dataclass",
+                structure=StudentWithUnclearAny,
+            )
+
+        with pytest.raises(ValueError):
+
+            @dataclass
+            class StudentWithUnclearDict(JsonObjectClassStruct):
+                name: str
+                grades: dict  # unclear type - should fail
+
+            JsonObjectConcept(
+                name="Unclear Dict Class Concept",
+                description="Testing unclear dict type in dataclass",
+                structure=StudentWithUnclearDict,
+            )
+
         # Test with vision extractor and justifications (should work)
         vision_concept = JsonObjectConcept(
             name="Vision Concept with Justifications",
@@ -1874,7 +1976,9 @@ class TestAll(TestUtils):
                     "frequency": Literal["daily", "weekly", "monthly"],
                 },
             },
-            "related_items": list[UserItem],  # Add list[cls] nested structure
+            "related_items": [
+                UserItem
+            ],  # Add [cls] nested structure (equivalent to list[cls])
             "security_level": Optional[Literal["Basic", "Advanced", "Enterprise"]],
         }
 
@@ -4252,6 +4356,46 @@ class TestAll(TestUtils):
             advanced_aspects_with_concepts,
             advanced_multiple_docs_pipeline,
         )
+        from dev.usage_examples.docs.aspects import (
+            aspect_with_concepts,
+            aspect_with_justifications,
+            aspect_with_sub_aspects,
+            basic_aspect,
+            complex_hierarchy,
+        )
+        from dev.usage_examples.docs.concepts.boolean_concept import (
+            boolean_concept,
+            refs_and_justifications,
+        )
+        from dev.usage_examples.docs.concepts.date_concept import (
+            date_concept,
+            refs_and_justifications,
+        )
+        from dev.usage_examples.docs.concepts.json_object_concept import (
+            adding_examples,
+            json_object_concept,
+            refs_and_justifications,
+        )
+        from dev.usage_examples.docs.concepts.json_object_concept.structure import (
+            nested_class_structure,
+            nested_structure,
+            simple_class_structure,
+            simple_structure,
+        )
+        from dev.usage_examples.docs.concepts.numerical_concept import (
+            numerical_concept,
+            refs_and_justifications,
+        )
+        from dev.usage_examples.docs.concepts.rating_concept import (
+            multiple_ratings,
+            rating_concept,
+            refs_and_justifications,
+        )
+        from dev.usage_examples.docs.concepts.string_concept import (
+            adding_examples,
+            refs_and_justifications,
+            string_concept,
+        )
         from dev.usage_examples.docs.llm_config import (
             cost_tracking,
             detailed_usage,
@@ -4262,7 +4406,13 @@ class TestAll(TestUtils):
             o1_o4,
             tracking_usage_and_cost,
         )
-        from dev.usage_examples.docs.llms import llm_api, llm_local
+        from dev.usage_examples.docs.llms.llm_extraction_methods import (
+            extract_all,
+            extract_aspects_from_document,
+            extract_concepts_from_aspect,
+            extract_concepts_from_document,
+        )
+        from dev.usage_examples.docs.llms.llm_init import llm_api, llm_local
         from dev.usage_examples.docs.optimizations import (
             optimization_accuracy,
             optimization_choosing_llm,

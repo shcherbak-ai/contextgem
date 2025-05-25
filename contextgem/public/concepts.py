@@ -33,7 +33,8 @@ and references to the source text.
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, List, Literal, Union, get_args
+from types import UnionType
+from typing import Any, List, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 
@@ -98,8 +99,8 @@ class StringConcept(_Concept):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "document title" vs "key findings").
     :type singular_occurrence: StrictBool
 
     Example:
@@ -154,8 +155,9 @@ class BooleanConcept(_Concept):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "contains confidential information"
+        vs "compliance violations").
     :type singular_occurrence: StrictBool
 
     Example:
@@ -211,8 +213,9 @@ class NumericalConcept(_Concept):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "total revenue" vs
+        "monthly sales figures").
     :type singular_occurrence: StrictBool
 
     Example:
@@ -281,8 +284,9 @@ class RatingConcept(_Concept):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "product rating score" vs
+        "customer satisfaction ratings").
     :type singular_occurrence: StrictBool
 
     Example:
@@ -357,9 +361,15 @@ class JsonObjectConcept(_Concept):
         - Simple structure: ``{"item": str, "amount": int | float}``
         - Nested structure: ``{"item": str, "details": {"price": float, "quantity": int}}``
         - List of objects: ``{"items": [{"name": str, "price": float}]}``
+        - List of primitives: ``{"names": [str], "scores": [int | float], "statuses": [Literal["active", "inactive"]]}``
+        - List of classes: ``{"addresses": [AddressModel], "users": [UserModel]}``
         - Literal values: ``{"status": Literal["pending", "completed", "failed"]}``
         - With type annotated classes: ``{"address": AddressModel}`` where AddressModel can be a
           Pydantic model, dataclass, or any class with type annotations
+
+        **Note**: For lists, you can use either generic syntax (``list[str]``) or literal syntax
+        (``[str]``). List instances support primitive types, unions, literals, and typed classes.
+        Both ``{"items": [ClassName]}`` and ``{"items": list[ClassName]}`` are equivalent.
 
         **Note**: Class types cannot be used as dictionary keys or values. For example,
         ``dict[str, Address]`` is not allowed. Use alternative structures like nested objects
@@ -392,8 +402,9 @@ class JsonObjectConcept(_Concept):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "product specifications" vs
+        "customer order details").
     :type singular_occurrence: StrictBool
 
     Example:
@@ -557,9 +568,41 @@ class JsonObjectConcept(_Concept):
                     f"List must contain exactly one element representing the item type"
                 )
 
-            # Process the single item in the list (type annotation)
-            processed_item = cls._process_structure_value(value[0], f"{path}[0]")
-            return [processed_item]
+            item_type = value[0]
+
+            # If it's a dictionary, process as nested structure
+            if isinstance(item_type, dict):
+                processed_item = cls._process_structure_value(item_type, f"{path}[0]")
+                return [processed_item]
+
+            # If it's not a dictionary, validate that it's an allowed type for list instances
+            # Allow primitive types, unions, literals, and typed classes
+            if (
+                # Primitive types
+                item_type in JSON_PRIMITIVE_TYPES
+                or
+                # Union types (including Optional) - both old Union and new | syntax
+                (hasattr(item_type, "__origin__") and get_origin(item_type) is Union)
+                or isinstance(item_type, UnionType)
+                or
+                # Literal types
+                (hasattr(item_type, "__origin__") and get_origin(item_type) is Literal)
+                or
+                # Typed classes (Pydantic models, dataclasses, etc.)
+                _is_typed_class(item_type)
+            ):
+                # For allowed types, process normally and return
+                processed_item = cls._process_structure_value(item_type, f"{path}[0]")
+                return [processed_item]
+            else:
+                # For other complex types, provide helpful error message
+                raise ValueError(
+                    f"Invalid list instance at `{path}` in concept `{cls.__name__}`: "
+                    f"List instances can only contain primitive types (str, int, float, bool, None), "
+                    f"union types (str | int, Optional[str]), literal types (Literal['a', 'b']), "
+                    f"or typed classes (Pydantic models, dataclasses, etc.). "
+                    f"Got: {item_type}"
+                )
 
         # Handle nested dictionary
         elif isinstance(value, dict):
@@ -747,8 +790,9 @@ class DateConcept(_Concept):
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate cardinality from the concept's
-        name, description, and type (e.g., "document title" vs "key findings").
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "contract signing date" vs
+        "meeting dates").
     :type singular_occurrence: StrictBool
 
     Example:

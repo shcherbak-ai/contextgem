@@ -32,7 +32,11 @@ from contextgem.internal.typings.strings_to_types import (
 )
 from contextgem.internal.typings.typed_class_utils import _raise_dict_class_type_error
 from contextgem.internal.typings.types_normalization import _normalize_type_annotation
-from contextgem.internal.typings.types_to_strings import JSON_PRIMITIVE_TYPES
+from contextgem.internal.typings.types_to_strings import (
+    JSON_PRIMITIVE_TYPES,
+    _is_json_serializable_type,
+    _raise_json_serializable_type_error,
+)
 
 
 def image_to_base64(image_path: str | Path) -> str:
@@ -125,9 +129,17 @@ class JsonObjectClassStruct:
             field_type = _normalize_type_annotation(field_type)
 
             # Process based on field_type
-            result[field_name] = cls._process_field_type(
+            processed_field_type = cls._process_field_type(
                 field_type, field_name, namespace
             )
+
+            # Validate that the processed field type is JSON serializable
+            if not _is_json_serializable_type(processed_field_type):
+                _raise_json_serializable_type_error(
+                    processed_field_type, field_name=field_name
+                )
+
+            result[field_name] = processed_field_type
 
         return result
 

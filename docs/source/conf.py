@@ -22,7 +22,7 @@ import sys
 project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
-release = "0.4.0"
+release = "0.4.1"
 
 
 # Add path to the package
@@ -69,6 +69,10 @@ extensions = [
     "sphinxext.opengraph",
     "sphinx_sitemap",
 ]
+
+# Configure autosectionlabel to prefix labels with document name
+# to avoid conflicts with the same section names in different documents
+autosectionlabel_prefix_document = True
 
 # Intersphinx mapping
 intersphinx_mapping = {

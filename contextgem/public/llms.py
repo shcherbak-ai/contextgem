@@ -35,12 +35,18 @@ import asyncio
 import warnings
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
-import litellm
 from aiolimiter import AsyncLimiter
 from jinja2 import Template
-from litellm import acompletion, supports_vision
+
+with warnings.catch_warnings():
+    # Temporarily disable warnings related to Pydantic deprecation in litellm==1.71.1
+    # (latest available version as of 2025-05-25)
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
+    import litellm
+    from litellm import acompletion, supports_vision
+
 from pydantic import (
     Field,
     PrivateAttr,

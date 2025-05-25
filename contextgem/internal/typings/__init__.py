@@ -43,6 +43,7 @@ from contextgem.internal.typings.types_to_strings import (
     _format_type,
     _is_json_serializable_type,
     _JsonObjectItemStructure,
+    _raise_json_serializable_type_error,
     _serialize_type_hint,
 )
 from contextgem.internal.typings.user_type_hints_validation import (
@@ -72,6 +73,7 @@ __all__ = [
     "_JsonObjectItemStructure",
     "_serialize_type_hint",
     "_format_dict_structure",
+    "_raise_json_serializable_type_error",
     # User type hints validation
     "_dynamic_pydantic_model",
     # Typed class utils
