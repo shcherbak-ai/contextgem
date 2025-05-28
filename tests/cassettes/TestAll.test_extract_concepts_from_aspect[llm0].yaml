@@ -213,7 +213,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -227,7 +227,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -237,7 +237,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -253,27 +253,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P17\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P35\",\n            \"P40\",\n            \"P42\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650166, "id": "chatcmpl-DUMMY",
+        [\n            \"P17\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P35\",\n            \"P42\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1748457486, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 104,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 99,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3333, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 3437}}'
+        "total_tokens": 3432}}'
     headers:
       Content-Length:
-      - '1662'
+      - '1639'
       Content-Type:
       - application/json
       Date:
@@ -285,7 +285,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1278'
+      - '1885'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -521,7 +521,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -535,7 +535,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -545,7 +545,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -561,20 +561,20 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
         [\n            \"P17\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P35\",\n            \"P42\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650168, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457489, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 99,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 99,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3333, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3200},
@@ -593,7 +593,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '998'
+      - '1833'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -813,17 +813,6 @@ interactions:
       shall return all materials containing Confidential Information to the Disclosing
       Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n```\\n-
       Paragraph ID: P14\\nParagraph sentences:\\n    -- Sentence ID: P14-S0\\n    Sentence
-      text: In the event of a breach of this Agreement by the Receiving Party, the
-      Disclosing Party shall be entitled to seek injunctive relief in addition to
-      any other remedy available at law or in equity.\\n    -- Sentence ID: P14-S1\\n
-      \   Sentence text: The Receiving Party acknowledges that a breach of this Agreement
-      may cause irreparable harm to the Disclosing Party for which monetary damages
-      would be an inadequate remedy.\\n    -- Sentence ID: P14-S2\\n    Sentence text:
-      In addition to injunctive relief, the Receiving Party shall be liable for liquidated
-      damages in the amount of $25,000 for each instance of unauthorized disclosure
-      or use of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n-
-      Paragraph ID: P15\\nParagraph sentences:\\n    -- Sentence ID: P15-S0\\n    Sentence
       text: Nothing in this Agreement shall be construed as granting any rights to
       the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
       Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
@@ -831,7 +820,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -839,13 +828,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16745'
+      - '15865'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -855,7 +844,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -871,8 +860,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -883,17 +872,17 @@ interactions:
         \"C1\",\n        \"extracted_items\": [\n            {\n                \"value\":
         true,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P2\",\n                        \"reference_sentence_ids\": [\n                            \"P2-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650169, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457491, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 149,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 149,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3272, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3421}}'
+        3088, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3237}}'
     headers:
       Content-Length:
       - '2114'
@@ -908,7 +897,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1839'
+      - '2248'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1086,23 +1075,15 @@ interactions:
       Party's Confidential Information.\\n\\nUpon termination of this Agreement or
       upon request, the Receiving Party shall return all materials containing Confidential
       Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\nIn the event of a breach of this Agreement by the Receiving
-      Party, the Disclosing Party shall be entitled to seek injunctive relief in addition
-      to any other remedy available at law or in equity. The Receiving Party acknowledges
-      that a breach of this Agreement may cause irreparable harm to the Disclosing
-      Party for which monetary damages would be an inadequate remedy. In addition
-      to injunctive relief, the Receiving Party shall be liable for liquidated damages
-      in the amount of $25,000 for each instance of unauthorized disclosure or use
-      of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      discretion.\\n\\nNothing in this Agreement shall be construed as granting any
+      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
+      Party\u2019s Confidential Information, except as expressly set forth in this
+      Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -1110,13 +1091,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '13299'
+      - '12615'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1126,7 +1107,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1142,8 +1123,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -1159,19 +1140,19 @@ interactions:
         [\n            \"trade secrets\",\n            \"know-how\",\n            \"patents\",\n            \"patent
         applications\",\n            \"copyrights\",\n            \"copyright applications\",\n            \"trademarks\",\n            \"trademark
         applications\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1747650171, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1748457493, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 232, "completion_tokens_details":
+        "fp_178c8d546f", "usage": {"completion_tokens": 232, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2457, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2689}}'
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2329, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 2561}}'
     headers:
       Content-Length:
-      - '2467'
+      - '2464'
       Content-Type:
       - application/json
       Date:
@@ -1183,7 +1164,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2407'
+      - '2368'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1294,76 +1275,67 @@ interactions:
       or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
       \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
       \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
-      Concept ID: C0\\nConcept name: Customer and Market Information\\n\\nConcept
-      description:\\nCategories of Customer and Market Information\\n\\nAmount of
-      extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
-      extracted item type: str\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nThe purpose
-      of this Agreement is to protect the confidential information that may be disclosed
-      between the parties during discussions and engagements regarding potential business
-      collaborations and partnerships.\\n\\nFor purposes of this Agreement, \\\"Confidential
-      Information\\\" means any and all non-public information, conveyed in all forms,
-      whether in oral, written, electronic, or other form or media, whether or not
-      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
-      been or may be disclosed to, accessed by, or observed by Receiving Party, which
-      (i) has actual or potential economic value by virtue of not being generally
-      known to, and not being readily ascertainable by proper means by, other persons
-      who can obtain economic value from its disclosure or use, or (ii) is subject
-      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n\\nConfidential
-      Information includes, but is not limited to, the following categories: (1) business
-      information (business plans, strategies, and models), (2) technical information
-      (technical specifications and documentation, research and development activities),
-      (3) customer and market information (customer lists and contact information,
-      sales histories and patterns), (4) personnel and internal information (employee
-      lists and contact information, employment agreements and personnel files), (5)
-      intellectual property (trade secrets and know-how, patents and patent applications,
-      copyrights and copyright applications, trademarks and trademark applications),
-      (6) strategic information (merger and acquisition plans, competitive analyses
-      and strategies). Software code shall also be included into the confidential
-      information.\\n\\nConfidential Information shall not include information that:
-      (a) is or becomes generally available to the public other than as a result of
-      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
-      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
-      (c) becomes available to Receiving Party on a non-confidential basis from a
-      person other than Disclosing Party who is not otherwise bound by a confidentiality
-      obligation to Disclosing Party; or (d) was independently developed by Receiving
-      Party without reference to or use of any Confidential Information. The name
-      of the dog of the Receiving Party is Bob.\\n\\nThe designation of information
-      as Confidential Information shall not be determinative of whether such information
-      constitutes a trade secret under applicable law. All Confidential Information
-      shall remain the exclusive property of Disclosing Party, and Receiving Party
-      shall have no rights, by license or otherwise, to use the Confidential Information
-      except as expressly provided herein.\\n\\na. Maintain the confidentiality of
-      the Confidential Information and not disclose it to any third party without
-      the prior written consent of the Disclosing Party.\\n\\nb. Use the Confidential
-      Information solely for the purpose of evaluating or engaging in the potential
-      business collaboration.\\n\\nc. Take all necessary precautions to protect the
-      confidentiality of the Confidential Information, which shall be no less than
-      the precautions it takes to protect its own confidential information.\\n\\nConfidential
-      Information does not include information that:\\n\\na. Is or becomes publicly
-      known through no wrongful act of the Receiving Party.\\n\\nb. Is already known
-      to the Receiving Party at the time of disclosure.\\n\\nc. Is lawfully received
-      from a third party without breach of this Agreement.\\n\\nd. Is independently
-      developed by the Receiving Party without use of or reference to the Disclosing
-      Party's Confidential Information.\\n\\nUpon termination of this Agreement or
-      upon request, the Receiving Party shall return all materials containing Confidential
-      Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\nIn the event of a breach of this Agreement by the Receiving
-      Party, the Disclosing Party shall be entitled to seek injunctive relief in addition
-      to any other remedy available at law or in equity. The Receiving Party acknowledges
-      that a breach of this Agreement may cause irreparable harm to the Disclosing
-      Party for which monetary damages would be an inadequate remedy. In addition
-      to injunctive relief, the Receiving Party shall be liable for liquidated damages
-      in the amount of $25,000 for each instance of unauthorized disclosure or use
-      of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Concept ID: C0\\nConcept name: Technical Information\\n\\nConcept description:\\nCategories
+      of Technical Information\\n\\nAmount of extracted items: This concept may have
+      zero, one, or multiple extracted items.\\n\\nConcept extracted item type: str\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      TEXT:\\nThe purpose of this Agreement is to protect the confidential information
+      that may be disclosed between the parties during discussions and engagements
+      regarding potential business collaborations and partnerships.\\n\\nFor purposes
+      of this Agreement, \\\"Confidential Information\\\" means any and all non-public
+      information, conveyed in all forms, whether in oral, written, electronic, or
+      other form or media, whether or not marked, designated, or otherwise identified
+      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
+      or observed by Receiving Party, which (i) has actual or potential economic value
+      by virtue of not being generally known to, and not being readily ascertainable
+      by proper means by, other persons who can obtain economic value from its disclosure
+      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
+      its secrecy and confidentiality.\\n\\nConfidential Information includes, but
+      is not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.\\n\\nConfidential
+      Information shall not include information that: (a) is or becomes generally
+      available to the public other than as a result of disclosure by Receiving Party
+      or its Representatives; (b) was available to Receiving Party on a non-confidential
+      basis prior to its disclosure by Disclosing Party; (c) becomes available to
+      Receiving Party on a non-confidential basis from a person other than Disclosing
+      Party who is not otherwise bound by a confidentiality obligation to Disclosing
+      Party; or (d) was independently developed by Receiving Party without reference
+      to or use of any Confidential Information. The name of the dog of the Receiving
+      Party is Bob.\\n\\nThe designation of information as Confidential Information
+      shall not be determinative of whether such information constitutes a trade secret
+      under applicable law. All Confidential Information shall remain the exclusive
+      property of Disclosing Party, and Receiving Party shall have no rights, by license
+      or otherwise, to use the Confidential Information except as expressly provided
+      herein.\\n\\na. Maintain the confidentiality of the Confidential Information
+      and not disclose it to any third party without the prior written consent of
+      the Disclosing Party.\\n\\nb. Use the Confidential Information solely for the
+      purpose of evaluating or engaging in the potential business collaboration.\\n\\nc.
+      Take all necessary precautions to protect the confidentiality of the Confidential
+      Information, which shall be no less than the precautions it takes to protect
+      its own confidential information.\\n\\nConfidential Information does not include
+      information that:\\n\\na. Is or becomes publicly known through no wrongful act
+      of the Receiving Party.\\n\\nb. Is already known to the Receiving Party at the
+      time of disclosure.\\n\\nc. Is lawfully received from a third party without
+      breach of this Agreement.\\n\\nd. Is independently developed by the Receiving
+      Party without use of or reference to the Disclosing Party's Confidential Information.\\n\\nUpon
+      termination of this Agreement or upon request, the Receiving Party shall return
+      all materials containing Confidential Information to the Disclosing Party or
+      destroy them, at the Disclosing Party's discretion.\\n\\nNothing in this Agreement
+      shall be construed as granting any rights to the Receiving Party, by license
+      or otherwise, to any of the Disclosing Party\u2019s Confidential Information,
+      except as expressly set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -1371,13 +1343,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12144'
+      - '11440'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1387,7 +1359,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1403,26 +1375,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"customer lists and
-        contact information\",\n            \"sales histories and patterns\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650174, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 40,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2230, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        2270}}'
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"technical specifications and documentation\",\n            \"research
+        and development activities\"\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1748457496, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 39, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2098, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2137}}'
     headers:
       Content-Length:
-      - '1289'
+      - '1427'
       Content-Type:
       - application/json
       Date:
@@ -1434,7 +1407,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '494'
+      - '476'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1598,23 +1571,15 @@ interactions:
       Party's Confidential Information.\\n\\nUpon termination of this Agreement or
       upon request, the Receiving Party shall return all materials containing Confidential
       Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\nIn the event of a breach of this Agreement by the Receiving
-      Party, the Disclosing Party shall be entitled to seek injunctive relief in addition
-      to any other remedy available at law or in equity. The Receiving Party acknowledges
-      that a breach of this Agreement may cause irreparable harm to the Disclosing
-      Party for which monetary damages would be an inadequate remedy. In addition
-      to injunctive relief, the Receiving Party shall be liable for liquidated damages
-      in the amount of $25,000 for each instance of unauthorized disclosure or use
-      of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      discretion.\\n\\nNothing in this Agreement shall be construed as granting any
+      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
+      Party\u2019s Confidential Information, except as expressly set forth in this
+      Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -1622,13 +1587,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12150'
+      - '11466'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1638,7 +1603,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1654,26 +1619,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"employee lists and
-        contact information\",\n            \"employment agreements and personnel
-        files\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1747650174, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_c8225066ea", "usage":
-        {"completion_tokens": 41, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 2230, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 2271}}'
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"employee lists and contact information\",\n            \"employment
+        agreements and personnel files\"\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1748457496, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 41, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2102, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2143}}'
     headers:
       Content-Length:
-      - '1302'
+      - '1429'
       Content-Type:
       - application/json
       Date:
@@ -1685,7 +1651,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '597'
+      - '504'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1796,76 +1762,68 @@ interactions:
       or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
       \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
       \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
-      Concept ID: C0\\nConcept name: Technical Information\\n\\nConcept description:\\nCategories
-      of Technical Information\\n\\nAmount of extracted items: This concept may have
-      zero, one, or multiple extracted items.\\n\\nConcept extracted item type: str\\n```\\n\\n___\\n\\n---\\nDOCUMENT
-      TEXT:\\nThe purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\\n\\nFor purposes
-      of this Agreement, \\\"Confidential Information\\\" means any and all non-public
-      information, conveyed in all forms, whether in oral, written, electronic, or
-      other form or media, whether or not marked, designated, or otherwise identified
-      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
-      or observed by Receiving Party, which (i) has actual or potential economic value
-      by virtue of not being generally known to, and not being readily ascertainable
-      by proper means by, other persons who can obtain economic value from its disclosure
-      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
-      its secrecy and confidentiality.\\n\\nConfidential Information includes, but
-      is not limited to, the following categories: (1) business information (business
-      plans, strategies, and models), (2) technical information (technical specifications
-      and documentation, research and development activities), (3) customer and market
-      information (customer lists and contact information, sales histories and patterns),
-      (4) personnel and internal information (employee lists and contact information,
-      employment agreements and personnel files), (5) intellectual property (trade
-      secrets and know-how, patents and patent applications, copyrights and copyright
-      applications, trademarks and trademark applications), (6) strategic information
-      (merger and acquisition plans, competitive analyses and strategies). Software
-      code shall also be included into the confidential information.\\n\\nConfidential
-      Information shall not include information that: (a) is or becomes generally
-      available to the public other than as a result of disclosure by Receiving Party
-      or its Representatives; (b) was available to Receiving Party on a non-confidential
-      basis prior to its disclosure by Disclosing Party; (c) becomes available to
-      Receiving Party on a non-confidential basis from a person other than Disclosing
-      Party who is not otherwise bound by a confidentiality obligation to Disclosing
-      Party; or (d) was independently developed by Receiving Party without reference
-      to or use of any Confidential Information. The name of the dog of the Receiving
-      Party is Bob.\\n\\nThe designation of information as Confidential Information
-      shall not be determinative of whether such information constitutes a trade secret
-      under applicable law. All Confidential Information shall remain the exclusive
-      property of Disclosing Party, and Receiving Party shall have no rights, by license
-      or otherwise, to use the Confidential Information except as expressly provided
-      herein.\\n\\na. Maintain the confidentiality of the Confidential Information
-      and not disclose it to any third party without the prior written consent of
-      the Disclosing Party.\\n\\nb. Use the Confidential Information solely for the
-      purpose of evaluating or engaging in the potential business collaboration.\\n\\nc.
-      Take all necessary precautions to protect the confidentiality of the Confidential
-      Information, which shall be no less than the precautions it takes to protect
-      its own confidential information.\\n\\nConfidential Information does not include
-      information that:\\n\\na. Is or becomes publicly known through no wrongful act
-      of the Receiving Party.\\n\\nb. Is already known to the Receiving Party at the
-      time of disclosure.\\n\\nc. Is lawfully received from a third party without
-      breach of this Agreement.\\n\\nd. Is independently developed by the Receiving
-      Party without use of or reference to the Disclosing Party's Confidential Information.\\n\\nUpon
-      termination of this Agreement or upon request, the Receiving Party shall return
-      all materials containing Confidential Information to the Disclosing Party or
-      destroy them, at the Disclosing Party's discretion.\\n\\nIn the event of a breach
-      of this Agreement by the Receiving Party, the Disclosing Party shall be entitled
-      to seek injunctive relief in addition to any other remedy available at law or
-      in equity. The Receiving Party acknowledges that a breach of this Agreement
-      may cause irreparable harm to the Disclosing Party for which monetary damages
-      would be an inadequate remedy. In addition to injunctive relief, the Receiving
-      Party shall be liable for liquidated damages in the amount of $25,000 for each
-      instance of unauthorized disclosure or use of Confidential Information, which
-      the parties agree represents a reasonable estimate of the damages likely to
-      be suffered and not a penalty.\\n\\nNothing in this Agreement shall be construed
-      as granting any rights to the Receiving Party, by license or otherwise, to any
-      of the Disclosing Party\u2019s Confidential Information, except as expressly
-      set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Concept ID: C0\\nConcept name: Customer and Market Information\\n\\nConcept
+      description:\\nCategories of Customer and Market Information\\n\\nAmount of
+      extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: str\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nThe purpose
+      of this Agreement is to protect the confidential information that may be disclosed
+      between the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\\n\\nFor purposes of this Agreement, \\\"Confidential
+      Information\\\" means any and all non-public information, conveyed in all forms,
+      whether in oral, written, electronic, or other form or media, whether or not
+      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
+      been or may be disclosed to, accessed by, or observed by Receiving Party, which
+      (i) has actual or potential economic value by virtue of not being generally
+      known to, and not being readily ascertainable by proper means by, other persons
+      who can obtain economic value from its disclosure or use, or (ii) is subject
+      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n\\nConfidential
+      Information includes, but is not limited to, the following categories: (1) business
+      information (business plans, strategies, and models), (2) technical information
+      (technical specifications and documentation, research and development activities),
+      (3) customer and market information (customer lists and contact information,
+      sales histories and patterns), (4) personnel and internal information (employee
+      lists and contact information, employment agreements and personnel files), (5)
+      intellectual property (trade secrets and know-how, patents and patent applications,
+      copyrights and copyright applications, trademarks and trademark applications),
+      (6) strategic information (merger and acquisition plans, competitive analyses
+      and strategies). Software code shall also be included into the confidential
+      information.\\n\\nConfidential Information shall not include information that:
+      (a) is or becomes generally available to the public other than as a result of
+      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
+      (c) becomes available to Receiving Party on a non-confidential basis from a
+      person other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information. The name
+      of the dog of the Receiving Party is Bob.\\n\\nThe designation of information
+      as Confidential Information shall not be determinative of whether such information
+      constitutes a trade secret under applicable law. All Confidential Information
+      shall remain the exclusive property of Disclosing Party, and Receiving Party
+      shall have no rights, by license or otherwise, to use the Confidential Information
+      except as expressly provided herein.\\n\\na. Maintain the confidentiality of
+      the Confidential Information and not disclose it to any third party without
+      the prior written consent of the Disclosing Party.\\n\\nb. Use the Confidential
+      Information solely for the purpose of evaluating or engaging in the potential
+      business collaboration.\\n\\nc. Take all necessary precautions to protect the
+      confidentiality of the Confidential Information, which shall be no less than
+      the precautions it takes to protect its own confidential information.\\n\\nConfidential
+      Information does not include information that:\\n\\na. Is or becomes publicly
+      known through no wrongful act of the Receiving Party.\\n\\nb. Is already known
+      to the Receiving Party at the time of disclosure.\\n\\nc. Is lawfully received
+      from a third party without breach of this Agreement.\\n\\nd. Is independently
+      developed by the Receiving Party without use of or reference to the Disclosing
+      Party's Confidential Information.\\n\\nUpon termination of this Agreement or
+      upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n\\nNothing in this Agreement shall be construed as granting any
+      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
+      Party\u2019s Confidential Information, except as expressly set forth in this
+      Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -1873,13 +1831,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12124'
+      - '11460'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1889,7 +1847,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1905,26 +1863,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"technical specifications
-        and documentation\",\n            \"research and development activities\",\n            \"software
-        code\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1747650174, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_c8225066ea", "usage":
-        {"completion_tokens": 44, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 2226, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        1280}, "total_tokens": 2270}}'
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"customer lists and contact information\",\n            \"sales
+        histories and patterns\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1748457496, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 40, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2102, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2142}}'
     headers:
       Content-Length:
-      - '1335'
+      - '1416'
       Content-Type:
       - application/json
       Date:
@@ -1936,7 +1895,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '612'
+      - '605'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2101,23 +2060,15 @@ interactions:
       Party's Confidential Information.\\n\\nUpon termination of this Agreement or
       upon request, the Receiving Party shall return all materials containing Confidential
       Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\nIn the event of a breach of this Agreement by the Receiving
-      Party, the Disclosing Party shall be entitled to seek injunctive relief in addition
-      to any other remedy available at law or in equity. The Receiving Party acknowledges
-      that a breach of this Agreement may cause irreparable harm to the Disclosing
-      Party for which monetary damages would be an inadequate remedy. In addition
-      to injunctive relief, the Receiving Party shall be liable for liquidated damages
-      in the amount of $25,000 for each instance of unauthorized disclosure or use
-      of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      discretion.\\n\\nNothing in this Agreement shall be construed as granting any
+      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
+      Party\u2019s Confidential Information, except as expressly set forth in this
+      Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -2125,13 +2076,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12231'
+      - '11547'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2141,7 +2092,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2157,27 +2108,29 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"trade secrets and know-how\",\n            \"patents
-        and patent applications\",\n            \"copyrights and copyright applications\",\n            \"trademarks
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"trade secrets and know-how\",\n            \"patents and
+        patent applications\",\n            \"copyrights and copyright applications\",\n            \"trademarks
         and trademark applications\",\n            \"software code\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650174, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457496, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 63,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 63,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2249, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        2312}}'
+        2121, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        2184}}'
     headers:
       Content-Length:
-      - '1424'
+      - '1548'
       Content-Type:
       - application/json
       Date:
@@ -2189,7 +2142,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '821'
+      - '778'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2405,17 +2358,6 @@ interactions:
       shall return all materials containing Confidential Information to the Disclosing
       Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n```\\n-
       Paragraph ID: P14\\nParagraph sentences:\\n    -- Sentence ID: P14-S0\\n    Sentence
-      text: In the event of a breach of this Agreement by the Receiving Party, the
-      Disclosing Party shall be entitled to seek injunctive relief in addition to
-      any other remedy available at law or in equity.\\n    -- Sentence ID: P14-S1\\n
-      \   Sentence text: The Receiving Party acknowledges that a breach of this Agreement
-      may cause irreparable harm to the Disclosing Party for which monetary damages
-      would be an inadequate remedy.\\n    -- Sentence ID: P14-S2\\n    Sentence text:
-      In addition to injunctive relief, the Receiving Party shall be liable for liquidated
-      damages in the amount of $25,000 for each instance of unauthorized disclosure
-      or use of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n-
-      Paragraph ID: P15\\nParagraph sentences:\\n    -- Sentence ID: P15-S0\\n    Sentence
       text: Nothing in this Agreement shall be construed as granting any rights to
       the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
       Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
@@ -2423,7 +2365,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -2431,13 +2373,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16466'
+      - '15586'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2447,7 +2389,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2463,27 +2405,29 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        true,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": true,\n                \"reference_paragraphs\":
+        [\n                    {\n                        \"reference_paragraph_id\":
         \"P2\",\n                        \"reference_sentence_ids\": [\n                            \"P2-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650174, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457496, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 76,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 76,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3215, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3291}}'
+        3031, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3107}}'
     headers:
       Content-Length:
-      - '1542'
+      - '1666'
       Content-Type:
       - application/json
       Date:
@@ -2495,7 +2439,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '937'
+      - '1225'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2711,17 +2655,6 @@ interactions:
       shall return all materials containing Confidential Information to the Disclosing
       Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n```\\n-
       Paragraph ID: P14\\nParagraph sentences:\\n    -- Sentence ID: P14-S0\\n    Sentence
-      text: In the event of a breach of this Agreement by the Receiving Party, the
-      Disclosing Party shall be entitled to seek injunctive relief in addition to
-      any other remedy available at law or in equity.\\n    -- Sentence ID: P14-S1\\n
-      \   Sentence text: The Receiving Party acknowledges that a breach of this Agreement
-      may cause irreparable harm to the Disclosing Party for which monetary damages
-      would be an inadequate remedy.\\n    -- Sentence ID: P14-S2\\n    Sentence text:
-      In addition to injunctive relief, the Receiving Party shall be liable for liquidated
-      damages in the amount of $25,000 for each instance of unauthorized disclosure
-      or use of Confidential Information, which the parties agree represents a reasonable
-      estimate of the damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n-
-      Paragraph ID: P15\\nParagraph sentences:\\n    -- Sentence ID: P15-S0\\n    Sentence
       text: Nothing in this Agreement shall be construed as granting any rights to
       the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
       Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
@@ -2729,7 +2662,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -2737,13 +2670,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16452'
+      - '15572'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2753,7 +2686,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2769,27 +2702,29 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        true,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": true,\n                \"reference_paragraphs\":
+        [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S0\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650174, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457496, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 76,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 76,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3216, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 3292}}'
+        3032, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3108}}'
     headers:
       Content-Length:
-      - '1545'
+      - '1666'
       Content-Type:
       - application/json
       Date:
@@ -2801,7 +2736,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '942'
+      - '1231'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2964,24 +2899,15 @@ interactions:
       Party without use of or reference to the Disclosing Party's Confidential Information.\\n\\nUpon
       termination of this Agreement or upon request, the Receiving Party shall return
       all materials containing Confidential Information to the Disclosing Party or
-      destroy them, at the Disclosing Party's discretion.\\n\\nIn the event of a breach
-      of this Agreement by the Receiving Party, the Disclosing Party shall be entitled
-      to seek injunctive relief in addition to any other remedy available at law or
-      in equity. The Receiving Party acknowledges that a breach of this Agreement
-      may cause irreparable harm to the Disclosing Party for which monetary damages
-      would be an inadequate remedy. In addition to injunctive relief, the Receiving
-      Party shall be liable for liquidated damages in the amount of $25,000 for each
-      instance of unauthorized disclosure or use of Confidential Information, which
-      the parties agree represents a reasonable estimate of the damages likely to
-      be suffered and not a penalty.\\n\\nNothing in this Agreement shall be construed
-      as granting any rights to the Receiving Party, by license or otherwise, to any
-      of the Disclosing Party\u2019s Confidential Information, except as expressly
-      set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      destroy them, at the Disclosing Party's discretion.\\n\\nNothing in this Agreement
+      shall be construed as granting any rights to the Receiving Party, by license
+      or otherwise, to any of the Disclosing Party\u2019s Confidential Information,
+      except as expressly set forth in this Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -2989,13 +2915,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12122'
+      - '11438'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3005,7 +2931,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3021,8 +2947,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3035,22 +2961,23 @@ interactions:
         contact information\",\n            \"employment agreements\",\n            \"personnel
         files\",\n            \"trade secrets\",\n            \"know-how\",\n            \"patents\",\n            \"patent
         applications\",\n            \"copyrights\",\n            \"copyright applications\",\n            \"trademarks\",\n            \"trademark
-        applications\",\n            \"merger and acquisition plans\",\n            \"competitive
-        analyses\",\n            \"competitive strategies\",\n            \"software
-        code\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1747650174, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_c8225066ea", "usage":
-        {"completion_tokens": 166, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 2226, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 2392}}'
+        applications\",\n            \"merger plans\",\n            \"acquisition
+        plans\",\n            \"competitive analyses\",\n            \"competitive
+        strategies\",\n            \"software code\"\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1748457496, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 170,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        2098, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
+        "total_tokens": 2268}}'
     headers:
       Content-Length:
-      - '2277'
+      - '2300'
       Content-Type:
       - application/json
       Date:
@@ -3062,7 +2989,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2684'
+      - '2151'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3307,7 +3234,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -3321,7 +3248,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3331,7 +3258,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3347,8 +3274,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3357,22 +3284,22 @@ interactions:
         \"This paragraph specifies the obligations upon termination of the Agreement,
         including returning or destroying confidential materials.\"\n            },\n            {\n                \"paragraph_id\":
         \"P45\",\n                \"justification\": \"This paragraph states the duration
-        of the Agreement and the governing jurisdiction, addressing the term and the
-        effect period of the contract.\"\n            }\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1747650177, "id": "chatcmpl-DUMMY",
+        of the Agreement and the governing jurisdiction, indicating the term and legal
+        framework for termination.\"\n            }\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1748457499, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 104,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 102,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3453, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3557}}'
+        3555}}'
     headers:
       Content-Length:
-      - '1811'
+      - '1809'
       Content-Type:
       - application/json
       Date:
@@ -3384,7 +3311,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1143'
+      - '1386'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3620,7 +3547,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -3634,7 +3561,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3644,7 +3571,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3660,27 +3587,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P17\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P35\",\n            \"P42\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650179, "id": "chatcmpl-DUMMY",
+        [\n            \"P17\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P35\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1748457501, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 99,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 94,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3333, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3200},
-        "total_tokens": 3432}}'
+        "total_tokens": 3427}}'
     headers:
       Content-Length:
-      - '1639'
+      - '1617'
       Content-Type:
       - application/json
       Date:
@@ -3692,7 +3619,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1025'
+      - '1632'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3910,16 +3837,12 @@ interactions:
       Paragraph ID: P13\\nParagraph sentences:\\n    -- Sentence ID: P13-S0\\n    Sentence
       text: Upon termination of this Agreement or upon request, the Receiving Party
       shall return all materials containing Confidential Information to the Disclosing
-      Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n```\\n-
-      Paragraph ID: P14\\nParagraph sentences:\\n    -- Sentence ID: P14-S0\\n    Sentence
-      text: Nothing in this Agreement shall be construed as granting any rights to
-      the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
-      Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -3927,13 +3850,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15865'
+      - '15535'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3943,7 +3866,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3959,8 +3882,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3971,17 +3894,17 @@ interactions:
         \"C1\",\n        \"extracted_items\": [\n            {\n                \"value\":
         true,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P2\",\n                        \"reference_sentence_ids\": [\n                            \"P2-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650180, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457503, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 149,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 149,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3088, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 3237}}'
+        3019, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2944},
+        "total_tokens": 3168}}'
     headers:
       Content-Length:
       - '2117'
@@ -3996,7 +3919,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2220'
+      - '2011'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4174,15 +4097,12 @@ interactions:
       Party's Confidential Information.\\n\\nUpon termination of this Agreement or
       upon request, the Receiving Party shall return all materials containing Confidential
       Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\nNothing in this Agreement shall be construed as granting any
-      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
-      Party\u2019s Confidential Information, except as expressly set forth in this
-      Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      discretion.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -4190,13 +4110,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12615'
+      - '12385'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4206,7 +4126,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4222,36 +4142,37 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"business plans\",\n            \"strategies\",\n            \"models\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C1\",\n        \"extracted_items\": [\n            \"technical specifications\",\n            \"documentation\",\n            \"research
-        and development activities\",\n            \"software code\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C2\",\n        \"extracted_items\": [\n            \"customer lists\",\n            \"contact
-        information\",\n            \"sales histories\",\n            \"sales patterns\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C3\",\n        \"extracted_items\": [\n            \"employee lists\",\n            \"contact
-        information\",\n            \"employment agreements\",\n            \"personnel
+        \"C1\",\n        \"extracted_items\": [\n            \"technical specifications
+        and documentation\",\n            \"research and development activities\",\n            \"software
+        code\"\n        ]\n    },\n    {\n        \"concept_id\": \"C2\",\n        \"extracted_items\":
+        [\n            \"customer lists and contact information\",\n            \"sales
+        histories and patterns\"\n        ]\n    },\n    {\n        \"concept_id\":
+        \"C3\",\n        \"extracted_items\": [\n            \"employee lists and
+        contact information\",\n            \"employment agreements and personnel
         files\"\n        ]\n    },\n    {\n        \"concept_id\": \"C4\",\n        \"extracted_items\":
-        [\n            \"trade secrets\",\n            \"know-how\",\n            \"patents\",\n            \"patent
-        applications\",\n            \"copyrights\",\n            \"copyright applications\",\n            \"trademarks\",\n            \"trademark
-        applications\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1747650183, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        [\n            \"trade secrets and know-how\",\n            \"patents and
+        patent applications\",\n            \"copyrights and copyright applications\",\n            \"trademarks
+        and trademark applications\"\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1748457505, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 232, "completion_tokens_details":
+        "fp_178c8d546f", "usage": {"completion_tokens": 210, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2329, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2176}, "total_tokens": 2561}}'
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2288, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2498}}'
     headers:
       Content-Length:
-      - '2467'
+      - '2335'
       Content-Type:
       - application/json
       Date:
@@ -4263,7 +4184,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2678'
+      - '2842'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4481,16 +4402,12 @@ interactions:
       Paragraph ID: P13\\nParagraph sentences:\\n    -- Sentence ID: P13-S0\\n    Sentence
       text: Upon termination of this Agreement or upon request, the Receiving Party
       shall return all materials containing Confidential Information to the Disclosing
-      Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n```\\n-
-      Paragraph ID: P14\\nParagraph sentences:\\n    -- Sentence ID: P14-S0\\n    Sentence
-      text: Nothing in this Agreement shall be construed as granting any rights to
-      the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
-      Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -4498,13 +4415,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15865'
+      - '15535'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4514,7 +4431,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4530,8 +4447,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -4542,17 +4459,17 @@ interactions:
         \"C1\",\n        \"extracted_items\": [\n            {\n                \"value\":
         true,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P2\",\n                        \"reference_sentence_ids\": [\n                            \"P2-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650186, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457509, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 149,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 149,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3088, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2944},
-        "total_tokens": 3237}}'
+        3019, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2944},
+        "total_tokens": 3168}}'
     headers:
       Content-Length:
       - '2117'
@@ -4567,7 +4484,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1737'
+      - '2070'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4745,15 +4662,12 @@ interactions:
       Party's Confidential Information.\\n\\nUpon termination of this Agreement or
       upon request, the Receiving Party shall return all materials containing Confidential
       Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\nNothing in this Agreement shall be construed as granting any
-      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
-      Party\u2019s Confidential Information, except as expressly set forth in this
-      Agreement.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      discretion.\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -4761,13 +4675,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12615'
+      - '12385'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4777,7 +4691,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4793,36 +4707,37 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"business plans\",\n            \"strategies\",\n            \"models\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C1\",\n        \"extracted_items\": [\n            \"technical specifications\",\n            \"documentation\",\n            \"research
-        and development activities\",\n            \"software code\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C2\",\n        \"extracted_items\": [\n            \"customer lists\",\n            \"contact
-        information\",\n            \"sales histories\",\n            \"sales patterns\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C3\",\n        \"extracted_items\": [\n            \"employee lists\",\n            \"contact
-        information\",\n            \"employment agreements\",\n            \"personnel
+        \"C1\",\n        \"extracted_items\": [\n            \"technical specifications
+        and documentation\",\n            \"research and development activities\",\n            \"software
+        code\"\n        ]\n    },\n    {\n        \"concept_id\": \"C2\",\n        \"extracted_items\":
+        [\n            \"customer lists and contact information\",\n            \"sales
+        histories and patterns\"\n        ]\n    },\n    {\n        \"concept_id\":
+        \"C3\",\n        \"extracted_items\": [\n            \"employee lists and
+        contact information\",\n            \"employment agreements and personnel
         files\"\n        ]\n    },\n    {\n        \"concept_id\": \"C4\",\n        \"extracted_items\":
-        [\n            \"trade secrets\",\n            \"know-how\",\n            \"patents\",\n            \"patent
-        applications\",\n            \"copyrights\",\n            \"copyright applications\",\n            \"trademarks\",\n            \"trademark
-        applications\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1747650188, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        [\n            \"trade secrets and know-how\",\n            \"patents and
+        patent applications\",\n            \"copyrights and copyright applications\",\n            \"trademarks
+        and trademark applications\"\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1748457511, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_c8225066ea", "usage": {"completion_tokens": 232, "completion_tokens_details":
+        "fp_178c8d546f", "usage": {"completion_tokens": 210, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2329, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2304}, "total_tokens": 2561}}'
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2288, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 2498}}'
     headers:
       Content-Length:
-      - '2467'
+      - '2335'
       Content-Type:
       - application/json
       Date:
@@ -4834,7 +4749,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2675'
+      - '2806'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5048,16 +4963,12 @@ interactions:
       Paragraph ID: P13\\nParagraph sentences:\\n    -- Sentence ID: P13-S0\\n    Sentence
       text: Upon termination of this Agreement or upon request, the Receiving Party
       shall return all materials containing Confidential Information to the Disclosing
-      Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n```\\n-
-      Paragraph ID: P14\\nParagraph sentences:\\n    -- Sentence ID: P14-S0\\n    Sentence
-      text: Nothing in this Agreement shall be construed as granting any rights to
-      the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
-      Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Party or destroy them, at the Disclosing Party's discretion.\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -5065,13 +4976,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15572'
+      - '15242'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5081,7 +4992,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5097,27 +5008,29 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        true,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": true,\n                \"reference_paragraphs\":
+        [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S0\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650191, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457514, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 76,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 76,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3032, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 3108}}'
+        2963, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
+        "total_tokens": 3039}}'
     headers:
       Content-Length:
-      - '1545'
+      - '1669'
       Content-Type:
       - application/json
       Date:
@@ -5129,7 +5042,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1005'
+      - '1131'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5366,7 +5279,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -5380,7 +5293,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5390,7 +5303,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5406,25 +5319,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
-        \"A0\",\n        \"paragraph_ids\": [\n            \"P36\",\n            \"P37\",\n            \"P38\",\n            \"P39\",\n            \"P40\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650192, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
+        [\n            \"P36\",\n            \"P37\",\n            \"P38\",\n            \"P39\",\n            \"P40\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1748457516, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 49,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 49,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3339, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
         "total_tokens": 3388}}'
     headers:
       Content-Length:
-      - '1295'
+      - '1419'
       Content-Type:
       - application/json
       Date:
@@ -5436,7 +5351,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '621'
+      - '633'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5560,7 +5475,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -5574,7 +5489,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5584,7 +5499,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5600,21 +5515,21 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
         [\"P1\", \"P2\"]\n    },\n    {\n        \"aspect_id\": \"A1\",\n        \"paragraph_ids\":
         [\"P3\", \"P4\"]\n    },\n    {\n        \"aspect_id\": \"A2\",\n        \"paragraph_ids\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1747650193,
+        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1748457516,
         "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
         "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
-        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"detected": false,
+        "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_c8225066ea", "usage":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
         {"completion_tokens": 74, "completion_tokens_details": {"accepted_prediction_tokens":
         0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
         0}, "prompt_tokens": 1530, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
@@ -5633,7 +5548,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1607'
+      - '1061'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5761,7 +5676,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -5775,7 +5690,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5785,7 +5700,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5801,26 +5716,28 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"$100,000\"\n        ]\n    },\n    {\n        \"concept_id\":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"$100,000\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            12\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650195, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1748457518, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 57,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 57,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         1536, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
         "total_tokens": 1593}}'
     headers:
       Content-Length:
-      - '1322'
+      - '1446'
       Content-Type:
       - application/json
       Date:
@@ -5832,7 +5749,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '696'
+      - '850'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5959,7 +5876,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       api-key:
       - DUMMY
       authorization:
@@ -5973,7 +5890,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.75.0
+      - AsyncAzureOpenAI/Python 1.82.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5983,7 +5900,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.75.0
+      - 1.82.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5999,25 +5916,26 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"$25,000\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1747650196, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_c8225066ea", "usage": {"completion_tokens": 31,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1509, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
-        "total_tokens": 1540}}'
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"$25,000\"\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1748457518, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 31, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1509, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 1540}}'
     headers:
       Content-Length:
-      - '1214'
+      - '1335'
       Content-Type:
       - application/json
       Date:
@@ -6029,7 +5947,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '402'
+      - '444'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
