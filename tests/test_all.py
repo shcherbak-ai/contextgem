@@ -2660,6 +2660,44 @@ class TestAll(TestUtils):
                     sat_model_id=temp_dir,
                 )
 
+    def test_input_output_token_validation(self):
+        """
+        Tests for max input and max output token validation.
+        """
+
+        # Test 1: Max input tokens validation
+        llm = DocumentLLM(
+            model="azure/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        )
+
+        # Create a very long message that should exceed input limits
+        long_message = "This is a test message. " * 50000
+        messages = [
+            {"role": "user", "content": long_message},
+        ]
+
+        with pytest.raises(
+            ValueError, match="exceeds the model's maximum input tokens"
+        ):
+            llm._validate_input_tokens(messages)
+
+        # Test 2: Max output tokens validation
+        llm_excessive_output = DocumentLLM(
+            model="azure/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            max_tokens=999999,  # excessive output tokens
+        )
+
+        with pytest.raises(
+            ValueError, match="exceeds the model's maximum output tokens"
+        ):
+            llm_excessive_output._validate_output_tokens()
+
     @pytest.mark.vcr()
     def test_system_messages(self):
         """

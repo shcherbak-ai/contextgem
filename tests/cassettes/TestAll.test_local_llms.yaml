@@ -96,7 +96,7 @@ interactions:
       accept:
       - '*/*'
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       connection:
       - keep-alive
       content-length:
@@ -104,12 +104,12 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.70.0
+      - litellm/1.71.1
     method: POST
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "llama3.1:8b", "created_at": "2025-05-19T10:20:45.3224377Z",
+      string: '{"model": "llama3.1:8b", "created_at": "2025-05-28T18:35:20.2033396Z",
         "response": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Non-disclosure agreement\"\n        ]\n    }\n]", "done":
         true, "done_reason": "stop", "context": [128006, 882, 128007, 271, 14711,
@@ -217,9 +217,9 @@ interactions:
         271, 791, 9875, 4985, 2567, 279, 828, 27285, 627, 4521, 1432, 128009, 128006,
         78191, 128007, 271, 9837, 262, 341, 286, 330, 69587, 851, 794, 330, 34, 15,
         761, 286, 330, 24396, 291, 12408, 794, 2330, 310, 330, 8284, 52765, 11915,
-        9306, 702, 286, 5243, 262, 457, 60], "total_duration": 7547837700, "load_duration":
-        6952658500, "prompt_eval_count": 1401, "prompt_eval_duration": 303022800,
-        "eval_count": 32, "eval_duration": 291653700}'
+        9306, 702, 286, 5243, 262, 457, 60], "total_duration": 7616760200, "load_duration":
+        7037240300, "prompt_eval_count": 1401, "prompt_eval_duration": 285209500,
+        "eval_count": 32, "eval_duration": 293681300}'
     headers:
       Content-Type:
       - application/json; charset=utf-8
@@ -327,7 +327,7 @@ interactions:
       accept:
       - '*/*'
       accept-encoding:
-      - gzip, deflate, zstd
+      - gzip, deflate
       connection:
       - keep-alive
       content-length:
@@ -335,12 +335,12 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.70.0
+      - litellm/1.71.1
     method: POST
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "deepseek-r1:32b", "created_at": "2025-05-19T10:21:00.7449796Z",
+      string: '{"model": "deepseek-r1:32b", "created_at": "2025-05-28T18:35:49.4008035Z",
         "response": "<think>\nAlright, I need to tackle this task step by step. Let''s
         see what the user is asking for. They provided a document text and a list
         of concepts, specifically one concept in this case: C0 with the name \"Contract
@@ -480,8 +480,8 @@ interactions:
         8121, 51665, 11653, 9128, 1, 438, 279, 27432, 1509, 624, 151649, 271, 9640,
         262, 341, 286, 330, 68487, 842, 788, 330, 34, 15, 756, 286, 330, 23493, 291,
         12134, 788, 4383, 8121, 51665, 11653, 9128, 7026, 262, 456, 60], "total_duration":
-        12633883200, "load_duration": 4747555600, "prompt_eval_count": 1394, "prompt_eval_duration":
-        693004700, "eval_count": 271, "eval_duration": 7192820700}'
+        26379810000, "load_duration": 15187285900, "prompt_eval_count": 1394, "prompt_eval_duration":
+        951524800, "eval_count": 271, "eval_duration": 10240495800}'
     headers:
       Content-Type:
       - application/json; charset=utf-8

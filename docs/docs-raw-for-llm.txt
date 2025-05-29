@@ -7199,11 +7199,11 @@ The "DocumentLLM" class accepts the following parameters:
 | "max_tokens"         | "4096"               | Maximum tokens in the generated response (applicable to most |
 |                      |                      | models).                                                     |
 +----------------------+----------------------+--------------------------------------------------------------+
-| "max_completion_tok  | "16000"              | Maximum tokens for output completions in OpenAI o1/o3/o4     |
-| ens"                 |                      | models.                                                      |
+| "max_completion_tok  | "16000"              | Maximum tokens for output completions in reasoning (CoT-     |
+| ens"                 |                      | capable) models.                                             |
 +----------------------+----------------------+--------------------------------------------------------------+
-| "reasoning_effort"   | "None"               | Reasoning effort for o1/o3/o4 models. Values: ""low"",       |
-|                      |                      | ""medium"", ""high"".                                        |
+| "reasoning_effort"   | "None"               | Reasoning effort for reasoning (CoT-capable) models. Values: |
+|                      |                      | ""low"", ""medium"", ""high"".                               |
 +----------------------+----------------------+--------------------------------------------------------------+
 | "top_p"              | "0.3"                | Nucleus sampling value (0.0 to 1.0) controlling output       |
 |                      |                      | focus/randomness. Lower values make output more              |
@@ -7321,8 +7321,8 @@ Setting up LLM cost tracking
 🧠 Using Model-Specific Parameters
 ----------------------------------
 
-For OpenAI's reasoning models (o1/o3/o4), you can set reasoning-
-specific parameters:
+For reasoning (CoT-capable) models (such as OpenAI's o1/o3/o4), you
+can set reasoning-specific parameters:
 
 Using model-specific parameters
 
@@ -7331,7 +7331,7 @@ Using model-specific parameters
    llm = DocumentLLM(
        model="openai/o3-mini",
        api_key="<your-openai-api-key>",
-       max_completion_tokens=8000,  # Specific to o1/o3/o4 models
+       max_completion_tokens=8000,  # Specific to reasoning (CoT-capable) models
        reasoning_effort="medium",  # Optional: "low", "medium", "high"
    )
 
@@ -13450,11 +13450,13 @@ class contextgem.public.llms.DocumentLLM(**data)
         response. Defaults to 4096.
 
       * **max_completion_tokens** -- Maximum token size for output
-        completions in o1/o3/o4 models. Defaults to 16000.
+        completions in reasoning (CoT-capable) models. Defaults to
+        16000.
 
       * **reasoning_effort** -- The effort level for the LLM to reason
         about the input. Can be set to ""low"", ""medium"", or
-        ""high"". Relevant for o1/o3/o4 models. Defaults to None.
+        ""high"". Relevant for reasoning (CoT-capable) models.
+        Defaults to None.
 
       * **top_p** -- Nucleus sampling value (0.0 to 1.0) controlling
         output focus/randomness. Lower values make output more

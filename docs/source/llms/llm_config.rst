@@ -82,10 +82,10 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - Maximum tokens in the generated response (applicable to most models).
    * - ``max_completion_tokens``
      - ``16000``
-     - Maximum tokens for output completions in OpenAI o1/o3/o4 models.
+     - Maximum tokens for output completions in reasoning (CoT-capable) models.
    * - ``reasoning_effort``
      - ``None``
-     - Reasoning effort for o1/o3/o4 models. Values: ``"low"``, ``"medium"``, ``"high"``.
+     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"low"``, ``"medium"``, ``"high"``.
    * - ``top_p``
      - ``0.3``
      - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs.
@@ -146,7 +146,7 @@ You can configure pricing details to track costs:
 🧠 Using Model-Specific Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For OpenAI's reasoning models (o1/o3/o4), you can set reasoning-specific parameters:
+For reasoning (CoT-capable) models (such as OpenAI's o1/o3/o4), you can set reasoning-specific parameters:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/o1_o4.py
    :language: python

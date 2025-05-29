@@ -45,7 +45,15 @@ with warnings.catch_warnings():
     # (latest available version as of 2025-05-25)
     warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
     import litellm
-    from litellm import acompletion, supports_vision
+    from litellm import (
+        acompletion,
+        supports_vision,
+        get_supported_openai_params,
+        supports_reasoning,
+        UnsupportedParamsError,
+        get_model_info,
+        token_counter,
+    )
 
 from pydantic import (
     Field,
@@ -315,11 +323,12 @@ class DocumentLLM(_GenericLLMProcessor):
     :type temperature: Optional[float]
     :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
     :type max_tokens: Optional[int]
-    :ivar max_completion_tokens: Maximum token size for output completions in o1/o3/o4 models.
-        Defaults to 16000.
+    :ivar max_completion_tokens: Maximum token size for output completions in reasoning
+        (CoT-capable) models. Defaults to 16000.
     :type max_completion_tokens: Optional[int]
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
-        ``"low"``, ``"medium"``, or ``"high"``. Relevant for o1/o3/o4 models. Defaults to None.
+        ``"low"``, ``"medium"``, or ``"high"``. Relevant for reasoning (CoT-capable) models.
+        Defaults to None.
     :type reasoning_effort: Optional[ReasoningEffort]
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
@@ -388,7 +397,7 @@ class DocumentLLM(_GenericLLMProcessor):
     max_tokens: Optional[StrictInt] = Field(default=4096, gt=0)
     max_completion_tokens: Optional[StrictInt] = Field(
         default=16000, gt=0
-    )  # for o1/o3/o4 models
+    )  # for reasoning (CoT-capable) models
     reasoning_effort: Optional[ReasoningEffort] = Field(default=None)
     top_p: Optional[StrictFloat] = Field(default=0.3, ge=0)
     num_retries_failed_request: Optional[StrictInt] = Field(default=3, ge=0)
@@ -710,7 +719,7 @@ class DocumentLLM(_GenericLLMProcessor):
         """
         if "/" not in model:
             raise ValueError(
-                "Model identifier must be in the form of `{model_provider}/{model_name}`. "
+                "Model identifier must be in the form of `<model_provider>/<model_name>`. "
                 "See https://docs.litellm.ai/docs/providers for the list of supported providers."
             )
         return model
@@ -803,6 +812,124 @@ class DocumentLLM(_GenericLLMProcessor):
                 )
         return self
 
+    def _validate_input_tokens(self, messages: list[dict[str, str]]) -> None:
+        """
+        Validates that the input messages do not exceed the model's maximum input tokens.
+
+        :param messages: List of message dictionaries to validate
+        :type messages: list[dict[str, str]]
+        :raises ValueError: If the messages exceed the model's maximum input tokens
+        :return: None
+        """
+        context_exceeded = False
+        try:
+            # Get model information to check context window
+            model_info = get_model_info(self.model)
+            max_input_tokens = model_info.get("max_input_tokens")
+
+            # If max_input_tokens is not available, skip validation
+            if max_input_tokens is None:
+                logger.warning(
+                    f"Could not determine max_input_tokens for model `{self.model}`. Skipping validation."
+                )
+                return
+
+            # Count tokens in the messages
+            try:
+                token_count = token_counter(model=self.model, messages=messages)
+            except Exception as e:
+                logger.warning(
+                    f"Could not count tokens for model `{self.model}`: {e}. Skipping input token validation."
+                )
+                return
+
+            # Check if we exceed the context window
+            if token_count > max_input_tokens:
+                context_exceeded = True
+                raise ValueError(
+                    f"Input messages contain {token_count} tokens, which exceeds the model's "
+                    f"maximum input tokens of {max_input_tokens} for model `{self.model}`."
+                )
+
+            logger.debug(
+                f"Input token validation passed: {token_count}/{max_input_tokens} tokens used"
+            )
+
+        except ValueError as e:
+            if context_exceeded:
+                # Re-raise our own ValueError
+                raise
+            # If it's a different ValueError, log and continue
+            logger.warning(
+                f"Could not validate max input tokens for model `{self.model}`: {e}"
+            )
+        except Exception as e:
+            # If we can't get model info, log a warning but don't fail
+            logger.warning(
+                f"Could not validate max input tokens for model `{self.model}`: {e}"
+            )
+
+    def _validate_output_tokens(self) -> None:
+        """
+        Validates that the configured max_tokens or max_completion_tokens do not exceed
+        the model's maximum output tokens.
+
+        :raises ValueError: If the configured tokens exceed the model's maximum output tokens
+        :return: None
+        """
+        output_exceeded = False
+        try:
+            # Get model information to check output token limits
+            model_info = get_model_info(self.model)
+            max_output_tokens = model_info.get("max_output_tokens")
+
+            # If max_output_tokens is not available, fall back to max_tokens
+            if max_output_tokens is None:
+                max_output_tokens = model_info.get("max_tokens")
+
+            # If we still don't have a limit, skip validation
+            if max_output_tokens is None:
+                logger.warning(
+                    f"Could not determine max_output_tokens for model `{self.model}`. "
+                    f"Skipping max output token validation."
+                )
+                return
+
+            # Determine which token limit to check based on model type
+            if supports_reasoning(self.model):
+                configured_tokens = self.max_completion_tokens
+                token_type = "max_completion_tokens"
+            else:
+                configured_tokens = self.max_tokens
+                token_type = "max_tokens"
+
+            # Check if configured tokens exceed the model's limit
+            if configured_tokens > max_output_tokens:
+                output_exceeded = True
+                raise ValueError(
+                    f"Configured {token_type} ({configured_tokens}) exceeds the model's "
+                    f"maximum output tokens of {max_output_tokens} for model `{self.model}`."
+                )
+
+            logger.debug(
+                f"Output token validation passed: {configured_tokens}/{max_output_tokens} "
+                f"{token_type} configured"
+            )
+
+        except ValueError as e:
+            if output_exceeded:
+                # Re-raise our own ValueError
+                raise
+            # If it's a different ValueError, log and continue
+            logger.warning(
+                f"Could not validate max output tokens for model `{self.model}`: {e}"
+            )
+        except Exception as e:
+            # If we can't get model info, log a warning but don't fail
+            logger.warning(
+                f"Could not validate max output tokens for model `{self.model}`: {e}"
+            )
+
     async def _query_llm(
         self,
         message: str,
@@ -811,6 +938,7 @@ class DocumentLLM(_GenericLLMProcessor):
         num_retries_failed_request: int = 3,
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
+        drop_params: bool = False,
     ) -> tuple[str | None, _LLMUsage]:
         """
         Generates a response from an LLM based on the provided message, optional images,
@@ -837,6 +965,9 @@ class DocumentLLM(_GenericLLMProcessor):
             async LLM API requests, when concurrency is enabled for certain tasks. If not provided,
             such requests will be sent synchronously.
         :type async_limiter: AsyncLimiter | None
+        :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
+            Used internally for automatic retry when UnsupportedParamsError occurs.
+        :type drop_params: bool
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _LLMUsage]
@@ -887,6 +1018,10 @@ class DocumentLLM(_GenericLLMProcessor):
                 }
             )
 
+        # Validate max input / output tokens before making the API call
+        self._validate_input_tokens(request_messages)
+        self._validate_output_tokens()
+
         # Prepare request dictionary with common parameters
         request_dict = {
             "model": self.model,
@@ -894,31 +1029,23 @@ class DocumentLLM(_GenericLLMProcessor):
         }
 
         # Add model-specific parameters
-        if any(
-            self.model.startswith(i)
-            for i in [
-                "openai/o1",
-                "openai/o3",
-                "openai/o4",
-                "azure/o1",
-                "azure/o3",
-                "azure/o4",
-            ]
-        ):
-            assert (
-                self.max_completion_tokens
-            ), "`max_completion_tokens` must be set for o1/o3/o4 models"
-            request_dict["max_completion_tokens"] = self.max_completion_tokens
-            # o1/o3/o4 models don't support `max_tokens` (`max_completion_tokens` must be used instead),
-            # `temperature`, or `top_p`
+        if supports_reasoning(self.model):
+            # Reasoning (CoT-capable) models
+            model_params = get_supported_openai_params(self.model)
+            if "max_completion_tokens" in model_params:
+                if not (self.max_completion_tokens):
+                    raise ValueError(
+                        "`max_completion_tokens` must be set for reasoning (CoT-capable) models"
+                    )
+                request_dict["max_completion_tokens"] = self.max_completion_tokens
+            if "reasoning_effort" in model_params and self.reasoning_effort:
+                request_dict["reasoning_effort"] = self.reasoning_effort
             if self.temperature or self.top_p:
                 logger.info(
-                    "`temperature` and `top_p` parameters are ignored for o1/o3/o4 models."
+                    f"`temperature` and `top_p` parameters are ignored for reasoning models"
                 )
-            # Set reasoning effort if provided. Otherwise uses LiteLLM's default.
-            if self.reasoning_effort:
-                request_dict["reasoning_effort"] = self.reasoning_effort
         else:
+            # Non-reasoning models
             request_dict["max_tokens"] = self.max_tokens
             request_dict["temperature"] = self.temperature
             request_dict["top_p"] = self.top_p
@@ -945,6 +1072,7 @@ class DocumentLLM(_GenericLLMProcessor):
                     max_retries=max_retries_failed_request,
                     timeout=self.timeout,
                     stream=False,
+                    drop_params=drop_params,
                 )
             )
             if async_limiter:
@@ -961,6 +1089,36 @@ class DocumentLLM(_GenericLLMProcessor):
             llm_call_obj.response = answer
             usage.calls.append(llm_call_obj)  # record the call details (call finished)
             return answer, usage
+        except UnsupportedParamsError as e:
+            # Handle unsupported model parameters error
+            if (
+                not drop_params
+            ):  # only retry if we haven't already tried with drop_params
+                logger.error(f"Exception occurred while calling LLM API: {repr(e)}")
+                logger.info("Retrying the call with unsupported parameters dropped...")
+
+                # Recursively call with drop_params=True
+                return await self._query_llm(
+                    message=message,
+                    llm_call_obj=llm_call_obj,
+                    images=images,
+                    num_retries_failed_request=num_retries_failed_request,
+                    max_retries_failed_request=max_retries_failed_request,
+                    async_limiter=async_limiter,
+                    drop_params=True,
+                )
+            else:
+                # If drop_params was already True and we still got UnsupportedParamsError,
+                # fall through to regular error handling
+                logger.error(
+                    f"Exception occurred while calling LLM API with drop_params=True: {repr(e)}"
+                )
+                if self.fallback_llm:
+                    logger.info(
+                        "Call will be retried if retry params provided and/or a fallback LLM is configured."
+                    )
+                else:
+                    raise
         except Exception as e:
             # e.g. rate limit error
             logger.error(f"Exception occurred while calling LLM API: {repr(e)}")

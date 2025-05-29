@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Literal, TypeVar, get_args
 
 from jinja2 import Environment, Template, nodes
-from wtpsplit import SaT
+from wtpsplit_lite import SaT
 
 if TYPE_CHECKING:
     from contextgem.public.aspects import Aspect

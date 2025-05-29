@@ -178,10 +178,9 @@ ContextGem relies on these excellent open-source packages:
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
-- [wtpsplit](https://github.com/segment-any-text/wtpsplit): State-of-the-art text segmentation tool
+- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
 - [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
 - [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
-- [PyTorch](https://github.com/pytorch/pytorch): Industry-standard machine learning framework
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
 
 
