@@ -3415,22 +3415,18 @@ name = "wtpsplit-lite"
 version = "0.1.0"
 description = "wtpsplit with minimal dependencies"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = "<4.0,>=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "wtpsplit_lite-0.1.0-py3-none-any.whl", hash = "sha256:2cec86b5040cd97b75a54ac1224080c69e0730abac2ed760aa18ae5aa7bd5c00"},
+    {file = "wtpsplit_lite-0.1.0.tar.gz", hash = "sha256:d1c6075f3dcf4e444cc68508468c475d4afa763e6df023cd1cd2bdaa72f1d3d6"},
+]
 
 [package.dependencies]
 huggingface-hub = ">=0.25.2"
-numpy = ">=1.26.0"
-onnxruntime = ">=1.17.0"
+numpy = ">=1.0.0"
+onnxruntime = ">=1.13.1"
 tokenizers = ">=0.20"
-
-[package.source]
-type = "git"
-url = "https://github.com/SergiiShcherbak/wtpsplit-lite.git"
-reference = "main"
-resolved_reference = "316bf2814ce156663d0f7d15a1568c1aa49dfd53"
 
 [[package]]
 name = "yarl"
@@ -3575,4 +3571,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "9f486d9c8d5895c08d6ea1b782b9af66b59272ba7247711d51794142c44005e4"
+content-hash = "fdbc211a0c6162b339f5895a46a3caa94af7f43dc5e86fcd0a607d3948d9c7aa"
