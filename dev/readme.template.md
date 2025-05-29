@@ -59,6 +59,8 @@ Read more on the project [motivation](https://contextgem.dev/motivation.html) in
 pip install -U contextgem
 ```
 
+> **⚡ v0.5.0+**: ContextGem now installs 7.5x faster with minimal dependencies (no torch/transformers required), making it easier to integrate into existing ML environments.
+
 
 ## 🚀 Quick start
 
