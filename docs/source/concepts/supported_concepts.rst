@@ -32,5 +32,6 @@ ContextGem provides several types of concepts, each tailored for specific extrac
 - 📅 :doc:`DateConcept <date_concept>`: For extracting date objects
 - ⭐ :doc:`RatingConcept <rating_concept>`: For extracting numerical ratings within a defined scale
 - 📊 :doc:`JsonObjectConcept <json_object_concept>`: For extracting structured data with multiple fields
+- 🏷️ :doc:`LabelConcept <label_concept>`: For classification using predefined labels (multi-class or multi-label)
 
 This section provides detailed documentation for each concept type, including usage examples and best practices.

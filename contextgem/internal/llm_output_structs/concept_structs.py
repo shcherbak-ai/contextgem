@@ -17,15 +17,21 @@
 #
 
 """
-Module for computing structures used for validating LLM responses parsed as JSON during
-concept extraction from a document or aspect. Such structures must match the JSON schema specified in the relevant
-LLM prompt.
+Module for computing and defining structures used for validating LLM responses parsed as JSON during
+concept extraction from a document or aspect.
+
+This module contains:
+1. Dynamic structures that match the JSON schema specified in LLM prompts for concept extraction
+2. Static Pydantic models for validating specific concept types' extracted item values
+returned in LLM responses
+
+All structures ensure proper validation of LLM outputs according to the expected response formats.
 """
 
 from functools import lru_cache
 from typing import Any
 
-from pydantic import ConfigDict, RootModel, create_model
+from pydantic import BaseModel, ConfigDict, Field, RootModel, create_model
 
 from contextgem.internal.llm_output_structs.utils import _create_root_model
 from contextgem.internal.typings.aliases import NonEmptyStr, ReferenceDepth
@@ -111,3 +117,24 @@ def _get_concept_extraction_output_struct(
 
     DynamicRootModel = _create_root_model("DynamicRootModel", list[ConceptModel])
     return DynamicRootModel
+
+
+# Dedicated models for specific concept types' extracted item value validation
+
+
+class _LabelConceptItemValueModel(BaseModel):
+    """
+    Pydantic model for validating LabelConcept extracted item values from LLM responses.
+
+    This model validates the structure and constraints of label classification responses
+    where the LLM returns a dictionary containing a list of selected labels.
+
+    Expected structure: {"labels": [str, ...]} with at least one label.
+
+    :ivar labels: List of selected label strings. Must contain at least one item.
+    :type labels: list[str]
+    """
+
+    labels: list[str] = Field(..., min_length=1)
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)

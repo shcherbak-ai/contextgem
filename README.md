@@ -17,11 +17,14 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem)
+[![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit)](https://github.com/shcherbak-ai/contextgem/commits/main)
 
 <img src="https://contextgem.dev/_static/tab_solid.png" alt="ContextGem: 2nd Product of the week" width="250">
 <br/><br/>
 
 ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
+
+---
 
 
 ## 💎 Why ContextGem?
@@ -30,7 +33,7 @@ Most popular LLM frameworks for extracting structured data from documents requir
 
 ContextGem addresses this challenge by providing a flexible, intuitive framework that extracts structured data and insights from documents with minimal effort. Complex, most time-consuming parts are handled with **powerful abstractions**, eliminating boilerplate code and reducing development overhead.
 
-Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
+📖 Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
 
 
 ## ⭐ Key features
@@ -158,8 +161,9 @@ Read more on the project [motivation](https://contextgem.dev/motivation.html) in
 
 \* See [descriptions](https://contextgem.dev/motivation.html#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks.html) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
 
+## 💡 What you can build
 
-## 💡 With **minimal code**, you can:
+With **minimal code**, you can:
 
 - **Extract structured data** from documents (text, images)
 - **Identify and analyze key aspects** (topics, themes, categories) within documents ([learn more](https://contextgem.dev/aspects/aspects.html))
@@ -253,9 +257,9 @@ for item in anomalies_concept.extracted_items:
 
 ---
 
-See more examples in the documentation:
+### 📚 More Examples
 
-### Basic usage examples
+**Basic usage:**
 - [Aspect Extraction from Document](https://contextgem.dev/quickstart.html#aspect-extraction-from-document)
 - [Extracting Aspect with Sub-Aspects](https://contextgem.dev/quickstart.html#extracting-aspect-with-sub-aspects)
 - [Concept Extraction from Aspect](https://contextgem.dev/quickstart.html#concept-extraction-from-aspect)
@@ -263,7 +267,7 @@ See more examples in the documentation:
 - [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart.html#concept-extraction-from-document-vision)
 - [LLM chat interface](https://contextgem.dev/quickstart.html#lightweight-llm-chat-interface)
 
-### Advanced usage examples
+**Advanced usage:**
 - [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage.html#extracting-aspects-with-concepts)
 - [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage.html#extracting-aspects-and-concepts-from-a-document)
 - [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage.html#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
@@ -302,15 +306,13 @@ docx_text = converter.convert_to_text_format(
 
 ```
 
-Learn more about [DOCX converter features](https://contextgem.dev/converters/docx.html) in the documentation.
-
+📖 Learn more about [DOCX converter features](https://contextgem.dev/converters/docx.html) in the documentation.
 
 ## 🎯 Focused document analysis
 
 ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
 
-Read more on [how ContextGem works](https://contextgem.dev/how_it_works.html) in the documentation.
-
+📖 Read more on [how ContextGem works](https://contextgem.dev/how_it_works.html) in the documentation.
 
 ## 🤖 Supported LLMs
 
@@ -320,8 +322,7 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. o4-mini) and non-reasoning models (e.g. gpt-4.1)
 - **Simple API**: Unified interface for all LLMs with easy provider switching
 
-Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html), how to [configure LLMs](https://contextgem.dev/llms/llm_config.html), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods.html) in the documentation.
-
+📖 Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html), how to [configure LLMs](https://contextgem.dev/llms/llm_config.html), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods.html) in the documentation.
 
 ## ⚡ Optimizations
 
@@ -342,36 +343,35 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 - Transfer extraction results between systems
 - Persist pipeline and LLM configurations for later reuse
 
-Learn more about [serialization options](https://contextgem.dev/serialization.html) in the documentation.
-
+📖 Learn more about [serialization options](https://contextgem.dev/serialization.html) in the documentation.
 
 ## 📚 Documentation
 
-Full documentation is available at [contextgem.dev](https://contextgem.dev).
+📖 **Full documentation:** [contextgem.dev](https://contextgem.dev)
 
-A raw text version of the full documentation is available at [`docs/docs-raw-for-llm.txt`](https://github.com/shcherbak-ai/contextgem/blob/main/docs/docs-raw-for-llm.txt). This file is automatically generated and contains all documentation in a format optimized for LLM ingestion (e.g. for Q&A).
+📄 **Raw documentation for LLMs:** Available at [`docs/docs-raw-for-llm.txt`](https://github.com/shcherbak-ai/contextgem/blob/main/docs/docs-raw-for-llm.txt) - automatically generated, optimized for LLM ingestion.
 
-You can also explore the repository through [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem), an AI-powered conversational interface that provides visual architecture maps and natural language Q&A for the codebase.
+🤖 **AI-powered code exploration:** [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem) provides visual architecture maps and natural language Q&A for the codebase.
 
-For a history of changes, improvements, and bug fixes, see the [CHANGELOG](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md).
-
+📈 **Change history:** See the [CHANGELOG](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for version history, improvements, and bug fixes.
 
 ## 💬 Community
 
-If you have a feature request or a bug report, feel free to [open an issue](https://github.com/shcherbak-ai/contextgem/issues/new) on GitHub. If you'd like to discuss a topic or get general advice on using ContextGem for your project, start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
+🐛 **Found a bug or have a feature request?** [Open an issue](https://github.com/shcherbak-ai/contextgem/issues/new) on GitHub.
 
+💭 **Need help or want to discuss?** Start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
 
 ## 🤝 Contributing
 
-We welcome contributions from the community - whether it's fixing a typo or developing a completely new feature! To get started, please check out our [Contributor Guidelines](https://github.com/shcherbak-ai/contextgem/blob/main/CONTRIBUTING.md).
+We welcome contributions from the community - whether it's fixing a typo or developing a completely new feature! 
 
+📋 **Get started:** Check out our [Contributor Guidelines](https://github.com/shcherbak-ai/contextgem/blob/main/CONTRIBUTING.md).
 
 ## 🔐 Security
 
 This project is automatically scanned for security vulnerabilities using [CodeQL](https://codeql.github.com/). We also use [Snyk](https://snyk.io) as needed for supplementary dependency checks.
 
-See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
-
+🛡️ **Security policy:** See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
 
 ## 💖 Acknowledgements
 
@@ -388,17 +388,20 @@ ContextGem relies on these excellent open-source packages:
 
 ## 🌱 Support the project
 
-ContextGem is just getting started, and your support means the world to us! If you find ContextGem useful, the best way to help is by sharing it with others and giving the project a ⭐. Your feedback and contributions are what make this project grow!
+ContextGem is just getting started, and your support means the world to us! 
 
+⭐ **Star the project** if you find ContextGem useful  
+📢 **Share it** with others who might benefit  
+🔧 **Contribute** with feedback, issues, or code improvements
+
+Your engagement is what makes this project grow!
 
 ## 📄 License & Contact
 
-This project is licensed under the Apache 2.0 License - see the [LICENSE](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE) and [NOTICE](https://github.com/shcherbak-ai/contextgem/blob/main/NOTICE) files for details.
+**License:** Apache 2.0 License - see the [LICENSE](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE) and [NOTICE](https://github.com/shcherbak-ai/contextgem/blob/main/NOTICE) files for details.
 
-Copyright © 2025 [Shcherbak AI AS](https://shcherbak.ai), an AI engineering company building tools for AI/ML/NLP developers.
+**Copyright:** © 2025 [Shcherbak AI AS](https://shcherbak.ai), an AI engineering company building tools for AI/ML/NLP developers.
 
-Shcherbak AI is now part of Microsoft for Startups.
-
-[Connect with us on LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) for questions or collaboration ideas.
+**Connect:** [LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) for questions or collaboration ideas.
 
 Built with ❤️ in Oslo, Norway.

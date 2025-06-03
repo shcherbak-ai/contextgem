@@ -20,7 +20,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.82.0
+      - AsyncAzureOpenAI/Python 1.82.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -30,7 +30,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.82.0
+      - 1.82.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -52,7 +52,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "Hello! I''m ContextGem. How can I assist you today?", "refusal":
-        null, "role": "assistant"}}], "created": 1748457371, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1748886114, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
@@ -77,7 +77,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '276'
+      - '398'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -120,7 +120,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.82.0
+      - AsyncAzureOpenAI/Python 1.82.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -130,7 +130,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.82.0
+      - 1.82.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -151,21 +151,21 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "I\u2019m ContextGem. Is there something I can assist you with?",
-        "refusal": null, "role": "assistant"}}], "created": 1748457372, "id": "chatcmpl-DUMMY",
+        [], "content": "I\u2019m ContextGem. How can I assist you today?", "refusal":
+        null, "role": "assistant"}}], "created": 1748886116, "id": "chatcmpl-DUMMY",
         "model": "o1-2024-12-17", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_ded0d14823", "usage": {"completion_tokens": 36,
+        "system_fingerprint": "fp_ded0d14823", "usage": {"completion_tokens": 215,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        0, "reasoning_tokens": 192, "rejected_prediction_tokens": 0}, "prompt_tokens":
         23, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        59}}'
+        238}}'
     headers:
       Content-Length:
-      - '1261'
+      - '1251'
       Content-Type:
       - application/json
       Date:
@@ -177,7 +177,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1290'
+      - '2637'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -220,7 +220,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.82.0
+      - AsyncAzureOpenAI/Python 1.82.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -230,7 +230,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.82.0
+      - 1.82.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -246,26 +246,26 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "Hi, I''m ContextGem. How can I help you today?", "refusal":
-        null, "role": "assistant"}}], "created": 1748457374, "id": "chatcmpl-DUMMY",
-        "model": "o3-mini-2025-01-31", "object": "chat.completion", "prompt_filter_results":
+        [], "content": "I''m ContextGem. How can I help you today?", "refusal": null,
+        "role": "assistant"}}], "created": 1748886119, "id": "chatcmpl-DUMMY", "model":
+        "o3-mini-2025-01-31", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_ded0d14823", "usage": {"completion_tokens": 216,
+        "system_fingerprint": "fp_ded0d14823", "usage": {"completion_tokens": 342,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 192, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        0, "reasoning_tokens": 320, "rejected_prediction_tokens": 0}, "prompt_tokens":
         23, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        239}}'
+        365}}'
     headers:
       Content-Length:
-      - '1256'
+      - '1252'
       Content-Type:
       - application/json
       Date:
@@ -277,7 +277,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1632'
+      - '2363'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -320,7 +320,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.82.0
+      - AsyncAzureOpenAI/Python 1.82.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -330,7 +330,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.82.0
+      - 1.82.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -351,20 +351,20 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "I\u2019m ContextGem. How can I assist you today?", "refusal":
-        null, "role": "assistant"}}], "created": 1748457376, "id": "chatcmpl-DUMMY",
+        [], "content": "My name is ContextGem. How can I assist you today?", "refusal":
+        null, "role": "assistant"}}], "created": 1748886122, "id": "chatcmpl-DUMMY",
         "model": "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 95, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 64,
+        "system_fingerprint": null, "usage": {"completion_tokens": 160, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 23, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 118}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 183}}'
     headers:
       Content-Length:
-      - '1243'
+      - '1250'
       Content-Type:
       - application/json
       Date:
@@ -376,7 +376,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2144'
+      - '2156'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

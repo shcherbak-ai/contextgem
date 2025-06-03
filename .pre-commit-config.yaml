@@ -41,7 +41,7 @@ repos:
       - id: export-requirements
         name: Export requirements files
         entry: python
-        args: ["-c", "import subprocess; subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.main.txt', '--without-hashes']); subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.dev.txt', '--with', 'dev', '--without-hashes'])"]
+        args: ["-c", "import subprocess; subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.main.txt']); subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.dev.txt', '--with', 'dev'])"]
         language: python
         pass_filenames: false
         always_run: true

@@ -21,6 +21,7 @@ from contextgem.internal.llm_output_structs.aspect_structs import (
 )
 from contextgem.internal.llm_output_structs.concept_structs import (
     _get_concept_extraction_output_struct,
+    _LabelConceptItemValueModel,
 )
 from contextgem.internal.llm_output_structs.utils import _create_root_model
 
@@ -31,4 +32,5 @@ __all__ = [
     "_get_aspect_extraction_output_struct",
     # Concept structs
     "_get_concept_extraction_output_struct",
+    "_LabelConceptItemValueModel",
 ]

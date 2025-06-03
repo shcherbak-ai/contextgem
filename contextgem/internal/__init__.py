@@ -52,11 +52,13 @@ from contextgem.internal.items import (
     _IntegerItem,
     _IntegerOrFloatItem,
     _JsonObjectItem,
+    _LabelItem,
     _StringItem,
 )
 from contextgem.internal.llm_output_structs import (
     _get_aspect_extraction_output_struct,
     _get_concept_extraction_output_struct,
+    _LabelConceptItemValueModel,
 )
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings import (
@@ -119,6 +121,7 @@ __all__ = [
     # LLM output structs
     "_get_aspect_extraction_output_struct",
     "_get_concept_extraction_output_struct",
+    "_LabelConceptItemValueModel",
     # Typings
     "NonEmptyStr",
     "LLMRoleAny",
@@ -162,6 +165,7 @@ __all__ = [
     "_BooleanItem",
     "_JsonObjectItem",
     "_DateItem",
+    "_LabelItem",
     # Logging
     "logger",
     # Utils

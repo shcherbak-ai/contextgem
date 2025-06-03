@@ -104,7 +104,7 @@ To sign the agreement:
    pytest
    ```
 
-   Please note that we use pytest-vcr to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#vcr-cassette-management) section below for details.
+   Please note that we use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#vcr-cassette-management) section below for details.
 
 4. **Commit your changes** using Conventional Commits format:
    
@@ -171,7 +171,7 @@ By submitting issues or feature requests to this project, you acknowledge that t
 
 ### VCR Cassette Management
 
-We use pytest-vcr to record and replay HTTP interactions with LLM APIs. This allows tests to run without making actual API calls after the initial recording.
+We use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay HTTP interactions with LLM APIs. This allows tests to run without making actual API calls after the initial recording.
 
 #### When to Re-record Cassettes
 

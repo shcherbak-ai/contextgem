@@ -87,9 +87,10 @@ Provide your answer in only the following answer format (do not include backtick
 {% if add_justifications or add_references %}
 - Item object structure:
     -- value: Mandatory field holding the extracted item.
-        --- If a specific structure is provided for a concept under “Expected structure,” the extracted item value must follow that structure for all extracted items corresponding to that concept.
+        --- If a specific structure is provided for a concept under "Expected structure," the extracted item value must follow that structure for all extracted items corresponding to that concept.
         --- If a rating scale is provided for a concept under "Rating scale," the extracted item value must be within that scale.
-        --- If there are example items (“Extracted concept examples”), the extracted item value should follow the same style and formatting.
+        --- If available labels are provided for a concept under "Available labels," the extracted item value must be a list containing only labels from the predefined set. If none of the predefined labels apply, do not extract any items for that concept.
+        --- If there are example items ("Extracted concept examples"), the extracted item value should follow the same style and formatting.
     {% if output_language == "en" %}
         {% if data_type == "text" %}
         --- When extracting string values, translate them in English if the original language of the document is not English.
@@ -104,7 +105,7 @@ Provide your answer in only the following answer format (do not include backtick
         {% endif %}
     {% endif %}
     {% if add_justifications %}
-    -- justification: Mandatory field holding a justification of why the item was extracted for the concept. Ensure the justification is specific and directly ties the extracted item to the concept's defining features. Never reference the concept's ID in the justification.
+    -- justification: Mandatory field holding a justification of why the item was extracted for the concept. Ensure the justification is specific and directly ties the extracted item to the concept's defining features. Never reference the concept's ID or any of the structural IDs provided in this prompt (such as paragraph IDs like "P0", or sentence IDs like "P0-S0") in the justification.
         {% if justification_depth == "brief" %}
         --- Justification should be brief, i.e. highlight only the essential details.
         {% elif justification_depth == "balanced" %}
@@ -134,9 +135,10 @@ Provide your answer in only the following answer format (do not include backtick
     {% endif %}
 {% else %}
 - Item structure:
-    -- If a specific structure is provided for a concept under “Expected structure,” you must follow that structure for all extracted items corresponding to that concept.
+    -- If a specific structure is provided for a concept under "Expected structure," you must follow that structure for all extracted items corresponding to that concept.
     -- If a rating scale is provided for a concept under "Rating scale," the extracted item value must be within that scale.
-    -- If there are example items (“Extracted concept examples”), try to follow the same style and formatting for your extracted items.
+    -- If available labels are provided for a concept under "Available labels," the extracted item value must be a list containing only labels from the predefined set. If none of the predefined labels apply, do not extract any items for that concept.
+    -- If there are example items ("Extracted concept examples"), try to follow the same style and formatting for your extracted items.
     {% if output_language == "en" %}
         {% if data_type == "text" %}
     -- When extracting string values, translate them in English if the original language of the document is not English.
@@ -162,7 +164,9 @@ Provide your answer in only the following answer format (do not include backtick
 
 - Handling missing or multiple items:
     -- If a concept is not mentioned at all, your output should still contain an entry for that concept with an empty "extracted_items" array.
-    -- If multiple items are found for a concept, include each as a separate entry within the "extracted_items" array.
+    -- For concepts that have an "Available labels:" section: if none of the predefined labels apply to the content, leave the "extracted_items" array empty.
+    -- For concepts that have an "Available labels:" section: if multiple labels apply to the same instance or context, include them all in a single extracted item with multiple labels in the "labels" array (e.g., {"labels": ["label1", "label2"]}). Only create multiple extracted items if there are genuinely distinct instances or contexts that warrant separate classification.
+    -- For concepts that do not have an "Available labels:" section: if multiple items are found for a concept, include each as a separate entry within the "extracted_items" array.
 
 - No additional text:
     -- Do not include any headers, explanations, or text outside of the JSON array.
@@ -232,6 +236,19 @@ Expected structure:
 
 Rating scale:
 Based on the concept description, assign and output a rating on the scale from {{ concept_data.rating_scale.start }} (inclusive) to {{ concept_data.rating_scale.end }} (inclusive).
+    {% endif %}
+    {% if concept_data.labels %}
+
+Available labels:
+        {% if concept_data.classification_type == "multi_class" %}
+Based on the concept description, assign exactly one label from the following list of available labels:
+{{ concept_data._format_labels_in_prompt }}
+The output must be an object with a mandatory field "labels" mapped to an array containing only the selected label, e.g. {"labels": ["label1"]}.
+        {% else %}
+Based on the concept description, assign one or more labels from the following list of available labels:
+{{ concept_data._format_labels_in_prompt }}
+The output must be an object with a mandatory field "labels" mapped to an array containing only the selected labels, e.g. {"labels": ["label1", "label2"]}.
+        {% endif %}
     {% endif %}
     {% if concept_data.singular_occurrence %}
 

@@ -20,7 +20,7 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
@@ -36,6 +36,7 @@ from contextgem.public import (
     JsonObjectClassStruct,
     JsonObjectConcept,
     JsonObjectExample,
+    LabelConcept,
     LLMPricing,
     NumericalConcept,
     Paragraph,
@@ -58,6 +59,7 @@ __all__ = [
     "RatingConcept",
     "JsonObjectConcept",
     "DateConcept",
+    "LabelConcept",
     # Documents
     "Document",
     # Pipelines
