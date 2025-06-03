@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.6.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.6.0) - 2025-06-03
+### Added
+- LabelConcept - a classification concept type that categorizes content using predefined labels.
+
 ## [0.5.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.5.0) - 2025-05-29
 ### Fixed
 - Params handling for reasoning (CoT-capable) models other than OpenAI o-series. Enabled automatic retry of LLM calls with dropping unsupported params if such unsupported params were set for the model. Improved handling and validation of LLM call params.
