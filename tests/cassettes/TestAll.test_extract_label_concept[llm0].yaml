@@ -1,0 +1,1918 @@
+interactions:
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find a list
+      of document paragraphs and a list of concepts.\\n\\nYour task is to:\\n1. Read
+      through the document paragraphs provided.\\n    - Each paragraph is identified
+      by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.), followed by the
+      full text of the paragraph and, optionally, additional information about the
+      paragraph, which may be helpful during your analysis.\\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\\n2. Identify
+      whether each concept in the concepts list is addressed within the document paragraphs.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n4. Produce a
+      JSON array containing your extracted data, in the provided format.\\n\\nIf a
+      concept is not addressed in the document paragraphs, you must still include
+      an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array of objects with mandatory fields \\\"value\\\", \\\"justification\\\",
+      and \\\"reference_paragraph_ids\\\". If the concept is not found or there are
+      no items to extract, leave the array empty ([]).\\n        --- Guidance regarding
+      the possible amount of extracted items for the concept is specified under \\\"Amount
+      of extracted items\\\". Each extracted item's object, even if there is only
+      one, must be part of the \\\"extracted_items\\\" array.\\n\\n- Item object structure:\\n
+      \   -- value: Mandatory field holding the extracted item.\\n        --- If a
+      specific structure is provided for a concept under \\\"Expected structure,\\\"
+      the extracted item value must follow that structure for all extracted items
+      corresponding to that concept.\\n        --- If a rating scale is provided for
+      a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- justification: Mandatory field holding a justification of why the item
+      was extracted for the concept. Ensure the justification is specific and directly
+      ties the extracted item to the concept's defining features. Never reference
+      the concept's ID or any of the structural IDs provided in this prompt (such
+      as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\") in the
+      justification.\\n        --- Justification should be brief, i.e. highlight only
+      the essential details.\\n        --- Justification should be no longer than
+      2 sentences.\\n        --- Justification should be in English.\\n    -- reference_paragraph_ids:
+      Mandatory field holding the IDs of the document paragraphs based on which the
+      item was extracted for the concept. Ensure such paragraphs directly tie the
+      extracted item to the concept's defining features. Each paragraph ID must match
+      exactly the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\",
+      etc.).\\n\\n- Types of extracted items:\\n    -- Each concept specifies an \\\"extracted
+      item type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that
+      the value of each of the extracted items for the concept strictly matches that
+      type. Python types are provided (e.g., str for string, int for integer, float
+      for floating-point number, dict for object, etc.).\\n    -- Do not introduce
+      any extra fields or modify the specified structure.\\n\\n- Handling missing
+      or multiple items:\\n    -- If a concept is not mentioned at all, your output
+      should still contain an entry for that concept with an empty \\\"extracted_items\\\"
+      array.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if none of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
+      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
+      ...,\\n                \\\"justification\\\": str,\\n                \\\"reference_paragraph_ids\\\":
+      [\\n                    str,\\n                    ...\\n                ]\\n
+      \           },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Document Type\\n\\nConcept description:\\nClassify
+      the type of legal document\\n\\nAvailable labels:\\nBased on the concept description,
+      assign exactly one label from the following list of available labels:\\n[\\\"NDA\\\",
+      \\\"Consultancy Agreement\\\", \\\"Privacy Policy\\\", \\\"Employment Contract\\\",
+      \\\"Other\\\"]\\nThe output must be an object with a mandatory field \\\"labels\\\"
+      mapped to an array containing only the selected label, e.g. {\\\"labels\\\":
+      [\\\"label1\\\"]}.\\n\\nAmount of extracted items: This concept may have zero
+      or one extracted item, never multiple items.\\n\\nConcept extracted item type:
+      dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT PARAGRAPHS:\\n```\\n- Paragraph ID:
+      P0\\nParagraph text: Non-Disclosure Agreement (NDA)\\n```\\n\\n```\\n- Paragraph
+      ID: P1\\nParagraph text: This Non-Disclosure Agreement (the \\\"Agreement\\\")
+      is made and entered into as of July 16, 2024, by and between:\\n```\\n\\n```\\n-
+      Paragraph ID: P2\\nParagraph text: Party A:\\n```\\n\\n```\\n- Paragraph ID:
+      P3\\nParagraph text: _____\\n```\\n\\n```\\n- Paragraph ID: P4\\nParagraph text:
+      _____\\n```\\n\\n```\\n- Paragraph ID: P5\\nParagraph text: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P6\\nParagraph text: Contact: _____\\n```\\n\\n```\\n- Paragraph
+      ID: P7\\nParagraph text: Phone: _____\\n```\\n\\n```\\n- Paragraph ID: P8\\nParagraph
+      text: Email: _____\\n```\\n\\n```\\n- Paragraph ID: P9\\nParagraph text: Party
+      B:\\n```\\n\\n```\\n- Paragraph ID: P10\\nParagraph text: Example.Com LLC\\n```\\n\\n```\\n-
+      Paragraph ID: P11\\nParagraph text: 5678 Random Drive\\n```\\n\\n```\\n- Paragraph
+      ID: P12\\nParagraph text: New York, NY 00000\\n```\\n\\n```\\n- Paragraph ID:
+      P13\\nParagraph text: Contact: Jane Doe, Managing Partner\\n```\\n\\n```\\n-
+      Paragraph ID: P14\\nParagraph text: Phone: (012) 345-6789\\n```\\n\\n```\\n-
+      Paragraph ID: P15\\nParagraph text: Email: jane.doe@example.com\\n```\\n\\n```\\n-
+      Paragraph ID: P16\\nParagraph text: 1. Purpose:\\n```\\n\\n```\\n- Paragraph
+      ID: P17\\nParagraph text: The purpose of this Agreement is to protect the confidential
+      information that may be disclosed between the parties during discussions and
+      engagements regarding potential business collaborations and partnerships.\\n```\\n\\n```\\n-
+      Paragraph ID: P18\\nParagraph text: 2. Definition of Confidential Information:\\n```\\n\\n```\\n-
+      Paragraph ID: P19\\nParagraph text: For purposes of this Agreement, \\\"Confidential
+      Information\\\" means any and all non-public information, conveyed in all forms,
+      whether in oral, written, electronic, or other form or media, whether or not
+      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
+      been or may be disclosed to, accessed by, or observed by Receiving Party, which
+      (i) has actual or potential economic value by virtue of not being generally
+      known to, and not being readily ascertainable by proper means by, other persons
+      who can obtain economic value from its disclosure or use, or (ii) is subject
+      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n```\\n\\n```\\n-
+      Paragraph ID: P20\\nParagraph text: Confidential Information includes, but is
+      not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.\\n```\\n\\n```\\n-
+      Paragraph ID: P21\\nParagraph text: Confidential Information shall not include
+      information that: (a) is or becomes generally available to the public other
+      than as a result of disclosure by Receiving Party or its Representatives; (b)
+      was available to Receiving Party on a non-confidential basis prior to its disclosure
+      by Disclosing Party; (c) becomes available to Receiving Party on a non-confidential
+      basis from a person other than Disclosing Party who is not otherwise bound by
+      a confidentiality obligation to Disclosing Party; or (d) was independently developed
+      by Receiving Party without reference to or use of any Confidential Information.
+      The name of the dog of the Receiving Party is Bob.\\n```\\n\\n```\\n- Paragraph
+      ID: P22\\nParagraph text: The designation of information as Confidential Information
+      shall not be determinative of whether such information constitutes a trade secret
+      under applicable law. All Confidential Information shall remain the exclusive
+      property of Disclosing Party, and Receiving Party shall have no rights, by license
+      or otherwise, to use the Confidential Information except as expressly provided
+      herein.\\n```\\n\\n```\\n- Paragraph ID: P23\\nParagraph text: 3. Obligations
+      of Receiving Party:\\n```\\n\\n```\\n- Paragraph ID: P24\\nParagraph text: The
+      party receiving Confidential Information (\\\"Receiving Party\\\") shall:\\n```\\n\\n```\\n-
+      Paragraph ID: P25\\nParagraph text: a. Maintain the confidentiality of the Confidential
+      Information and not disclose it to any third party without the prior written
+      consent of the Disclosing Party.\\n```\\n\\n```\\n- Paragraph ID: P26\\nParagraph
+      text: b. Use the Confidential Information solely for the purpose of evaluating
+      or engaging in the potential business collaboration.\\n```\\n\\n```\\n- Paragraph
+      ID: P27\\nParagraph text: c. Take all necessary precautions to protect the confidentiality
+      of the Confidential Information, which shall be no less than the precautions
+      it takes to protect its own confidential information.\\n```\\n\\n```\\n- Paragraph
+      ID: P28\\nParagraph text: 4. Exclusions from Confidential Information:\\n```\\n\\n```\\n-
+      Paragraph ID: P29\\nParagraph text: Confidential Information does not include
+      information that:\\n```\\n\\n```\\n- Paragraph ID: P30\\nParagraph text: a.
+      Is or becomes publicly known through no wrongful act of the Receiving Party.\\n```\\n\\n```\\n-
+      Paragraph ID: P31\\nParagraph text: b. Is already known to the Receiving Party
+      at the time of disclosure.\\n```\\n\\n```\\n- Paragraph ID: P32\\nParagraph
+      text: c. Is lawfully received from a third party without breach of this Agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P33\\nParagraph text: d. Is independently developed by the Receiving
+      Party without use of or reference to the Disclosing Party's Confidential Information.\\n```\\n\\n```\\n-
+      Paragraph ID: P34\\nParagraph text: 6. Return of Materials:\\n```\\n\\n```\\n-
+      Paragraph ID: P35\\nParagraph text: Upon termination of this Agreement or upon
+      request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n```\\n\\n```\\n- Paragraph ID: P36\\nParagraph text: 5. Liability:\\n```\\n\\n```\\n-
+      Paragraph ID: P37\\nParagraph text: a. Total Liability Cap:\\n```\\n\\n```\\n-
+      Paragraph ID: P38\\nParagraph text: The total liability of either party for
+      any and all claims arising out of or related to this Agreement, whether in contract,
+      tort, or otherwise, shall not exceed the greater of (i) $100,000 or (ii) the
+      total amount paid by the Receiving Party to the Disclosing Party under any separate
+      business agreement between the parties during the twelve (12) months preceding
+      the event giving rise to the claim. This limitation of liability is cumulative
+      and not per incident.\\n```\\n\\n```\\n- Paragraph ID: P39\\nParagraph text:
+      b. Penalties for Breach:\\n```\\n\\n```\\n- Paragraph ID: P40\\nParagraph text:
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n- Paragraph
+      ID: P41\\nParagraph text: 7. No License:\\n```\\n\\n```\\n- Paragraph ID: P42\\nParagraph
+      text: Nothing in this Agreement shall be construed as granting any rights to
+      the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
+      Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P43\\nParagraph text: 8. Governing Law and Disputes:\\n```\\n\\n```\\n-
+      Paragraph ID: P44\\nParagraph text: This Agreement shall be governed by and
+      construed in accordance with the laws of the State of California, without regard
+      to its conflict of law principles.\\n```\\n\\n```\\n- Paragraph ID: P45\\nParagraph
+      text: All disputes shall be resolved by the courts of the State of California.
+      This Agreement shall remain in effect for a period of five (5) years from the
+      date of signing this agreement.\\n```\\n\\n```\\n- Paragraph ID: P46\\nParagraph
+      text: 9. Miscellaneous:\\n```\\n\\n```\\n- Paragraph ID: P47\\nParagraph text:
+      a. This Agreement constitutes the entire agreement between the parties with
+      respect to the subject matter hereof and supersedes all prior or contemporaneous
+      oral or written agreements concerning such subject matter.\\n```\\n\\n```\\n-
+      Paragraph ID: P48\\nParagraph text: b. Any amendments or modifications to this
+      Agreement must be made in writing and signed by both parties.\\n```\\n\\n```\\n-
+      Paragraph ID: P49\\nParagraph text: c. If any provision of this Agreement is
+      found to be unenforceable, the remainder shall be enforced as fully as possible
+      and the unenforceable provision shall be deemed modified to the limited extent
+      required to permit its enforcement in a manner most closely representing the
+      intention of the parties.\\n```\\n\\n```\\n- Paragraph ID: P50\\nParagraph text:
+      d. The Disclosing Party shall be a good person to execute this contract.\\n```\\n\\n```\\n-
+      Paragraph ID: P51\\nParagraph text: IN WITNESS WHEREOF, the parties hereto have
+      executed this Non-Disclosure Agreement as of the date first above written.\\n```\\n\\n```\\n-
+      Paragraph ID: P52\\nParagraph text: _____\\n```\\n\\n```\\n- Paragraph ID: P53\\nParagraph
+      text: By: ___________________________\\n```\\n\\n```\\n- Paragraph ID: P54\\nParagraph
+      text: Name: _____\\n```\\n\\n```\\n- Paragraph ID: P55\\nParagraph text: Title:
+      _____\\n```\\n\\n```\\n- Paragraph ID: P56\\nParagraph text: Date: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P57\\nParagraph text: Example.Com LLC\\n```\\n\\n```\\n- Paragraph
+      ID: P58\\nParagraph text: By: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P59\\nParagraph text: Name: Jane Doe\\n```\\n\\n```\\n- Paragraph
+      ID: P60\\nParagraph text: Title: Managing Partner\\n```\\n\\n```\\n- Paragraph
+      ID: P61\\nParagraph text: Date: ___________________________\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '20765'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.82.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.82.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": {\"labels\": [\"NDA\"]},\n                \"justification\":
+        \"The document is explicitly titled ''Non-Disclosure Agreement (NDA)'' and
+        repeatedly refers to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
+        [\"P0\", \"P1\", \"P51\"]\n            }\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1748886068, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 91,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        4227, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        4318}}'
+    headers:
+      Content-Length:
+      - '1634'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '1583'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find a list
+      of document paragraphs (including sentences) and a list of concepts.\\n\\nYour
+      task is to:\\n1. Read through the provided document paragraphs and their sentences.\\n
+      \   - Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\",
+      \\\"P1\\\", etc.), optionally followed by additional information about the paragraph,
+      which may be helpful during your analysis.\\n    - Each paragraph includes sentences,
+      each identified by a sentence ID (for example, \\\"P0-S0\\\", \\\"P0-S1\\\",
+      etc.), followed by the full text of the sentence and, optionally, additional
+      information about the sentence, which may be helpful during your analysis.\\n
+      \   - Note that paragraphs are listed in the same order they appear in the original
+      document.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document paragraphs.\\n3. For each concept that appears, extract
+      zero or more items relevant to that concept. The item format and structure are
+      specified for each concept.\\n4. Produce a JSON array containing your extracted
+      data, in the provided format.\\n\\nIf a concept is not addressed in the document
+      paragraphs, you must still include an entry in the final JSON output but with
+      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
+      Output format:\\nProvide your answer in only the following answer format (do
+      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
+      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
+      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
+      \   -- The value of \\\"extracted_items\\\" must be an array of objects with
+      mandatory fields \\\"value\\\", \\\"justification\\\", and \\\"reference_paragraphs\\\".
+      If the concept is not found or there are no items to extract, leave the array
+      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
+      items for the concept is specified under \\\"Amount of extracted items\\\".
+      Each extracted item's object, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n        --- The value of \\\"reference_paragraphs\\\"
+      must be an array of objects with mandatory fields \\\"reference_paragraph_id\\\",
+      which holds the provided ID of the reference paragraph, and \\\"reference_sentence_ids\\\",
+      which holds the provided IDs of the reference sentences within the paragraph.
+      Note that not every sentence in the paragraph necessarily serves as a relevant
+      reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
+      the extracted item.\\n        --- If a specific structure is provided for a
+      concept under \\\"Expected structure,\\\" the extracted item value must follow
+      that structure for all extracted items corresponding to that concept.\\n        ---
+      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
+      extracted item value must be within that scale.\\n        --- If available labels
+      are provided for a concept under \\\"Available labels,\\\" the extracted item
+      value must be a list containing only labels from the predefined set. If none
+      of the predefined labels apply, do not extract any items for that concept.\\n
+      \       --- If there are example items (\\\"Extracted concept examples\\\"),
+      the extracted item value should follow the same style and formatting.\\n        ---
+      When extracting string values, translate them in English if the original language
+      of the document is not English.\\n    -- justification: Mandatory field holding
+      a justification of why the item was extracted for the concept. Ensure the justification
+      is specific and directly ties the extracted item to the concept's defining features.
+      Never reference the concept's ID or any of the structural IDs provided in this
+      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
+      in the justification.\\n        --- Justification should be brief, i.e. highlight
+      only the essential details.\\n        --- Justification should be no longer
+      than 2 sentences.\\n        --- Justification should be in English.\\n    --
+      reference_paragraphs: An array of objects for each paragraph based on which
+      the item was extracted for the concept. Each object should include:\\n        ---
+      reference_paragraph_id: Mandatory field holding the provided ID of the reference
+      paragraph. Each paragraph ID must match exactly the provided ID for the paragraph
+      (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n        --- reference_sentence_ids:
+      Mandatory field holding an array of the provided IDs of the sentences within
+      the paragraph, based on which the item was extracted for the concept. Each sentence
+      ID must match exactly the provided ID for the sentence (for example, \\\"P0-S0\\\",
+      \\\"P0-S2\\\", etc.).\\n\\n- Types of extracted items:\\n    -- Each concept
+      specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
+      item type\\\"). Ensure that the value of each of the extracted items for the
+      concept strictly matches that type. Python types are provided (e.g., str for
+      string, int for integer, float for floating-point number, dict for object, etc.).\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- For concepts that have an \\\"Available
+      labels:\\\" section: if none of the predefined labels apply to the content,
+      leave the \\\"extracted_items\\\" array empty.\\n    -- For concepts that have
+      an \\\"Available labels:\\\" section: if multiple labels apply to the same instance
+      or context, include them all in a single extracted item with multiple labels
+      in the \\\"labels\\\" array (e.g., {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}).
+      Only create multiple extracted items if there are genuinely distinct instances
+      or contexts that warrant separate classification.\\n    -- For concepts that
+      do not have an \\\"Available labels:\\\" section: if multiple items are found
+      for a concept, include each as a separate entry within the \\\"extracted_items\\\"
+      array.\\n\\n- No additional text:\\n    -- Do not include any headers, explanations,
+      or text outside of the JSON array.\\n    -- Do not wrap your JSON response in
+      backticks or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
+      str,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
+      \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
+      [\\n                            str,\\n                            ...\\n                        ]\\n
+      \                   },\\n                    ...\\n                ]\\n            },\\n
+      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Content Topics\\n\\nConcept description:\\nIdentify
+      all relevant topics covered in this legal document\\n\\nAvailable labels:\\nBased
+      on the concept description, assign one or more labels from the following list
+      of available labels:\\n[\\\"Confidentiality\\\", \\\"Technology\\\", \\\"Finance\\\",
+      \\\"Legal Compliance\\\", \\\"Third Party Relations\\\", \\\"Contract Terms\\\"]\\nThe
+      output must be an object with a mandatory field \\\"labels\\\" mapped to an
+      array containing only the selected labels, e.g. {\\\"labels\\\": [\\\"label1\\\",
+      \\\"label2\\\"]}.\\n\\nAmount of extracted items: This concept may have zero,
+      one, or multiple extracted items.\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\\n```\\n- Paragraph ID: P0\\nParagraph sentences:\\n
+      \   -- Sentence ID: P0-S0\\n    Sentence text: Non-Disclosure Agreement (NDA)\\n```\\n\\n```\\n-
+      Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
+      text: This Non-Disclosure Agreement (the \\\"Agreement\\\") is made and entered
+      into as of July 16, 2024, by and between:\\n```\\n\\n```\\n- Paragraph ID: P2\\nParagraph
+      sentences:\\n    -- Sentence ID: P2-S0\\n    Sentence text: Party A:\\n```\\n\\n```\\n-
+      Paragraph ID: P3\\nParagraph sentences:\\n    -- Sentence ID: P3-S0\\n    Sentence
+      text: _____\\n```\\n\\n```\\n- Paragraph ID: P4\\nParagraph sentences:\\n    --
+      Sentence ID: P4-S0\\n    Sentence text: _____\\n```\\n\\n```\\n- Paragraph ID:
+      P5\\nParagraph sentences:\\n    -- Sentence ID: P5-S0\\n    Sentence text: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P6\\nParagraph sentences:\\n    -- Sentence ID: P6-S0\\n    Sentence
+      text: Contact: _____\\n```\\n\\n```\\n- Paragraph ID: P7\\nParagraph sentences:\\n
+      \   -- Sentence ID: P7-S0\\n    Sentence text: Phone: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P8\\nParagraph sentences:\\n    -- Sentence ID: P8-S0\\n    Sentence
+      text: Email: _____\\n```\\n\\n```\\n- Paragraph ID: P9\\nParagraph sentences:\\n
+      \   -- Sentence ID: P9-S0\\n    Sentence text: Party B:\\n```\\n\\n```\\n- Paragraph
+      ID: P10\\nParagraph sentences:\\n    -- Sentence ID: P10-S0\\n    Sentence text:
+      Example.Com LLC\\n```\\n\\n```\\n- Paragraph ID: P11\\nParagraph sentences:\\n
+      \   -- Sentence ID: P11-S0\\n    Sentence text: 5678 Random Drive\\n```\\n\\n```\\n-
+      Paragraph ID: P12\\nParagraph sentences:\\n    -- Sentence ID: P12-S0\\n    Sentence
+      text: New York, NY 00000\\n```\\n\\n```\\n- Paragraph ID: P13\\nParagraph sentences:\\n
+      \   -- Sentence ID: P13-S0\\n    Sentence text: Contact: Jane Doe, Managing
+      Partner\\n```\\n\\n```\\n- Paragraph ID: P14\\nParagraph sentences:\\n    --
+      Sentence ID: P14-S0\\n    Sentence text: Phone: (012) 345-6789\\n```\\n\\n```\\n-
+      Paragraph ID: P15\\nParagraph sentences:\\n    -- Sentence ID: P15-S0\\n    Sentence
+      text: Email: jane.doe@example.com\\n```\\n\\n```\\n- Paragraph ID: P16\\nParagraph
+      sentences:\\n    -- Sentence ID: P16-S0\\n    Sentence text: 1. Purpose:\\n```\\n\\n```\\n-
+      Paragraph ID: P17\\nParagraph sentences:\\n    -- Sentence ID: P17-S0\\n    Sentence
+      text: The purpose of this Agreement is to protect the confidential information
+      that may be disclosed between the parties during discussions and engagements
+      regarding potential business collaborations and partnerships.\\n```\\n\\n```\\n-
+      Paragraph ID: P18\\nParagraph sentences:\\n    -- Sentence ID: P18-S0\\n    Sentence
+      text: 2. Definition of Confidential Information:\\n```\\n\\n```\\n- Paragraph
+      ID: P19\\nParagraph sentences:\\n    -- Sentence ID: P19-S0\\n    Sentence text:
+      For purposes of this Agreement, \\\"Confidential Information\\\" means any and
+      all non-public information, conveyed in all forms, whether in oral, written,
+      electronic, or other form or media, whether or not marked, designated, or otherwise
+      identified as \\\"confidential,\\\" that has been or may be disclosed to, accessed
+      by, or observed by Receiving Party, which (i) has actual or potential economic
+      value by virtue of not being generally known to, and not being readily ascertainable
+      by proper means by, other persons who can obtain economic value from its disclosure
+      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
+      its secrecy and confidentiality.\\n```\\n\\n```\\n- Paragraph ID: P20\\nParagraph
+      sentences:\\n    -- Sentence ID: P20-S0\\n    Sentence text: Confidential Information
+      includes, but is not limited to, the following categories: (1) business information
+      (business plans, strategies, and models), (2) technical information (technical
+      specifications and documentation, research and development activities), (3)
+      customer and market information (customer lists and contact information, sales
+      histories and patterns), (4) personnel and internal information (employee lists
+      and contact information, employment agreements and personnel files), (5) intellectual
+      property (trade secrets and know-how, patents and patent applications, copyrights
+      and copyright applications, trademarks and trademark applications), (6) strategic
+      information (merger and acquisition plans, competitive analyses and strategies).\\n
+      \   -- Sentence ID: P20-S1\\n    Sentence text: Software code shall also be
+      included into the confidential information.\\n```\\n\\n```\\n- Paragraph ID:
+      P21\\nParagraph sentences:\\n    -- Sentence ID: P21-S0\\n    Sentence text:
+      Confidential Information shall not include information that:\\n    -- Sentence
+      ID: P21-S1\\n    Sentence text: (a) is or becomes generally available to the
+      public other than as a result of disclosure by Receiving Party or its Representatives;\\n
+      \   -- Sentence ID: P21-S2\\n    Sentence text: (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;\\n
+      \   -- Sentence ID: P21-S3\\n    Sentence text: (c) becomes available to Receiving
+      Party on a non-confidential basis from a person other than Disclosing Party
+      who is not otherwise bound by a confidentiality obligation to Disclosing Party;
+      or (d) was independently developed by Receiving Party without reference to or
+      use of any Confidential Information.\\n    -- Sentence ID: P21-S4\\n    Sentence
+      text: The name of the dog of the Receiving Party is Bob.\\n```\\n\\n```\\n-
+      Paragraph ID: P22\\nParagraph sentences:\\n    -- Sentence ID: P22-S0\\n    Sentence
+      text: The designation of information as Confidential Information shall not be
+      determinative of whether such information constitutes a trade secret under applicable
+      law.\\n    -- Sentence ID: P22-S1\\n    Sentence text: All Confidential Information
+      shall remain the exclusive property of Disclosing Party, and Receiving Party
+      shall have no rights, by license or otherwise, to use the Confidential Information
+      except as expressly provided herein.\\n```\\n\\n```\\n- Paragraph ID: P23\\nParagraph
+      sentences:\\n    -- Sentence ID: P23-S0\\n    Sentence text: 3. Obligations
+      of Receiving Party:\\n```\\n\\n```\\n- Paragraph ID: P24\\nParagraph sentences:\\n
+      \   -- Sentence ID: P24-S0\\n    Sentence text: The party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:\\n```\\n\\n```\\n- Paragraph ID:
+      P25\\nParagraph sentences:\\n    -- Sentence ID: P25-S0\\n    Sentence text:
+      a. Maintain the confidentiality of the Confidential Information and not disclose
+      it to any third party without the prior written consent of the Disclosing Party.\\n```\\n\\n```\\n-
+      Paragraph ID: P26\\nParagraph sentences:\\n    -- Sentence ID: P26-S0\\n    Sentence
+      text: b. Use the Confidential Information solely for the purpose of evaluating
+      or engaging in the potential business collaboration.\\n```\\n\\n```\\n- Paragraph
+      ID: P27\\nParagraph sentences:\\n    -- Sentence ID: P27-S0\\n    Sentence text:
+      c. Take all necessary precautions to protect the confidentiality of the Confidential
+      Information, which shall be no less than the precautions it takes to protect
+      its own confidential information.\\n```\\n\\n```\\n- Paragraph ID: P28\\nParagraph
+      sentences:\\n    -- Sentence ID: P28-S0\\n    Sentence text: 4. Exclusions from
+      Confidential Information:\\n```\\n\\n```\\n- Paragraph ID: P29\\nParagraph sentences:\\n
+      \   -- Sentence ID: P29-S0\\n    Sentence text: Confidential Information does
+      not include information that:\\n```\\n\\n```\\n- Paragraph ID: P30\\nParagraph
+      sentences:\\n    -- Sentence ID: P30-S0\\n    Sentence text: a. Is or becomes
+      publicly known through no wrongful act of the Receiving Party.\\n```\\n\\n```\\n-
+      Paragraph ID: P31\\nParagraph sentences:\\n    -- Sentence ID: P31-S0\\n    Sentence
+      text: b. Is already known to the Receiving Party at the time of disclosure.\\n```\\n\\n```\\n-
+      Paragraph ID: P32\\nParagraph sentences:\\n    -- Sentence ID: P32-S0\\n    Sentence
+      text: c. Is lawfully received from a third party without breach of this Agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P33\\nParagraph sentences:\\n    -- Sentence ID: P33-S0\\n    Sentence
+      text: d. Is independently developed by the Receiving Party without use of or
+      reference to the Disclosing Party's Confidential Information.\\n```\\n\\n```\\n-
+      Paragraph ID: P34\\nParagraph sentences:\\n    -- Sentence ID: P34-S0\\n    Sentence
+      text: 6. Return of Materials:\\n```\\n\\n```\\n- Paragraph ID: P35\\nParagraph
+      sentences:\\n    -- Sentence ID: P35-S0\\n    Sentence text: Upon termination
+      of this Agreement or upon request, the Receiving Party shall return all materials
+      containing Confidential Information to the Disclosing Party or destroy them,
+      at the Disclosing Party's discretion.\\n```\\n\\n```\\n- Paragraph ID: P36\\nParagraph
+      sentences:\\n    -- Sentence ID: P36-S0\\n    Sentence text: 5. Liability:\\n```\\n\\n```\\n-
+      Paragraph ID: P37\\nParagraph sentences:\\n    -- Sentence ID: P37-S0\\n    Sentence
+      text: a.\\n    -- Sentence ID: P37-S1\\n    Sentence text: Total Liability Cap:\\n```\\n\\n```\\n-
+      Paragraph ID: P38\\nParagraph sentences:\\n    -- Sentence ID: P38-S0\\n    Sentence
+      text: The total liability of either party for any and all claims arising out
+      of or related to this Agreement, whether in contract, tort, or otherwise, shall
+      not exceed the greater of (i) $100,000 or (ii) the total amount paid by the
+      Receiving Party to the Disclosing Party under any separate business agreement
+      between the parties during the twelve (12) months preceding the event giving
+      rise to the claim.\\n    -- Sentence ID: P38-S1\\n    Sentence text: This limitation
+      of liability is cumulative and not per incident.\\n```\\n\\n```\\n- Paragraph
+      ID: P39\\nParagraph sentences:\\n    -- Sentence ID: P39-S0\\n    Sentence text:
+      b. Penalties for Breach:\\n```\\n\\n```\\n- Paragraph ID: P40\\nParagraph sentences:\\n
+      \   -- Sentence ID: P40-S0\\n    Sentence text: In the event of a breach of
+      this Agreement by the Receiving Party, the Disclosing Party shall be entitled
+      to seek injunctive relief in addition to any other remedy available at law or
+      in equity.\\n    -- Sentence ID: P40-S1\\n    Sentence text: The Receiving Party
+      acknowledges that a breach of this Agreement may cause irreparable harm to the
+      Disclosing Party for which monetary damages would be an inadequate remedy.\\n
+      \   -- Sentence ID: P40-S2\\n    Sentence text: In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n- Paragraph
+      ID: P41\\nParagraph sentences:\\n    -- Sentence ID: P41-S0\\n    Sentence text:
+      7. No License:\\n```\\n\\n```\\n- Paragraph ID: P42\\nParagraph sentences:\\n
+      \   -- Sentence ID: P42-S0\\n    Sentence text: Nothing in this Agreement shall
+      be construed as granting any rights to the Receiving Party, by license or otherwise,
+      to any of the Disclosing Party\u2019s Confidential Information, except as expressly
+      set forth in this Agreement.\\n```\\n\\n```\\n- Paragraph ID: P43\\nParagraph
+      sentences:\\n    -- Sentence ID: P43-S0\\n    Sentence text: 8. Governing Law
+      and Disputes:\\n```\\n\\n```\\n- Paragraph ID: P44\\nParagraph sentences:\\n
+      \   -- Sentence ID: P44-S0\\n    Sentence text: This Agreement shall be governed
+      by and construed in accordance with the laws of the State of California, without
+      regard to its conflict of law principles.\\n```\\n\\n```\\n- Paragraph ID: P45\\nParagraph
+      sentences:\\n    -- Sentence ID: P45-S0\\n    Sentence text: All disputes shall
+      be resolved by the courts of the State of California.\\n    -- Sentence ID:
+      P45-S1\\n    Sentence text: This Agreement shall remain in effect for a period
+      of five (5) years from the date of signing this agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P46\\nParagraph sentences:\\n    -- Sentence ID: P46-S0\\n    Sentence
+      text: 9. Miscellaneous:\\n```\\n\\n```\\n- Paragraph ID: P47\\nParagraph sentences:\\n
+      \   -- Sentence ID: P47-S0\\n    Sentence text: a. This Agreement constitutes
+      the entire agreement between the parties with respect to the subject matter
+      hereof and supersedes all prior or contemporaneous oral or written agreements
+      concerning such subject matter.\\n```\\n\\n```\\n- Paragraph ID: P48\\nParagraph
+      sentences:\\n    -- Sentence ID: P48-S0\\n    Sentence text: b. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n```\\n\\n```\\n- Paragraph ID: P49\\nParagraph sentences:\\n    --
+      Sentence ID: P49-S0\\n    Sentence text: c. If any provision of this Agreement
+      is found to be unenforceable, the remainder shall be enforced as fully as possible
+      and the unenforceable provision shall be deemed modified to the limited extent
+      required to permit its enforcement in a manner most closely representing the
+      intention of the parties.\\n```\\n\\n```\\n- Paragraph ID: P50\\nParagraph sentences:\\n
+      \   -- Sentence ID: P50-S0\\n    Sentence text: d. The Disclosing Party shall
+      be a good person to execute this contract.\\n```\\n\\n```\\n- Paragraph ID:
+      P51\\nParagraph sentences:\\n    -- Sentence ID: P51-S0\\n    Sentence text:
+      IN WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n```\\n\\n```\\n- Paragraph ID: P52\\nParagraph
+      sentences:\\n    -- Sentence ID: P52-S0\\n    Sentence text: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P53\\nParagraph sentences:\\n    -- Sentence ID: P53-S0\\n    Sentence
+      text: By: ___________________________\\n```\\n\\n```\\n- Paragraph ID: P54\\nParagraph
+      sentences:\\n    -- Sentence ID: P54-S0\\n    Sentence text: Name: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P55\\nParagraph sentences:\\n    -- Sentence ID: P55-S0\\n    Sentence
+      text: Title: _____\\n```\\n\\n```\\n- Paragraph ID: P56\\nParagraph sentences:\\n
+      \   -- Sentence ID: P56-S0\\n    Sentence text: Date: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P57\\nParagraph sentences:\\n    -- Sentence ID: P57-S0\\n    Sentence
+      text: Example.Com LLC\\n```\\n\\n```\\n- Paragraph ID: P58\\nParagraph sentences:\\n
+      \   -- Sentence ID: P58-S0\\n    Sentence text: By: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P59\\nParagraph sentences:\\n    -- Sentence ID: P59-S0\\n    Sentence
+      text: Name: Jane Doe\\n```\\n\\n```\\n- Paragraph ID: P60\\nParagraph sentences:\\n
+      \   -- Sentence ID: P60-S0\\n    Sentence text: Title: Managing Partner\\n```\\n\\n```\\n-
+      Paragraph ID: P61\\nParagraph sentences:\\n    -- Sentence ID: P61-S0\\n    Sentence
+      text: Date: ___________________________\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '25835'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.82.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.82.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": {\n                    \"labels\":
+        [\n                        \"Confidentiality\",\n                        \"Technology\",\n                        \"Third
+        Party Relations\",\n                        \"Contract Terms\",\n                        \"Legal
+        Compliance\"\n                    ]\n                },\n                \"justification\":
+        \"The document is a Non-Disclosure Agreement focused on protecting confidential
+        information including business, technical, and strategic information, involving
+        obligations to maintain confidentiality and legal remedies for breach, which
+        covers confidentiality, technology, third party relations, contract terms,
+        and legal compliance.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        \"P0\",\n                        \"reference_sentence_ids\": [\"P0-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P17\",\n                        \"reference_sentence_ids\": [\"P17-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P20\",\n                        \"reference_sentence_ids\": [\"P20-S0\",
+        \"P20-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P25\",\n                        \"reference_sentence_ids\": [\"P25-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P40\",\n                        \"reference_sentence_ids\": [\"P40-S0\",
+        \"P40-S1\", \"P40-S2\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1748886070, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 315,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        5480, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5376},
+        "total_tokens": 5795}}'
+    headers:
+      Content-Length:
+      - '3202'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '5667'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find a list
+      of document paragraphs and a list of concepts.\\n\\nYour task is to:\\n1. Read
+      through the document paragraphs provided.\\n    - Each paragraph is identified
+      by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.), followed by the
+      full text of the paragraph and, optionally, additional information about the
+      paragraph, which may be helpful during your analysis.\\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\\n2. Identify
+      whether each concept in the concepts list is addressed within the document paragraphs.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n4. Produce a
+      JSON array containing your extracted data, in the provided format.\\n\\nIf a
+      concept is not addressed in the document paragraphs, you must still include
+      an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array of objects with mandatory fields \\\"value\\\", \\\"justification\\\",
+      and \\\"reference_paragraph_ids\\\". If the concept is not found or there are
+      no items to extract, leave the array empty ([]).\\n        --- Guidance regarding
+      the possible amount of extracted items for the concept is specified under \\\"Amount
+      of extracted items\\\". Each extracted item's object, even if there is only
+      one, must be part of the \\\"extracted_items\\\" array.\\n\\n- Item object structure:\\n
+      \   -- value: Mandatory field holding the extracted item.\\n        --- If a
+      specific structure is provided for a concept under \\\"Expected structure,\\\"
+      the extracted item value must follow that structure for all extracted items
+      corresponding to that concept.\\n        --- If a rating scale is provided for
+      a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- justification: Mandatory field holding a justification of why the item
+      was extracted for the concept. Ensure the justification is specific and directly
+      ties the extracted item to the concept's defining features. Never reference
+      the concept's ID or any of the structural IDs provided in this prompt (such
+      as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\") in the
+      justification.\\n        --- Justification should be brief, i.e. highlight only
+      the essential details.\\n        --- Justification should be no longer than
+      2 sentences.\\n        --- Justification should be in English.\\n    -- reference_paragraph_ids:
+      Mandatory field holding the IDs of the document paragraphs based on which the
+      item was extracted for the concept. Ensure such paragraphs directly tie the
+      extracted item to the concept's defining features. Each paragraph ID must match
+      exactly the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\",
+      etc.).\\n\\n- Types of extracted items:\\n    -- Each concept specifies an \\\"extracted
+      item type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that
+      the value of each of the extracted items for the concept strictly matches that
+      type. Python types are provided (e.g., str for string, int for integer, float
+      for floating-point number, dict for object, etc.).\\n    -- Do not introduce
+      any extra fields or modify the specified structure.\\n\\n- Handling missing
+      or multiple items:\\n    -- If a concept is not mentioned at all, your output
+      should still contain an entry for that concept with an empty \\\"extracted_items\\\"
+      array.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if none of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
+      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
+      ...,\\n                \\\"justification\\\": str,\\n                \\\"reference_paragraph_ids\\\":
+      [\\n                    str,\\n                    ...\\n                ]\\n
+      \           },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Document Type\\n\\nConcept description:\\nClassify
+      the type of legal document\\n\\nAvailable labels:\\nBased on the concept description,
+      assign exactly one label from the following list of available labels:\\n[\\\"NDA\\\",
+      \\\"Consultancy Agreement\\\", \\\"Privacy Policy\\\", \\\"Employment Contract\\\",
+      \\\"Other\\\"]\\nThe output must be an object with a mandatory field \\\"labels\\\"
+      mapped to an array containing only the selected label, e.g. {\\\"labels\\\":
+      [\\\"label1\\\"]}.\\n\\nAmount of extracted items: This concept may have zero
+      or one extracted item, never multiple items.\\n\\nConcept extracted item type:
+      dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT PARAGRAPHS:\\n```\\n- Paragraph ID:
+      P0\\nParagraph text: Non-Disclosure Agreement (NDA)\\n```\\n\\n```\\n- Paragraph
+      ID: P1\\nParagraph text: This Non-Disclosure Agreement (the \\\"Agreement\\\")
+      is made and entered into as of July 16, 2024, by and between:\\n```\\n\\n```\\n-
+      Paragraph ID: P2\\nParagraph text: Party A:\\n```\\n\\n```\\n- Paragraph ID:
+      P3\\nParagraph text: _____\\n```\\n\\n```\\n- Paragraph ID: P4\\nParagraph text:
+      _____\\n```\\n\\n```\\n- Paragraph ID: P5\\nParagraph text: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P6\\nParagraph text: Contact: _____\\n```\\n\\n```\\n- Paragraph
+      ID: P7\\nParagraph text: Phone: _____\\n```\\n\\n```\\n- Paragraph ID: P8\\nParagraph
+      text: Email: _____\\n```\\n\\n```\\n- Paragraph ID: P9\\nParagraph text: Party
+      B:\\n```\\n\\n```\\n- Paragraph ID: P10\\nParagraph text: Example.Com LLC\\n```\\n\\n```\\n-
+      Paragraph ID: P11\\nParagraph text: 5678 Random Drive\\n```\\n\\n```\\n- Paragraph
+      ID: P12\\nParagraph text: New York, NY 00000\\n```\\n\\n```\\n- Paragraph ID:
+      P13\\nParagraph text: Contact: Jane Doe, Managing Partner\\n```\\n\\n```\\n-
+      Paragraph ID: P14\\nParagraph text: Phone: (012) 345-6789\\n```\\n\\n```\\n-
+      Paragraph ID: P15\\nParagraph text: Email: jane.doe@example.com\\n```\\n\\n```\\n-
+      Paragraph ID: P16\\nParagraph text: 1. Purpose:\\n```\\n\\n```\\n- Paragraph
+      ID: P17\\nParagraph text: The purpose of this Agreement is to protect the confidential
+      information that may be disclosed between the parties during discussions and
+      engagements regarding potential business collaborations and partnerships.\\n```\\n\\n```\\n-
+      Paragraph ID: P18\\nParagraph text: 2. Definition of Confidential Information:\\n```\\n\\n```\\n-
+      Paragraph ID: P19\\nParagraph text: For purposes of this Agreement, \\\"Confidential
+      Information\\\" means any and all non-public information, conveyed in all forms,
+      whether in oral, written, electronic, or other form or media, whether or not
+      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
+      been or may be disclosed to, accessed by, or observed by Receiving Party, which
+      (i) has actual or potential economic value by virtue of not being generally
+      known to, and not being readily ascertainable by proper means by, other persons
+      who can obtain economic value from its disclosure or use, or (ii) is subject
+      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n```\\n\\n```\\n-
+      Paragraph ID: P20\\nParagraph text: Confidential Information includes, but is
+      not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.\\n```\\n\\n```\\n-
+      Paragraph ID: P21\\nParagraph text: Confidential Information shall not include
+      information that: (a) is or becomes generally available to the public other
+      than as a result of disclosure by Receiving Party or its Representatives; (b)
+      was available to Receiving Party on a non-confidential basis prior to its disclosure
+      by Disclosing Party; (c) becomes available to Receiving Party on a non-confidential
+      basis from a person other than Disclosing Party who is not otherwise bound by
+      a confidentiality obligation to Disclosing Party; or (d) was independently developed
+      by Receiving Party without reference to or use of any Confidential Information.
+      The name of the dog of the Receiving Party is Bob.\\n```\\n\\n```\\n- Paragraph
+      ID: P22\\nParagraph text: The designation of information as Confidential Information
+      shall not be determinative of whether such information constitutes a trade secret
+      under applicable law. All Confidential Information shall remain the exclusive
+      property of Disclosing Party, and Receiving Party shall have no rights, by license
+      or otherwise, to use the Confidential Information except as expressly provided
+      herein.\\n```\\n\\n```\\n- Paragraph ID: P23\\nParagraph text: 3. Obligations
+      of Receiving Party:\\n```\\n\\n```\\n- Paragraph ID: P24\\nParagraph text: The
+      party receiving Confidential Information (\\\"Receiving Party\\\") shall:\\n```\\n\\n```\\n-
+      Paragraph ID: P25\\nParagraph text: a. Maintain the confidentiality of the Confidential
+      Information and not disclose it to any third party without the prior written
+      consent of the Disclosing Party.\\n```\\n\\n```\\n- Paragraph ID: P26\\nParagraph
+      text: b. Use the Confidential Information solely for the purpose of evaluating
+      or engaging in the potential business collaboration.\\n```\\n\\n```\\n- Paragraph
+      ID: P27\\nParagraph text: c. Take all necessary precautions to protect the confidentiality
+      of the Confidential Information, which shall be no less than the precautions
+      it takes to protect its own confidential information.\\n```\\n\\n```\\n- Paragraph
+      ID: P28\\nParagraph text: 4. Exclusions from Confidential Information:\\n```\\n\\n```\\n-
+      Paragraph ID: P29\\nParagraph text: Confidential Information does not include
+      information that:\\n```\\n\\n```\\n- Paragraph ID: P30\\nParagraph text: a.
+      Is or becomes publicly known through no wrongful act of the Receiving Party.\\n```\\n\\n```\\n-
+      Paragraph ID: P31\\nParagraph text: b. Is already known to the Receiving Party
+      at the time of disclosure.\\n```\\n\\n```\\n- Paragraph ID: P32\\nParagraph
+      text: c. Is lawfully received from a third party without breach of this Agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P33\\nParagraph text: d. Is independently developed by the Receiving
+      Party without use of or reference to the Disclosing Party's Confidential Information.\\n```\\n\\n```\\n-
+      Paragraph ID: P34\\nParagraph text: 6. Return of Materials:\\n```\\n\\n```\\n-
+      Paragraph ID: P35\\nParagraph text: Upon termination of this Agreement or upon
+      request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n```\\n\\n```\\n- Paragraph ID: P36\\nParagraph text: 5. Liability:\\n```\\n\\n```\\n-
+      Paragraph ID: P37\\nParagraph text: a. Total Liability Cap:\\n```\\n\\n```\\n-
+      Paragraph ID: P38\\nParagraph text: The total liability of either party for
+      any and all claims arising out of or related to this Agreement, whether in contract,
+      tort, or otherwise, shall not exceed the greater of (i) $100,000 or (ii) the
+      total amount paid by the Receiving Party to the Disclosing Party under any separate
+      business agreement between the parties during the twelve (12) months preceding
+      the event giving rise to the claim. This limitation of liability is cumulative
+      and not per incident.\\n```\\n\\n```\\n- Paragraph ID: P39\\nParagraph text:
+      b. Penalties for Breach:\\n```\\n\\n```\\n- Paragraph ID: P40\\nParagraph text:
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n- Paragraph
+      ID: P41\\nParagraph text: 7. No License:\\n```\\n\\n```\\n- Paragraph ID: P42\\nParagraph
+      text: Nothing in this Agreement shall be construed as granting any rights to
+      the Receiving Party, by license or otherwise, to any of the Disclosing Party\u2019s
+      Confidential Information, except as expressly set forth in this Agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P43\\nParagraph text: 8. Governing Law and Disputes:\\n```\\n\\n```\\n-
+      Paragraph ID: P44\\nParagraph text: This Agreement shall be governed by and
+      construed in accordance with the laws of the State of California, without regard
+      to its conflict of law principles.\\n```\\n\\n```\\n- Paragraph ID: P45\\nParagraph
+      text: All disputes shall be resolved by the courts of the State of California.
+      This Agreement shall remain in effect for a period of five (5) years from the
+      date of signing this agreement.\\n```\\n\\n```\\n- Paragraph ID: P46\\nParagraph
+      text: 9. Miscellaneous:\\n```\\n\\n```\\n- Paragraph ID: P47\\nParagraph text:
+      a. This Agreement constitutes the entire agreement between the parties with
+      respect to the subject matter hereof and supersedes all prior or contemporaneous
+      oral or written agreements concerning such subject matter.\\n```\\n\\n```\\n-
+      Paragraph ID: P48\\nParagraph text: b. Any amendments or modifications to this
+      Agreement must be made in writing and signed by both parties.\\n```\\n\\n```\\n-
+      Paragraph ID: P49\\nParagraph text: c. If any provision of this Agreement is
+      found to be unenforceable, the remainder shall be enforced as fully as possible
+      and the unenforceable provision shall be deemed modified to the limited extent
+      required to permit its enforcement in a manner most closely representing the
+      intention of the parties.\\n```\\n\\n```\\n- Paragraph ID: P50\\nParagraph text:
+      d. The Disclosing Party shall be a good person to execute this contract.\\n```\\n\\n```\\n-
+      Paragraph ID: P51\\nParagraph text: IN WITNESS WHEREOF, the parties hereto have
+      executed this Non-Disclosure Agreement as of the date first above written.\\n```\\n\\n```\\n-
+      Paragraph ID: P52\\nParagraph text: _____\\n```\\n\\n```\\n- Paragraph ID: P53\\nParagraph
+      text: By: ___________________________\\n```\\n\\n```\\n- Paragraph ID: P54\\nParagraph
+      text: Name: _____\\n```\\n\\n```\\n- Paragraph ID: P55\\nParagraph text: Title:
+      _____\\n```\\n\\n```\\n- Paragraph ID: P56\\nParagraph text: Date: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P57\\nParagraph text: Example.Com LLC\\n```\\n\\n```\\n- Paragraph
+      ID: P58\\nParagraph text: By: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P59\\nParagraph text: Name: Jane Doe\\n```\\n\\n```\\n- Paragraph
+      ID: P60\\nParagraph text: Title: Managing Partner\\n```\\n\\n```\\n- Paragraph
+      ID: P61\\nParagraph text: Date: ___________________________\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '20765'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.82.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.82.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": {\n                    \"labels\":
+        [\"NDA\"]\n                },\n                \"justification\": \"The document
+        is explicitly titled ''Non-Disclosure Agreement (NDA)'' and repeatedly refers
+        to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1748886076, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 100,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        4227, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4096},
+        "total_tokens": 4327}}'
+    headers:
+      Content-Length:
+      - '1760'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '2075'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find a list
+      of document paragraphs (including sentences) and a list of concepts.\\n\\nYour
+      task is to:\\n1. Read through the provided document paragraphs and their sentences.\\n
+      \   - Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\",
+      \\\"P1\\\", etc.), optionally followed by additional information about the paragraph,
+      which may be helpful during your analysis.\\n    - Each paragraph includes sentences,
+      each identified by a sentence ID (for example, \\\"P0-S0\\\", \\\"P0-S1\\\",
+      etc.), followed by the full text of the sentence and, optionally, additional
+      information about the sentence, which may be helpful during your analysis.\\n
+      \   - Note that paragraphs are listed in the same order they appear in the original
+      document.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document paragraphs.\\n3. For each concept that appears, extract
+      zero or more items relevant to that concept. The item format and structure are
+      specified for each concept.\\n4. Produce a JSON array containing your extracted
+      data, in the provided format.\\n\\nIf a concept is not addressed in the document
+      paragraphs, you must still include an entry in the final JSON output but with
+      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
+      Output format:\\nProvide your answer in only the following answer format (do
+      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
+      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
+      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
+      \   -- The value of \\\"extracted_items\\\" must be an array of objects with
+      mandatory fields \\\"value\\\", \\\"justification\\\", and \\\"reference_paragraphs\\\".
+      If the concept is not found or there are no items to extract, leave the array
+      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
+      items for the concept is specified under \\\"Amount of extracted items\\\".
+      Each extracted item's object, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n        --- The value of \\\"reference_paragraphs\\\"
+      must be an array of objects with mandatory fields \\\"reference_paragraph_id\\\",
+      which holds the provided ID of the reference paragraph, and \\\"reference_sentence_ids\\\",
+      which holds the provided IDs of the reference sentences within the paragraph.
+      Note that not every sentence in the paragraph necessarily serves as a relevant
+      reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
+      the extracted item.\\n        --- If a specific structure is provided for a
+      concept under \\\"Expected structure,\\\" the extracted item value must follow
+      that structure for all extracted items corresponding to that concept.\\n        ---
+      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
+      extracted item value must be within that scale.\\n        --- If available labels
+      are provided for a concept under \\\"Available labels,\\\" the extracted item
+      value must be a list containing only labels from the predefined set. If none
+      of the predefined labels apply, do not extract any items for that concept.\\n
+      \       --- If there are example items (\\\"Extracted concept examples\\\"),
+      the extracted item value should follow the same style and formatting.\\n        ---
+      When extracting string values, translate them in English if the original language
+      of the document is not English.\\n    -- justification: Mandatory field holding
+      a justification of why the item was extracted for the concept. Ensure the justification
+      is specific and directly ties the extracted item to the concept's defining features.
+      Never reference the concept's ID or any of the structural IDs provided in this
+      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
+      in the justification.\\n        --- Justification should be brief, i.e. highlight
+      only the essential details.\\n        --- Justification should be no longer
+      than 2 sentences.\\n        --- Justification should be in English.\\n    --
+      reference_paragraphs: An array of objects for each paragraph based on which
+      the item was extracted for the concept. Each object should include:\\n        ---
+      reference_paragraph_id: Mandatory field holding the provided ID of the reference
+      paragraph. Each paragraph ID must match exactly the provided ID for the paragraph
+      (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n        --- reference_sentence_ids:
+      Mandatory field holding an array of the provided IDs of the sentences within
+      the paragraph, based on which the item was extracted for the concept. Each sentence
+      ID must match exactly the provided ID for the sentence (for example, \\\"P0-S0\\\",
+      \\\"P0-S2\\\", etc.).\\n\\n- Types of extracted items:\\n    -- Each concept
+      specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
+      item type\\\"). Ensure that the value of each of the extracted items for the
+      concept strictly matches that type. Python types are provided (e.g., str for
+      string, int for integer, float for floating-point number, dict for object, etc.).\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- For concepts that have an \\\"Available
+      labels:\\\" section: if none of the predefined labels apply to the content,
+      leave the \\\"extracted_items\\\" array empty.\\n    -- For concepts that have
+      an \\\"Available labels:\\\" section: if multiple labels apply to the same instance
+      or context, include them all in a single extracted item with multiple labels
+      in the \\\"labels\\\" array (e.g., {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}).
+      Only create multiple extracted items if there are genuinely distinct instances
+      or contexts that warrant separate classification.\\n    -- For concepts that
+      do not have an \\\"Available labels:\\\" section: if multiple items are found
+      for a concept, include each as a separate entry within the \\\"extracted_items\\\"
+      array.\\n\\n- No additional text:\\n    -- Do not include any headers, explanations,
+      or text outside of the JSON array.\\n    -- Do not wrap your JSON response in
+      backticks or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
+      str,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
+      \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
+      [\\n                            str,\\n                            ...\\n                        ]\\n
+      \                   },\\n                    ...\\n                ]\\n            },\\n
+      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
+      Concept ID: C0\\nConcept name: Content Topics\\n\\nConcept description:\\nIdentify
+      all relevant topics covered in this legal document\\n\\nAvailable labels:\\nBased
+      on the concept description, assign one or more labels from the following list
+      of available labels:\\n[\\\"Confidentiality\\\", \\\"Technology\\\", \\\"Finance\\\",
+      \\\"Legal Compliance\\\", \\\"Third Party Relations\\\", \\\"Contract Terms\\\"]\\nThe
+      output must be an object with a mandatory field \\\"labels\\\" mapped to an
+      array containing only the selected labels, e.g. {\\\"labels\\\": [\\\"label1\\\",
+      \\\"label2\\\"]}.\\n\\nAmount of extracted items: This concept may have zero,
+      one, or multiple extracted items.\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\\n```\\n- Paragraph ID: P0\\nParagraph sentences:\\n
+      \   -- Sentence ID: P0-S0\\n    Sentence text: Non-Disclosure Agreement (NDA)\\n```\\n\\n```\\n-
+      Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
+      text: This Non-Disclosure Agreement (the \\\"Agreement\\\") is made and entered
+      into as of July 16, 2024, by and between:\\n```\\n\\n```\\n- Paragraph ID: P2\\nParagraph
+      sentences:\\n    -- Sentence ID: P2-S0\\n    Sentence text: Party A:\\n```\\n\\n```\\n-
+      Paragraph ID: P3\\nParagraph sentences:\\n    -- Sentence ID: P3-S0\\n    Sentence
+      text: _____\\n```\\n\\n```\\n- Paragraph ID: P4\\nParagraph sentences:\\n    --
+      Sentence ID: P4-S0\\n    Sentence text: _____\\n```\\n\\n```\\n- Paragraph ID:
+      P5\\nParagraph sentences:\\n    -- Sentence ID: P5-S0\\n    Sentence text: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P6\\nParagraph sentences:\\n    -- Sentence ID: P6-S0\\n    Sentence
+      text: Contact: _____\\n```\\n\\n```\\n- Paragraph ID: P7\\nParagraph sentences:\\n
+      \   -- Sentence ID: P7-S0\\n    Sentence text: Phone: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P8\\nParagraph sentences:\\n    -- Sentence ID: P8-S0\\n    Sentence
+      text: Email: _____\\n```\\n\\n```\\n- Paragraph ID: P9\\nParagraph sentences:\\n
+      \   -- Sentence ID: P9-S0\\n    Sentence text: Party B:\\n```\\n\\n```\\n- Paragraph
+      ID: P10\\nParagraph sentences:\\n    -- Sentence ID: P10-S0\\n    Sentence text:
+      Example.Com LLC\\n```\\n\\n```\\n- Paragraph ID: P11\\nParagraph sentences:\\n
+      \   -- Sentence ID: P11-S0\\n    Sentence text: 5678 Random Drive\\n```\\n\\n```\\n-
+      Paragraph ID: P12\\nParagraph sentences:\\n    -- Sentence ID: P12-S0\\n    Sentence
+      text: New York, NY 00000\\n```\\n\\n```\\n- Paragraph ID: P13\\nParagraph sentences:\\n
+      \   -- Sentence ID: P13-S0\\n    Sentence text: Contact: Jane Doe, Managing
+      Partner\\n```\\n\\n```\\n- Paragraph ID: P14\\nParagraph sentences:\\n    --
+      Sentence ID: P14-S0\\n    Sentence text: Phone: (012) 345-6789\\n```\\n\\n```\\n-
+      Paragraph ID: P15\\nParagraph sentences:\\n    -- Sentence ID: P15-S0\\n    Sentence
+      text: Email: jane.doe@example.com\\n```\\n\\n```\\n- Paragraph ID: P16\\nParagraph
+      sentences:\\n    -- Sentence ID: P16-S0\\n    Sentence text: 1. Purpose:\\n```\\n\\n```\\n-
+      Paragraph ID: P17\\nParagraph sentences:\\n    -- Sentence ID: P17-S0\\n    Sentence
+      text: The purpose of this Agreement is to protect the confidential information
+      that may be disclosed between the parties during discussions and engagements
+      regarding potential business collaborations and partnerships.\\n```\\n\\n```\\n-
+      Paragraph ID: P18\\nParagraph sentences:\\n    -- Sentence ID: P18-S0\\n    Sentence
+      text: 2. Definition of Confidential Information:\\n```\\n\\n```\\n- Paragraph
+      ID: P19\\nParagraph sentences:\\n    -- Sentence ID: P19-S0\\n    Sentence text:
+      For purposes of this Agreement, \\\"Confidential Information\\\" means any and
+      all non-public information, conveyed in all forms, whether in oral, written,
+      electronic, or other form or media, whether or not marked, designated, or otherwise
+      identified as \\\"confidential,\\\" that has been or may be disclosed to, accessed
+      by, or observed by Receiving Party, which (i) has actual or potential economic
+      value by virtue of not being generally known to, and not being readily ascertainable
+      by proper means by, other persons who can obtain economic value from its disclosure
+      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
+      its secrecy and confidentiality.\\n```\\n\\n```\\n- Paragraph ID: P20\\nParagraph
+      sentences:\\n    -- Sentence ID: P20-S0\\n    Sentence text: Confidential Information
+      includes, but is not limited to, the following categories: (1) business information
+      (business plans, strategies, and models), (2) technical information (technical
+      specifications and documentation, research and development activities), (3)
+      customer and market information (customer lists and contact information, sales
+      histories and patterns), (4) personnel and internal information (employee lists
+      and contact information, employment agreements and personnel files), (5) intellectual
+      property (trade secrets and know-how, patents and patent applications, copyrights
+      and copyright applications, trademarks and trademark applications), (6) strategic
+      information (merger and acquisition plans, competitive analyses and strategies).\\n
+      \   -- Sentence ID: P20-S1\\n    Sentence text: Software code shall also be
+      included into the confidential information.\\n```\\n\\n```\\n- Paragraph ID:
+      P21\\nParagraph sentences:\\n    -- Sentence ID: P21-S0\\n    Sentence text:
+      Confidential Information shall not include information that:\\n    -- Sentence
+      ID: P21-S1\\n    Sentence text: (a) is or becomes generally available to the
+      public other than as a result of disclosure by Receiving Party or its Representatives;\\n
+      \   -- Sentence ID: P21-S2\\n    Sentence text: (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;\\n
+      \   -- Sentence ID: P21-S3\\n    Sentence text: (c) becomes available to Receiving
+      Party on a non-confidential basis from a person other than Disclosing Party
+      who is not otherwise bound by a confidentiality obligation to Disclosing Party;
+      or (d) was independently developed by Receiving Party without reference to or
+      use of any Confidential Information.\\n    -- Sentence ID: P21-S4\\n    Sentence
+      text: The name of the dog of the Receiving Party is Bob.\\n```\\n\\n```\\n-
+      Paragraph ID: P22\\nParagraph sentences:\\n    -- Sentence ID: P22-S0\\n    Sentence
+      text: The designation of information as Confidential Information shall not be
+      determinative of whether such information constitutes a trade secret under applicable
+      law.\\n    -- Sentence ID: P22-S1\\n    Sentence text: All Confidential Information
+      shall remain the exclusive property of Disclosing Party, and Receiving Party
+      shall have no rights, by license or otherwise, to use the Confidential Information
+      except as expressly provided herein.\\n```\\n\\n```\\n- Paragraph ID: P23\\nParagraph
+      sentences:\\n    -- Sentence ID: P23-S0\\n    Sentence text: 3. Obligations
+      of Receiving Party:\\n```\\n\\n```\\n- Paragraph ID: P24\\nParagraph sentences:\\n
+      \   -- Sentence ID: P24-S0\\n    Sentence text: The party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:\\n```\\n\\n```\\n- Paragraph ID:
+      P25\\nParagraph sentences:\\n    -- Sentence ID: P25-S0\\n    Sentence text:
+      a. Maintain the confidentiality of the Confidential Information and not disclose
+      it to any third party without the prior written consent of the Disclosing Party.\\n```\\n\\n```\\n-
+      Paragraph ID: P26\\nParagraph sentences:\\n    -- Sentence ID: P26-S0\\n    Sentence
+      text: b. Use the Confidential Information solely for the purpose of evaluating
+      or engaging in the potential business collaboration.\\n```\\n\\n```\\n- Paragraph
+      ID: P27\\nParagraph sentences:\\n    -- Sentence ID: P27-S0\\n    Sentence text:
+      c. Take all necessary precautions to protect the confidentiality of the Confidential
+      Information, which shall be no less than the precautions it takes to protect
+      its own confidential information.\\n```\\n\\n```\\n- Paragraph ID: P28\\nParagraph
+      sentences:\\n    -- Sentence ID: P28-S0\\n    Sentence text: 4. Exclusions from
+      Confidential Information:\\n```\\n\\n```\\n- Paragraph ID: P29\\nParagraph sentences:\\n
+      \   -- Sentence ID: P29-S0\\n    Sentence text: Confidential Information does
+      not include information that:\\n```\\n\\n```\\n- Paragraph ID: P30\\nParagraph
+      sentences:\\n    -- Sentence ID: P30-S0\\n    Sentence text: a. Is or becomes
+      publicly known through no wrongful act of the Receiving Party.\\n```\\n\\n```\\n-
+      Paragraph ID: P31\\nParagraph sentences:\\n    -- Sentence ID: P31-S0\\n    Sentence
+      text: b. Is already known to the Receiving Party at the time of disclosure.\\n```\\n\\n```\\n-
+      Paragraph ID: P32\\nParagraph sentences:\\n    -- Sentence ID: P32-S0\\n    Sentence
+      text: c. Is lawfully received from a third party without breach of this Agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P33\\nParagraph sentences:\\n    -- Sentence ID: P33-S0\\n    Sentence
+      text: d. Is independently developed by the Receiving Party without use of or
+      reference to the Disclosing Party's Confidential Information.\\n```\\n\\n```\\n-
+      Paragraph ID: P34\\nParagraph sentences:\\n    -- Sentence ID: P34-S0\\n    Sentence
+      text: 6. Return of Materials:\\n```\\n\\n```\\n- Paragraph ID: P35\\nParagraph
+      sentences:\\n    -- Sentence ID: P35-S0\\n    Sentence text: Upon termination
+      of this Agreement or upon request, the Receiving Party shall return all materials
+      containing Confidential Information to the Disclosing Party or destroy them,
+      at the Disclosing Party's discretion.\\n```\\n\\n```\\n- Paragraph ID: P36\\nParagraph
+      sentences:\\n    -- Sentence ID: P36-S0\\n    Sentence text: 5. Liability:\\n```\\n\\n```\\n-
+      Paragraph ID: P37\\nParagraph sentences:\\n    -- Sentence ID: P37-S0\\n    Sentence
+      text: a.\\n    -- Sentence ID: P37-S1\\n    Sentence text: Total Liability Cap:\\n```\\n\\n```\\n-
+      Paragraph ID: P38\\nParagraph sentences:\\n    -- Sentence ID: P38-S0\\n    Sentence
+      text: The total liability of either party for any and all claims arising out
+      of or related to this Agreement, whether in contract, tort, or otherwise, shall
+      not exceed the greater of (i) $100,000 or (ii) the total amount paid by the
+      Receiving Party to the Disclosing Party under any separate business agreement
+      between the parties during the twelve (12) months preceding the event giving
+      rise to the claim.\\n    -- Sentence ID: P38-S1\\n    Sentence text: This limitation
+      of liability is cumulative and not per incident.\\n```\\n\\n```\\n- Paragraph
+      ID: P39\\nParagraph sentences:\\n    -- Sentence ID: P39-S0\\n    Sentence text:
+      b. Penalties for Breach:\\n```\\n\\n```\\n- Paragraph ID: P40\\nParagraph sentences:\\n
+      \   -- Sentence ID: P40-S0\\n    Sentence text: In the event of a breach of
+      this Agreement by the Receiving Party, the Disclosing Party shall be entitled
+      to seek injunctive relief in addition to any other remedy available at law or
+      in equity.\\n    -- Sentence ID: P40-S1\\n    Sentence text: The Receiving Party
+      acknowledges that a breach of this Agreement may cause irreparable harm to the
+      Disclosing Party for which monetary damages would be an inadequate remedy.\\n
+      \   -- Sentence ID: P40-S2\\n    Sentence text: In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n```\\n\\n```\\n- Paragraph
+      ID: P41\\nParagraph sentences:\\n    -- Sentence ID: P41-S0\\n    Sentence text:
+      7. No License:\\n```\\n\\n```\\n- Paragraph ID: P42\\nParagraph sentences:\\n
+      \   -- Sentence ID: P42-S0\\n    Sentence text: Nothing in this Agreement shall
+      be construed as granting any rights to the Receiving Party, by license or otherwise,
+      to any of the Disclosing Party\u2019s Confidential Information, except as expressly
+      set forth in this Agreement.\\n```\\n\\n```\\n- Paragraph ID: P43\\nParagraph
+      sentences:\\n    -- Sentence ID: P43-S0\\n    Sentence text: 8. Governing Law
+      and Disputes:\\n```\\n\\n```\\n- Paragraph ID: P44\\nParagraph sentences:\\n
+      \   -- Sentence ID: P44-S0\\n    Sentence text: This Agreement shall be governed
+      by and construed in accordance with the laws of the State of California, without
+      regard to its conflict of law principles.\\n```\\n\\n```\\n- Paragraph ID: P45\\nParagraph
+      sentences:\\n    -- Sentence ID: P45-S0\\n    Sentence text: All disputes shall
+      be resolved by the courts of the State of California.\\n    -- Sentence ID:
+      P45-S1\\n    Sentence text: This Agreement shall remain in effect for a period
+      of five (5) years from the date of signing this agreement.\\n```\\n\\n```\\n-
+      Paragraph ID: P46\\nParagraph sentences:\\n    -- Sentence ID: P46-S0\\n    Sentence
+      text: 9. Miscellaneous:\\n```\\n\\n```\\n- Paragraph ID: P47\\nParagraph sentences:\\n
+      \   -- Sentence ID: P47-S0\\n    Sentence text: a. This Agreement constitutes
+      the entire agreement between the parties with respect to the subject matter
+      hereof and supersedes all prior or contemporaneous oral or written agreements
+      concerning such subject matter.\\n```\\n\\n```\\n- Paragraph ID: P48\\nParagraph
+      sentences:\\n    -- Sentence ID: P48-S0\\n    Sentence text: b. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n```\\n\\n```\\n- Paragraph ID: P49\\nParagraph sentences:\\n    --
+      Sentence ID: P49-S0\\n    Sentence text: c. If any provision of this Agreement
+      is found to be unenforceable, the remainder shall be enforced as fully as possible
+      and the unenforceable provision shall be deemed modified to the limited extent
+      required to permit its enforcement in a manner most closely representing the
+      intention of the parties.\\n```\\n\\n```\\n- Paragraph ID: P50\\nParagraph sentences:\\n
+      \   -- Sentence ID: P50-S0\\n    Sentence text: d. The Disclosing Party shall
+      be a good person to execute this contract.\\n```\\n\\n```\\n- Paragraph ID:
+      P51\\nParagraph sentences:\\n    -- Sentence ID: P51-S0\\n    Sentence text:
+      IN WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n```\\n\\n```\\n- Paragraph ID: P52\\nParagraph
+      sentences:\\n    -- Sentence ID: P52-S0\\n    Sentence text: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P53\\nParagraph sentences:\\n    -- Sentence ID: P53-S0\\n    Sentence
+      text: By: ___________________________\\n```\\n\\n```\\n- Paragraph ID: P54\\nParagraph
+      sentences:\\n    -- Sentence ID: P54-S0\\n    Sentence text: Name: _____\\n```\\n\\n```\\n-
+      Paragraph ID: P55\\nParagraph sentences:\\n    -- Sentence ID: P55-S0\\n    Sentence
+      text: Title: _____\\n```\\n\\n```\\n- Paragraph ID: P56\\nParagraph sentences:\\n
+      \   -- Sentence ID: P56-S0\\n    Sentence text: Date: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P57\\nParagraph sentences:\\n    -- Sentence ID: P57-S0\\n    Sentence
+      text: Example.Com LLC\\n```\\n\\n```\\n- Paragraph ID: P58\\nParagraph sentences:\\n
+      \   -- Sentence ID: P58-S0\\n    Sentence text: By: ___________________________\\n```\\n\\n```\\n-
+      Paragraph ID: P59\\nParagraph sentences:\\n    -- Sentence ID: P59-S0\\n    Sentence
+      text: Name: Jane Doe\\n```\\n\\n```\\n- Paragraph ID: P60\\nParagraph sentences:\\n
+      \   -- Sentence ID: P60-S0\\n    Sentence text: Title: Managing Partner\\n```\\n\\n```\\n-
+      Paragraph ID: P61\\nParagraph sentences:\\n    -- Sentence ID: P61-S0\\n    Sentence
+      text: Date: ___________________________\\n```\\n\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '25835'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.82.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.82.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": {\n                    \"labels\":
+        [\n                        \"Confidentiality\",\n                        \"Technology\",\n                        \"Third
+        Party Relations\",\n                        \"Contract Terms\",\n                        \"Legal
+        Compliance\"\n                    ]\n                },\n                \"justification\":
+        \"The document is a Non-Disclosure Agreement focused on protecting confidential
+        information including business, technical, and strategic information, outlining
+        obligations, liabilities, and governing law.\",\n                \"reference_paragraphs\":
+        [\n                    {\n                        \"reference_paragraph_id\":
+        \"P0\",\n                        \"reference_sentence_ids\": [\"P0-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P17\",\n                        \"reference_sentence_ids\": [\"P17-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P20\",\n                        \"reference_sentence_ids\": [\"P20-S0\",
+        \"P20-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P25\",\n                        \"reference_sentence_ids\": [\"P25-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P26\",\n                        \"reference_sentence_ids\": [\"P26-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P38\",\n                        \"reference_sentence_ids\": [\"P38-S0\",
+        \"P38-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P40\",\n                        \"reference_sentence_ids\": [\"P40-S0\",
+        \"P40-S1\", \"P40-S2\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P45\",\n                        \"reference_sentence_ids\": [\"P45-S0\",
+        \"P45-S1\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1748886076, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 389,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        5480, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5376},
+        "total_tokens": 5869}}'
+    headers:
+      Content-Length:
+      - '3622'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '6252'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \\\"Expected structure,\\\" you must
+      follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If available labels
+      are provided for a concept under \\\"Available labels,\\\" the extracted item
+      value must be a list containing only labels from the predefined set. If none
+      of the predefined labels apply, do not extract any items for that concept.\\n
+      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
+      to follow the same style and formatting for your extracted items.\\n    -- When
+      extracting string values, translate them in English if the original language
+      of the document is not English.\\n\\n- Types of extracted items:\\n    -- Each
+      concept specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
+      item type\\\"). Ensure your extracted items strictly match that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if none of the
+      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
+      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
+      \   ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n- Concept ID: C0\\nConcept name:
+      Technical Specifications\\n\\nConcept description:\\nIdentify technical specifications
+      mentioned in the document\\n\\nAvailable labels:\\nBased on the concept description,
+      assign one or more labels from the following list of available labels:\\n[\\\"Cooking
+      Recipes\\\", \\\"Nutrition Information\\\"]\\nThe output must be an object with
+      a mandatory field \\\"labels\\\" mapped to an array containing only the selected
+      labels, e.g. {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}.\\n\\nAmount
+      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nNon-Disclosure
+      Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
+      made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
+      _____\\nPhone: _____\\nEmail: _____\\n\\nParty B:\\n\\nExample.Com LLC\\n5678
+      Random Drive\\nNew York, NY 00000\\nContact: Jane Doe, Managing Partner\\nPhone:
+      (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1. Purpose:\\n\\nThe purpose
+      of this Agreement is to protect the confidential information that may be disclosed
+      between the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\\n\\n2. Definition of Confidential Information:\\n\\nFor
+      purposes of this Agreement, \\\"Confidential Information\\\" means any and all
+      non-public information, conveyed in all forms, whether in oral, written, electronic,
+      or other form or media, whether or not marked, designated, or otherwise identified
+      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
+      or observed by Receiving Party, which (i) has actual or potential economic value
+      by virtue of not being generally known to, and not being readily ascertainable
+      by proper means by, other persons who can obtain economic value from its disclosure
+      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
+      its secrecy and confidentiality.\\n\\nConfidential Information includes, but
+      is not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.\\n\\nConfidential
+      Information shall not include information that: (a) is or becomes generally
+      available to the public other than as a result of disclosure by Receiving Party
+      or its Representatives; (b) was available to Receiving Party on a non-confidential
+      basis prior to its disclosure by Disclosing Party; (c) becomes available to
+      Receiving Party on a non-confidential basis from a person other than Disclosing
+      Party who is not otherwise bound by a confidentiality obligation to Disclosing
+      Party; or (d) was independently developed by Receiving Party without reference
+      to or use of any Confidential Information. The name of the dog of the Receiving
+      Party is Bob.\\nThe designation of information as Confidential Information shall
+      not be determinative of whether such information constitutes a trade secret
+      under applicable law. All Confidential Information shall remain the exclusive
+      property of Disclosing Party, and Receiving Party shall have no rights, by license
+      or otherwise, to use the Confidential Information except as expressly provided
+      herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:\\n\\na. Maintain the confidentiality
+      of the Confidential Information and not disclose it to any third party without
+      the prior written consent of the Disclosing Party.\\n\\nb. Use the Confidential
+      Information solely for the purpose of evaluating or engaging in the potential
+      business collaboration.\\n\\nc. Take all necessary precautions to protect the
+      confidentiality of the Confidential Information, which shall be no less than
+      the precautions it takes to protect its own confidential information.\\n\\n4.
+      Exclusions from Confidential Information:\\n\\nConfidential Information does
+      not include information that:\\n\\na. Is or becomes publicly known through no
+      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
+      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
+      without breach of this Agreement.\\n\\nd. Is independently developed by the
+      Receiving Party without use of or reference to the Disclosing Party's Confidential
+      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
+      of either party for any and all claims arising out of or related to this Agreement,
+      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
+      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
+      Party under any separate business agreement between the parties during the twelve
+      (12) months preceding the event giving rise to the claim. This limitation of
+      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
+      in this Agreement shall be construed as granting any rights to the Receiving
+      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
+      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
+      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
+      accordance with the laws of the State of California, without regard to its conflict
+      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
+      State of California. This Agreement shall remain in effect for a period of five
+      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
+      This Agreement constitutes the entire agreement between the parties with respect
+      to the subject matter hereof and supersedes all prior or contemporaneous oral
+      or written agreements concerning such subject matter.\\n\\nb. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
+      the remainder shall be enforced as fully as possible and the unenforceable provision
+      shall be deemed modified to the limited extent required to permit its enforcement
+      in a manner most closely representing the intention of the parties.\\n\\nd.
+      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
+      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
+      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
+      ___________________________\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '16016'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.82.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.82.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1748886083,
+        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
+        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"detected": false,
+        "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
+        {"completion_tokens": 23, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 3012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        1408}, "total_tokens": 3035}}'
+    headers:
+      Content-Length:
+      - '1303'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '547'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

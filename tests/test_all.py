@@ -64,6 +64,7 @@ from contextgem.internal.items import (
     _IntegerItem,
     _IntegerOrFloatItem,
     _JsonObjectItem,
+    _LabelItem,
     _StringItem,
 )
 from contextgem.internal.loggers import (
@@ -102,6 +103,9 @@ def vcr_config():
         "before_record_request": vcr_before_record_request,
         "before_record_response": vcr_before_record_response,
         "match_on": ["method", "host", "path", "body"],
+        "record_mode": "once",
+        "cassette_library_dir": "tests/cassettes",
+        "ignore_localhost": False,
     }
 
 
@@ -372,7 +376,7 @@ class TestAll(TestUtils):
             with pytest.raises(AttributeError):
                 TestNoRequiredAttrs()  # initialized with no required attributes
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_local_llms(self):
         """
         Tests for initialization of and getting a response from local LLMs,
@@ -1104,9 +1108,15 @@ class TestAll(TestUtils):
             ]  # below min (1)
 
         with pytest.raises(ValueError):
+            valid_rating_concept._process_item_value(0)
+
+        with pytest.raises(ValueError):
             valid_rating_concept.extracted_items = [
                 _IntegerItem(value=6)
             ]  # above max (5)
+
+        with pytest.raises(ValueError):
+            valid_rating_concept._process_item_value(6)
 
         # Test with non-integer items
         with pytest.raises(ValueError):
@@ -1923,7 +1933,7 @@ class TestAll(TestUtils):
         )
         self.check_custom_data_json_serializable(vision_concept)
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_extract_complex_json_object_concept(self):
         """
         Tests the extraction of a complex JsonObjectConcept from a text file, validating
@@ -2190,6 +2200,271 @@ class TestAll(TestUtils):
         # Verify custom data serialization works
         self.check_custom_data_json_serializable(default_date_concept)
         self.check_custom_data_json_serializable(date_concept_with_refs)
+
+    def test_init_and_validate_label_concept(self):
+        """
+        Tests the initialization of the LabelConcept class with valid and invalid input parameters.
+        """
+        # Valid initialization with multi-class classification
+        multi_class_concept = LabelConcept(
+            name="Document Type",
+            description="Classify the type of legal document",
+            labels=["NDA", "Consultancy Agreement", "Privacy Policy", "Other"],
+            classification_type="multi_class",
+            llm_role="extractor_text",
+            add_justifications=True,
+        )
+
+        # Valid initialization with multi-label classification
+        multi_label_concept = LabelConcept(
+            name="Content Topics",
+            description="Identify all relevant topics covered in the document",
+            labels=["Finance", "Legal", "Technology", "HR", "Operations", "Marketing"],
+            classification_type="multi_label",
+            llm_role="reasoner_text",
+            add_references=True,
+            reference_depth="sentences",
+        )
+
+        # Test with invalid extra parameters
+        with pytest.raises(ValueError):
+            LabelConcept(
+                name="Invalid Params",
+                description="Test invalid parameters",
+                labels=["A", "B", "C"],
+                extra_param=True,
+            )
+
+        # Test with insufficient labels (less than 2)
+        with pytest.raises(ValueError):
+            LabelConcept(
+                name="Too Few Labels",
+                description="Test with only one label",
+                labels=["OnlyOne"],
+            )
+
+        # Test with duplicate labels
+        with pytest.raises(ValueError):
+            LabelConcept(
+                name="Duplicate Labels",
+                description="Test with duplicate labels",
+                labels=["A", "B", "A", "C"],
+            )
+
+        # Test with invalid classification type
+        with pytest.raises(ValueError):
+            LabelConcept(
+                name="Invalid Classification",
+                description="Test invalid classification type",
+                labels=["A", "B", "C"],
+                classification_type="invalid_type",
+            )
+
+        # Test with invalid label types (non-string types in labels list)
+        with pytest.raises(ValueError):
+            LabelConcept(
+                name="Invalid Label Types",
+                description="Test with non-string label types",
+                labels=["A", 123, "C"],  # Integer in labels list
+            )
+
+        # Test attaching extracted items for multi-class
+        multi_class_item = _LabelItem(value=["NDA"])
+        multi_class_concept.extracted_items = [multi_class_item]
+
+        # Test attaching extracted items for multi-label
+        multi_label_item = _LabelItem(value=["Finance", "Legal"])
+        multi_label_concept.extracted_items = [multi_label_item]
+
+        # Test with invalid items (wrong type)
+        with pytest.raises(ValueError):
+            multi_class_concept.extracted_items = [
+                _StringItem(value="NDA")
+            ]  # must be _LabelItem
+
+        # Test with invalid labels in extracted item
+        with pytest.raises(ValueError):
+            multi_class_concept.extracted_items = [
+                _LabelItem(value=["InvalidLabel"])
+            ]  # label not in predefined set
+
+        # Test multi-class constraint validation (only one label allowed)
+        with pytest.raises(ValueError):
+            multi_class_concept._process_item_value({"labels": ["NDA", "Other"]})
+
+        # Test multi-label allows multiple labels
+        processed_labels = multi_label_concept._process_item_value(
+            {"labels": ["Finance", "Legal", "Technology"]}
+        )
+        assert processed_labels == ["Finance", "Legal", "Technology"]
+
+        # Test _format_labels_in_prompt property
+        assert (
+            multi_class_concept._format_labels_in_prompt
+            == '["NDA", "Consultancy Agreement", "Privacy Policy", "Other"]'
+        )
+        assert (
+            multi_label_concept._format_labels_in_prompt
+            == '["Finance", "Legal", "Technology", "HR", "Operations", "Marketing"]'
+        )
+
+        # Test _item_type_in_prompt property
+        assert multi_class_concept._item_type_in_prompt == "dict"
+        assert multi_label_concept._item_type_in_prompt == "dict"
+
+        # Test with justifications and references
+        concept_with_refs = LabelConcept(
+            name="Concept with refs",
+            description="Test concept with references",
+            labels=["Category1", "Category2", "Category3"],
+            classification_type="multi_label",
+            add_justifications=True,
+            add_references=True,
+            reference_depth="sentences",
+            singular_occurrence=True,
+        )
+
+        # Verify custom data serialization works
+        self.check_custom_data_json_serializable(multi_class_concept)
+        self.check_custom_data_json_serializable(multi_label_concept)
+        self.check_custom_data_json_serializable(concept_with_refs)
+
+    @pytest.mark.vcr
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    def test_extract_label_concept(self, llm: DocumentLLMGroup | DocumentLLM):
+        """
+        Tests for label concept extraction from document using LLMs.
+        """
+
+        self.config_llm_async_limiter_for_mock_responses(llm)
+
+        # Create a document with content suitable for label classification
+        document = Document(raw_text=get_test_document_text())
+
+        # Test multi-class classification
+        document_type_concept = LabelConcept(
+            name="Document Type",
+            description="Classify the type of legal document",
+            labels=[
+                "NDA",
+                "Consultancy Agreement",
+                "Privacy Policy",
+                "Employment Contract",
+                "Other",
+            ],
+            classification_type="multi_class",
+            llm_role="extractor_text",
+            add_justifications=True,
+            add_references=True,
+            reference_depth="paragraphs",
+            singular_occurrence=True,
+        )
+
+        # Test multi-label classification
+        content_topics_concept = LabelConcept(
+            name="Content Topics",
+            description="Identify all relevant topics covered in this legal document",
+            labels=[
+                "Confidentiality",
+                "Technology",
+                "Finance",
+                "Legal Compliance",
+                "Third Party Relations",
+                "Contract Terms",
+            ],
+            classification_type="multi_label",
+            llm_role="extractor_text",
+            add_justifications=True,
+            add_references=True,
+            reference_depth="sentences",
+        )
+
+        # Assign concepts to document
+        document_concepts = [document_type_concept, content_topics_concept]
+        document.concepts = document_concepts
+        assert document.concepts is not document_concepts
+
+        # LLM extraction
+        self.compare_with_concurrent_execution(
+            llm=llm,
+            expected_n_calls_no_concurrency=(2 if llm.is_group else 2),
+            expected_n_calls_with_concurrency=(2 if llm.is_group else 2),
+            expected_n_calls_1_item_per_call=(2 if llm.is_group else 2),
+            func=llm.extract_concepts_from_document,
+            func_kwargs={
+                "document": document,
+            },
+            original_container=document_concepts,
+            assigned_container=document.concepts,
+            assigned_instance_class=_Concept,
+        )
+        self.check_extra_data_in_extracted_items(document)
+
+        # Verify extraction results
+        extracted_document_type = document.get_concept_by_name("Document Type")
+        extracted_content_topics = document.get_concept_by_name("Content Topics")
+
+        # Check that items were extracted
+        assert extracted_document_type.extracted_items
+        assert extracted_content_topics.extracted_items
+
+        # Verify multi-class constraint (only one label)
+        document_type_item = extracted_document_type.extracted_items[0]
+        assert len(document_type_item.value) == 1
+        assert document_type_item.value[0] in document_type_concept.labels
+
+        # Verify multi-label allows multiple labels
+        content_topics_item = extracted_content_topics.extracted_items[0]
+        assert len(content_topics_item.value) >= 1
+        for label in content_topics_item.value:
+            assert label in content_topics_concept.labels
+
+        # Verify justifications and references are present
+        assert document_type_item.justification
+        assert document_type_item.reference_paragraphs
+        assert content_topics_item.justification
+        assert content_topics_item.reference_sentences
+
+        # Log extracted items for verification
+        self.log_extracted_items_for_instance(extracted_document_type)
+        self.log_extracted_items_for_instance(extracted_content_topics)
+
+        # Test scenario where no labels apply
+        irrelevant_concept = LabelConcept(
+            name="Technical Specifications",
+            description="Identify technical specifications mentioned in the document",
+            labels=[
+                "Cooking Recipes",
+                "Nutrition Information",
+            ],
+            classification_type="multi_label",
+            llm_role="extractor_text",
+        )
+
+        document.add_concepts([irrelevant_concept])
+        llm.extract_concepts_from_document(
+            document,
+            from_concepts=[document.get_concept_by_name("Technical Specifications")],
+        )
+
+        # Should have empty extracted_items when no labels apply
+        assert not document.get_concept_by_name(
+            "Technical Specifications"
+        ).extracted_items
+        # Note: The framework allows empty extracted_items when no predefined labels apply
+        # This is the expected behavior as documented in LabelConcept
+
+        # Overwrite check
+        with pytest.raises(ValueError):
+            llm.extract_concepts_from_document(document)
+
+        # Check usage tokens
+        self.check_usage(llm)
+        # Check cost
+        self.check_cost(llm)
+
+        # Log costs
+        self.output_test_costs()
 
     def test_init_example(self):
         """
@@ -2698,7 +2973,7 @@ class TestAll(TestUtils):
         ):
             llm_excessive_output._validate_output_tokens()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_system_messages(self):
         """
         Tests the system messages functionality of LLMs.
@@ -2761,7 +3036,7 @@ class TestAll(TestUtils):
             assert "ContextGem" in response
             logger.debug(response)
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -2984,7 +3259,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     def test_extract_concepts_from_aspect(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -3311,7 +3586,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     def test_extract_concepts_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -3519,7 +3794,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",
         [
@@ -3716,7 +3991,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_extract_with_fallback(self):
         """
         Tests for retrying extraction with a fallback LLM.
@@ -3757,7 +4032,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",
         [
@@ -3840,6 +4115,18 @@ class TestAll(TestUtils):
                         llm_role="extractor_text",
                         singular_occurrence=False,
                     ),
+                    LabelConcept(
+                        name="Party types",
+                        description="The types of parties involved in the agreement.",
+                        labels=[
+                            "Individual",
+                            "Corporation",
+                            "Government entity",
+                            "Non-profit organization",
+                            "Partnership",
+                        ],
+                        classification_type="multi_label",
+                    ),
                 ],
                 llm_role="extractor_text",
                 reference_depth="sentences",
@@ -3865,6 +4152,21 @@ class TestAll(TestUtils):
                 llm_role="reasoner_text",
                 add_justifications=True,
                 singular_occurrence=True,
+            ),
+            LabelConcept(
+                name="Contract type",
+                description="The type(s) of contract represented by this document",
+                labels=[
+                    "Non-disclosure agreement",
+                    "Employment contract",
+                    "Service agreement",
+                    "Sales contract",
+                    "Lease agreement",
+                    "Licensing agreement",
+                ],
+                classification_type="multi_label",
+                llm_role="reasoner_text",
+                singular_occurrence=True,  # global document classification
             ),
             StringConcept(
                 name="Title",
@@ -3928,6 +4230,20 @@ class TestAll(TestUtils):
                 llm_role="extractor_vision",
                 singular_occurrence=False,  # multiple invoices in the document
             ),
+            LabelConcept(
+                name="Invoice type",
+                description="The type of invoice shown in the image",
+                labels=[
+                    "Commercial invoice",
+                    "Proforma invoice",
+                    "Tax invoice",
+                    "Credit note",
+                    "Debit note",
+                ],
+                classification_type="multi_class",
+                llm_role="extractor_vision",
+                singular_occurrence=False,  # multiple invoices in the document
+            ),
         ]
         document.aspects = document_aspects
         document.images = document_images
@@ -3944,6 +4260,9 @@ class TestAll(TestUtils):
             )
         )
         self.log_extracted_items_for_instance(
+            document.get_aspect_by_name("Parties").get_concept_by_name("Party types")
+        )
+        self.log_extracted_items_for_instance(
             document.get_concept_by_name("Start date")
         )
         self.log_extracted_items_for_instance(
@@ -3951,6 +4270,9 @@ class TestAll(TestUtils):
         )
         self.log_extracted_items_for_instance(
             document.get_concept_by_name("Section titles")
+        )
+        self.log_extracted_items_for_instance(
+            document.get_concept_by_name("Contract type")
         )
         # Vision-related
         self.log_extracted_items_for_instance(
@@ -3964,6 +4286,9 @@ class TestAll(TestUtils):
         )
         self.log_extracted_items_for_instance(
             document.get_concept_by_name("Key aspects")
+        )
+        self.log_extracted_items_for_instance(
+            document.get_concept_by_name("Invoice type")
         )
 
         # Document serialization and deserialization (post-extraction)
@@ -4053,7 +4378,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     def test_aspect_extraction_from_paragraphs(
         self, llm: DocumentLLMGroup | DocumentLLM
@@ -4128,7 +4453,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     @pytest.mark.parametrize(
         "image",
         [
@@ -4213,7 +4538,7 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_chat(self):
         """
         Tests for the chat method.
@@ -4383,7 +4708,7 @@ class TestAll(TestUtils):
             print()
             log_messages()
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_usage_examples(self):
         """
         Tests for usage examples in project's documentation and README.md.
@@ -4419,6 +4744,12 @@ class TestAll(TestUtils):
             nested_structure,
             simple_class_structure,
             simple_structure,
+        )
+        from dev.usage_examples.docs.concepts.label_concept import (
+            document_aspect_analysis,
+            label_concept,
+            multi_label_classification,
+            refs_and_justifications,
         )
         from dev.usage_examples.docs.concepts.numerical_concept import (
             numerical_concept,
@@ -4482,6 +4813,7 @@ class TestAll(TestUtils):
             def_boolean_concept,
             def_date_concept,
             def_json_object_concept,
+            def_label_concept,
             def_numerical_concept,
             def_rating_concept,
             def_string_concept,
@@ -4718,7 +5050,7 @@ class TestAll(TestUtils):
                     result == first_result
                 ), f"Text result {i} is different for format {output_format}"
 
-    @pytest.mark.vcr()
+    @pytest.mark.vcr
     def test_docx_converter_llm_extract(self):
         """
         Tests for LLM extraction from DOCX files.

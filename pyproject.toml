@@ -16,8 +16,8 @@ dependencies = [
     "jinja2 (>=3.1.5,<4.0.0)",
     "loguru (>=0.7.3,<0.8.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
-    "litellm (>=1.68.0,<2.0.0)",
     "wtpsplit-lite (>=0.1.0,<0.2.0)",
+    "litellm (>=1.68.0,<1.71.2)",
 ]
 license = {text = "Apache-2.0"}
 keywords = [
@@ -120,7 +120,6 @@ pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 python-dotenv = "^1.0.1"
 pip-tools = "^7.4.1"
-pytest-vcr = {git = "https://github.com/shcherbak-ai/pytest-vcr.git", rev = "master"}
 pre-commit = "^4.1.0"
 isort = "^6.0.1"
 sphinx = ">=7.0.0,<8.0.0"
@@ -132,6 +131,7 @@ sphinxext-opengraph = "^0.9.1"
 nbformat = "^5.10.4"
 commitizen = "^4.5.1"
 sphinx-sitemap = "^2.6.0"
+pytest-recording = "^0.13.4"
 
 [tool.black]
 line-length = 88

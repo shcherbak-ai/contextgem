@@ -208,3 +208,32 @@ class _DateItem(_ExtractedItem):
 
         # Use the parent class's from_dict method
         return super().from_dict(obj_dict_copy)
+
+
+class _LabelItem(_ExtractedItem):
+    """
+    Represents an extracted item that holds a list of label values.
+
+    :ivar value: A list of label strings. Always returns a list for API consistency,
+        containing one or more labels depending on the classification type.
+    :type value: list[NonEmptyStr]
+    """
+
+    value: list[NonEmptyStr] = Field(..., min_length=1, frozen=True)
+
+    @field_validator("value")
+    @classmethod
+    def _validate_value(cls, value: list[NonEmptyStr]) -> list[NonEmptyStr]:
+        """
+        Validates the input list of labels. Ensures there are no duplicates in the list.
+
+        :param value: List of label strings to validate.
+        :type value: list[NonEmptyStr]
+        :return: The same list provided as input, if it passes validation.
+        :rtype: list[NonEmptyStr]
+        :raises ValueError: If the list contains duplicate labels.
+        """
+        if len(value) != len(set(value)):
+            raise ValueError("_LabelItem value cannot contain duplicate labels.")
+
+        return value

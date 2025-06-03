@@ -55,6 +55,8 @@ ExtractedInstanceType = Literal["aspect", "concept"]
 
 ReferenceDepth = Literal["paragraphs", "sentences"]
 
+ClassificationType = Literal["multi_class", "multi_label"]
+
 # Define standard SaT model IDs as a separate type
 StandardSaTModelId = Literal[
     "sat-1l",

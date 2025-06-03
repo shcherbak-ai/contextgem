@@ -1465,9 +1465,15 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     if add_justifications or add_references:
                         for i in concept_dict["extracted_items"]:
                             # Process the item value with a custom function on the concept
-                            i["value"] = relevant_concept._process_item_value(
-                                i["value"]
-                            )
+                            try:
+                                i["value"] = relevant_concept._process_item_value(
+                                    i["value"]
+                                )
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error processing extracted item value: {e}"
+                                )
+                                return None, all_usage_data
                             concept_extracted_item_kwargs = {"value": i["value"]}
                             if add_justifications:
                                 concept_extracted_item_kwargs["justification"] = i[
@@ -1569,7 +1575,13 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     else:
                         for i in concept_dict["extracted_items"]:
                             # Process the item value with a custom function on the concept
-                            i = relevant_concept._process_item_value(i)
+                            try:
+                                i = relevant_concept._process_item_value(i)
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error processing extracted item value: {e}"
+                                )
+                                return None, all_usage_data
                             sources_mapper[relevant_concept.unique_id][
                                 "extracted_items"
                             ].append(relevant_concept._item_class(value=i))

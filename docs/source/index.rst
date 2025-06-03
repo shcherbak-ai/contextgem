@@ -92,7 +92,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
         :link-type: doc
         :class-card: sd-border-0 sd-shadow-sm sd-card-hover
 
-        Learn how to extract and infer structured data like JSON objects, strings, numbers, dates, booleans, and ratings from documents using ContextGem's Concepts API.
+        Learn how to extract and infer structured data like JSON objects, strings, numbers, dates, booleans, ratings, and labels from documents using ContextGem's Concepts API.
 
         +++
         .. button-ref:: concepts/supported_concepts
@@ -253,6 +253,7 @@ Indices and tables
    concepts/date_concept
    concepts/rating_concept
    concepts/json_object_concept
+   concepts/label_concept
 
 .. toctree::
    :maxdepth: 2

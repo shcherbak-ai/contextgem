@@ -4806,6 +4806,9 @@ specific extraction needs:
 * 📊 JsonObjectConcept: For extracting structured data with multiple
   fields
 
+* 🏷️ LabelConcept: For classification using predefined labels (multi-
+  class or multi-label)
+
 This section provides detailed documentation for each concept type,
 including usage examples and best practices.
 
@@ -6990,6 +6993,541 @@ used as sources for the extraction:
   document, such as multiple product listings in a catalog, several
   patient records in a hospital report, or various customer complaints
   in a feedback compilation.
+
+
+# ==== concepts/label_concept ====
+
+LabelConcept
+************
+
+"LabelConcept" is a classification concept type in ContextGem that
+categorizes documents or content using predefined labels, supporting
+both single-label and multi-label classification approaches.
+
+
+🏷️ Overview
+===========
+
+"LabelConcept" is used when you need to classify content into
+predefined categories, including:
+
+* **Document classification**: contract types, document categories,
+  legal classifications
+
+* **Content categorization**: topics, themes, subjects, areas of focus
+
+* **Quality assessment**: compliance levels, risk categories, priority
+  levels
+
+* **Multi-faceted tagging**: multiple applicable labels for
+  comprehensive classification
+
+This concept type supports two classification modes:
+
+* **Multi-class**: Select exactly one label from the predefined set
+  (mutually exclusive labels) - used for classifying the content into
+  a single type or category
+
+* **Multi-label**: Select one or more labels from the predefined set
+  (non-exclusive labels) - used when multiple topics or attributes can
+  apply simultaneously
+
+Note:
+
+  When none of the predefined labels apply to the content being
+  classified, no extracted items will be returned for the concept
+  (empty "extracted_items" list). This ensures that only valid,
+  predefined labels are selected and prevents forced classification
+  when no appropriate label exists.
+
+
+💻 Usage Example
+================
+
+Here's a basic example of how to use "LabelConcept" for document type
+classification:
+
+   # ContextGem: Contract Type Classification using LabelConcept
+
+   import os
+
+   from contextgem import Document, DocumentLLM, LabelConcept
+
+   # Create a Document object from legal document text
+   legal_doc_text = """
+   NON-DISCLOSURE AGREEMENT
+
+   This Non-Disclosure Agreement ("Agreement") is entered into as of January 15, 2025, by and between TechCorp Inc., a Delaware corporation ("Disclosing Party"), and DataSystems LLC, a California limited liability company ("Receiving Party").
+
+   WHEREAS, Disclosing Party possesses certain confidential information relating to its proprietary technology and business operations;
+
+   NOW, THEREFORE, in consideration of the mutual covenants contained herein, the parties agree as follows:
+
+   1. CONFIDENTIAL INFORMATION
+   The term "Confidential Information" shall mean any and all non-public information...
+
+   2. OBLIGATIONS OF RECEIVING PARTY
+   Receiving Party agrees to hold all Confidential Information in strict confidence...
+   """
+
+   doc = Document(raw_text=legal_doc_text)
+
+   # Define a LabelConcept for contract type classification
+   contract_type_concept = LabelConcept(
+       name="Contract Type",
+       description="Classify the type of contract",
+       labels=["NDA", "Consultancy Agreement", "Privacy Policy", "Other"],
+       classification_type="multi_class",  # only one label can be selected (mutually exclusive labels)
+       singular_occurrence=True,  # expect only one classification result
+   )
+   print(contract_type_concept._format_labels_in_prompt)
+
+   # Attach the concept to the document
+   doc.add_concepts([contract_type_concept])
+
+   # Configure DocumentLLM with your API parameters
+   llm = DocumentLLM(
+       model="azure/gpt-4.1-mini",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+   )
+
+   # Extract the concept from the document
+   contract_type_concept = llm.extract_concepts_from_document(doc)[0]
+
+   # Check if any labels were extracted
+   if contract_type_concept.extracted_items:
+       # Get the classified document type
+       classified_type = contract_type_concept.extracted_items[0].value
+       print(f"Document classified as: {classified_type}")  # Output: ['NDA']
+   else:
+       print("No applicable labels found for this document")
+
+
+⚙️ Parameters
+=============
+
+When creating a "LabelConcept", you can specify the following
+parameters:
+
++----------------------+----------------------+--------------------------------------------------------------+
+| Parameter            | Type                 | Description                                                  |
+|======================|======================|==============================================================|
+| "name"               | str                  | A unique name identifier for the concept                     |
++----------------------+----------------------+--------------------------------------------------------------+
+| "description"        | str                  | A clear description of what the concept represents and how   |
+|                      |                      | classification should be performed                           |
++----------------------+----------------------+--------------------------------------------------------------+
+| "labels"             | list[str]            | List of predefined labels for classification. Must contain   |
+|                      |                      | at least 2 unique labels                                     |
++----------------------+----------------------+--------------------------------------------------------------+
+| "classification_typ  | str                  | Classification mode. Available values: ""multi_class""       |
+| e"                   |                      | (select exactly one label), ""multi_label"" (select one or   |
+|                      |                      | more labels). Defaults to ""multi_class""                    |
++----------------------+----------------------+--------------------------------------------------------------+
+| "llm_role"           | str                  | The role of the LLM responsible for extracting the concept.  |
+|                      |                      | Available values: ""extractor_text"", ""reasoner_text"",     |
+|                      |                      | ""extractor_vision"", ""reasoner_vision"". Defaults to       |
+|                      |                      | ""extractor_text"". For more details, see 🏷️ LLM Roles.      |
++----------------------+----------------------+--------------------------------------------------------------+
+| "add_justifications" | bool                 | Whether to include justifications for extracted items        |
+|                      |                      | (defaults to "False"). Justifications provide explanations   |
+|                      |                      | of why specific labels were selected and the reasoning       |
+|                      |                      | behind the classification decision.                          |
++----------------------+----------------------+--------------------------------------------------------------+
+| "justification_dept  | str                  | Justification detail level. Available values: ""brief"",     |
+| h"                   |                      | ""balanced"", ""comprehensive"". Defaults to ""brief""       |
++----------------------+----------------------+--------------------------------------------------------------+
+| "justification_max_  | int                  | Maximum sentences in a justification (defaults to "2")       |
+| sents"               |                      |                                                              |
++----------------------+----------------------+--------------------------------------------------------------+
+| "add_references"     | bool                 | Whether to include source references for extracted items     |
+|                      |                      | (defaults to "False"). References indicate the specific      |
+|                      |                      | locations in the document that informed the classification   |
+|                      |                      | decision.                                                    |
++----------------------+----------------------+--------------------------------------------------------------+
+| "reference_depth"    | str                  | Source reference granularity. Available values:              |
+|                      |                      | ""paragraphs"", ""sentences"". Defaults to ""paragraphs""    |
++----------------------+----------------------+--------------------------------------------------------------+
+| "singular_occurrenc  | bool                 | Whether this concept is restricted to having only one        |
+| e"                   |                      | extracted item. If "True", only a single extracted item will |
+|                      |                      | be extracted. Defaults to "False" (multiple extracted items  |
+|                      |                      | are allowed). This is particularly useful for global         |
+|                      |                      | document classifications where only one classification       |
+|                      |                      | result is expected.                                          |
++----------------------+----------------------+--------------------------------------------------------------+
+| "custom_data"        | dict                 | Optional. Dictionary for storing any additional data that    |
+|                      |                      | you want to associate with the concept. This data must be    |
+|                      |                      | JSON-serializable. This data is not used for extraction but  |
+|                      |                      | can be useful for custom processing or downstream tasks.     |
+|                      |                      | Defaults to an empty dictionary.                             |
++----------------------+----------------------+--------------------------------------------------------------+
+
+
+🚀 Advanced Usage
+=================
+
+
+🏷️ Multi-Class vs Multi-Label Classification
+--------------------------------------------
+
+Choose the appropriate classification type based on your use case:
+
+**Multi-Class Classification** ("classification_type="multi_class""):
+- Select exactly one label from the predefined set (mutually exclusive
+labels) - Ideal for: document types, priority levels, status
+categories - Example: A document can only be one type: "NDA",
+"Consultancy Agreement", or "Privacy Policy"
+
+**Multi-Label Classification** ("classification_type="multi_label""):
+- Select one or more labels from the predefined set (non-exclusive
+labels) - Ideal for: content topics, applicable regulations, feature
+tags - Example: A document can cover multiple topics: "Finance",
+"Legal", "Technology"
+
+Here's an example demonstrating multi-label classification for content
+topic identification:
+
+   # ContextGem: Multi-Label Classification with LabelConcept
+
+   import os
+
+   from contextgem import Document, DocumentLLM, LabelConcept
+
+   # Create a Document object with business document text covering multiple topics
+   business_doc_text = """
+   QUARTERLY BUSINESS REVIEW - Q4 2024
+
+   FINANCIAL PERFORMANCE
+   Revenue for Q4 2024 reached $2.8 million, exceeding our target by 12%. The finance team has prepared detailed budget projections for 2025, with anticipated growth of 18% across all divisions.
+
+   TECHNOLOGY INITIATIVES
+   Our development team has successfully implemented the new cloud infrastructure, reducing operational costs by 25%. The IT department is now focusing on cybersecurity enhancements and data analytics platform upgrades.
+
+   HUMAN RESOURCES UPDATE
+   We welcomed 15 new employees this quarter, bringing our total headcount to 145. The HR team has launched a comprehensive employee wellness program and updated our remote work policies.
+
+   LEGAL AND COMPLIANCE
+   All regulatory compliance requirements have been met for Q4. The legal department has reviewed and updated our data privacy policies in accordance with recent legislation changes.
+
+   MARKETING STRATEGY
+   The marketing team launched three successful campaigns this quarter, resulting in a 40% increase in lead generation. Our digital marketing efforts have expanded to include LinkedIn advertising and content marketing.
+   """
+
+   doc = Document(raw_text=business_doc_text)
+
+   # Define a LabelConcept for topic classification allowing multiple topics
+   content_topics_concept = LabelConcept(
+       name="Document Topics",
+       description="Identify all relevant business topics covered in this document",
+       labels=[
+           "Finance",
+           "Technology",
+           "HR",
+           "Legal",
+           "Marketing",
+           "Operations",
+           "Sales",
+           "Strategy",
+       ],
+       classification_type="multi_label",  # multiple labels can be selected (non-exclusive labels)
+   )
+
+
+   # Attach the concept to the document
+   doc.add_concepts([content_topics_concept])
+
+   # Configure DocumentLLM with your API parameters
+   llm = DocumentLLM(
+       model="azure/gpt-4.1-mini",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+   )
+
+   # Extract the concept from the document
+   content_topics_concept = llm.extract_concepts_from_document(doc)[0]
+
+   # Check if any labels were extracted
+   if content_topics_concept.extracted_items:
+       # Get all identified topics
+       identified_topics = content_topics_concept.extracted_items[0].value
+       print(f"Document covers the following topics: {', '.join(identified_topics)}")
+       # Expected output might include: Finance, Technology, HR, Legal, Marketing
+   else:
+       print("No applicable topic labels found for this document")
+
+
+🔍 References and Justifications for Classification
+---------------------------------------------------
+
+You can configure a "LabelConcept" to include justifications and
+references to understand classification decisions. This is
+particularly valuable when dealing with complex documents that might
+contain elements of multiple document types:
+
+   # ContextGem: LabelConcept with References and Justifications
+
+   import os
+
+   from contextgem import Document, DocumentLLM, LabelConcept
+
+   # Create a Document with content that might be challenging to classify
+   mixed_content_text = """
+   QUARTERLY BUSINESS REVIEW AND POLICY UPDATES
+   GlobalTech Solutions Inc. - February 2025
+
+   EMPLOYMENT AGREEMENT AND CONFIDENTIALITY PROVISIONS
+
+   This Employment Agreement ("Agreement") is entered into between GlobalTech Solutions Inc. ("Company") and Sarah Johnson ("Employee") as of February 1, 2025.
+
+   EMPLOYMENT TERMS
+   Employee shall serve as Senior Software Engineer with responsibilities including software development, code review, and technical leadership. The position is full-time with an annual salary of $125,000.
+
+   CONFIDENTIALITY OBLIGATIONS
+   Employee acknowledges that during employment, they may have access to confidential information including proprietary algorithms, customer data, and business strategies. Employee agrees to maintain strict confidentiality of such information both during and after employment.
+
+   NON-COMPETE PROVISIONS
+   For a period of 12 months following termination, Employee agrees not to engage in any business activities that directly compete with Company's core services within the same geographic market.
+
+   INTELLECTUAL PROPERTY
+   All work products, inventions, and discoveries made during employment shall be the exclusive property of the Company.
+
+   ADDITIONAL INFORMATION:
+
+   FINANCIAL PERFORMANCE SUMMARY
+   Q4 2024 revenue exceeded projections by 12%, reaching $3.2M. Cost optimization initiatives reduced operational expenses by 8%. The board approved a $500K investment in new data analytics infrastructure for 2025.
+
+   PRODUCT LAUNCH TIMELINE
+   The AI-powered customer analytics platform will launch Q2 2025. Marketing budget allocated: $200K for digital campaigns. Expected customer acquisition target: 150 new enterprise clients in the first quarter post-launch.
+   """
+
+   doc = Document(raw_text=mixed_content_text)
+
+   # Define a LabelConcept with justifications and references enabled
+   document_classification_concept = LabelConcept(
+       name="Document Classification with Evidence",
+       description="Classify this document type and provide reasoning for the classification",
+       labels=[
+           "Employment Contract",
+           "NDA",
+           "Consulting Agreement",
+           "Service Agreement",
+           "Partnership Agreement",
+           "Other",
+       ],
+       classification_type="multi_class",
+       add_justifications=True,  # enable justifications to understand classification reasoning
+       justification_depth="comprehensive",  # provide detailed reasoning
+       justification_max_sents=5,  # allow up to 5 sentences for justification
+       add_references=True,  # include references to source text
+       reference_depth="paragraphs",  # reference specific paragraphs that informed classification
+       singular_occurrence=True,  # expect only one classification result
+   )
+
+   # Attach the concept to the document
+   doc.add_concepts([document_classification_concept])
+
+   # Configure DocumentLLM with your API parameters
+   llm = DocumentLLM(
+       model="azure/gpt-4.1",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+   )
+
+   # Extract the concept from the document
+   document_classification_concept = llm.extract_concepts_from_document(doc)[0]
+
+   # Display the classification results with evidence
+   if document_classification_concept.extracted_items:
+       item = document_classification_concept.extracted_items[0]
+
+       print("=== DOCUMENT CLASSIFICATION RESULTS ===")
+       print(f"Classification: {item.value[0]}")
+       print(f"\nJustification:")
+       print(f"{item.justification}")
+
+       print(f"\nEvidence from document:")
+       for i, paragraph in enumerate(item.reference_paragraphs, 1):
+           print(f"{i}. {paragraph.raw_text}")
+
+   else:
+       print("No classification could be determined - none of the predefined labels apply")
+
+   # This example demonstrates how justifications help explain why the LLM
+   # chose a specific classification and how references show which parts
+   # of the document informed that decision
+
+
+🎯 Document Aspect Analysis
+---------------------------
+
+"LabelConcept" can be used to classify extracted "Aspect" instances,
+providing a powerful way to analyze and categorize specific
+information that has been extracted from documents. This approach
+allows you to first extract relevant content using aspects, then apply
+classification logic to those extracted items.
+
+Here's an example that demonstrates using "LabelConcept" to classify
+the financial risk level of extracted financial obligations from legal
+contracts:
+
+   # ContextGem: Aspect Analysis with LabelConcept
+
+   import os
+
+   from contextgem import Aspect, Document, DocumentLLM, LabelConcept
+
+   # Create a Document object from contract text
+   contract_text = """
+   SOFTWARE DEVELOPMENT AGREEMENT
+   ...
+
+   SECTION 5. PAYMENT TERMS
+   Client shall pay Developer a total fee of $150,000 for the complete software development project, payable in three installments: $50,000 upon signing, $50,000 at milestone completion, and $50,000 upon final delivery.
+   ...
+
+   SECTION 8. MAINTENANCE AND SUPPORT
+   Following project completion, Developer shall provide 12 months of maintenance and support services at a rate of $5,000 per month, totaling $60,000 annually.
+   ...
+
+   SECTION 12. PENALTY CLAUSES
+   In the event of project delay beyond the agreed timeline, Developer shall pay liquidated damages of $2,000 per day of delay, with a maximum penalty cap of $50,000.
+   ...
+
+   SECTION 15. INTELLECTUAL PROPERTY LICENSING
+   Client agrees to pay ongoing licensing fees of $10,000 annually for the use of Developer's proprietary frameworks and libraries integrated into the software solution.
+   ...
+
+   SECTION 18. TERMINATION COSTS
+   Should Client terminate this agreement without cause, Client shall pay Developer 75% of all remaining unpaid fees, estimated at approximately $100,000 based on current project status.
+   ...
+   """
+
+   doc = Document(raw_text=contract_text)
+
+   # Define a LabelConcept to classify the financial risk level of the obligations
+   risk_classification_concept = LabelConcept(
+       name="Client Financial Risk Level",
+       description=(
+           "Classify the financial risk level for the Client's financial obligations based on:\n"
+           "- Amount size and impact on Client's cash flow\n"
+           "- Payment timing and predictability for the Client\n"
+           "- Penalty or liability exposure for the Client\n"
+           "- Ongoing vs. one-time obligations for the Client"
+       ),
+       labels=["Low Risk", "Moderate Risk", "High Risk", "Critical Risk"],
+       classification_type="multi_class",
+       add_justifications=True,
+       justification_depth="comprehensive",  # provide a comprehensive justification
+       justification_max_sents=10,  # set an adequate justification length
+       singular_occurrence=True,  # global risk level for the client's financial obligations
+   )
+
+   # Define Aspect containing the concept
+   financial_obligations_aspect = Aspect(
+       name="Client Financial Obligations",
+       description="Financial obligations that the Client must fulfill under the contract",
+       concepts=[risk_classification_concept],
+   )
+
+   # Attach the aspect to the document
+   doc.add_aspects([financial_obligations_aspect])
+
+   # Configure DocumentLLM with your API parameters
+   llm = DocumentLLM(
+       model="azure/gpt-4.1-mini",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+   )
+
+   # Extract all data from the document
+   doc = llm.extract_all(doc)
+
+   # Get the extracted aspect and concept
+   financial_obligations_aspect = doc.get_aspect_by_name(
+       "Client Financial Obligations"
+   )  # or `doc.aspects[0]`
+   risk_classification_concept = financial_obligations_aspect.get_concept_by_name(
+       "Client Financial Risk Level"
+   )  # or `financial_obligations_aspect.concepts[0]`
+
+   # Display the extracted information
+
+   print("Extracted Client Financial Obligations:")
+   for extracted_item in financial_obligations_aspect.extracted_items:
+       print(f"- {extracted_item.value}")
+
+   if risk_classification_concept.extracted_items:
+       assert (
+           len(risk_classification_concept.extracted_items) == 1
+       )  # as we have set `singular_occurrence=True` on the concept
+       risk_item = risk_classification_concept.extracted_items[0]
+       print(f"\nClient Financial Risk Level: {risk_item.value[0]}")
+       print(f"Justification: {risk_item.justification}")
+   else:
+       print("\nRisk level could not be determined")
+
+
+📊 Extracted Items
+==================
+
+When a "LabelConcept" is extracted, it is populated with **a list of
+extracted items** accessible through the ".extracted_items" property.
+Each item is an instance of the "_LabelItem" class with the following
+attributes:
+
++----------------------+----------------------+--------------------------------------------------------------+
+| Attribute            | Type                 | Description                                                  |
+|======================|======================|==============================================================|
+| "value"              | list[str]            | List of selected labels (always a list for API consistency,  |
+|                      |                      | even for multi-class with single selection)                  |
++----------------------+----------------------+--------------------------------------------------------------+
+| "justification"      | str                  | Explanation of why these labels were selected (only if       |
+|                      |                      | "add_justifications=True")                                   |
++----------------------+----------------------+--------------------------------------------------------------+
+| "reference_paragrap  | list["Paragraph"]    | List of paragraph objects that informed the classification   |
+| hs"                  |                      | (only if "add_references=True")                              |
++----------------------+----------------------+--------------------------------------------------------------+
+| "reference_sentence  | list["Sentence"]     | List of sentence objects that informed the classification    |
+| s"                   |                      | (only if "add_references=True" and                           |
+|                      |                      | "reference_depth="sentences"")                               |
++----------------------+----------------------+--------------------------------------------------------------+
+
+
+💡 Best Practices
+=================
+
+Here are some best practices to optimize your use of "LabelConcept":
+
+* **Choose meaningful labels**: Use clear, distinct labels that cover
+  your classification needs without overlap.
+
+* **Provide clear descriptions**: Explain what each classification
+  represents and when each label should be applied.
+
+* **Consider label granularity**: Balance between too few labels
+  (insufficient precision) and too many labels (classification
+  complexity).
+
+* **Include edge cases**: Consider adding labels like "Other" or
+  "Mixed" for content that doesn't fit standard categories.
+
+* **Use appropriate classification type**: Set
+  "classification_type="multi_class"" for mutually exclusive
+  categories, "classification_type="multi_label"" for potentially
+  overlapping attributes.
+
+* **Enable justifications**: Use "add_justifications=True" to
+  understand and validate classification decisions, especially for
+  complex or ambiguous content.
+
+* **Handle empty results**: Design your workflow to handle cases where
+  none of the predefined labels apply (resulting in empty
+  "extracted_items").
 
 
 # ==== llms/supported_llms ====
@@ -12091,6 +12629,304 @@ class contextgem.public.concepts.DateConcept(**data)
 
       Return type:
          list[_ExtractedItem]
+
+   classmethod from_dict(obj_dict)
+
+      Reconstructs an instance of the class from a dictionary
+      representation.
+
+      This method deserializes a dictionary containing the object's
+      attributes and values into a new instance of the class. It
+      handles complex nested structures like aspects, concepts, and
+      extracted items, properly reconstructing each component.
+
+      Parameters:
+         **obj_dict** (*dict**[**str**, **Any**]*) -- Dictionary
+         containing the serialized object data.
+
+      Returns:
+         A new instance of the class with restored attributes.
+
+      Return type:
+         Self
+
+   classmethod from_disk(file_path)
+
+      Loads an instance of the class from a JSON file stored on disk.
+
+      This method reads the JSON content from the specified file path
+      and deserializes it into an instance of the class using the
+      *from_json* method.
+
+      Parameters:
+         **file_path** (*str*) -- Path to the JSON file to load (must
+         end with '.json').
+
+      Returns:
+         An instance of the class populated with the data from the
+         file.
+
+      Return type:
+         Self
+
+      Raises:
+         * **ValueError** -- If the file path doesn't end with
+           '.json'.
+
+         * **OSError** -- If there's an error reading the file.
+
+         * **RuntimeError** -- If deserialization fails.
+
+   classmethod from_json(json_string)
+
+      Creates an instance of the class from a JSON string
+      representation.
+
+      This method deserializes the provided JSON string into a
+      dictionary and uses the *from_dict* method to construct the
+      class instance. It validates that the class name in the
+      serialized data matches the current class.
+
+      Parameters:
+         **json_string** (*str*) -- JSON string containing the
+         serialized object data.
+
+      Returns:
+         A new instance of the class with restored state.
+
+      Return type:
+         Self
+
+      Raises:
+         **TypeError** -- If the class name in the serialized data
+         doesn't match.
+
+   to_dict()
+
+      Transforms the current object into a dictionary representation.
+
+      Converts the object to a dictionary that includes: - All public
+      attributes - Special handling for specific public and private
+      attributes
+
+      When an LLM or LLM group is serialized, its API credentials and
+      usage/cost stats are removed.
+
+      Returns:
+         A dictionary representation of the current object with all
+         necessary data for serialization
+
+      Return type:
+         dict[str, Any]
+
+   to_disk(file_path)
+
+      Saves the serialized instance to a JSON file at the specified
+      path.
+
+      This method converts the instance to a dictionary representation
+      using *to_dict()*, then writes it to disk as a formatted JSON
+      file with UTF-8 encoding.
+
+      Parameters:
+         **file_path** (*str*) -- Path where the JSON file should be
+         saved (must end with '.json').
+
+      Return type:
+         "None"
+
+      Returns:
+         None
+
+      Raises:
+         * **ValueError** -- If the file path doesn't end with
+           '.json'.
+
+         * **IOError** -- If there's an error during the file writing
+           process.
+
+   to_json()
+
+      Converts the object to its JSON string representation.
+
+      Serializes the object into a JSON-formatted string using the
+      dictionary representation provided by the *to_dict()* method.
+
+      Returns:
+         A JSON string representation of the object.
+
+      Return type:
+         str
+
+   property unique_id: str
+
+      Returns the ULID of the instance.
+
+   name: NonEmptyStr
+
+   description: NonEmptyStr
+
+   llm_role: LLMRoleAny
+
+   add_references: StrictBool
+
+   reference_depth: ReferenceDepth
+
+   singular_occurrence: StrictBool
+
+   add_justifications: StrictBool
+
+   justification_depth: JustificationDepth
+
+   justification_max_sents: StrictInt
+
+   custom_data: dict
+
+class contextgem.public.concepts.LabelConcept(**data)
+
+   Bases: "_Concept"
+
+   A concept model for label-based classification of documents and
+   aspects.
+
+   This class handles identification and classification using
+   predefined labels, supporting both multi-class (single label
+   selection) and multi-label (multiple label selection)
+   classification approaches.
+
+   **Note**: When none of the predefined labels apply to the content
+   being classified, no extracted items will be returned (empty
+   "extracted_items" list). This ensures that only valid, predefined
+   labels are selected and prevents forced classification when no
+   appropriate label exists.
+
+   Variables:
+      * **name** -- The name of the concept (non-empty string,
+        stripped).
+
+      * **description** -- A brief description of the concept (non-
+        empty string, stripped).
+
+      * **labels** -- List of predefined labels for classification.
+        Must contain at least 2 unique labels.
+
+      * **classification_type** -- Classification mode - "multi_class"
+        for single label selection, "multi_label" for multiple label
+        selection. Defaults to "multi_class".
+
+      * **llm_role** -- The role of the LLM responsible for extracting
+        the concept ("extractor_text", "reasoner_text",
+        "extractor_vision", "reasoner_vision"). Defaults to
+        "extractor_text".
+
+      * **add_justifications** -- Whether to include justifications
+        for extracted items.
+
+      * **justification_depth** -- Justification detail level.
+        Defaults to "brief".
+
+      * **justification_max_sents** -- Maximum sentences in
+        justification. Defaults to 2.
+
+      * **add_references** -- Whether to include source references for
+        extracted items.
+
+      * **reference_depth** -- Source reference granularity
+        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
+        relevant when references are added to extracted items. Affects
+        the structure of "extracted_items".
+
+      * **singular_occurrence** -- Whether this concept is restricted
+        to having only one extracted item. If True, only a single
+        extracted item will be extracted. Defaults to False (multiple
+        extracted items are allowed). Note that with advanced LLMs,
+        this constraint may not be strictly required as they can often
+        infer the appropriate number of items to extract from the
+        concept's name, description, and type (e.g., "document type"
+        vs "content topics").
+
+   Parameters:
+      * **custom_data** (*dict*)
+
+      * **add_justifications** (*bool*)
+
+      * **justification_depth** (*JustificationDepth*)
+
+      * **justification_max_sents** (*int*)
+
+      * **name** (*NonEmptyStr*)
+
+      * **description** (*NonEmptyStr*)
+
+      * **llm_role** (*LLMRoleAny*)
+
+      * **add_references** (*bool*)
+
+      * **reference_depth** (*ReferenceDepth*)
+
+      * **singular_occurrence** (*StrictBool*)
+
+      * **labels** (*list**[**NonEmptyStr**]*)
+
+      * **classification_type** (*ClassificationType*)
+
+   Example:
+      Label concept definition
+
+         from contextgem import LabelConcept
+
+         # Multi-class classification: single label selection
+         document_type_concept = LabelConcept(
+             name="Document Type",
+             description="Classify the type of legal document",
+             labels=["NDA", "Consultancy Agreement", "Privacy Policy", "Other"],
+             classification_type="multi_class",
+             singular_occurrence=True,
+         )
+
+         # Multi-label classification: multiple label selection
+         content_topics_concept = LabelConcept(
+             name="Content Topics",
+             description="Identify all relevant topics covered in the document",
+             labels=["Finance", "Legal", "Technology", "HR", "Operations", "Marketing"],
+             classification_type="multi_label",
+             add_justifications=True,
+             justification_depth="brief",  # add justifications for the selected labels
+         )
+
+   Create a new model by parsing and validating input data from
+   keyword arguments.
+
+   Raises [*ValidationError*][pydantic_core.ValidationError] if the
+   input data cannot be validated to form a valid model.
+
+   *self* is explicitly positional-only to allow *self* as a field
+   name.
+
+   labels: list[NonEmptyStr]
+
+   classification_type: ClassificationType
+
+   property extracted_items: list[_LabelItem]
+
+      Provides access to extracted items.
+
+      Returns:
+         A list containing the extracted items as *_ExtractedItem*
+         objects.
+
+      Return type:
+         list[_ExtractedItem]
+
+   clone()
+
+      Creates and returns a deep copy of the current instance.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         A deep copy of the current instance.
 
    classmethod from_dict(obj_dict)
 

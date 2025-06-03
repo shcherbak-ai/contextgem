@@ -36,6 +36,7 @@ from contextgem.public import (
     JsonObjectClassStruct,
     JsonObjectConcept,
     JsonObjectExample,
+    LabelConcept,
     LLMPricing,
     NumericalConcept,
     Paragraph,
@@ -58,6 +59,7 @@ __all__ = [
     "RatingConcept",
     "JsonObjectConcept",
     "DateConcept",
+    "LabelConcept",
     # Documents
     "Document",
     # Pipelines

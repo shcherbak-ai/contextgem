@@ -1,132 +1,138 @@
 interactions:
 - request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array. If the concept is not found or there are no items to extract,
-      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
-      of extracted items for the concept is specified under \\\"Amount of extracted
-      items\\\". Each extracted item, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
-      structure is provided for a concept under \u201CExpected structure,\u201D you
-      must follow that structure for all extracted items corresponding to that concept.\\n
-      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
-      the extracted item value must be within that scale.\\n    -- If there are example
-      items (\u201CExtracted concept examples\u201D), try to follow the same style
-      and formatting for your extracted items.\\n    -- When extracting string values,
-      translate them in English if the original language of the document is not English.\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure your extracted
-      items strictly match that type. Python types are provided (e.g., str for string,
-      int for integer, float for floating-point number, dict for object, etc.).\\n
-      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
-      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\nNote that occasionally you may be working
+      with document fragments rather than complete documents. These fragments represent
+      portions of a larger document and should be analyzed within their limited context.
+      When working with fragments, focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n2. Aspect: A defined
+      area or topic within a document that requires focused attention. Each aspect
+      corresponds to a specific subject or theme described in the task. For example:\n-
+      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
+      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
+      Work experience, education, or skills.\nYou will analyze aspects as instructed,
+      considering their relevance and context within the document.\n\n3. Concept:
+      A unit of information or an entity relevant to the task. Concepts may be derived
+      from an aspect or the broader document context. They represent a wide range
+      of data points and insights, from simple entities (names, dates, monetary values)
+      to complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
+      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
+      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
+      Reasoned conclusions: Such as determining whether a document meets specific
+      criteria or answers particular questions.\n- Interpretative judgments: Such
+      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
+      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
+      you comprehend the nature of the document and the aspects or concepts you need
+      to focus on.\n- Follow specific instructions: Each task will include detailed
+      instructions, such as which aspects or concepts to focus on and how the data
+      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
+      ensuring your outputs align with the document''s intent and context.\n- Adapt
+      to variability: Documents may differ in structure, language, or formatting.
+      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks."},{"role":"user","content":"Below
+      you will find document text and a list of concepts.\n\nYour task is to:\n1.
+      Read through the document text provided.\n2. Identify whether each concept in
+      the concepts list is addressed within the document text.\n3. For each concept
+      that appears, extract zero or more items relevant to that concept. The item
+      format and structure are specified for each concept.\n4. Produce a JSON array
+      containing your extracted data, in the provided format.\n\nIf a concept is not
+      addressed in the document text, you must still include an entry in the final
+      JSON output but with an empty \"extracted_items\" list.\n\nFollow these additional
+      rules:\n\n- Output format:\nProvide your answer in only the following answer
+      format (do not include backticks, code fences, or any introductory/explanatory
+      text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
+      keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
+      must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
+      The value of \"extracted_items\" must be an array. If the concept is not found
+      or there are no items to extract, leave the array empty ([]).\n        --- Guidance
+      regarding the possible amount of extracted items for the concept is specified
+      under \"Amount of extracted items\". Each extracted item, even if there is only
+      one, must be part of the \"extracted_items\" array.\n\n- Item structure:\n    --
+      If a specific structure is provided for a concept under \"Expected structure,\"
+      you must follow that structure for all extracted items corresponding to that
+      concept.\n    -- If a rating scale is provided for a concept under \"Rating
+      scale,\" the extracted item value must be within that scale.\n    -- If available
+      labels are provided for a concept under \"Available labels,\" the extracted
+      item value must be a list containing only labels from the predefined set. If
+      none of the predefined labels apply, do not extract any items for that concept.\n    --
+      If there are example items (\"Extracted concept examples\"), try to follow the
+      same style and formatting for your extracted items.\n    -- When extracting
+      string values, translate them in English if the original language of the document
+      is not English.\n\n- Types of extracted items:\n    -- Each concept specifies
+      an \"extracted item type\" (found under \"Concept extracted item type\"). Ensure
+      your extracted items strictly match that type. Python types are provided (e.g.,
+      str for string, int for integer, float for floating-point number, dict for object,
+      etc.).\n    -- Do not introduce any extra fields or modify the specified structure.\n\n-
+      Handling missing or multiple items:\n    -- If a concept is not mentioned at
       all, your output should still contain an entry for that concept with an empty
-      \\\"extracted_items\\\" array.\\n    -- If multiple items are found for a concept,
-      include each as a separate entry within the \\\"extracted_items\\\" array.\\n\\n-
-      No additional text:\\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n
-      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n-
-      Concept ID: C0\\nConcept name: User System Profile\\n\\nConcept description:\\nComprehensive
-      user profile with system access permissions and settings\\n\\nExpected structure:\\n{\\n
-      \ \\\"user\\\": {\\n    \\\"name\\\": str,\\n    \\\"age\\\": int,\\n    \\\"contact\\\":
-      {\\n      \\\"email\\\": str,\\n      \\\"phone\\\": str,\\n      \\\"address\\\":
-      {\\n        \\\"street\\\": str,\\n        \\\"city\\\": str,\\n        \\\"country\\\":
-      str\\n      },\\n      \\\"contact_type\\\": \\\"primary\\\" or \\\"secondary\\\"
-      or \\\"emergency\\\" or \\\"union\\\" or \\\"literal\\\" or null\\n    }\\n
-      \ },\\n  \\\"status\\\": \\\"active\\\" or \\\"inactive\\\",\\n  \\\"permissions\\\":
-      [\\n    {\\n      \\\"resource\\\": str,\\n      \\\"access\\\": \\\"read\\\"
-      or \\\"write\\\" or \\\"admin\\\"\\n    },\\n    ...\\n  ],\\n  \\\"settings\\\":
-      {\\n    \\\"theme\\\": str,\\n    \\\"notifications\\\": {\\n      \\\"email\\\":
-      bool,\\n      \\\"sms\\\": bool,\\n      \\\"frequency\\\": \\\"daily\\\" or
-      \\\"weekly\\\" or \\\"monthly\\\"\\n    }\\n  },\\n  \\\"related_items\\\":
-      [\\n    {\\n      \\\"id\\\": int,\\n      \\\"name\\\": str,\\n      \\\"description\\\":
-      str,\\n      \\\"is_active\\\": bool\\n    },\\n    ...\\n  ],\\n  \\\"security_level\\\":
-      \\\"Basic\\\" or \\\"Advanced\\\" or \\\"Enterprise\\\" or null\\n}\\n\\nAmount
-      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nExtracted
-      concept examples:\\n- custom_data={} content={'user': {'name': 'Charlie Davis',
-      'age': 42, 'contact': {'email': 'charlie@example.com', 'phone': '111-222-3333',
-      'address': {'street': '101 Maple Dr', 'city': 'Nowhere', 'country': 'Australia'},
-      'contact_type': 'primary'}}, 'status': 'active', 'permissions': [{'resource':
-      'files', 'access': 'read'}, {'resource': 'users', 'access': 'admin'}], 'settings':
-      {'theme': 'dark', 'notifications': {'email': True, 'sms': False, 'frequency':
-      'weekly'}}, 'related_items': [{'id': 1, 'name': 'Document Review', 'description':
-      'Annual document review task', 'is_active': True}, {'id': 2, 'name': 'Access
-      Audit', 'description': 'System access verification', 'is_active': False}], 'security_level':
-      'Advanced'}\\n\\nConcept extracted item type: dict\\n```\\n\\n___\\n\\n---\\nDOCUMENT
-      TEXT:\\nSystem Profile Information\\n===========================\\n\\nUSER PROFILE\\nName:
-      Charlie Davis\\nAge: 42\\nContact Information (primary contact):\\n Email: charlie@example.com\\n
-      Phone: 111-222-3333\\n Address: 101 Maple Dr, Nowhere, Australia\\n\\nACCOUNT
-      STATUS: active\\n\\nSYSTEM PERMISSIONS:\\n1. Resource: files\\n Access Level:
-      read\\n2. Resource: users\\n Access Level: admin\\n3. Resource: settings\\n
-      Access Level: write\\n\\nPREFERENCE SETTINGS\\nTheme: dark\\nNotification Preferences:\\n-
-      Email notifications: Enabled\\n- SMS notifications: Disabled\\n- Notification
-      frequency: weekly\\n\\nLogin History:\\n- Last login: 2023-12-15\\n- Sessions
-      active: 2\\n- Device: Mobile, Desktop\\n\\nRELATED ITEMS:\\n1. Document Review
-      (ID: 1)\\n Description: Annual document review task\\n Status: Active\\n\\n2.
-      Access Audit (ID: 2)\\n Description: System access verification\\n Status: Inactive\\n\\nSecurity
-      Level: Advanced\\n2FA: Enabled\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \"extracted_items\" array.\n    -- For concepts that have an \"Available labels:\"
+      section: if none of the predefined labels apply to the content, leave the \"extracted_items\"
+      array empty.\n    -- For concepts that have an \"Available labels:\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \"labels\" array (e.g.,
+      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
+      if there are genuinely distinct instances or contexts that warrant separate
+      classification.\n    -- For concepts that do not have an \"Available labels:\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
+      Do not include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n===\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n===\n\n___\nCONCEPTS:\n```\n-
+      Concept ID: C0\nConcept name: User System Profile\n\nConcept description:\nComprehensive
+      user profile with system access permissions and settings\n\nExpected structure:\n{\n  \"user\":
+      {\n    \"name\": str,\n    \"age\": int,\n    \"contact\": {\n      \"email\":
+      str,\n      \"phone\": str,\n      \"address\": {\n        \"street\": str,\n        \"city\":
+      str,\n        \"country\": str\n      },\n      \"contact_type\": \"primary\"
+      or \"secondary\" or \"emergency\" or \"union\" or \"literal\" or null\n    }\n  },\n  \"status\":
+      \"active\" or \"inactive\",\n  \"permissions\": [\n    {\n      \"resource\":
+      str,\n      \"access\": \"read\" or \"write\" or \"admin\"\n    },\n    ...\n  ],\n  \"settings\":
+      {\n    \"theme\": str,\n    \"notifications\": {\n      \"email\": bool,\n      \"sms\":
+      bool,\n      \"frequency\": \"daily\" or \"weekly\" or \"monthly\"\n    }\n  },\n  \"related_items\":
+      [\n    {\n      \"id\": int,\n      \"name\": str,\n      \"description\": str,\n      \"is_active\":
+      bool\n    },\n    ...\n  ],\n  \"security_level\": \"Basic\" or \"Advanced\"
+      or \"Enterprise\" or null\n}\n\nAmount of extracted items: This concept may
+      have zero, one, or multiple extracted items.\n\nExtracted concept examples:\n-
+      custom_data={} content={''user'': {''name'': ''Charlie Davis'', ''age'': 42,
+      ''contact'': {''email'': ''charlie@example.com'', ''phone'': ''111-222-3333'',
+      ''address'': {''street'': ''101 Maple Dr'', ''city'': ''Nowhere'', ''country'':
+      ''Australia''}, ''contact_type'': ''primary''}}, ''status'': ''active'', ''permissions'':
+      [{''resource'': ''files'', ''access'': ''read''}, {''resource'': ''users'',
+      ''access'': ''admin''}], ''settings'': {''theme'': ''dark'', ''notifications'':
+      {''email'': True, ''sms'': False, ''frequency'': ''weekly''}}, ''related_items'':
+      [{''id'': 1, ''name'': ''Document Review'', ''description'': ''Annual document
+      review task'', ''is_active'': True}, {''id'': 2, ''name'': ''Access Audit'',
+      ''description'': ''System access verification'', ''is_active'': False}], ''security_level'':
+      ''Advanced''}\n\nConcept extracted item type: dict\n```\n\n___\n\n---\nDOCUMENT
+      TEXT:\nSystem Profile Information\n===========================\n\nUSER PROFILE\nName:
+      Charlie Davis\nAge: 42\nContact Information (primary contact):\n Email: charlie@example.com\n
+      Phone: 111-222-3333\n Address: 101 Maple Dr, Nowhere, Australia\n\nACCOUNT STATUS:
+      active\n\nSYSTEM PERMISSIONS:\n1. Resource: files\n Access Level: read\n2. Resource:
+      users\n Access Level: admin\n3. Resource: settings\n Access Level: write\n\nPREFERENCE
+      SETTINGS\nTheme: dark\nNotification Preferences:\n- Email notifications: Enabled\n-
+      SMS notifications: Disabled\n- Notification frequency: weekly\n\nLogin History:\n-
+      Last login: 2023-12-15\n- Sessions active: 2\n- Device: Mobile, Desktop\n\nRELATED
+      ITEMS:\n1. Document Review (ID: 1)\n Description: Annual document review task\n
+      Status: Active\n\n2. Access Audit (ID: 2)\n Description: System access verification\n
+      Status: Inactive\n\nSecurity Level: Advanced\n2FA: Enabled\n---\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -139,13 +145,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '9948'
+      - '10814'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.82.0
+      - AsyncAzureOpenAI/Python 1.82.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -155,7 +161,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.82.0
+      - 1.82.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -193,7 +199,7 @@ interactions:
         2,\n            \"name\": \"Access Audit\",\n            \"description\":
         \"System access verification\",\n            \"is_active\": false\n          }\n        ],\n        \"security_level\":
         \"Advanced\"\n      }\n    ]\n  }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1748457355, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1748886060, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
@@ -201,8 +207,8 @@ interactions:
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
         "fp_178c8d546f", "usage": {"completion_tokens": 314, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2047, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 2361}}'
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2217, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 2531}}'
     headers:
       Content-Length:
       - '2800'
@@ -217,7 +223,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2964'
+      - '6215'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

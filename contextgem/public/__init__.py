@@ -21,6 +21,7 @@ from contextgem.public.concepts import (
     BooleanConcept,
     DateConcept,
     JsonObjectConcept,
+    LabelConcept,
     NumericalConcept,
     RatingConcept,
     StringConcept,
@@ -50,6 +51,7 @@ __all__ = [
     "RatingConcept",
     "JsonObjectConcept",
     "DateConcept",
+    "LabelConcept",
     # Documents
     "Document",
     # Pipelines

@@ -46,9 +46,13 @@ from contextgem.internal.items import (
     _IntegerItem,
     _IntegerOrFloatItem,
     _JsonObjectItem,
+    _LabelItem,
     _StringItem,
 )
-from contextgem.internal.typings.aliases import NonEmptyStr, Self
+from contextgem.internal.llm_output_structs.concept_structs import (
+    _LabelConceptItemValueModel,
+)
+from contextgem.internal.typings.aliases import ClassificationType, NonEmptyStr, Self
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
     _is_typed_class,
@@ -326,16 +330,41 @@ class RatingConcept(_Concept):
         # First, perform rating scale validation
         if value:
             for item in value:
-                if not self.rating_scale.start <= item.value <= self.rating_scale.end:
-                    raise ValueError(
-                        f"Invalid value for scaled rating concept: "
-                        f"value {item.value} is outside of the scale range {self.rating_scale.start} to {self.rating_scale.end}"
-                    )
+                self._validate_rating_value(item.value)
 
         # Then, call the parent class setter for final validation and assignment
         super(RatingConcept, type(self)).extracted_items.fset(self, value)
 
+    def _validate_rating_value(self, rating_value: int) -> None:
+        """
+        Validates rating values against concept-specific business logic.
+
+        Checks that the rating value is within the defined rating scale range.
+
+        :param rating_value: Rating value to validate.
+        :type rating_value: int
+        :raises ValueError: If the rating value is outside the allowed rating scale range.
+        """
+        if not self.rating_scale.start <= rating_value <= self.rating_scale.end:
+            raise ValueError(
+                f"Invalid value for scaled rating concept: "
+                f"value {rating_value} is outside of the scale range "
+                f"{self.rating_scale.start} to {self.rating_scale.end}"
+            )
+
     def _process_item_value(self, value: int) -> int:
+        """
+        Validates the rating value against the rating scale and returns it.
+
+        :param value: Integer rating value to validate.
+        :type value: int
+        :return: Validated rating value.
+        :rtype: int
+        :raises ValueError: If the value is outside the allowed rating scale range.
+        """
+        # Apply concept-specific business logic validation
+        self._validate_rating_value(value)
+
         return value
 
 
@@ -848,3 +877,172 @@ class DateConcept(_Concept):
                 f"Failed to parse date string '{date_string}' with "
                 f"format '{self._date_format_in_prompt}': {e}"
             ) from e
+
+
+class LabelConcept(_Concept):
+    """
+    A concept model for label-based classification of documents and aspects.
+
+    This class handles identification and classification using predefined labels,
+    supporting both multi-class (single label selection) and multi-label (multiple
+    label selection) classification approaches.
+
+    **Note**: When none of the predefined labels apply to the content being classified,
+    no extracted items will be returned (empty ``extracted_items`` list). This ensures
+    that only valid, predefined labels are selected and prevents forced classification
+    when no appropriate label exists.
+
+    :ivar name: The name of the concept (non-empty string, stripped).
+    :type name: NonEmptyStr
+    :ivar description: A brief description of the concept (non-empty string, stripped).
+    :type description: NonEmptyStr
+    :ivar labels: List of predefined labels for classification. Must contain at least 2 unique labels.
+    :type labels: list[NonEmptyStr]
+    :ivar classification_type: Classification mode - "multi_class" for single label selection,
+        "multi_label" for multiple label selection. Defaults to "multi_class".
+    :type classification_type: ClassificationType
+    :ivar llm_role: The role of the LLM responsible for extracting the concept
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
+        Defaults to "extractor_text".
+    :type llm_role: LLMRoleAny
+    :ivar add_justifications: Whether to include justifications for extracted items.
+    :type add_justifications: bool
+    :ivar justification_depth: Justification detail level. Defaults to "brief".
+    :type justification_depth: JustificationDepth
+    :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
+    :type justification_max_sents: int
+    :ivar add_references: Whether to include source references for extracted items.
+    :type add_references: bool
+    :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
+        Defaults to "paragraphs". Only relevant when references are added to extracted items.
+        Affects the structure of ``extracted_items``.
+    :type reference_depth: ReferenceDepth
+    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
+        If True, only a single extracted item will be extracted. Defaults to False (multiple
+        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
+        strictly required as they can often infer the appropriate number of items to extract
+        from the concept's name, description, and type (e.g., "document type" vs
+        "content topics").
+    :type singular_occurrence: StrictBool
+
+    Example:
+        .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_label_concept.py
+            :language: python
+            :caption: Label concept definition
+    """
+
+    labels: list[NonEmptyStr] = Field(..., min_length=2)
+    classification_type: ClassificationType = Field(default="multi_class")
+
+    _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)
+
+    @field_validator("labels")
+    @classmethod
+    def _validate_labels(cls, labels: list[NonEmptyStr]) -> list[NonEmptyStr]:
+        """
+        Validates that all labels are unique.
+
+        :param labels: List of labels to validate.
+        :type labels: list[NonEmptyStr]
+        :return: The validated list of labels.
+        :rtype: list[NonEmptyStr]
+        :raises ValueError: If labels are not unique.
+        """
+        if len(labels) != len(set(labels)):
+            raise ValueError("All labels must be unique.")
+        return labels
+
+    @property
+    def _item_type_in_prompt(self) -> str:
+        return _format_type(dict)
+
+    @property
+    def _item_class(self) -> type[_LabelItem]:
+        return _LabelItem
+
+    @property
+    def _format_labels_in_prompt(self) -> str:
+        """
+        Formats the available labels for display in prompts.
+
+        :return: Formatted string listing all available labels.
+        :rtype: str
+        """
+        return "[" + ", ".join(f'"{label}"' for label in self.labels) + "]"
+
+    @property
+    def extracted_items(self) -> list[_LabelItem]:
+        return self._extracted_items
+
+    @extracted_items.setter
+    def extracted_items(self, value: list[_LabelItem]) -> None:
+        """
+        Validates that all label values are from the predefined set and conform
+        to classification type constraints, in addition to the validation
+        performed by the parent class.
+
+        :param value: The new list of extracted items to be set.
+        :type value: list[_LabelItem]
+        :raises ValueError: If any extracted item contains invalid labels or
+            violates classification type constraints.
+        :return: None
+        """
+        # First, perform label validation for each item
+        if value:
+            for item in value:
+                self._validate_label_values(item.value)
+
+        # Then, call the parent class setter for final validation and assignment
+        super(LabelConcept, type(self)).extracted_items.fset(self, value)
+
+    def _validate_label_values(self, labels_list: list[str]) -> None:
+        """
+        Validates label values against concept-specific business logic.
+
+        Checks that all labels are from the predefined set and enforces
+        classification type constraints.
+
+        :param labels_list: List of label strings to validate.
+        :type labels_list: list[str]
+        :raises ValueError: If any label is not in the predefined set, or if
+            classification type constraints are violated.
+        """
+        # Validate that all labels are from the predefined set
+        invalid_labels = [label for label in labels_list if label not in self.labels]
+        if invalid_labels:
+            raise ValueError(
+                f"Invalid labels found for concept `{self.__class__.__name__}`: "
+                f"{invalid_labels}. Must be from predefined labels: {self.labels}"
+            )
+
+        # Validate classification type constraints
+        if self.classification_type == "multi_class" and len(labels_list) > 1:
+            raise ValueError(
+                f"Multi-class classification allows only one label, got {len(labels_list)}: {labels_list}"
+            )
+
+    def _process_item_value(self, value: dict[str, list[str]]) -> list[str]:
+        """
+        Processes the object format of an extracted item's value, returned in the LLM response.
+        Validates the value structure using a Pydantic model and then applies concept-specific
+        business logic validation (labels from predefined set, classification type constraints).
+
+        :param value: Dictionary with "labels" key containing list of label strings.
+        :type value: dict[str, list[str]]
+        :return: Validated list of labels for _LabelItem.value.
+        :rtype: list[str]
+        :raises ValueError: If the structure is invalid, any label is not in the predefined
+            set, or if classification type constraints are violated.
+        """
+
+        # First, validate the extracted item's value structure using the Pydantic model
+        _LabelConceptItemValueModel.model_validate(value)
+
+        # Extract the labels list
+        labels_list = value["labels"]
+
+        # Apply concept-specific business logic validation
+        self._validate_label_values(labels_list)
+
+        # Return just the list of labels for _LabelItem.value
+        return labels_list

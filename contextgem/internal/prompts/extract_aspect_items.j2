@@ -48,7 +48,7 @@ Below you will find a list of consecutively ordered paragraphs from a document a
     {% if reference_depth == "sentences" %}
         --- sentences: An array of objects for each relevant sentence within the paragraph. Each object should include:
             ---- sentence_id: The provided ID of the sentence, e.g., "P0-S0", "P0-S2".
-            ---- justification: A justification of why the sentence is relevant to the aspect. Ensure the justification is specific and directly ties the content of the sentence to the aspect's defining features. Never reference the sentence's ID in the justification.
+            ---- justification: A justification of why the sentence is relevant to the aspect. Ensure the justification is specific and directly ties the content of the sentence to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", paragraph IDs like "P0", or sentence IDs like "P0-S0") in the justification.
         {% if justification_depth == "brief" %}
                 ----- Justification should be brief, i.e. highlight only the essential details.
         {% elif justification_depth == "balanced" %}
@@ -63,7 +63,7 @@ Below you will find a list of consecutively ordered paragraphs from a document a
                 ----- Justification should be in the original language of the document.
         {% endif %}
     {% else %}
-        --- justification: A justification of why the paragraph is relevant to the aspect. Ensure the justification is specific and directly ties the content of the paragraph to the aspect's defining features. Never reference the paragraph's ID in the justification.
+        --- justification: A justification of why the paragraph is relevant to the aspect. Ensure the justification is specific and directly ties the content of the paragraph to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", or paragraph IDs like "P0") in the justification.
         {% if justification_depth == "brief" %}
             ---- Justification should be brief, i.e. highlight only the essential details.
         {% elif justification_depth == "balanced" %}
