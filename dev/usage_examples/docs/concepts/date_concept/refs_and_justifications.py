@@ -26,7 +26,7 @@ doc = Document(raw_text=project_text)
 completion_date_concept = DateConcept(
     name="Project completion date",
     description="The final completion date for the website redesign project",
-    add_justifications=True,  # enable justifications to understand extraction reasoning
+    add_justifications=True,  # enable justifications to understand extraction logic
     justification_depth="balanced",
     justification_max_sents=3,  # allow up to 3 sentences for the calculation justification
     add_references=True,  # include references to source text
@@ -39,11 +39,10 @@ doc.add_concepts([completion_date_concept])
 
 # Configure DocumentLLM
 llm = DocumentLLM(
-    model="azure/o4-mini",
+    model="azure/gpt-4.1",
     api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
     api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
     api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-    reasoning_effort="medium",
 )
 
 # Extract the concept

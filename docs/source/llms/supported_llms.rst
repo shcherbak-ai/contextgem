@@ -50,5 +50,14 @@ For local LLMs, you'll need to specify the provider, model name, and the appropr
    :language: python
    :caption: Using local LLM providers
 
+.. note::
+   **LM Studio Connection Error**: If you encounter a connection error (``litellm.APIError: APIError: Lm_studioException - Connection error``) when using LM Studio, check that you have provided a dummy API key. While API keys are usually not expected for local models, this is a specific case where LM Studio requires one:
+
+   .. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/lm_studio_connection_error_fix.py
+      :language: python
+      :caption: LM Studio with dummy API key
+
+   This is a known issue with calling LM Studio API in litellm: https://github.com/openai/openai-python/issues/961
+
 
 For a complete list of configuration options available when initializing DocumentLLM instances, see the next section :doc:`llm_config`.

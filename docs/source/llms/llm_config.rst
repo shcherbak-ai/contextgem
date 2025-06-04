@@ -40,6 +40,15 @@ For local models, usually you need to specify the ``api_base`` instead of the AP
    :language: python
    :caption: Using a local LLM
 
+.. note::
+   **LM Studio Connection Error**: If you encounter a connection error (``litellm.APIError: APIError: Lm_studioException - Connection error``) when using LM Studio, check that you have provided a dummy API key. While API keys are usually not expected for local models, this is a specific case where LM Studio requires one:
+
+   .. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/lm_studio_connection_error_fix.py
+      :language: python
+      :caption: LM Studio with dummy API key
+
+   This is a known issue with calling LM Studio API in litellm: https://github.com/openai/openai-python/issues/961
+
 
 📝 Configuration Parameters
 -----------------------------

@@ -396,28 +396,37 @@ class TestAll(TestUtils):
             extracted_concepts = llm.extract_concepts_from_document(
                 document, overwrite_existing=True
             )
-            self.log_extracted_items_for_instance(extracted_concepts[0])
+            assert llm.get_usage()[0].usage.calls[-1].prompt
+            assert llm.get_usage()[0].usage.calls[-1].response
             extracted_items = extracted_concepts[0].extracted_items
-            if extracted_items:
-                logger.debug(f"Extracted by local LLM: {extracted_items}")
-            else:
-                warnings.warn("Local LLM did not return any extracted items.")
+            assert len(
+                extracted_items
+            ), f"No extracted items returned with local LLM {llm.model}"
+            self.log_extracted_items_for_instance(extracted_concepts[0])
 
+        # Ollama
         # Non-reasoning LLM
-        llm_non_reasoning = DocumentLLM(
+        llm_non_reasoning_ollama = DocumentLLM(
             model="ollama/llama3.1:8b",
             api_base="http://localhost:11434",
             seed=123,
         )
-        extract_with_local_llm(llm_non_reasoning)
-
-        # Reasoning LLM (response may begin with <think> tags)
-        llm_reasoning = DocumentLLM(
+        extract_with_local_llm(llm_non_reasoning_ollama)
+        llm_reasoning_ollama = DocumentLLM(
             model="ollama/deepseek-r1:32b",
             api_base="http://localhost:11434",
             seed=123,
         )
-        extract_with_local_llm(llm_reasoning)
+        extract_with_local_llm(llm_reasoning_ollama)
+
+        # LM Studio
+        llm_lm_studio = DocumentLLM(
+            model="lm_studio/meta-llama-3.1-8b-instruct",
+            api_base="http://localhost:1234/v1",
+            api_key="random-key",  # required for LM Studio API
+            seed=123,
+        )
+        extract_with_local_llm(llm_lm_studio)
 
     def test_init_api_llm(self):
         """
@@ -4781,7 +4790,11 @@ class TestAll(TestUtils):
             extract_concepts_from_aspect,
             extract_concepts_from_document,
         )
-        from dev.usage_examples.docs.llms.llm_init import llm_api, llm_local
+        from dev.usage_examples.docs.llms.llm_init import (
+            llm_api,
+            llm_local,
+            lm_studio_connection_error_fix,
+        )
         from dev.usage_examples.docs.optimizations import (
             optimization_accuracy,
             optimization_choosing_llm,

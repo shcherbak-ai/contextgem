@@ -5894,7 +5894,7 @@ date information was inferred:
    completion_date_concept = DateConcept(
        name="Project completion date",
        description="The final completion date for the website redesign project",
-       add_justifications=True,  # enable justifications to understand extraction reasoning
+       add_justifications=True,  # enable justifications to understand extraction logic
        justification_depth="balanced",
        justification_max_sents=3,  # allow up to 3 sentences for the calculation justification
        add_references=True,  # include references to source text
@@ -5907,11 +5907,10 @@ date information was inferred:
 
    # Configure DocumentLLM
    llm = DocumentLLM(
-       model="azure/o4-mini",
+       model="azure/gpt-4.1",
        api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
        api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
        api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-       reasoning_effort="medium",
    )
 
    # Extract the concept
@@ -7613,6 +7612,29 @@ Using local LLM providers
        # see DocumentLLM API reference for all configuration options
    )
 
+Note:
+
+  **LM Studio Connection Error**: If you encounter a connection error
+  ("litellm.APIError: APIError: Lm_studioException - Connection
+  error") when using LM Studio, check that you have provided a dummy
+  API key. While API keys are usually not expected for local models,
+  this is a specific case where LM Studio requires one:LM Studio with
+  dummy API key
+
+     from contextgem import DocumentLLM
+
+     llm = DocumentLLM(
+         model="lm_studio/meta-llama-3.1-8b-instruct",
+         api_base="http://localhost:1234/v1",
+         api_key="dummy-key",  # dummy key to avoid connection error
+     )
+
+     # This is a known issue with calling LM Studio API in litellm:
+     # https://github.com/openai/openai-python/issues/961
+
+  This is a known issue with calling LM Studio API in litellm:
+  https://github.com/openai/openai-python/issues/961
+
 For a complete list of configuration options available when
 initializing DocumentLLM instances, see the next section Configuring
 LLM(s).
@@ -7686,6 +7708,29 @@ Using a local LLM
        api_base="http://localhost:11434",
        # see DocumentLLM API reference for all configuration options
    )
+
+Note:
+
+  **LM Studio Connection Error**: If you encounter a connection error
+  ("litellm.APIError: APIError: Lm_studioException - Connection
+  error") when using LM Studio, check that you have provided a dummy
+  API key. While API keys are usually not expected for local models,
+  this is a specific case where LM Studio requires one:LM Studio with
+  dummy API key
+
+     from contextgem import DocumentLLM
+
+     llm = DocumentLLM(
+         model="lm_studio/meta-llama-3.1-8b-instruct",
+         api_base="http://localhost:1234/v1",
+         api_key="dummy-key",  # dummy key to avoid connection error
+     )
+
+     # This is a known issue with calling LM Studio API in litellm:
+     # https://github.com/openai/openai-python/issues/961
+
+  This is a known issue with calling LM Studio API in litellm:
+  https://github.com/openai/openai-python/issues/961
 
 
 📝 Configuration Parameters
