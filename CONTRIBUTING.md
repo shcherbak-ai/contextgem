@@ -179,6 +179,7 @@ You **must** re-record cassettes if:
 - You modified any parameters in LLM API calls
 - You're writing a new test that calls the LLM API
 - The existing cassettes are no longer compatible with your changes
+- You made changes to local LLM API interactions (requires Ollama and LM Studio installed on your system)
 
 #### How to Re-record Cassettes
 
@@ -195,7 +196,9 @@ You **must** re-record cassettes if:
    ```
    CONTEXTGEM_LOGGER_LEVEL=DEBUG
    ```
-4. Run your tests, which will create new cassette files
+4. **For local LLM testing**: Install [Ollama](https://ollama.ai/) and [LM Studio](https://lmstudio.ai/) on your system if you're testing local model interactions
+
+5. Run your tests, which will create new cassette files
 
 **Important**: Re-recording cassettes will use your OpenAI API key and may incur charges to your account based on the number and type of API calls made during testing. Please be aware of these potential costs before re-recording.
 

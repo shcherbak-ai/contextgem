@@ -120,7 +120,7 @@ interactions:
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "llama3.1:8b", "created_at": "2025-06-02T17:40:44.3715372Z",
+      string: '{"model": "llama3.1:8b", "created_at": "2025-06-04T15:02:52.1439544Z",
         "response": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Non-disclosure agreement\"\n        ]\n    }\n]", "done":
         true, "done_reason": "stop", "context": [128006, 882, 128007, 271, 14711,
@@ -240,9 +240,9 @@ interactions:
         11915, 9306, 271, 791, 9875, 4985, 2567, 279, 828, 27285, 627, 4521, 1432,
         128009, 128006, 78191, 128007, 271, 9837, 262, 341, 286, 330, 69587, 851,
         794, 330, 34, 15, 761, 286, 330, 24396, 291, 12408, 794, 2330, 310, 330, 8284,
-        52765, 11915, 9306, 702, 286, 5243, 262, 457, 60], "total_duration": 487970200,
-        "load_duration": 11295700, "prompt_eval_count": 1571, "prompt_eval_duration":
-        6694800, "eval_count": 32, "eval_duration": 469473900}'
+        52765, 11915, 9306, 702, 286, 5243, 262, 457, 60], "total_duration": 7428419400,
+        "load_duration": 6801297000, "prompt_eval_count": 1571, "prompt_eval_duration":
+        326076800, "eval_count": 32, "eval_duration": 300004600}'
     headers:
       Content-Type:
       - application/json; charset=utf-8
@@ -374,27 +374,26 @@ interactions:
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "deepseek-r1:32b", "created_at": "2025-06-02T17:40:54.4288172Z",
-        "response": "<think>\nAlright, I need to process this task step by step. Let''s
-        start by understanding what is being asked. The user has provided a document
-        text and a list of concepts. My job is to analyze the document and extract
-        information based on these concepts.\n\nFirst, looking at the concepts, there''s
-        only one concept here: C0, which is \"Contract title\". The description says
-        it''s the title of the contract. The extracted item type is a string, and
-        there can be zero, one, or multiple items.\n\nNow, examining the document
-        text provided:\n\n\"Non-disclosure agreement\n\nThe parties shall keep the
-        data confidential.\"\n\nSo, the first line is \"Non-disclosure agreement\".
-        That seems like the title of the contract. The second part talks about confidentiality
-        but doesn''t add to the title.\n\nSince C0 is looking for the contract title,
-        I should extract \"Non-disclosure agreement\" as a string. There''s only one
-        instance here, so the extracted_items array will have this single item.\n\nI
-        need to make sure that the JSON structure follows exactly what''s required:
-        each object has \"concept_id\" and \"extracted_items\". Since C0 is addressed,
-        I include it with the extracted title. If there were other concepts not mentioned
-        in the document, they would still be included but with empty arrays, but in
-        this case, only C0 is present.\n\nI also need to ensure that the JSON doesn''t
-        have any extra text or formatting beyond what''s specified. So, just a clean
-        array with the necessary objects.\n</think>\n\n[\n    {\n        \"concept_id\":
+      string: '{"model": "deepseek-r1:32b", "created_at": "2025-06-04T15:03:23.5169086Z",
+        "response": "<think>\nOkay, so I need to process this document text and extract
+        concepts based on the given instructions. Let me start by understanding what''s
+        required.\n\nFirst, the task is to check each concept in the list against
+        the document text. The only concept here is C0, which is \"Contract title\".
+        My job is to see if this concept is addressed in the provided text.\n\nLooking
+        at the document text: it starts with \"Non-disclosure agreement\" and then
+        has a sentence about confidentiality. So the first line seems like the title
+        of the contract.\n\nThe concept description says that the extracted item should
+        be a string, which matches because \"Non-disclosure agreement\" is a string.
+        The amount can be zero, one, or multiple items, but in this case, there''s
+        only one title mentioned.\n\nI need to make sure I extract it correctly. Since
+        the document starts with the title, that''s definitely relevant. There are
+        no other titles mentioned, so only one item will be extracted.\n\nNow, structuring
+        the JSON output as per the guidelines: each object has \"concept_id\" and
+        \"extracted_items\". For C0, the extracted item is the string from the document.\n\nI
+        should ensure there are no extra fields or deviations from the specified structure.
+        Also, since it''s a title, I don''t need to translate anything here because
+        it''s already in English.\n\nSo putting it all together, the JSON will have
+        one entry for C0 with the extracted title.\n</think>\n\n[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\"Non-disclosure agreement\"]\n    }\n]",
         "done": true, "done_reason": "stop", "context": [151644, 14374, 739, 510,
         2610, 686, 387, 12607, 9079, 15860, 279, 32189, 11, 6358, 11, 323, 22845,
@@ -511,33 +510,32 @@ interactions:
         614, 7168, 11, 825, 11, 476, 5248, 27432, 3589, 382, 44576, 27432, 1509, 943,
         25, 607, 198, 13874, 19324, 60288, 10952, 44097, 15762, 510, 8121, 51665,
         11653, 9128, 271, 785, 9677, 4880, 2506, 279, 821, 26193, 624, 4421, 1406,
-        151645, 151648, 198, 71486, 11, 358, 1184, 311, 1882, 419, 3383, 3019, 553,
-        3019, 13, 6771, 594, 1191, 553, 8660, 1128, 374, 1660, 4588, 13, 576, 1196,
-        702, 3897, 264, 2197, 1467, 323, 264, 1140, 315, 18940, 13, 3017, 2618, 374,
-        311, 23643, 279, 2197, 323, 8649, 1995, 3118, 389, 1493, 18940, 382, 5338,
-        11, 3330, 518, 279, 18940, 11, 1052, 594, 1172, 825, 7286, 1588, 25, 356,
-        15, 11, 892, 374, 330, 14067, 2265, 3263, 576, 4008, 2727, 432, 594, 279,
-        2265, 315, 279, 5116, 13, 576, 27432, 1509, 943, 374, 264, 914, 11, 323, 1052,
-        646, 387, 7168, 11, 825, 11, 476, 5248, 3589, 382, 7039, 11, 37836, 279, 2197,
-        1467, 3897, 1447, 1, 8121, 51665, 11653, 9128, 271, 785, 9677, 4880, 2506,
-        279, 821, 26193, 2217, 4416, 11, 279, 1156, 1555, 374, 330, 8121, 51665, 11653,
-        9128, 3263, 2938, 4977, 1075, 279, 2265, 315, 279, 5116, 13, 576, 2086, 949,
-        13433, 911, 64195, 714, 3171, 944, 912, 311, 279, 2265, 382, 12549, 356, 15,
-        374, 3330, 369, 279, 5116, 2265, 11, 358, 1265, 8649, 330, 8121, 51665, 11653,
-        9128, 1, 438, 264, 914, 13, 2619, 594, 1172, 825, 2867, 1588, 11, 773, 279,
-        27432, 12134, 1334, 686, 614, 419, 3175, 1509, 382, 40, 1184, 311, 1281, 2704,
-        429, 279, 4718, 5944, 11017, 6896, 1128, 594, 2567, 25, 1817, 1633, 702, 330,
-        68487, 842, 1, 323, 330, 23493, 291, 12134, 3263, 8704, 356, 15, 374, 20068,
-        11, 358, 2924, 432, 448, 279, 27432, 2265, 13, 1416, 1052, 1033, 1008, 18940,
-        537, 9733, 304, 279, 2197, 11, 807, 1035, 2058, 387, 5230, 714, 448, 4287,
-        18386, 11, 714, 304, 419, 1142, 11, 1172, 356, 15, 374, 3042, 382, 40, 1083,
-        1184, 311, 5978, 429, 279, 4718, 3171, 944, 614, 894, 4960, 1467, 476, 36566,
-        7797, 1128, 594, 5189, 13, 2055, 11, 1101, 264, 4240, 1334, 448, 279, 5871,
-        6171, 624, 151649, 271, 9640, 262, 341, 286, 330, 68487, 842, 788, 330, 34,
-        15, 756, 286, 330, 23493, 291, 12134, 788, 4383, 8121, 51665, 11653, 9128,
-        7026, 262, 456, 60], "total_duration": 9210219700, "load_duration": 16739000,
-        "prompt_eval_count": 1564, "prompt_eval_duration": 8427900, "eval_count":
-        340, "eval_duration": 9181272700}'
+        151645, 151648, 198, 32313, 11, 773, 358, 1184, 311, 1882, 419, 2197, 1467,
+        323, 8649, 18940, 3118, 389, 279, 2661, 11221, 13, 6771, 752, 1191, 553, 8660,
+        1128, 594, 2567, 382, 5338, 11, 279, 3383, 374, 311, 1779, 1817, 7286, 304,
+        279, 1140, 2348, 279, 2197, 1467, 13, 576, 1172, 7286, 1588, 374, 356, 15,
+        11, 892, 374, 330, 14067, 2265, 3263, 3017, 2618, 374, 311, 1490, 421, 419,
+        7286, 374, 20068, 304, 279, 3897, 1467, 382, 22464, 518, 279, 2197, 1467,
+        25, 432, 8471, 448, 330, 8121, 51665, 11653, 9128, 1, 323, 1221, 702, 264,
+        11652, 911, 64195, 13, 2055, 279, 1156, 1555, 4977, 1075, 279, 2265, 315,
+        279, 5116, 382, 785, 7286, 4008, 2727, 429, 279, 27432, 1509, 1265, 387, 264,
+        914, 11, 892, 9071, 1576, 330, 8121, 51665, 11653, 9128, 1, 374, 264, 914,
+        13, 576, 3311, 646, 387, 7168, 11, 825, 11, 476, 5248, 3589, 11, 714, 304,
+        419, 1142, 11, 1052, 594, 1172, 825, 2265, 9733, 382, 40, 1184, 311, 1281,
+        2704, 358, 8649, 432, 12440, 13, 8704, 279, 2197, 8471, 448, 279, 2265, 11,
+        429, 594, 8491, 9760, 13, 2619, 525, 902, 1008, 15311, 9733, 11, 773, 1172,
+        825, 1509, 686, 387, 27432, 382, 7039, 11, 2036, 1677, 279, 4718, 2550, 438,
+        817, 279, 17501, 25, 1817, 1633, 702, 330, 68487, 842, 1, 323, 330, 23493,
+        291, 12134, 3263, 1752, 356, 15, 11, 279, 27432, 1509, 374, 279, 914, 504,
+        279, 2197, 382, 40, 1265, 5978, 1052, 525, 902, 4960, 5043, 476, 85265, 504,
+        279, 5189, 5944, 13, 7281, 11, 2474, 432, 594, 264, 2265, 11, 358, 1513, 944,
+        1184, 311, 14683, 4113, 1588, 1576, 432, 594, 2669, 304, 6364, 382, 4416,
+        10687, 432, 678, 3786, 11, 279, 4718, 686, 614, 825, 4343, 369, 356, 15, 448,
+        279, 27432, 2265, 624, 151649, 271, 9640, 262, 341, 286, 330, 68487, 842,
+        788, 330, 34, 15, 756, 286, 330, 23493, 291, 12134, 788, 4383, 8121, 51665,
+        11653, 9128, 7026, 262, 456, 60], "total_duration": 28562299800, "load_duration":
+        15551796400, "prompt_eval_count": 1564, "prompt_eval_duration": 1000595200,
+        "eval_count": 326, "eval_duration": 12009107200}'
     headers:
       Content-Type:
       - application/json; charset=utf-8
@@ -545,6 +543,173 @@ interactions:
       - DUMMY
       Transfer-Encoding:
       - chunked
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\nNote that occasionally you may be working
+      with document fragments rather than complete documents. These fragments represent
+      portions of a larger document and should be analyzed within their limited context.
+      When working with fragments, focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n2. Aspect: A defined
+      area or topic within a document that requires focused attention. Each aspect
+      corresponds to a specific subject or theme described in the task. For example:\n-
+      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
+      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
+      Work experience, education, or skills.\nYou will analyze aspects as instructed,
+      considering their relevance and context within the document.\n\n3. Concept:
+      A unit of information or an entity relevant to the task. Concepts may be derived
+      from an aspect or the broader document context. They represent a wide range
+      of data points and insights, from simple entities (names, dates, monetary values)
+      to complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
+      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
+      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
+      Reasoned conclusions: Such as determining whether a document meets specific
+      criteria or answers particular questions.\n- Interpretative judgments: Such
+      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
+      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
+      you comprehend the nature of the document and the aspects or concepts you need
+      to focus on.\n- Follow specific instructions: Each task will include detailed
+      instructions, such as which aspects or concepts to focus on and how the data
+      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
+      ensuring your outputs align with the document''s intent and context.\n- Adapt
+      to variability: Documents may differ in structure, language, or formatting.
+      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks."},{"role":"user","content":"Below
+      you will find document text and a list of concepts.\n\nYour task is to:\n1.
+      Read through the document text provided.\n2. Identify whether each concept in
+      the concepts list is addressed within the document text.\n3. For each concept
+      that appears, extract zero or more items relevant to that concept. The item
+      format and structure are specified for each concept.\n4. Produce a JSON array
+      containing your extracted data, in the provided format.\n\nIf a concept is not
+      addressed in the document text, you must still include an entry in the final
+      JSON output but with an empty \"extracted_items\" list.\n\nFollow these additional
+      rules:\n\n- Output format:\nProvide your answer in only the following answer
+      format (do not include backticks, code fences, or any introductory/explanatory
+      text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
+      keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
+      must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
+      The value of \"extracted_items\" must be an array. If the concept is not found
+      or there are no items to extract, leave the array empty ([]).\n        --- Guidance
+      regarding the possible amount of extracted items for the concept is specified
+      under \"Amount of extracted items\". Each extracted item, even if there is only
+      one, must be part of the \"extracted_items\" array.\n\n- Item structure:\n    --
+      If a specific structure is provided for a concept under \"Expected structure,\"
+      you must follow that structure for all extracted items corresponding to that
+      concept.\n    -- If a rating scale is provided for a concept under \"Rating
+      scale,\" the extracted item value must be within that scale.\n    -- If available
+      labels are provided for a concept under \"Available labels,\" the extracted
+      item value must be a list containing only labels from the predefined set. If
+      none of the predefined labels apply, do not extract any items for that concept.\n    --
+      If there are example items (\"Extracted concept examples\"), try to follow the
+      same style and formatting for your extracted items.\n    -- When extracting
+      string values, translate them in English if the original language of the document
+      is not English.\n\n- Types of extracted items:\n    -- Each concept specifies
+      an \"extracted item type\" (found under \"Concept extracted item type\"). Ensure
+      your extracted items strictly match that type. Python types are provided (e.g.,
+      str for string, int for integer, float for floating-point number, dict for object,
+      etc.).\n    -- Do not introduce any extra fields or modify the specified structure.\n\n-
+      Handling missing or multiple items:\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \"extracted_items\" array.\n    -- For concepts that have an \"Available labels:\"
+      section: if none of the predefined labels apply to the content, leave the \"extracted_items\"
+      array empty.\n    -- For concepts that have an \"Available labels:\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \"labels\" array (e.g.,
+      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
+      if there are genuinely distinct instances or contexts that warrant separate
+      classification.\n    -- For concepts that do not have an \"Available labels:\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
+      Do not include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n===\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n===\n\n___\nCONCEPTS:\n```\n-
+      Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
+      of the contract.\n\nAmount of extracted items: This concept may have zero, one,
+      or multiple extracted items.\n\nConcept extracted item type: str\n```\n\n___\n\n---\nDOCUMENT
+      TEXT:\nNon-disclosure agreement\n\nThe parties shall keep the data confidential.\n---\n"}],"model":"meta-llama-3.1-8b-instruct","max_tokens":4096,"seed":123,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '8223'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncOpenAI/Python 1.83.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.83.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: http://localhost:1234/v1/chat/completions
+  response:
+    body:
+      string: '{"id": "chatcmpl-DUMMY", "object": "chat.completion", "created": 1749049406,
+        "model": "meta-llama-3.1-8b-instruct", "choices": [{"index": 0, "logprobs":
+        null, "finish_reason": "stop", "message": {"role": "assistant", "content":
+        "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\": [\n            \"Non-disclosure
+        agreement\"\n        ]\n    }\n]"}}], "usage": {"prompt_tokens": 1589, "completion_tokens":
+        31, "total_tokens": 1620}, "stats": {}, "system_fingerprint": "meta-llama-3.1-8b-instruct"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '628'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - DUMMY
+      ETag:
+      - W/"274-qjyEAXLfOh5m3TVetGxKt3HsoSE"
+      Keep-Alive:
+      - timeout=5
+      X-Powered-By:
+      - Express
     status:
       code: 200
       message: OK
