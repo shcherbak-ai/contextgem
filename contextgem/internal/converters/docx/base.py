@@ -26,16 +26,26 @@ tables, images, footnotes, comments, and other elements.
 
 import base64
 import re
-import xml.etree.ElementTree as ET
-from typing import Optional
+from typing import Callable, Optional
+
+from lxml import etree
 
 from contextgem.internal.converters.docx.exceptions import (
     DocxContentError,
     DocxConverterError,
     DocxXmlError,
 )
-from contextgem.internal.converters.docx.namespaces import WORD_XML_NAMESPACES
 from contextgem.internal.converters.docx.package import _DocxPackage
+from contextgem.internal.converters.docx.utils import (
+    NUMBERED_LIST_FORMATS,
+    PAGE_FIELD_KEYWORDS,
+    _docx_get_namespaced_attr,
+    _docx_xpath,
+    _extract_comment_id_from_context,
+    _extract_footnote_id_from_context,
+    _is_text_content_empty,
+    _join_text_parts,
+)
 from contextgem.internal.loggers import logger
 from contextgem.public.images import Image
 from contextgem.public.paragraphs import Paragraph
@@ -46,622 +56,77 @@ class _DocxConverterBase:
     Base class for the DOCX converter.
     """
 
-    def _get_style_name(self, style_id: str, package: _DocxPackage) -> str:
-        """
-        Gets the style name from its ID by looking it up in the styles.xml.
-
-        :param style_id: Style ID to look up
-        :param package: _DocxPackage object containing the styles
-        :return: Style name or the style_id if not found
-        """
-        if not style_id:
-            return "Normal"
-
-        if package.styles is None:
-            return style_id or "Normal"
-
-        try:
-            style_element = package.styles.find(
-                f".//w:style[@w:styleId='{style_id}']", WORD_XML_NAMESPACES
-            )
-            if style_element is not None:
-                name_element = style_element.find("w:name", WORD_XML_NAMESPACES)
-                if name_element is not None and "val" in name_element.attrib.get(
-                    f"{{{WORD_XML_NAMESPACES['w']}}}val", ""
-                ):
-                    return name_element.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}val"]
-        except Exception as e:
-            # If there's an error finding the style, log it but continue with default
-            logger.warning(f"Error looking up style '{style_id}': {str(e)}")
-
-        return style_id or "Normal"
-
-    def _get_paragraph_style(self, para_element: ET.Element) -> str:
-        """
-        Extracts the style information from a paragraph element.
-
-        :param para_element: Paragraph XML element
-        :return: Style ID string
-        """
-        # Find the paragraph properties element
-        p_pr = para_element.find("w:pPr", WORD_XML_NAMESPACES)
-        if p_pr is not None:
-            # Find the style element within paragraph properties
-            style = p_pr.find("w:pStyle", WORD_XML_NAMESPACES)
-            if (
-                style is not None
-                and f"{{{WORD_XML_NAMESPACES['w']}}}val" in style.attrib
-            ):
-                return style.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}val"]
-
-        return "Normal"
-
-    def _get_list_info(
-        self, para_element: ET.Element, package: _DocxPackage
-    ) -> tuple[bool, int, str, str, bool]:
-        """
-        Extracts list information from a paragraph element.
-
-        :param para_element: Paragraph XML element
-        :param package: _DocxPackage object
-        :return: Tuple of (is_list, list_level, list_info_string, list_type, is_numbered)
-        """
-        is_list = False
-        list_level = 0
-        list_info = ""
-        list_type = ""
-        is_numbered = False
-
-        p_pr = para_element.find("w:pPr", WORD_XML_NAMESPACES)
-        if p_pr is not None:
-            num_pr = p_pr.find("w:numPr", WORD_XML_NAMESPACES)
-            if num_pr is not None:
-                is_list = True
-
-                # Get list ID
-                num_id_elem = num_pr.find("w:numId", WORD_XML_NAMESPACES)
-                num_id = (
-                    num_id_elem.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}val"]
-                    if num_id_elem is not None
-                    else None
-                )
-
-                # Get level
-                ilvl_elem = num_pr.find("w:ilvl", WORD_XML_NAMESPACES)
-                if ilvl_elem is not None:
-                    list_level = int(
-                        ilvl_elem.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}val"]
-                    )
-
-                # Determine list type and numbering format if numbering is available
-                if num_id and package.numbering is not None:
-                    # First find the abstractNumId associated with this numId
-                    num_def = package.numbering.find(
-                        f".//w:num[@w:numId='{num_id}']", WORD_XML_NAMESPACES
-                    )
-                    if num_def is not None:
-                        abstract_num_id_elem = num_def.find(
-                            "w:abstractNumId", WORD_XML_NAMESPACES
-                        )
-                        if abstract_num_id_elem is not None:
-                            abstract_num_id = abstract_num_id_elem.attrib[
-                                f"{{{WORD_XML_NAMESPACES['w']}}}val"
-                            ]
-
-                            # Now find the level formatting in the abstractNum
-                            abstract_num = package.numbering.find(
-                                f".//w:abstractNum[@w:abstractNumId='{abstract_num_id}']",
-                                WORD_XML_NAMESPACES,
-                            )
-                            if abstract_num is not None:
-                                # Find the level formatting for this specific level
-                                level_elem = abstract_num.find(
-                                    f".//w:lvl[@w:ilvl='{list_level}']",
-                                    WORD_XML_NAMESPACES,
-                                )
-                                if level_elem is not None:
-                                    # Get the numFmt element which defines if it's bullet or numbered
-                                    num_fmt = level_elem.find(
-                                        "w:numFmt", WORD_XML_NAMESPACES
-                                    )
-                                    if (
-                                        num_fmt is not None
-                                        and f"{{{WORD_XML_NAMESPACES['w']}}}val"
-                                        in num_fmt.attrib
-                                    ):
-                                        fmt_val = num_fmt.attrib[
-                                            f"{{{WORD_XML_NAMESPACES['w']}}}val"
-                                        ]
-                                        list_type = fmt_val
-
-                                        # Check if it's a numbered list format
-                                        numbered_formats = {
-                                            "decimal",
-                                            "decimalZero",
-                                            "upperRoman",
-                                            "lowerRoman",
-                                            "upperLetter",
-                                            "lowerLetter",
-                                            "ordinal",
-                                            "cardinalText",
-                                            "ordinalText",
-                                            "hex",
-                                            "chicago",
-                                            "ideographDigital",
-                                            "japaneseCounting",
-                                            "aiueo",
-                                            "iroha",
-                                            "arabicFullWidth",
-                                            "hindiNumbers",
-                                            "thaiNumbers",
-                                        }
-                                        is_numbered = fmt_val in numbered_formats
-
-                if num_id:
-                    list_info = f", List ID: {num_id}, Level: {list_level}"
-                    if list_type:
-                        list_info += f", Format: {list_type}"
-
-        return is_list, list_level, list_info, list_type, is_numbered
-
-    def _extract_footnote_references(self, para_element: ET.Element) -> list[str]:
-        """
-        Extracts footnote references from a paragraph.
-
-        :param para_element: Paragraph XML element
-        :return: List of footnote IDs
-        """
-        footnote_ids = []
-
-        # Find all footnote references in this paragraph
-        for run in para_element.findall(".//w:r", WORD_XML_NAMESPACES):
-            footnote_ref = run.find(".//w:footnoteReference", WORD_XML_NAMESPACES)
-            if (
-                footnote_ref is not None
-                and f"{{{WORD_XML_NAMESPACES['w']}}}id" in footnote_ref.attrib
-            ):
-                footnote_id = footnote_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"]
-                footnote_ids.append(footnote_id)
-
-        return footnote_ids
-
-    def _extract_comment_references(self, para_element: ET.Element) -> list[str]:
-        """
-        Extracts comment references from a paragraph.
-
-        :param para_element: Paragraph XML element
-        :return: List of comment IDs
-        """
-        comment_ids = []
-
-        # Find all comment references in this paragraph
-        for run in para_element.findall(".//w:r", WORD_XML_NAMESPACES):
-            comment_ref = run.find(".//w:commentReference", WORD_XML_NAMESPACES)
-            if (
-                comment_ref is not None
-                and f"{{{WORD_XML_NAMESPACES['w']}}}id" in comment_ref.attrib
-            ):
-                comment_id = comment_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"]
-                comment_ids.append(comment_id)
-
-        return comment_ids
-
-    def _process_footnotes(
-        self,
-        package: _DocxPackage,
-        strict_mode: bool = False,
-        include_textboxes: bool = True,
-    ) -> list[Paragraph]:
-        """
-        Processes footnotes from the footnotes.xml file and converts them to Paragraph objects.
-
-        :param package: _DocxPackage object
-        :param strict_mode: If True, raise exceptions for any processing error
-            instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
-        :return: List of Paragraph objects representing footnotes
-        """
-        footnote_paragraphs = []
-
-        if package.footnotes is None:
-            return footnote_paragraphs
-
-        # Find all footnote elements (excluding separators and continuation separators)
-        for footnote_elem in package.footnotes.findall(
-            ".//w:footnote", WORD_XML_NAMESPACES
-        ):
-            # Skip special footnotes (separators and continuation notices)
-            if f"{{{WORD_XML_NAMESPACES['w']}}}id" not in footnote_elem.attrib:
-                continue
-
-            footnote_id = footnote_elem.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"]
-            if footnote_id in ("-1", "0"):  # Separator and continuation separator
-                continue
-
-            # Process each paragraph in the footnote
-            for para in footnote_elem.findall(".//w:p", WORD_XML_NAMESPACES):
-                # Extract the text content
-                para_text = self._extract_paragraph_text(
-                    para, strict_mode=strict_mode, include_textboxes=include_textboxes
-                ).strip()
-                if para_text:
-                    # Get paragraph style and metadata
-                    style_id = self._get_paragraph_style(para)
-                    style_name = self._get_style_name(style_id, package)
-
-                    # Include footnote ID in the metadata
-                    footnote_info = f"Style: {style_name}, Footnote: {footnote_id}"
-
-                    # Create paragraph object with metadata
-                    footnote_paragraphs.append(
-                        Paragraph(raw_text=para_text, additional_context=footnote_info)
-                    )
-
-        return footnote_paragraphs
-
-    def _process_comments(
-        self,
-        package: _DocxPackage,
-        strict_mode: bool = False,
-        include_textboxes: bool = True,
-    ) -> list[Paragraph]:
-        """
-        Processes comments from the comments.xml file and converts them to Paragraph objects.
-
-        :param package: _DocxPackage object
-        :param strict_mode: If True, raise exceptions for any processing error
-            instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
-        :return: List of Paragraph objects representing comments
-        """
-        comment_paragraphs = []
-
-        if package.comments is None:
-            return comment_paragraphs
-
-        # Find all comment elements with explicit namespace
-        comment_elements = package.comments.findall(
-            f".//{{{WORD_XML_NAMESPACES['w']}}}comment", WORD_XML_NAMESPACES
-        )
-
-        for comment_elem in comment_elements:
-            # Skip comments without an ID
-            if f"{{{WORD_XML_NAMESPACES['w']}}}id" not in comment_elem.attrib:
-                continue
-
-            comment_id = comment_elem.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"]
-
-            # Get comment author if available
-            author = ""
-            if f"{{{WORD_XML_NAMESPACES['w']}}}author" in comment_elem.attrib:
-                author = comment_elem.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}author"]
-
-            # Get comment date if available
-            date = ""
-            if f"{{{WORD_XML_NAMESPACES['w']}}}date" in comment_elem.attrib:
-                date = comment_elem.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}date"]
-
-            # Process each paragraph in the comment with explicit namespace
-            for para in comment_elem.findall(
-                f".//{{{WORD_XML_NAMESPACES['w']}}}p", WORD_XML_NAMESPACES
-            ):
-                # Extract the text content
-                para_text = self._extract_paragraph_text(
-                    para, strict_mode=strict_mode, include_textboxes=include_textboxes
-                ).strip()
-                if para_text:
-                    # Get paragraph style and metadata
-                    style_id = self._get_paragraph_style(para)
-                    style_name = self._get_style_name(style_id, package)
-
-                    # Build metadata
-                    comment_info = f"Style: {style_name}, Comment: {comment_id}"
-                    if author:
-                        comment_info += f", Author: {author}"
-                    if date:
-                        comment_info += f", Date: {date}"
-
-                    # Create paragraph object with metadata
-                    comment_paragraphs.append(
-                        Paragraph(raw_text=para_text, additional_context=comment_info)
-                    )
-
-        return comment_paragraphs
-
-    def _extract_paragraph_text(
-        self,
-        para_element: ET.Element,
-        strict_mode: bool = False,
-        include_textboxes: bool = True,
-    ) -> str:
-        """
-        Extracts the text content from a paragraph element.
-
-        :param para_element: Paragraph XML element
-        :param strict_mode: If True, raise exceptions for any processing error
-            instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
-        :return: Text content of the paragraph
-        """
-        # Use a dictionary to track text content by location
-        text_by_location = {}
-        ordered_runs = []
-
-        # Track processed element IDs to avoid technical duplicates
-        processed_elem_ids = set()
-
-        try:
-            # Process regular paragraph text first (most common case)
-            run_idx = 0
-            for run in para_element.findall(".//w:r", WORD_XML_NAMESPACES):
-                # Skip runs that are part of drawings (we'll handle them separately)
-                if run.find(".//w:drawing", WORD_XML_NAMESPACES) is not None:
-                    continue
-
-                # Process text elements in this run
-                for text_elem in run.findall(".//w:t", WORD_XML_NAMESPACES):
-                    elem_id = id(text_elem)
-                    if text_elem.text and elem_id not in processed_elem_ids:
-                        text_by_location[run_idx] = text_elem.text
-                        ordered_runs.append(run_idx)
-                        processed_elem_ids.add(elem_id)
-                        run_idx += 1
-
-                # Process line breaks in this run
-                for br in run.findall(".//w:br", WORD_XML_NAMESPACES):
-                    text_by_location[run_idx] = "\n"
-                    ordered_runs.append(run_idx)
-                    run_idx += 1
-
-                # Add footnote reference marker if this run contains a footnote reference
-                footnote_ref = run.find(".//w:footnoteReference", WORD_XML_NAMESPACES)
-                if (
-                    footnote_ref is not None
-                    and f"{{{WORD_XML_NAMESPACES['w']}}}id" in footnote_ref.attrib
-                ):
-                    footnote_id = footnote_ref.attrib[
-                        f"{{{WORD_XML_NAMESPACES['w']}}}id"
-                    ]
-                    text_by_location[run_idx] = (
-                        f"[Footnote {footnote_id}]"  # Use footnote ID as marker
-                    )
-                    ordered_runs.append(run_idx)
-                    run_idx += 1
-
-                # Add comment reference marker if this run contains a comment reference
-                comment_ref = run.find(".//w:commentReference", WORD_XML_NAMESPACES)
-                if (
-                    comment_ref is not None
-                    and f"{{{WORD_XML_NAMESPACES['w']}}}id" in comment_ref.attrib
-                ):
-                    comment_id = comment_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"]
-                    text_by_location[run_idx] = (
-                        f"[Comment {comment_id}]"  # Use comment ID as marker
-                    )
-                    ordered_runs.append(run_idx)
-                    run_idx += 1
-
-            # Process drawing objects (incl. text boxes) - these need special handling
-            # Skip this section if include_textboxes is False
-            if include_textboxes:
-                # We keep track of which drawings we've seen to avoid duplicates but still permit
-                # intentional repetition of text boxes
-
-                # Group 1: Standard VML textboxes
-                vml_idx = 1000
-                for textbox in para_element.findall(
-                    ".//v:textbox", WORD_XML_NAMESPACES
-                ):
-                    for text_elem in textbox.findall(".//w:t", WORD_XML_NAMESPACES):
-                        elem_id = id(text_elem)
-                        if text_elem.text and elem_id not in processed_elem_ids:
-                            text_by_location[vml_idx] = text_elem.text
-                            ordered_runs.append(vml_idx)
-                            processed_elem_ids.add(elem_id)
-                            vml_idx += 1
-
-                # Group 2: DrawingML textboxes (Office 2007+ format)
-                dml_idx = 2000
-                txbx_content_elems = para_element.findall(
-                    ".//w:txbxContent", WORD_XML_NAMESPACES
-                )
-                for txbx_content in txbx_content_elems:
-                    # Process each paragraph in the text box content
-                    for p in txbx_content.findall(".//w:p", WORD_XML_NAMESPACES):
-                        for text_elem in p.findall(".//w:t", WORD_XML_NAMESPACES):
-                            elem_id = id(text_elem)
-                            if text_elem.text and elem_id not in processed_elem_ids:
-                                text_by_location[dml_idx] = text_elem.text
-                                ordered_runs.append(dml_idx)
-                                processed_elem_ids.add(elem_id)
-                                dml_idx += 1
-
-                # Group 3: DrawingML text directly in shapes
-                shape_idx = 3000
-                for text_elem in para_element.findall(".//a:t", WORD_XML_NAMESPACES):
-                    elem_id = id(text_elem)
-                    if text_elem.text and elem_id not in processed_elem_ids:
-                        text_by_location[shape_idx] = text_elem.text
-                        ordered_runs.append(shape_idx)
-                        processed_elem_ids.add(elem_id)
-                        shape_idx += 1
-
-                # Group 4: Drawing elements that might contain text not captured by other groups
-                drawing_idx = 4000
-                for drawing in para_element.findall(
-                    ".//w:drawing", WORD_XML_NAMESPACES
-                ):
-                    # Extract any text elements that might be in the drawing but not covered by previous groups
-                    for text_elem in drawing.findall(".//w:t", WORD_XML_NAMESPACES):
-                        elem_id = id(text_elem)
-                        if text_elem.text and elem_id not in processed_elem_ids:
-                            text_by_location[drawing_idx] = text_elem.text
-                            ordered_runs.append(drawing_idx)
-                            processed_elem_ids.add(elem_id)
-                            drawing_idx += 1
-
-            # Group 5: Handle Markup Compatibility (mc) alternate content
-            # This is crucial because Word often uses this for cross-version compatibility
-            # and the same content can appear in both the Choice and Fallback sections
-            mc_idx = 5000
-            for mc_elem in para_element.findall(
-                ".//mc:AlternateContent", WORD_XML_NAMESPACES
-            ):
-                # First try the Choice content (preferred for newer versions of Word)
-                choice_elems = mc_elem.findall(".//mc:Choice", WORD_XML_NAMESPACES)
-                fallback_elems = mc_elem.findall(".//mc:Fallback", WORD_XML_NAMESPACES)
-
-                # We only want to process either Choice OR Fallback, not both, as they represent
-                # alternate representations of the same content
-                if choice_elems:
-                    for choice in choice_elems:
-                        # If include_textboxes is False, skip textboxes in markup compatibility content
-                        if not include_textboxes:
-                            # Skip textbox content within this choice element
-                            has_textbox = (
-                                choice.find(".//v:textbox", WORD_XML_NAMESPACES)
-                                is not None
-                                or choice.find(".//w:txbxContent", WORD_XML_NAMESPACES)
-                                is not None
-                                or choice.find(".//a:t", WORD_XML_NAMESPACES)
-                                is not None
-                                or choice.find(".//w:drawing", WORD_XML_NAMESPACES)
-                                is not None
-                            )
-                            if has_textbox:
-                                continue
-
-                        for text_elem in choice.findall(".//w:t", WORD_XML_NAMESPACES):
-                            elem_id = id(text_elem)
-                            if text_elem.text and elem_id not in processed_elem_ids:
-                                text_by_location[mc_idx] = text_elem.text
-                                ordered_runs.append(mc_idx)
-                                processed_elem_ids.add(elem_id)
-                                mc_idx += 1
-                # Only use Fallback if we didn't find any usable Choice elements
-                elif fallback_elems:
-                    # Check if we've already extracted text from a Choice element
-                    for fallback in fallback_elems:
-                        # If include_textboxes is False, skip textboxes in markup compatibility content
-                        if not include_textboxes:
-                            # Skip textbox content within this fallback element
-                            has_textbox = (
-                                fallback.find(".//v:textbox", WORD_XML_NAMESPACES)
-                                is not None
-                                or fallback.find(
-                                    ".//w:txbxContent", WORD_XML_NAMESPACES
-                                )
-                                is not None
-                                or fallback.find(".//a:t", WORD_XML_NAMESPACES)
-                                is not None
-                                or fallback.find(".//w:drawing", WORD_XML_NAMESPACES)
-                                is not None
-                            )
-                            if has_textbox:
-                                continue
-
-                        for text_elem in fallback.findall(
-                            ".//w:t", WORD_XML_NAMESPACES
-                        ):
-                            elem_id = id(text_elem)
-                            if text_elem.text and elem_id not in processed_elem_ids:
-                                text_by_location[mc_idx] = text_elem.text
-                                ordered_runs.append(mc_idx)
-                                processed_elem_ids.add(elem_id)
-                                mc_idx += 1
-
-            # Sort the runs to maintain document order
-            ordered_runs.sort()
-
-            # Get raw text parts
-            text_parts = [text_by_location[idx] for idx in ordered_runs]
-
-            # Post-processing step: fix text box duplication where identical text appears consecutively
-            # This handles cases where Word stores the same text multiple times in the XML
-            processed_text = []
-            i = 0
-            while i < len(text_parts):
-                # Start with the current text segment
-                current_segment = text_parts[i]
-
-                # Check if the same text is immediately repeated (common in text boxes)
-                j = i + 1
-                while j < len(text_parts) and text_parts[j] == current_segment:
-                    # Skip consecutive identical segments
-                    j += 1
-
-                # Add the text segment once and skip all duplicates
-                processed_text.append(current_segment)
-                i = j
-
-            return "".join(processed_text)
-        except Exception as e:
-            if strict_mode:
-                raise DocxContentError(
-                    f"Error extracting paragraph text: {str(e)}"
-                ) from e
-            else:
-                logger.warning(f"Error extracting paragraph text: {str(e)}")
-                return ""
-
-    def _is_text_box_paragraph(self, para_element: ET.Element) -> bool:
-        """
-        Determines if a paragraph is from a text box.
-
-        :param para_element: Paragraph XML element
-        :return: True if the paragraph is part of a text box
-        """
-        # Check for various types of text boxes in Word
-        # 1. VML textbox (older Word format)
-        if para_element.find(".//v:textbox", WORD_XML_NAMESPACES) is not None:
-            return True
-
-        # 2. DrawingML text box (Office 2007+)
-        if para_element.find(".//w:txbxContent", WORD_XML_NAMESPACES) is not None:
-            return True
-
-        # 3. Check for shape with text
-        if para_element.find(".//a:t", WORD_XML_NAMESPACES) is not None:
-            return True
-
-        # 4. Check for drawing element
-        if para_element.find(".//w:drawing", WORD_XML_NAMESPACES) is not None:
-            return True
-
-        return False
-
     def _process_paragraph(
         self,
-        para_element: ET.Element,
+        para_element: etree._Element,
         package: _DocxPackage,
         markdown_mode: bool = False,
-        strict_mode: bool = False,
         include_textboxes: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
+        apply_text_formatting: bool = None,
+        populate_md_text: bool = False,
+        list_counters: dict = None,
+        strict_mode: bool = False,
     ) -> Optional[str | Paragraph]:
         """
-        Processes a paragraph element and returns either a markdown string or Paragraph object.
+        Processes a paragraph element and returns appropriate content based on mode.
 
         :param para_element: Paragraph XML element
         :param package: _DocxPackage object
         :param markdown_mode: If True, return markdown formatted text,
             otherwise return a Paragraph object (default: False)
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
+        :param apply_text_formatting: If provided, use this flag for text formatting
+            instead of markdown_mode (default: None)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: False)
+        :param list_counters: Dictionary to track list numbering counters (default: None)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
-        :return: Markdown string, Paragraph object, or None if paragraph is empty
+        :return: * **None** -- When paragraph should be skipped:
+
+                    - Empty paragraph (no text content after processing)
+                    - Textbox paragraph when ``include_textboxes=False``
+                    - Paragraph within tracked changes (move source or deletion)
+                    - Processing error when ``strict_mode=False`` (error logged)
+
+                * **str** -- When ``markdown_mode=True`` and paragraph has content:
+
+                    - Markdown-formatted text with appropriate styling
+
+                * **Paragraph** -- When ``markdown_mode=False`` and paragraph has content:
+
+                    - Structured paragraph object with ``raw_text`` and ``additional_context``
+                    - Optionally has ``_md_text`` attribute populated when ``populate_md_text=True``
+        :rtype: Optional[str | Paragraph]
         """
         try:
             # Check if this is a text box paragraph and we should skip it
             if not include_textboxes and self._is_text_box_paragraph(para_element):
                 return None
 
-            # Extract text content
-            text = self._extract_paragraph_text(
-                para_element,
+            # Check if this entire paragraph is within a move source or deletion -
+            # skip these to avoid duplicates
+            is_para_in_move_from = _docx_xpath(para_element, "ancestor::w:moveFrom")
+            is_para_in_deletion = _docx_xpath(para_element, "ancestor::w:del")
+            if is_para_in_move_from or is_para_in_deletion:
+                return None
+
+            # Extract raw text content (always without markdown formatting for consistency)
+            raw_text = self._extract_paragraph_text(
+                para_element=para_element,
+                package=package,
+                markdown_mode=False,  # Always extract raw text first
                 strict_mode=strict_mode,
                 include_textboxes=include_textboxes,
+                include_links=include_links,
+                include_inline_formatting=False,  # Never apply inline formatting for raw text
             ).strip()
-            if not text:
+            if _is_text_content_empty(raw_text):
                 return None
 
             # Get style information
@@ -673,6 +138,39 @@ class _DocxConverterBase:
             is_list, list_level, _, list_type, is_numbered = self._get_list_info(
                 para_element, package
             )
+
+            # Extract markdown text if needed (either for return or for _md_text field)
+            markdown_text = None
+            if markdown_mode or populate_md_text:
+                # Use apply_text_formatting if provided, otherwise use True for markdown
+                actual_formatting_mode = (
+                    apply_text_formatting if apply_text_formatting is not None else True
+                )
+                if actual_formatting_mode:
+                    # Get base markdown text
+                    base_markdown_text = self._extract_paragraph_text(
+                        para_element=para_element,
+                        package=package,
+                        markdown_mode=True,  # Extract with markdown formatting
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        include_links=include_links,
+                        include_inline_formatting=include_inline_formatting,  # Use the parameter
+                    ).strip()
+
+                    # Apply document-level markdown formatting
+                    markdown_text = self._apply_markdown_formatting(
+                        text=base_markdown_text,
+                        style_name=style_name,
+                        is_list=is_list,
+                        list_level=list_level,
+                        is_numbered=is_numbered,
+                        para_element=para_element,
+                        list_counters=list_counters,
+                    )
+
+            # Use the appropriate text for processing based on mode
+            text = markdown_text if markdown_mode and markdown_text else raw_text
 
             # Get footnote reference information
             footnote_info = ""
@@ -691,33 +189,22 @@ class _DocxConverterBase:
             if self._is_text_box_paragraph(para_element):
                 text_box_info = ", Text Box"
 
+            # Get hyperlink information
+            hyperlink_info = ""
+            if include_links:
+                hyperlinks = self._extract_hyperlink_references(para_element, package)
+                if hyperlinks:
+                    # For paragraph mode, add hyperlink information to metadata without changing text
+                    hyperlink_urls = [link["url"] for link in hyperlinks if link["url"]]
+                    if hyperlink_urls:
+                        hyperlink_info = (
+                            f", Link, Link URL: {', '.join(hyperlink_urls)}"
+                        )
+
             if markdown_mode:
-                # Convert to markdown based on style and list status
-                if style_name.lower().startswith("heading"):
-                    # Extract heading level (e.g., "Heading 1" -> 1)
-                    heading_level = 1
-                    match = re.search(r"(\d+)", style_name)
-                    if match:
-                        heading_level = int(match.group(1))
-                    return "#" * heading_level + " " + text
+                # Return the formatted markdown text
+                return text
 
-                elif is_list:
-                    # Add indentation based on list level
-                    indent = "    " * list_level
-
-                    # Use the appropriate list marker based on list type
-                    if is_numbered:
-                        # For numbered lists, use "1. " format
-                        # Note: Markdown doesn't support different numbered formats,
-                        # but it will render as a numbered list
-                        return f"{indent}1. {text}"
-                    else:
-                        # For bullet lists, use "- " format
-                        return f"{indent}- {text}"
-
-                else:
-                    # Regular paragraph
-                    return text
             else:
                 # Return a Paragraph instance with metadata
                 metadata = style_info
@@ -725,24 +212,44 @@ class _DocxConverterBase:
                 # Add list information with more details
                 if is_list:
                     list_type_info = "Numbered" if is_numbered else "Bullet"
-                    metadata += f", List Type: {list_type_info}, Level: {list_level}"
+                    metadata += (
+                        f", List Type: {list_type_info}, List Level: {list_level}"
+                    )
                     if list_type:
-                        metadata += f", Format: {list_type}"
+                        # Capitalize the format name for consistency
+                        formatted_list_type = list_type.capitalize()
+                        metadata += f", List Format: {formatted_list_type}"
 
                     # Extract List ID from original _get_list_info results
-                    p_pr = para_element.find("w:pPr", WORD_XML_NAMESPACES)
-                    if p_pr is not None:
-                        num_pr = p_pr.find("w:numPr", WORD_XML_NAMESPACES)
-                        if num_pr is not None:
-                            num_id_elem = num_pr.find("w:numId", WORD_XML_NAMESPACES)
-                            if num_id_elem is not None:
-                                list_id = num_id_elem.attrib[
-                                    f"{{{WORD_XML_NAMESPACES['w']}}}val"
-                                ]
+                    p_pr_elements = _docx_xpath(para_element, "w:pPr")
+                    if p_pr_elements:
+                        p_pr = p_pr_elements[0]
+                        num_pr_elements = _docx_xpath(p_pr, "w:numPr")
+                        if num_pr_elements:
+                            num_pr = num_pr_elements[0]
+                            num_id_elements = _docx_xpath(num_pr, "w:numId")
+                            if num_id_elements:
+                                list_id = _docx_get_namespaced_attr(
+                                    num_id_elements[0], "val"
+                                )
                                 metadata += f", List ID: {list_id}"
 
-                metadata += footnote_info + comment_info + text_box_info
-                return Paragraph(raw_text=text, additional_context=metadata)
+                metadata += (
+                    footnote_info + comment_info + text_box_info + hyperlink_info
+                )
+
+                # Create paragraph with _md_text if requested
+                paragraph_kwargs = {
+                    "raw_text": raw_text,
+                    "additional_context": metadata,
+                }
+                paragraph = Paragraph(**paragraph_kwargs)
+                if populate_md_text:
+                    # Use the properly formatted markdown text
+                    paragraph._md_text = markdown_text if markdown_text else raw_text
+
+                return paragraph
+
         except DocxXmlError:
             # Re-raise specific XML errors
             raise
@@ -753,14 +260,1198 @@ class _DocxConverterBase:
                 logger.warning(f"Error processing paragraph: {str(e)}")
                 return None
 
+    def _extract_paragraph_text(
+        self,
+        para_element: etree._Element,
+        package: _DocxPackage,
+        markdown_mode: bool = False,
+        include_textboxes: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
+        strict_mode: bool = False,
+    ) -> str:
+        """
+        Extracts the text content from a paragraph element.
+
+        Page numbers are automatically excluded from extraction, except when processing
+        table of contents content where page numbers provide valuable navigation information.
+
+        :param para_element: Paragraph XML element
+        :param package: _DocxPackage object containing hyperlink relationships
+        :param markdown_mode: If True, format hyperlinks as markdown links
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
+        :param strict_mode: If True, raise exceptions for any processing error
+            instead of skipping problematic elements (default: False)
+        :return: Text content of the paragraph
+        """
+        # Use a dictionary to track text content by location
+        text_by_location = {}
+        ordered_runs = []
+
+        # Track processed element IDs and content for textbox/drawing content only
+        processed_textbox_elem_ids = set()
+        processed_textbox_content = set()  # Textbox content deduplication only
+
+        try:
+            # First, collect hyperlink information to handle them properly during run processing
+            # Skip this entirely if include_links is False to avoid processing overhead
+            hyperlink_info_by_run = {}  # Maps run elements to their hyperlink info
+            if include_links:
+                hyperlink_elements = _docx_xpath(para_element, ".//w:hyperlink")
+                for hyperlink_elem in hyperlink_elements:
+                    # Get the relationship ID
+                    rel_id = _docx_get_namespaced_attr(hyperlink_elem, "id", "r")
+
+                    # Get the hyperlink URL from relationships
+                    url = package.hyperlinks.get(rel_id, "")
+
+                    # Find all runs within this hyperlink
+                    hyperlink_runs = _docx_xpath(hyperlink_elem, ".//w:r")
+                    for run in hyperlink_runs:
+                        hyperlink_info_by_run[id(run)] = {"url": url, "rel_id": rel_id}
+
+            # Check if this paragraph is part of a table of contents (preserve page numbers in TOC)
+            is_toc_context = self._is_toc_context(para_element)
+
+            # Always exclude page numbers except in TOC context
+            should_exclude_page_numbers = not is_toc_context
+
+            # Process regular paragraph text (including runs inside hyperlinks, content controls, etc.)
+            run_idx = 0
+            runs = _docx_xpath(para_element, ".//w:r")
+            for run in runs:
+                run_element_id = id(run)
+                is_hyperlink_run = run_element_id in hyperlink_info_by_run
+
+                # Skip page number fields (except in TOC context)
+                if should_exclude_page_numbers and self._is_page_number_field(
+                    run, para_element
+                ):
+                    continue
+
+                # Extract formatting for this run if inline formatting is enabled
+                run_formatting = {}
+                if include_inline_formatting and markdown_mode:
+                    run_formatting = self._extract_run_formatting(run)
+
+                # Process text elements in this run (don't skip runs with drawings)
+                text_elements = _docx_xpath(run, ".//w:t")
+                for text_elem in text_elements:
+                    # Get all text including from child elements
+                    text_content = (
+                        text_elem.text_content()
+                        if hasattr(text_elem, "text_content")
+                        else (text_elem.text or "")
+                    )
+                    # For regular paragraph text, don't use content deduplication to allow
+                    # intentional duplicates but check if this text element is part of a textbox
+                    # to avoid cross-section duplication
+                    if text_content:
+                        # Check if this text element is inside a textbox/drawing context
+                        is_in_textbox = (
+                            _docx_xpath(text_elem, "ancestor::v:textbox")
+                            or _docx_xpath(text_elem, "ancestor::w:txbxContent")
+                            or _docx_xpath(text_elem, "ancestor::a:p")
+                            or _docx_xpath(text_elem, "ancestor::w:drawing")
+                        )
+
+                        # Check if this text element is in a move source (w:moveFrom) - skip these
+                        # to avoid duplicates
+                        is_in_move_from = _docx_xpath(text_elem, "ancestor::w:moveFrom")
+
+                        # Check if this text element is in a deletion (w:del) - skip these
+                        is_in_deletion = _docx_xpath(text_elem, "ancestor::w:del")
+
+                        # Only process if NOT in textbox (textbox content will be handled in
+                        # specialized sections) and NOT in a move source or deletion (to avoid
+                        # duplicated/deleted content)
+                        if (
+                            not is_in_textbox
+                            and not is_in_move_from
+                            and not is_in_deletion
+                        ):
+                            # Start with the base text content
+                            formatted_text = text_content
+
+                            # Apply inline formatting if enabled and in markdown mode
+                            if (
+                                include_inline_formatting
+                                and markdown_mode
+                                and run_formatting
+                            ):
+                                formatted_text = self._apply_inline_formatting(
+                                    formatted_text, run_formatting
+                                )
+
+                            # Apply hyperlink formatting only if include_links=True and
+                            # markdown_mode=True
+                            if is_hyperlink_run and markdown_mode and include_links:
+                                # For hyperlink runs in markdown mode, format as markdown link
+                                url = hyperlink_info_by_run[run_element_id]["url"]
+                                if url:
+                                    # If text already has formatting, preserve it inside the link
+                                    text_by_location[run_idx] = (
+                                        f"[{formatted_text}]({url})"
+                                    )
+                                else:
+                                    text_by_location[run_idx] = formatted_text
+                            else:
+                                # Regular text or hyperlink when include_links=False
+                                text_by_location[run_idx] = formatted_text
+                            ordered_runs.append(run_idx)
+                            run_idx += 1
+
+                # Process line breaks in this run
+                br_elements = _docx_xpath(run, ".//w:br")
+                for br in br_elements:
+                    text_by_location[run_idx] = "\n"
+                    ordered_runs.append(run_idx)
+                    run_idx += 1
+
+                # Add footnote reference marker if this run contains a footnote reference
+                footnote_refs = _docx_xpath(run, ".//w:footnoteReference")
+                for footnote_ref in footnote_refs:
+                    footnote_id = _docx_get_namespaced_attr(footnote_ref, "id")
+                    if footnote_id:
+                        if markdown_mode:
+                            # In markdown mode, use descriptive marker
+                            text_by_location[run_idx] = f"[Footnote {footnote_id}]"
+                        else:
+                            # In raw text mode, use just the footnote number
+                            text_by_location[run_idx] = footnote_id
+                        ordered_runs.append(run_idx)
+                        run_idx += 1
+
+                # Add comment reference marker if this run contains a comment reference
+                # Note: Comments are only included in markdown mode, not in raw text
+                if markdown_mode:
+                    comment_refs = _docx_xpath(run, ".//w:commentReference")
+                    for comment_ref in comment_refs:
+                        comment_id = _docx_get_namespaced_attr(comment_ref, "id")
+                        if comment_id:
+                            text_by_location[run_idx] = f"[Comment {comment_id}]"
+                            ordered_runs.append(run_idx)
+                            run_idx += 1
+
+            # Calculate dynamic starting indices to avoid collisions
+            # Pre-count elements to determine actual space needed for each content type
+            current_idx = run_idx + 100  # Small buffer after regular text runs
+
+            # Process drawing objects (incl. text boxes) - these need special handling
+            # Skip this section if include_textboxes is False
+            if include_textboxes:
+                # We keep track of which drawings we've seen to avoid duplicates
+                # but still permit intentional repetition of text boxes.
+
+                # Group 1: Standard VML textboxes
+                vml_idx = current_idx
+                textboxes = _docx_xpath(para_element, ".//v:textbox")
+                for textbox in textboxes:
+                    textbox_results = self._process_textbox_runs(
+                        container_element=textbox,
+                        hyperlink_info_by_run=hyperlink_info_by_run,
+                        should_exclude_page_numbers=should_exclude_page_numbers,
+                        para_element=para_element,
+                        include_inline_formatting=include_inline_formatting,
+                        markdown_mode=markdown_mode,
+                        include_links=include_links,
+                        processed_textbox_elem_ids=processed_textbox_elem_ids,
+                        processed_textbox_content=processed_textbox_content,
+                    )
+                    for formatted_text in textbox_results:
+                        text_by_location[vml_idx] = formatted_text
+                        ordered_runs.append(vml_idx)
+                        vml_idx += 1
+
+                # Update current_idx to next available position
+                current_idx = vml_idx + 100  # Small buffer between content types
+
+                # Group 2: DrawingML textboxes (Office 2007+ format)
+                dml_idx = current_idx
+                txbx_content_elems = _docx_xpath(para_element, ".//w:txbxContent")
+                for txbx_content in txbx_content_elems:
+                    # Process each paragraph in the text box content
+                    paragraphs = _docx_xpath(txbx_content, ".//w:p")
+                    for p in paragraphs:
+                        textbox_results = self._process_textbox_runs(
+                            container_element=p,
+                            hyperlink_info_by_run=hyperlink_info_by_run,
+                            should_exclude_page_numbers=should_exclude_page_numbers,
+                            para_element=para_element,
+                            include_inline_formatting=include_inline_formatting,
+                            markdown_mode=markdown_mode,
+                            include_links=include_links,
+                            processed_textbox_elem_ids=processed_textbox_elem_ids,
+                            processed_textbox_content=processed_textbox_content,
+                        )
+                        for formatted_text in textbox_results:
+                            text_by_location[dml_idx] = formatted_text
+                            ordered_runs.append(dml_idx)
+                            dml_idx += 1
+
+                # Update current_idx to next available position
+                current_idx = dml_idx + 100  # Small buffer between content types
+
+                # Group 3: DrawingML text directly in shapes
+                shape_idx = current_idx
+                # First find all runs that contain a:t elements to check for hyperlinks
+                shape_runs = _docx_xpath(para_element, ".//w:r[.//a:t]")
+                for run in shape_runs:
+                    # Create a temporary container to use our helper method
+                    textbox_results = self._process_textbox_runs(
+                        container_element=run,
+                        hyperlink_info_by_run=hyperlink_info_by_run,
+                        should_exclude_page_numbers=should_exclude_page_numbers,
+                        para_element=para_element,
+                        include_inline_formatting=include_inline_formatting,
+                        markdown_mode=markdown_mode,
+                        include_links=include_links,
+                        processed_textbox_elem_ids=processed_textbox_elem_ids,
+                        processed_textbox_content=processed_textbox_content,
+                        text_xpath=".//a:t",  # Use a:t instead of w:t for shapes
+                    )
+                    for formatted_text in textbox_results:
+                        text_by_location[shape_idx] = formatted_text
+                        ordered_runs.append(shape_idx)
+                        shape_idx += 1
+
+                # Update current_idx to next available position
+                current_idx = shape_idx + 100  # Small buffer between content types
+
+                # Group 4: Drawing elements that might contain text not captured by other groups
+                drawing_idx = current_idx
+                drawings = _docx_xpath(para_element, ".//w:drawing")
+                for drawing in drawings:
+                    textbox_results = self._process_textbox_runs(
+                        container_element=drawing,
+                        hyperlink_info_by_run=hyperlink_info_by_run,
+                        should_exclude_page_numbers=should_exclude_page_numbers,
+                        para_element=para_element,
+                        include_inline_formatting=include_inline_formatting,
+                        markdown_mode=markdown_mode,
+                        include_links=include_links,
+                        processed_textbox_elem_ids=processed_textbox_elem_ids,
+                        processed_textbox_content=processed_textbox_content,
+                    )
+                    for formatted_text in textbox_results:
+                        text_by_location[drawing_idx] = formatted_text
+                        ordered_runs.append(drawing_idx)
+                        drawing_idx += 1
+
+                # Update current_idx to next available position
+                current_idx = drawing_idx + 100  # Small buffer between content types
+
+            # Group 5: Handle Markup Compatibility (mc) alternate content
+            # This is outside include_textboxes condition because MC elements can contain mixed content:
+            # regular text, hyperlinks, drawings, etc. The include_textboxes parameter is passed through
+            # to allow granular control within the MC processor (process text always, textboxes conditionally)
+            mc_idx = current_idx
+            mc_elements = _docx_xpath(para_element, ".//mc:AlternateContent")
+            for mc_elem in mc_elements:
+                # First try the Choice content (preferred for newer versions of Word)
+                choice_elems = _docx_xpath(mc_elem, ".//mc:Choice")
+                fallback_elems = _docx_xpath(mc_elem, ".//mc:Fallback")
+
+                # We only want to process either Choice OR Fallback, not both, as they represent
+                # alternate representations of the same content
+                if choice_elems:
+                    for choice in choice_elems:
+                        mc_results = self._process_markup_compatibility_element(
+                            mc_element=choice,
+                            hyperlink_info_by_run=hyperlink_info_by_run,
+                            should_exclude_page_numbers=should_exclude_page_numbers,
+                            para_element=para_element,
+                            include_inline_formatting=include_inline_formatting,
+                            markdown_mode=markdown_mode,
+                            include_links=include_links,
+                            include_textboxes=include_textboxes,
+                            processed_textbox_elem_ids=processed_textbox_elem_ids,
+                            processed_textbox_content=processed_textbox_content,
+                        )
+                        for formatted_text in mc_results:
+                            text_by_location[mc_idx] = formatted_text
+                            ordered_runs.append(mc_idx)
+                            mc_idx += 1
+                # Only use Fallback if we didn't find any usable Choice elements
+                elif fallback_elems:
+                    for fallback in fallback_elems:
+                        mc_results = self._process_markup_compatibility_element(
+                            mc_element=fallback,
+                            hyperlink_info_by_run=hyperlink_info_by_run,
+                            should_exclude_page_numbers=should_exclude_page_numbers,
+                            para_element=para_element,
+                            include_inline_formatting=include_inline_formatting,
+                            markdown_mode=markdown_mode,
+                            include_links=include_links,
+                            include_textboxes=include_textboxes,
+                            processed_textbox_elem_ids=processed_textbox_elem_ids,
+                            processed_textbox_content=processed_textbox_content,
+                        )
+                        for formatted_text in mc_results:
+                            text_by_location[mc_idx] = formatted_text
+                            ordered_runs.append(mc_idx)
+                            mc_idx += 1
+
+            # Sort the runs to maintain document order
+            ordered_runs.sort()
+
+            # Get raw text parts
+            text_parts = [text_by_location[idx] for idx in ordered_runs]
+
+            # Post-processing step: fix text box duplication where identical text appears
+            # consecutively. This handles cases where Word stores the same text multiple times
+            # in the XML. Only apply deduplication to textbox content (idx > run_idx),
+            # not regular paragraph text (idx <= run_idx).
+            textbox_start_idx = run_idx + 100  # First textbox content starts here
+            processed_text = []
+            i = 0
+            while i < len(text_parts):
+                current_segment = text_parts[i]
+                current_idx = ordered_runs[i]
+
+                # Only deduplicate textbox content (technical duplicates), not regular text
+                # (intentional duplicates)
+                if (
+                    current_idx >= textbox_start_idx
+                ):  # Textbox content starts after regular text runs
+                    # Check if the same text is immediately repeated (common in text boxes)
+                    j = i + 1
+                    while (
+                        j < len(text_parts)
+                        and text_parts[j] == current_segment
+                        and ordered_runs[j] >= textbox_start_idx
+                    ):
+                        # Skip consecutive identical segments in textbox content
+                        j += 1
+                    processed_text.append(current_segment)
+                    i = j
+                else:
+                    # For regular paragraph text, keep all content including intentional duplicates
+                    processed_text.append(current_segment)
+                    i += 1
+
+            return _join_text_parts(processed_text)
+        except Exception as e:
+            if strict_mode:
+                raise DocxContentError(
+                    f"Error extracting paragraph text: {str(e)}"
+                ) from e
+            else:
+                logger.warning(f"Error extracting paragraph text: {str(e)}")
+                return ""
+
+    def _process_docx_elements(
+        self,
+        package: _DocxPackage,
+        markdown_mode: bool = False,
+        include_tables: bool = True,
+        include_comments: bool = True,
+        include_footnotes: bool = True,
+        include_headers: bool = True,
+        include_footers: bool = True,
+        include_textboxes: bool = True,
+        include_toc: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
+        use_markdown_text_in_paragraphs: bool = False,
+        populate_md_text: bool = False,
+        strict_mode: bool = False,
+    ) -> list[str | Paragraph]:
+        """
+        Processes all elements in the DOCX document and returns appropriate objects.
+
+        :param package: _DocxPackage object
+        :param markdown_mode: If True, return markdown formatted lines,
+            otherwise return objects (default: False)
+        :param include_tables: If True, include tables in the output (default: True)
+        :param include_comments: If True, include comments in the output (default: True)
+        :param include_footnotes: If True, include footnotes in the output (default: True)
+        :param include_headers: If True, include headers in the output (default: True)
+        :param include_footers: If True, include footers in the output (default: True)
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param include_toc: If True, include table of contents in the output (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
+        :param use_markdown_text_in_paragraphs: If True, format comments and hyperlinks
+            in markdown style even when creating Paragraph objects (default: False)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: False)
+        :param strict_mode: If True, raise exceptions for any processing
+            error instead of skipping problematic elements (default: False)
+        :return: List of markdown lines or Paragraph objects
+        """
+        result = []
+
+        if package.main_document is None:
+            raise DocxContentError("Main document content is missing")
+
+        try:
+            # Get the body element
+            body_elements = _docx_xpath(package.main_document, ".//w:body")
+            if not body_elements:
+                raise DocxContentError("Document body element is missing")
+            body = body_elements[0]
+
+            # Process headers
+            if include_headers:
+                try:
+                    header_paragraphs = self._process_headers(
+                        package,
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        populate_md_text=populate_md_text,
+                    )
+                    if markdown_mode and header_paragraphs:
+                        self._handle_section_in_markdown_mode(
+                            header_paragraphs, "Header", result
+                        )
+                    else:
+                        # For object mode, add headers at the beginning
+                        result.extend(header_paragraphs)
+                except Exception as e:
+                    # In strict mode, re-raise as DocxContentError
+                    if strict_mode:
+                        raise DocxContentError(
+                            f"Error processing headers: {str(e)}"
+                        ) from e
+                    # Otherwise, log error and continue without headers
+                    logger.warning(f"Error processing headers: {str(e)}")
+
+            # Process table of contents
+            if include_toc:
+                try:
+                    toc_paragraphs = self._process_toc(
+                        package,
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        populate_md_text=populate_md_text,
+                        include_links=include_links,
+                        include_inline_formatting=include_inline_formatting,
+                    )
+                    if markdown_mode and toc_paragraphs:
+                        # Add table of contents section in markdown mode
+                        result.append("**Table of Contents**")
+                        result.append("")
+                        for para in toc_paragraphs:
+                            # Use _md_text if available and different from raw_text
+                            display_text = para.raw_text
+                            if para._md_text and para._md_text != para.raw_text:
+                                display_text = para._md_text
+                            result.append(display_text)
+                        result.append("")
+                    else:
+                        # For object mode, add ToC paragraphs
+                        result.extend(toc_paragraphs)
+                except Exception as e:
+                    # In strict mode, re-raise as DocxContentError
+                    if strict_mode:
+                        raise DocxContentError(
+                            f"Error processing table of contents: {str(e)}"
+                        ) from e
+                    # Otherwise, log error and continue without table of contents
+                    logger.warning(f"Error processing table of contents: {str(e)}")
+
+            # Track tables for indexing
+            table_count = 0
+
+            # Track numbered lists for proper sequencing
+            list_counters = {}  # {(list_id, level): counter}
+            last_list_id = None
+            last_list_level = -1
+
+            # Process each element in order
+            for element in body:
+                tag = element.tag.split("}")[-1]  # Remove namespace prefix
+
+                if tag == "p":
+                    # Process paragraph
+                    try:
+                        # Update list counters for both markdown and paragraph modes
+                        # Extract list information
+                        p_pr_elements = _docx_xpath(element, "w:pPr")
+                        if p_pr_elements:
+                            p_pr = p_pr_elements[0]
+                            num_pr_elements = _docx_xpath(p_pr, "w:numPr")
+                            if num_pr_elements:
+                                num_pr = num_pr_elements[0]
+                                # This is a list item
+                                _, list_level, __, ___, is_numbered = (
+                                    self._get_list_info(element, package)
+                                )
+
+                                # Get num_id for this list item
+                                num_id_elements = _docx_xpath(num_pr, "w:numId")
+                                if num_id_elements:
+                                    num_id = _docx_get_namespaced_attr(
+                                        num_id_elements[0], "val"
+                                    )
+
+                                    # If it's a numbered list, we need to track counter
+                                    if is_numbered:
+                                        list_key = (num_id, list_level)
+
+                                        # Reset counter if this is a new list or a higher
+                                        # level in the same list
+                                        if (
+                                            last_list_id != num_id
+                                            or list_level < last_list_level
+                                        ):
+                                            # Reset counters for all levels below
+                                            # the current level
+                                            for key in list(list_counters.keys()):
+                                                if (
+                                                    key[0] == num_id
+                                                    and key[1] > list_level
+                                                ):
+                                                    list_counters.pop(key)
+
+                                        # Initialize counter if needed
+                                        if list_key not in list_counters:
+                                            list_counters[list_key] = 1
+                                        else:
+                                            list_counters[list_key] += 1
+
+                                        # Remember this list for next iteration
+                                        last_list_id = num_id
+                                        last_list_level = list_level
+
+                        # Process paragraph with list counter information
+                        # Use markdown_mode OR use_markdown_text_in_paragraphs for text formatting
+                        apply_text_formatting = (
+                            markdown_mode or use_markdown_text_in_paragraphs
+                        )
+                        processed_para = self._process_paragraph(
+                            para_element=element,
+                            package=package,
+                            markdown_mode=markdown_mode,
+                            strict_mode=strict_mode,
+                            include_textboxes=include_textboxes,
+                            apply_text_formatting=apply_text_formatting,
+                            populate_md_text=populate_md_text,
+                            include_links=include_links,
+                            include_inline_formatting=include_inline_formatting,
+                            list_counters=list_counters,
+                        )
+                        if processed_para is not None:
+                            result.append(processed_para)
+                            # Add blank line after paragraphs in markdown mode
+                            if markdown_mode:
+                                result.append("")
+                    except Exception as e:
+                        if strict_mode:
+                            # In strict mode, re-raise as DocxContentError
+                            raise DocxContentError(
+                                f"Error processing paragraph: {str(e)}"
+                            )
+                        # Log error and continue with next paragraph
+                        logger.warning(f"Error processing paragraph: {str(e)}")
+
+                elif tag == "tbl" and include_tables:
+                    # Process table
+                    try:
+                        table_items = self._process_table(
+                            table_element=element,
+                            package=package,
+                            markdown_mode=markdown_mode,
+                            table_idx=table_count,
+                            strict_mode=strict_mode,
+                            include_textboxes=include_textboxes,
+                            populate_md_text=populate_md_text,
+                            include_links=include_links,
+                            include_inline_formatting=include_inline_formatting,
+                        )
+                        result.extend(table_items)
+                        table_count += 1
+                    except Exception as e:
+                        if strict_mode:
+                            # In strict mode, re-raise as DocxContentError
+                            raise DocxContentError(
+                                f"Error processing table: {str(e)}"
+                            ) from e
+                        # Log error and continue with next element
+                        logger.warning(f"Error processing table: {str(e)}")
+
+            # Process footnotes and add them as regular paragraphs
+            if include_footnotes and package.footnotes is not None:
+                try:
+                    footnote_paragraphs = self._process_footnotes(
+                        package,
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        populate_md_text=populate_md_text,
+                    )
+
+                    if markdown_mode and footnote_paragraphs:
+                        self._handle_section_in_markdown_mode(
+                            footnote_paragraphs,
+                            "Footnote",
+                            result,
+                            _extract_footnote_id_from_context,
+                        )
+                    else:
+                        # For object mode, just add footnotes as paragraphs
+                        result.extend(footnote_paragraphs)
+                except Exception as e:
+                    if strict_mode:
+                        # In strict mode, re-raise as DocxContentError
+                        raise DocxContentError(
+                            f"Error processing footnotes: {str(e)}"
+                        ) from e
+                    # Log error and continue without footnotes
+                    logger.warning(f"Error processing footnotes: {str(e)}")
+
+            # Process comments and add them as regular paragraphs
+            if include_comments and package.comments is not None:
+                try:
+                    comment_paragraphs = self._process_comments(
+                        package,
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        populate_md_text=populate_md_text,
+                    )
+
+                    if markdown_mode and comment_paragraphs:
+                        self._handle_section_in_markdown_mode(
+                            comment_paragraphs,
+                            "Comment",
+                            result,
+                            _extract_comment_id_from_context,
+                        )
+                    else:
+                        # For object mode, just add comments as paragraphs
+                        result.extend(comment_paragraphs)
+                except Exception as e:
+                    if strict_mode:
+                        # In strict mode, re-raise as DocxContentError
+                        raise DocxContentError(
+                            f"Error processing comments: {str(e)}"
+                        ) from e
+                    # Log error and continue without comments
+                    logger.warning(f"Error processing comments: {str(e)}")
+
+            # Process footers
+            if include_footers and package.footers:
+                try:
+                    footer_paragraphs = self._process_footers(
+                        package,
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        populate_md_text=populate_md_text,
+                    )
+                    if markdown_mode and footer_paragraphs:
+                        self._handle_section_in_markdown_mode(
+                            footer_paragraphs, "Footer", result
+                        )
+                    else:
+                        # For object mode, add footers at the end
+                        result.extend(footer_paragraphs)
+                except Exception as e:
+                    if strict_mode:
+                        # In strict mode, re-raise as DocxContentError
+                        raise DocxContentError(
+                            f"Error processing footers: {str(e)}"
+                        ) from e
+                    # Log error and continue without footers
+                    logger.warning(f"Error processing footers: {str(e)}")
+
+            return result
+        except DocxConverterError:
+            # Re-raise specific converter errors
+            raise
+        except Exception as e:
+            # Handle general errors in document processing
+            raise DocxXmlError(f"Error processing document elements: {str(e)}") from e
+
+    def _process_text_run(
+        self,
+        run: etree._Element,
+        hyperlink_info_by_run: dict,
+        should_exclude_page_numbers: bool,
+        para_element: etree._Element,
+        include_inline_formatting: bool,
+        markdown_mode: bool,
+        include_links: bool,
+        text_xpath: str = ".//w:t",
+    ) -> list[tuple[str, bool]]:
+        """
+        Processes a single text run and returns formatted text segments.
+
+        :param run: XML run element
+        :param hyperlink_info_by_run: Dictionary mapping run IDs to hyperlink info
+        :param should_exclude_page_numbers: Whether to exclude page number fields
+        :param para_element: Parent paragraph element for context
+        :param include_inline_formatting: Whether to apply inline formatting
+        :param markdown_mode: Whether in markdown mode
+        :param include_links: Whether to process hyperlinks
+        :param text_xpath: XPath to find text elements (default: ".//w:t")
+        :return: List of (text, is_content) tuples where is_content indicates if
+            it's text content
+        """
+        results = []
+        run_element_id = id(run)
+        is_hyperlink_run = run_element_id in hyperlink_info_by_run
+
+        # Skip page number fields
+        if should_exclude_page_numbers and self._is_page_number_field(
+            run, para_element
+        ):
+            return results
+
+        # Extract formatting for this run if needed
+        run_formatting = {}
+        if include_inline_formatting and markdown_mode:
+            run_formatting = self._extract_run_formatting(run)
+
+        # Process text elements
+        text_elements = _docx_xpath(run, text_xpath)
+        for text_elem in text_elements:
+            text_content = (
+                text_elem.text_content()
+                if hasattr(text_elem, "text_content")
+                else (text_elem.text or "")
+            )
+
+            if text_content:
+                # Check for tracked changes
+                is_in_move_from = _docx_xpath(text_elem, "ancestor::w:moveFrom")
+                is_in_deletion = _docx_xpath(text_elem, "ancestor::w:del")
+
+                if not is_in_move_from and not is_in_deletion:
+                    formatted_text = self._apply_text_formatting(
+                        text_content=text_content,
+                        run_formatting=run_formatting,
+                        is_hyperlink_run=is_hyperlink_run,
+                        hyperlink_info_by_run=hyperlink_info_by_run,
+                        run_element_id=run_element_id,
+                        markdown_mode=markdown_mode,
+                        include_inline_formatting=include_inline_formatting,
+                        include_links=include_links,
+                    )
+                    results.append((formatted_text, True))
+
+        return results
+
+    def _get_style_name(self, style_id: str, package: _DocxPackage) -> str:
+        """
+        Gets the style name from its ID by looking it up in the styles.xml.
+
+        :param style_id: Style ID to look up
+        :param package: _DocxPackage object containing the styles
+        :return: Style name with Title Case formatting
+        """
+        if not style_id:
+            return "Normal"
+
+        if package.styles is None:
+            return (style_id or "Normal").title()
+
+        try:
+            style_elements = _docx_xpath(
+                package.styles, f".//w:style[@w:styleId='{style_id}']"
+            )
+            if style_elements:
+                style_element = style_elements[0]
+                name_elements = _docx_xpath(style_element, "w:name")
+                if name_elements:
+                    val = _docx_get_namespaced_attr(name_elements[0], "val")
+                    if val:
+                        return val.title()
+        except Exception as e:
+            # If there's an error finding the style, log it but continue with default
+            logger.warning(f"Error looking up style '{style_id}': {str(e)}")
+
+        return (style_id or "Normal").title()
+
+    def _get_paragraph_style(self, para_element: etree._Element) -> str:
+        """
+        Extracts the style information from a paragraph element.
+
+        :param para_element: Paragraph XML element
+        :return: Style ID string
+        """
+        # Find the paragraph properties element
+        p_pr_elements = _docx_xpath(para_element, "w:pPr")
+        if p_pr_elements:
+            p_pr = p_pr_elements[0]
+            # Find the style element within paragraph properties
+            style_elements = _docx_xpath(p_pr, "w:pStyle")
+            if style_elements:
+                val = _docx_get_namespaced_attr(style_elements[0], "val")
+                if val:
+                    return val
+
+        return "Normal"
+
+    def _apply_markdown_formatting(
+        self,
+        text: str,
+        style_name: str,
+        is_list: bool,
+        list_level: int,
+        is_numbered: bool,
+        para_element: etree._Element,
+        list_counters: dict = None,
+    ) -> str:
+        """
+        Applies document-level markdown formatting to text.
+
+        :param text: Base text to format
+        :param style_name: Style name of the paragraph
+        :param is_list: Whether this is a list item
+        :param list_level: List level (0-based)
+        :param is_numbered: Whether this is a numbered list
+        :param para_element: Paragraph XML element
+        :param list_counters: Dictionary to track list numbering counters
+        :return: Formatted markdown text
+        """
+        if style_name.lower().startswith("heading"):
+            # Extract heading level (e.g., "Heading 1" -> 1)
+            heading_level = 1
+            match = re.search(r"(\d+)", style_name)
+            if match:
+                heading_level = int(match.group(1))
+            return "#" * heading_level + " " + text
+
+        elif is_list:
+            # Add indentation based on list level
+            indent = "    " * list_level
+
+            if is_numbered and list_counters is not None:
+                # Get the list ID for counter tracking
+                p_pr_elements = _docx_xpath(para_element, "w:pPr")
+                num_id = None
+                if p_pr_elements:
+                    p_pr = p_pr_elements[0]
+                    num_pr_elements = _docx_xpath(p_pr, "w:numPr")
+                    if num_pr_elements:
+                        num_pr = num_pr_elements[0]
+                        num_id_elements = _docx_xpath(num_pr, "w:numId")
+                        if num_id_elements:
+                            num_id = _docx_get_namespaced_attr(
+                                num_id_elements[0], "val"
+                            )
+
+                if num_id:
+                    list_key = (num_id, list_level)
+                    # Get the counter value (should be set by the calling method)
+                    counter = list_counters.get(list_key, 1)
+                    return f"{indent}{counter}. {text}"
+                else:
+                    # Fallback to bullet format when numbering cannot be determined
+                    logger.warning(
+                        f"No numId found for numbered list item, "
+                        f"using bullet format: {text[:50]}..."
+                    )
+                    return f"{indent}- {text}"
+            elif is_numbered:
+                # For numbered lists without counter tracking, use bullet format
+                return f"{indent}- {text}"
+            else:
+                # For bullet lists, use "- " format
+                return f"{indent}- {text}"
+
+        else:
+            # Regular paragraph
+            return text
+
+    def _extract_run_formatting(self, run_element: etree._Element) -> dict:
+        """
+        Extracts formatting properties from a run element.
+
+        :param run_element: Run XML element (w:r)
+        :return: Dictionary with formatting properties
+        """
+        formatting = {
+            "bold": False,
+            "italic": False,
+            "underline": False,
+            "strikethrough": False,
+        }
+
+        # Check for run properties (w:rPr)
+        r_pr_elements = _docx_xpath(run_element, "w:rPr")
+        if r_pr_elements:
+            r_pr = r_pr_elements[0]
+
+            # Bold (w:b or w:bCs for complex scripts)
+            bold_elements = _docx_xpath(r_pr, "w:b")
+            if bold_elements:
+                # Check if bold is explicitly disabled (val="0" or val="false")
+                val = _docx_get_namespaced_attr(bold_elements[0], "val")
+                if val in ("", "1", "true", "on"):  # Empty means enabled by default
+                    formatting["bold"] = True
+
+            # Italic (w:i or w:iCs for complex scripts)
+            italic_elements = _docx_xpath(r_pr, "w:i")
+            if italic_elements:
+                val = _docx_get_namespaced_attr(italic_elements[0], "val")
+                if val in ("", "1", "true", "on"):
+                    formatting["italic"] = True
+
+            # Underline (w:u)
+            underline_elements = _docx_xpath(r_pr, "w:u")
+            if underline_elements:
+                val = _docx_get_namespaced_attr(underline_elements[0], "val")
+                # Only consider actual underline styles (not "none")
+                if val and val != "none":
+                    formatting["underline"] = True
+
+            # Strikethrough (w:strike)
+            strike_elements = _docx_xpath(r_pr, "w:strike")
+            if strike_elements:
+                val = _docx_get_namespaced_attr(strike_elements[0], "val")
+                if val in ("", "1", "true", "on"):
+                    formatting["strikethrough"] = True
+
+        return formatting
+
+    def _apply_inline_formatting(self, text: str, formatting: dict) -> str:
+        """
+        Applies markdown formatting to text based on detected formatting properties.
+
+        :param text: Text content to format
+        :param formatting: Dictionary with formatting properties from _extract_run_formatting
+        :return: Text with markdown formatting applied
+        """
+        if not any(formatting.values()) or not text.strip():
+            return text
+
+        result = text
+
+        # Apply formatting in order to ensure proper nesting
+        # Order: strikethrough > underline > italic > bold
+        # This creates the most readable nested markdown
+
+        if formatting["strikethrough"]:
+            result = f"~~{result}~~"  # GitHub-flavored markdown
+
+        if formatting["underline"]:
+            result = (
+                f"<u>{result}</u>"  # HTML fallback (underline not standard markdown)
+            )
+
+        if formatting["italic"]:
+            result = f"*{result}*"
+
+        if formatting["bold"]:
+            result = f"**{result}**"
+
+        return result
+
+    def _apply_text_formatting(
+        self,
+        text_content: str,
+        run_formatting: dict,
+        is_hyperlink_run: bool,
+        hyperlink_info_by_run: dict,
+        run_element_id: int,
+        markdown_mode: bool,
+        include_inline_formatting: bool,
+        include_links: bool,
+    ) -> str:
+        """
+        Applies formatting to text content.
+
+        :param text_content: Raw text content
+        :param run_formatting: Formatting dictionary from _extract_run_formatting
+        :param is_hyperlink_run: Whether this run is part of a hyperlink
+        :param hyperlink_info_by_run: Dictionary with hyperlink information
+        :param run_element_id: ID of the run element
+        :param markdown_mode: Whether in markdown mode
+        :param include_inline_formatting: Whether to apply inline formatting
+        :param include_links: Whether to process hyperlinks
+        :return: Formatted text
+        """
+        formatted_text = text_content
+
+        # Apply inline formatting if enabled
+        if include_inline_formatting and markdown_mode and run_formatting:
+            formatted_text = self._apply_inline_formatting(
+                formatted_text, run_formatting
+            )
+
+        # Apply hyperlink formatting
+        if is_hyperlink_run and markdown_mode and include_links:
+            url = hyperlink_info_by_run[run_element_id]["url"]
+            if url:
+                formatted_text = f"[{formatted_text}]({url})"
+
+        return formatted_text
+
+    def _get_list_info(
+        self, para_element: etree._Element, package: _DocxPackage
+    ) -> tuple[bool, int, str, str, bool]:
+        """
+        Extracts list information from a paragraph element.
+
+        :param para_element: Paragraph XML element
+        :param package: _DocxPackage object
+        :return: Tuple of (is_list, list_level, list_info_string, list_type, is_numbered)
+        """
+        is_list = False
+        list_level = 0
+        list_info = ""
+        list_type = ""
+        is_numbered = False
+
+        p_pr_elements = _docx_xpath(para_element, "w:pPr")
+        if p_pr_elements:
+            p_pr = p_pr_elements[0]
+            num_pr_elements = _docx_xpath(p_pr, "w:numPr")
+            if num_pr_elements:
+                num_pr = num_pr_elements[0]
+
+                # Get list ID first to check if it's a valid list
+                num_id_elements = _docx_xpath(num_pr, "w:numId")
+                num_id = (
+                    _docx_get_namespaced_attr(num_id_elements[0], "val")
+                    if num_id_elements
+                    else None
+                )
+
+                # Only treat as a list if numId exists and is not "0"
+                # numId="0" in DOCX typically means "no numbering" - used to remove
+                # numbering from paragraphs that inherit list formatting from styles
+                if num_id and num_id != "0":
+                    is_list = True
+
+                    # Get level
+                    ilvl_elements = _docx_xpath(num_pr, "w:ilvl")
+                    if ilvl_elements:
+                        list_level = int(
+                            _docx_get_namespaced_attr(ilvl_elements[0], "val")
+                        )
+
+                    # Determine list type and numbering format if numbering is available
+                    if package.numbering is not None:
+                        # First find the abstractNumId associated with this numId
+                        num_def_elements = _docx_xpath(
+                            package.numbering, f".//w:num[@w:numId='{num_id}']"
+                        )
+                        if num_def_elements:
+                            num_def = num_def_elements[0]
+                            abstract_num_id_elements = _docx_xpath(
+                                num_def, "w:abstractNumId"
+                            )
+                            if abstract_num_id_elements:
+                                abstract_num_id = _docx_get_namespaced_attr(
+                                    abstract_num_id_elements[0], "val"
+                                )
+
+                                # Now find the level formatting in the abstractNum
+                                abstract_num_elements = _docx_xpath(
+                                    package.numbering,
+                                    f".//w:abstractNum[@w:abstractNumId='{abstract_num_id}']",
+                                )
+                                if abstract_num_elements:
+                                    abstract_num = abstract_num_elements[0]
+                                    # Find the level formatting for this specific level
+                                    level_elements = _docx_xpath(
+                                        abstract_num,
+                                        f".//w:lvl[@w:ilvl='{list_level}']",
+                                    )
+                                    if level_elements:
+                                        level_elem = level_elements[0]
+                                        # Get the numFmt element which defines if it's
+                                        # bullet or numbered
+                                        num_fmt_elements = _docx_xpath(
+                                            level_elem, "w:numFmt"
+                                        )
+                                        if (
+                                            num_fmt_elements
+                                            and _docx_get_namespaced_attr(
+                                                num_fmt_elements[0], "val"
+                                            )
+                                        ):
+                                            fmt_val = _docx_get_namespaced_attr(
+                                                num_fmt_elements[0], "val"
+                                            )
+                                            list_type = fmt_val
+
+                                            # Check if it's a numbered list format
+                                            is_numbered = (
+                                                fmt_val in NUMBERED_LIST_FORMATS
+                                            )
+
+                    # Only add list info if it's actually a list
+                    list_info = f", List ID: {num_id}, List Level: {list_level}"
+                    if list_type:
+                        list_info += f", List Format: {list_type.capitalize()}"
+
+        return is_list, list_level, list_info, list_type, is_numbered
+
+    def _update_list_counters(
+        self,
+        para_element: etree._Element,
+        package: _DocxPackage,
+        list_counters: dict,
+        last_list_id: str,
+        last_list_level: int,
+    ) -> tuple[str, int]:
+        """
+        Updates list counters for numbered lists and returns the new last list state.
+
+        :param para_element: Paragraph XML element
+        :param package: _DocxPackage object
+        :param list_counters: Dictionary to track list numbering counters
+        :param last_list_id: Last processed list ID
+        :param last_list_level: Last processed list level
+        :return: Tuple of (new_last_list_id, new_last_list_level)
+        """
+        # Extract list information
+        p_pr_elements = _docx_xpath(para_element, "w:pPr")
+        if p_pr_elements:
+            p_pr = p_pr_elements[0]
+            num_pr_elements = _docx_xpath(p_pr, "w:numPr")
+            if num_pr_elements:
+                num_pr = num_pr_elements[0]
+                # This is a list item
+                _, list_level, __, ___, is_numbered = self._get_list_info(
+                    para_element, package
+                )
+
+                # Get num_id for this list item
+                num_id_elements = _docx_xpath(num_pr, "w:numId")
+                if num_id_elements:
+                    num_id = _docx_get_namespaced_attr(num_id_elements[0], "val")
+
+                    # If it's a numbered list, we need to track counter
+                    if is_numbered:
+                        list_key = (num_id, list_level)
+
+                        # Reset counter if this is a new list or a higher level in the same list
+                        if last_list_id != num_id or list_level < last_list_level:
+                            # Reset counters for all levels below the current level
+                            for key in list(list_counters.keys()):
+                                if key[0] == num_id and key[1] > list_level:
+                                    list_counters.pop(key)
+
+                        # Initialize counter if needed
+                        if list_key not in list_counters:
+                            list_counters[list_key] = 1
+                        else:
+                            list_counters[list_key] += 1
+
+                        # Remember this list for next iteration
+                        return num_id, list_level
+
+        return last_list_id, last_list_level
+
     def _process_table(
         self,
-        table_element: ET.Element,
+        table_element: etree._Element,
         package: _DocxPackage,
         markdown_mode: bool = False,
         table_idx: int = 0,
-        strict_mode: bool = False,
+        populate_md_text: bool = False,
         include_textboxes: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
+        strict_mode: bool = False,
     ) -> list[str | Paragraph]:
         """
         Processes a table element and returns either paragraphs or markdown lines.
@@ -770,17 +1461,22 @@ class _DocxConverterBase:
         :param markdown_mode: If True, return markdown formatted lines,
             otherwise return Paragraph objects (default: False)
         :param table_idx: Index of the table in the document (default: 0)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: False)
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
         :return: List of markdown lines or Paragraph objects
         """
         result = []
 
         try:
             if markdown_mode:
-                # Process table for markdown output
-                rows = table_element.findall(".//w:tr", WORD_XML_NAMESPACES)
+                # Process table for markdown output - only direct rows, not nested table rows
+                rows = _docx_xpath(table_element, "./w:tr")
                 if not rows:
                     return result
 
@@ -790,18 +1486,66 @@ class _DocxConverterBase:
 
                 for row in rows:
                     row_cells = []
-                    for cell in row.findall(".//w:tc", WORD_XML_NAMESPACES):
+                    cells = _docx_xpath(row, "./w:tc")
+                    for cell in cells:
+                        # Check for nested tables in this cell
+                        nested_tables = _docx_xpath(cell, "./w:tbl")
+
                         # Combine all text from paragraphs in the cell
                         cell_text = []
-                        for para in cell.findall(".//w:p", WORD_XML_NAMESPACES):
+
+                        # Process direct paragraphs (not in nested tables)
+                        paragraphs = _docx_xpath(cell, "./w:p")
+                        for para in paragraphs:
                             # Process paragraph
                             processed_para = self._process_paragraph(
-                                para, package, True, strict_mode, include_textboxes
+                                para_element=para,
+                                package=package,
+                                markdown_mode=True,
+                                strict_mode=strict_mode,
+                                include_textboxes=include_textboxes,
+                                apply_text_formatting=None,
+                                populate_md_text=populate_md_text,
+                                include_links=include_links,
+                                include_inline_formatting=include_inline_formatting,
+                                list_counters=None,  # list_counters - tables handle their own formatting
                             )
                             if processed_para:
                                 cell_text.append(processed_para)
 
-                        cell_content = " ".join(cell_text).strip() or " "
+                        # Process nested tables if any
+                        for nested_table in nested_tables:
+                            nested_content = self._process_table(
+                                table_element=nested_table,
+                                package=package,
+                                markdown_mode=True,
+                                table_idx=-1,
+                                strict_mode=strict_mode,
+                                include_textboxes=include_textboxes,
+                                populate_md_text=populate_md_text,
+                                include_links=include_links,
+                                include_inline_formatting=include_inline_formatting,
+                            )
+                            if nested_content:
+                                # Join nested table content as text
+                                nested_text = "\n".join(
+                                    line for line in nested_content if line.strip()
+                                )
+                                if nested_text:
+                                    cell_text.append(nested_text)
+
+                        # Join cell content, using appropriate separators
+                        if len(cell_text) > 1 and any(
+                            "|" in text and "---" in text for text in cell_text
+                        ):
+                            # Contains nested table - use newlines to separate content
+                            cell_content = "\n".join(cell_text).strip() or " "
+                        elif len(cell_text) > 1:
+                            # Multiple paragraphs in cell - use newlines to separate
+                            cell_content = "\n".join(cell_text).strip() or " "
+                        else:
+                            # Single paragraph or empty content
+                            cell_content = " ".join(cell_text).strip() or " "
                         row_cells.append(cell_content)
 
                     all_rows.append(row_cells)
@@ -836,18 +1580,31 @@ class _DocxConverterBase:
                 # Add blank line after table
                 result.append("")
             else:
-                # Process table for Paragraph objects
-                table_metadata = f"Table: {table_idx+1}"
-                rows = table_element.findall(".//w:tr", WORD_XML_NAMESPACES)
+                # Process table for Paragraph objects - only direct rows, not nested table rows
+                table_metadata = f"Table ID: {table_idx+1}"
+                rows = _docx_xpath(table_element, "./w:tr")
 
                 for row_idx, row in enumerate(rows):
-                    for cell_idx, cell in enumerate(
-                        row.findall(".//w:tc", WORD_XML_NAMESPACES)
-                    ):
-                        for para in cell.findall(".//w:p", WORD_XML_NAMESPACES):
+                    cells = _docx_xpath(row, "./w:tc")
+                    for cell_idx, cell in enumerate(cells):
+                        # Check for nested tables in this cell
+                        nested_tables = _docx_xpath(cell, "./w:tbl")
+
+                        # Process direct paragraphs (not in nested tables)
+                        paragraphs = _docx_xpath(cell, "./w:p")
+                        for para in paragraphs:
                             # Process paragraph
                             processed_para = self._process_paragraph(
-                                para, package, False, strict_mode, include_textboxes
+                                para_element=para,
+                                package=package,
+                                markdown_mode=False,
+                                strict_mode=strict_mode,
+                                include_textboxes=include_textboxes,
+                                apply_text_formatting=None,
+                                populate_md_text=populate_md_text,
+                                include_links=include_links,
+                                include_inline_formatting=include_inline_formatting,
+                                list_counters=None,  # list_counters - tables handle their own formatting
                             )
                             if processed_para:
                                 style_id = self._get_paragraph_style(para)
@@ -855,9 +1612,9 @@ class _DocxConverterBase:
                                 cell_style_info = f"Style: {style_name}"
 
                                 # Copy the paragraph with added table metadata
-                                cell_para = Paragraph(
-                                    raw_text=processed_para.raw_text,
-                                    additional_context=f"{cell_style_info}, {table_metadata}, "
+                                cell_para_kwargs = {
+                                    "raw_text": processed_para.raw_text,
+                                    "additional_context": f"{cell_style_info}, {table_metadata}, "
                                     f"Row: {row_idx+1}, Column: {cell_idx+1}, "
                                     f"Table Cell"
                                     + (
@@ -868,8 +1625,71 @@ class _DocxConverterBase:
                                         if ", " in processed_para.additional_context
                                         else ""
                                     ),
-                                )
+                                }
+                                cell_para = Paragraph(**cell_para_kwargs)
+                                # Assign _md_text if populate_md_text was requested
+                                if populate_md_text:
+                                    cell_para._md_text = processed_para._md_text
+
                                 result.append(cell_para)
+
+                        # Process nested tables if any
+                        for nested_table_idx, nested_table in enumerate(nested_tables):
+                            nested_content = self._process_table(
+                                table_element=nested_table,
+                                package=package,
+                                markdown_mode=False,
+                                table_idx=nested_table_idx,  # Use the actual nested table index
+                                strict_mode=strict_mode,
+                                include_textboxes=include_textboxes,
+                                populate_md_text=populate_md_text,
+                                include_links=include_links,
+                                include_inline_formatting=include_inline_formatting,
+                            )
+                            # Add nested table content with proper metadata
+                            for nested_para in nested_content:
+                                if isinstance(nested_para, Paragraph):
+                                    # Extract style and other info from nested table metadata
+                                    nested_context = nested_para.additional_context
+                                    parts = nested_context.split(", ")
+
+                                    # Find and extract the style (should be first)
+                                    style_part = ""
+                                    remaining_parts = []
+
+                                    for part in parts:
+                                        if part.startswith("Style: "):
+                                            style_part = part
+                                        elif not part.startswith(
+                                            "Table ID: "
+                                        ):  # Skip redundant "Table ID: X"
+                                            remaining_parts.append(part)
+
+                                    # Build the final metadata: Style first, then parent table info,
+                                    # then nested table info
+                                    final_context = (
+                                        f"{style_part}, {table_metadata}, Row: {row_idx+1}, "
+                                        f"Column: {cell_idx+1}, "
+                                        f"Nested Table ID: {nested_table_idx+1}"
+                                    )
+
+                                    # Add remaining parts (like Row, Column, Table Cell from
+                                    # nested table)
+                                    if remaining_parts:
+                                        final_context += ", " + ", ".join(
+                                            remaining_parts
+                                        )
+
+                                    nested_meta_kwargs = {
+                                        "raw_text": nested_para.raw_text,
+                                        "additional_context": final_context,
+                                    }
+                                    nested_meta = Paragraph(**nested_meta_kwargs)
+                                    # Assign _md_text if populate_md_text was requested
+                                    if populate_md_text:
+                                        nested_meta._md_text = nested_para._md_text
+
+                                    result.append(nested_meta)
 
             return result
         except Exception as e:
@@ -887,397 +1707,1022 @@ class _DocxConverterBase:
                     # Return whatever we've processed so far
                     return result
 
+    def _process_document_section(
+        self,
+        package: _DocxPackage,
+        section_name: str,
+        section_data: dict,
+        metadata_key: str,
+        include_textboxes: bool = True,
+        populate_md_text: bool = False,
+        strict_mode: bool = False,
+    ) -> list[Paragraph]:
+        """
+        Generic processor for document sections (headers, footers, footnotes, comments).
+
+        :param package: _DocxPackage object
+        :param section_name: Name of the section for error reporting
+        :param section_data: Data structure containing the section elements
+        :param metadata_key: Key to use in metadata (e.g., "Header ID", "Footer ID")
+        :param include_textboxes: Whether to include textbox content
+        :param populate_md_text: Whether to populate _md_text field
+        :param strict_mode: Whether to raise exceptions on errors
+        :return: List of Paragraph objects
+        """
+        paragraphs = []
+
+        if not section_data:
+            return paragraphs
+
+        try:
+            for section_id, section_info in section_data.items():
+                # Handle different data structures
+                if isinstance(section_info, dict):
+                    if "content" in section_info:
+                        # Headers/footers structure
+                        content = section_info["content"]
+                        xpath_expr = ".//w:p"
+                    else:
+                        # Other structures
+                        content = section_info
+                        xpath_expr = ".//w:p"
+                else:
+                    # Direct XML content
+                    content = section_info
+                    xpath_expr = ".//w:p"
+
+                # Extract additional metadata for comments
+                extra_metadata = ""
+                if hasattr(content, "attrib"):
+                    author = _docx_get_namespaced_attr(content, "author")
+                    if author:
+                        extra_metadata += f", Author: {author}"
+                    date = _docx_get_namespaced_attr(content, "date")
+                    if date:
+                        extra_metadata += f", Date: {date}"
+
+                # Find paragraphs in the content
+                content_paragraphs = _docx_xpath(content, xpath_expr)
+
+                for para in content_paragraphs:
+                    processed_para = self._process_paragraph(
+                        para_element=para,
+                        package=package,
+                        markdown_mode=False,
+                        strict_mode=strict_mode,
+                        include_textboxes=include_textboxes,
+                        apply_text_formatting=None,
+                        populate_md_text=populate_md_text,
+                        include_links=False,  # Always disabled for headers/footers/comments/footnotes
+                        list_counters=None,  # list_counters - tables handle their own formatting
+                        include_inline_formatting=False,  # Always disabled for headers/footers/comments/footnotes
+                    )
+
+                    if processed_para:
+                        # Add section-specific metadata
+                        original_context = processed_para.additional_context
+                        section_context = (
+                            f"{original_context}, {metadata_key}: "
+                            f"{section_id}{extra_metadata}"
+                        )
+
+                        # Create paragraph with updated metadata
+                        para_kwargs = {
+                            "raw_text": processed_para.raw_text,
+                            "additional_context": section_context,
+                        }
+                        paragraph = Paragraph(**para_kwargs)
+                        if populate_md_text:
+                            paragraph._md_text = processed_para._md_text
+
+                        paragraphs.append(paragraph)
+
+        except Exception as e:
+            if strict_mode:
+                raise DocxContentError(
+                    f"Error processing {section_name}: {str(e)}"
+                ) from e
+            else:
+                logger.warning(f"Error processing {section_name}: {str(e)}")
+
+        return paragraphs
+
+    def _handle_section_in_markdown_mode(
+        self,
+        paragraphs: list[Paragraph],
+        section_title: str,
+        result: list[str],
+        extract_id_func: Optional[Callable[[str], str]] = None,
+    ) -> None:
+        """
+        Handles displaying a document section in markdown mode.
+
+        :param paragraphs: List of paragraph objects from the section
+        :param section_title: Title to display for the section (e.g., "Header", "Footer")
+        :param result: Result list to append to
+        :param extract_id_func: Optional function to extract ID from paragraph context
+        """
+        if not paragraphs:
+            return
+
+        for para in paragraphs:
+            # Extract ID for display if function provided
+            display_title = section_title
+            if extract_id_func:
+                try:
+                    section_id = extract_id_func(para.additional_context)
+                    if section_id:
+                        display_title = f"{section_title} {section_id}"
+                except:
+                    pass  # Use default title if extraction fails
+
+            # Use _md_text if available and different from raw_text
+            display_text = para.raw_text
+            if para._md_text and para._md_text != para.raw_text:
+                display_text = para._md_text
+
+            result.append(f"**{display_title}**: {display_text}")
+            result.append("")
+
+    def _process_markup_compatibility_element(
+        self,
+        mc_element: etree._Element,
+        hyperlink_info_by_run: dict,
+        should_exclude_page_numbers: bool,
+        para_element: etree._Element,
+        markdown_mode: bool,
+        processed_textbox_elem_ids: set,
+        processed_textbox_content: set,
+        include_inline_formatting: bool,
+        include_links: bool,
+        include_textboxes: bool,
+    ) -> list[str]:
+        """
+        Processes a markup compatibility element (Choice or Fallback).
+
+        :param mc_element: Choice or Fallback XML element
+        :param hyperlink_info_by_run: Dictionary mapping run IDs to hyperlink info
+        :param should_exclude_page_numbers: Whether to exclude page number fields
+        :param para_element: Parent paragraph element for context
+        :param markdown_mode: Whether in markdown mode
+        :param processed_textbox_elem_ids: Set of already processed element IDs
+        :param processed_textbox_content: Set of already processed text content
+        :param include_inline_formatting: Whether to apply inline formatting
+        :param include_links: Whether to process hyperlinks
+        :param include_textboxes: Whether to include textbox content
+        :return: List of formatted text strings
+        """
+        # If include_textboxes is False, skip textboxes in markup compatibility content
+        if not include_textboxes:
+            # Skip textbox content within this element
+            has_textbox = (
+                _docx_xpath(mc_element, ".//v:textbox")
+                or _docx_xpath(mc_element, ".//w:txbxContent")
+                or _docx_xpath(mc_element, ".//a:t")
+                or _docx_xpath(mc_element, ".//w:drawing")
+            )
+            if has_textbox:
+                return []
+
+        return self._process_textbox_runs(
+            mc_element,
+            hyperlink_info_by_run,
+            should_exclude_page_numbers,
+            para_element,
+            include_inline_formatting,
+            markdown_mode,
+            include_links,
+            processed_textbox_elem_ids,
+            processed_textbox_content,
+        )
+
     def _process_headers(
         self,
         package: _DocxPackage,
-        strict_mode: bool = False,
         include_textboxes: bool = True,
+        populate_md_text: bool = False,
+        strict_mode: bool = False,
     ) -> list[Paragraph]:
         """
         Processes headers from the header XML files and converts them to Paragraph objects.
 
         :param package: _DocxPackage object
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: False)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
         :return: List of Paragraph objects representing headers
         """
-        header_paragraphs = []
-
-        if not package.headers:
-            return header_paragraphs
-
-        # Process each header
-        for header_id, header_info in package.headers.items():
-            header_content = header_info["content"]
-
-            # Process each paragraph in the header
-            for para in header_content.findall(
-                f".//{{{WORD_XML_NAMESPACES['w']}}}p", WORD_XML_NAMESPACES
-            ):
-                # Extract the text content
-                para_text = self._extract_paragraph_text(
-                    para, strict_mode=strict_mode, include_textboxes=include_textboxes
-                ).strip()
-                if para_text:
-                    # Get paragraph style and metadata
-                    style_id = self._get_paragraph_style(para)
-                    style_name = self._get_style_name(style_id, package)
-
-                    # Build metadata
-                    header_info = f"Style: {style_name}, Header: {header_id}"
-
-                    # Create paragraph object with metadata
-                    header_paragraphs.append(
-                        Paragraph(raw_text=para_text, additional_context=header_info)
-                    )
-
-        return header_paragraphs
+        return self._process_document_section(
+            package=package,
+            section_name="headers",
+            section_data=package.headers,
+            metadata_key="Header ID",
+            strict_mode=strict_mode,
+            include_textboxes=include_textboxes,
+            populate_md_text=populate_md_text,
+        )
 
     def _process_footers(
         self,
         package: _DocxPackage,
-        strict_mode: bool = False,
         include_textboxes: bool = True,
+        populate_md_text: bool = False,
+        strict_mode: bool = False,
     ) -> list[Paragraph]:
         """
         Processes footers from the footer XML files and converts them to Paragraph objects.
 
         :param package: _DocxPackage object
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: False)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :param include_textboxes: If True, include textbox content (default: True)
         :return: List of Paragraph objects representing footers
         """
-        footer_paragraphs = []
+        return self._process_document_section(
+            package=package,
+            section_name="footers",
+            section_data=package.footers,
+            metadata_key="Footer ID",
+            strict_mode=strict_mode,
+            include_textboxes=include_textboxes,
+            populate_md_text=populate_md_text,
+        )
 
-        if not package.footers:
-            return footer_paragraphs
-
-        # Process each footer
-        for footer_id, footer_info in package.footers.items():
-            footer_content = footer_info["content"]
-
-            # Process each paragraph in the footer
-            for para in footer_content.findall(
-                f".//{{{WORD_XML_NAMESPACES['w']}}}p", WORD_XML_NAMESPACES
-            ):
-                # Extract the text content
-                para_text = self._extract_paragraph_text(
-                    para, strict_mode=strict_mode, include_textboxes=include_textboxes
-                ).strip()
-                if para_text:
-                    # Get paragraph style and metadata
-                    style_id = self._get_paragraph_style(para)
-                    style_name = self._get_style_name(style_id, package)
-
-                    # Build metadata
-                    footer_info = f"Style: {style_name}, Footer: {footer_id}"
-
-                    # Create paragraph object with metadata
-                    footer_paragraphs.append(
-                        Paragraph(raw_text=para_text, additional_context=footer_info)
-                    )
-
-        return footer_paragraphs
-
-    def _process_docx_elements(
+    def _process_footnotes(
         self,
         package: _DocxPackage,
-        markdown_mode: bool = False,
-        include_tables: bool = True,
-        include_comments: bool = True,
-        include_footnotes: bool = True,
-        include_headers: bool = True,
-        include_footers: bool = True,
         include_textboxes: bool = True,
+        populate_md_text: bool = True,
         strict_mode: bool = False,
-    ) -> list[str | Paragraph]:
+    ) -> list[Paragraph]:
         """
-        Processes all elements in the DOCX document and returns appropriate objects.
+        Processes footnotes from the footnotes.xml file and converts them to Paragraph objects.
 
         :param package: _DocxPackage object
-        :param markdown_mode: If True, return markdown formatted lines,
-            otherwise return objects (default: False)
-        :param include_tables: If True, include tables in the output (default: True)
-        :param include_comments: If True, include comments in the output (default: True)
-        :param include_footnotes: If True, include footnotes in the output (default: True)
-        :param include_headers: If True, include headers in the output (default: True)
-        :param include_footers: If True, include footers in the output (default: True)
         :param include_textboxes: If True, include textbox content (default: True)
-        :param strict_mode: If True, raise exceptions for any processing
-            error instead of skipping problematic elements (default: False)
-        :return: List of markdown lines or Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: True)
+        :param strict_mode: If True, raise exceptions for any processing error
+            instead of skipping problematic elements (default: False)
+        :return: List of Paragraph objects representing footnotes
         """
-        result = []
+        if package.footnotes is None:
+            return []
 
+        # Build a dictionary of footnote elements, filtering out separators
+        footnote_elements = _docx_xpath(package.footnotes, ".//w:footnote")
+        footnote_data = {}
+        for footnote_elem in footnote_elements:
+            footnote_id = _docx_get_namespaced_attr(footnote_elem, "id")
+            if not footnote_id:
+                continue
+            if footnote_id not in ("-1", "0"):  # Skip separators
+                footnote_data[footnote_id] = footnote_elem
+
+        return self._process_document_section(
+            package=package,
+            section_name="footnotes",
+            section_data=footnote_data,
+            metadata_key="Footnote ID",
+            strict_mode=strict_mode,
+            include_textboxes=include_textboxes,
+            populate_md_text=populate_md_text,
+        )
+
+    def _process_comments(
+        self,
+        package: _DocxPackage,
+        include_textboxes: bool = True,
+        populate_md_text: bool = True,
+        strict_mode: bool = False,
+    ) -> list[Paragraph]:
+        """
+        Processes comments from the comments.xml file and converts them to Paragraph objects.
+
+        :param package: _DocxPackage object
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: True)
+        :param strict_mode: If True, raise exceptions for any processing error
+            instead of skipping problematic elements (default: False)
+        :return: List of Paragraph objects representing comments
+        """
+        if package.comments is None:
+            return []
+
+        # Build a dictionary of comment elements
+        comment_elements = _docx_xpath(package.comments, ".//w:comment")
+        comment_data = {}
+        for comment_elem in comment_elements:
+            comment_id = _docx_get_namespaced_attr(comment_elem, "id")
+            if not comment_id:
+                continue
+            comment_data[comment_id] = comment_elem
+
+        return self._process_document_section(
+            package=package,
+            section_name="comments",
+            section_data=comment_data,
+            metadata_key="Comment ID",
+            strict_mode=strict_mode,
+            include_textboxes=include_textboxes,
+            populate_md_text=populate_md_text,
+        )
+
+    def _extract_footnote_references(self, para_element: etree._Element) -> list[str]:
+        """
+        Extracts footnote references from a paragraph.
+
+        :param para_element: Paragraph XML element
+        :return: List of footnote IDs
+        """
+        footnote_ids = []
+
+        # Find all footnote references in this paragraph
+        runs = _docx_xpath(para_element, ".//w:r")
+        for run in runs:
+            footnote_refs = _docx_xpath(run, ".//w:footnoteReference")
+            for footnote_ref in footnote_refs:
+                footnote_id = _docx_get_namespaced_attr(footnote_ref, "id")
+                if footnote_id:
+                    footnote_ids.append(footnote_id)
+
+        return footnote_ids
+
+    def _extract_comment_references(self, para_element: etree._Element) -> list[str]:
+        """
+        Extracts comment references from a paragraph.
+
+        :param para_element: Paragraph XML element
+        :return: List of comment IDs
+        """
+        comment_ids = []
+
+        # Find all comment references in this paragraph
+        runs = _docx_xpath(para_element, ".//w:r")
+        for run in runs:
+            comment_refs = _docx_xpath(run, ".//w:commentReference")
+            for comment_ref in comment_refs:
+                comment_id = _docx_get_namespaced_attr(comment_ref, "id")
+                if comment_id:
+                    comment_ids.append(comment_id)
+
+        return comment_ids
+
+    def _extract_hyperlink_references(
+        self, para_element: etree._Element, package: _DocxPackage
+    ) -> list[dict]:
+        """
+        Extracts hyperlink references from a paragraph.
+
+        :param para_element: Paragraph XML element
+        :param package: _DocxPackage object containing hyperlink relationships
+        :return: List of dictionaries with hyperlink info:
+            [{"text": str, "url": str, "rel_id": str}]
+        """
+        hyperlinks = []
+        seen_urls = set()  # Track URLs to avoid duplication
+
+        # Find all hyperlink elements in this paragraph
+        hyperlink_elements = _docx_xpath(para_element, ".//w:hyperlink")
+        for hyperlink_elem in hyperlink_elements:
+            # Get the relationship ID
+            rel_id = _docx_get_namespaced_attr(hyperlink_elem, "id", "r")
+
+            # Get the hyperlink URL from relationships
+            url = package.hyperlinks.get(rel_id, "")
+
+            # Extract the text content of the hyperlink
+            text_elements = _docx_xpath(hyperlink_elem, ".//w:t")
+            link_text = ""
+            for text_elem in text_elements:
+                text_content = (
+                    text_elem.text_content()
+                    if hasattr(text_elem, "text_content")
+                    else (text_elem.text or "")
+                )
+                link_text += text_content
+
+            # Only add if we have text, URL, and haven't seen this URL before
+            if link_text and url and url not in seen_urls:
+                hyperlinks.append({"text": link_text, "url": url, "rel_id": rel_id})
+                seen_urls.add(url)
+
+        return hyperlinks
+
+    def _is_text_box_paragraph(self, para_element: etree._Element) -> bool:
+        """
+        Determines if a paragraph is from a text box.
+
+        :param para_element: Paragraph XML element
+        :return: True if the paragraph is part of a text box
+        """
+        # Check for various types of text boxes in Word
+        # 1. VML textbox (older Word format)
+        if _docx_xpath(para_element, ".//v:textbox"):
+            return True
+
+        # 2. DrawingML text box (Office 2007+)
+        if _docx_xpath(para_element, ".//w:txbxContent"):
+            return True
+
+        # 3. Check for shape with text
+        if _docx_xpath(para_element, ".//a:t"):
+            return True
+
+        # 4. Check for drawing element
+        if _docx_xpath(para_element, ".//w:drawing"):
+            return True
+
+        return False
+
+    def _process_textbox_runs(
+        self,
+        container_element: etree._Element,
+        hyperlink_info_by_run: dict,
+        should_exclude_page_numbers: bool,
+        para_element: etree._Element,
+        include_inline_formatting: bool,
+        markdown_mode: bool,
+        include_links: bool,
+        processed_textbox_elem_ids: set,
+        processed_textbox_content: set,
+        text_xpath: str = ".//w:t",
+        run_xpath: str = ".//w:r",
+    ) -> list[str]:
+        """
+        Processes runs within textbox containers with deduplication.
+
+        :param container_element: Container element (textbox, drawing, etc.)
+        :param hyperlink_info_by_run: Dictionary mapping run IDs to hyperlink info
+        :param should_exclude_page_numbers: Whether to exclude page number fields
+        :param para_element: Parent paragraph element for context
+        :param include_inline_formatting: Whether to apply inline formatting
+        :param markdown_mode: Whether in markdown mode
+        :param include_links: Whether to process hyperlinks
+        :param processed_textbox_elem_ids: Set of already processed element IDs
+        :param processed_textbox_content: Set of already processed text content
+        :param text_xpath: XPath to find text elements (default: ".//w:t")
+        :param run_xpath: XPath to find run elements (default: ".//w:r")
+        :return: List of formatted text strings
+        """
+        results = []
+        runs = _docx_xpath(container_element, run_xpath)
+
+        for run in runs:
+            run_results = self._process_text_run(
+                run=run,
+                hyperlink_info_by_run=hyperlink_info_by_run,
+                should_exclude_page_numbers=should_exclude_page_numbers,
+                para_element=para_element,
+                include_inline_formatting=include_inline_formatting,
+                markdown_mode=markdown_mode,
+                include_links=include_links,
+                text_xpath=text_xpath,
+            )
+
+            # Apply textbox-specific deduplication
+            text_elements = _docx_xpath(run, text_xpath)
+            content_results = [r for r in run_results if r[1]]
+            for text_elem, text_result in zip(text_elements, content_results):
+                formatted_text, _ = text_result
+                elem_id = id(text_elem)
+                original_content = (
+                    text_elem.text_content()
+                    if hasattr(text_elem, "text_content")
+                    else (text_elem.text or "")
+                )
+
+                if (
+                    original_content
+                    and elem_id not in processed_textbox_elem_ids
+                    and original_content not in processed_textbox_content
+                ):
+                    results.append(formatted_text)
+                    processed_textbox_elem_ids.add(elem_id)
+                    processed_textbox_content.add(original_content)
+
+        return results
+
+    def _process_toc(
+        self,
+        package: _DocxPackage,
+        include_textboxes: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
+        populate_md_text: bool = False,
+        strict_mode: bool = False,
+    ) -> list[Paragraph]:
+        """
+        Processes table of contents from the document and converts them to Paragraph objects.
+
+        Table of contents in DOCX can be represented in several ways:
+        1. TOC field codes (w:fldSimple with "TOC" instruction)
+        2. Complex field codes (w:fldChar with TOC instruction)
+        3. Paragraphs with TOC styles ("TOC 1", "TOC 2", "TOC 3", etc.)
+
+        :param package: _DocxPackage object
+        :param include_textboxes: If True, include textbox content (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
+        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            with markdown representation (default: False)
+        :param strict_mode: If True, raise exceptions for any processing error
+            instead of skipping problematic elements (default: False)
+        :return: List of Paragraph objects representing table of contents entries
+        """
         if package.main_document is None:
-            raise DocxContentError("Main document content is missing")
+            return []
 
         try:
             # Get the body element
-            body = package.main_document.find(
-                f".//{{{WORD_XML_NAMESPACES['w']}}}body", WORD_XML_NAMESPACES
+            body_elements = _docx_xpath(package.main_document, ".//w:body")
+            if not body_elements:
+                return []
+            body = body_elements[0]
+
+            # Collect all ToC paragraph elements with their document positions
+            # Use a dictionary to track: {paragraph_element_id: (position_index,
+            # paragraph_element, detection_method)}
+            toc_paragraph_elements = {}
+
+            # Get all paragraphs in document order for position tracking
+            all_paragraphs = _docx_xpath(body, ".//w:p")
+            para_positions = {id(para): idx for idx, para in enumerate(all_paragraphs)}
+
+            # Find TOC headings by their structural relationship to TOC fields
+            toc_fields_with_positions = self._collect_toc_field_paragraphs(
+                body, para_positions
             )
-            if body is None:
-                raise DocxContentError("Document body element is missing")
 
-            # Process headers
-            if include_headers:
-                try:
-                    header_paragraphs = self._process_headers(
-                        package,
-                        strict_mode=strict_mode,
+            # Look for TOC heading using simple rule-based approach
+            if toc_fields_with_positions:
+                # Sort TOC fields by position and find the earliest one
+                toc_fields_with_positions.sort(key=lambda x: x[0])
+                earliest_toc_position, _ = toc_fields_with_positions[0]
+
+                # Simple rule-based heading detection
+                best_heading_candidate = None
+
+                for check_idx in range(earliest_toc_position - 1, -1, -1):
+                    if check_idx < 0:
+                        break
+
+                    candidate_para = all_paragraphs[check_idx]
+                    para_text = self._extract_paragraph_text(
+                        para_element=candidate_para,
+                        package=package,
+                        markdown_mode=False,
+                        strict_mode=False,
                         include_textboxes=include_textboxes,
-                    )
-                    if markdown_mode and header_paragraphs:
-                        for para in header_paragraphs:
-                            # Add clear Header marker
-                            result.append(f"**Header**: {para.raw_text}")
-                            result.append("")
-                    else:
-                        # For object mode, add headers at the beginning
-                        result.extend(header_paragraphs)
-                except Exception as e:
-                    # In strict mode, re-raise as DocxContentError
-                    if strict_mode:
-                        raise DocxContentError(
-                            f"Error processing headers: {str(e)}"
-                        ) from e
-                    # Otherwise, log error and continue without headers
-                    logger.warning(f"Error processing headers: {str(e)}")
+                        include_links=False,
+                        include_inline_formatting=False,
+                    ).strip()
 
-            # Track tables for indexing
-            table_count = 0
+                    # Basic structural criteria (content-agnostic)
+                    if (
+                        para_text  # Has text content
+                        and not _docx_xpath(
+                            candidate_para, "ancestor::w:tbl"
+                        )  # Not in table
+                        and not _docx_xpath(
+                            candidate_para, ".//w:fldSimple"
+                        )  # Not containing fields
+                        and not _docx_xpath(
+                            candidate_para, ".//w:fldChar"
+                        )  # Not containing field chars
+                    ):
+                        style_id = self._get_paragraph_style(candidate_para)
+                        style_name = self._get_style_name(style_id, package)
 
-            # Track numbered lists for proper sequencing in markdown mode
-            list_counters = {}  # {(list_id, level): counter}
-            last_list_id = None
-            last_list_level = -1
+                        # Rule 1: If it has heading/title style, use it immediately (most reliable)
+                        if (
+                            "heading" in style_name.lower()
+                            or "title" in style_name.lower()
+                        ):
+                            best_heading_candidate = (check_idx, candidate_para)
+                            break
 
-            # Process each element in order
-            for element in body:
-                tag = element.tag.split("}")[-1]  # Remove namespace prefix
+                        # Rule 2: If no heading found yet and this has content, consider it as fallback
+                        elif not best_heading_candidate:
+                            best_heading_candidate = (check_idx, candidate_para)
 
-                if tag == "p":
-                    # Process paragraph
-                    try:
-                        # Before processing, check if this is a list item that needs
-                        # special handling for markdown
-                        if markdown_mode:
-                            # Extract list information
-                            p_pr = element.find("w:pPr", WORD_XML_NAMESPACES)
-                            if p_pr is not None:
-                                num_pr = p_pr.find("w:numPr", WORD_XML_NAMESPACES)
-                                if num_pr is not None:
-                                    # This is a list item
-                                    _, list_level, __, ___, is_numbered = (
-                                        self._get_list_info(element, package)
-                                    )
-
-                                    # Get num_id for this list item
-                                    num_id_elem = num_pr.find(
-                                        "w:numId", WORD_XML_NAMESPACES
-                                    )
-                                    if num_id_elem is not None:
-                                        num_id = num_id_elem.attrib[
-                                            f"{{{WORD_XML_NAMESPACES['w']}}}val"
-                                        ]
-
-                                        # If it's a numbered list, we need to track counter
-                                        if is_numbered:
-                                            list_key = (num_id, list_level)
-
-                                            # Reset counter if this is a new list or a higher
-                                            # level in the same list
-                                            if (
-                                                last_list_id != num_id
-                                                or list_level < last_list_level
-                                            ):
-                                                # Reset counters for all levels below
-                                                # the current level
-                                                for key in list(list_counters.keys()):
-                                                    if (
-                                                        key[0] == num_id
-                                                        and key[1] > list_level
-                                                    ):
-                                                        list_counters.pop(key)
-
-                                            # Initialize counter if needed
-                                            if list_key not in list_counters:
-                                                list_counters[list_key] = 1
-                                            else:
-                                                list_counters[list_key] += 1
-
-                                            # Remember this list for next iteration
-                                            last_list_id = num_id
-                                            last_list_level = list_level
-
-                                            # Now extract paragraph text to build the markdown
-                                            text = self._extract_paragraph_text(
-                                                element,
-                                                strict_mode=strict_mode,
-                                                include_textboxes=include_textboxes,
-                                            ).strip()
-                                            if text:
-                                                # Add indentation based on list level
-                                                indent = "    " * list_level
-                                                # Use actual number from counter
-                                                result.append(
-                                                    f"{indent}{list_counters[list_key]}. {text}"
-                                                )
-                                                result.append("")  # Add blank line
-                                                continue  # Skip normal processing
-
-                        # Regular processing for non-numbered lists or non-markdown mode
-                        processed_para = self._process_paragraph(
-                            element,
-                            package,
-                            markdown_mode,
-                            strict_mode,
-                            include_textboxes,
+                # Add the heading candidate if found
+                if best_heading_candidate:
+                    check_idx, candidate_para = best_heading_candidate
+                    para_id = id(candidate_para)
+                    if para_id not in toc_paragraph_elements:
+                        toc_paragraph_elements[para_id] = (
+                            para_positions[para_id],
+                            candidate_para,
+                            "heading",
                         )
-                        if processed_para is not None:
-                            result.append(processed_para)
-                            # Add blank line after paragraphs in markdown mode
-                            if markdown_mode:
-                                result.append("")
-                    except Exception as e:
-                        if strict_mode:
-                            # In strict mode, re-raise as DocxContentError
-                            raise DocxContentError(
-                                f"Error processing paragraph: {str(e)}"
-                            )
-                        # Log error and continue with next paragraph
-                        logger.warning(f"Error processing paragraph: {str(e)}")
 
-                elif tag == "tbl" and include_tables:
-                    # Process table
-                    try:
-                        table_items = self._process_table(
-                            element,
-                            package,
-                            markdown_mode,
-                            table_count,
-                            strict_mode,
-                            include_textboxes,
+            # Method 1: Find TOC field codes (simple fields) - add any remaining field content
+            # Note: Some field positions may already be captured in the heading detection above
+            for fld in _docx_xpath(body, ".//w:fldSimple[contains(@w:instr, 'TOC')]"):
+                paragraphs = _docx_xpath(fld, ".//w:p")
+                for para in paragraphs:
+                    para_id = id(para)
+                    if (
+                        para_id in para_positions
+                        and para_id not in toc_paragraph_elements
+                    ):
+                        toc_paragraph_elements[para_id] = (
+                            para_positions[para_id],
+                            para,
+                            "simple_field",
                         )
-                        result.extend(table_items)
-                        table_count += 1
-                    except Exception as e:
-                        if strict_mode:
-                            # In strict mode, re-raise as DocxContentError
-                            raise DocxContentError(
-                                f"Error processing table: {str(e)}"
-                            ) from e
-                        # Log error and continue with next element
-                        logger.warning(f"Error processing table: {str(e)}")
 
-            # Process footnotes and add them as regular paragraphs
-            if include_footnotes and package.footnotes is not None:
-                try:
-                    footnote_paragraphs = self._process_footnotes(
-                        package,
-                        strict_mode=strict_mode,
-                        include_textboxes=include_textboxes,
-                    )
+            # Method 2: Find complex TOC fields (begin/end field characters) - add any remaining
+            # field content. Note: Some field positions may already be captured in the heading
+            # detection above.
+            for _, toc_field_para in toc_fields_with_positions:
+                # Find paragraphs between field begin and field end for complex fields
+                if _docx_xpath(toc_field_para, ".//w:fldChar[@w:fldCharType='begin']"):
+                    current_para = toc_field_para
 
-                    if markdown_mode and footnote_paragraphs:
-                        # Add each footnote as markdown text
-                        for para in footnote_paragraphs:
-                            footnote_id = para.additional_context.split("Footnote: ")[
-                                1
-                            ].split(",")[0]
-                            result.append(
-                                f"**Footnote {footnote_id}**: {para.raw_text}"
-                            )
-                            result.append("")
-                    else:
-                        # For object mode, just add footnotes as paragraphs
-                        result.extend(footnote_paragraphs)
-                except Exception as e:
-                    if strict_mode:
-                        # In strict mode, re-raise as DocxContentError
-                        raise DocxContentError(
-                            f"Error processing footnotes: {str(e)}"
-                        ) from e
-                    # Log error and continue without footnotes
-                    logger.warning(f"Error processing footnotes: {str(e)}")
+                    # Look for field end and collect intermediate paragraphs
+                    while current_para is not None:
+                        # Check for field end in this paragraph
+                        field_ends = _docx_xpath(
+                            current_para, ".//w:fldChar[@w:fldCharType='end']"
+                        )
 
-            # Process comments and add them as regular paragraphs
-            if include_comments and package.comments is not None:
-                try:
-                    comment_paragraphs = self._process_comments(
-                        package,
-                        strict_mode=strict_mode,
-                        include_textboxes=include_textboxes,
-                    )
+                        # Check if paragraph has meaningful content and not already processed
+                        para_text = self._extract_paragraph_text(
+                            para_element=current_para,
+                            package=package,
+                            markdown_mode=False,
+                            strict_mode=False,
+                            include_textboxes=include_textboxes,
+                            include_links=False,
+                            include_inline_formatting=False,
+                        ).strip()
 
-                    if markdown_mode and comment_paragraphs:
-                        # Add each comment as markdown text
-                        for para in comment_paragraphs:
-                            if "Comment:" in para.additional_context:
-                                # Extract comment ID from additional_context
-                                comment_id = para.additional_context.split("Comment: ")[
-                                    1
-                                ].split(",")[0]
-
-                                # Extract author if present
-                                author = ""
-                                if "Author: " in para.additional_context:
-                                    author = para.additional_context.split("Author: ")[
-                                        1
-                                    ].split(",")[0]
-                                    author = f" (by {author})"
-
-                                result.append(
-                                    f"**Comment {comment_id}{author}**: {para.raw_text}"
+                        if para_text:
+                            para_id = id(current_para)
+                            if (
+                                para_id in para_positions
+                                and para_id not in toc_paragraph_elements
+                            ):
+                                toc_paragraph_elements[para_id] = (
+                                    para_positions[para_id],
+                                    current_para,
+                                    "complex_field",
                                 )
-                                result.append("")
-                    else:
-                        # For object mode, just add comments as paragraphs
-                        result.extend(comment_paragraphs)
-                except Exception as e:
-                    if strict_mode:
-                        # In strict mode, re-raise as DocxContentError
-                        raise DocxContentError(
-                            f"Error processing comments: {str(e)}"
-                        ) from e
-                    # Log error and continue without comments
-                    logger.warning(f"Error processing comments: {str(e)}")
 
-            # Process footers
-            if include_footers and package.footers:
-                try:
-                    footer_paragraphs = self._process_footers(
-                        package,
-                        strict_mode=strict_mode,
-                        include_textboxes=include_textboxes,
+                        # Stop if we encounter field end
+                        if field_ends:
+                            break
+
+                        # Move to next paragraph
+                        current_para = current_para.getnext()
+                        if current_para is None or not current_para.tag.endswith("}p"):
+                            break
+
+            # Method 3: Find paragraphs with TOC styles (only if no field-based ToC found)
+            if not toc_paragraph_elements:
+                toc_style_ids = self._get_toc_style_ids(package)
+
+                # Find paragraphs using TOC styles
+                for style_id in toc_style_ids:
+                    toc_style_paragraphs = _docx_xpath(
+                        body, f".//w:p[w:pPr/w:pStyle/@w:val='{style_id}']"
                     )
-                    if markdown_mode and footer_paragraphs:
-                        for para in footer_paragraphs:
-                            # Add clear Footer marker
-                            result.append(f"**Footer**: {para.raw_text}")
-                            result.append("")
-                    else:
-                        # For object mode, add footers at the end
-                        result.extend(footer_paragraphs)
-                except Exception as e:
-                    if strict_mode:
-                        # In strict mode, re-raise as DocxContentError
-                        raise DocxContentError(
-                            f"Error processing footers: {str(e)}"
-                        ) from e
-                    # Log error and continue without footers
-                    logger.warning(f"Error processing footers: {str(e)}")
+                    for para in toc_style_paragraphs:
+                        para_id = id(para)
+                        if (
+                            para_id in para_positions
+                            and para_id not in toc_paragraph_elements
+                        ):
+                            toc_paragraph_elements[para_id] = (
+                                para_positions[para_id],
+                                para,
+                                f"style_{style_id}",
+                            )
 
-            return result
-        except DocxConverterError:
-            # Re-raise specific converter errors
-            raise
+            # Sort by document position and process paragraphs
+            sorted_toc_elements = sorted(
+                toc_paragraph_elements.values(), key=lambda x: x[0]
+            )
+            toc_paragraphs = []
+
+            for _, para_element, detection_method in sorted_toc_elements:
+                processed_para = self._process_paragraph(
+                    para_element=para_element,
+                    package=package,
+                    markdown_mode=False,  # markdown_mode=False for Paragraph objects
+                    strict_mode=strict_mode,
+                    include_textboxes=include_textboxes,
+                    apply_text_formatting=None,
+                    populate_md_text=populate_md_text,
+                    include_links=include_links,
+                    list_counters=None,  # list_counters not needed for ToC
+                    include_inline_formatting=include_inline_formatting,
+                )
+
+                if processed_para:
+                    # Add ToC metadata based on detection method
+                    original_context = processed_para.additional_context
+                    if detection_method.startswith("style_"):
+                        style_id = detection_method.split("_", 1)[1]
+                        style_name = self._get_style_name(style_id, package)
+                        toc_context = f"{original_context}, Table of Contents, TOC Style: {style_name}"
+                    elif detection_method == "heading":
+                        # Check if the style name already indicates ToC heading to avoid
+                        # duplication
+                        if (
+                            "toc" in original_context.lower()
+                            and "heading" in original_context.lower()
+                        ):
+                            # Style already indicates ToC heading, don't add redundant marker
+                            toc_context = f"{original_context}, Table of Contents"
+                        else:
+                            toc_context = (
+                                f"{original_context}, Table of Contents, TOC Heading"
+                            )
+                    else:
+                        toc_context = f"{original_context}, Table of Contents"
+
+                    # Format the text for ToC entries (but not for headings)
+                    raw_text = processed_para.raw_text
+                    md_text = processed_para._md_text
+
+                    if (
+                        detection_method != "heading"
+                    ):  # Apply formatting to entries but not heading
+                        raw_text = self._format_toc_text(raw_text)
+                        if md_text:
+                            md_text = self._format_toc_text(md_text)
+
+                    # Create new paragraph with updated metadata and formatted text
+                    toc_kwargs = {
+                        "raw_text": raw_text,
+                        "additional_context": toc_context,
+                    }
+                    toc_paragraph = Paragraph(**toc_kwargs)
+                    if populate_md_text and md_text:
+                        toc_paragraph._md_text = md_text
+
+                    toc_paragraphs.append(toc_paragraph)
+
+            return toc_paragraphs
+
         except Exception as e:
-            # Handle general errors in document processing
-            raise DocxXmlError(f"Error processing document elements: {str(e)}") from e
+            if strict_mode:
+                raise DocxContentError(
+                    f"Error processing table of contents: {str(e)}"
+                ) from e
+            else:
+                logger.warning(f"Error processing table of contents: {str(e)}")
+                return []
+
+    def _format_toc_text(self, raw_text: str) -> str:
+        """
+        Formats table of contents text by adding proper separators between content
+        and page numbers.
+
+        Simply inserts dot separators before numbers at the end of text if no proper
+        separator exists.
+
+        :param raw_text: Raw text from ToC entry
+        :return: Formatted text with proper page number separation
+        """
+        if not raw_text or not raw_text.strip():
+            return raw_text
+
+        text = raw_text.strip()
+
+        # Pattern for text ending with a number
+        pattern = r"^(.+?)(\s*)(\d+)$"
+        match = re.match(pattern, text)
+
+        if match:
+            content_part = match.group(1)
+            page_number = match.group(3)
+
+            # If content doesn't already end with proper separators, add them
+            if not re.search(r"[.\-_]{2,}\s*$", content_part):
+                return f"{content_part.rstrip()} ... {page_number}"
+
+        return text
+
+    def _is_toc_context(self, para_element: etree._Element) -> bool:
+        """
+        Determines if a paragraph is part of a table of contents.
+
+        :param para_element: Paragraph XML element
+        :return: True if the paragraph is part of a TOC
+        """
+        # Check if paragraph contains TOC field codes
+        if self._detect_simple_toc_field(para_element):
+            return True
+
+        # Check for complex TOC fields
+        if self._detect_complex_toc_field(para_element):
+            return True
+
+        # Check for TOC styles
+        if self._detect_toc_style(para_element):
+            return True
+
+        return False
+
+    def _collect_toc_field_paragraphs(
+        self, body: etree._Element, para_positions: dict
+    ) -> list[tuple[int, etree._Element]]:
+        """
+        Collects all paragraphs containing TOC fields with their positions.
+
+        :param body: Document body element
+        :param para_positions: Dictionary mapping paragraph IDs to positions
+        :return: List of (position, paragraph) tuples for TOC field paragraphs
+        """
+        toc_fields_with_positions = []
+
+        # Collect all TOC field positions (simple fields)
+        toc_simple_fields = _docx_xpath(
+            body, ".//w:fldSimple[contains(@w:instr, 'TOC')]"
+        )
+        for fld in toc_simple_fields:
+            # Find the first paragraph containing this field
+            para_with_field = _docx_xpath(fld, "ancestor::w:p")
+            if para_with_field:
+                para = para_with_field[0]
+                para_id = id(para)
+                if para_id in para_positions:
+                    toc_fields_with_positions.append((para_positions[para_id], para))
+
+        # Collect all TOC field positions (complex fields)
+        fld_begins = _docx_xpath(body, ".//w:fldChar[@w:fldCharType='begin']")
+        for fld_begin in fld_begins:
+            parent_run = _docx_xpath(fld_begin, "ancestor::w:r")
+            if not parent_run:
+                continue
+
+            parent_para = _docx_xpath(parent_run[0], "ancestor::w:p")
+            if not parent_para:
+                continue
+
+            # Use the helper method to check if this paragraph contains TOC fields
+            if self._detect_complex_toc_field(parent_para[0]):
+                para = parent_para[0]
+                para_id = id(para)
+                if para_id in para_positions:
+                    toc_fields_with_positions.append((para_positions[para_id], para))
+
+        return toc_fields_with_positions
+
+    def _detect_simple_toc_field(self, element: etree._Element) -> bool:
+        """
+        Detects if an element contains simple TOC field codes.
+
+        :param element: XML element to check
+        :return: True if element contains simple TOC fields
+        """
+        return bool(_docx_xpath(element, ".//w:fldSimple[contains(@w:instr, 'TOC')]"))
+
+    def _detect_complex_toc_field(self, para_element: etree._Element) -> bool:
+        """
+        Detects if a paragraph contains complex TOC field codes.
+
+        :param para_element: Paragraph XML element
+        :return: True if paragraph contains complex TOC fields
+        """
+        fld_begins = _docx_xpath(para_element, ".//w:fldChar[@w:fldCharType='begin']")
+        for fld_begin in fld_begins:
+            # Look for TOC instruction in subsequent runs
+            parent_para = _docx_xpath(fld_begin, "ancestor::w:p")
+            if parent_para:
+                all_runs = _docx_xpath(parent_para[0], ".//w:r")
+                for run in all_runs:
+                    instr_texts = _docx_xpath(run, ".//w:instrText")
+                    for instr in instr_texts:
+                        if instr.text and "TOC" in instr.text.upper():
+                            return True
+                    # Stop if we encounter field end
+                    fld_ends = _docx_xpath(run, ".//w:fldChar[@w:fldCharType='end']")
+                    if fld_ends:
+                        break
+        return False
+
+    def _detect_toc_style(self, para_element: etree._Element) -> bool:
+        """
+        Detects if a paragraph has TOC-related style.
+
+        :param para_element: Paragraph XML element
+        :return: True if paragraph has TOC style
+        """
+        style_id = self._get_paragraph_style(para_element)
+        return bool(style_id and "TOC" in style_id.upper())
+
+    def _get_toc_style_ids(self, package: _DocxPackage) -> set[str]:
+        """
+        Gets all TOC-related style IDs from the styles.xml.
+
+        :param package: _DocxPackage object
+        :return: Set of TOC-related style IDs
+        """
+        toc_style_ids = set()
+        if package.styles is None:
+            return toc_style_ids
+
+        style_elements = _docx_xpath(package.styles, ".//w:style")
+        for style_elem in style_elements:
+            # Check style name
+            name_elements = _docx_xpath(style_elem, "w:name")
+            if name_elements:
+                style_name = _docx_get_namespaced_attr(name_elements[0], "val")
+                if style_name and (
+                    "TOC" in style_name.upper() or "Table of Contents" in style_name
+                ):
+                    style_id = _docx_get_namespaced_attr(style_elem, "styleId")
+                    if style_id:
+                        toc_style_ids.add(style_id)
+
+            # Also check style ID directly
+            style_id = _docx_get_namespaced_attr(style_elem, "styleId")
+            if style_id and "TOC" in style_id.upper():
+                toc_style_ids.add(style_id)
+
+        return toc_style_ids
+
+    def _is_page_number_field(
+        self, run_element: etree._Element, para_element: etree._Element
+    ) -> bool:
+        """
+        Determines if a run element contains a page number field.
+
+        Page numbers in DOCX can appear as:
+        1. Simple fields: w:fldSimple with PAGE, NUMPAGES, etc.
+        2. Complex fields: w:fldChar with PAGE instruction
+        3. In headers/footers as standalone numeric content
+
+        :param run_element: Run XML element (w:r)
+        :param para_element: Parent paragraph XML element for context
+        :return: True if the run contains a page number field
+        """
+
+        # Check for simple page number fields in this run
+        simple_fields = _docx_xpath(run_element, ".//w:fldSimple")
+        for field in simple_fields:
+            instr = _docx_get_namespaced_attr(field, "instr").upper()
+            if any(page_field in instr for page_field in PAGE_FIELD_KEYWORDS):
+                return True
+
+        # Check for complex page number fields
+        # Look for field begin in this run or previous runs in the same paragraph
+        all_runs = _docx_xpath(para_element, ".//w:r")
+        current_run_idx = None
+        for idx, run in enumerate(all_runs):
+            if run == run_element:
+                current_run_idx = idx
+                break
+
+        if current_run_idx is not None:
+            # Check if we're inside a page number field
+            field_started = False
+            for idx in range(current_run_idx + 1):  # Include current run
+                run = all_runs[idx]
+
+                # Check for field begin
+                field_begins = _docx_xpath(run, ".//w:fldChar[@w:fldCharType='begin']")
+                if field_begins:
+                    field_started = True
+
+                # Check for field instruction with page number keywords
+                if field_started:
+                    instr_texts = _docx_xpath(run, ".//w:instrText")
+                    for instr in instr_texts:
+                        if instr.text:
+                            instr_upper = instr.text.upper()
+                            if any(
+                                page_field in instr_upper
+                                for page_field in PAGE_FIELD_KEYWORDS
+                            ):
+                                # Check if current run is between field begin and end
+                                for check_idx in range(idx, len(all_runs)):
+                                    check_run = all_runs[check_idx]
+                                    if check_run == run_element:
+                                        return True
+                                    field_ends = _docx_xpath(
+                                        check_run, ".//w:fldChar[@w:fldCharType='end']"
+                                    )
+                                    if field_ends:
+                                        break
+
+                # Check for field end (reset field_started)
+                field_ends = _docx_xpath(run, ".//w:fldChar[@w:fldCharType='end']")
+                if field_ends:
+                    field_started = False
+
+        return False
 
     def _extract_images(
         self, package: _DocxPackage, strict_mode: bool = False
@@ -1293,6 +2738,8 @@ class _DocxConverterBase:
         images = []
         img_count = 0
         error_count = 0
+        duplicate_count = 0
+        seen_base64_data = set()  # Track base64 data to avoid duplicates
 
         try:
             logger.debug(
@@ -1319,6 +2766,17 @@ class _DocxConverterBase:
                 try:
                     # Convert to base64
                     b64_data = base64.b64encode(image_bytes).decode("utf-8")
+
+                    # Check for duplicates based on base64 data content
+                    # If we create duplicate Image objects and add them to the document,
+                    # a ValueError will be raised.
+                    if b64_data in seen_base64_data:
+                        duplicate_count += 1
+                        logger.debug("Skipping duplicate image")
+                        continue
+
+                    # Add to seen set and create image instance
+                    seen_base64_data.add(b64_data)
                     img_instance = Image(base64_data=b64_data, mime_type=mime_type)
                     images.append(img_instance)
                     img_count += 1
@@ -1326,18 +2784,22 @@ class _DocxConverterBase:
                     # If in strict mode, raise the error
                     if strict_mode:
                         raise DocxContentError(
-                            f"Error converting image '{image_info.get('target', rel_id)}': {str(e)}"
+                            f"Error converting image '{image_info.get('target', rel_id)}': "
+                            f"{str(e)}"
                         ) from e
 
                     # Otherwise log the error and continue with the next image
                     error_count += 1
                     logger.warning(
-                        f"Error converting image '{image_info.get('target', rel_id)}': {str(e)}"
+                        f"Error converting image '{image_info.get('target', rel_id)}': "
+                        f"{str(e)}"
                     )
                     continue
 
             if img_count > 0:
                 logger.info(f"Successfully extracted {img_count} images from DOCX")
+            if duplicate_count > 0:
+                logger.info(f"Skipped {duplicate_count} duplicate images from DOCX")
             if error_count > 0:
                 logger.warning(f"Failed to extract {error_count} images from DOCX")
 

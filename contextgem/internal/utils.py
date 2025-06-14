@@ -37,6 +37,7 @@ from wtpsplit_lite import SaT
 if TYPE_CHECKING:
     from contextgem.public.aspects import Aspect
     from contextgem.public.concepts import _Concept
+    from contextgem.public.paragraphs import Paragraph
 
 from contextgem.internal.data_models import _LLMUsage
 from contextgem.internal.llm_output_structs.aspect_structs import (
@@ -52,6 +53,7 @@ from contextgem.internal.typings.aliases import (
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
+    TextMode,
 )
 
 T = TypeVar("T")
@@ -178,23 +180,28 @@ def _contains_jinja2_tags(text: str) -> bool:
     return False
 
 
-def _clean_text_for_llm_prompt(raw_text: str, preserve_linebreaks: bool = True) -> str:
+def _clean_text_for_llm_prompt(
+    text: str, preserve_linebreaks: bool = True, strip_text: bool = True
+) -> str:
     """
     Removes control characters and other problematic elements from text
     to make it suitable for LLM input.
 
-    :param raw_text: The input string to be cleaned, as raw text.
-    :type raw_text: str
+    :param text: The input string to be cleaned.
+    :type text: str
     :param preserve_linebreaks: Whether to preserve linebreaks in the text.
         If False, all whitespace is collapsed to a single space. Defaults to True.
     :type preserve_linebreaks: bool
+    :param strip_text: Whether to strip the text of leading and trailing whitespace.
+        If False, the text is not stripped. Defaults to True.
+    :type strip_text: bool
     :return: A cleaned and formatted version of the input text.
     :rtype: str
     """
 
     if preserve_linebreaks:
         # Normalize newlines to \n
-        cleaned = re.sub(r"\r\n|\r", "\n", raw_text)
+        cleaned = re.sub(r"\r\n|\r", "\n", text)
 
         # Remove control characters EXCEPT newlines (\n = ASCII 10)
         # This includes:
@@ -218,28 +225,33 @@ def _clean_text_for_llm_prompt(raw_text: str, preserve_linebreaks: bool = True) 
     else:
         # Remove all control characters including newlines
         cleaned = re.sub(
-            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", raw_text
+            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", text
         )
 
         # Remove all whitespace sequences with a single space
         cleaned = re.sub(r"\s+", " ", cleaned)
 
-    # Strip leading/trailing whitespace
-    return cleaned.strip()
+    if strip_text:
+        # Strip leading/trailing whitespace
+        return cleaned.strip()
+    else:
+        # We may want to preserve leading/trailing whitespace for markdown representation
+        # of paragraphs, e.g. for indentation in lists.
+        return cleaned
 
 
-def _contains_linebreaks(raw_text: str) -> bool:
+def _contains_linebreaks(text: str) -> bool:
     """
     Checks if the given string contains line breaks, considering both Unix (\n) and
     Windows (\r\n) style line breaks.
 
-    :param raw_text: The string to be checked, as raw text.
-    :type raw_text: str
+    :param text: The string to be checked.
+    :type text: str
     :return: True if the string contains one or more line breaks, False otherwise.
     :rtype: bool
     """
     # Check for both Unix (\n) and Windows (\r\n) style line breaks
-    return "\n" in raw_text or "\r" in raw_text
+    return "\n" in text or "\r" in text
 
 
 def _are_prompt_template_brackets_balanced(prompt: str) -> bool:
@@ -693,3 +705,72 @@ def _is_json_serializable(data: Any) -> bool:
         logger.error(f"Data is not JSON serializable. Error: {repr(e)}")
         return False
     return True
+
+
+def _check_paragraphs_match_in_text(
+    paragraphs: list[Paragraph], document_text: str, text_mode: TextMode
+) -> list[Paragraph]:
+    """
+    Check that all relevant paragraph texts exist in the given document text.
+
+    :param paragraphs: List of paragraph objects to check
+    :param document_text: The document text to search in
+    :param text_mode: Type of text being checked ('raw' or 'markdown')
+    :return: List of unmatched paragraphs
+    """
+    if text_mode == "raw":
+        return [p for p in paragraphs if p.raw_text not in document_text]
+    elif text_mode == "markdown":
+        return [p for p in paragraphs if p._md_text and p._md_text not in document_text]
+    else:
+        raise ValueError(f"Unknown text_mode: {text_mode}")
+
+
+def _check_paragraphs_ordering_in_text(
+    paragraphs: list[Paragraph], document_text: str, text_mode: TextMode
+) -> None:
+    """
+    Check that paragraphs are ordered according to their appearance in document text.
+    Handles cases where paragraphs may have duplicate text content.
+
+    :param paragraphs: List of paragraph objects to check ordering for
+    :param document_text: The document text to check ordering in
+    :param text_mode: Type of text being checked ('raw' or 'markdown')
+    :raises ValueError: If paragraphs are not ordered correctly
+    """
+    if len(paragraphs) <= 1:
+        return
+
+    current_search_pos = 0
+    for i in range(len(paragraphs) - 1):
+        current_para_text = (
+            paragraphs[i].raw_text if text_mode == "raw" else paragraphs[i]._md_text
+        )
+        next_para_text = (
+            paragraphs[i + 1].raw_text
+            if text_mode == "raw"
+            else paragraphs[i + 1]._md_text
+        )
+
+        if not current_para_text or not next_para_text:
+            continue
+
+        # Find current paragraph starting from the current search position
+        current_pos = document_text.find(current_para_text, current_search_pos)
+        if current_pos == -1:  # This shouldn't happen due to earlier check
+            current_pos = document_text.find(current_para_text)
+
+        # Update search position for next paragraph to start after current paragraph
+        current_search_pos = current_pos + len(current_para_text)
+
+        # Find next paragraph starting from the current search position
+        next_pos = document_text.find(next_para_text, current_search_pos)
+        if (
+            next_pos == -1
+        ):  # If not found from current position, check if it exists earlier
+            next_pos = document_text.find(next_para_text)
+            if next_pos < current_search_pos:
+                raise ValueError(
+                    f"Paragraphs are not ordered according to their appearance "
+                    f"in the document's {text_mode} text."
+                )

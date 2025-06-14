@@ -27,9 +27,11 @@ from contextgem.internal.typings.aliases import (
     LLMRoleAny,
     LLMRoleAspect,
     NonEmptyStr,
+    ReasoningEffort,
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
+    TextMode,
 )
 from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
 from contextgem.internal.typings.typed_class_utils import (
@@ -65,6 +67,8 @@ __all__ = [
     "JustificationDepth",
     "AsyncCalsAndKwargs",
     "DefaultDecimalField",
+    "ReasoningEffort",
+    "TextMode",
     # Strings to types
     "_deserialize_type_hint",
     # Types to strings

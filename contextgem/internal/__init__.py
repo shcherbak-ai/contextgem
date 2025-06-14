@@ -24,16 +24,13 @@ from contextgem.internal.base import (
     _ExtractedItem,
     _ExtractedItemsAttributeProcessor,
     _InstanceBase,
+    _MarkdownTextAttributesProcessor,
     _ParasAndSentsBase,
     _PostInitCollectorMixin,
     _RefParasAndSentsAttrituteProcessor,
 )
 from contextgem.internal.converters import (
-    WORD_XML_NAMESPACES,
-    DocxContentError,
     DocxConverterError,
-    DocxFormatError,
-    DocxXmlError,
     _DocxConverterBase,
     _DocxPackage,
 )
@@ -72,9 +69,11 @@ from contextgem.internal.typings import (
     LLMRoleAny,
     LLMRoleAspect,
     NonEmptyStr,
+    ReasoningEffort,
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
+    TextMode,
     _deserialize_type_hint,
     _dynamic_pydantic_model,
     _format_dict_structure,
@@ -118,6 +117,7 @@ __all__ = [
     "_Concept",
     "_ExtractedItem",
     "_ParasAndSentsBase",
+    "_MarkdownTextAttributesProcessor",
     # LLM output structs
     "_get_aspect_extraction_output_struct",
     "_get_concept_extraction_output_struct",
@@ -136,6 +136,8 @@ __all__ = [
     "JustificationDepth",
     "AsyncCalsAndKwargs",
     "DefaultDecimalField",
+    "ReasoningEffort",
+    "TextMode",
     "_deserialize_type_hint",
     "_is_json_serializable_type",
     "_format_type",
@@ -186,11 +188,7 @@ __all__ = [
     "_remove_thinking_content_from_llm_output",
     # Converters
     # DOCX
-    "WORD_XML_NAMESPACES",
-    "DocxContentError",
     "DocxConverterError",
-    "DocxFormatError",
-    "DocxXmlError",
     "_DocxConverterBase",
     "_DocxPackage",
 ]

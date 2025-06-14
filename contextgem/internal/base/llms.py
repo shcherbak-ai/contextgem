@@ -933,7 +933,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 if max_paragraphs_to_analyze_per_call
                 else len(paragraphs)
             )
-            paragraphs_chunks = _chunk_list(paragraphs, max_paras_per_call)
+            paragraphs_chunks: list[list[Paragraph]] = _chunk_list(
+                paragraphs, max_paras_per_call
+            )
             logger.debug(f"Processing {max_paras_per_call} paragraphs per LLM call.")
 
             for paragraphs_chunk in paragraphs_chunks:
@@ -951,6 +953,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         "reference_depth": reference_depth,
                         "output_language": llm.output_language,
                     }
+                    if all(p._md_text for p in paragraphs_chunk):
+                        # Add guidance that the paragraphs are in markdown format, e.g. when document
+                        # was converted from DOCX using DocxConverter in markdown mode.
+                        prompt_kwargs["is_markdown"] = True
 
                 # Concept (document- and aspect-levels)
                 elif extraction_level in {
@@ -970,28 +976,55 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     if add_references:
                         # List of document/aspect paragraphs used for concept extraction with references
                         prompt_kwargs["paragraphs"] = paragraphs_chunk
+                        if all(p._md_text for p in paragraphs_chunk):
+                            # Add guidance that the paragraphs are in markdown format, e.g. when document
+                            # was converted from DOCX using DocxConverter in markdown mode.
+                            prompt_kwargs["is_markdown"] = True
                     else:
                         # Raw text of document/aspect used for concept extraction
                         if isinstance(source, Document) and len(
                             paragraphs_chunk
                         ) == len(source.paragraphs):
-                            # If the document is being processed as a whole, use the raw text of the document,
-                            # which can be markdown (if converted from DOCX) or raw text.
+                            # If the document is being processed as a whole, use _md_text of the document,
+                            # if available (e.g. after being converted from DOCX using DocxConverter in markdown mode),
+                            # otherwise use raw_text.
+                            if source._md_text:
+                                text = source._md_text
+                                prompt_kwargs["is_markdown"] = True
+                            else:
+                                text = source.raw_text
                             prompt_kwargs["text"] = _clean_text_for_llm_prompt(
-                                source.raw_text,
+                                text,
                                 preserve_linebreaks=True,
+                                strip_text=True,
                             )  # markdown or raw text of the document
                         else:
                             # If an aspect is being processed, or if the document is being processed in chunks,
-                            # use the raw text of the paragraphs, which is cleaned of markdown and other formatting.
-                            prompt_kwargs["text"] = "\n\n".join(
-                                [
-                                    _clean_text_for_llm_prompt(
-                                        p.raw_text, preserve_linebreaks=False
-                                    )
-                                    for p in paragraphs_chunk
-                                ]
-                            )
+                            # use _md_text of the paragraphs, if available (e.g. when document was converted
+                            # from DOCX using DocxConverter in markdown mode), otherwise use raw_text.
+                            if all(p._md_text for p in paragraphs_chunk):
+                                prompt_kwargs["text"] = "\n\n".join(
+                                    [
+                                        _clean_text_for_llm_prompt(
+                                            p._md_text,
+                                            preserve_linebreaks=True,  # preserve markdown markers etc.
+                                            strip_text=False,  # preserve markdown list indentation etc.
+                                        )
+                                        for p in paragraphs_chunk
+                                    ]
+                                )
+                                prompt_kwargs["is_markdown"] = True
+                            else:
+                                prompt_kwargs["text"] = "\n\n".join(
+                                    [
+                                        _clean_text_for_llm_prompt(
+                                            p.raw_text,
+                                            preserve_linebreaks=False,
+                                            strip_text=True,
+                                        )
+                                        for p in paragraphs_chunk
+                                    ]
+                                )
 
                 else:
                     raise ValueError(

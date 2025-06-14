@@ -24,10 +24,11 @@ providing access to its XML parts.
 """
 
 import os
-import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 from typing import BinaryIO, Optional
+
+from lxml import etree
 
 from contextgem.internal.converters.docx.exceptions import (
     DocxContentError,
@@ -35,7 +36,7 @@ from contextgem.internal.converters.docx.exceptions import (
     DocxFormatError,
     DocxXmlError,
 )
-from contextgem.internal.converters.docx.namespaces import WORD_XML_NAMESPACES
+from contextgem.internal.converters.docx.utils import _docx_get_attr, _docx_xpath
 from contextgem.internal.loggers import logger
 
 
@@ -60,6 +61,7 @@ class _DocxPackage:
         self.headers = {}
         self.footers = {}
         self.images = {}
+        self.hyperlinks = {}
 
         file_desc = (
             docx_path_or_file
@@ -99,7 +101,7 @@ class _DocxPackage:
         except DocxConverterError:
             # Re-raise specific converter errors
             raise
-        except ET.ParseError as e:
+        except etree.XMLSyntaxError as e:
             raise DocxXmlError(f"XML parsing error in '{file_desc}': {str(e)}") from e
         except KeyError as e:
             raise DocxContentError(
@@ -110,25 +112,25 @@ class _DocxPackage:
                 f"Error processing DOCX file '{file_desc}': {str(e)}"
             ) from e
 
-    def _load_xml_part(self, part_path: str) -> Optional[ET.Element]:
+    def _load_xml_part(self, part_path: str) -> Optional[etree._Element]:
         """
         Loads an XML part from the DOCX package.
 
         :param part_path: Path to the XML part within the DOCX package
-        :return: ElementTree Element or None if the part doesn't exist
+        :return: lxml Element or None if the part doesn't exist
         """
         if part_path not in self.archive.namelist():
             return None
 
         try:
             data = self.archive.read(part_path)
-            return ET.fromstring(data)
-        except ET.ParseError as e:
+            return etree.fromstring(data)
+        except etree.XMLSyntaxError as e:
             raise DocxXmlError(f"Failed to parse XML in '{part_path}': {str(e)}") from e
         except Exception as e:
             raise DocxConverterError(f"Error reading '{part_path}': {str(e)}") from e
 
-    def _load_relationships(self):
+    def _load_relationships(self) -> None:
         """
         Loads the document relationship definitions that connect document parts.
         """
@@ -137,17 +139,23 @@ class _DocxPackage:
         if "word/_rels/document.xml.rels" in self.archive.namelist():
             doc_rels_root = self._load_xml_part("word/_rels/document.xml.rels")
             if doc_rels_root is not None:
-                self.rels["document"] = {
-                    rel.attrib["Id"]: {
-                        "type": rel.attrib["Type"],
-                        "target": rel.attrib["Target"],
-                    }
-                    for rel in doc_rels_root.findall(
-                        ".//rels:Relationship", WORD_XML_NAMESPACES
-                    )
-                }
+                relationships = _docx_xpath(doc_rels_root, ".//rels:Relationship")
+                for rel in relationships:
+                    # Relationship attributes are not namespaced
+                    rel_id = _docx_get_attr(rel, "Id")
+                    rel_type = _docx_get_attr(rel, "Type")
+                    rel_target = _docx_get_attr(rel, "Target")
 
-    def _load_main_document(self):
+                    self.rels["document"][rel_id] = {
+                        "type": rel_type,
+                        "target": rel_target,
+                    }
+
+                    # Store hyperlinks separately for easy access
+                    if "hyperlink" in rel_type.lower():
+                        self.hyperlinks[rel_id] = rel_target
+
+    def _load_main_document(self) -> None:
         """
         Loads the main document.xml content.
         """
@@ -157,31 +165,31 @@ class _DocxPackage:
                 "Main document (word/document.xml) is missing or invalid"
             )
 
-    def _load_styles(self):
+    def _load_styles(self) -> None:
         """
         Loads the styles.xml content.
         """
         self.styles = self._load_xml_part("word/styles.xml")
 
-    def _load_numbering(self):
+    def _load_numbering(self) -> None:
         """
         Loads the numbering.xml content for lists.
         """
         self.numbering = self._load_xml_part("word/numbering.xml")
 
-    def _load_footnotes(self):
+    def _load_footnotes(self) -> None:
         """
         Loads the footnotes.xml content.
         """
         self.footnotes = self._load_xml_part("word/footnotes.xml")
 
-    def _load_comments(self):
+    def _load_comments(self) -> None:
         """
         Loads the comments.xml content.
         """
         self.comments = self._load_xml_part("word/comments.xml")
 
-    def _load_headers_footers(self):
+    def _load_headers_footers(self) -> None:
         """
         Loads headers and footers referenced in the document.
         """
@@ -234,7 +242,7 @@ class _DocxPackage:
                         f"Error loading footer '{target}': {str(e)}"
                     ) from e
 
-    def _load_images(self):
+    def _load_images(self) -> None:
         """
         Loads all images embedded in the document.
         """
@@ -281,7 +289,7 @@ class _DocxPackage:
         }
         return mime_types.get(ext, "image/png")  # Default to PNG if unknown
 
-    def close(self):
+    def close(self) -> None:
         """Closes the zip archive."""
         if self.archive:
             try:

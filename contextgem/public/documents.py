@@ -46,10 +46,16 @@ from pydantic import Field, field_validator, model_validator
 
 from contextgem.internal.base.attrs import _AssignedInstancesProcessor
 from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.decorators import _post_init_method, _timer_decorator
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import NonEmptyStr, SaTModelId, Self
-from contextgem.internal.utils import _get_sat_model, _split_text_into_paragraphs
+from contextgem.internal.utils import (
+    _check_paragraphs_match_in_text,
+    _check_paragraphs_ordering_in_text,
+    _get_sat_model,
+    _split_text_into_paragraphs,
+)
 from contextgem.public.aspects import Aspect
 from contextgem.public.images import Image
 from contextgem.public.paragraphs import Paragraph
@@ -57,7 +63,7 @@ from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.sentences import Sentence
 
 
-class Document(_AssignedInstancesProcessor):
+class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
     """
     Represents a document containing textual and visual content for analysis.
 
@@ -118,12 +124,15 @@ class Document(_AssignedInstancesProcessor):
         :raises ValueError: If attempting to reassign a restricted attribute
             after it has already been assigned to a *truthy* value.
         """
-        if name in ["raw_text", "paragraphs"]:
-            # Prevent raw_text/paragraphs reassignment once populated, to prevent inconsistencies in analysis.
+        if name in ["raw_text", "paragraphs", "_md_text"]:
+            # Prevent raw_text/paragraphs/_md_text reassignment once populated,
+            # to prevent inconsistencies in analysis.
             if getattr(self, name, None):
                 raise ValueError(
                     f"The attribute `{name}` cannot be changed once populated."
                 )
+        if name == "_md_text":
+            self._validate_md_text(value)
         super().__setattr__(name, value)
 
     @property
@@ -255,17 +264,18 @@ class Document(_AssignedInstancesProcessor):
 
     def _set_text_from_paras(self) -> None:
         """
-        Sets the text attribute for the object by combining text from paragraphs.
+        Sets the raw text attribute for the object by combining text from paragraphs.
 
-        This method checks if the `paragraphs` attribute of the object exists and
-        is not empty, while the `text` attribute is empty. If these conditions
-        are met, it merges the text content of all the paragraphs and assigns it
-        to the `text` attribute.
+        If the `paragraphs` attribute exists and is not empty, while the `raw_text`
+        attribute is empty, it merges the text content of all paragraphs and assigns
+        it to the `raw_text` attribute.
 
         :return: None
         """
+
+        # Set raw text from paragraphs
         if self.paragraphs and not self.raw_text:
-            logger.info("Text is being set from paragraphs...")
+            logger.info("Raw text is being set from paragraphs...")
             self.raw_text = "\n\n".join([i.raw_text for i in self.paragraphs])
 
     @field_validator("images")
@@ -330,47 +340,56 @@ class Document(_AssignedInstancesProcessor):
     @model_validator(mode="after")
     def _validate_document_post(self) -> Self:
         """
-        Validates the consistency between the `text` attribute and the `paragraphs` attribute
-        of the instance. Specifically, verifies that if both `text` and `paragraphs` are provided,
-        each paragraph's `text` must exist in the overall document's `text`.
+        Validates the consistency between document text attributes and paragraphs.
 
-        Does nothing if both `text` and `paragraphs` are not provided.
+        Verifies that:
+        - Document's `_md_text` cannot be populated without `raw_text` being set
+        - Each paragraph's text exists in the corresponding document text
+        - Paragraphs are ordered according to their appearance in the document text
+
+        Does nothing if both `raw_text` and `paragraphs` are not provided.
 
         :param self: The instance of the model being validated.
 
         :return: The validated instance of the model.
-        :raises ValueError: If the `text` attribute exists, and not all paragraphs are matched in
-            the overall document's text.
+        :raises ValueError: If paragraphs are not matched or ordered correctly in
+            the document text, or if `_md_text` is provided without `raw_text`.
         """
+
+        # Validate that _md_text cannot be populated without raw_text
+        if self._md_text and not self.raw_text:
+            raise ValueError(
+                "Document's `_md_text` cannot be populated without `raw_text` being set."
+            )
+
         if self.raw_text and self.paragraphs:
-            # Check that all paragraphs exist in the document text
-            if not all(i.raw_text in self.raw_text for i in self.paragraphs):
-                raise ValueError("Not all paragraphs were matched in document text.")
-
+            # Check that all paragraphs exist in the document raw text
+            unmatched_paragraphs = _check_paragraphs_match_in_text(
+                self.paragraphs, self.raw_text, "raw"
+            )
+            if unmatched_paragraphs:
+                unmatched_texts = [p.raw_text for p in unmatched_paragraphs]
+                raise ValueError(
+                    f"Not all paragraphs were matched in document raw text. "
+                    f"Unmatched paragraphs: {unmatched_texts}"
+                )
             # Check that paragraphs are ordered according to their appearance in the raw text
-            # Handle case where paragraphs may have duplicate text content
-            current_search_pos = 0
-            for i in range(len(self.paragraphs) - 1):
-                # Find current paragraph starting from the current search position
-                current_pos = self.raw_text.find(
-                    self.paragraphs[i].raw_text, current_search_pos
-                )
-                if current_pos == -1:  # This shouldn't happen due to earlier check
-                    current_pos = self.raw_text.find(self.paragraphs[i].raw_text)
+            _check_paragraphs_ordering_in_text(self.paragraphs, self.raw_text, "raw")
 
-                # Update search position for next paragraph to start after current paragraph
-                current_search_pos = current_pos + len(self.paragraphs[i].raw_text)
-
-                # Find next paragraph starting from the current search position
-                next_pos = self.raw_text.find(
-                    self.paragraphs[i + 1].raw_text, current_search_pos
+            # If both document and paragraphs have _md_text, validate matching in _md_text as well
+            if self._md_text:
+                unmatched_md_paragraphs = _check_paragraphs_match_in_text(
+                    self.paragraphs, self._md_text, "markdown"
                 )
-                if (
-                    next_pos == -1
-                ):  # If not found from current position, check if it exists earlier
-                    next_pos = self.raw_text.find(self.paragraphs[i + 1].raw_text)
-                    if next_pos < current_search_pos:
-                        raise ValueError(
-                            "Paragraphs are not ordered according to their appearance in the document text."
-                        )
+                if unmatched_md_paragraphs:
+                    unmatched_md_texts = [p._md_text for p in unmatched_md_paragraphs]
+                    raise ValueError(
+                        f"Paragraphs with _md_text were not matched in document _md_text. "
+                        f"Unmatched _md_text: {unmatched_md_texts}"
+                    )
+                # Check that paragraphs are ordered according to their appearance in the markdown text
+                _check_paragraphs_ordering_in_text(
+                    self.paragraphs, self._md_text, "markdown"
+                )
+
         return self

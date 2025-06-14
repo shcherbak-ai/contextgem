@@ -11,6 +11,9 @@ Below you will find a list of consecutively ordered paragraphs from a document a
 {% else %}
 2. Examine each paragraph
 - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph and, optionally, additional information about the paragraph, which may be helpful during your analysis.
+    {% if is_markdown %}
+- Note that paragraphs are provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
+    {% endif %}
 {% endif %}
 - Note that paragraphs are listed in the same order they appear in the original document; therefore, context from surrounding paragraphs may influence whether a particular paragraph is relevant to an aspect.
 
@@ -94,7 +97,7 @@ Below you will find a list of consecutively ordered paragraphs from a document a
 
 Use the following answer format as a guide for your final answer (remember: no surrounding text or ```json delimiters should be included).
 
-===
+======
 ANSWER FORMAT (MANDATORY):
 {% if add_justifications %}
 [
@@ -147,42 +150,50 @@ ANSWER FORMAT (MANDATORY):
     ...
 ]
 {% endif %}
-===
+======
 
-___
+______
 DOCUMENT ASPECTS:
 {% for aspect_index, aspect_data in enumerate(aspects) %}
-```
+````
 - Aspect ID: A{{ aspect_index }}
 Aspect name: {{ aspect_data.name }}
 Aspect description:
 {{ aspect_data.description }}
-```
+````
 
 {% endfor %}
-___
+______
 
----
+------
 {% if reference_depth == "sentences" %}
 DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
 {% else %}
 DOCUMENT PARAGRAPHS:
 {% endif %}
 {% for para_index, para_item in enumerate(paragraphs) %}
-    {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False) %}
+    {% if is_markdown and para_item._md_text %}
+        {% set para_text = _clean_text_for_llm_prompt(para_item._md_text, preserve_linebreaks=True, strip_text=False) %}
+    {% else %}
+        {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
+    {% endif %}
     {% if para_text %}
-'''
+''''
 - Paragraph ID: P{{ para_index }}
         {% if reference_depth != "sentences" %}
-Paragraph text: {{ para_text }}
+~~~
+Paragraph text:
+{{ para_text }}
+~~~
         {% endif %}
         {% if para_item.additional_context %}
-Additional information about the paragraph: {{ para_item.additional_context }}
+Additional information about the paragraph:
+{{ para_item.additional_context }}
         {% endif %}
         {% if reference_depth == "sentences" %}
 Paragraph sentences:
             {% for sent_index, sent_item in enumerate(para_item.sentences) %}
-                {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False) %}
+                {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
                 {% if sent_text %}
     -- Sentence ID: P{{ para_index }}-S{{ sent_index }}
     Sentence text: {{ sent_text }}
@@ -192,8 +203,8 @@ Paragraph sentences:
                 {% endif %}
             {% endfor %}
         {% endif %}
-'''
+''''
 
     {% endif %}
 {% endfor %}
----
+------

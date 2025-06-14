@@ -17,21 +17,13 @@
 #
 
 from contextgem.internal.converters.docx import (
-    WORD_XML_NAMESPACES,
-    DocxContentError,
     DocxConverterError,
-    DocxFormatError,
-    DocxXmlError,
     _DocxConverterBase,
     _DocxPackage,
 )
 
 __all__ = [
-    "WORD_XML_NAMESPACES",
     "DocxConverterError",
-    "DocxFormatError",
-    "DocxXmlError",
-    "DocxContentError",
     "_DocxConverterBase",
     "_DocxPackage",
 ]

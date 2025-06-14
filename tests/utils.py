@@ -240,6 +240,7 @@ class TestUtils:
             "_reference_paragraphs",
             "_reference_sentences",
             "_is_processed",
+            "_md_text",
         ]
 
         # To / from dict

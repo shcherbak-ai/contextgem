@@ -97,17 +97,17 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
       \   -- Do not include any headers, explanations, or text outside of the JSON
       array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n===\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
       str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
-      \   ...\\n]\\n===\\n\\n___\\nCONCEPTS:\\n```\\n- Concept ID: C0\\nConcept name:
-      Title\\n\\nConcept description:\\nContract title\\n\\nAmount of extracted items:
-      This concept may have zero, one, or multiple extracted items.\\n\\nConcept extracted
-      item type: str\\n```\\n\\n```\\n- Concept ID: C1\\nConcept name: Is a contract\\n\\nConcept
-      description:\\nDocument is a contract\\n\\nAmount of extracted items: This concept
-      may have zero, one, or multiple extracted items.\\n\\nConcept extracted item
-      type: bool\\n```\\n\\n___\\n\\n---\\nDOCUMENT TEXT:\\nNon-Disclosure Agreement
-      (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is made and
-      entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
+      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
+      name: Title\\n\\nConcept description:\\nContract title\\n\\nAmount of extracted
+      items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: str\\n````\\n\\n````\\n- Concept ID: C1\\nConcept name:
+      Is a contract\\n\\nConcept description:\\nDocument is a contract\\n\\nAmount
+      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: bool\\n````\\n\\n______\\n\\n------\\nDOCUMENT TEXT:\\nNon-Disclosure
+      Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
+      made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
       _____\\nPhone: _____\\nEmail: _____\\n\\nParty B:\\n\\nExample.Com LLC\\n5678
       Random Drive\\nNew York, NY 00000\\nContact: Jane Doe, Managing Partner\\nPhone:
       (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1. Purpose:\\n\\nThe purpose
@@ -200,7 +200,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n---\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -213,13 +213,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15845'
+      - '15867'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.82.1
+      - AsyncAzureOpenAI/Python 1.86.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -229,7 +229,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.82.1
+      - 1.86.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -245,28 +245,26 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            \"Non-Disclosure Agreement (NDA)\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C1\",\n        \"extracted_items\": [\n            true\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1748886635, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 60,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2988, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 3048}}'
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement
+        (NDA)\"\n        ]\n    },\n    {\n        \"concept_id\": \"C1\",\n        \"extracted_items\":
+        [\n            true\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1749921684, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 60, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2991, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 3051}}'
     headers:
       Content-Length:
-      - '1470'
+      - '1346'
       Content-Type:
       - application/json
       Date:
@@ -278,7 +276,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '843'
+      - '716'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
