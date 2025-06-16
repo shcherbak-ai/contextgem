@@ -180,6 +180,45 @@ def _contains_jinja2_tags(text: str) -> bool:
     return False
 
 
+def _clean_control_characters(
+    text: str, preserve_newlines: bool = True, strip_text: bool = True
+) -> str:
+    """
+    Removes control characters from text.
+
+    :param text: The input string to be cleaned of control characters.
+    :type text: str
+    :param preserve_newlines: Whether to preserve newline characters (\n).
+        If True, removes control characters except newlines.
+        If False, removes all control characters including newlines.
+    :type preserve_newlines: bool
+    :param strip_text: Whether to strip the text of leading and trailing whitespace.
+        If False, the text is not stripped. Defaults to True.
+    :type strip_text: bool
+    :return: The text with control characters removed and optionally stripped.
+    :rtype: str
+    """
+    if preserve_newlines:
+        # Remove control characters EXCEPT newlines (\n = ASCII 10)
+        # This includes:
+        # - ASCII control characters except LF (0x00-0x09, 0x0B-0x1F and 0x7F)
+        # - Zero-width characters
+        # - Bidirectional text markers
+        # - Other invisible unicode characters
+        cleaned = re.sub(
+            r"[\x00-\x09\x0B-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]",
+            "",
+            text,
+        )
+    else:
+        # Remove all control characters including newlines
+        cleaned = re.sub(
+            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", text
+        )
+
+    return cleaned.strip() if strip_text else cleaned
+
+
 def _clean_text_for_llm_prompt(
     text: str, preserve_linebreaks: bool = True, strip_text: bool = True
 ) -> str:
@@ -203,16 +242,9 @@ def _clean_text_for_llm_prompt(
         # Normalize newlines to \n
         cleaned = re.sub(r"\r\n|\r", "\n", text)
 
-        # Remove control characters EXCEPT newlines (\n = ASCII 10)
-        # This includes:
-        # - ASCII control characters except LF (0x00-0x09, 0x0B-0x1F and 0x7F)
-        # - Zero-width characters
-        # - Bidirectional text markers
-        # - Other invisible unicode characters
-        cleaned = re.sub(
-            r"[\x00-\x09\x0B-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]",
-            "",
-            cleaned,
+        # Remove control characters except newlines
+        cleaned = _clean_control_characters(
+            cleaned, preserve_newlines=True, strip_text=strip_text
         )
 
         # Replace horizontal whitespace sequences (spaces and tabs) with a single space
@@ -224,20 +256,40 @@ def _clean_text_for_llm_prompt(
 
     else:
         # Remove all control characters including newlines
-        cleaned = re.sub(
-            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", text
+        cleaned = _clean_control_characters(
+            text, preserve_newlines=False, strip_text=strip_text
         )
 
         # Remove all whitespace sequences with a single space
         cleaned = re.sub(r"\s+", " ", cleaned)
 
-    if strip_text:
-        # Strip leading/trailing whitespace
-        return cleaned.strip()
-    else:
-        # We may want to preserve leading/trailing whitespace for markdown representation
-        # of paragraphs, e.g. for indentation in lists.
-        return cleaned
+    # We may want to preserve leading/trailing whitespace for markdown representation
+    # of paragraphs, e.g. for indentation in lists.
+    return cleaned.strip() if strip_text else cleaned
+
+
+def _is_text_content_empty(text: str) -> bool:
+    """
+    Checks if text content is empty or whitespace-only after removing control characters.
+
+    This function first removes all control characters (including newlines) and then
+    checks if the remaining text is empty or contains only whitespace. This catches
+    cases where text contains only invisible unicode characters, control characters,
+    tabs, spaces, or any other whitespace characters.
+
+    :param text: Text to check
+    :return: True if text is empty or contains only whitespace after control character removal
+    """
+    if not text:
+        return True
+
+    # Remove all control characters including newlines
+    cleaned_text = _clean_control_characters(
+        text, preserve_newlines=False, strip_text=True
+    )
+
+    # Check if remaining text is only whitespace (covers all Unicode whitespace categories)
+    return not cleaned_text or cleaned_text.isspace()
 
 
 def _contains_linebreaks(text: str) -> bool:
@@ -297,7 +349,7 @@ def _split_text_into_paragraphs(raw_text: str) -> list[str]:
     """
     paragraphs = re.split(r"[\r\n]+", raw_text)
     paragraphs = [i.strip() for i in paragraphs]
-    paragraphs = [i for i in paragraphs if len(i)]
+    paragraphs = [i for i in paragraphs if not _is_text_content_empty(i)]
     return paragraphs
 
 

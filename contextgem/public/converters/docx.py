@@ -66,6 +66,33 @@ class DocxConverter(_DocxConverterBase):
             :caption: DocxConverter usage example
     """
 
+    def _validate_file_extension(
+        self, docx_path_or_file: str | Path | BinaryIO
+    ) -> None:
+        """
+        Validates that the provided file has a valid DOCX extension.
+
+        :param docx_path_or_file: Path to the file or file-like object
+        :raises DocxConverterError: If the file doesn't have a valid DOCX extension
+        """
+        # Skip validation for file-like objects (BinaryIO)
+        if not isinstance(docx_path_or_file, (str, Path)):
+            return
+
+        file_path = Path(docx_path_or_file)
+        file_extension = file_path.suffix.lower()
+
+        # Only accept .docx files - the standard XML-based Word document format
+        if not file_extension:
+            raise DocxConverterError(
+                f"File '{file_path.name}' has no extension. Expected a .docx file."
+            )
+        elif file_extension != ".docx":
+            raise DocxConverterError(
+                f"File '{file_path.name}' has extension '{file_extension}'. "
+                f"Only .docx files are supported by this converter."
+            )
+
     def convert_to_text_format(
         self,
         docx_path_or_file: str | Path | BinaryIO,
@@ -76,7 +103,6 @@ class DocxConverter(_DocxConverterBase):
         include_headers: bool = True,
         include_footers: bool = True,
         include_textboxes: bool = True,
-        include_toc: bool = True,
         include_links: bool = True,
         include_inline_formatting: bool = True,
         strict_mode: bool = False,
@@ -92,7 +118,6 @@ class DocxConverter(_DocxConverterBase):
         :param include_headers: If True, include headers in the output (default: True)
         :param include_footers: If True, include footers in the output (default: True)
         :param include_textboxes: If True, include textbox content (default: True)
-        :param include_toc: If True, include table of contents in the output (default: True)
         :param include_links: If True, process and format hyperlinks (default: True)
         :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
             in markdown mode (default: True)
@@ -107,8 +132,11 @@ class DocxConverter(_DocxConverterBase):
            * Headings are converted to markdown heading syntax (# Heading 1, ## Heading 2, etc.)
            * Lists are converted to markdown list syntax, preserving numbering and hierarchy
            * Tables are formatted using markdown table syntax
-           * Footnotes, comments, headers, footers, and table of contents are included as specially marked sections
+           * Footnotes, comments, headers, and footers are included as specially marked sections
         """
+        # Validate file extension first
+        self._validate_file_extension(docx_path_or_file)
+
         package = None
 
         try:
@@ -125,7 +153,6 @@ class DocxConverter(_DocxConverterBase):
                     include_headers=include_headers,
                     include_footers=include_footers,
                     include_textboxes=include_textboxes,
-                    include_toc=include_toc,
                     include_links=include_links,
                     strict_mode=strict_mode,
                     include_inline_formatting=include_inline_formatting,
@@ -144,7 +171,6 @@ class DocxConverter(_DocxConverterBase):
                     include_headers=include_headers,
                     include_footers=include_footers,
                     include_textboxes=include_textboxes,
-                    include_toc=include_toc,
                     include_links=include_links,
                     strict_mode=strict_mode,
                     include_inline_formatting=include_inline_formatting,
@@ -179,7 +205,6 @@ class DocxConverter(_DocxConverterBase):
         include_headers: bool = True,
         include_footers: bool = True,
         include_textboxes: bool = True,
-        include_toc: bool = True,
         include_images: bool = True,
         include_links: bool = True,
         include_inline_formatting: bool = True,
@@ -201,7 +226,6 @@ class DocxConverter(_DocxConverterBase):
         :param include_headers: If True, include headers in the output (default: True)
         :param include_footers: If True, include footers in the output (default: True)
         :param include_textboxes: If True, include textbox content (default: True)
-        :param include_toc: If True, include table of contents in the output (default: True)
         :param include_images: If True, extract and include images (default: True)
         :param include_links: If True, process and format hyperlinks (default: True)
         :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
@@ -210,6 +234,9 @@ class DocxConverter(_DocxConverterBase):
             instead of skipping problematic elements (default: False)
         :return: A populated Document object
         """
+        # Validate file extension first
+        self._validate_file_extension(docx_path_or_file)
+
         # Handle deprecated parameter
         if raw_text_to_md is not None:
             warnings.warn(
@@ -245,7 +272,6 @@ class DocxConverter(_DocxConverterBase):
                 include_headers=include_headers,
                 include_footers=include_footers,
                 include_textboxes=include_textboxes,
-                include_toc=include_toc,
                 include_links=include_links,
                 include_inline_formatting=include_inline_formatting,
                 use_markdown_text_in_paragraphs=apply_markdown,
@@ -253,11 +279,6 @@ class DocxConverter(_DocxConverterBase):
                 strict_mode=strict_mode,
             )
             logger.debug(f"Extracted {len(paragraphs)} paragraphs")
-
-            # Generate text representation from the extracted paragraphs
-            logger.debug(
-                f"Generating text from paragraphs (markdown mode: {apply_markdown})"
-            )
 
             # Generate raw text from the paragraph objects we already have
             raw_text = "\n\n".join(para.raw_text for para in paragraphs)
@@ -280,7 +301,6 @@ class DocxConverter(_DocxConverterBase):
                     include_headers=include_headers,
                     include_footers=include_footers,
                     include_textboxes=include_textboxes,
-                    include_toc=include_toc,
                     include_links=include_links,
                     include_inline_formatting=include_inline_formatting,
                     strict_mode=strict_mode,

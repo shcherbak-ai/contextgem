@@ -22,9 +22,9 @@ DOCX Converter
 
 ContextGem provides built-in converter to easily transform DOCX files into LLM-ready ContextGem document objects.
 
-* 📑 Extracts information that other open-source tools often do not capture: misaligned tables, comments, footnotes, textboxes, headers/footers, and embedded images
-* 🧩 Preserves document structure with rich metadata for improved LLM analysis
-* 🛠️ Custom native converter that directly processes Word XML
+* 📑 **Comprehensive extraction of document elements**: paragraphs, headings, lists, tables, comments, footnotes, textboxes, headers/footers, links, embedded images, and inline formatting
+* 🧩 **Document structure preservation** with rich metadata for improved LLM analysis
+* 🛠️ **Built-in converter** that directly processes Word XML
 
 
 🚀 Usage
@@ -82,17 +82,6 @@ The :class:`~contextgem.public.converters.DocxConverter` performs the following 
    * - **Images**
      - Extracts embedded images and converts them to :class:`~contextgem.public.images.Image` objects for further processing with vision models
      - ``include_images=True``
-   * - **Tables of Contents**
-     - Extracts table of contents sections and preserves their structure
-     - ``include_toc=True``
-
-💥 Beyond Standard Libraries
-------------------------------
-
-Our evaluation of popular open-source DOCX processing libraries revealed critical limitations: most packages either omit important elements (e.g. comments, footnotes, or embedded images), fail to handle complex structures (such as inconsistently formatted tables), or cannot extract paragraphs with the rich metadata needed for LLM processing.
-
-While it would have been much easier to use an existing open-source package as a dependency, these limitations compelled us to build a custom solution. The :class:`~contextgem.public.converters.DocxConverter` was developed specifically to address these gaps, ensuring extraction of the most commonly occurring DOCX elements with their contextual relationships preserved.
-
 
 ℹ️ Current Limitations
 ------------------------
@@ -100,4 +89,6 @@ While it would have been much easier to use an existing open-source package as a
 DocxConverter has the following limitations:
 
 * Drawings such as charts are skipped as it is challenging to represent them in text format.
-* In specially marked sections (headers, footers, footnotes, comments), inline markdown formatting (bold, italic, etc.) and hyperlink formatting is currently not supported.
+* Inline markdown formatting (bold, italic, etc.) and hyperlink formatting are not supported in specially marked sections (headers, footers, footnotes, comments).
+* Extraction of generated table of contents (ToC) is not supported. (A ToC is an automatically generated list of document headings with page numbers that Word creates based on heading styles.)
+* When converting very long DOCX files with complex formatting, performance may be very slow. (Our goal is to improve this in the future.)

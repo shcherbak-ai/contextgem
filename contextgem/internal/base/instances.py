@@ -36,6 +36,7 @@ from ulid import ULID
 from contextgem.internal.base.mixins import _PostInitCollectorMixin
 from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.typings.aliases import Self
+from contextgem.internal.utils import _is_text_content_empty
 
 
 class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
@@ -74,6 +75,30 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         Returns the ULID of the instance.
         """
         return self._unique_id
+
+    @field_validator("raw_text", check_fields=False)
+    @classmethod
+    def _validate_raw_text(cls, raw_text: str) -> str:
+        """
+        Validates that the raw text is not empty.
+
+        This validation goes beyond Pydantic's standard string constraints by also
+        checking for invisible Unicode characters and other control characters that
+        would make the text effectively empty despite having a non-zero length.
+
+        :param raw_text: The raw text to validate.
+        :type raw_text: str
+        :return: The original raw text if it is not empty.
+        :rtype: str
+        :raises ValueError: If the raw text is empty or contains only whitespace/control characters.
+        """
+        if _is_text_content_empty(raw_text):
+            raise ValueError(
+                "`raw_text` cannot be empty or contain only whitespace/control characters. "
+                "This includes text with only spaces, tabs, newlines, invisible Unicode characters, "
+                "or other control characters."
+            )
+        return raw_text
 
     @field_validator(
         "aspects",

@@ -43,10 +43,10 @@ from contextgem.internal.converters.docx.utils import (
     _docx_xpath,
     _extract_comment_id_from_context,
     _extract_footnote_id_from_context,
-    _is_text_content_empty,
     _join_text_parts,
 )
 from contextgem.internal.loggers import logger
+from contextgem.internal.utils import _is_text_content_empty
 from contextgem.public.images import Image
 from contextgem.public.paragraphs import Paragraph
 
@@ -273,8 +273,7 @@ class _DocxConverterBase:
         """
         Extracts the text content from a paragraph element.
 
-        Page numbers are automatically excluded from extraction, except when processing
-        table of contents content where page numbers provide valuable navigation information.
+        Page numbers are automatically excluded from extraction.
 
         :param para_element: Paragraph XML element
         :param package: _DocxPackage object containing hyperlink relationships
@@ -290,10 +289,6 @@ class _DocxConverterBase:
         # Use a dictionary to track text content by location
         text_by_location = {}
         ordered_runs = []
-
-        # Track processed element IDs and content for textbox/drawing content only
-        processed_textbox_elem_ids = set()
-        processed_textbox_content = set()  # Textbox content deduplication only
 
         try:
             # First, collect hyperlink information to handle them properly during run processing
@@ -313,12 +308,6 @@ class _DocxConverterBase:
                     for run in hyperlink_runs:
                         hyperlink_info_by_run[id(run)] = {"url": url, "rel_id": rel_id}
 
-            # Check if this paragraph is part of a table of contents (preserve page numbers in TOC)
-            is_toc_context = self._is_toc_context(para_element)
-
-            # Always exclude page numbers except in TOC context
-            should_exclude_page_numbers = not is_toc_context
-
             # Process regular paragraph text (including runs inside hyperlinks, content controls, etc.)
             run_idx = 0
             runs = _docx_xpath(para_element, ".//w:r")
@@ -326,10 +315,8 @@ class _DocxConverterBase:
                 run_element_id = id(run)
                 is_hyperlink_run = run_element_id in hyperlink_info_by_run
 
-                # Skip page number fields (except in TOC context)
-                if should_exclude_page_numbers and self._is_page_number_field(
-                    run, para_element
-                ):
+                # Skip page number fields
+                if self._is_page_number_field(run, para_element):
                     continue
 
                 # Extract formatting for this run if inline formatting is enabled
@@ -453,13 +440,10 @@ class _DocxConverterBase:
                     textbox_results = self._process_textbox_runs(
                         container_element=textbox,
                         hyperlink_info_by_run=hyperlink_info_by_run,
-                        should_exclude_page_numbers=should_exclude_page_numbers,
                         para_element=para_element,
                         include_inline_formatting=include_inline_formatting,
                         markdown_mode=markdown_mode,
                         include_links=include_links,
-                        processed_textbox_elem_ids=processed_textbox_elem_ids,
-                        processed_textbox_content=processed_textbox_content,
                     )
                     for formatted_text in textbox_results:
                         text_by_location[vml_idx] = formatted_text
@@ -479,13 +463,10 @@ class _DocxConverterBase:
                         textbox_results = self._process_textbox_runs(
                             container_element=p,
                             hyperlink_info_by_run=hyperlink_info_by_run,
-                            should_exclude_page_numbers=should_exclude_page_numbers,
                             para_element=para_element,
                             include_inline_formatting=include_inline_formatting,
                             markdown_mode=markdown_mode,
                             include_links=include_links,
-                            processed_textbox_elem_ids=processed_textbox_elem_ids,
-                            processed_textbox_content=processed_textbox_content,
                         )
                         for formatted_text in textbox_results:
                             text_by_location[dml_idx] = formatted_text
@@ -504,13 +485,10 @@ class _DocxConverterBase:
                     textbox_results = self._process_textbox_runs(
                         container_element=run,
                         hyperlink_info_by_run=hyperlink_info_by_run,
-                        should_exclude_page_numbers=should_exclude_page_numbers,
                         para_element=para_element,
                         include_inline_formatting=include_inline_formatting,
                         markdown_mode=markdown_mode,
                         include_links=include_links,
-                        processed_textbox_elem_ids=processed_textbox_elem_ids,
-                        processed_textbox_content=processed_textbox_content,
                         text_xpath=".//a:t",  # Use a:t instead of w:t for shapes
                     )
                     for formatted_text in textbox_results:
@@ -528,13 +506,10 @@ class _DocxConverterBase:
                     textbox_results = self._process_textbox_runs(
                         container_element=drawing,
                         hyperlink_info_by_run=hyperlink_info_by_run,
-                        should_exclude_page_numbers=should_exclude_page_numbers,
                         para_element=para_element,
                         include_inline_formatting=include_inline_formatting,
                         markdown_mode=markdown_mode,
                         include_links=include_links,
-                        processed_textbox_elem_ids=processed_textbox_elem_ids,
-                        processed_textbox_content=processed_textbox_content,
                     )
                     for formatted_text in textbox_results:
                         text_by_location[drawing_idx] = formatted_text
@@ -562,14 +537,11 @@ class _DocxConverterBase:
                         mc_results = self._process_markup_compatibility_element(
                             mc_element=choice,
                             hyperlink_info_by_run=hyperlink_info_by_run,
-                            should_exclude_page_numbers=should_exclude_page_numbers,
                             para_element=para_element,
-                            include_inline_formatting=include_inline_formatting,
                             markdown_mode=markdown_mode,
+                            include_inline_formatting=include_inline_formatting,
                             include_links=include_links,
                             include_textboxes=include_textboxes,
-                            processed_textbox_elem_ids=processed_textbox_elem_ids,
-                            processed_textbox_content=processed_textbox_content,
                         )
                         for formatted_text in mc_results:
                             text_by_location[mc_idx] = formatted_text
@@ -581,14 +553,11 @@ class _DocxConverterBase:
                         mc_results = self._process_markup_compatibility_element(
                             mc_element=fallback,
                             hyperlink_info_by_run=hyperlink_info_by_run,
-                            should_exclude_page_numbers=should_exclude_page_numbers,
                             para_element=para_element,
-                            include_inline_formatting=include_inline_formatting,
                             markdown_mode=markdown_mode,
+                            include_inline_formatting=include_inline_formatting,
                             include_links=include_links,
                             include_textboxes=include_textboxes,
-                            processed_textbox_elem_ids=processed_textbox_elem_ids,
-                            processed_textbox_content=processed_textbox_content,
                         )
                         for formatted_text in mc_results:
                             text_by_location[mc_idx] = formatted_text
@@ -607,6 +576,7 @@ class _DocxConverterBase:
             # not regular paragraph text (idx <= run_idx).
             textbox_start_idx = run_idx + 100  # First textbox content starts here
             processed_text = []
+            seen_textbox_content = set()  # Track textbox content to avoid duplicates
             i = 0
             while i < len(text_parts):
                 current_segment = text_parts[i]
@@ -617,17 +587,32 @@ class _DocxConverterBase:
                 if (
                     current_idx >= textbox_start_idx
                 ):  # Textbox content starts after regular text runs
-                    # Check if the same text is immediately repeated (common in text boxes)
-                    j = i + 1
-                    while (
-                        j < len(text_parts)
-                        and text_parts[j] == current_segment
-                        and ordered_runs[j] >= textbox_start_idx
+                    # For textbox content, use content-based deduplication to handle
+                    # variations in formatting of the same underlying text
+
+                    # Strip markdown formatting to get base content for comparison
+                    normalized_content = re.sub(
+                        r"\*+([^*]+)\*+", r"\1", current_segment
+                    )  # Remove *italics* and **bold**
+                    normalized_content = re.sub(
+                        r"~~([^~]+)~~", r"\1", normalized_content
+                    )  # Remove ~~strikethrough~~
+                    normalized_content = re.sub(
+                        r"\[([^\]]+)\]\([^)]+\)", r"\1", normalized_content
+                    )  # Remove [text](url)
+                    normalized_content = re.sub(
+                        r"</?[^>]+>", "", normalized_content
+                    )  # Remove HTML tags
+                    normalized_content = normalized_content.strip()
+
+                    if (
+                        normalized_content
+                        and normalized_content not in seen_textbox_content
                     ):
-                        # Skip consecutive identical segments in textbox content
-                        j += 1
-                    processed_text.append(current_segment)
-                    i = j
+                        processed_text.append(current_segment)
+                        seen_textbox_content.add(normalized_content)
+                    # Skip if we've already seen this textbox content
+                    i += 1
                 else:
                     # For regular paragraph text, keep all content including intentional duplicates
                     processed_text.append(current_segment)
@@ -653,7 +638,6 @@ class _DocxConverterBase:
         include_headers: bool = True,
         include_footers: bool = True,
         include_textboxes: bool = True,
-        include_toc: bool = True,
         include_links: bool = True,
         include_inline_formatting: bool = True,
         use_markdown_text_in_paragraphs: bool = False,
@@ -672,7 +656,6 @@ class _DocxConverterBase:
         :param include_headers: If True, include headers in the output (default: True)
         :param include_footers: If True, include footers in the output (default: True)
         :param include_textboxes: If True, include textbox content (default: True)
-        :param include_toc: If True, include table of contents in the output (default: True)
         :param include_links: If True, process and format hyperlinks (default: True)
         :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
             in markdown mode (default: True)
@@ -720,40 +703,6 @@ class _DocxConverterBase:
                         ) from e
                     # Otherwise, log error and continue without headers
                     logger.warning(f"Error processing headers: {str(e)}")
-
-            # Process table of contents
-            if include_toc:
-                try:
-                    toc_paragraphs = self._process_toc(
-                        package,
-                        strict_mode=strict_mode,
-                        include_textboxes=include_textboxes,
-                        populate_md_text=populate_md_text,
-                        include_links=include_links,
-                        include_inline_formatting=include_inline_formatting,
-                    )
-                    if markdown_mode and toc_paragraphs:
-                        # Add table of contents section in markdown mode
-                        result.append("**Table of Contents**")
-                        result.append("")
-                        for para in toc_paragraphs:
-                            # Use _md_text if available and different from raw_text
-                            display_text = para.raw_text
-                            if para._md_text and para._md_text != para.raw_text:
-                                display_text = para._md_text
-                            result.append(display_text)
-                        result.append("")
-                    else:
-                        # For object mode, add ToC paragraphs
-                        result.extend(toc_paragraphs)
-                except Exception as e:
-                    # In strict mode, re-raise as DocxContentError
-                    if strict_mode:
-                        raise DocxContentError(
-                            f"Error processing table of contents: {str(e)}"
-                        ) from e
-                    # Otherwise, log error and continue without table of contents
-                    logger.warning(f"Error processing table of contents: {str(e)}")
 
             # Track tables for indexing
             table_count = 0
@@ -970,7 +919,6 @@ class _DocxConverterBase:
         self,
         run: etree._Element,
         hyperlink_info_by_run: dict,
-        should_exclude_page_numbers: bool,
         para_element: etree._Element,
         include_inline_formatting: bool,
         markdown_mode: bool,
@@ -982,7 +930,6 @@ class _DocxConverterBase:
 
         :param run: XML run element
         :param hyperlink_info_by_run: Dictionary mapping run IDs to hyperlink info
-        :param should_exclude_page_numbers: Whether to exclude page number fields
         :param para_element: Parent paragraph element for context
         :param include_inline_formatting: Whether to apply inline formatting
         :param markdown_mode: Whether in markdown mode
@@ -996,9 +943,7 @@ class _DocxConverterBase:
         is_hyperlink_run = run_element_id in hyperlink_info_by_run
 
         # Skip page number fields
-        if should_exclude_page_numbers and self._is_page_number_field(
-            run, para_element
-        ):
+        if self._is_page_number_field(run, para_element):
             return results
 
         # Extract formatting for this run if needed
@@ -1848,11 +1793,8 @@ class _DocxConverterBase:
         self,
         mc_element: etree._Element,
         hyperlink_info_by_run: dict,
-        should_exclude_page_numbers: bool,
         para_element: etree._Element,
         markdown_mode: bool,
-        processed_textbox_elem_ids: set,
-        processed_textbox_content: set,
         include_inline_formatting: bool,
         include_links: bool,
         include_textboxes: bool,
@@ -1862,11 +1804,8 @@ class _DocxConverterBase:
 
         :param mc_element: Choice or Fallback XML element
         :param hyperlink_info_by_run: Dictionary mapping run IDs to hyperlink info
-        :param should_exclude_page_numbers: Whether to exclude page number fields
         :param para_element: Parent paragraph element for context
         :param markdown_mode: Whether in markdown mode
-        :param processed_textbox_elem_ids: Set of already processed element IDs
-        :param processed_textbox_content: Set of already processed text content
         :param include_inline_formatting: Whether to apply inline formatting
         :param include_links: Whether to process hyperlinks
         :param include_textboxes: Whether to include textbox content
@@ -1887,13 +1826,10 @@ class _DocxConverterBase:
         return self._process_textbox_runs(
             mc_element,
             hyperlink_info_by_run,
-            should_exclude_page_numbers,
             para_element,
             include_inline_formatting,
             markdown_mode,
             include_links,
-            processed_textbox_elem_ids,
-            processed_textbox_content,
         )
 
     def _process_headers(
@@ -2144,28 +2080,22 @@ class _DocxConverterBase:
         self,
         container_element: etree._Element,
         hyperlink_info_by_run: dict,
-        should_exclude_page_numbers: bool,
         para_element: etree._Element,
         include_inline_formatting: bool,
         markdown_mode: bool,
         include_links: bool,
-        processed_textbox_elem_ids: set,
-        processed_textbox_content: set,
         text_xpath: str = ".//w:t",
         run_xpath: str = ".//w:r",
     ) -> list[str]:
         """
-        Processes runs within textbox containers with deduplication.
+        Processes runs within textbox containers.
 
         :param container_element: Container element (textbox, drawing, etc.)
         :param hyperlink_info_by_run: Dictionary mapping run IDs to hyperlink info
-        :param should_exclude_page_numbers: Whether to exclude page number fields
         :param para_element: Parent paragraph element for context
         :param include_inline_formatting: Whether to apply inline formatting
         :param markdown_mode: Whether in markdown mode
         :param include_links: Whether to process hyperlinks
-        :param processed_textbox_elem_ids: Set of already processed element IDs
-        :param processed_textbox_content: Set of already processed text content
         :param text_xpath: XPath to find text elements (default: ".//w:t")
         :param run_xpath: XPath to find run elements (default: ".//w:r")
         :return: List of formatted text strings
@@ -2177,481 +2107,26 @@ class _DocxConverterBase:
             run_results = self._process_text_run(
                 run=run,
                 hyperlink_info_by_run=hyperlink_info_by_run,
-                should_exclude_page_numbers=should_exclude_page_numbers,
                 para_element=para_element,
                 include_inline_formatting=include_inline_formatting,
                 markdown_mode=markdown_mode,
                 include_links=include_links,
                 text_xpath=text_xpath,
             )
-
-            # Apply textbox-specific deduplication
             text_elements = _docx_xpath(run, text_xpath)
             content_results = [r for r in run_results if r[1]]
             for text_elem, text_result in zip(text_elements, content_results):
                 formatted_text, _ = text_result
-                elem_id = id(text_elem)
                 original_content = (
                     text_elem.text_content()
                     if hasattr(text_elem, "text_content")
                     else (text_elem.text or "")
                 )
-
-                if (
-                    original_content
-                    and elem_id not in processed_textbox_elem_ids
-                    and original_content not in processed_textbox_content
-                ):
+                if original_content:
+                    # Include all textbox content
                     results.append(formatted_text)
-                    processed_textbox_elem_ids.add(elem_id)
-                    processed_textbox_content.add(original_content)
 
         return results
-
-    def _process_toc(
-        self,
-        package: _DocxPackage,
-        include_textboxes: bool = True,
-        include_links: bool = True,
-        include_inline_formatting: bool = True,
-        populate_md_text: bool = False,
-        strict_mode: bool = False,
-    ) -> list[Paragraph]:
-        """
-        Processes table of contents from the document and converts them to Paragraph objects.
-
-        Table of contents in DOCX can be represented in several ways:
-        1. TOC field codes (w:fldSimple with "TOC" instruction)
-        2. Complex field codes (w:fldChar with TOC instruction)
-        3. Paragraphs with TOC styles ("TOC 1", "TOC 2", "TOC 3", etc.)
-
-        :param package: _DocxPackage object
-        :param include_textboxes: If True, include textbox content (default: True)
-        :param include_links: If True, process and format hyperlinks (default: True)
-        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
-            in markdown mode (default: True)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
-            with markdown representation (default: False)
-        :param strict_mode: If True, raise exceptions for any processing error
-            instead of skipping problematic elements (default: False)
-        :return: List of Paragraph objects representing table of contents entries
-        """
-        if package.main_document is None:
-            return []
-
-        try:
-            # Get the body element
-            body_elements = _docx_xpath(package.main_document, ".//w:body")
-            if not body_elements:
-                return []
-            body = body_elements[0]
-
-            # Collect all ToC paragraph elements with their document positions
-            # Use a dictionary to track: {paragraph_element_id: (position_index,
-            # paragraph_element, detection_method)}
-            toc_paragraph_elements = {}
-
-            # Get all paragraphs in document order for position tracking
-            all_paragraphs = _docx_xpath(body, ".//w:p")
-            para_positions = {id(para): idx for idx, para in enumerate(all_paragraphs)}
-
-            # Find TOC headings by their structural relationship to TOC fields
-            toc_fields_with_positions = self._collect_toc_field_paragraphs(
-                body, para_positions
-            )
-
-            # Look for TOC heading using simple rule-based approach
-            if toc_fields_with_positions:
-                # Sort TOC fields by position and find the earliest one
-                toc_fields_with_positions.sort(key=lambda x: x[0])
-                earliest_toc_position, _ = toc_fields_with_positions[0]
-
-                # Simple rule-based heading detection
-                best_heading_candidate = None
-
-                for check_idx in range(earliest_toc_position - 1, -1, -1):
-                    if check_idx < 0:
-                        break
-
-                    candidate_para = all_paragraphs[check_idx]
-                    para_text = self._extract_paragraph_text(
-                        para_element=candidate_para,
-                        package=package,
-                        markdown_mode=False,
-                        strict_mode=False,
-                        include_textboxes=include_textboxes,
-                        include_links=False,
-                        include_inline_formatting=False,
-                    ).strip()
-
-                    # Basic structural criteria (content-agnostic)
-                    if (
-                        para_text  # Has text content
-                        and not _docx_xpath(
-                            candidate_para, "ancestor::w:tbl"
-                        )  # Not in table
-                        and not _docx_xpath(
-                            candidate_para, ".//w:fldSimple"
-                        )  # Not containing fields
-                        and not _docx_xpath(
-                            candidate_para, ".//w:fldChar"
-                        )  # Not containing field chars
-                    ):
-                        style_id = self._get_paragraph_style(candidate_para)
-                        style_name = self._get_style_name(style_id, package)
-
-                        # Rule 1: If it has heading/title style, use it immediately (most reliable)
-                        if (
-                            "heading" in style_name.lower()
-                            or "title" in style_name.lower()
-                        ):
-                            best_heading_candidate = (check_idx, candidate_para)
-                            break
-
-                        # Rule 2: If no heading found yet and this has content, consider it as fallback
-                        elif not best_heading_candidate:
-                            best_heading_candidate = (check_idx, candidate_para)
-
-                # Add the heading candidate if found
-                if best_heading_candidate:
-                    check_idx, candidate_para = best_heading_candidate
-                    para_id = id(candidate_para)
-                    if para_id not in toc_paragraph_elements:
-                        toc_paragraph_elements[para_id] = (
-                            para_positions[para_id],
-                            candidate_para,
-                            "heading",
-                        )
-
-            # Method 1: Find TOC field codes (simple fields) - add any remaining field content
-            # Note: Some field positions may already be captured in the heading detection above
-            for fld in _docx_xpath(body, ".//w:fldSimple[contains(@w:instr, 'TOC')]"):
-                paragraphs = _docx_xpath(fld, ".//w:p")
-                for para in paragraphs:
-                    para_id = id(para)
-                    if (
-                        para_id in para_positions
-                        and para_id not in toc_paragraph_elements
-                    ):
-                        toc_paragraph_elements[para_id] = (
-                            para_positions[para_id],
-                            para,
-                            "simple_field",
-                        )
-
-            # Method 2: Find complex TOC fields (begin/end field characters) - add any remaining
-            # field content. Note: Some field positions may already be captured in the heading
-            # detection above.
-            for _, toc_field_para in toc_fields_with_positions:
-                # Find paragraphs between field begin and field end for complex fields
-                if _docx_xpath(toc_field_para, ".//w:fldChar[@w:fldCharType='begin']"):
-                    current_para = toc_field_para
-
-                    # Look for field end and collect intermediate paragraphs
-                    while current_para is not None:
-                        # Check for field end in this paragraph
-                        field_ends = _docx_xpath(
-                            current_para, ".//w:fldChar[@w:fldCharType='end']"
-                        )
-
-                        # Check if paragraph has meaningful content and not already processed
-                        para_text = self._extract_paragraph_text(
-                            para_element=current_para,
-                            package=package,
-                            markdown_mode=False,
-                            strict_mode=False,
-                            include_textboxes=include_textboxes,
-                            include_links=False,
-                            include_inline_formatting=False,
-                        ).strip()
-
-                        if para_text:
-                            para_id = id(current_para)
-                            if (
-                                para_id in para_positions
-                                and para_id not in toc_paragraph_elements
-                            ):
-                                toc_paragraph_elements[para_id] = (
-                                    para_positions[para_id],
-                                    current_para,
-                                    "complex_field",
-                                )
-
-                        # Stop if we encounter field end
-                        if field_ends:
-                            break
-
-                        # Move to next paragraph
-                        current_para = current_para.getnext()
-                        if current_para is None or not current_para.tag.endswith("}p"):
-                            break
-
-            # Method 3: Find paragraphs with TOC styles (only if no field-based ToC found)
-            if not toc_paragraph_elements:
-                toc_style_ids = self._get_toc_style_ids(package)
-
-                # Find paragraphs using TOC styles
-                for style_id in toc_style_ids:
-                    toc_style_paragraphs = _docx_xpath(
-                        body, f".//w:p[w:pPr/w:pStyle/@w:val='{style_id}']"
-                    )
-                    for para in toc_style_paragraphs:
-                        para_id = id(para)
-                        if (
-                            para_id in para_positions
-                            and para_id not in toc_paragraph_elements
-                        ):
-                            toc_paragraph_elements[para_id] = (
-                                para_positions[para_id],
-                                para,
-                                f"style_{style_id}",
-                            )
-
-            # Sort by document position and process paragraphs
-            sorted_toc_elements = sorted(
-                toc_paragraph_elements.values(), key=lambda x: x[0]
-            )
-            toc_paragraphs = []
-
-            for _, para_element, detection_method in sorted_toc_elements:
-                processed_para = self._process_paragraph(
-                    para_element=para_element,
-                    package=package,
-                    markdown_mode=False,  # markdown_mode=False for Paragraph objects
-                    strict_mode=strict_mode,
-                    include_textboxes=include_textboxes,
-                    apply_text_formatting=None,
-                    populate_md_text=populate_md_text,
-                    include_links=include_links,
-                    list_counters=None,  # list_counters not needed for ToC
-                    include_inline_formatting=include_inline_formatting,
-                )
-
-                if processed_para:
-                    # Add ToC metadata based on detection method
-                    original_context = processed_para.additional_context
-                    if detection_method.startswith("style_"):
-                        style_id = detection_method.split("_", 1)[1]
-                        style_name = self._get_style_name(style_id, package)
-                        toc_context = f"{original_context}, Table of Contents, TOC Style: {style_name}"
-                    elif detection_method == "heading":
-                        # Check if the style name already indicates ToC heading to avoid
-                        # duplication
-                        if (
-                            "toc" in original_context.lower()
-                            and "heading" in original_context.lower()
-                        ):
-                            # Style already indicates ToC heading, don't add redundant marker
-                            toc_context = f"{original_context}, Table of Contents"
-                        else:
-                            toc_context = (
-                                f"{original_context}, Table of Contents, TOC Heading"
-                            )
-                    else:
-                        toc_context = f"{original_context}, Table of Contents"
-
-                    # Format the text for ToC entries (but not for headings)
-                    raw_text = processed_para.raw_text
-                    md_text = processed_para._md_text
-
-                    if (
-                        detection_method != "heading"
-                    ):  # Apply formatting to entries but not heading
-                        raw_text = self._format_toc_text(raw_text)
-                        if md_text:
-                            md_text = self._format_toc_text(md_text)
-
-                    # Create new paragraph with updated metadata and formatted text
-                    toc_kwargs = {
-                        "raw_text": raw_text,
-                        "additional_context": toc_context,
-                    }
-                    toc_paragraph = Paragraph(**toc_kwargs)
-                    if populate_md_text and md_text:
-                        toc_paragraph._md_text = md_text
-
-                    toc_paragraphs.append(toc_paragraph)
-
-            return toc_paragraphs
-
-        except Exception as e:
-            if strict_mode:
-                raise DocxContentError(
-                    f"Error processing table of contents: {str(e)}"
-                ) from e
-            else:
-                logger.warning(f"Error processing table of contents: {str(e)}")
-                return []
-
-    def _format_toc_text(self, raw_text: str) -> str:
-        """
-        Formats table of contents text by adding proper separators between content
-        and page numbers.
-
-        Simply inserts dot separators before numbers at the end of text if no proper
-        separator exists.
-
-        :param raw_text: Raw text from ToC entry
-        :return: Formatted text with proper page number separation
-        """
-        if not raw_text or not raw_text.strip():
-            return raw_text
-
-        text = raw_text.strip()
-
-        # Pattern for text ending with a number
-        pattern = r"^(.+?)(\s*)(\d+)$"
-        match = re.match(pattern, text)
-
-        if match:
-            content_part = match.group(1)
-            page_number = match.group(3)
-
-            # If content doesn't already end with proper separators, add them
-            if not re.search(r"[.\-_]{2,}\s*$", content_part):
-                return f"{content_part.rstrip()} ... {page_number}"
-
-        return text
-
-    def _is_toc_context(self, para_element: etree._Element) -> bool:
-        """
-        Determines if a paragraph is part of a table of contents.
-
-        :param para_element: Paragraph XML element
-        :return: True if the paragraph is part of a TOC
-        """
-        # Check if paragraph contains TOC field codes
-        if self._detect_simple_toc_field(para_element):
-            return True
-
-        # Check for complex TOC fields
-        if self._detect_complex_toc_field(para_element):
-            return True
-
-        # Check for TOC styles
-        if self._detect_toc_style(para_element):
-            return True
-
-        return False
-
-    def _collect_toc_field_paragraphs(
-        self, body: etree._Element, para_positions: dict
-    ) -> list[tuple[int, etree._Element]]:
-        """
-        Collects all paragraphs containing TOC fields with their positions.
-
-        :param body: Document body element
-        :param para_positions: Dictionary mapping paragraph IDs to positions
-        :return: List of (position, paragraph) tuples for TOC field paragraphs
-        """
-        toc_fields_with_positions = []
-
-        # Collect all TOC field positions (simple fields)
-        toc_simple_fields = _docx_xpath(
-            body, ".//w:fldSimple[contains(@w:instr, 'TOC')]"
-        )
-        for fld in toc_simple_fields:
-            # Find the first paragraph containing this field
-            para_with_field = _docx_xpath(fld, "ancestor::w:p")
-            if para_with_field:
-                para = para_with_field[0]
-                para_id = id(para)
-                if para_id in para_positions:
-                    toc_fields_with_positions.append((para_positions[para_id], para))
-
-        # Collect all TOC field positions (complex fields)
-        fld_begins = _docx_xpath(body, ".//w:fldChar[@w:fldCharType='begin']")
-        for fld_begin in fld_begins:
-            parent_run = _docx_xpath(fld_begin, "ancestor::w:r")
-            if not parent_run:
-                continue
-
-            parent_para = _docx_xpath(parent_run[0], "ancestor::w:p")
-            if not parent_para:
-                continue
-
-            # Use the helper method to check if this paragraph contains TOC fields
-            if self._detect_complex_toc_field(parent_para[0]):
-                para = parent_para[0]
-                para_id = id(para)
-                if para_id in para_positions:
-                    toc_fields_with_positions.append((para_positions[para_id], para))
-
-        return toc_fields_with_positions
-
-    def _detect_simple_toc_field(self, element: etree._Element) -> bool:
-        """
-        Detects if an element contains simple TOC field codes.
-
-        :param element: XML element to check
-        :return: True if element contains simple TOC fields
-        """
-        return bool(_docx_xpath(element, ".//w:fldSimple[contains(@w:instr, 'TOC')]"))
-
-    def _detect_complex_toc_field(self, para_element: etree._Element) -> bool:
-        """
-        Detects if a paragraph contains complex TOC field codes.
-
-        :param para_element: Paragraph XML element
-        :return: True if paragraph contains complex TOC fields
-        """
-        fld_begins = _docx_xpath(para_element, ".//w:fldChar[@w:fldCharType='begin']")
-        for fld_begin in fld_begins:
-            # Look for TOC instruction in subsequent runs
-            parent_para = _docx_xpath(fld_begin, "ancestor::w:p")
-            if parent_para:
-                all_runs = _docx_xpath(parent_para[0], ".//w:r")
-                for run in all_runs:
-                    instr_texts = _docx_xpath(run, ".//w:instrText")
-                    for instr in instr_texts:
-                        if instr.text and "TOC" in instr.text.upper():
-                            return True
-                    # Stop if we encounter field end
-                    fld_ends = _docx_xpath(run, ".//w:fldChar[@w:fldCharType='end']")
-                    if fld_ends:
-                        break
-        return False
-
-    def _detect_toc_style(self, para_element: etree._Element) -> bool:
-        """
-        Detects if a paragraph has TOC-related style.
-
-        :param para_element: Paragraph XML element
-        :return: True if paragraph has TOC style
-        """
-        style_id = self._get_paragraph_style(para_element)
-        return bool(style_id and "TOC" in style_id.upper())
-
-    def _get_toc_style_ids(self, package: _DocxPackage) -> set[str]:
-        """
-        Gets all TOC-related style IDs from the styles.xml.
-
-        :param package: _DocxPackage object
-        :return: Set of TOC-related style IDs
-        """
-        toc_style_ids = set()
-        if package.styles is None:
-            return toc_style_ids
-
-        style_elements = _docx_xpath(package.styles, ".//w:style")
-        for style_elem in style_elements:
-            # Check style name
-            name_elements = _docx_xpath(style_elem, "w:name")
-            if name_elements:
-                style_name = _docx_get_namespaced_attr(name_elements[0], "val")
-                if style_name and (
-                    "TOC" in style_name.upper() or "Table of Contents" in style_name
-                ):
-                    style_id = _docx_get_namespaced_attr(style_elem, "styleId")
-                    if style_id:
-                        toc_style_ids.add(style_id)
-
-            # Also check style ID directly
-            style_id = _docx_get_namespaced_attr(style_elem, "styleId")
-            if style_id and "TOC" in style_id.upper():
-                toc_style_ids.add(style_id)
-
-        return toc_style_ids
 
     def _is_page_number_field(
         self, run_element: etree._Element, para_element: etree._Element

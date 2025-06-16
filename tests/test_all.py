@@ -52,7 +52,10 @@ from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.base.llms import _GenericLLMProcessor
 from contextgem.internal.converters.docx import _DocxPackage
-from contextgem.internal.converters.docx.exceptions import DocxFormatError
+from contextgem.internal.converters.docx.exceptions import (
+    DocxConverterError,
+    DocxFormatError,
+)
 from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import _LLMCost, _LLMUsage
 from contextgem.internal.items import (
@@ -79,6 +82,7 @@ from tests.utils import (
     get_project_root_path,
     get_test_document_text,
     get_test_img,
+    read_text_file,
     remove_file,
     vcr_before_record_request,
     vcr_before_record_response,
@@ -153,6 +157,39 @@ class TestAll(TestUtils):
     )
     document_docx = DocxConverter().convert(test_docx_nda_path)
     document_docx_ua = DocxConverter().convert(test_docx_nda_ua_path)
+    # Match badly formatted converted DOCX content (default mode - all content is included)
+    test_badly_formatted_converted_md_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_md.txt",
+        )
+    )
+    test_badly_formatted_converted_raw_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_raw.txt",
+        )
+    )
+    test_badly_formatted_converted_md_paras_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_paras_md.txt",
+        )
+    )
+    test_badly_formatted_converted_raw_paras_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_paras_raw.txt",
+        )
+    )
 
     # Document pipeline
     document_pipeline = DocumentPipeline(
@@ -752,6 +789,9 @@ class TestAll(TestUtils):
             linebreaks
             """,
         )
+        # Test with non-empty text but containing only control chars
+        with pytest.raises(ValueError, match="control characters"):
+            Paragraph(raw_text=" \u200c ")  # zero-width non-joiner
 
     def test_init_sentence(self):
         """
@@ -774,6 +814,9 @@ class TestAll(TestUtils):
             linebreaks
             """,
         )
+        # Test with non-empty text but containing only control chars
+        with pytest.raises(ValueError, match="control characters"):
+            Sentence(raw_text=" \u200c ")  # zero-width non-joiner
 
     def test_init_aspect(self):
         """
@@ -2541,6 +2584,7 @@ class TestAll(TestUtils):
         _IntegerOrFloatItem(value=1)
         _IntegerOrFloatItem(value=1.0)
         _JsonObjectItem(value={"hello": "world"})
+        _LabelItem(value=["NDA"])
         with pytest.raises(TypeError):
             _ExtractedItem(value=1)
         with pytest.raises(ValueError):
@@ -2566,6 +2610,10 @@ class TestAll(TestUtils):
                 value="Random string",
                 extra=True,  # extra fields not permitted
             )
+        with pytest.raises(ValueError):
+            _LabelItem(value=[])
+        with pytest.raises(ValueError):
+            _LabelItem(value="NDA")
 
         # List field items' unique IDs
         para = Paragraph(raw_text="Test")
@@ -2709,6 +2757,9 @@ class TestAll(TestUtils):
                         self.test_img_png,
                     ]
                 )
+            # Test with non-empty text but containing only control chars
+            with pytest.raises(ValueError, match="control characters"):
+                Document(raw_text=" \u200c ")  # zero-width non-joiner
         # Document pipeline initialization
         elif isinstance(context, DocumentPipeline):
             DocumentPipeline()  # works as we can interactive add aspects and concepts after initialization
@@ -4899,7 +4950,6 @@ class TestAll(TestUtils):
                 "include_textboxes": True,
                 "include_links": True,
                 "include_inline_formatting": True,
-                "include_toc": True,
                 "include_images": True,
             },
             "minimal": {
@@ -4911,7 +4961,6 @@ class TestAll(TestUtils):
                 "include_textboxes": False,
                 "include_links": False,
                 "include_inline_formatting": False,
-                "include_toc": False,
                 "include_images": False,
             },
             "no_images": {
@@ -4923,7 +4972,6 @@ class TestAll(TestUtils):
                 "include_textboxes": True,
                 "include_links": True,
                 "include_inline_formatting": True,
-                "include_toc": True,
                 "include_images": False,
             },
         }[include_options]
@@ -4967,16 +5015,30 @@ class TestAll(TestUtils):
         # Create converter instance
         converter = DocxConverter()
 
+        # Test with invalid file extension
+        with pytest.raises(DocxConverterError):
+            converter.convert("random_path.txt")
+
         # Helper function to verify Document objects
         def verify_document_equality(documents):
             # Check that all documents have the expected properties
             for doc in documents:
                 assert isinstance(doc, Document)
                 assert doc.raw_text, "Document should have raw text"
+                if include_options == "default":  # when all content is included
+                    assert (
+                        doc.raw_text.strip()
+                        == self.test_badly_formatted_converted_raw_text
+                    ), "Raw text does not match"
                 if apply_markdown:
                     assert (
                         doc._md_text
                     ), "Document should have markdown text when markdown is enabled"
+                    if include_options == "default":  # when all content is included
+                        assert (
+                            doc._md_text.strip()
+                            == self.test_badly_formatted_converted_md_text
+                        ), "Markdown text does not match"
                     with pytest.raises(ValueError):
                         doc._md_text = "Random md text"  # cannot be set once populated
                 else:
@@ -4986,12 +5048,16 @@ class TestAll(TestUtils):
                 assert doc.paragraphs, "Document should have paragraphs"
 
                 # Verify that each sentence inherits additional_context from its paragraph
+                paragraphs_raw_text = ""
+                paragraphs_md_text = ""
                 for paragraph in doc.paragraphs:
                     assert paragraph.raw_text, "Paragraph should have raw text"
+                    paragraphs_raw_text += paragraph.raw_text + "\n"
                     if apply_markdown:
                         assert (
                             paragraph._md_text
                         ), "Paragraph should have markdown text when markdown is enabled"
+                        paragraphs_md_text += paragraph._md_text + "\n"
                         with pytest.raises(ValueError):
                             paragraph._md_text = (
                                 "Random md text"  # cannot be set once populated
@@ -5003,6 +5069,9 @@ class TestAll(TestUtils):
                     assert (
                         paragraph.additional_context
                     ), "Paragraph should have additional context"
+                    paragraphs_raw_text += paragraph.additional_context + "\n\n"
+                    if apply_markdown:
+                        paragraphs_md_text += paragraph.additional_context + "\n\n"
                     for sentence in paragraph.sentences:
                         assert (
                             sentence.additional_context == paragraph.additional_context
@@ -5010,6 +5079,21 @@ class TestAll(TestUtils):
                         assert (
                             sentence.custom_data == paragraph.custom_data
                         ), f"Sentence custom_data should match its paragraph's custom_data"
+                if include_options == "default":  # when all content is included
+                    assert (
+                        paragraphs_raw_text.strip()
+                        == self.test_badly_formatted_converted_raw_paras_text
+                    ), "Raw paragraphs text does not match"
+                if apply_markdown:
+                    if include_options == "default":  # when all content is included
+                        assert (
+                            paragraphs_md_text.strip()
+                            == self.test_badly_formatted_converted_md_paras_text
+                        ), "Markdown paragraphs text does not match"
+                else:
+                    assert (
+                        paragraphs_md_text == ""
+                    ), "Markdown paragraphs text should be empty when markdown is disabled"
 
             # Check that all documents have the same content
             first_doc = documents[0]
@@ -5154,7 +5238,6 @@ class TestAll(TestUtils):
             "include_headers",
             "include_footers",
             "include_textboxes",
-            "include_toc",
             "include_links",
             "include_inline_formatting",
         ]
@@ -5375,7 +5458,7 @@ class TestAll(TestUtils):
                     )
 
         # Test concept extraction
-        doc.concepts = [
+        doc_concepts = [
             NumericalConcept(
                 name="Hidden gems count",
                 description="Number of hidden gems in the document",
@@ -5388,6 +5471,15 @@ class TestAll(TestUtils):
                 llm_role="extractor_vision",
             ),
         ]
+        if apply_markdown:
+            doc_concepts.append(
+                StringConcept(
+                    name="Links in the document",
+                    description="URLs mentioned in the document",
+                    llm_role="extractor_text",
+                )
+            )
+        doc.concepts = doc_concepts
 
         # Test extraction from full text (markdown)
         extracted_concepts = llm_group.extract_concepts_from_document(doc)
@@ -5397,6 +5489,10 @@ class TestAll(TestUtils):
         assert extracted_concepts[1].extracted_items
         logger.debug(extracted_concepts[1].extracted_items[0].value)
         assert "4800" in extracted_concepts[1].extracted_items[0].value
+        if apply_markdown:
+            assert extracted_concepts[2].extracted_items
+            logger.debug(extracted_concepts[2].extracted_items[0].value)
+            assert "example.com" in extracted_concepts[2].extracted_items[0].value
         # Check the full text for markdown content
         check_markdown_in_prompt(prompt_kwargs_key="text", expect_newlines=True)
 

@@ -90,11 +90,14 @@ from contextgem.internal.typings import (
 from contextgem.internal.utils import (
     _async_multi_executor,
     _chunk_list,
+    _clean_control_characters,
+    _clean_text_for_llm_prompt,
     _contains_linebreaks,
     _get_sat_model,
     _get_template,
     _group_instances_by_fields,
     _is_json_serializable,
+    _is_text_content_empty,
     _llm_call_result_is_valid,
     _parse_llm_output_as_json,
     _remove_thinking_content_from_llm_output,
@@ -186,6 +189,9 @@ __all__ = [
     "_get_sat_model",
     "_setup_jinja2_template",
     "_remove_thinking_content_from_llm_output",
+    "_clean_control_characters",
+    "_is_text_content_empty",
+    "_clean_text_for_llm_prompt",
     # Converters
     # DOCX
     "DocxConverterError",

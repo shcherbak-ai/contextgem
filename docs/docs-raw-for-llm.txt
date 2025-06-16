@@ -8688,14 +8688,14 @@ DOCX Converter
 ContextGem provides built-in converter to easily transform DOCX files
 into LLM-ready ContextGem document objects.
 
-* 📑 Extracts information that other open-source tools often do not
-  capture: misaligned tables, comments, footnotes, textboxes,
-  headers/footers, and embedded images
+* 📑 **Comprehensive extraction of document elements**: paragraphs,
+  headings, lists, tables, comments, footnotes, textboxes,
+  headers/footers, links, embedded images, and inline formatting
 
-* 🧩 Preserves document structure with rich metadata for improved LLM
-  analysis
+* 🧩 **Document structure preservation** with rich metadata for
+  improved LLM analysis
 
-* 🛠️ Custom native converter that directly processes Word XML
+* 🛠️ **Built-in converter** that directly processes Word XML
 
 
 🚀 Usage
@@ -8776,26 +8776,6 @@ a DOCX file to a ContextGem Document with "convert()" method:
 |                           | "Image" objects for further processing with vision |                           |
 |                           | models                                             |                           |
 +---------------------------+----------------------------------------------------+---------------------------+
-| **Tables of Contents**    | Extracts table of contents sections and preserves  | "include_toc=True"        |
-|                           | their structure                                    |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-
-
-💥 Beyond Standard Libraries
-============================
-
-Our evaluation of popular open-source DOCX processing libraries
-revealed critical limitations: most packages either omit important
-elements (e.g. comments, footnotes, or embedded images), fail to
-handle complex structures (such as inconsistently formatted tables),
-or cannot extract paragraphs with the rich metadata needed for LLM
-processing.
-
-While it would have been much easier to use an existing open-source
-package as a dependency, these limitations compelled us to build a
-custom solution. The "DocxConverter" was developed specifically to
-address these gaps, ensuring extraction of the most commonly occurring
-DOCX elements with their contextual relationships preserved.
 
 
 ℹ️ Current Limitations
@@ -8806,9 +8786,17 @@ DocxConverter has the following limitations:
 * Drawings such as charts are skipped as it is challenging to
   represent them in text format.
 
-* In specially marked sections (headers, footers, footnotes,
-  comments), inline markdown formatting (bold, italic, etc.) and
-  hyperlink formatting is currently not supported.
+* Inline markdown formatting (bold, italic, etc.) and hyperlink
+  formatting are not supported in specially marked sections (headers,
+  footers, footnotes, comments).
+
+* Extraction of generated table of contents (ToC) is not supported. (A
+  ToC is an automatically generated list of document headings with
+  page numbers that Word creates based on heading styles.)
+
+* When converting very long DOCX files with complex formatting,
+  performance may be very slow. (Our goal is to improve this in the
+  future.)
 
 
 # ==== advanced_usage ====
@@ -10479,7 +10467,7 @@ class contextgem.public.converters.DocxConverter
              output_format="markdown",  # or "raw"
          )
 
-   convert_to_text_format(docx_path_or_file, output_format='markdown', include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_toc=True, include_links=True, include_inline_formatting=True, strict_mode=False)
+   convert_to_text_format(docx_path_or_file, output_format='markdown', include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_links=True, include_inline_formatting=True, strict_mode=False)
 
       Converts a DOCX file directly to text without creating a
       ContextGem Document.
@@ -10510,9 +10498,6 @@ class contextgem.public.converters.DocxConverter
 
          * **include_textboxes** ("bool") -- If True, include textbox
            content (default: True)
-
-         * **include_toc** ("bool") -- If True, include table of
-           contents in the output (default: True)
 
          * **include_links** ("bool") -- If True, process and format
            hyperlinks (default: True)
@@ -10547,10 +10532,10 @@ class contextgem.public.converters.DocxConverter
 
         * Tables are formatted using markdown table syntax
 
-        * Footnotes, comments, headers, footers, and table of contents
-          are included as specially marked sections
+        * Footnotes, comments, headers, and footers are included as
+          specially marked sections
 
-   convert(docx_path_or_file, apply_markdown=True, raw_text_to_md=None, include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_toc=True, include_images=True, include_links=True, include_inline_formatting=True, strict_mode=False)
+   convert(docx_path_or_file, apply_markdown=True, raw_text_to_md=None, include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_images=True, include_links=True, include_inline_formatting=True, strict_mode=False)
 
       Converts a DOCX file into a ContextGem Document object.
 
@@ -10588,9 +10573,6 @@ class contextgem.public.converters.DocxConverter
 
          * **include_textboxes** ("bool") -- If True, include textbox
            content (default: True)
-
-         * **include_toc** ("bool") -- If True, include table of
-           contents in the output (default: True)
 
          * **include_images** ("bool") -- If True, extract and include
            images (default: True)

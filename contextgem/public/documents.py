@@ -54,6 +54,7 @@ from contextgem.internal.utils import (
     _check_paragraphs_match_in_text,
     _check_paragraphs_ordering_in_text,
     _get_sat_model,
+    _is_text_content_empty,
     _split_text_into_paragraphs,
 )
 from contextgem.public.aspects import Aspect
@@ -240,19 +241,31 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                         "Some paragraphs already have sentences. "
                         "These will be used `as is`."
                     )
-                split_sents_for_paras = _get_sat_model(self.sat_model_id).split(
-                    [p.raw_text for p in self.paragraphs]
-                )
+                try:
+                    split_sents_for_paras = _get_sat_model(self.sat_model_id).split(
+                        [p.raw_text for p in self.paragraphs]
+                    )
+                except Exception as e:
+                    logger.error(f"Error splitting paragraphs into sentences: {e}")
+                    raise
                 for paragraph, sent_group in zip(
                     self.paragraphs, split_sents_for_paras
                 ):
                     if not paragraph.sentences:
                         # Filter out empty sents, if any
                         sent_group = [i.strip() for i in sent_group]
-                        sent_group = [i for i in sent_group if len(i)]
-                        assert all(
-                            i in paragraph.raw_text for i in sent_group
-                        ), "Not all segmented sentences were matched in paragraph text."
+                        sent_group = [
+                            i for i in sent_group if not _is_text_content_empty(i)
+                        ]
+                        unmatched_sentences = [
+                            i for i in sent_group if i not in paragraph.raw_text
+                        ]
+                        if unmatched_sentences:
+                            raise ValueError(
+                                f"Not all segmented sentences were matched in paragraph text.\n"
+                                f"Paragraph text: {paragraph.raw_text}\n"
+                                f"Unmatched sentences: {unmatched_sentences}"
+                            )
                         paragraph.sentences = [
                             Sentence(
                                 raw_text=i,

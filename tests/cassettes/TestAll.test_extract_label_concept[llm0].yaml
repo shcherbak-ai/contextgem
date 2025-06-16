@@ -322,25 +322,24 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": {\n                    \"labels\":
-        [\"NDA\"]\n                },\n                \"justification\": \"The document
-        is explicitly titled ''Non-Disclosure Agreement (NDA)'' and repeatedly refers
-        to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1749921151, "id": "chatcmpl-DUMMY",
+        [\n            {\n                \"value\": {\"labels\": [\"NDA\"]},\n                \"justification\":
+        \"The document is explicitly titled ''Non-Disclosure Agreement (NDA)'' and
+        repeatedly refers to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
+        [\"P0\", \"P1\", \"P51\"]\n            }\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1750031398, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 100,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 91,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         4532, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        4632}}'
+        4623}}'
     headers:
       Content-Length:
-      - '1757'
+      - '1634'
       Content-Type:
       - application/json
       Date:
@@ -352,12 +351,14 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1852'
+      - '914'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -757,9 +758,9 @@ interactions:
         Compliance\",\n                        \"Third Party Relations\",\n                        \"Contract
         Terms\"\n                    ]\n                },\n                \"justification\":
         \"The document is a Non-Disclosure Agreement focusing on protecting confidential
-        information, defining obligations, liability, and governing law, which relates
-        to confidentiality, legal compliance, third party relations, and contract
-        terms.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        information, legal obligations, third party consent for disclosure, and contract
+        terms such as liability and governing law.\",\n                \"reference_paragraphs\":
+        [\n                    {\n                        \"reference_paragraph_id\":
         \"P0\",\n                        \"reference_sentence_ids\": [\"P0-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P17\",\n                        \"reference_sentence_ids\": [\"P17-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P19\",\n                        \"reference_sentence_ids\": [\"P19-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
@@ -772,24 +773,21 @@ interactions:
         \"P40-S1\", \"P40-S2\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P45\",\n                        \"reference_sentence_ids\": [\"P45-S0\",
-        \"P45-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P48\",\n                        \"reference_sentence_ids\": [\"P48-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P49\",\n                        \"reference_sentence_ids\": [\"P49-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1749921153, "id": "chatcmpl-DUMMY",
+        \"P45-S1\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750031399, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 474,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 387,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         5544, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        6018}}'
+        5931}}'
     headers:
       Content-Length:
-      - '4139'
+      - '3578'
       Content-Type:
       - application/json
       Date:
@@ -801,12 +799,14 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '5222'
+      - '3000'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -1148,10 +1148,10 @@ interactions:
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            {\n                \"value\": {\n                    \"labels\":
         [\"NDA\"]\n                },\n                \"justification\": \"The document
-        is explicitly titled ''Non-Disclosure Agreement (NDA)'' and repeatedly refers
-        to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
+        is explicitly titled ''Non-Disclosure Agreement (NDA)'' and is repeatedly
+        referred to as such throughout the text.\",\n                \"reference_paragraph_ids\":
         [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1749921158, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750031402, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1164,7 +1164,7 @@ interactions:
         4632}}'
     headers:
       Content-Length:
-      - '1757'
+      - '1755'
       Content-Type:
       - application/json
       Date:
@@ -1176,12 +1176,14 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1096'
+      - '821'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -1597,23 +1599,21 @@ interactions:
         \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P45\",\n                        \"reference_sentence_ids\": [\"P45-S0\",
         \"P45-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P48\",\n                        \"reference_sentence_ids\": [\"P48-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P49\",\n                        \"reference_sentence_ids\": [\"P49-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1749921158, "id": "chatcmpl-DUMMY",
+        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750031402, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 474,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 420,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5544, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
-        "total_tokens": 6018}}'
+        5544, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        5964}}'
     headers:
       Content-Length:
-      - '4142'
+      - '3789'
       Content-Type:
       - application/json
       Date:
@@ -1625,12 +1625,14 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '4827'
+      - '2902'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -1900,7 +1902,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1749921164, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750031405, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -1924,12 +1926,14 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '528'
+      - '510'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY

@@ -116,16 +116,6 @@ def _extract_comment_id_from_context(context: str) -> str:
     return f"{comment_id}{author}"
 
 
-def _is_text_content_empty(text: str) -> bool:
-    """
-    Checks if text content is empty or whitespace-only.
-
-    :param text: Text to check
-    :return: True if text is empty or contains only whitespace
-    """
-    return not text or not text.strip()
-
-
 def _join_text_parts(parts: list[str]) -> str:
     """
     Joins text parts, filtering out empty ones.

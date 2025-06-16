@@ -281,8 +281,9 @@ To create a ContextGem document for LLM analysis, you can either pass raw text d
 
 ContextGem provides built-in converter to easily transform DOCX files into LLM-ready data.
 
-- Extracts information that other open-source tools often do not capture: misaligned tables, comments, footnotes, textboxes, headers/footers, and embedded images
-- Preserves document structure with rich metadata for improved LLM analysis
+- **Comprehensive extraction of document elements**: paragraphs, headings, lists, tables, comments, footnotes, textboxes, headers/footers, links, embedded images, and inline formatting
+- **Document structure preservation** with rich metadata for improved LLM analysis
+- **Built-in converter** that directly processes Word XML
 
 ```python
 # Using ContextGem's DocxConverter
