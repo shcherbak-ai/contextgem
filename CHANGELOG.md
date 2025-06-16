@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.7.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.7.0) - 2025-06-16
+### Added
+- DocxConverter upgrade: migrated to high-performance lxml library for parsing DOCX document structure, added processing of links and inline formatting, improved conversion accuracy.
+- Integrated Bandit security scanning across development pipeline.
+
+### Changed
+- Updated documentation to reflect the above changes.
+
 ## [0.6.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.6.1) - 2025-06-04
 ### Changed
 - Updated documentation for LM Studio models to clarify dummy API key requirement
