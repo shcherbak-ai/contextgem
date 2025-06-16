@@ -9,7 +9,8 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-bright.svg)](https://opensource.org/licenses/Apache-2.0)
 ![PyPI](https://img.shields.io/pypi/v/contextgem)
 [![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/)
-[![Code Security](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml)
+[![bandit security](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml/badge.svg?branch=dev)](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort/)
 [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://pydantic.dev)
@@ -375,7 +376,11 @@ We welcome contributions from the community - whether it's fixing a typo or deve
 
 ## 🔐 Security
 
-This project is automatically scanned for security vulnerabilities using [CodeQL](https://codeql.github.com/). We also use [Snyk](https://snyk.io) as needed for supplementary dependency checks.
+This project is automatically scanned for security vulnerabilities using multiple security tools:
+
+- **[CodeQL](https://codeql.github.com/)** - GitHub's semantic code analysis engine for vulnerability detection
+- **[Bandit](https://github.com/PyCQA/bandit)** - Python security linter for common security issues  
+- **[Snyk](https://snyk.io)** - Dependency vulnerability monitoring (used as needed)
 
 🛡️ **Security policy:** See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
 
@@ -387,6 +392,7 @@ ContextGem relies on these excellent open-source packages:
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
 - [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
+- [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
 - [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations

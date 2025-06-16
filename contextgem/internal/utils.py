@@ -105,15 +105,16 @@ def _get_template(
         raise NotImplementedError(f"Unknown template type: {template_type}")
     with open(template_path, "r", encoding="utf-8") as file:
         template_text = file.read().strip()
-        assert template_text
+        if not template_text:
+            raise RuntimeError(
+                f"Template file '{template_path}' is empty or contains only whitespace"
+            )
     if template_extension == "j2":
         # Validate template text
-        assert _are_prompt_template_brackets_balanced(
-            template_text
-        ), "Prompt template brackets are not balanced."
-        assert not bool(
-            re.search(r"(\r\n|\r|\n){3,}", template_text)
-        ), "Too many newlines in template."
+        if not _are_prompt_template_brackets_balanced(template_text):
+            raise RuntimeError("Prompt template brackets are not balanced.")
+        if bool(re.search(r"(\r\n|\r|\n){3,}", template_text)):
+            raise RuntimeError("Too many newlines in template.")
         template = _setup_jinja2_template(template_text)
     elif template_extension == "txt":
         template = template_text
@@ -166,7 +167,7 @@ def _contains_jinja2_tags(text: str) -> bool:
     :return: True if the text contains Jinja2 tags, False otherwise
     :rtype: bool
     """
-    env = Environment()
+    env = Environment()  # nosec B701 - templates used for internal LLM prompts
     parsed = env.parse(text)
     # If any node in the top-level body is not TemplateData (and isn't an Output
     # wrapping only TemplateData), it indicates the presence of Jinja2 tags,
@@ -523,11 +524,12 @@ def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | No
                 cleaned_str = output_str[end_tag_pos + len("</think>") :]
                 # Strip any remaining whitespace
                 cleaned_str = cleaned_str.strip()
-                assert len(cleaned_str) > 0, "Cleaned string is empty"
+                if not cleaned_str:
+                    raise ValueError("Cleaned string is empty")
                 return cleaned_str
 
         return output_str.strip()
-    except (AssertionError, AttributeError):
+    except (ValueError, AttributeError):
         return None
 
 

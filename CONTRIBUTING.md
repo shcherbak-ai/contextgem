@@ -91,13 +91,21 @@ To sign the agreement:
 
     - **Black**: For code formatting
     - **isort**: For import sorting
+    - **Bandit**: For Python security vulnerability scanning
     - **Pre-commit hooks**: To automatically check and format code before commits
 
-    The pre-commit hooks will automatically check and format your code when you commit. If the hooks modify any files during commit:
+    The pre-commit hooks will automatically check and format your code when you commit. There are two scenarios to be aware of:
 
+    **If the hooks modify any files during commit** (Black/isort formatting):
     1. Review the changes made by the formatters
     2. Add the modified files to the staging area
     3. Commit again
+
+    **If security issues are detected** (Bandit):
+    1. Review the security findings in the terminal output
+    2. Fix the identified security issues in your code
+    3. Add the fixed files to the staging area
+    4. Commit again
 
 3. **Run tests** to ensure your changes do not break existing functionality:
    ```bash

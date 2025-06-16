@@ -1778,8 +1778,9 @@ class _DocxConverterBase:
                     section_id = extract_id_func(para.additional_context)
                     if section_id:
                         display_title = f"{section_title} {section_id}"
-                except:
-                    pass  # Use default title if extraction fails
+                except (IndexError, AttributeError, TypeError) as e:
+                    # Use default title if extraction fails
+                    logger.debug(f"Failed to extract section ID from context: {e}")
 
             # Use _md_text if available and different from raw_text
             display_text = para.raw_text
