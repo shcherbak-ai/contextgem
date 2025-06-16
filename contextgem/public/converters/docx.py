@@ -24,6 +24,7 @@ preserving text, structure, tables, footnotes, headers, footers, and embedded im
 Implemented through the DocxConverter class.
 """
 
+import warnings
 from pathlib import Path
 from typing import BinaryIO
 
@@ -31,7 +32,7 @@ from contextgem.internal.converters.docx.base import _DocxConverterBase
 from contextgem.internal.converters.docx.exceptions import DocxConverterError
 from contextgem.internal.converters.docx.package import _DocxPackage
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.aliases import RawTextMode
+from contextgem.internal.typings.aliases import TextMode
 from contextgem.public.documents import Document
 
 
@@ -42,10 +43,13 @@ class DocxConverter(_DocxConverterBase):
     This class handles extraction of text, formatting, tables, images, footnotes,
     comments, and other elements from DOCX files by directly parsing Word XML.
 
+    The converter is read-only and does not modify the source DOCX file
+    in any way. It only extracts content for conversion to ContextGem document object
+    or text formats.
+
     The resulting ContextGem document is populated with the following:
 
-    - Raw text: The raw text of the DOCX file converted to markdown or left as raw text,
-      based on the ``raw_text_to_md`` flag.
+    - Raw text: The raw text of the DOCX file.
 
     - Paragraphs: Paragraph objects with the following metadata:
 
@@ -62,16 +66,45 @@ class DocxConverter(_DocxConverterBase):
             :caption: DocxConverter usage example
     """
 
+    def _validate_file_extension(
+        self, docx_path_or_file: str | Path | BinaryIO
+    ) -> None:
+        """
+        Validates that the provided file has a valid DOCX extension.
+
+        :param docx_path_or_file: Path to the file or file-like object
+        :raises DocxConverterError: If the file doesn't have a valid DOCX extension
+        """
+        # Skip validation for file-like objects (BinaryIO)
+        if not isinstance(docx_path_or_file, (str, Path)):
+            return
+
+        file_path = Path(docx_path_or_file)
+        file_extension = file_path.suffix.lower()
+
+        # Only accept .docx files - the standard XML-based Word document format
+        if not file_extension:
+            raise DocxConverterError(
+                f"File '{file_path.name}' has no extension. Expected a .docx file."
+            )
+        elif file_extension != ".docx":
+            raise DocxConverterError(
+                f"File '{file_path.name}' has extension '{file_extension}'. "
+                f"Only .docx files are supported by this converter."
+            )
+
     def convert_to_text_format(
         self,
         docx_path_or_file: str | Path | BinaryIO,
-        output_format: RawTextMode = "markdown",
+        output_format: TextMode = "markdown",
         include_tables: bool = True,
         include_comments: bool = True,
         include_footnotes: bool = True,
         include_headers: bool = True,
         include_footers: bool = True,
         include_textboxes: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
         strict_mode: bool = False,
     ) -> str:
         """
@@ -85,6 +118,9 @@ class DocxConverter(_DocxConverterBase):
         :param include_headers: If True, include headers in the output (default: True)
         :param include_footers: If True, include footers in the output (default: True)
         :param include_textboxes: If True, include textbox content (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
         :return: Text in the specified format
@@ -93,13 +129,14 @@ class DocxConverter(_DocxConverterBase):
            When using markdown output format, the following conditions apply:
 
            * Document structure elements (headings, lists, tables) are preserved
-           * Character-level formatting (bold, italic, underline) is intentionally skipped
-             to ensure proper text matching between markdown and DOCX content
            * Headings are converted to markdown heading syntax (# Heading 1, ## Heading 2, etc.)
            * Lists are converted to markdown list syntax, preserving numbering and hierarchy
            * Tables are formatted using markdown table syntax
            * Footnotes, comments, headers, and footers are included as specially marked sections
         """
+        # Validate file extension first
+        self._validate_file_extension(docx_path_or_file)
+
         package = None
 
         try:
@@ -116,7 +153,9 @@ class DocxConverter(_DocxConverterBase):
                     include_headers=include_headers,
                     include_footers=include_footers,
                     include_textboxes=include_textboxes,
+                    include_links=include_links,
                     strict_mode=strict_mode,
+                    include_inline_formatting=include_inline_formatting,
                 )
 
                 # Join all lines and return as a single string
@@ -132,7 +171,9 @@ class DocxConverter(_DocxConverterBase):
                     include_headers=include_headers,
                     include_footers=include_footers,
                     include_textboxes=include_textboxes,
+                    include_links=include_links,
                     strict_mode=strict_mode,
+                    include_inline_formatting=include_inline_formatting,
                 )
 
                 # Combine all paragraph texts
@@ -156,7 +197,8 @@ class DocxConverter(_DocxConverterBase):
     def convert(
         self,
         docx_path_or_file: str | Path | BinaryIO,
-        raw_text_to_md: bool = True,
+        apply_markdown: bool = True,
+        raw_text_to_md: bool = None,  # Deprecated parameter
         include_tables: bool = True,
         include_comments: bool = True,
         include_footnotes: bool = True,
@@ -164,13 +206,20 @@ class DocxConverter(_DocxConverterBase):
         include_footers: bool = True,
         include_textboxes: bool = True,
         include_images: bool = True,
+        include_links: bool = True,
+        include_inline_formatting: bool = True,
         strict_mode: bool = False,
     ) -> Document:
         """
         Converts a DOCX file into a ContextGem Document object.
 
         :param docx_path_or_file: Path to the DOCX file (as string or Path object) or a file-like object
-        :param raw_text_to_md: If True, convert raw text to markdown (default: True)
+        :param apply_markdown: If True, applies markdown processing and formatting to the document content
+            while preserving raw text separately (default: True)
+        :param raw_text_to_md: [DEPRECATED] Use apply_markdown instead. Will be removed in v1.0.0.
+            Note: This parameter previously controlled whether raw_text would contain raw or markdown text.
+            The new apply_markdown parameter instead controls whether to apply markdown processing
+            while keeping raw text and processed text separate.
         :param include_tables: If True, include tables in the output (default: True)
         :param include_comments: If True, include comments in the output (default: True)
         :param include_footnotes: If True, include footnotes in the output (default: True)
@@ -178,10 +227,27 @@ class DocxConverter(_DocxConverterBase):
         :param include_footers: If True, include footers in the output (default: True)
         :param include_textboxes: If True, include textbox content (default: True)
         :param include_images: If True, extract and include images (default: True)
+        :param include_links: If True, process and format hyperlinks (default: True)
+        :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
+            in markdown mode (default: True)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
         :return: A populated Document object
         """
+        # Validate file extension first
+        self._validate_file_extension(docx_path_or_file)
+
+        # Handle deprecated parameter
+        if raw_text_to_md is not None:
+            warnings.warn(
+                "The 'raw_text_to_md' parameter is deprecated and will be removed in v1.0.0. "
+                "Please use 'apply_markdown' instead. Note: This change affects how text processing "
+                "is handled - the Document now maintains separate raw and processed text representations.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            apply_markdown = raw_text_to_md
+
         package = None
         try:
             # Get file name or descriptor for logging
@@ -199,36 +265,50 @@ class DocxConverter(_DocxConverterBase):
             logger.debug("Processing document elements")
             paragraphs = self._process_docx_elements(
                 package,
-                markdown_mode=False,
+                markdown_mode=False,  # Always get Paragraph objects, but we'll handle text formatting separately
                 include_tables=include_tables,
                 include_comments=include_comments,
                 include_footnotes=include_footnotes,
                 include_headers=include_headers,
                 include_footers=include_footers,
                 include_textboxes=include_textboxes,
+                include_links=include_links,
+                include_inline_formatting=include_inline_formatting,
+                use_markdown_text_in_paragraphs=apply_markdown,
+                populate_md_text=apply_markdown,
                 strict_mode=strict_mode,
             )
             logger.debug(f"Extracted {len(paragraphs)} paragraphs")
 
-            # Generate text representation based on the flag
-            output_format = "markdown" if raw_text_to_md else "raw"
-            logger.debug(f"Converting to {output_format} format")
+            # Generate raw text from the paragraph objects we already have
+            raw_text = "\n\n".join(para.raw_text for para in paragraphs)
+            doc_kwargs = {
+                "raw_text": raw_text,
+                "paragraphs": paragraphs,
+            }
 
-            text = self.convert_to_text_format(
-                docx_path_or_file,
-                output_format=output_format,
-                include_tables=include_tables,
-                include_comments=include_comments,
-                include_footnotes=include_footnotes,
-                include_headers=include_headers,
-                include_footers=include_footers,
-                include_textboxes=include_textboxes,
-                strict_mode=strict_mode,
-            )
+            # Create the document object
+            context_doc = Document(**doc_kwargs)
 
-            # Initialize the ContextGem Document
-            logger.debug("Creating Document object")
-            context_doc = Document(raw_text=text, paragraphs=paragraphs)
+            if apply_markdown:
+                # Generate markdown text from the same paragraphs we extracted
+                markdown_lines = self._process_docx_elements(
+                    package,
+                    markdown_mode=True,
+                    include_tables=include_tables,
+                    include_comments=include_comments,
+                    include_footnotes=include_footnotes,
+                    include_headers=include_headers,
+                    include_footers=include_footers,
+                    include_textboxes=include_textboxes,
+                    include_links=include_links,
+                    include_inline_formatting=include_inline_formatting,
+                    strict_mode=strict_mode,
+                )
+                md_text = "\n".join(markdown_lines)
+
+                # When markdown mode is requested, populate _md_text
+                context_doc._md_text = md_text
 
             # Process images from DOCX if requested
             if include_images:

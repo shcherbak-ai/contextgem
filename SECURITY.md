@@ -8,9 +8,11 @@ We maintain security practices for the latest release of this library. Older ver
 
 ## Security Testing
 
-This project is automatically tested for security issues using [CodeQL](https://codeql.github.com/) static analysis (run via GitHub Actions).
+This project is automatically tested for security issues using multiple security scanning tools:
 
-We also use [Snyk](https://snyk.io) as needed for supplementary dependency vulnerability monitoring.
+- **[CodeQL](https://codeql.github.com/)** - GitHub's semantic code analysis engine for vulnerability detection (run via GitHub Actions)
+- **[Bandit](https://github.com/PyCQA/bandit)** - Python security linter for common security issues (run via GitHub Actions and pre-commit hooks)
+- **[Snyk](https://snyk.io)** - Dependency vulnerability monitoring (used as needed)
 
 
 ## Data Privacy

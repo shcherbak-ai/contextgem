@@ -8688,15 +8688,14 @@ DOCX Converter
 ContextGem provides built-in converter to easily transform DOCX files
 into LLM-ready ContextGem document objects.
 
-* 📑 Extracts information that other open-source tools often do not
-  capture: misaligned tables, comments, footnotes, textboxes,
-  headers/footers, and embedded images
+* 📑 **Comprehensive extraction of document elements**: paragraphs,
+  headings, lists, tables, comments, footnotes, textboxes,
+  headers/footers, links, embedded images, and inline formatting
 
-* 🧩 Preserves document structure with rich metadata for improved LLM
-  analysis
+* 🧩 **Document structure preservation** with rich metadata for
+  improved LLM analysis
 
-* 🛠️ Custom native converter that directly processes Word XML with
-  zero external dependencies
+* 🛠️ **Built-in converter** that directly processes Word XML
 
 
 🚀 Usage
@@ -8715,7 +8714,12 @@ into LLM-ready ContextGem document objects.
    with open("path/to/document.docx", "rb") as docx_file_object:
        document = converter.convert(docx_file_object)
 
-   # You can also use it as a standalone text extractor
+   # Perform data extraction on the resulting Document object
+   # document.add_aspects(...)
+   # document.add_concepts(...)
+   # llm.extract_all(document)
+
+   # You can also use DocxConverter instance as a standalone text extractor
    docx_text = converter.convert_to_text_format(
        "path/to/document.docx",
        output_format="markdown",  # or "raw"
@@ -8726,79 +8730,73 @@ into LLM-ready ContextGem document objects.
 =====================
 
 The "DocxConverter" performs the following operations when converting
-a DOCX file to a ContextGem Document:
+a DOCX file to a ContextGem Document with "convert()" method:
 
-+--------------------------------+------------------------------------------------------------------------+
-| Elements                       | Extraction Details                                                     |
-|================================|========================================================================|
-| **Text**                       | Extracts the full document text as either raw text or markdown format  |
-|                                | (controlled by "raw_text_to_md" parameter)                             |
-+--------------------------------+------------------------------------------------------------------------+
-| **Paragraphs**                 | Extracts "Paragraph" objects with rich metadata serving as additional  |
-|                                | context for LLM (e.g., *"Style: Normal, Table: 3, Row: 1, Column: 3,   |
-|                                | Table Cell"*)                                                          |
-+--------------------------------+------------------------------------------------------------------------+
-| **Headings**                   | Preserves heading levels and formats as markdown headings when in      |
-|                                | markdown mode                                                          |
-+--------------------------------+------------------------------------------------------------------------+
-| **Lists**                      | Maintains list hierarchy, numbering, and formatting with proper        |
-|                                | indentation and list type information                                  |
-+--------------------------------+------------------------------------------------------------------------+
-| **Tables**                     | Preserves table structure and formats tables in markdown mode (can be  |
-|                                | excluded using "include_tables=False")                                 |
-+--------------------------------+------------------------------------------------------------------------+
-| **Headers & Footers**          | Captures document headers and footers with appropriate metadata (can   |
-|                                | be excluded using "include_headers=False" and "include_footers=False") |
-+--------------------------------+------------------------------------------------------------------------+
-| **Footnotes**                  | Extracts footnotes with references and preserves connection to         |
-|                                | original text (can be excluded using "include_footnotes=False")        |
-+--------------------------------+------------------------------------------------------------------------+
-| **Comments**                   | Preserves document comments with author information and timestamps     |
-|                                | (can be excluded using "include_comments=False")                       |
-+--------------------------------+------------------------------------------------------------------------+
-| **Text Boxes**                 | Extracts text from various text box formats (can be excluded using     |
-|                                | "include_textboxes=False")                                             |
-+--------------------------------+------------------------------------------------------------------------+
-| **Images**                     | Extracts embedded images and converts them to "Image" objects for      |
-|                                | further processing with vision models (can be excluded using           |
-|                                | "include_images=False")                                                |
-+--------------------------------+------------------------------------------------------------------------+
-
-
-💥 Beyond Standard Libraries
-============================
-
-Our evaluation of popular open-source DOCX processing libraries
-revealed critical limitations: most packages either omit important
-elements (e.g. comments, textboxes, or embedded images), fail to
-handle complex structures (such as inconsistently formatted tables),
-or cannot extract paragraphs with the rich metadata needed for LLM
-processing.
-
-While it would have been much easier to use an existing open-source
-package as a dependency, these limitations compelled us to build a
-custom solution. The "DocxConverter" was developed specifically to
-address these gaps, ensuring extraction of the most commonly occurring
-DOCX elements with their contextual relationships preserved.
++---------------------------+----------------------------------------------------+---------------------------+
+| Elements                  | Extraction Details                                 | Control Parameter         |
+|                           |                                                    | (Default)                 |
+|===========================|====================================================|===========================|
+| **Text**                  | Extracts the full document text as raw text, and   | "apply_markdown=True"     |
+|                           | optionally applies markdown processing and         |                           |
+|                           | formatting while preserving raw text separately    |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Paragraphs**            | Extracts "Paragraph" objects with rich metadata    | *Always included*         |
+|                           | serving as additional context for LLM (e.g.,       |                           |
+|                           | *"Style: Normal, Table: 3, Row: 1, Column: 3,      |                           |
+|                           | Table Cell"*)                                      |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Headings**              | Preserves heading levels and formats as markdown   | *Always included*         |
+|                           | headings when in markdown mode                     |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Lists**                 | Maintains list hierarchy, numbering, and           | *Always included*         |
+|                           | formatting with proper indentation and list type   |                           |
+|                           | information                                        |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Tables**                | Preserves table structure and formats tables in    | "include_tables=True"     |
+|                           | markdown mode                                      |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Headers & Footers**     | Captures document headers and footers with         | "include_headers=True" /  |
+|                           | appropriate metadata                               | "include_footers=True"    |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Footnotes**             | Extracts footnotes with references and preserves   | "include_footnotes=True"  |
+|                           | connection to original text                        |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Comments**              | Preserves document comments with author            | "include_comments=True"   |
+|                           | information and timestamps                         |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Links**                 | Processes and formats hyperlinks, preserving both  | "include_links=True"      |
+|                           | link text and target URLs                          |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Text Boxes**            | Extracts text from various text box formats        | "include_textboxes=True"  |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Inline Formatting**     | Applies inline formatting such as bold, italic,    | "include_inline_formatti  |
+|                           | underline, etc. when in markdown mode              | ng=True"                  |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Images**                | Extracts embedded images and converts them to      | "include_images=True"     |
+|                           | "Image" objects for further processing with vision |                           |
+|                           | models                                             |                           |
++---------------------------+----------------------------------------------------+---------------------------+
 
 
 ℹ️ Current Limitations
 ======================
 
-DocxConverter has the following limitations, some of which are
-intentional:
-
-* Character-level styling (e.g., bold, underline, italics,
-  strikethrough) is *intentionally skipped* to ensure proper matching
-  of processed paragraphs and sentences in the DOCX content.
-
-* Nested tables are preserved but may lead to table cell duplication.
-
-* Consecutive textboxes are preserved but may lead to textbox content
-  duplication.
+DocxConverter has the following limitations:
 
 * Drawings such as charts are skipped as it is challenging to
   represent them in text format.
+
+* Inline markdown formatting (bold, italic, etc.) and hyperlink
+  formatting are not supported in specially marked sections (headers,
+  footers, footnotes, comments).
+
+* Extraction of generated table of contents (ToC) is not supported. (A
+  ToC is an automatically generated list of document headings with
+  page numbers that Word creates based on heading styles.)
+
+* When converting very long DOCX files with complex formatting,
+  performance may be very slow. (Our goal is to improve this in the
+  future.)
 
 
 # ==== advanced_usage ====
@@ -9889,7 +9887,8 @@ information extraction workflows.
 
 class contextgem.public.documents.Document(**data)
 
-   Bases: "_AssignedInstancesProcessor"
+   Bases: "_AssignedInstancesProcessor",
+   "_MarkdownTextAttributesProcessor"
 
    Represents a document containing textual and visual content for
    analysis.
@@ -10421,10 +10420,13 @@ class contextgem.public.converters.DocxConverter
    footnotes, comments, and other elements from DOCX files by directly
    parsing Word XML.
 
+   The converter is read-only and does not modify the source DOCX file
+   in any way. It only extracts content for conversion to ContextGem
+   document object or text formats.
+
    The resulting ContextGem document is populated with the following:
 
-   * Raw text: The raw text of the DOCX file converted to markdown or
-     left as raw text, based on the "raw_text_to_md" flag.
+   * Raw text: The raw text of the DOCX file.
 
    * Paragraphs: Paragraph objects with the following metadata:
 
@@ -10454,13 +10456,18 @@ class contextgem.public.converters.DocxConverter
          with open("path/to/document.docx", "rb") as docx_file_object:
              document = converter.convert(docx_file_object)
 
-         # You can also use it as a standalone text extractor
+         # Perform data extraction on the resulting Document object
+         # document.add_aspects(...)
+         # document.add_concepts(...)
+         # llm.extract_all(document)
+
+         # You can also use DocxConverter instance as a standalone text extractor
          docx_text = converter.convert_to_text_format(
              "path/to/document.docx",
              output_format="markdown",  # or "raw"
          )
 
-   convert_to_text_format(docx_path_or_file, output_format='markdown', include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, strict_mode=False)
+   convert_to_text_format(docx_path_or_file, output_format='markdown', include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_links=True, include_inline_formatting=True, strict_mode=False)
 
       Converts a DOCX file directly to text without creating a
       ContextGem Document.
@@ -10492,6 +10499,13 @@ class contextgem.public.converters.DocxConverter
          * **include_textboxes** ("bool") -- If True, include textbox
            content (default: True)
 
+         * **include_links** ("bool") -- If True, process and format
+           hyperlinks (default: True)
+
+         * **include_inline_formatting** ("bool") -- If True, apply
+           inline formatting (bold, italic, etc.) in markdown mode
+           (default: True)
+
          * **strict_mode** ("bool") -- If True, raise exceptions for
            any processing error instead of skipping problematic
            elements (default: False)
@@ -10510,10 +10524,6 @@ class contextgem.public.converters.DocxConverter
         * Document structure elements (headings, lists, tables) are
           preserved
 
-        * Character-level formatting (bold, italic, underline) is
-          intentionally skipped to ensure proper text matching between
-          markdown and DOCX content
-
         * Headings are converted to markdown heading syntax (# Heading
           1, ## Heading 2, etc.)
 
@@ -10525,7 +10535,7 @@ class contextgem.public.converters.DocxConverter
         * Footnotes, comments, headers, and footers are included as
           specially marked sections
 
-   convert(docx_path_or_file, raw_text_to_md=True, include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_images=True, strict_mode=False)
+   convert(docx_path_or_file, apply_markdown=True, raw_text_to_md=None, include_tables=True, include_comments=True, include_footnotes=True, include_headers=True, include_footers=True, include_textboxes=True, include_images=True, include_links=True, include_inline_formatting=True, strict_mode=False)
 
       Converts a DOCX file into a ContextGem Document object.
 
@@ -10534,8 +10544,17 @@ class contextgem.public.converters.DocxConverter
            "typing.BinaryIO") -- Path to the DOCX file (as string or
            Path object) or a file-like object
 
-         * **raw_text_to_md** ("bool") -- If True, convert raw text to
-           markdown (default: True)
+         * **apply_markdown** ("bool") -- If True, applies markdown
+           processing and formatting to the document content while
+           preserving raw text separately (default: True)
+
+         * **raw_text_to_md** ("bool") -- [DEPRECATED] Use
+           apply_markdown instead. Will be removed in v1.0.0. Note:
+           This parameter previously controlled whether raw_text would
+           contain raw or markdown text. The new apply_markdown
+           parameter instead controls whether to apply markdown
+           processing while keeping raw text and processed text
+           separate.
 
          * **include_tables** ("bool") -- If True, include tables in
            the output (default: True)
@@ -10557,6 +10576,13 @@ class contextgem.public.converters.DocxConverter
 
          * **include_images** ("bool") -- If True, extract and include
            images (default: True)
+
+         * **include_links** ("bool") -- If True, process and format
+           hyperlinks (default: True)
+
+         * **include_inline_formatting** ("bool") -- If True, apply
+           inline formatting (bold, italic, etc.) in markdown mode
+           (default: True)
 
          * **strict_mode** ("bool") -- If True, raise exceptions for
            any processing error instead of skipping problematic
@@ -15972,7 +15998,7 @@ restricting certain attribute modifications after initial assignment.
 
 class contextgem.public.paragraphs.Paragraph(**data)
 
-   Bases: "_ParasAndSentsBase"
+   Bases: "_ParasAndSentsBase", "_MarkdownTextAttributesProcessor"
 
    Represents a paragraph of a document with its raw text content and
    constituent sentences.

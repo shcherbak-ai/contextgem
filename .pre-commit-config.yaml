@@ -74,3 +74,21 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+
+      # Bandit security check for contextgem
+      - id: bandit-contextgem
+        name: Bandit security check (contextgem)
+        entry: poetry run bandit -r contextgem
+        pass_filenames: false
+        language: system
+        files: '\.py$'
+        stages: [pre-commit]
+      
+      # Bandit security check for tests and dev (skip B101 - assert usage)
+      - id: bandit-tests-dev
+        name: Bandit security check (tests/dev)
+        entry: poetry run bandit -r tests dev --skip B101
+        pass_filenames: false
+        language: system
+        files: '\.py$'
+        stages: [pre-commit]

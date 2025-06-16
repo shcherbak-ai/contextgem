@@ -1,4 +1,4 @@
-name: "CodeQL"
+name: CodeQL
 
 on:
   push:
@@ -50,8 +50,6 @@ jobs:
       with:
         path: |
           ~/.cache/pip
-          ~/Library/Caches/pip
-          ~\AppData\Local\pip\Cache
         key: pip-${{ runner.os }}-python-${{ hashFiles('**/poetry.lock') }}
 
     - name: Install dependencies

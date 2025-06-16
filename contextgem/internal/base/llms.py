@@ -488,9 +488,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         )
 
         if not aspect._is_processed:
-            assert (
-                not aspect.extracted_items
-            ), "Aspect is not marked as processed, yet it has extracted items."
+            if aspect.extracted_items:
+                raise RuntimeError(
+                    "Aspect is not marked as processed, yet it has extracted items."
+                )
             raise ValueError(
                 f"Aspect `{aspect.name}` is not yet processed. "
                 f"Use `extract_aspects_from_document` first.`"
@@ -933,11 +934,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 if max_paragraphs_to_analyze_per_call
                 else len(paragraphs)
             )
-            paragraphs_chunks = _chunk_list(paragraphs, max_paras_per_call)
+            paragraphs_chunks: list[list[Paragraph]] = _chunk_list(
+                paragraphs, max_paras_per_call
+            )
             logger.debug(f"Processing {max_paras_per_call} paragraphs per LLM call.")
 
             for paragraphs_chunk in paragraphs_chunks:
-                assert len(paragraphs_chunk)
+                if not paragraphs_chunk:
+                    raise RuntimeError("Paragraphs chunk cannot be empty.")
 
                 # Aspect (document-level)
                 if extraction_level == "aspect_document_text":
@@ -951,6 +955,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         "reference_depth": reference_depth,
                         "output_language": llm.output_language,
                     }
+                    if all(p._md_text for p in paragraphs_chunk):
+                        # Add guidance that the paragraphs are in markdown format, e.g. when document
+                        # was converted from DOCX using DocxConverter in markdown mode.
+                        prompt_kwargs["is_markdown"] = True
 
                 # Concept (document- and aspect-levels)
                 elif extraction_level in {
@@ -970,28 +978,55 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     if add_references:
                         # List of document/aspect paragraphs used for concept extraction with references
                         prompt_kwargs["paragraphs"] = paragraphs_chunk
+                        if all(p._md_text for p in paragraphs_chunk):
+                            # Add guidance that the paragraphs are in markdown format, e.g. when document
+                            # was converted from DOCX using DocxConverter in markdown mode.
+                            prompt_kwargs["is_markdown"] = True
                     else:
                         # Raw text of document/aspect used for concept extraction
                         if isinstance(source, Document) and len(
                             paragraphs_chunk
                         ) == len(source.paragraphs):
-                            # If the document is being processed as a whole, use the raw text of the document,
-                            # which can be markdown (if converted from DOCX) or raw text.
+                            # If the document is being processed as a whole, use _md_text of the document,
+                            # if available (e.g. after being converted from DOCX using DocxConverter in markdown mode),
+                            # otherwise use raw_text.
+                            if source._md_text:
+                                text = source._md_text
+                                prompt_kwargs["is_markdown"] = True
+                            else:
+                                text = source.raw_text
                             prompt_kwargs["text"] = _clean_text_for_llm_prompt(
-                                source.raw_text,
+                                text,
                                 preserve_linebreaks=True,
+                                strip_text=True,
                             )  # markdown or raw text of the document
                         else:
                             # If an aspect is being processed, or if the document is being processed in chunks,
-                            # use the raw text of the paragraphs, which is cleaned of markdown and other formatting.
-                            prompt_kwargs["text"] = "\n\n".join(
-                                [
-                                    _clean_text_for_llm_prompt(
-                                        p.raw_text, preserve_linebreaks=False
-                                    )
-                                    for p in paragraphs_chunk
-                                ]
-                            )
+                            # use _md_text of the paragraphs, if available (e.g. when document was converted
+                            # from DOCX using DocxConverter in markdown mode), otherwise use raw_text.
+                            if all(p._md_text for p in paragraphs_chunk):
+                                prompt_kwargs["text"] = "\n\n".join(
+                                    [
+                                        _clean_text_for_llm_prompt(
+                                            p._md_text,
+                                            preserve_linebreaks=True,  # preserve markdown markers etc.
+                                            strip_text=False,  # preserve markdown list indentation etc.
+                                        )
+                                        for p in paragraphs_chunk
+                                    ]
+                                )
+                                prompt_kwargs["is_markdown"] = True
+                            else:
+                                prompt_kwargs["text"] = "\n\n".join(
+                                    [
+                                        _clean_text_for_llm_prompt(
+                                            p.raw_text,
+                                            preserve_linebreaks=False,
+                                            strip_text=True,
+                                        )
+                                        for p in paragraphs_chunk
+                                    ]
+                                )
 
                 else:
                     raise ValueError(
@@ -1016,7 +1051,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             logger.debug(f"Processing {max_images_per_call} images per LLM call.")
 
             for images_chunk in images_chunks:
-                assert len(images_chunk)
+                if not images_chunk:
+                    raise RuntimeError("Images chunk cannot be empty.")
 
                 # Concept (from images)
                 if extraction_level == "concept_document_vision":
@@ -1270,9 +1306,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 message_kwargs["prompt_kwargs"][
                     "concepts"
                 ] = filtered_instances_to_process
-                assert not any(
-                    i in filtered_instances_to_process for i in discarded_instances
-                )
+                if any(i in filtered_instances_to_process for i in discarded_instances):
+                    raise RuntimeError(
+                        "Discarded instances found in filtered instances list."
+                    )
                 logger.debug(
                     f"Total {extracted_item_type}s discarded: {len(discarded_instances)}"
                 )
@@ -1816,7 +1853,11 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     func=self._extract_items_from_instances,
                     data_list=data_list,
                 )
-                assert len(results) == len(data_chunks)
+                if len(results) != len(data_chunks):
+                    raise RuntimeError(
+                        f"Number of results ({len(results)}) does not match "
+                        f"number of data chunks ({len(data_chunks)})."
+                    )
 
                 # Update usage stats and cost
                 for result in results:
@@ -1971,13 +2012,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             item_type_name: Name of the item type for the error message (e.g., "sub-aspects")
 
         Raises:
-            AssertionError: If any child item has an incorrect nesting level
+            ValueError: If any child item has an incorrect nesting level
         """
         expected_level = parent_item._nesting_level + 1
-        assert all(item._nesting_level == expected_level for item in child_items), (
-            f"{item_type_name.capitalize()} must have a nesting level of `{expected_level}`."
-            f" Current nesting levels: {[item._nesting_level for item in child_items]}"
-        )
+        if not all(item._nesting_level == expected_level for item in child_items):
+            raise ValueError(
+                f"{item_type_name.capitalize()} must have a nesting level of `{expected_level}`. "
+                f"Current nesting levels: {[item._nesting_level for item in child_items]}"
+            )
 
     def _get_usage_or_cost(
         self,

@@ -126,8 +126,11 @@ def vcr_before_record_response(response):
             if "id" in body:
                 body["id"] = "chatcmpl-DUMMY"
             response["body"]["string"] = json.dumps(body)
-        except:
-            pass
+        except (json.JSONDecodeError, TypeError, UnicodeDecodeError):
+            # Skip redaction if response body is not valid JSON or lacks expected structure
+            logger.debug(
+                "Could not redact response body - not valid JSON or unexpected structure"
+            )
     vcr_count_recording(response)
     return response
 
@@ -240,6 +243,7 @@ class TestUtils:
             "_reference_paragraphs",
             "_reference_sentences",
             "_is_processed",
+            "_md_text",
         ]
 
         # To / from dict

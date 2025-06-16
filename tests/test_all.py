@@ -26,7 +26,6 @@ import os
 import sys
 import tempfile
 import warnings
-import xml.etree.ElementTree as ET
 import zipfile
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -38,6 +37,7 @@ from typing import Any, Dict, List, Literal, Optional
 import pytest
 from _pytest.nodes import Item as PytestItem
 from dotenv import load_dotenv
+from lxml import etree
 from pydantic import BaseModel, Field, field_validator
 
 from contextgem import *
@@ -51,11 +51,12 @@ from contextgem.internal.base.attrs import (
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.base.llms import _GenericLLMProcessor
-from contextgem.internal.converters.docx import (
-    WORD_XML_NAMESPACES,
+from contextgem.internal.converters.docx import _DocxPackage
+from contextgem.internal.converters.docx.exceptions import (
+    DocxConverterError,
     DocxFormatError,
-    _DocxPackage,
 )
+from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import _LLMCost, _LLMUsage
 from contextgem.internal.items import (
     _BooleanItem,
@@ -81,6 +82,7 @@ from tests.utils import (
     get_project_root_path,
     get_test_document_text,
     get_test_img,
+    read_text_file,
     remove_file,
     vcr_before_record_request,
     vcr_before_record_response,
@@ -147,10 +149,47 @@ class TestAll(TestUtils):
     test_docx_nda_path = os.path.join(
         get_project_root_path(), "tests", "docx_files", "en_nda_with_anomalies.docx"
     )
+    test_docx_nda_ua_path = os.path.join(
+        get_project_root_path(), "tests", "docx_files", "ua_nda_with_anomalies.docx"
+    )
     test_docx_badly_formatted_path = os.path.join(
         get_project_root_path(), "tests", "docx_files", "badly_formatted.docx"
     )
     document_docx = DocxConverter().convert(test_docx_nda_path)
+    document_docx_ua = DocxConverter().convert(test_docx_nda_ua_path)
+    # Match badly formatted converted DOCX content (default mode - all content is included)
+    test_badly_formatted_converted_md_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_md.txt",
+        )
+    )
+    test_badly_formatted_converted_raw_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_raw.txt",
+        )
+    )
+    test_badly_formatted_converted_md_paras_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_paras_md.txt",
+        )
+    )
+    test_badly_formatted_converted_raw_paras_text = read_text_file(
+        os.path.join(
+            get_project_root_path(),
+            "tests",
+            "docx_converted",
+            "badly_formatted_paras_raw.txt",
+        )
+    )
 
     # Document pipeline
     document_pipeline = DocumentPipeline(
@@ -383,8 +422,7 @@ class TestAll(TestUtils):
         e.g. models run on Ollama local server.
         """
         document = Document(
-            raw_text="Non-disclosure agreement\n\n"
-            "The parties shall keep the data confidential.",
+            raw_text="The title of this contract is Non-Disclosure Agreement.",
         )
         concept = StringConcept(
             name="Contract title", description="The title of the contract."
@@ -405,13 +443,14 @@ class TestAll(TestUtils):
             self.log_extracted_items_for_instance(extracted_concepts[0])
 
         # Ollama
-        # Non-reasoning LLM
-        llm_non_reasoning_ollama = DocumentLLM(
-            model="ollama/llama3.1:8b",
+        # MoE LLM
+        llm_moe_ollama = DocumentLLM(
+            model="ollama/deepseek-v2:16b",
             api_base="http://localhost:11434",
             seed=123,
         )
-        extract_with_local_llm(llm_non_reasoning_ollama)
+        extract_with_local_llm(llm_moe_ollama)
+        # Reasoning (CoT-capable) LLM
         llm_reasoning_ollama = DocumentLLM(
             model="ollama/deepseek-r1:32b",
             api_base="http://localhost:11434",
@@ -718,9 +757,12 @@ class TestAll(TestUtils):
         Tests for constructing a Paragraph instance and attaching it to a Document instance.
         """
         paragraph = Paragraph(raw_text="Test paragraph")
+        assert paragraph.raw_text
+        assert not paragraph._md_text  # markdown text is not populated from raw text
         self.check_custom_data_json_serializable(paragraph)
         document = Document(paragraphs=[paragraph])
         assert document.raw_text  # to be populated from paragraphs
+        assert not document._md_text  # markdown text is not populated from paragraphs
         with pytest.raises(ValueError):
             Paragraph()
         with pytest.raises(ValueError):
@@ -747,12 +789,19 @@ class TestAll(TestUtils):
             linebreaks
             """,
         )
+        # Test with non-empty text but containing only control chars
+        with pytest.raises(ValueError, match="control characters"):
+            Paragraph(raw_text=" \u200c ")  # zero-width non-joiner
 
     def test_init_sentence(self):
         """
         Tests for constructing a Sentence instance and attaching it to a Paragraph instance.
         """
         sentence = Sentence(raw_text="Test sentence")
+        assert sentence.raw_text
+        assert not hasattr(
+            sentence, "_md_text"
+        )  # markdown text does not apply to sentences
         self.check_custom_data_json_serializable(sentence)
         Paragraph(raw_text=sentence.raw_text, sentences=[sentence])
         # Warning is logged if linebreaks occur in additional context
@@ -765,6 +814,9 @@ class TestAll(TestUtils):
             linebreaks
             """,
         )
+        # Test with non-empty text but containing only control chars
+        with pytest.raises(ValueError, match="control characters"):
+            Sentence(raw_text=" \u200c ")  # zero-width non-joiner
 
     def test_init_aspect(self):
         """
@@ -2532,6 +2584,7 @@ class TestAll(TestUtils):
         _IntegerOrFloatItem(value=1)
         _IntegerOrFloatItem(value=1.0)
         _JsonObjectItem(value={"hello": "world"})
+        _LabelItem(value=["NDA"])
         with pytest.raises(TypeError):
             _ExtractedItem(value=1)
         with pytest.raises(ValueError):
@@ -2557,6 +2610,10 @@ class TestAll(TestUtils):
                 value="Random string",
                 extra=True,  # extra fields not permitted
             )
+        with pytest.raises(ValueError):
+            _LabelItem(value=[])
+        with pytest.raises(ValueError):
+            _LabelItem(value="NDA")
 
         # List field items' unique IDs
         para = Paragraph(raw_text="Test")
@@ -2609,6 +2666,9 @@ class TestAll(TestUtils):
                 ],
             )
             assert document.raw_text  # to be populated from paragraphs
+            assert (
+                not document._md_text
+            )  # markdown text is not populated from paragraphs
             assert all(
                 i.sentences for i in document.paragraphs
             )  # to be segmented from paragraphs
@@ -2697,6 +2757,9 @@ class TestAll(TestUtils):
                         self.test_img_png,
                     ]
                 )
+            # Test with non-empty text but containing only control chars
+            with pytest.raises(ValueError, match="control characters"):
+                Document(raw_text=" \u200c ")  # zero-width non-joiner
         # Document pipeline initialization
         elif isinstance(context, DocumentPipeline):
             DocumentPipeline()  # works as we can interactive add aspects and concepts after initialization
@@ -3810,7 +3873,8 @@ class TestAll(TestUtils):
             document,
             document_docx,
             document_ua,
-            # document_zh
+            document_zh,
+            document_docx_ua,
         ],
     )
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
@@ -4048,7 +4112,8 @@ class TestAll(TestUtils):
             document,
             document_docx,
             document_ua,
-            # document_zh
+            document_zh,
+            document_docx_ua,
         ],
     )
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
@@ -4850,7 +4915,7 @@ class TestAll(TestUtils):
             reload_logger_settings,
         )
 
-    @pytest.mark.parametrize("raw_text_to_md", [True, False])
+    @pytest.mark.parametrize("apply_markdown", [True, False])
     @pytest.mark.parametrize("strict_mode", [True, False])
     @pytest.mark.parametrize(
         "include_options",
@@ -4861,13 +4926,13 @@ class TestAll(TestUtils):
         ],
     )
     def test_docx_converter(
-        self, raw_text_to_md: bool, strict_mode: bool, include_options: str
+        self, apply_markdown: bool, strict_mode: bool, include_options: str
     ):
         """
         Tests for the DocxConverter class, covering both convert() and convert_to_text_format() methods.
 
         This test uses parametrization to test different combinations of:
-        - raw_text_to_md (True/False)
+        - apply_markdown (True/False)
         - strict_mode (True/False)
         - include_options (default/minimal/no_images)
 
@@ -4883,6 +4948,8 @@ class TestAll(TestUtils):
                 "include_headers": True,
                 "include_footers": True,
                 "include_textboxes": True,
+                "include_links": True,
+                "include_inline_formatting": True,
                 "include_images": True,
             },
             "minimal": {
@@ -4892,6 +4959,8 @@ class TestAll(TestUtils):
                 "include_headers": False,
                 "include_footers": False,
                 "include_textboxes": False,
+                "include_links": False,
+                "include_inline_formatting": False,
                 "include_images": False,
             },
             "no_images": {
@@ -4901,6 +4970,8 @@ class TestAll(TestUtils):
                 "include_headers": True,
                 "include_footers": True,
                 "include_textboxes": True,
+                "include_links": True,
+                "include_inline_formatting": True,
                 "include_images": False,
             },
         }[include_options]
@@ -4922,6 +4993,7 @@ class TestAll(TestUtils):
                 assert package.headers, "Headers must be populated"
                 assert package.footers, "Footers must be populated"
                 assert package.images, "Images must be populated"
+                assert package.hyperlinks, "Hyperlinks must be populated"
 
                 logger.debug("All _DocxPackage attributes successfully verified")
             finally:
@@ -4943,19 +5015,63 @@ class TestAll(TestUtils):
         # Create converter instance
         converter = DocxConverter()
 
+        # Test with invalid file extension
+        with pytest.raises(DocxConverterError):
+            converter.convert("random_path.txt")
+
         # Helper function to verify Document objects
         def verify_document_equality(documents):
             # Check that all documents have the expected properties
             for doc in documents:
                 assert isinstance(doc, Document)
                 assert doc.raw_text, "Document should have raw text"
+                if include_options == "default":  # when all content is included
+                    assert (
+                        doc.raw_text.strip()
+                        == self.test_badly_formatted_converted_raw_text
+                    ), "Raw text does not match"
+                if apply_markdown:
+                    assert (
+                        doc._md_text
+                    ), "Document should have markdown text when markdown is enabled"
+                    if include_options == "default":  # when all content is included
+                        assert (
+                            doc._md_text.strip()
+                            == self.test_badly_formatted_converted_md_text
+                        ), "Markdown text does not match"
+                    with pytest.raises(ValueError):
+                        doc._md_text = "Random md text"  # cannot be set once populated
+                else:
+                    assert (
+                        doc._md_text is None
+                    ), "Document should not have markdown text when markdown is disabled"
                 assert doc.paragraphs, "Document should have paragraphs"
 
                 # Verify that each sentence inherits additional_context from its paragraph
+                paragraphs_raw_text = ""
+                paragraphs_md_text = ""
                 for paragraph in doc.paragraphs:
+                    assert paragraph.raw_text, "Paragraph should have raw text"
+                    paragraphs_raw_text += paragraph.raw_text + "\n"
+                    if apply_markdown:
+                        assert (
+                            paragraph._md_text
+                        ), "Paragraph should have markdown text when markdown is enabled"
+                        paragraphs_md_text += paragraph._md_text + "\n"
+                        with pytest.raises(ValueError):
+                            paragraph._md_text = (
+                                "Random md text"  # cannot be set once populated
+                            )
+                    else:
+                        assert (
+                            paragraph._md_text is None
+                        ), "Paragraph should not have markdown text when markdown is disabled"
                     assert (
                         paragraph.additional_context
                     ), "Paragraph should have additional context"
+                    paragraphs_raw_text += paragraph.additional_context + "\n\n"
+                    if apply_markdown:
+                        paragraphs_md_text += paragraph.additional_context + "\n\n"
                     for sentence in paragraph.sentences:
                         assert (
                             sentence.additional_context == paragraph.additional_context
@@ -4963,16 +5079,52 @@ class TestAll(TestUtils):
                         assert (
                             sentence.custom_data == paragraph.custom_data
                         ), f"Sentence custom_data should match its paragraph's custom_data"
+                if include_options == "default":  # when all content is included
+                    assert (
+                        paragraphs_raw_text.strip()
+                        == self.test_badly_formatted_converted_raw_paras_text
+                    ), "Raw paragraphs text does not match"
+                if apply_markdown:
+                    if include_options == "default":  # when all content is included
+                        assert (
+                            paragraphs_md_text.strip()
+                            == self.test_badly_formatted_converted_md_paras_text
+                        ), "Markdown paragraphs text does not match"
+                else:
+                    assert (
+                        paragraphs_md_text == ""
+                    ), "Markdown paragraphs text should be empty when markdown is disabled"
 
             # Check that all documents have the same content
             first_doc = documents[0]
             for i, doc in enumerate(documents[1:], 1):
+                # Compare full texts
                 assert (
                     doc.raw_text == first_doc.raw_text
                 ), f"Document {i} has different raw text"
+                if apply_markdown:
+                    assert (
+                        doc._md_text and doc._md_text == first_doc._md_text
+                    ), f"Document {i} has different markdown text"
                 assert len(doc.paragraphs) == len(
                     first_doc.paragraphs
                 ), f"Document {i} has different paragraph count"
+                # Compare paragraphs
+                for p_idx, para in enumerate(doc.paragraphs):
+                    assert (
+                        para.raw_text == first_doc.paragraphs[p_idx].raw_text
+                    ), f"Paragraph {p_idx} has different raw text"
+                    if apply_markdown:
+                        assert (
+                            para._md_text
+                            and para._md_text == first_doc.paragraphs[p_idx]._md_text
+                        ), f"Paragraph {p_idx} has different markdown text"
+                    for sent_idx, sent in enumerate(para.sentences):
+                        assert (
+                            sent.raw_text
+                            == first_doc.paragraphs[p_idx].sentences[sent_idx].raw_text
+                        ), f"Sentence {sent_idx} has different raw text"
+                        # markdown does not apply to sentences
 
                 # Check images if they should be included
                 if include_params["include_images"]:
@@ -4987,7 +5139,7 @@ class TestAll(TestUtils):
         verify_docx_package_attributes(self.test_docx_badly_formatted_path)
         doc_from_path = converter.convert(
             self.test_docx_badly_formatted_path,
-            raw_text_to_md=raw_text_to_md,
+            apply_markdown=apply_markdown,
             strict_mode=strict_mode,
             **include_params,
         )
@@ -4998,7 +5150,7 @@ class TestAll(TestUtils):
             verify_docx_package_attributes(file_obj)
             doc_from_obj = converter.convert(
                 file_obj,
-                raw_text_to_md=raw_text_to_md,
+                apply_markdown=apply_markdown,
                 strict_mode=strict_mode,
                 **include_params,
             )
@@ -5009,7 +5161,7 @@ class TestAll(TestUtils):
         verify_docx_package_attributes(bytesio)
         doc_from_bytesio = converter.convert(
             bytesio,
-            raw_text_to_md=raw_text_to_md,
+            apply_markdown=apply_markdown,
             strict_mode=strict_mode,
             **include_params,
         )
@@ -5063,23 +5215,125 @@ class TestAll(TestUtils):
                     result == first_result
                 ), f"Text result {i} is different for format {output_format}"
 
+            # Match with the converted Document text content (must be the same)
+            for text_result in text_results:
+                if not include_params["include_images"]:
+                    if output_format == "raw":
+                        assert all(text_result == doc.raw_text for doc in documents)
+                    if apply_markdown and output_format == "markdown":
+                        assert all(text_result == doc._md_text for doc in documents)
+
+    def test_docx_converter_include_params(self):
+        """
+        Test that disabling include parameters affects document text content.
+        """
+        converter = DocxConverter()
+
+        # Define all include parameters to test
+        # Note: include_images doesn't affect md or raw text content, so we skip it
+        include_params = [
+            "include_tables",
+            "include_comments",
+            "include_footnotes",
+            "include_headers",
+            "include_footers",
+            "include_textboxes",
+            "include_links",
+            "include_inline_formatting",
+        ]
+
+        params_not_affecting_raw_text = [
+            "include_links",
+            "include_inline_formatting",
+        ]
+
+        # Try with markdown and without markdown
+        for apply_markdown in [True, False]:
+
+            # Convert with all parameters True (baseline default)
+            baseline_doc = converter.convert(
+                self.test_docx_badly_formatted_path, apply_markdown=apply_markdown
+            )
+
+            # Test each parameter by setting it to False while others remain True
+            for param_name in include_params:
+                kwargs = {param: True for param in include_params}
+                kwargs[param_name] = False
+
+                test_doc = converter.convert(
+                    self.test_docx_badly_formatted_path,
+                    apply_markdown=apply_markdown,
+                    **kwargs,
+                )
+
+                # Assert that text content is different when parameter is disabled
+                if param_name not in params_not_affecting_raw_text:
+                    assert (
+                        test_doc.raw_text != baseline_doc.raw_text
+                    ), f"raw_text should differ when {param_name}=False"
+                    test_doc_raw_paras_merged = "".join(
+                        p.raw_text for p in test_doc.paragraphs
+                    )
+                    baseline_doc_raw_paras_merged = "".join(
+                        p.raw_text for p in baseline_doc.paragraphs
+                    )
+                    assert (
+                        test_doc_raw_paras_merged != baseline_doc_raw_paras_merged
+                    ), f"Paragraphs' raw_text should differ when {param_name}=False"
+                if apply_markdown:
+                    assert (
+                        test_doc._md_text != baseline_doc._md_text
+                    ), f"md_text should differ when {param_name}=False"
+                    test_doc_md_paras_merged = "".join(
+                        p._md_text for p in test_doc.paragraphs
+                    )
+                    baseline_doc_md_paras_merged = "".join(
+                        p._md_text for p in baseline_doc.paragraphs
+                    )
+                    assert (
+                        test_doc_md_paras_merged != baseline_doc_md_paras_merged
+                    ), f"Paragraphs' md_text should differ when {param_name}=False"
+
     @pytest.mark.vcr
-    def test_docx_converter_llm_extract(self):
+    @pytest.mark.parametrize("apply_markdown", [True, False])
+    def test_docx_converter_llm_extract(self, apply_markdown: bool):
         """
         Tests for LLM extraction from DOCX files.
         """
 
         converter = DocxConverter()
 
-        doc = converter.convert(self.test_docx_badly_formatted_path)
+        doc = converter.convert(
+            self.test_docx_badly_formatted_path, apply_markdown=apply_markdown
+        )
+        if apply_markdown:
+            assert (
+                doc._md_text
+            ), "Document should have markdown text when markdown is enabled"
+            for para in doc.paragraphs:
+                assert (
+                    para._md_text
+                ), "Paragraph should have markdown text when markdown is enabled"
+        else:
+            assert (
+                doc._md_text is None
+            ), "Document should not have markdown text when markdown is disabled"
+            for para in doc.paragraphs:
+                assert (
+                    para._md_text is None
+                ), "Paragraph should not have markdown text when markdown is disabled"
+
+        # Create a new LLM group with new usage stats for each test iteration,
+        # as we will supply markdown or raw text based on apply_markdown flag
+        # and we need to isolate such prompts for inspection.
+        llm_group = DocumentLLMGroup(
+            llms=[
+                DocumentLLM(**self._llm_extractor_text_kwargs_openai),
+                DocumentLLM(**self._llm_extractor_vision_kwargs_openai),
+            ]
+        )
 
         md_test_chars = ["**", "|", "##"]
-
-        def check_not_markdown(text: str) -> None:
-            """
-            Checks that the text does not contain markdown.
-            """
-            assert not any(i in text for i in md_test_chars)
 
         def check_is_markdown(text: str, expect_newlines: bool = False) -> None:
             """
@@ -5090,8 +5344,121 @@ class TestAll(TestUtils):
             else:
                 assert any(i in text for i in md_test_chars)
 
+        def check_not_markdown(text: str) -> None:
+            """
+            Checks that the text does not contain markdown.
+            """
+            assert not any(i in text for i in md_test_chars)
+
+        def check_markdown_in_prompt(
+            prompt_kwargs_key: str,
+            expect_newlines: bool = False,
+        ) -> None:
+            """
+            Validates that prompt content contains or excludes markdown formatting based on the apply_markdown flag.
+
+            This function inspects LLM call objects to verify that text content submitted in prompts
+            either contains markdown formatting (when apply_markdown=True) or excludes it (when
+            apply_markdown=False). It checks both the specific prompt parameter content and the
+            full rendered prompt.
+
+            :param prompt_kwargs_key: The key in prompt_kwargs to check ('text' or 'paragraphs')
+            :type prompt_kwargs_key: str
+            :param expect_newlines: Whether to expect newlines in addition to markdown characters
+            :type expect_newlines: bool
+            :raises ValueError: If an invalid prompt_kwargs_key is provided
+            """
+            # Only check text extraction calls
+            call_objs = llm_group.get_usage(llm_role="extractor_text")[0].usage.calls
+            text_call_objs = [
+                c
+                for c in call_objs
+                if (
+                    "data_type" not in c.prompt_kwargs
+                    or c.prompt_kwargs["data_type"] == "text"
+                )
+                and prompt_kwargs_key in c.prompt_kwargs
+            ]
+            assert text_call_objs, f"No text call objects found for {prompt_kwargs_key}"
+
+            # We may have multiple text extraction calls when chunking document text,
+            # i.e. submitting text fragments for extraction in the same pipeline.
+            # We need to check each call separately.
+            for text_call_obj in text_call_objs:
+
+                # Check for markdown flag in prompt kwargs
+                if apply_markdown:
+                    assert "is_markdown" in text_call_obj.prompt_kwargs
+                    assert text_call_obj.prompt_kwargs["is_markdown"]
+                else:
+                    assert "is_markdown" not in text_call_obj.prompt_kwargs
+
+                # Check the text of specific param in the prompt
+                if prompt_kwargs_key == "text":
+                    submitted_text_in_prompt = text_call_obj.prompt_kwargs[
+                        prompt_kwargs_key
+                    ]
+                elif prompt_kwargs_key == "paragraphs":
+                    if apply_markdown:
+                        p_md_texts = [
+                            p._md_text
+                            for p in text_call_obj.prompt_kwargs[prompt_kwargs_key]
+                        ]
+                        # Check that some paragraphs have non-stripped markdown text,
+                        # e.g. to keep indentation in lists
+                        assert any(
+                            t != t.strip() for t in p_md_texts
+                        ), "Expected some paragraphs to have non-stripped markdown text"
+                        submitted_text_in_prompt = "".join(p_md_texts)
+                    else:
+                        submitted_text_in_prompt = "".join(
+                            [
+                                p.raw_text
+                                for p in text_call_obj.prompt_kwargs[prompt_kwargs_key]
+                            ]
+                        )
+                else:
+                    raise ValueError(f"Invalid prompt_kwargs_key: {prompt_kwargs_key}")
+                if apply_markdown:
+                    check_is_markdown(
+                        submitted_text_in_prompt,
+                        expect_newlines=expect_newlines,
+                    )
+                else:
+                    check_not_markdown(
+                        submitted_text_in_prompt,
+                    )
+                # Separately check for paragraph sentences (raw text only)
+                if prompt_kwargs_key == "paragraphs":
+                    for paragraph in text_call_obj.prompt_kwargs[prompt_kwargs_key]:
+                        for sentence in paragraph.sentences:
+                            check_not_markdown(sentence.raw_text)
+
+                # Check the full rendered prompt
+                submitted_prompt = text_call_obj.prompt
+                if apply_markdown:
+                    if text_call_obj.prompt_kwargs["reference_depth"] == "sentences":
+                        # Only sentences with raw text are passed to the prompt
+                        check_not_markdown(
+                            submitted_prompt,
+                        )
+                        # No markdown instructions in the prompt, as only sentences
+                        # with raw text are passed as context
+                        assert "markdown syntax" not in submitted_prompt.lower()
+                    else:
+                        check_is_markdown(
+                            submitted_prompt,
+                            expect_newlines=True,
+                        )
+                        # Check for markdown instructions in the prompt
+                        assert "markdown syntax" in submitted_prompt.lower()
+                else:
+                    check_not_markdown(
+                        submitted_prompt,
+                    )
+
         # Test concept extraction
-        doc.concepts = [
+        doc_concepts = [
             NumericalConcept(
                 name="Hidden gems count",
                 description="Number of hidden gems in the document",
@@ -5104,35 +5471,39 @@ class TestAll(TestUtils):
                 llm_role="extractor_vision",
             ),
         ]
+        if apply_markdown:
+            doc_concepts.append(
+                StringConcept(
+                    name="Links in the document",
+                    description="URLs mentioned in the document",
+                    llm_role="extractor_text",
+                )
+            )
+        doc.concepts = doc_concepts
 
         # Test extraction from full text (markdown)
-        extracted_concepts = self.llm_group.extract_concepts_from_document(doc)
+        extracted_concepts = llm_group.extract_concepts_from_document(doc)
         assert extracted_concepts[0].extracted_items
         logger.debug(extracted_concepts[0].extracted_items[0].value)
         assert extracted_concepts[0].extracted_items[0].value == 3
         assert extracted_concepts[1].extracted_items
         logger.debug(extracted_concepts[1].extracted_items[0].value)
         assert "4800" in extracted_concepts[1].extracted_items[0].value
+        if apply_markdown:
+            assert extracted_concepts[2].extracted_items
+            logger.debug(extracted_concepts[2].extracted_items[0].value)
+            assert "example" in extracted_concepts[2].extracted_items[0].value
+        # Check the full text for markdown content
+        check_markdown_in_prompt(prompt_kwargs_key="text", expect_newlines=True)
 
-        # Check that the text contains newlines and markdown, as full text is passed to LLM
-        check_is_markdown(
-            self.llm_group.get_usage(llm_role="extractor_text")[0]
-            .usage.calls[-1]
-            .prompt_kwargs["text"],
-            expect_newlines=True,
-        )
-
-        # Test extraction with max paragraphs (no markdown)
-        extracted_concepts = self.llm_group.extract_concepts_from_document(
+        # Test extraction with max paragraphs
+        # (paragraphs' _md_text and raw_text are used based on apply_markdown flag)
+        extracted_concepts = llm_group.extract_concepts_from_document(
             doc, max_paragraphs_to_analyze_per_call=25, overwrite_existing=True
         )
         assert extracted_concepts[0].extracted_items
-        # Check that the text does not contain markdown, as we process paragraph chunks
-        check_not_markdown(
-            self.llm_group.get_usage(llm_role="extractor_text")[0]
-            .usage.calls[-1]
-            .prompt_kwargs["text"]
-        )
+        # Check the chunked text for markdown content
+        check_markdown_in_prompt(prompt_kwargs_key="text", expect_newlines=True)
 
         # Test aspect extraction
 
@@ -5143,16 +5514,11 @@ class TestAll(TestUtils):
                 description="Clauses describing the obligations of the receiving party",
             )
         ]
-        extracted_aspects = self.llm_group.extract_aspects_from_document(doc)
+        extracted_aspects = llm_group.extract_aspects_from_document(doc)
         assert extracted_aspects[0].extracted_items
         assert extracted_aspects[0].extracted_items[0].reference_paragraphs
-        # Check that the text does not contain markdown, as we process aspect paragraphs
-        for paragraph in (
-            self.llm_group.get_usage(llm_role="extractor_text")[0]
-            .usage.calls[-1]
-            .prompt_kwargs["paragraphs"]
-        ):
-            check_not_markdown(paragraph.raw_text)
+        # Check the paragraphs' texts for markdown content
+        check_markdown_in_prompt(prompt_kwargs_key="paragraphs", expect_newlines=False)
 
         # Test with sentence-level refs
         doc.aspects = [
@@ -5162,21 +5528,31 @@ class TestAll(TestUtils):
                 reference_depth="sentences",
             )
         ]
-        extracted_aspects = self.llm_group.extract_aspects_from_document(
-            doc, overwrite_existing=True
-        )
+        extracted_aspects = llm_group.extract_aspects_from_document(doc)
         assert extracted_aspects[0].extracted_items
         assert extracted_aspects[0].extracted_items[0].reference_sentences
-        for paragraph in (
-            self.llm_group.get_usage(llm_role="extractor_text")[0]
-            .usage.calls[-1]
-            .prompt_kwargs["paragraphs"]
-        ):
-            # Check that the text does not contain markdown, as we process
-            # aspect paragraphs and sentences
-            check_not_markdown(paragraph.raw_text)
+        # Check the paragraphs' texts for markdown content
+        # Markdown does not apply to sentences that are passed to the aspects
+        # extraction prompt when reference_depth="sentences"
+        check_markdown_in_prompt(
+            prompt_kwargs_key="paragraphs",
+            expect_newlines=False,
+        )
+
+        # Test serialization and cloning after DOCX conversion and LLM extraction
+        self.check_instance_serialization_and_cloning(doc)
+        for aspect in doc.aspects:
+            self.check_instance_serialization_and_cloning(aspect)
+        for concept in doc.concepts:
+            self.check_instance_serialization_and_cloning(concept)
+        for paragraph in doc.paragraphs:
+            self.check_instance_serialization_and_cloning(paragraph)
             for sentence in paragraph.sentences:
-                check_not_markdown(sentence.raw_text)
+                self.check_instance_serialization_and_cloning(sentence)
+        for sentence in doc.sentences:
+            self.check_instance_serialization_and_cloning(sentence)
+        for image in doc.images:
+            self.check_instance_serialization_and_cloning(image)
 
     def test_docx_package_error_handling(self):
         """
@@ -5213,59 +5589,23 @@ class TestAll(TestUtils):
 
         converter = DocxConverter()
 
-        # Create sample XML elements for testing
+        # Create sample XML elements for testing using lxml
         def create_text_element(text_content):
-            element = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}t")
+            element = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}t")
             element.text = text_content
             return element
 
         def create_run_with_text(text_content):
-            run = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
+            run = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
             text_elem = create_text_element(text_content)
             run.append(text_elem)
             return run
 
         def create_paragraph_with_runs(runs):
-            para = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
+            para = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
             for run in runs:
                 para.append(run)
             return para
-
-        # Basic paragraph with multiple runs
-        runs = [
-            create_run_with_text("First part. "),
-            create_run_with_text("Second part."),
-        ]
-        para = create_paragraph_with_runs(runs)
-        text = converter._extract_paragraph_text(para)
-        assert text == "First part. Second part."
-
-        # Paragraph with line breaks
-        br_run = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
-        br_run.append(ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}br"))
-        runs_with_br = [
-            create_run_with_text("Before break"),
-            br_run,
-            create_run_with_text("After break"),
-        ]
-        para = create_paragraph_with_runs(runs_with_br)
-        text = converter._extract_paragraph_text(para)
-        assert text == "Before break\nAfter break"
-
-        # Paragraph with footnote reference
-        run_with_footnote = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
-        footnote_ref = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}footnoteReference")
-        footnote_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"] = "1"
-        run_with_footnote.append(footnote_ref)
-        para = create_paragraph_with_runs(
-            [create_run_with_text("Text with footnote "), run_with_footnote]
-        )
-        text = converter._extract_paragraph_text(para)
-        assert text == "Text with footnote [Footnote 1]"
-
-        # Empty paragraph
-        # Create a paragraph element that will result in empty text
-        empty_para = ET.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
 
         # Create a minimal mock package
         class MockPackage:
@@ -5274,6 +5614,44 @@ class TestAll(TestUtils):
                 self.numbering = None
 
         package = MockPackage()
+
+        # Basic paragraph with multiple runs
+        runs = [
+            create_run_with_text("First part. "),
+            create_run_with_text("Second part."),
+        ]
+        para = create_paragraph_with_runs(runs)
+        text = converter._extract_paragraph_text(para, package)
+        assert text == "First part. Second part."
+
+        # Paragraph with line breaks
+        br_run = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
+        br_run.append(etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}br"))
+        runs_with_br = [
+            create_run_with_text("Before break"),
+            br_run,
+            create_run_with_text("After break"),
+        ]
+        para = create_paragraph_with_runs(runs_with_br)
+        text = converter._extract_paragraph_text(para, package)
+        assert text == "Before break\nAfter break"
+
+        # Paragraph with footnote reference
+        run_with_footnote = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
+        footnote_ref = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}footnoteReference")
+        footnote_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"] = "1"
+        run_with_footnote.append(footnote_ref)
+        para = create_paragraph_with_runs(
+            [create_run_with_text("Text with footnote "), run_with_footnote]
+        )
+        text = converter._extract_paragraph_text(para, package, markdown_mode=True)
+        assert text == "Text with footnote [Footnote 1]"
+        text = converter._extract_paragraph_text(para, package, markdown_mode=False)
+        assert text == "Text with footnote 1"
+
+        # Empty paragraph
+        # Create a paragraph element that will result in empty text
+        empty_para = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
 
         result = converter._process_paragraph(empty_para, package)
         assert result is None

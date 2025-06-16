@@ -37,6 +37,7 @@ from wtpsplit_lite import SaT
 if TYPE_CHECKING:
     from contextgem.public.aspects import Aspect
     from contextgem.public.concepts import _Concept
+    from contextgem.public.paragraphs import Paragraph
 
 from contextgem.internal.data_models import _LLMUsage
 from contextgem.internal.llm_output_structs.aspect_structs import (
@@ -52,6 +53,7 @@ from contextgem.internal.typings.aliases import (
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
+    TextMode,
 )
 
 T = TypeVar("T")
@@ -103,15 +105,16 @@ def _get_template(
         raise NotImplementedError(f"Unknown template type: {template_type}")
     with open(template_path, "r", encoding="utf-8") as file:
         template_text = file.read().strip()
-        assert template_text
+        if not template_text:
+            raise RuntimeError(
+                f"Template file '{template_path}' is empty or contains only whitespace"
+            )
     if template_extension == "j2":
         # Validate template text
-        assert _are_prompt_template_brackets_balanced(
-            template_text
-        ), "Prompt template brackets are not balanced."
-        assert not bool(
-            re.search(r"(\r\n|\r|\n){3,}", template_text)
-        ), "Too many newlines in template."
+        if not _are_prompt_template_brackets_balanced(template_text):
+            raise RuntimeError("Prompt template brackets are not balanced.")
+        if bool(re.search(r"(\r\n|\r|\n){3,}", template_text)):
+            raise RuntimeError("Too many newlines in template.")
         template = _setup_jinja2_template(template_text)
     elif template_extension == "txt":
         template = template_text
@@ -164,7 +167,7 @@ def _contains_jinja2_tags(text: str) -> bool:
     :return: True if the text contains Jinja2 tags, False otherwise
     :rtype: bool
     """
-    env = Environment()
+    env = Environment()  # nosec B701 - templates used for internal LLM prompts
     parsed = env.parse(text)
     # If any node in the top-level body is not TemplateData (and isn't an Output
     # wrapping only TemplateData), it indicates the presence of Jinja2 tags,
@@ -178,24 +181,25 @@ def _contains_jinja2_tags(text: str) -> bool:
     return False
 
 
-def _clean_text_for_llm_prompt(raw_text: str, preserve_linebreaks: bool = True) -> str:
+def _clean_control_characters(
+    text: str, preserve_newlines: bool = True, strip_text: bool = True
+) -> str:
     """
-    Removes control characters and other problematic elements from text
-    to make it suitable for LLM input.
+    Removes control characters from text.
 
-    :param raw_text: The input string to be cleaned, as raw text.
-    :type raw_text: str
-    :param preserve_linebreaks: Whether to preserve linebreaks in the text.
-        If False, all whitespace is collapsed to a single space. Defaults to True.
-    :type preserve_linebreaks: bool
-    :return: A cleaned and formatted version of the input text.
+    :param text: The input string to be cleaned of control characters.
+    :type text: str
+    :param preserve_newlines: Whether to preserve newline characters (\n).
+        If True, removes control characters except newlines.
+        If False, removes all control characters including newlines.
+    :type preserve_newlines: bool
+    :param strip_text: Whether to strip the text of leading and trailing whitespace.
+        If False, the text is not stripped. Defaults to True.
+    :type strip_text: bool
+    :return: The text with control characters removed and optionally stripped.
     :rtype: str
     """
-
-    if preserve_linebreaks:
-        # Normalize newlines to \n
-        cleaned = re.sub(r"\r\n|\r", "\n", raw_text)
-
+    if preserve_newlines:
         # Remove control characters EXCEPT newlines (\n = ASCII 10)
         # This includes:
         # - ASCII control characters except LF (0x00-0x09, 0x0B-0x1F and 0x7F)
@@ -205,7 +209,43 @@ def _clean_text_for_llm_prompt(raw_text: str, preserve_linebreaks: bool = True) 
         cleaned = re.sub(
             r"[\x00-\x09\x0B-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]",
             "",
-            cleaned,
+            text,
+        )
+    else:
+        # Remove all control characters including newlines
+        cleaned = re.sub(
+            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", text
+        )
+
+    return cleaned.strip() if strip_text else cleaned
+
+
+def _clean_text_for_llm_prompt(
+    text: str, preserve_linebreaks: bool = True, strip_text: bool = True
+) -> str:
+    """
+    Removes control characters and other problematic elements from text
+    to make it suitable for LLM input.
+
+    :param text: The input string to be cleaned.
+    :type text: str
+    :param preserve_linebreaks: Whether to preserve linebreaks in the text.
+        If False, all whitespace is collapsed to a single space. Defaults to True.
+    :type preserve_linebreaks: bool
+    :param strip_text: Whether to strip the text of leading and trailing whitespace.
+        If False, the text is not stripped. Defaults to True.
+    :type strip_text: bool
+    :return: A cleaned and formatted version of the input text.
+    :rtype: str
+    """
+
+    if preserve_linebreaks:
+        # Normalize newlines to \n
+        cleaned = re.sub(r"\r\n|\r", "\n", text)
+
+        # Remove control characters except newlines
+        cleaned = _clean_control_characters(
+            cleaned, preserve_newlines=True, strip_text=strip_text
         )
 
         # Replace horizontal whitespace sequences (spaces and tabs) with a single space
@@ -217,29 +257,54 @@ def _clean_text_for_llm_prompt(raw_text: str, preserve_linebreaks: bool = True) 
 
     else:
         # Remove all control characters including newlines
-        cleaned = re.sub(
-            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", raw_text
+        cleaned = _clean_control_characters(
+            text, preserve_newlines=False, strip_text=strip_text
         )
 
         # Remove all whitespace sequences with a single space
         cleaned = re.sub(r"\s+", " ", cleaned)
 
-    # Strip leading/trailing whitespace
-    return cleaned.strip()
+    # We may want to preserve leading/trailing whitespace for markdown representation
+    # of paragraphs, e.g. for indentation in lists.
+    return cleaned.strip() if strip_text else cleaned
 
 
-def _contains_linebreaks(raw_text: str) -> bool:
+def _is_text_content_empty(text: str) -> bool:
+    """
+    Checks if text content is empty or whitespace-only after removing control characters.
+
+    This function first removes all control characters (including newlines) and then
+    checks if the remaining text is empty or contains only whitespace. This catches
+    cases where text contains only invisible unicode characters, control characters,
+    tabs, spaces, or any other whitespace characters.
+
+    :param text: Text to check
+    :return: True if text is empty or contains only whitespace after control character removal
+    """
+    if not text:
+        return True
+
+    # Remove all control characters including newlines
+    cleaned_text = _clean_control_characters(
+        text, preserve_newlines=False, strip_text=True
+    )
+
+    # Check if remaining text is only whitespace (covers all Unicode whitespace categories)
+    return not cleaned_text or cleaned_text.isspace()
+
+
+def _contains_linebreaks(text: str) -> bool:
     """
     Checks if the given string contains line breaks, considering both Unix (\n) and
     Windows (\r\n) style line breaks.
 
-    :param raw_text: The string to be checked, as raw text.
-    :type raw_text: str
+    :param text: The string to be checked.
+    :type text: str
     :return: True if the string contains one or more line breaks, False otherwise.
     :rtype: bool
     """
     # Check for both Unix (\n) and Windows (\r\n) style line breaks
-    return "\n" in raw_text or "\r" in raw_text
+    return "\n" in text or "\r" in text
 
 
 def _are_prompt_template_brackets_balanced(prompt: str) -> bool:
@@ -285,7 +350,7 @@ def _split_text_into_paragraphs(raw_text: str) -> list[str]:
     """
     paragraphs = re.split(r"[\r\n]+", raw_text)
     paragraphs = [i.strip() for i in paragraphs]
-    paragraphs = [i for i in paragraphs if len(i)]
+    paragraphs = [i for i in paragraphs if not _is_text_content_empty(i)]
     return paragraphs
 
 
@@ -459,11 +524,12 @@ def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | No
                 cleaned_str = output_str[end_tag_pos + len("</think>") :]
                 # Strip any remaining whitespace
                 cleaned_str = cleaned_str.strip()
-                assert len(cleaned_str) > 0, "Cleaned string is empty"
+                if not cleaned_str:
+                    raise ValueError("Cleaned string is empty")
                 return cleaned_str
 
         return output_str.strip()
-    except (AssertionError, AttributeError):
+    except (ValueError, AttributeError):
         return None
 
 
@@ -693,3 +759,72 @@ def _is_json_serializable(data: Any) -> bool:
         logger.error(f"Data is not JSON serializable. Error: {repr(e)}")
         return False
     return True
+
+
+def _check_paragraphs_match_in_text(
+    paragraphs: list[Paragraph], document_text: str, text_mode: TextMode
+) -> list[Paragraph]:
+    """
+    Check that all relevant paragraph texts exist in the given document text.
+
+    :param paragraphs: List of paragraph objects to check
+    :param document_text: The document text to search in
+    :param text_mode: Type of text being checked ('raw' or 'markdown')
+    :return: List of unmatched paragraphs
+    """
+    if text_mode == "raw":
+        return [p for p in paragraphs if p.raw_text not in document_text]
+    elif text_mode == "markdown":
+        return [p for p in paragraphs if p._md_text and p._md_text not in document_text]
+    else:
+        raise ValueError(f"Unknown text_mode: {text_mode}")
+
+
+def _check_paragraphs_ordering_in_text(
+    paragraphs: list[Paragraph], document_text: str, text_mode: TextMode
+) -> None:
+    """
+    Check that paragraphs are ordered according to their appearance in document text.
+    Handles cases where paragraphs may have duplicate text content.
+
+    :param paragraphs: List of paragraph objects to check ordering for
+    :param document_text: The document text to check ordering in
+    :param text_mode: Type of text being checked ('raw' or 'markdown')
+    :raises ValueError: If paragraphs are not ordered correctly
+    """
+    if len(paragraphs) <= 1:
+        return
+
+    current_search_pos = 0
+    for i in range(len(paragraphs) - 1):
+        current_para_text = (
+            paragraphs[i].raw_text if text_mode == "raw" else paragraphs[i]._md_text
+        )
+        next_para_text = (
+            paragraphs[i + 1].raw_text
+            if text_mode == "raw"
+            else paragraphs[i + 1]._md_text
+        )
+
+        if not current_para_text or not next_para_text:
+            continue
+
+        # Find current paragraph starting from the current search position
+        current_pos = document_text.find(current_para_text, current_search_pos)
+        if current_pos == -1:  # This shouldn't happen due to earlier check
+            current_pos = document_text.find(current_para_text)
+
+        # Update search position for next paragraph to start after current paragraph
+        current_search_pos = current_pos + len(current_para_text)
+
+        # Find next paragraph starting from the current search position
+        next_pos = document_text.find(next_para_text, current_search_pos)
+        if (
+            next_pos == -1
+        ):  # If not found from current position, check if it exists earlier
+            next_pos = document_text.find(next_para_text)
+            if next_pos < current_search_pos:
+                raise ValueError(
+                    f"Paragraphs are not ordered according to their appearance "
+                    f"in the document's {text_mode} text."
+                )

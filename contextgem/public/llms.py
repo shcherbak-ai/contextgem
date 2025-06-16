@@ -642,7 +642,8 @@ class DocumentLLM(_GenericLLMProcessor):
         if self.fallback_llm:
             self_fallback_llm = self_dict.pop("fallback_llm")
             other_fallback_llm = other_dict.pop("fallback_llm")
-            assert other_fallback_llm, "Deserialized fallback LLM is not set"
+            if not other_fallback_llm:
+                raise RuntimeError("Deserialized fallback LLM was not set")
             if not self_fallback_llm._eq_deserialized_llm_config(other_fallback_llm):
                 logger.debug(f"Fallback LLM config of deserialized LLM is different.")
                 return False
@@ -652,9 +653,11 @@ class DocumentLLM(_GenericLLMProcessor):
         other_dict.pop("api_key")
         self_dict.pop("api_base")
         other_dict.pop("api_base")
-        assert (
-            other.api_key is None and other.api_base is None
-        ), "Deserialized LLM has api_key or api_base set, while credentials were redacted pre-serialization"
+        if not (other.api_key is None and other.api_base is None):
+            raise RuntimeError(
+                "Deserialized LLM has api_key or api_base set, "
+                "while API credentials should have been redacted pre-serialization"
+            )
 
         # Compare the modified dictionaries
         if self_dict != other_dict:
@@ -684,7 +687,10 @@ class DocumentLLM(_GenericLLMProcessor):
             return False
 
         # Check that usage and cost stats were reset pre-serialization
-        assert other._usage == _LLMUsage() and other._cost == _LLMCost()
+        if not (other._usage == _LLMUsage() and other._cost == _LLMCost()):
+            raise RuntimeError(
+                "Usage and cost stats were not properly reset during serialization"
+            )
 
         # Check _async_limiter
         if (
@@ -898,10 +904,10 @@ class DocumentLLM(_GenericLLMProcessor):
             # Determine which token limit to check based on model type
             if supports_reasoning(self.model):
                 configured_tokens = self.max_completion_tokens
-                token_type = "max_completion_tokens"
+                token_type = "max_completion_tokens"  # nosec B105 - not a password
             else:
                 configured_tokens = self.max_tokens
-                token_type = "max_tokens"
+                token_type = "max_tokens"  # nosec B105 - not a password
 
             # Check if configured tokens exceed the model's limit
             if configured_tokens > max_output_tokens:
