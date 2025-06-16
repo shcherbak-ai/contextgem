@@ -5492,6 +5492,7 @@ class TestAll(TestUtils):
         if apply_markdown:
             assert extracted_concepts[2].extracted_items
             logger.debug(extracted_concepts[2].extracted_items[0].value)
+            # lgtm[py/incomplete-url-substring-sanitization]
             assert "example.com" in extracted_concepts[2].extracted_items[0].value
         # Check the full text for markdown content
         check_markdown_in_prompt(prompt_kwargs_key="text", expect_newlines=True)
