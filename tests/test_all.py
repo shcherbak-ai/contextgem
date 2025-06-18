@@ -5817,6 +5817,99 @@ class TestAll(TestUtils):
             locals(), test_name="test_sat_model_cache"
         )  # here, a SaT wrapper object is measured, not the full model
 
+    @pytest.mark.vcr
+    @memory_profile_and_capture(max_memory=1000.0)
+    # higher value to allocate memory for SaT model sentence splitting in a very long document
+    # (2000+ sentences)
+    def test_very_long_doc_extraction(self):
+        """
+        Tests for very long document extraction (200+ pages).
+        """
+        # Load the test text file as a Document
+        with open(
+            os.path.join(
+                get_project_root_path(),
+                "tests",
+                "other_files",
+                "gdpr_modified_for_testing.txt",
+            ),
+            "r",
+            encoding="utf-8",
+        ) as f:
+            text_content = f.read()
+        doc_concepts = [
+            StringConcept(
+                name="Document title",
+                description="Title of the current document",
+                llm_role="extractor_text",
+                singular_occurrence=True,
+            ),
+            LabelConcept(
+                name="Document type",
+                description="Type of the current document",
+                labels=["legislation", "contract", "other"],
+                llm_role="extractor_text",
+                singular_occurrence=True,
+            ),
+            StringConcept(
+                name="Entry into force date",
+                description=(
+                    "Date of the entry into force of the current document. "
+                    "Only focus on the entry into force date for the current document, "
+                    "not for other documents. If no specific date is mentioned, "
+                    "look for the provision on how this date is determined. "
+                    "Note that the entry into force date may not be the same as "
+                    "the publication date."
+                ),
+                llm_role="extractor_text",
+            ),  # entry into force date is modified in the test doc
+            StringConcept(
+                name="Anomalies",
+                description="Anomalies in the document",
+                llm_role="extractor_text",
+            ),  # anomaly is in the middle of the document
+        ]
+        doc = Document(raw_text=text_content)
+        doc.concepts = doc_concepts
+
+        # Use params optimized for very long documents (200+ pages)
+        extracted_concepts = self.llm_extractor_text.extract_concepts_from_document(
+            doc,
+            max_paragraphs_to_analyze_per_call=250,  # split into paragraph chunks
+            use_concurrency=True,
+        )
+
+        assert extracted_concepts[0].extracted_items
+        self.log_extracted_items_for_instance(extracted_concepts[0])
+        assert extracted_concepts[1].extracted_items
+        self.log_extracted_items_for_instance(extracted_concepts[1])
+        assert extracted_concepts[2].extracted_items
+        self.log_extracted_items_for_instance(extracted_concepts[2])
+        assert extracted_concepts[3].extracted_items
+        self.log_extracted_items_for_instance(extracted_concepts[3])
+
+        # We intentionally modified the entry into force date in the GDPR test doc,
+        # to check that the LLM does not rely on the general (pre-trained) knowledge alone,
+        # but instead actually uses the document text for extraction
+        match_found = False
+        for extracted_item in extracted_concepts[2].extracted_items:
+            if "thirtieth" in extracted_item.value or "30" in extracted_item.value:
+                match_found = True
+                break
+        assert match_found, "No modified entry into force date found"
+
+        # We intentionally added an anomaly in the middle of the document.
+        match_found = False
+        for extracted_item in extracted_concepts[3].extracted_items:
+            if "Texas" in extracted_item.value:
+                match_found = True
+                break
+        assert match_found, "No anomaly found in the middle of the document"
+
+        check_locals_memory_usage(
+            locals(), test_name="test_very_long_doc_extraction", max_obj_memory=5.0
+        )  # higher value for a very long document (200+ pages)
+
     @memory_profile_and_capture
     def test_total_cost_and_reset(self):
         """
