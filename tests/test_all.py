@@ -25,7 +25,6 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
-import warnings
 import zipfile
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -76,6 +75,7 @@ from contextgem.internal.loggers import (
 )
 from contextgem.internal.utils import _get_sat_model, _split_text_into_paragraphs
 from contextgem.public.utils import JsonObjectClassStruct
+from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import (
     VCR_FILTER_HEADERS,
     TestUtils,
@@ -116,28 +116,7 @@ class TestAll(TestUtils):
     Test cases for validating the functionality and error handling of the framework's
     core classes and methods, particularly for document analysis workflows.
 
-    :ivar document: Instance of Document initialized with test data.
-    :type document: Document
-    :ivar document_pipeline: Instance of DocumentPipeline initialized with test data.
-    :type document_pipeline: DocumentPipeline
-    :ivar llm_extractor_text: LLM instance configured for text-based extraction tasks.
-    :type llm_extractor_text: DocumentLLM
-    :ivar llm_reasoner_text: LLM instance configured for text-based reasoning tasks.
-    :type llm_reasoner_text: DocumentLLM
-    :ivar llm_extractor_vision: LLM instance configured for vision-based extraction tasks.
-    :type llm_extractor_vision: DocumentLLM
-    :ivar llm_reasoner_vision: LLM instance configured for vision-based reasoning tasks.
-    :type llm_reasoner_vision: DocumentLLM
-    :ivar llm_group: Instance of DocumentLLMGroup initialized with multiple LLM instances.
-    :type llm_group: DocumentLLMGroup
-    :ivar llm_with_fallback: Instance of invalid DocumentLLM with a valid DocumentLLM fallback.
-    :type llm_with_fallback: DocumentLLM
-    :ivar test_img_png: Instance of a test Image (PNG format).
-    :type test_img_png: Image
-    :ivar test_img_jpg: Instance of a test Image (JPG format).
-    :type test_img_jpg: Image
-    :ivar test_img_webp: Instance of a test Image (WEBP format).
-    :type test_img_webp: Image
+    Variables are initialized at a class level to be used in the test methods.
     """
 
     # Documents
@@ -349,6 +328,24 @@ class TestAll(TestUtils):
     test_img_jpg_2 = get_test_img("invoice2.jpg")
     test_img_webp = get_test_img("invoice.webp")
 
+    # Memory profiling
+    memory_baseline: float = 0.0  # baseline memory usage
+    memory_profiles: dict[str, str] = {}  # memory usage profiles
+    memory_deltas: dict[str, float] = {}  # memory usage deltas (relative to baseline)
+
+    @memory_profile_and_capture
+    def test_establish_memory_baseline(self):
+        """
+        Establishes a memory usage baseline for subsequent per-method memory calculations.
+
+        This test captures the initial memory footprint including module imports,
+        variable initialization, and framework setup. The memory profile from this
+        test serves as a baseline against which memory deltas of other test methods
+        can be measured.
+        """
+        logger.info("Memory usage baseline captured.")
+
+    @memory_profile_and_capture
     def test_prompt_templates(self):
         """
         Tests for content validity and consistency in the prompt templates.
@@ -368,6 +365,7 @@ class TestAll(TestUtils):
                     self.check_rendered_prompt(raw_content)
         assert j2_files_found, prompts_folder_path
 
+    @memory_profile_and_capture
     def test_attr_models(self):
         """
         Tests for attribute validation models.
@@ -391,6 +389,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             _LLMCost(input=-Decimal("0.001"))
 
+    @memory_profile_and_capture
     def test_init_instance_bases(self):
         """
         Tests for initialization of the base classes.
@@ -416,6 +415,7 @@ class TestAll(TestUtils):
                 TestNoRequiredAttrs()  # initialized with no required attributes
 
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_local_llms(self):
         """
         Tests for initialization of and getting a response from local LLMs,
@@ -467,6 +467,9 @@ class TestAll(TestUtils):
         )
         extract_with_local_llm(llm_lm_studio)
 
+        check_locals_memory_usage(locals(), test_name="test_local_llms")
+
+    @memory_profile_and_capture
     def test_init_api_llm(self):
         """
         Tests the behaviour of the `DocumentLLM` class initialization.
@@ -611,6 +614,9 @@ class TestAll(TestUtils):
                 role="extractor_text",
             )
 
+        check_locals_memory_usage(locals(), test_name="test_init_llm")
+
+    @memory_profile_and_capture
     def test_init_llm_group(self):
         """
         Tests the behavior of the `DocumentLLMGroup` class initialization.
@@ -668,6 +674,9 @@ class TestAll(TestUtils):
         with pytest.raises(NotImplementedError):
             document_llm_group.model_dump_json()
 
+        check_locals_memory_usage(locals(), test_name="test_init_llm_group")
+
+    @memory_profile_and_capture
     def test_update_default_prompt(self):
         """
         Tests for updating the default prompt for the LLM.
@@ -728,7 +737,10 @@ class TestAll(TestUtils):
             in llm_with_updated_prompts._extract_concept_items_prompt.render()
         )
 
+        check_locals_memory_usage(locals(), test_name="test_update_default_prompt")
+
     @pytest.mark.parametrize("image", [test_img_png, test_img_jpg, test_img_webp])
+    @memory_profile_and_capture
     def test_init_and_attach_image(self, image: Image):
         """
         Tests for constructing a Image instance and attaching it to a Document instance.
@@ -752,6 +764,9 @@ class TestAll(TestUtils):
             Document(images=[image, image])  # duplicate images with same base64 string
         self.check_custom_data_json_serializable(image)
 
+        check_locals_memory_usage(locals(), test_name="test_init_and_attach_image")
+
+    @memory_profile_and_capture
     def test_init_paragraph(self):
         """
         Tests for constructing a Paragraph instance and attaching it to a Document instance.
@@ -793,6 +808,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="control characters"):
             Paragraph(raw_text=" \u200c ")  # zero-width non-joiner
 
+        check_locals_memory_usage(locals(), test_name="test_init_paragraph")
+
+    @memory_profile_and_capture
     def test_init_sentence(self):
         """
         Tests for constructing a Sentence instance and attaching it to a Paragraph instance.
@@ -818,6 +836,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="control characters"):
             Sentence(raw_text=" \u200c ")  # zero-width non-joiner
 
+        check_locals_memory_usage(locals(), test_name="test_init_sentence")
+
+    @memory_profile_and_capture
     def test_init_aspect(self):
         """
         Tests the initializing and error handling of the `Aspect` class.
@@ -982,6 +1003,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             aspect.add_concepts([concept, concept])
 
+        check_locals_memory_usage(locals(), test_name="test_init_aspect")
+
+    @memory_profile_and_capture
     def test_init_and_validate_string_concept(self):
         """
         Tests the initialization of the StringConcept class with valid and invalid input parameters.
@@ -1014,6 +1038,11 @@ class TestAll(TestUtils):
         # Verify custom data serialization works
         self.check_custom_data_json_serializable(string_concept)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_string_concept"
+        )
+
+    @memory_profile_and_capture
     def test_init_and_validate_boolean_concept(self):
         """
         Tests the initialization of the BooleanConcept class with valid and invalid input parameters.
@@ -1046,6 +1075,11 @@ class TestAll(TestUtils):
         # Verify custom data serialization works
         self.check_custom_data_json_serializable(boolean_concept)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_boolean_concept"
+        )
+
+    @memory_profile_and_capture
     def test_init_and_validate_numerical_concept(self):
         """
         Tests for initialization and usage of NumericalConcept with different types.
@@ -1115,6 +1149,11 @@ class TestAll(TestUtils):
         self.check_custom_data_json_serializable(float_concept)
         self.check_custom_data_json_serializable(any_concept)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_numerical_concept"
+        )
+
+    @memory_profile_and_capture
     def test_init_and_validate_rating_concept(self):
         """
         Tests the initialization of the RatingConcept class with valid and invalid input parameters.
@@ -1198,6 +1237,11 @@ class TestAll(TestUtils):
         self.check_custom_data_json_serializable(default_scale_concept)
         self.check_custom_data_json_serializable(concept_with_refs)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_rating_concept"
+        )
+
+    @memory_profile_and_capture
     def test_init_and_validate_json_object_concept(self):
         """
         Tests the initialization of the JsonObjectConcept class with valid and invalid input parameters.
@@ -1994,7 +2038,12 @@ class TestAll(TestUtils):
         )
         self.check_custom_data_json_serializable(vision_concept)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_json_object_concept"
+        )
+
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_extract_complex_json_object_concept(self):
         """
         Tests the extraction of a complex JsonObjectConcept from a text file, validating
@@ -2210,6 +2259,11 @@ class TestAll(TestUtils):
         # Log the extracted item for debugging
         self.log_extracted_items_for_instance(extracted_concept)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_extract_complex_json_object_concept"
+        )
+
+    @memory_profile_and_capture
     def test_init_and_validate_date_concept(self):
         """
         Tests the initialization of the DateConcept class with valid and invalid input parameters.
@@ -2262,6 +2316,11 @@ class TestAll(TestUtils):
         self.check_custom_data_json_serializable(default_date_concept)
         self.check_custom_data_json_serializable(date_concept_with_refs)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_date_concept"
+        )
+
+    @memory_profile_and_capture
     def test_init_and_validate_label_concept(self):
         """
         Tests the initialization of the LabelConcept class with valid and invalid input parameters.
@@ -2390,8 +2449,13 @@ class TestAll(TestUtils):
         self.check_custom_data_json_serializable(multi_label_concept)
         self.check_custom_data_json_serializable(concept_with_refs)
 
+        check_locals_memory_usage(
+            locals(), test_name="test_init_and_validate_label_concept"
+        )
+
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_extract_label_concept(self, llm: DocumentLLMGroup | DocumentLLM):
         """
         Tests for label concept extraction from document using LLMs.
@@ -2527,6 +2591,9 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(locals(), test_name="test_extract_label_concept")
+
+    @memory_profile_and_capture
     def test_init_example(self):
         """
         Tests the initialization of the example classes.
@@ -2573,6 +2640,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             JsonObjectExample(content={"category": str, "valid": bool})
 
+        check_locals_memory_usage(locals(), test_name="test_init_example")
+
+    @memory_profile_and_capture
     def test_init_item(self):
         """
         Tests the initialization of the extracted item classes.
@@ -2626,7 +2696,10 @@ class TestAll(TestUtils):
             item.value = 2.0
         self.check_custom_data_json_serializable(item)
 
+        check_locals_memory_usage(locals(), test_name="test_init_item")
+
     @pytest.mark.parametrize("context", [document, document_pipeline])
+    @memory_profile_and_capture(max_memory=2500.0)  # for testing larger SaT models
     def test_init_document_and_pipeline(self, context: Document | DocumentPipeline):
         """
         Tests different initialization scenarios and validations associated with
@@ -2963,6 +3036,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             context.add_concepts([concept, concept])
 
+        check_locals_memory_usage(locals(), test_name="test_init_document_and_pipeline")
+
+    @memory_profile_and_capture
     def test_local_sat_model(self):
         """
         Tests the loading of a local SAT model.
@@ -3007,6 +3083,7 @@ class TestAll(TestUtils):
                     sat_model_id=temp_dir,
                 )
 
+    @memory_profile_and_capture
     def test_input_output_token_validation(self):
         """
         Tests for max input and max output token validation.
@@ -3045,7 +3122,12 @@ class TestAll(TestUtils):
         ):
             llm_excessive_output._validate_output_tokens()
 
+        check_locals_memory_usage(
+            locals(), test_name="test_input_output_token_validation"
+        )
+
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_system_messages(self):
         """
         Tests the system messages functionality of LLMs.
@@ -3108,8 +3190,11 @@ class TestAll(TestUtils):
             assert "ContextGem" in response
             logger.debug(response)
 
+        check_locals_memory_usage(locals(), test_name="test_system_messages")
+
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
         Tests the aspects extraction functionality of LLMs.
@@ -3331,8 +3416,13 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(
+            locals(), test_name="test_extract_aspects_from_document"
+        )
+
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_extract_concepts_from_aspect(self, llm: DocumentLLMGroup | DocumentLLM):
         """
         Tests for concept extraction from aspect.
@@ -3658,8 +3748,13 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(
+            locals(), test_name="test_extract_concepts_from_aspect"
+        )
+
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_extract_concepts_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
         Tests for concept extraction from document.
@@ -3866,6 +3961,10 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(
+            locals(), test_name="test_extract_concepts_from_document"
+        )
+
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",
@@ -3878,6 +3977,7 @@ class TestAll(TestUtils):
         ],
     )
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_extract_all(self, document: Document, llm: DocumentLLMGroup | DocumentLLM):
         """
         Tests for extracting all aspects and concepts from the document and its aspects.
@@ -4064,7 +4164,10 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(locals(), test_name="test_extract_all")
+
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_extract_with_fallback(self):
         """
         Tests for retrying extraction with a fallback LLM.
@@ -4105,6 +4208,8 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(locals(), test_name="test_extract_with_fallback")
+
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",
@@ -4117,6 +4222,7 @@ class TestAll(TestUtils):
         ],
     )
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_serialization_and_cloning(
         self, document: Document, llm: DocumentLLMGroup | DocumentLLM
     ):
@@ -4452,8 +4558,11 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")
+
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @memory_profile_and_capture
     def test_aspect_extraction_from_paragraphs(
         self, llm: DocumentLLMGroup | DocumentLLM
     ):
@@ -4527,6 +4636,10 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(
+            locals(), test_name="test_aspect_extraction_from_paragraphs"
+        )
+
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "image",
@@ -4536,6 +4649,7 @@ class TestAll(TestUtils):
             # test_img_webp
         ],
     )
+    @memory_profile_and_capture
     def test_vision(self, image: Image):
         """
         Tests for data extraction from document images using vision API.
@@ -4612,7 +4726,10 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
+        check_locals_memory_usage(locals(), test_name="test_vision")
+
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_chat(self):
         """
         Tests for the chat method.
@@ -4655,6 +4772,9 @@ class TestAll(TestUtils):
                 "What's the type of this document?", images=[self.test_img_png]
             )
 
+        check_locals_memory_usage(locals(), test_name="test_chat")
+
+    # Do not memory-profile this test as we monkey patch sys.stdout
     def test_logger_disabled(self, monkeypatch, capsys):
         """
         Tests for disabling the logger.
@@ -4676,6 +4796,7 @@ class TestAll(TestUtils):
         # 4) Assert that the message is indeed missing
         assert "This message should NOT appear." not in captured.out
 
+    # Do not memory-profile this test as we monkey patch sys.stdout
     def test_logger_enabled(self, monkeypatch, capsys):
         """
         Tests for enabling the logger.
@@ -4709,6 +4830,7 @@ class TestAll(TestUtils):
             ("CRITICAL", False, False, False, False, False, True),
         ],
     )
+    # Do not memory-profile this test as we monkey patch sys.stdout
     def test_log_levels(
         self,
         monkeypatch,
@@ -4783,6 +4905,7 @@ class TestAll(TestUtils):
             log_messages()
 
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_usage_examples(self):
         """
         Tests for usage examples in project's documentation and README.md.
@@ -4881,6 +5004,9 @@ class TestAll(TestUtils):
             quickstart_concept,
         )
 
+        check_locals_memory_usage(locals(), test_name="test_usage_examples")
+
+    @memory_profile_and_capture
     def test_docstring_examples(self):
         """
         Tests for examples in docstrings.
@@ -4915,6 +5041,8 @@ class TestAll(TestUtils):
             reload_logger_settings,
         )
 
+        check_locals_memory_usage(locals(), test_name="test_docstring_examples")
+
     @pytest.mark.parametrize("apply_markdown", [True, False])
     @pytest.mark.parametrize("strict_mode", [True, False])
     @pytest.mark.parametrize(
@@ -4925,6 +5053,7 @@ class TestAll(TestUtils):
             "no_images",  # All options True except images
         ],
     )
+    @memory_profile_and_capture
     def test_docx_converter(
         self, apply_markdown: bool, strict_mode: bool, include_options: str
     ):
@@ -5223,6 +5352,9 @@ class TestAll(TestUtils):
                     if apply_markdown and output_format == "markdown":
                         assert all(text_result == doc._md_text for doc in documents)
 
+        check_locals_memory_usage(locals(), test_name="test_docx_converter")
+
+    @memory_profile_and_capture
     def test_docx_converter_include_params(self):
         """
         Test that disabling include parameters affects document text content.
@@ -5294,8 +5426,13 @@ class TestAll(TestUtils):
                         test_doc_md_paras_merged != baseline_doc_md_paras_merged
                     ), f"Paragraphs' md_text should differ when {param_name}=False"
 
+        check_locals_memory_usage(
+            locals(), test_name="test_docx_converter_include_params"
+        )
+
     @pytest.mark.vcr
     @pytest.mark.parametrize("apply_markdown", [True, False])
+    @memory_profile_and_capture
     def test_docx_converter_llm_extract(self, apply_markdown: bool):
         """
         Tests for LLM extraction from DOCX files.
@@ -5554,6 +5691,9 @@ class TestAll(TestUtils):
         for image in doc.images:
             self.check_instance_serialization_and_cloning(image)
 
+        check_locals_memory_usage(locals(), test_name="test_docx_converter_llm_extract")
+
+    @memory_profile_and_capture
     def test_docx_package_error_handling(self):
         """
         Tests for error handling in _DocxPackage initialization and XML loading.
@@ -5582,6 +5722,7 @@ class TestAll(TestUtils):
             remove_file("tests/temp_not_a_docx.txt")
             remove_file("tests/temp_invalid.docx")
 
+    @memory_profile_and_capture
     def test_docx_converter_extract_paragraph_text(self):
         """
         Tests for paragraph text extraction from DOCX elements.
@@ -5656,6 +5797,27 @@ class TestAll(TestUtils):
         result = converter._process_paragraph(empty_para, package)
         assert result is None
 
+        check_locals_memory_usage(
+            locals(), test_name="test_docx_converter_extract_paragraph_text"
+        )
+
+    @memory_profile_and_capture
+    def test_sat_model_cache(self):
+        """
+        Tests for the SaT model cache.
+        """
+        sat_model_id = "sat-3l-sm"
+        sat_model = _get_sat_model(sat_model_id)
+        for _ in range(5):
+            # Must return the same model instance from the cache
+            sat_model_same = _get_sat_model(sat_model_id)
+            assert sat_model is sat_model_same
+
+        check_locals_memory_usage(
+            locals(), test_name="test_sat_model_cache"
+        )  # here, a SaT wrapper object is measured, not the full model
+
+    @memory_profile_and_capture
     def test_total_cost_and_reset(self):
         """
         Runs last and outputs total cost details for the test run, as well

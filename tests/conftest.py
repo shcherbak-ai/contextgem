@@ -20,8 +20,42 @@ import os
 
 from contextgem.public.utils import reload_logger_settings
 
+# Memory profiling behavior
+_ENABLE_MEMORY_PROFILING_FLAG = "--mem-profile"
+_MEMORY_PROFILING_ENABLED = False
+
+
+def pytest_addoption(parser):
+    """
+    Add custom command line options to pytest.
+    """
+    parser.addoption(
+        _ENABLE_MEMORY_PROFILING_FLAG,
+        action="store_true",
+        default=False,
+        help="Disable memory profiling during test execution",
+    )
+
 
 def pytest_configure(config):
+    """
+    Configure pytest with custom settings.
+    """
+    global _MEMORY_PROFILING_ENABLED
+
     # Set contextgem logger level to DEBUG
     os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "DEBUG"
     reload_logger_settings()
+
+    # Set the global memory profiling flag
+    _MEMORY_PROFILING_ENABLED = config.getoption(_ENABLE_MEMORY_PROFILING_FLAG)
+
+
+def is_memory_profiling_enabled() -> bool:
+    """
+    Check if memory profiling has been enabled via command line flag.
+
+    :return: True if memory profiling is enabled, False otherwise
+    :rtype: bool
+    """
+    return _MEMORY_PROFILING_ENABLED
