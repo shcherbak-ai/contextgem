@@ -24,6 +24,10 @@ from contextgem.public.utils import reload_logger_settings
 _ENABLE_MEMORY_PROFILING_FLAG = "--mem-profile"
 _MEMORY_PROFILING_ENABLED = False
 
+# VCR redaction of API keys, private endpoints, etc.
+VCR_REDACTION_MARKER = "DUMMY"
+VCR_DUMMY_ENDPOINT_PREFIX = "https://<DUMMY-ENDPOINT>/"
+
 
 def pytest_addoption(parser):
     """

@@ -442,7 +442,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -451,7 +451,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P40\",\n            \"P35\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175491, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338856, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -460,7 +460,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4213, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4096},
+        4213, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
         "total_tokens": 4247}}'
     headers:
       Content-Length:
@@ -476,7 +476,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '344'
+      - '432'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -953,7 +953,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -967,9 +967,8 @@ interactions:
         \"\u0426\u0435\u0439 \u0430\u0431\u0437\u0430\u0446 \u043c\u0456\u0441\u0442\u0438\u0442\u044c
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e \u043f\u0440\u043e
         \u0434\u0430\u0442\u0443 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f
-        \u0443\u0433\u043e\u0434\u0438 \u0442\u0430 \u0432\u043a\u0430\u0437\u0443\u0454,
-        \u0449\u043e \u0443\u0433\u043e\u0434\u0430 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u0430
-        \u043c\u0456\u0436 \u0441\u0442\u043e\u0440\u043e\u043d\u0430\u043c\u0438.\"\n            },\n            {\n                \"paragraph_id\":
+        \u0443\u0433\u043e\u0434\u0438 \u0442\u0430 \u0441\u0442\u043e\u0440\u043e\u043d\u0438,
+        \u044f\u043a\u0456 \u0457\u0457 \u043f\u0456\u0434\u043f\u0438\u0441\u0443\u044e\u0442\u044c.\"\n            },\n            {\n                \"paragraph_id\":
         \"P2\",\n                \"justification\": \"\u0412\u043a\u0430\u0437\u0443\u0454
         \u043d\u0430 \u0421\u0442\u043e\u0440\u043e\u043d\u0443 \u0410, \u0449\u043e
         \u0454 \u043e\u0434\u043d\u0456\u0454\u044e \u0437 \u0441\u0442\u043e\u0440\u0456\u043d
@@ -988,43 +987,38 @@ interactions:
         \u0443\u0447\u0430\u0441\u043d\u0438\u043a\u0430 \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
         \"P14\",\n                \"justification\": \"\u041d\u0430\u0434\u0430\u0454
         \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0438\u0439 \u0442\u0435\u043b\u0435\u0444\u043e\u043d
-        \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B, \u0449\u043e \u0454 \u0447\u0430\u0441\u0442\u0438\u043d\u043e\u044e
-        \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0430\u0446\u0456\u0457
-        \u0441\u0442\u043e\u0440\u043e\u043d\u0438.\"\n            },\n            {\n                \"paragraph_id\":
+        \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B.\"\n            },\n            {\n                \"paragraph_id\":
         \"P15\",\n                \"justification\": \"\u041d\u0430\u0434\u0430\u0454
         \u0435\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u0443 \u0430\u0434\u0440\u0435\u0441\u0443
         \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457 \u043e\u0441\u043e\u0431\u0438
-        \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B, \u0449\u043e \u0454 \u0447\u0430\u0441\u0442\u0438\u043d\u043e\u044e
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457 \u043f\u0440\u043e
-        \u0441\u0442\u043e\u0440\u043e\u043d\u0438.\"\n            },\n            {\n                \"paragraph_id\":
+        \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B.\"\n            },\n            {\n                \"paragraph_id\":
         \"P52\",\n                \"justification\": \"\u041f\u043e\u0432\u0442\u043e\u0440\u043d\u0435
         \u0437\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f \u043d\u0430\u0437\u0432\u0438
         \u043a\u043e\u043c\u043f\u0430\u043d\u0456\u0457 \u0421\u0442\u043e\u0440\u043e\u043d\u0438
-        B, \u0449\u043e \u043f\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0443\u0454
-        \u0457\u0457 \u0443\u0447\u0430\u0441\u0442\u044c \u0443 \u0443\u0433\u043e\u0434\u0456.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P54\",\n                \"justification\": \"\u0406\u043c''\u044f \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457
+        B.\"\n            },\n            {\n                \"paragraph_id\": \"P54\",\n                \"justification\":
+        \"\u0406\u043c''\u044f \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457
         \u043e\u0441\u043e\u0431\u0438 \u0421\u0442\u043e\u0440\u043e\u043d\u0438
-        B, \u0449\u043e \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0443\u0454
-        \u0443\u0447\u0430\u0441\u043d\u0438\u043a\u0430 \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
+        B, \u0449\u043e \u043f\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0443\u0454
+        \u0457\u0457 \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0430\u0446\u0456\u044e.\"\n            },\n            {\n                \"paragraph_id\":
         \"P55\",\n                \"justification\": \"\u041f\u043e\u0441\u0430\u0434\u0430
         \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457 \u043e\u0441\u043e\u0431\u0438
         \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B, \u0449\u043e \u0454 \u0447\u0430\u0441\u0442\u0438\u043d\u043e\u044e
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457 \u043f\u0440\u043e
+        \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0430\u0446\u0456\u0457
         \u0441\u0442\u043e\u0440\u043e\u043d\u0438.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175491, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338857, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 456,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 416,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4354, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
-        "total_tokens": 4810}}'
+        4354, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        4770}}'
     headers:
       Content-Length:
-      - '3700'
+      - '3478'
       Content-Type:
       - application/json
       Date:
@@ -1036,7 +1030,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '4196'
+      - '3648'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1220,7 +1214,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1231,7 +1225,7 @@ interactions:
         \"C0\",\n        \"extracted_items\": [\n            \"5 (\u043f\u2019\u044f\u0442\u0438)
         \u0440\u043e\u043a\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f
         \u0446\u044c\u043e\u0433\u043e \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175496, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338861, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1256,7 +1250,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '517'
+      - '500'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1482,7 +1476,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1499,7 +1493,7 @@ interactions:
         \u0440\u043e\u043a\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175496, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338861, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1508,7 +1502,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 113,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2292, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
+        2292, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
         "total_tokens": 2405}}'
     headers:
       Content-Length:
@@ -1524,7 +1518,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1027'
+      - '1062'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1711,7 +1705,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1722,21 +1716,22 @@ interactions:
         \"C0\",\n        \"extracted_items\": [\n            \"\u0422\u041e\u0412
         \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            \"\u0422\u041e\u0412
-        \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175497, "id": "chatcmpl-DUMMY",
+        \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb
+        (\u0421\u0442\u043e\u0440\u043e\u043d\u0430 B)\"\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1750338862, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 69,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 74,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1759, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 1828}}'
+        1759, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        1833}}'
     headers:
       Content-Length:
-      - '1380'
+      - '1396'
       Content-Type:
       - application/json
       Date:
@@ -1748,7 +1743,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '637'
+      - '938'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2201,7 +2196,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2223,7 +2218,7 @@ interactions:
         \u043b\u0456\u0446\u0435\u043d\u0437\u0456\u0457\",\n          \"\u0417\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u043d\u0435
         \u0437\u0430\u043a\u043e\u043d\u043e\u0434\u0430\u0432\u0441\u0442\u0432\u043e
         \u0442\u0430 \u0441\u043f\u043e\u0440\u0438\",\n          \"\u0420\u0456\u0437\u043d\u0435\"\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175498, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338863, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -2232,7 +2227,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 160,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3613, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
+        3613, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
         "total_tokens": 3773}}'
     headers:
       Content-Length:
@@ -2248,7 +2243,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1483'
+      - '1902'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2708,7 +2703,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2723,7 +2718,7 @@ interactions:
         \u0432\u043a\u0430\u0437\u0430\u043d\u0430 \u043d\u0430 \u043f\u043e\u0447\u0430\u0442\u043a\u0443
         \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430 \u044f\u043a 16 \u043b\u0438\u043f\u043d\u044f
         2024 \u0440\u043e\u043a\u0443.\"\n            }\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1750175500, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1750338865, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -2748,7 +2743,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '782'
+      - '850'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3215,7 +3210,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3224,7 +3219,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P40\",\n            \"P35\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175501, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338867, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3249,7 +3244,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '392'
+      - '412'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3726,7 +3721,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3735,68 +3730,60 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
-        [\n            {\n                \"paragraph_id\": \"P1\",\n                \"justification\":
-        \"\u0426\u0435\u0439 \u0430\u0431\u0437\u0430\u0446 \u043c\u0456\u0441\u0442\u0438\u0442\u044c
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e \u043f\u0440\u043e
-        \u0434\u0430\u0442\u0443 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f
+        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
+        \"P1\",\n        \"justification\": \"\u0426\u0435\u0439 \u0430\u0431\u0437\u0430\u0446
+        \u043c\u0456\u0441\u0442\u0438\u0442\u044c \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e
+        \u043f\u0440\u043e \u0434\u0430\u0442\u0443 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f
         \u0443\u0433\u043e\u0434\u0438 \u0442\u0430 \u0441\u0442\u043e\u0440\u043e\u043d\u0438,
-        \u044f\u043a\u0456 \u0457\u0457 \u043f\u0456\u0434\u043f\u0438\u0441\u0443\u044e\u0442\u044c.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P2\",\n                \"justification\": \"\u0412\u043a\u0430\u0437\u0443\u0454
+        \u044f\u043a\u0456 \u0457\u0457 \u043f\u0456\u0434\u043f\u0438\u0441\u0443\u044e\u0442\u044c.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P2\",\n        \"justification\": \"\u0412\u043a\u0430\u0437\u0443\u0454
         \u043d\u0430 \u0421\u0442\u043e\u0440\u043e\u043d\u0443 \u0410, \u0449\u043e
         \u0454 \u043e\u0434\u043d\u0456\u0454\u044e \u0437 \u0441\u0442\u043e\u0440\u0456\u043d
-        \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P9\",\n                \"justification\": \"\u0412\u043a\u0430\u0437\u0443\u0454
+        \u0443\u0433\u043e\u0434\u0438.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P9\",\n        \"justification\": \"\u0412\u043a\u0430\u0437\u0443\u0454
         \u043d\u0430 \u0421\u0442\u043e\u0440\u043e\u043d\u0443 B, \u0449\u043e \u0454
         \u0434\u0440\u0443\u0433\u043e\u044e \u0441\u0442\u043e\u0440\u043e\u043d\u043e\u044e
-        \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P10\",\n                \"justification\": \"\u041d\u0430\u0437\u0432\u0430
-        \u043a\u043e\u043c\u043f\u0430\u043d\u0456\u0457 \u0422\u041e\u0412 \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb
-        \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0443\u0454 \u043e\u0434\u043d\u0443
-        \u0437\u0456 \u0441\u0442\u043e\u0440\u0456\u043d \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P11\",\n                \"justification\": \"\u0410\u0434\u0440\u0435\u0441\u0430,
-        \u0449\u043e \u043d\u0430\u043b\u0435\u0436\u0438\u0442\u044c \u043e\u0434\u043d\u0456\u0439
-        \u0437\u0456 \u0441\u0442\u043e\u0440\u0456\u043d \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P12\",\n                \"justification\": \"\u041c\u0456\u0441\u0442\u043e
-        \u0456 \u043f\u043e\u0448\u0442\u043e\u0432\u0438\u0439 \u0456\u043d\u0434\u0435\u043a\u0441,
-        \u0449\u043e \u043d\u0430\u043b\u0435\u0436\u0430\u0442\u044c \u043e\u0434\u043d\u0456\u0439
-        \u0437\u0456 \u0441\u0442\u043e\u0440\u0456\u043d \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P13\",\n                \"justification\": \"\u0406\u043c''\u044f \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457
-        \u043e\u0441\u043e\u0431\u0438 \u0442\u0430 \u0457\u0457 \u043f\u043e\u0441\u0430\u0434\u0430,
-        \u0449\u043e \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0443\u0454
-        \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043d\u0438\u043a\u0430 \u0441\u0442\u043e\u0440\u043e\u043d\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P14\",\n                \"justification\": \"\u041a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0438\u0439
-        \u0442\u0435\u043b\u0435\u0444\u043e\u043d \u0441\u0442\u043e\u0440\u043e\u043d\u0438
-        \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P15\",\n                \"justification\": \"\u0415\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u0430
-        \u0430\u0434\u0440\u0435\u0441\u0430 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457
-        \u043e\u0441\u043e\u0431\u0438 \u0441\u0442\u043e\u0440\u043e\u043d\u0438
-        \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P52\",\n                \"justification\": \"\u041f\u043e\u0432\u0442\u043e\u0440\u043d\u0435
-        \u0437\u0433\u0430\u0434\u0443\u0432\u0430\u043d\u043d\u044f \u0422\u041e\u0412
-        \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb
-        \u044f\u043a \u0441\u0442\u043e\u0440\u043e\u043d\u0438 \u0443\u0433\u043e\u0434\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P54\",\n                \"justification\": \"\u0406\u043c''\u044f \u0414\u0436\u0435\u0439\u043d
-        \u0414\u043e\u0443, \u0449\u043e \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0443\u0454
-        \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043d\u0438\u043a\u0430 \u0441\u0442\u043e\u0440\u043e\u043d\u0438.\"\n            },\n            {\n                \"paragraph_id\":
-        \"P55\",\n                \"justification\": \"\u041f\u043e\u0441\u0430\u0434\u0430
-        \u043a\u0435\u0440\u0443\u044e\u0447\u043e\u0433\u043e \u043f\u0430\u0440\u0442\u043d\u0435\u0440\u0430,
-        \u0449\u043e \u0432\u043a\u0430\u0437\u0443\u0454 \u043d\u0430 \u0440\u043e\u043b\u044c
-        \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043d\u0438\u043a\u0430 \u0441\u0442\u043e\u0440\u043e\u043d\u0438.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175501, "id": "chatcmpl-DUMMY",
+        \u0443\u0433\u043e\u0434\u0438.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P10\",\n        \"justification\": \"\u041d\u0430\u0437\u0432\u0430 \u043a\u043e\u043c\u043f\u0430\u043d\u0456\u0457,
+        \u044f\u043a\u0430 \u0454 \u0421\u0442\u043e\u0440\u043e\u043d\u043e\u044e
+        B \u0443 \u0443\u0433\u043e\u0434\u0456.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P13\",\n        \"justification\": \"\u0406\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044f
+        \u043f\u0440\u043e \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0443
+        \u043e\u0441\u043e\u0431\u0443 \u0421\u0442\u043e\u0440\u043e\u043d\u0438
+        B, \u0449\u043e \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0443\u0454
+        \u0443\u0447\u0430\u0441\u043d\u0438\u043a\u0430 \u0443\u0433\u043e\u0434\u0438.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P14\",\n        \"justification\": \"\u041d\u0430\u0434\u0430\u0454 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0438\u0439
+        \u0442\u0435\u043b\u0435\u0444\u043e\u043d \u0421\u0442\u043e\u0440\u043e\u043d\u0438
+        B.\"\n      },\n      {\n        \"paragraph_id\": \"P15\",\n        \"justification\":
+        \"\u041d\u0430\u0434\u0430\u0454 \u0435\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u0443
+        \u0430\u0434\u0440\u0435\u0441\u0443 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457
+        \u043e\u0441\u043e\u0431\u0438 \u0421\u0442\u043e\u0440\u043e\u043d\u0438
+        B.\"\n      },\n      {\n        \"paragraph_id\": \"P52\",\n        \"justification\":
+        \"\u041f\u043e\u0432\u0442\u043e\u0440\u043d\u0435 \u0437\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f
+        \u043d\u0430\u0437\u0432\u0438 \u043a\u043e\u043c\u043f\u0430\u043d\u0456\u0457
+        \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P54\",\n        \"justification\": \"\u0406\u043c''\u044f \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457
+        \u043e\u0441\u043e\u0431\u0438 \u0421\u0442\u043e\u0440\u043e\u043d\u0438
+        B, \u0449\u043e \u043f\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0443\u0454
+        \u0457\u0457 \u0456\u0434\u0435\u043d\u0442\u0438\u0444\u0456\u043a\u0430\u0446\u0456\u044e.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P55\",\n        \"justification\": \"\u041f\u043e\u0441\u0430\u0434\u0430
+        \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0457 \u043e\u0441\u043e\u0431\u0438
+        \u0421\u0442\u043e\u0440\u043e\u043d\u0438 B, \u0449\u043e \u0443\u0442\u043e\u0447\u043d\u044e\u0454
+        \u0457\u0457 \u0440\u043e\u043b\u044c \u0443 \u043a\u043e\u043c\u043f\u0430\u043d\u0456\u0457.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750338867, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 491,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 412,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         4354, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4224},
-        "total_tokens": 4845}}'
+        "total_tokens": 4766}}'
     headers:
       Content-Length:
-      - '3930'
+      - '3172'
       Content-Type:
       - application/json
       Date:
@@ -3808,7 +3795,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3744'
+      - '4666'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3943,11 +3930,9 @@ interactions:
       \u0442\u0430 \u0443\u043A\u043B\u0430\u0434\u0435\u043D\u043E 16 \u043B\u0438\u043F\u043D\u044F
       2024 \u0440\u043E\u043A\u0443 \u043C\u0456\u0436:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430
       \u0410:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430 B:\\n\\n\u0422\u041E\u0412
-      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\\n5678
-      \u0412\u0438\u043F\u0430\u0434\u043A\u043E\u0432\u0438\u0439 \u0434\u0440\u0430\u0439\u0432\\n\\n\u041D\u044C\u044E-\u0419\u043E\u0440\u043A,
-      NY 00000\\n\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u043E\u0441\u043E\u0431\u0430:
-      \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443, \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
-      \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
+      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430
+      \u043E\u0441\u043E\u0431\u0430: \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443,
+      \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
       (012) 345-6789\\n\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430
       \u0430\u0434\u0440\u0435\u0441\u0430: jane.doe@example.com\\n\\n\u0422\u041E\u0412
       \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\\n\u0406\u043C'\u044F:
@@ -3965,7 +3950,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '8904'
+      - '8835'
       content-type:
       - application/json
       host:
@@ -3993,7 +3978,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4002,7 +3987,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750175505, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750338872, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -4010,8 +3995,8 @@ interactions:
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
         "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 1717, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 1740}}'
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1697, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1536}, "total_tokens": 1720}}'
     headers:
       Content-Length:
       - '1179'
@@ -4026,7 +4011,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '232'
+      - '307'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4210,7 +4195,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4221,7 +4206,7 @@ interactions:
         \"C0\",\n        \"extracted_items\": [\n            \"5 (\u043f\u2019\u044f\u0442\u0438)
         \u0440\u043e\u043a\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f
         \u0446\u044c\u043e\u0433\u043e \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175505, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338872, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -4230,7 +4215,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 44,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1661, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
+        1661, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
         "total_tokens": 1705}}'
     headers:
       Content-Length:
@@ -4246,7 +4231,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '348'
+      - '491'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4380,11 +4365,9 @@ interactions:
       \u0442\u0430 \u0443\u043A\u043B\u0430\u0434\u0435\u043D\u043E 16 \u043B\u0438\u043F\u043D\u044F
       2024 \u0440\u043E\u043A\u0443 \u043C\u0456\u0436:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430
       \u0410:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430 B:\\n\\n\u0422\u041E\u0412
-      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\\n5678
-      \u0412\u0438\u043F\u0430\u0434\u043A\u043E\u0432\u0438\u0439 \u0434\u0440\u0430\u0439\u0432\\n\\n\u041D\u044C\u044E-\u0419\u043E\u0440\u043A,
-      NY 00000\\n\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u043E\u0441\u043E\u0431\u0430:
-      \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443, \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
-      \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
+      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430
+      \u043E\u0441\u043E\u0431\u0430: \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443,
+      \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
       (012) 345-6789\\n\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430
       \u0430\u0434\u0440\u0435\u0441\u0430: jane.doe@example.com\\n\\n\u0422\u041E\u0412
       \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\\n\u0406\u043C'\u044F:
@@ -4402,7 +4385,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '8804'
+      - '8735'
       content-type:
       - application/json
       host:
@@ -4430,7 +4413,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4440,7 +4423,7 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"\u0422\u041e\u0412
         \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175505, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338872, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -4449,8 +4432,8 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 36,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1696, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
-        "total_tokens": 1732}}'
+        1676, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
+        "total_tokens": 1712}}'
     headers:
       Content-Length:
       - '1239'
@@ -4465,7 +4448,491 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '330'
+      - '461'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \\\"Expected structure,\\\" you must
+      follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If available labels
+      are provided for a concept under \\\"Available labels,\\\" the extracted item
+      value must be a list containing only labels from the predefined set. If none
+      of the predefined labels apply, do not extract any items for that concept.\\n
+      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
+      to follow the same style and formatting for your extracted items.\\n    -- When
+      extracting string values, retain them in the original language of the document
+      without translating them.\\n\\n- Types of extracted items:\\n    -- Each concept
+      specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
+      item type\\\"). Ensure your extracted items strictly match that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if none of the
+      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
+      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
+      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
+      name: Title\\n\\nConcept description:\\nContract title\\n\\nAmount of extracted
+      items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT TEXT:\\n\u0423\u0433\u043E\u0434\u0430
+      \u043F\u0440\u043E \u043D\u0435\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
+      (NDA)\\n\\n\u0426\u044E \u0423\u0433\u043E\u0434\u0443 \u043F\u0440\u043E \u043D\u0435\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
+      (\xAB\u0423\u0433\u043E\u0434\u0430\xBB) \u0443\u043A\u043B\u0430\u0434\u0435\u043D\u043E
+      \u0442\u0430 \u0443\u043A\u043B\u0430\u0434\u0435\u043D\u043E 16 \u043B\u0438\u043F\u043D\u044F
+      2024 \u0440\u043E\u043A\u0443 \u043C\u0456\u0436:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430
+      \u0410:\\n\\n_____\\n_____\\n_____\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430
+      \u043E\u0441\u043E\u0431\u0430: _____\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
+      _____\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430 \u043F\u043E\u0448\u0442\u0430:
+      _____\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430 B:\\n\\n\u0422\u041E\u0412
+      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n5678
+      \u0412\u0438\u043F\u0430\u0434\u043A\u043E\u0432\u0438\u0439 \u0434\u0440\u0430\u0439\u0432\\n\u041D\u044C\u044E-\u0419\u043E\u0440\u043A,
+      NY 00000\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u043E\u0441\u043E\u0431\u0430:
+      \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443, \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
+      \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
+      (012) 345-6789\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430
+      \u0430\u0434\u0440\u0435\u0441\u0430: jane.doe@example.com\\n\\n1. \u041F\u0440\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F:\\n\\n\u041C\u0435\u0442\u043E\u044E
+      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0454 \u0437\u0430\u0445\u0438\u0441\u0442
+      \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457, \u044F\u043A\u0430
+      \u043C\u043E\u0436\u0435 \u0431\u0443\u0442\u0438 \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u0430
+      \u043C\u0456\u0436 \u0441\u0442\u043E\u0440\u043E\u043D\u0430\u043C\u0438 \u043F\u0456\u0434
+      \u0447\u0430\u0441 \u043E\u0431\u0433\u043E\u0432\u043E\u0440\u0435\u043D\u044C
+      \u0456 \u0432\u0437\u0430\u0454\u043C\u043E\u0434\u0456\u0439 \u0449\u043E\u0434\u043E
+      \u043F\u043E\u0442\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457 \u0434\u0456\u043B\u043E\u0432\u043E\u0457
+      \u0441\u043F\u0456\u0432\u043F\u0440\u0430\u0446\u0456 \u0442\u0430 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u0442\u0432\u0430.\\n\\n2.
+      \u0412\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457:\\n\\n\u0414\u043B\u044F
+      \u0446\u0456\u043B\u0435\u0439 \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438
+      \xAB\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F\xBB \u043E\u0437\u043D\u0430\u0447\u0430\u0454
+      \u0431\u0443\u0434\u044C-\u044F\u043A\u0443 \u0442\u0430 \u0432\u0441\u044E
+      \u043D\u0435\u043F\u0443\u0431\u043B\u0456\u0447\u043D\u0443 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E,
+      \u043F\u0435\u0440\u0435\u0434\u0430\u043D\u0443 \u0432 \u0431\u0443\u0434\u044C-\u044F\u043A\u0456\u0439
+      \u0444\u043E\u0440\u043C\u0456, \u0431\u0443\u0434\u044C \u0442\u043E \u0432
+      \u0443\u0441\u043D\u0456\u0439, \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u0456\u0439,
+      \u0435\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0456\u0439 \u0447\u0438
+      \u0456\u043D\u0448\u0456\u0439 \u0444\u043E\u0440\u043C\u0456 \u0447\u0438 \u0437\u0430\u0441\u043E\u0431\u0456
+      \u043C\u0430\u0441\u043E\u0432\u043E\u0457 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457,
+      \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E \u0432\u0456\u0434 \u0442\u043E\u0433\u043E,
+      \u043F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u0430, \u043F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u0430
+      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C \u0432\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u0430
+      \u044F\u043A \xAB\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430\xBB,
+      \u044F\u043A\u0430 \u0431\u0443\u043B\u0430 \u0430\u0431\u043E \u043C\u043E\u0436\u0435
+      \u0431\u0443\u0442\u0438 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0430, \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430
+      \u0430\u0431\u043E \u0441\u043F\u043E\u0441\u0442\u0435\u0440\u0435\u0436\u0435\u043D\u0430
+      \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C,
+      \u044F\u043A\u0430 (i) \u043C\u0430\u0454 \u0444\u0430\u043A\u0442\u0438\u0447\u043D\u0443
+      \u0447\u0438 \u043F\u043E\u0442\u0435\u043D\u0446\u0456\u0439\u043D\u0443 \u0435\u043A\u043E\u043D\u043E\u043C\u0456\u0447\u043D\u0443
+      \u0446\u0456\u043D\u043D\u0456\u0441\u0442\u044C \u0447\u0435\u0440\u0435\u0437
+      \u0442\u0435, \u0449\u043E \u0432\u043E\u043D\u0430 \u043D\u0435 \u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0432\u0456\u0434\u043E\u043C\u043E\u044E
+      \u0442\u0430 \u043D\u0435 \u0454 \u043B\u0435\u0433\u043A\u043E \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0438
+      \u043D\u0430\u043B\u0435\u0436\u043D\u0438\u043C\u0438 \u0437\u0430\u0441\u043E\u0431\u0430\u043C\u0438
+      \u0456\u043D\u0448\u0438\u043C\u0438 \u043E\u0441\u043E\u0431\u0430\u043C\u0438,
+      \u044F\u043A\u0456 \u043C\u043E\u0436\u0443\u0442\u044C \u043E\u0442\u0440\u0438\u043C\u0430\u0442\u0438
+      \u0435\u043A\u043E\u043D\u043E\u043C\u0456\u0447\u043D\u0443 \u0446\u0456\u043D\u043D\u0456\u0441\u0442\u044C
+      \u0432\u0456\u0434 \u0439\u043E\u0433\u043E \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
+      \u0447\u0438 \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F,
+      \u0430\u0431\u043E (ii) \u043F\u0456\u0434\u043B\u044F\u0433\u0430\u0454 \u043E\u0431\u0491\u0440\u0443\u043D\u0442\u043E\u0432\u0430\u043D\u0438\u043C
+      \u0437\u0443\u0441\u0438\u043B\u043B\u044F\u043C \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0434\u043B\u044F
+      \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043D\u044F \u0441\u0435\u043A\u0440\u0435\u0442\u043D\u043E\u0441\u0442\u0456
+      \u0442\u0430 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456.\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u0432\u043A\u043B\u044E\u0447\u0430\u0454,
+      \u0430\u043B\u0435 \u043D\u0435 \u043E\u0431\u043C\u0435\u0436\u0443\u0454\u0442\u044C\u0441\u044F
+      \u0442\u0430\u043A\u0438\u043C\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0456\u044F\u043C\u0438:
+      (1) \u0431\u0456\u0437\u043D\u0435\u0441-\u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
+      (\u0431\u0456\u0437\u043D\u0435\u0441-\u043F\u043B\u0430\u043D\u0438, \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457
+      \u0442\u0430 \u043C\u043E\u0434\u0435\u043B\u0456), (2) \u0442\u0435\u0445\u043D\u0456\u0447\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F (\u0442\u0435\u0445\u043D\u0456\u0447\u043D\u0456
+      \u0441\u043F\u0435\u0446\u0438\u0444\u0456\u043A\u0430\u0446\u0456\u0457 \u0442\u0430
+      \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430\u0446\u0456\u044F, \u043D\u0430\u0443\u043A\u043E\u0432\u043E-\u0434\u043E\u0441\u043B\u0456\u0434\u043D\u0430
+      \u0434\u0456\u044F\u043B\u044C\u043D\u0456\u0441\u0442\u044C), (3) \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
+      \u043F\u0440\u043E \u043A\u043B\u0456\u0454\u043D\u0442\u0456\u0432 \u0456 \u0440\u0438\u043D\u043E\u043A
+      (\u0441\u043F\u0438\u0441\u043A\u0438 \u043A\u043B\u0456\u0454\u043D\u0442\u0456\u0432
+      \u0456 \u043A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F,
+      \u0456\u0441\u0442\u043E\u0440\u0456\u0457 \u043F\u0440\u043E\u0434\u0430\u0436\u0456\u0432
+      \u0456 \u0448\u0430\u0431\u043B\u043E\u043D\u0438), (4) \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B
+      \u0456 \u0432\u043D\u0443\u0442\u0440\u0456\u0448\u043D\u044F \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
+      (\u0441\u043F\u0438\u0441\u043A\u0438 \u0441\u043F\u0456\u0432\u0440\u043E\u0431\u0456\u0442\u043D\u0438\u043A\u0456\u0432
+      \u0456 \u043A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F,
+      \u0442\u0440\u0443\u0434\u043E\u0432\u0456 \u0443\u0433\u043E\u0434\u0438 \u0442\u0430
+      \u043E\u0441\u043E\u0431\u0438\u0441\u0442\u0456 \u0441\u043F\u0440\u0430\u0432\u0438),
+      (5) \u0456\u043D\u0442\u0435\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u0430
+      \u0432\u043B\u0430\u0441\u043D\u0456\u0441\u0442\u044C (\u043A\u043E\u043C\u0435\u0440\u0446\u0456\u0439\u043D\u0456
+      \u0441\u0435\u043A\u0440\u0435\u0442\u0438 \u0442\u0430 \u043D\u043E\u0443-\u0445\u0430\u0443,
+      \u043F\u0430\u0442\u0435\u043D\u0442\u0438 \u0442\u0430 \u0437\u0430\u044F\u0432\u043A\u0438
+      \u043D\u0430 \u043F\u0430\u0442\u0435\u043D\u0442\u0438, \u0430\u0432\u0442\u043E\u0440\u0441\u044C\u043A\u0456
+      \u043F\u0440\u0430\u0432\u0430 \u0442\u0430 \u0437\u0430\u044F\u0432\u043A\u0438
+      \u043D\u0430 \u0430\u0432\u0442\u043E\u0440\u0441\u044C\u043A\u0456 \u043F\u0440\u0430\u0432\u0430,
+      \u0442\u043E\u0440\u0433\u043E\u0432\u0456 \u043C\u0430\u0440\u043A\u0438 \u0442\u0430
+      \u0437\u0430\u044F\u0432\u043A\u0438 \u043D\u0430 \u0442\u043E\u0440\u0433\u043E\u0432\u0435\u043B\u044C\u043D\u0456
+      \u043C\u0430\u0440\u043A\u0438), (6) \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0447\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F (\u043F\u043B\u0430\u043D\u0438
+      \u0437\u043B\u0438\u0442\u0442\u044F \u0442\u0430 \u043F\u043E\u0433\u043B\u0438\u043D\u0430\u043D\u043D\u044F,
+      \u043A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u043D\u0438\u0439 \u0430\u043D\u0430\u043B\u0456\u0437
+      \u0442\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457). \u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043D\u0438\u0439
+      \u043A\u043E\u0434 \u0442\u0430\u043A\u043E\u0436 \u043F\u043E\u0432\u0438\u043D\u0435\u043D
+      \u0431\u0443\u0442\u0438 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0439
+      \u0434\u043E \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457.\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u043D\u0435 \u0432\u043A\u043B\u044E\u0447\u0430\u0442\u0438\u043C\u0435
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u044F\u043A\u0430:
+      (a) \u0454 \u0430\u0431\u043E \u0441\u0442\u0430\u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u044E
+      \u0437\u0430 \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u0456\u0432
+      \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E,
+      \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u0430\u0431\u043E
+      \u0457\u0457 \u041F\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043D\u0438\u043A\u0430\u043C\u0438;
+      (b) \u0431\u0443\u043B\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0456-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0443
+      \u043D\u0430 \u043D\u0435\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0439
+      \u043E\u0441\u043D\u043E\u0432\u0456 \u0434\u043E \u0457\u0457 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0442\u044F
+      \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454;
+      (c) \u0441\u0442\u0430\u0454 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0438\u043C
+      \u0434\u043B\u044F \u0421\u0442\u043E\u0440\u043E\u043D\u0438-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0430
+      \u043D\u0430 \u043D\u0435\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0439
+      \u043E\u0441\u043D\u043E\u0432\u0456 \u0432\u0456\u0434 \u043E\u0441\u043E\u0431\u0438,
+      \u0456\u043D\u0448\u043E\u0457 \u043D\u0456\u0436 \u0421\u0442\u043E\u0440\u043E\u043D\u0430-\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0447,
+      \u044F\u043A\u0430 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C
+      \u043D\u0435 \u043F\u043E\u0432\u2019\u044F\u0437\u0430\u043D\u0430 \u0437\u043E\u0431\u043E\u0432\u2019\u044F\u0437\u0430\u043D\u043D\u044F\u043C\u0438
+      \u0449\u043E\u0434\u043E \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456
+      \u043F\u0435\u0440\u0435\u0434 \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0447\u0435\u043C;
+      \u0430\u0431\u043E (d) \u0431\u0443\u043B\u0430 \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E
+      \u0440\u043E\u0437\u0440\u043E\u0431\u043B\u0435\u043D\u0430 \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C
+      \u0431\u0435\u0437 \u043F\u043E\u0441\u0438\u043B\u0430\u043D\u043D\u044F \u0430\u0431\u043E
+      \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F \u0431\u0443\u0434\u044C-\u044F\u043A\u043E\u0457
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457. \u0406\u043C'\u044F
+      \u0441\u043E\u0431\u0430\u043A\u0438 \u041F\u0440\u0438\u0439\u043C\u0430\u044E\u0447\u043E\u0457
+      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 - \u0411\u043E\u0431.\\n\u041F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u044F\u043A \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u043D\u0435 \u0454
+      \u0432\u0438\u0437\u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043C \u0434\u043B\u044F
+      \u0442\u043E\u0433\u043E, \u0447\u0438 \u0454 \u0442\u0430\u043A\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
+      \u043A\u043E\u043C\u0435\u0440\u0446\u0456\u0439\u043D\u043E\u044E \u0442\u0430\u0454\u043C\u043D\u0438\u0446\u0435\u044E
+      \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u043D\u043E \u0434\u043E \u0447\u0438\u043D\u043D\u043E\u0433\u043E
+      \u0437\u0430\u043A\u043E\u043D\u043E\u0434\u0430\u0432\u0441\u0442\u0432\u0430.
+      \u0423\u0441\u044F \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u0437\u0430\u043B\u0438\u0448\u0430\u0454\u0442\u044C\u0441\u044F
+      \u0432\u0438\u043A\u043B\u044E\u0447\u043D\u043E\u044E \u0432\u043B\u0430\u0441\u043D\u0456\u0441\u0442\u044E
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454,
+      \u0456 \u0421\u0442\u043E\u0440\u043E\u043D\u0430, \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454,
+      \u043D\u0435 \u043C\u0430\u0454 \u0436\u043E\u0434\u043D\u0438\u0445 \u043F\u0440\u0430\u0432,
+      \u0437\u0433\u0456\u0434\u043D\u043E \u0437 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0454\u044E
+      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C,
+      \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u043E\u0432\u0443\u0432\u0430\u0442\u0438
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0437\u0430 \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C
+      \u0432\u0438\u043F\u0430\u0434\u043A\u0456\u0432, \u043F\u0440\u044F\u043C\u043E
+      \u043F\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043D\u0438\u0445 \u0443
+      \u0446\u044C\u043E\u043C\u0443 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0456.\\n\\n3.
+      \u041E\u0431\u043E\u0432'\u044F\u0437\u043A\u0438 \u043F\u0440\u0438\u0439\u043C\u0430\u044E\u0447\u043E\u0457
+      \u0441\u0442\u043E\u0440\u043E\u043D\u0438:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430,
+      \u044F\u043A\u0430 \u043E\u0442\u0440\u0438\u043C\u0443\u0454 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E (\\\"\u0421\u0442\u043E\u0440\u043E\u043D\u0430-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\\\"):\\n\\na.
+      \u0417\u0431\u0435\u0440\u0456\u0433\u0430\u0442\u0438 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0441\u0442\u044C
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u0442\u0430 \u043D\u0435
+      \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0442\u0438
+      \u0457\u0457 \u0442\u0440\u0435\u0442\u0456\u043C \u043E\u0441\u043E\u0431\u0430\u043C
+      \u0431\u0435\u0437 \u043F\u043E\u043F\u0435\u0440\u0435\u0434\u043D\u044C\u043E\u0457
+      \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u043E\u0457 \u0437\u0433\u043E\u0434\u0438
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\nb.
+      \u0412\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u043E\u0432\u0443\u0432\u0430\u0442\u0438
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0432\u0438\u043A\u043B\u044E\u0447\u043D\u043E
+      \u0437 \u043C\u0435\u0442\u043E\u044E \u043E\u0446\u0456\u043D\u043A\u0438 \u0447\u0438
+      \u0437\u0430\u043B\u0443\u0447\u0435\u043D\u043D\u044F \u0434\u043E \u043F\u043E\u0442\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0434\u0456\u043B\u043E\u0432\u043E\u0457 \u0441\u043F\u0456\u0432\u043F\u0440\u0430\u0446\u0456.\\n\\n\u0432.
+      \u0412\u0436\u0438\u0432\u0430\u0442\u0438 \u0432\u0441\u0456\u0445 \u043D\u0435\u043E\u0431\u0445\u0456\u0434\u043D\u0438\u0445
+      \u0437\u0430\u043F\u043E\u0431\u0456\u0436\u043D\u0438\u0445 \u0437\u0430\u0445\u043E\u0434\u0456\u0432
+      \u0434\u043B\u044F \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457, \u044F\u043A\u0456
+      \u043F\u043E\u0432\u0438\u043D\u043D\u0456 \u0431\u0443\u0442\u0438 \u043D\u0435
+      \u043C\u0435\u043D\u0448\u0438\u043C\u0438, \u043D\u0456\u0436 \u0437\u0430\u043F\u043E\u0431\u0456\u0436\u043D\u0456
+      \u0437\u0430\u0445\u043E\u0434\u0438, \u0432\u0436\u0438\u0442\u0456 \u0434\u043B\u044F
+      \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u0432\u043B\u0430\u0441\u043D\u043E\u0457
+      \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457.\\n\\n4. \u0412\u0438\u043D\u044F\u0442\u043A\u0438
+      \u0437 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457:\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u043D\u0435 \u0432\u043A\u043B\u044E\u0447\u0430\u0454
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u044F\u043A\u0430:\\n\\na.
+      \u0404 \u0430\u0431\u043E \u0441\u0442\u0430\u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0432\u0456\u0434\u043E\u043C\u0438\u043C
+      \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u043F\u0440\u0430\u0432\u043E\u043C\u0456\u0440\u043D\u0456
+      \u0434\u0456\u0457 \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E
+      \u043E\u0442\u0440\u0438\u043C\u0443\u0454.\\n\\nb. \u0412\u0436\u0435 \u0432\u0456\u0434\u043E\u043C\u0438\u0439
+      \u041E\u0442\u0440\u0438\u043C\u0443\u044E\u0447\u0456\u0439 \u0441\u0442\u043E\u0440\u043E\u043D\u0456
+      \u043D\u0430 \u043C\u043E\u043C\u0435\u043D\u0442 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0442\u044F.\\n\\n\u0432.
+      \u041E\u0442\u0440\u0438\u043C\u0430\u043D\u043E \u043D\u0430 \u0437\u0430\u043A\u043E\u043D\u043D\u0438\u0445
+      \u043F\u0456\u0434\u0441\u0442\u0430\u0432\u0430\u0445 \u0432\u0456\u0434 \u0442\u0440\u0435\u0442\u044C\u043E\u0457
+      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 \u0431\u0435\u0437 \u043F\u043E\u0440\u0443\u0448\u0435\u043D\u043D\u044F
+      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438.\\n\\nd. \u0420\u043E\u0437\u0440\u043E\u0431\u043B\u044F\u0454\u0442\u044C\u0441\u044F
+      \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E \u041E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C
+      \u0431\u0435\u0437 \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F
+      \u0430\u0431\u043E \u043F\u043E\u0441\u0438\u043B\u0430\u043D\u043D\u044F \u043D\u0430
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\n6.
+      \u041F\u043E\u0432\u0435\u0440\u043D\u0435\u043D\u043D\u044F \u043C\u0430\u0442\u0435\u0440\u0456\u0430\u043B\u0456\u0432:\\n\\n\u041F\u0456\u0441\u043B\u044F
+      \u043F\u0440\u0438\u043F\u0438\u043D\u0435\u043D\u043D\u044F \u0434\u0456\u0457
+      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0430\u0431\u043E \u0437\u0430
+      \u0437\u0430\u043F\u0438\u0442\u043E\u043C \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
+      \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u043F\u043E\u0432\u0435\u0440\u0442\u0430\u0454
+      \u0432\u0441\u0456 \u043C\u0430\u0442\u0435\u0440\u0456\u0430\u043B\u0438, \u0449\u043E
+      \u043C\u0456\u0441\u0442\u044F\u0442\u044C \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0421\u0442\u043E\u0440\u043E\u043D\u0456,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0430\u0431\u043E
+      \u0437\u043D\u0438\u0449\u0443\u0454 \u0457\u0445 \u043D\u0430 \u0440\u043E\u0437\u0441\u0443\u0434
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\n7.
+      \u0411\u0435\u0437 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0457:\\n\\n\u041D\u0456\u0449\u043E
+      \u0432 \u0446\u0456\u0439 \u0423\u0433\u043E\u0434\u0456 \u043D\u0435 \u043F\u043E\u0432\u0438\u043D\u043D\u043E
+      \u0442\u043B\u0443\u043C\u0430\u0447\u0438\u0442\u0438\u0441\u044F \u044F\u043A
+      \u043D\u0430\u0434\u0430\u043D\u043D\u044F \u0431\u0443\u0434\u044C-\u044F\u043A\u0438\u0445
+      \u043F\u0440\u0430\u0432 \u0421\u0442\u043E\u0440\u043E\u043D\u0456, \u0449\u043E
+      \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u0437\u0430 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0454\u044E
+      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C \u043D\u0430
+      \u0431\u0443\u0434\u044C-\u044F\u043A\u0443 \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0437\u0430
+      \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C \u0432\u0438\u043F\u0430\u0434\u043A\u0456\u0432,
+      \u043F\u0440\u044F\u043C\u043E \u0432\u0438\u043A\u043B\u0430\u0434\u0435\u043D\u0438\u0445
+      \u0443 \u0446\u0456\u0439 \u0423\u0433\u043E\u0434\u0456.\\n\\n8. \u0417\u0430\u0441\u0442\u043E\u0441\u043E\u0432\u043D\u0435
+      \u0437\u0430\u043A\u043E\u043D\u043E\u0434\u0430\u0432\u0441\u0442\u0432\u043E
+      \u0442\u0430 \u0441\u043F\u043E\u0440\u0438:\\n\\n\u0426\u044F \u0423\u0433\u043E\u0434\u0430
+      \u0440\u0435\u0433\u0443\u043B\u044E\u0454\u0442\u044C\u0441\u044F \u0442\u0430
+      \u0442\u043B\u0443\u043C\u0430\u0447\u0438\u0442\u044C\u0441\u044F \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u043D\u043E
+      \u0434\u043E \u0437\u0430\u043A\u043E\u043D\u0456\u0432 \u0448\u0442\u0430\u0442\u0443
+      \u041A\u0430\u043B\u0456\u0444\u043E\u0440\u043D\u0456\u044F \u0431\u0435\u0437
+      \u0443\u0440\u0430\u0445\u0443\u0432\u0430\u043D\u043D\u044F \u043F\u0440\u0438\u043D\u0446\u0438\u043F\u0456\u0432
+      \u043A\u043E\u043B\u0456\u0437\u0456\u0439\u043D\u043E\u0433\u043E \u043F\u0440\u0430\u0432\u0430.\\n\\n\u0423\u0441\u0456
+      \u0441\u0443\u043F\u0435\u0440\u0435\u0447\u043A\u0438 \u0432\u0438\u0440\u0456\u0448\u0443\u044E\u0442\u044C\u0441\u044F
+      \u0441\u0443\u0434\u0430\u043C\u0438 \u0448\u0442\u0430\u0442\u0443 \u041A\u0430\u043B\u0456\u0444\u043E\u0440\u043D\u0456\u044F.
+      \u0414\u043E\u0433\u043E\u0432\u0456\u0440 \u0434\u0456\u0454 \u043F\u0440\u043E\u0442\u044F\u0433\u043E\u043C
+      5 (\u043F\u2019\u044F\u0442\u0438) \u0440\u043E\u043A\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438
+      \u043F\u0456\u0434\u043F\u0438\u0441\u0430\u043D\u043D\u044F \u0446\u044C\u043E\u0433\u043E
+      \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0443.\\n\\n9. \u0420\u0456\u0437\u043D\u0435:\\n\\na.
+      \u0426\u044F \u0423\u0433\u043E\u0434\u0430 \u044F\u0432\u043B\u044F\u0454 \u0441\u043E\u0431\u043E\u044E
+      \u043F\u043E\u0432\u043D\u0443 \u0443\u0433\u043E\u0434\u0443 \u043C\u0456\u0436
+      \u0441\u0442\u043E\u0440\u043E\u043D\u0430\u043C\u0438 \u0449\u043E\u0434\u043E
+      \u0457\u0457 \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u0430 \u0442\u0430 \u0437\u0430\u043C\u0456\u043D\u044E\u0454
+      \u0432\u0441\u0456 \u043F\u043E\u043F\u0435\u0440\u0435\u0434\u043D\u0456 \u0430\u0431\u043E
+      \u043E\u0434\u043D\u043E\u0447\u0430\u0441\u043D\u0456 \u0443\u0441\u043D\u0456
+      \u0447\u0438 \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u0456 \u0443\u0433\u043E\u0434\u0438
+      \u0449\u043E\u0434\u043E \u0442\u0430\u043A\u043E\u0433\u043E \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u0430.\\n\\nb.
+      \u0411\u0443\u0434\u044C-\u044F\u043A\u0456 \u043F\u043E\u043F\u0440\u0430\u0432\u043A\u0438
+      \u0430\u0431\u043E \u0437\u043C\u0456\u043D\u0438 \u0434\u043E \u0446\u0456\u0454\u0457
+      \u0423\u0433\u043E\u0434\u0438 \u043F\u043E\u0432\u0438\u043D\u043D\u0456 \u0431\u0443\u0442\u0438
+      \u0437\u0440\u043E\u0431\u043B\u0435\u043D\u0456 \u0432 \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u0456\u0439
+      \u0444\u043E\u0440\u043C\u0456 \u0442\u0430 \u043F\u0456\u0434\u043F\u0438\u0441\u0430\u043D\u0456
+      \u043E\u0431\u043E\u043C\u0430 \u0441\u0442\u043E\u0440\u043E\u043D\u0430\u043C\u0438.\\n\\n\u0432.
+      \u042F\u043A\u0449\u043E \u0431\u0443\u0434\u044C-\u044F\u043A\u0435 \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u043D\u044F
+      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0431\u0443\u0434\u0435
+      \u0432\u0438\u0437\u043D\u0430\u043D\u043E \u0442\u0430\u043A\u0438\u043C, \u0449\u043E
+      \u043D\u0435 \u043C\u0430\u0454 \u043F\u043E\u0437\u043E\u0432\u043D\u043E\u0457
+      \u0441\u0438\u043B\u0438, \u0440\u0435\u0448\u0442\u0430 \u043C\u0430\u0454
+      \u0431\u0443\u0442\u0438 \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u0430 \u044F\u043A\u043E\u043C\u043E\u0433\u0430
+      \u043F\u043E\u0432\u043D\u0456\u0448\u0435, \u0430 \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u043D\u044F,
+      \u044F\u043A\u0435 \u043D\u0435 \u043C\u0430\u0454 \u043F\u043E\u0437\u043E\u0432\u043D\u043E\u0457
+      \u0441\u0438\u043B\u0438, \u0431\u0443\u0434\u0435 \u0432\u0432\u0430\u0436\u0430\u0442\u0438\u0441\u044F
+      \u0437\u043C\u0456\u043D\u0435\u043D\u0438\u043C \u0443 \u043E\u0431\u043C\u0435\u0436\u0435\u043D\u043E\u043C\u0443
+      \u043E\u0431\u0441\u044F\u0437\u0456, \u043D\u0435\u043E\u0431\u0445\u0456\u0434\u043D\u043E\u043C\u0443
+      \u0434\u043B\u044F \u0437\u0430\u0431\u0435\u0437\u043F\u0435\u0447\u0435\u043D\u043D\u044F
+      \u0439\u043E\u0433\u043E \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
+      \u0443 \u0441\u043F\u043E\u0441\u0456\u0431, \u044F\u043A\u0438\u0439 \u043D\u0430\u0439\u0431\u0456\u043B\u044C\u0448\u0435
+      \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u0430\u0454 \u043D\u0430\u043C\u0456\u0440\u0430\u043C
+      \u0441\u0442\u043E\u0440\u0456\u043D.\\n\\nd. \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E,
+      \u043F\u043E\u0432\u0438\u043D\u043D\u0430 \u0431\u0443\u0442\u0438 \u043D\u0430\u043B\u0435\u0436\u043D\u043E\u044E
+      \u043E\u0441\u043E\u0431\u043E\u044E \u0434\u043B\u044F \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
+      \u0446\u044C\u043E\u0433\u043E \u043A\u043E\u043D\u0442\u0440\u0430\u043A\u0442\u0443.\\n\\n\u041D\u0410
+      \u041F\u041E\u0421\u0412\u0406\u0414\u0427\u0415\u041D\u041D\u042F \u0427\u041E\u0413\u041E
+      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 \u0443\u043A\u043B\u0430\u043B\u0438
+      \u0446\u044E \u0423\u0433\u043E\u0434\u0443 \u043F\u0440\u043E \u043D\u0435\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
+      \u043D\u0430 \u043F\u0435\u0440\u0448\u0443 \u0434\u0430\u0442\u0443, \u0437\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0443
+      \u0432\u0438\u0449\u0435.\\n\\n_____\\n\u0410\u0432\u0442\u043E\u0440: ___________________________\\n\u0406\u043C'\u044F:
+      _____\\n\u041D\u0430\u0437\u0432\u0430: _____\\n\u0414\u0430\u0442\u0430: ___________________________\\n\\n\u0422\u041E\u0412
+      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\u0410\u0432\u0442\u043E\u0440:
+      ___________________________\\n\u0406\u043C'\u044F: \u0414\u0436\u0435\u0439\u043D
+      \u0414\u043E\u0443\\n\u0417\u0432\u0430\u043D\u043D\u044F: \u041A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
+      \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\u0414\u0430\u0442\u0430: ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '18922'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            \"\u0423\u0433\u043e\u0434\u0430
+        \u043f\u0440\u043e \u043d\u0435\u0440\u043e\u0437\u0433\u043e\u043b\u043e\u0448\u0435\u043d\u043d\u044f
+        (NDA)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
+        1750338872, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
+        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
+        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
+        {"completion_tokens": 40, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 3540, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        3456}, "total_tokens": 3580}}'
+    headers:
+      Content-Length:
+      - '1259'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '469'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4925,7 +5392,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4937,23 +5404,22 @@ interactions:
         \"16 \u043b\u0438\u043f\u043d\u044f 2024 \u0440\u043e\u043a\u0443\",\n                \"justification\":
         \"\u0414\u0430\u0442\u0430 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f
         \u0423\u0433\u043e\u0434\u0438 \u043f\u0440\u043e \u043d\u0435\u0440\u043e\u0437\u0433\u043e\u043b\u043e\u0448\u0435\u043d\u043d\u044f
-        \u0432\u043a\u0430\u0437\u0430\u043d\u0430 \u043d\u0430 \u043f\u043e\u0447\u0430\u0442\u043a\u0443
-        \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430 \u044f\u043a 16 \u043b\u0438\u043f\u043d\u044f
+        \u0432\u043a\u0430\u0437\u0430\u043d\u0430 \u044f\u043a 16 \u043b\u0438\u043f\u043d\u044f
         2024 \u0440\u043e\u043a\u0443.\"\n            }\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1750175505, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1750338872, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 78,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 74,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3716, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 3794}}'
+        3716, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3584},
+        "total_tokens": 3790}}'
     headers:
       Content-Length:
-      - '1483'
+      - '1444'
       Content-Type:
       - application/json
       Date:
@@ -4965,275 +5431,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '732'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find a list
-      of document paragraphs (including sentences) and a list of concepts.\\n\\nYour
-      task is to:\\n1. Read through the provided document paragraphs and their sentences.\\n
-      \   - Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\",
-      \\\"P1\\\", etc.), optionally followed by additional information about the paragraph,
-      which may be helpful during your analysis.\\n    - Each paragraph includes sentences,
-      each identified by a sentence ID (for example, \\\"P0-S0\\\", \\\"P0-S1\\\",
-      etc.), followed by the full text of the sentence and, optionally, additional
-      information about the sentence, which may be helpful during your analysis.\\n
-      \   - Note that paragraphs are listed in the same order they appear in the original
-      document.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document paragraphs.\\n3. For each concept that appears, extract
-      zero or more items relevant to that concept. The item format and structure are
-      specified for each concept.\\n4. Produce a JSON array containing your extracted
-      data, in the provided format.\\n\\nIf a concept is not addressed in the document
-      paragraphs, you must still include an entry in the final JSON output but with
-      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
-      Output format:\\nProvide your answer in only the following answer format (do
-      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
-      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
-      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
-      exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
-      \   -- The value of \\\"extracted_items\\\" must be an array of objects with
-      mandatory fields \\\"value\\\", \\\"justification\\\", and \\\"reference_paragraphs\\\".
-      If the concept is not found or there are no items to extract, leave the array
-      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
-      items for the concept is specified under \\\"Amount of extracted items\\\".
-      Each extracted item's object, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n        --- The value of \\\"reference_paragraphs\\\"
-      must be an array of objects with mandatory fields \\\"reference_paragraph_id\\\",
-      which holds the provided ID of the reference paragraph, and \\\"reference_sentence_ids\\\",
-      which holds the provided IDs of the reference sentences within the paragraph.
-      Note that not every sentence in the paragraph necessarily serves as a relevant
-      reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
-      the extracted item.\\n        --- If a specific structure is provided for a
-      concept under \\\"Expected structure,\\\" the extracted item value must follow
-      that structure for all extracted items corresponding to that concept.\\n        ---
-      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
-      extracted item value must be within that scale.\\n        --- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \       --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, retain them in the original language of the document
-      without translating them.\\n    -- justification: Mandatory field holding a
-      justification of why the item was extracted for the concept. Ensure the justification
-      is specific and directly ties the extracted item to the concept's defining features.
-      Never reference the concept's ID or any of the structural IDs provided in this
-      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
-      in the justification.\\n        --- Justification should be brief, i.e. highlight
-      only the essential details.\\n        --- Justification should be no longer
-      than 2 sentences.\\n        --- Justification should be in the original language
-      of the document.\\n    -- reference_paragraphs: An array of objects for each
-      paragraph based on which the item was extracted for the concept. Each object
-      should include:\\n        --- reference_paragraph_id: Mandatory field holding
-      the provided ID of the reference paragraph. Each paragraph ID must match exactly
-      the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n
-      \       --- reference_sentence_ids: Mandatory field holding an array of the
-      provided IDs of the sentences within the paragraph, based on which the item
-      was extracted for the concept. Each sentence ID must match exactly the provided
-      ID for the sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
-      value of each of the extracted items for the concept strictly matches that type.
-      Python types are provided (e.g., str for string, int for integer, float for
-      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
-      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
-      items:\\n    -- If a concept is not mentioned at all, your output should still
-      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
-      \   -- For concepts that have an \\\"Available labels:\\\" section: if none
-      of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
-      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
-      ...,\\n                \\\"justification\\\": str,\\n                \\\"reference_paragraphs\\\":
-      [\\n                    {\\n                        \\\"reference_paragraph_id\\\":
-      str,\\n                        \\\"reference_sentence_ids\\\": [\\n                            str,\\n
-      \                           ...\\n                        ]\\n                    },\\n
-      \                   ...\\n                ]\\n            },\\n            ...\\n
-      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
-      Concept ID: C0\\nConcept name: Duration\\n\\nConcept description:\\nContract
-      duration in years\\n\\nAmount of extracted items: This concept may have zero,
-      one, or multiple extracted items.\\n\\nConcept extracted item type: int\\n````\\n\\n______\\n\\n------\\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\\n````\\n- Paragraph ID: P0\\nParagraph sentences:\\n
-      \   -- Sentence ID: P0-S0\\n    Sentence text: \u041F\u0456\u0441\u043B\u044F
-      \u043F\u0440\u0438\u043F\u0438\u043D\u0435\u043D\u043D\u044F \u0434\u0456\u0457
-      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0430\u0431\u043E \u0437\u0430
-      \u0437\u0430\u043F\u0438\u0442\u043E\u043C \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
-      \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u043F\u043E\u0432\u0435\u0440\u0442\u0430\u0454
-      \u0432\u0441\u0456 \u043C\u0430\u0442\u0435\u0440\u0456\u0430\u043B\u0438, \u0449\u043E
-      \u043C\u0456\u0441\u0442\u044F\u0442\u044C \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0421\u0442\u043E\u0440\u043E\u043D\u0456,
-      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0430\u0431\u043E
-      \u0437\u043D\u0438\u0449\u0443\u0454 \u0457\u0445 \u043D\u0430 \u0440\u043E\u0437\u0441\u0443\u0434
-      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n````\\n\\n````\\n-
-      Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
-      text: \u0423\u0441\u0456 \u0441\u0443\u043F\u0435\u0440\u0435\u0447\u043A\u0438
-      \u0432\u0438\u0440\u0456\u0448\u0443\u044E\u0442\u044C\u0441\u044F \u0441\u0443\u0434\u0430\u043C\u0438
-      \u0448\u0442\u0430\u0442\u0443 \u041A\u0430\u043B\u0456\u0444\u043E\u0440\u043D\u0456\u044F.\\n
-      \   -- Sentence ID: P1-S1\\n    Sentence text: \u0414\u043E\u0433\u043E\u0432\u0456\u0440
-      \u0434\u0456\u0454 \u043F\u0440\u043E\u0442\u044F\u0433\u043E\u043C 5 (\u043F\u2019\u044F\u0442\u0438)
-      \u0440\u043E\u043A\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043F\u0456\u0434\u043F\u0438\u0441\u0430\u043D\u043D\u044F
-      \u0446\u044C\u043E\u0433\u043E \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0443.\\n````\\n\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '12023'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.88.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.88.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": 5,\n                \"justification\":
-        \"\u0423 \u0440\u0435\u0447\u0435\u043d\u043d\u0456 \u0437\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u043e,
-        \u0449\u043e \u0434\u043e\u0433\u043e\u0432\u0456\u0440 \u0434\u0456\u0454
-        \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 5 (\u043f\u2019\u044f\u0442\u0438)
-        \u0440\u043e\u043a\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f.\",\n                \"reference_paragraphs\":
-        [\n                    {\n                        \"reference_paragraph_id\":
-        \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175505, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 113,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2292, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
-        "total_tokens": 2405}}'
-    headers:
-      Content-Length:
-      - '1851'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '881'
+      - '800'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5683,7 +5881,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -5703,7 +5901,7 @@ interactions:
         \u043b\u0456\u0446\u0435\u043d\u0437\u0456\u0457\",\n          \"\u0417\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u043d\u0435
         \u0437\u0430\u043a\u043e\u043d\u043e\u0434\u0430\u0432\u0441\u0442\u0432\u043e
         \u0442\u0430 \u0441\u043f\u043e\u0440\u0438\",\n          \"\u0420\u0456\u0437\u043d\u0435\"\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175505, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338872, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -5728,7 +5926,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '845'
+      - '1292'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5801,46 +5999,79 @@ interactions:
       the instructions, output references based on which you extracted data, provided
       insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
       you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array. If the concept is not found or there are no items to extract,
-      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
-      of extracted items for the concept is specified under \\\"Amount of extracted
-      items\\\". Each extracted item, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
-      structure is provided for a concept under \\\"Expected structure,\\\" you must
-      follow that structure for all extracted items corresponding to that concept.\\n
-      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
-      the extracted item value must be within that scale.\\n    -- If available labels
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find a list
+      of document paragraphs (including sentences) and a list of concepts.\\n\\nYour
+      task is to:\\n1. Read through the provided document paragraphs and their sentences.\\n
+      \   - Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\",
+      \\\"P1\\\", etc.), optionally followed by additional information about the paragraph,
+      which may be helpful during your analysis.\\n    - Each paragraph includes sentences,
+      each identified by a sentence ID (for example, \\\"P0-S0\\\", \\\"P0-S1\\\",
+      etc.), followed by the full text of the sentence and, optionally, additional
+      information about the sentence, which may be helpful during your analysis.\\n
+      \   - Note that paragraphs are listed in the same order they appear in the original
+      document.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document paragraphs.\\n3. For each concept that appears, extract
+      zero or more items relevant to that concept. The item format and structure are
+      specified for each concept.\\n4. Produce a JSON array containing your extracted
+      data, in the provided format.\\n\\nIf a concept is not addressed in the document
+      paragraphs, you must still include an entry in the final JSON output but with
+      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
+      Output format:\\nProvide your answer in only the following answer format (do
+      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
+      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
+      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
+      \   -- The value of \\\"extracted_items\\\" must be an array of objects with
+      mandatory fields \\\"value\\\", \\\"justification\\\", and \\\"reference_paragraphs\\\".
+      If the concept is not found or there are no items to extract, leave the array
+      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
+      items for the concept is specified under \\\"Amount of extracted items\\\".
+      Each extracted item's object, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n        --- The value of \\\"reference_paragraphs\\\"
+      must be an array of objects with mandatory fields \\\"reference_paragraph_id\\\",
+      which holds the provided ID of the reference paragraph, and \\\"reference_sentence_ids\\\",
+      which holds the provided IDs of the reference sentences within the paragraph.
+      Note that not every sentence in the paragraph necessarily serves as a relevant
+      reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
+      the extracted item.\\n        --- If a specific structure is provided for a
+      concept under \\\"Expected structure,\\\" the extracted item value must follow
+      that structure for all extracted items corresponding to that concept.\\n        ---
+      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
+      extracted item value must be within that scale.\\n        --- If available labels
       are provided for a concept under \\\"Available labels,\\\" the extracted item
       value must be a list containing only labels from the predefined set. If none
       of the predefined labels apply, do not extract any items for that concept.\\n
-      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
-      to follow the same style and formatting for your extracted items.\\n    -- When
-      extracting string values, retain them in the original language of the document
-      without translating them.\\n\\n- Types of extracted items:\\n    -- Each concept
-      specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
-      item type\\\"). Ensure your extracted items strictly match that type. Python
-      types are provided (e.g., str for string, int for integer, float for floating-point
-      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
-      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
-      \   -- If a concept is not mentioned at all, your output should still contain
-      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
-      For concepts that have an \\\"Available labels:\\\" section: if none of the
-      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
-      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      \       --- If there are example items (\\\"Extracted concept examples\\\"),
+      the extracted item value should follow the same style and formatting.\\n        ---
+      When extracting string values, retain them in the original language of the document
+      without translating them.\\n    -- justification: Mandatory field holding a
+      justification of why the item was extracted for the concept. Ensure the justification
+      is specific and directly ties the extracted item to the concept's defining features.
+      Never reference the concept's ID or any of the structural IDs provided in this
+      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
+      in the justification.\\n        --- Justification should be brief, i.e. highlight
+      only the essential details.\\n        --- Justification should be no longer
+      than 2 sentences.\\n        --- Justification should be in the original language
+      of the document.\\n    -- reference_paragraphs: An array of objects for each
+      paragraph based on which the item was extracted for the concept. Each object
+      should include:\\n        --- reference_paragraph_id: Mandatory field holding
+      the provided ID of the reference paragraph. Each paragraph ID must match exactly
+      the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n
+      \       --- reference_sentence_ids: Mandatory field holding an array of the
+      provided IDs of the sentences within the paragraph, based on which the item
+      was extracted for the concept. Each sentence ID must match exactly the provided
+      ID for the sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n-
+      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
+      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
+      value of each of the extracted items for the concept strictly matches that type.
+      Python types are provided (e.g., str for string, int for integer, float for
+      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
+      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
+      items:\\n    -- If a concept is not mentioned at all, your output should still
+      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
+      \   -- For concepts that have an \\\"Available labels:\\\" section: if none
+      of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
+      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
       if multiple labels apply to the same instance or context, include them all in
       a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
       {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
@@ -5851,211 +6082,18 @@ interactions:
       \   -- Do not include any headers, explanations, or text outside of the JSON
       array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
       characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
-      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
-      name: Title\\n\\nConcept description:\\nContract title\\n\\nAmount of extracted
-      items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
-      extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT TEXT:\\n\u0423\u0433\u043E\u0434\u0430
-      \u043F\u0440\u043E \u043D\u0435\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
-      (NDA)\\n\\n\u0426\u044E \u0423\u0433\u043E\u0434\u0443 \u043F\u0440\u043E \u043D\u0435\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
-      (\xAB\u0423\u0433\u043E\u0434\u0430\xBB) \u0443\u043A\u043B\u0430\u0434\u0435\u043D\u043E
-      \u0442\u0430 \u0443\u043A\u043B\u0430\u0434\u0435\u043D\u043E 16 \u043B\u0438\u043F\u043D\u044F
-      2024 \u0440\u043E\u043A\u0443 \u043C\u0456\u0436:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430
-      \u0410:\\n\\n_____\\n_____\\n_____\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430
-      \u043E\u0441\u043E\u0431\u0430: _____\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
-      _____\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430 \u043F\u043E\u0448\u0442\u0430:
-      _____\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430 B:\\n\\n\u0422\u041E\u0412
-      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n5678
-      \u0412\u0438\u043F\u0430\u0434\u043A\u043E\u0432\u0438\u0439 \u0434\u0440\u0430\u0439\u0432\\n\u041D\u044C\u044E-\u0419\u043E\u0440\u043A,
-      NY 00000\\n\u041A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u043E\u0441\u043E\u0431\u0430:
-      \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443, \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
-      \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
-      (012) 345-6789\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430
-      \u0430\u0434\u0440\u0435\u0441\u0430: jane.doe@example.com\\n\\n1. \u041F\u0440\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F:\\n\\n\u041C\u0435\u0442\u043E\u044E
-      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0454 \u0437\u0430\u0445\u0438\u0441\u0442
-      \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457, \u044F\u043A\u0430
-      \u043C\u043E\u0436\u0435 \u0431\u0443\u0442\u0438 \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u0430
-      \u043C\u0456\u0436 \u0441\u0442\u043E\u0440\u043E\u043D\u0430\u043C\u0438 \u043F\u0456\u0434
-      \u0447\u0430\u0441 \u043E\u0431\u0433\u043E\u0432\u043E\u0440\u0435\u043D\u044C
-      \u0456 \u0432\u0437\u0430\u0454\u043C\u043E\u0434\u0456\u0439 \u0449\u043E\u0434\u043E
-      \u043F\u043E\u0442\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457 \u0434\u0456\u043B\u043E\u0432\u043E\u0457
-      \u0441\u043F\u0456\u0432\u043F\u0440\u0430\u0446\u0456 \u0442\u0430 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u0442\u0432\u0430.\\n\\n2.
-      \u0412\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457:\\n\\n\u0414\u043B\u044F
-      \u0446\u0456\u043B\u0435\u0439 \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438
-      \xAB\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F\xBB \u043E\u0437\u043D\u0430\u0447\u0430\u0454
-      \u0431\u0443\u0434\u044C-\u044F\u043A\u0443 \u0442\u0430 \u0432\u0441\u044E
-      \u043D\u0435\u043F\u0443\u0431\u043B\u0456\u0447\u043D\u0443 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E,
-      \u043F\u0435\u0440\u0435\u0434\u0430\u043D\u0443 \u0432 \u0431\u0443\u0434\u044C-\u044F\u043A\u0456\u0439
-      \u0444\u043E\u0440\u043C\u0456, \u0431\u0443\u0434\u044C \u0442\u043E \u0432
-      \u0443\u0441\u043D\u0456\u0439, \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u0456\u0439,
-      \u0435\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0456\u0439 \u0447\u0438
-      \u0456\u043D\u0448\u0456\u0439 \u0444\u043E\u0440\u043C\u0456 \u0447\u0438 \u0437\u0430\u0441\u043E\u0431\u0456
-      \u043C\u0430\u0441\u043E\u0432\u043E\u0457 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457,
-      \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E \u0432\u0456\u0434 \u0442\u043E\u0433\u043E,
-      \u043F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u0430, \u043F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u0430
-      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C \u0432\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u0430
-      \u044F\u043A \xAB\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430\xBB,
-      \u044F\u043A\u0430 \u0431\u0443\u043B\u0430 \u0430\u0431\u043E \u043C\u043E\u0436\u0435
-      \u0431\u0443\u0442\u0438 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0430, \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430
-      \u0430\u0431\u043E \u0441\u043F\u043E\u0441\u0442\u0435\u0440\u0435\u0436\u0435\u043D\u0430
-      \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C,
-      \u044F\u043A\u0430 (i) \u043C\u0430\u0454 \u0444\u0430\u043A\u0442\u0438\u0447\u043D\u0443
-      \u0447\u0438 \u043F\u043E\u0442\u0435\u043D\u0446\u0456\u0439\u043D\u0443 \u0435\u043A\u043E\u043D\u043E\u043C\u0456\u0447\u043D\u0443
-      \u0446\u0456\u043D\u043D\u0456\u0441\u0442\u044C \u0447\u0435\u0440\u0435\u0437
-      \u0442\u0435, \u0449\u043E \u0432\u043E\u043D\u0430 \u043D\u0435 \u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0432\u0456\u0434\u043E\u043C\u043E\u044E
-      \u0442\u0430 \u043D\u0435 \u0454 \u043B\u0435\u0433\u043A\u043E \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0438
-      \u043D\u0430\u043B\u0435\u0436\u043D\u0438\u043C\u0438 \u0437\u0430\u0441\u043E\u0431\u0430\u043C\u0438
-      \u0456\u043D\u0448\u0438\u043C\u0438 \u043E\u0441\u043E\u0431\u0430\u043C\u0438,
-      \u044F\u043A\u0456 \u043C\u043E\u0436\u0443\u0442\u044C \u043E\u0442\u0440\u0438\u043C\u0430\u0442\u0438
-      \u0435\u043A\u043E\u043D\u043E\u043C\u0456\u0447\u043D\u0443 \u0446\u0456\u043D\u043D\u0456\u0441\u0442\u044C
-      \u0432\u0456\u0434 \u0439\u043E\u0433\u043E \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
-      \u0447\u0438 \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F,
-      \u0430\u0431\u043E (ii) \u043F\u0456\u0434\u043B\u044F\u0433\u0430\u0454 \u043E\u0431\u0491\u0440\u0443\u043D\u0442\u043E\u0432\u0430\u043D\u0438\u043C
-      \u0437\u0443\u0441\u0438\u043B\u043B\u044F\u043C \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
-      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0434\u043B\u044F
-      \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043D\u044F \u0441\u0435\u043A\u0440\u0435\u0442\u043D\u043E\u0441\u0442\u0456
-      \u0442\u0430 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456.\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u0432\u043A\u043B\u044E\u0447\u0430\u0454,
-      \u0430\u043B\u0435 \u043D\u0435 \u043E\u0431\u043C\u0435\u0436\u0443\u0454\u0442\u044C\u0441\u044F
-      \u0442\u0430\u043A\u0438\u043C\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0456\u044F\u043C\u0438:
-      (1) \u0431\u0456\u0437\u043D\u0435\u0441-\u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
-      (\u0431\u0456\u0437\u043D\u0435\u0441-\u043F\u043B\u0430\u043D\u0438, \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457
-      \u0442\u0430 \u043C\u043E\u0434\u0435\u043B\u0456), (2) \u0442\u0435\u0445\u043D\u0456\u0447\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F (\u0442\u0435\u0445\u043D\u0456\u0447\u043D\u0456
-      \u0441\u043F\u0435\u0446\u0438\u0444\u0456\u043A\u0430\u0446\u0456\u0457 \u0442\u0430
-      \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430\u0446\u0456\u044F, \u043D\u0430\u0443\u043A\u043E\u0432\u043E-\u0434\u043E\u0441\u043B\u0456\u0434\u043D\u0430
-      \u0434\u0456\u044F\u043B\u044C\u043D\u0456\u0441\u0442\u044C), (3) \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
-      \u043F\u0440\u043E \u043A\u043B\u0456\u0454\u043D\u0442\u0456\u0432 \u0456 \u0440\u0438\u043D\u043E\u043A
-      (\u0441\u043F\u0438\u0441\u043A\u0438 \u043A\u043B\u0456\u0454\u043D\u0442\u0456\u0432
-      \u0456 \u043A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F,
-      \u0456\u0441\u0442\u043E\u0440\u0456\u0457 \u043F\u0440\u043E\u0434\u0430\u0436\u0456\u0432
-      \u0456 \u0448\u0430\u0431\u043B\u043E\u043D\u0438), (4) \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B
-      \u0456 \u0432\u043D\u0443\u0442\u0440\u0456\u0448\u043D\u044F \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
-      (\u0441\u043F\u0438\u0441\u043A\u0438 \u0441\u043F\u0456\u0432\u0440\u043E\u0431\u0456\u0442\u043D\u0438\u043A\u0456\u0432
-      \u0456 \u043A\u043E\u043D\u0442\u0430\u043A\u0442\u043D\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F,
-      \u0442\u0440\u0443\u0434\u043E\u0432\u0456 \u0443\u0433\u043E\u0434\u0438 \u0442\u0430
-      \u043E\u0441\u043E\u0431\u0438\u0441\u0442\u0456 \u0441\u043F\u0440\u0430\u0432\u0438),
-      (5) \u0456\u043D\u0442\u0435\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u0430
-      \u0432\u043B\u0430\u0441\u043D\u0456\u0441\u0442\u044C (\u043A\u043E\u043C\u0435\u0440\u0446\u0456\u0439\u043D\u0456
-      \u0441\u0435\u043A\u0440\u0435\u0442\u0438 \u0442\u0430 \u043D\u043E\u0443-\u0445\u0430\u0443,
-      \u043F\u0430\u0442\u0435\u043D\u0442\u0438 \u0442\u0430 \u0437\u0430\u044F\u0432\u043A\u0438
-      \u043D\u0430 \u043F\u0430\u0442\u0435\u043D\u0442\u0438, \u0430\u0432\u0442\u043E\u0440\u0441\u044C\u043A\u0456
-      \u043F\u0440\u0430\u0432\u0430 \u0442\u0430 \u0437\u0430\u044F\u0432\u043A\u0438
-      \u043D\u0430 \u0430\u0432\u0442\u043E\u0440\u0441\u044C\u043A\u0456 \u043F\u0440\u0430\u0432\u0430,
-      \u0442\u043E\u0440\u0433\u043E\u0432\u0456 \u043C\u0430\u0440\u043A\u0438 \u0442\u0430
-      \u0437\u0430\u044F\u0432\u043A\u0438 \u043D\u0430 \u0442\u043E\u0440\u0433\u043E\u0432\u0435\u043B\u044C\u043D\u0456
-      \u043C\u0430\u0440\u043A\u0438), (6) \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0447\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F (\u043F\u043B\u0430\u043D\u0438
-      \u0437\u043B\u0438\u0442\u0442\u044F \u0442\u0430 \u043F\u043E\u0433\u043B\u0438\u043D\u0430\u043D\u043D\u044F,
-      \u043A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u043D\u0438\u0439 \u0430\u043D\u0430\u043B\u0456\u0437
-      \u0442\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457). \u041F\u0440\u043E\u0433\u0440\u0430\u043C\u043D\u0438\u0439
-      \u043A\u043E\u0434 \u0442\u0430\u043A\u043E\u0436 \u043F\u043E\u0432\u0438\u043D\u0435\u043D
-      \u0431\u0443\u0442\u0438 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0439
-      \u0434\u043E \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457.\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u043D\u0435 \u0432\u043A\u043B\u044E\u0447\u0430\u0442\u0438\u043C\u0435
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u044F\u043A\u0430:
-      (a) \u0454 \u0430\u0431\u043E \u0441\u0442\u0430\u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u044E
-      \u0437\u0430 \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u0456\u0432
-      \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E,
-      \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u0430\u0431\u043E
-      \u0457\u0457 \u041F\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043D\u0438\u043A\u0430\u043C\u0438;
-      (b) \u0431\u0443\u043B\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430
-      \u0421\u0442\u043E\u0440\u043E\u043D\u0456-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0443
-      \u043D\u0430 \u043D\u0435\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0439
-      \u043E\u0441\u043D\u043E\u0432\u0456 \u0434\u043E \u0457\u0457 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0442\u044F
-      \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454;
-      (c) \u0441\u0442\u0430\u0454 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0438\u043C
-      \u0434\u043B\u044F \u0421\u0442\u043E\u0440\u043E\u043D\u0438-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0430
-      \u043D\u0430 \u043D\u0435\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0439
-      \u043E\u0441\u043D\u043E\u0432\u0456 \u0432\u0456\u0434 \u043E\u0441\u043E\u0431\u0438,
-      \u0456\u043D\u0448\u043E\u0457 \u043D\u0456\u0436 \u0421\u0442\u043E\u0440\u043E\u043D\u0430-\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0447,
-      \u044F\u043A\u0430 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C
-      \u043D\u0435 \u043F\u043E\u0432\u2019\u044F\u0437\u0430\u043D\u0430 \u0437\u043E\u0431\u043E\u0432\u2019\u044F\u0437\u0430\u043D\u043D\u044F\u043C\u0438
-      \u0449\u043E\u0434\u043E \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456
-      \u043F\u0435\u0440\u0435\u0434 \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0447\u0435\u043C;
-      \u0430\u0431\u043E (d) \u0431\u0443\u043B\u0430 \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E
-      \u0440\u043E\u0437\u0440\u043E\u0431\u043B\u0435\u043D\u0430 \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C
-      \u0431\u0435\u0437 \u043F\u043E\u0441\u0438\u043B\u0430\u043D\u043D\u044F \u0430\u0431\u043E
-      \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F \u0431\u0443\u0434\u044C-\u044F\u043A\u043E\u0457
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457. \u0406\u043C'\u044F
-      \u0441\u043E\u0431\u0430\u043A\u0438 \u041F\u0440\u0438\u0439\u043C\u0430\u044E\u0447\u043E\u0457
-      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 - \u0411\u043E\u0431.\\n\u041F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u044F\u043A \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u043D\u0435 \u0454
-      \u0432\u0438\u0437\u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043C \u0434\u043B\u044F
-      \u0442\u043E\u0433\u043E, \u0447\u0438 \u0454 \u0442\u0430\u043A\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
-      \u043A\u043E\u043C\u0435\u0440\u0446\u0456\u0439\u043D\u043E\u044E \u0442\u0430\u0454\u043C\u043D\u0438\u0446\u0435\u044E
-      \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u043D\u043E \u0434\u043E \u0447\u0438\u043D\u043D\u043E\u0433\u043E
-      \u0437\u0430\u043A\u043E\u043D\u043E\u0434\u0430\u0432\u0441\u0442\u0432\u0430.
-      \u0423\u0441\u044F \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u0437\u0430\u043B\u0438\u0448\u0430\u0454\u0442\u044C\u0441\u044F
-      \u0432\u0438\u043A\u043B\u044E\u0447\u043D\u043E\u044E \u0432\u043B\u0430\u0441\u043D\u0456\u0441\u0442\u044E
-      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454,
-      \u0456 \u0421\u0442\u043E\u0440\u043E\u043D\u0430, \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454,
-      \u043D\u0435 \u043C\u0430\u0454 \u0436\u043E\u0434\u043D\u0438\u0445 \u043F\u0440\u0430\u0432,
-      \u0437\u0433\u0456\u0434\u043D\u043E \u0437 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0454\u044E
-      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C,
-      \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u043E\u0432\u0443\u0432\u0430\u0442\u0438
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0437\u0430 \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C
-      \u0432\u0438\u043F\u0430\u0434\u043A\u0456\u0432, \u043F\u0440\u044F\u043C\u043E
-      \u043F\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043D\u0438\u0445 \u0443
-      \u0446\u044C\u043E\u043C\u0443 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0456.\\n\\n3.
-      \u041E\u0431\u043E\u0432'\u044F\u0437\u043A\u0438 \u043F\u0440\u0438\u0439\u043C\u0430\u044E\u0447\u043E\u0457
-      \u0441\u0442\u043E\u0440\u043E\u043D\u0438:\\n\\n\u0421\u0442\u043E\u0440\u043E\u043D\u0430,
-      \u044F\u043A\u0430 \u043E\u0442\u0440\u0438\u043C\u0443\u0454 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E (\\\"\u0421\u0442\u043E\u0440\u043E\u043D\u0430-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\\\"):\\n\\na.
-      \u0417\u0431\u0435\u0440\u0456\u0433\u0430\u0442\u0438 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0441\u0442\u044C
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u0442\u0430 \u043D\u0435
-      \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0442\u0438
-      \u0457\u0457 \u0442\u0440\u0435\u0442\u0456\u043C \u043E\u0441\u043E\u0431\u0430\u043C
-      \u0431\u0435\u0437 \u043F\u043E\u043F\u0435\u0440\u0435\u0434\u043D\u044C\u043E\u0457
-      \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u043E\u0457 \u0437\u0433\u043E\u0434\u0438
-      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\nb.
-      \u0412\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u043E\u0432\u0443\u0432\u0430\u0442\u0438
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0432\u0438\u043A\u043B\u044E\u0447\u043D\u043E
-      \u0437 \u043C\u0435\u0442\u043E\u044E \u043E\u0446\u0456\u043D\u043A\u0438 \u0447\u0438
-      \u0437\u0430\u043B\u0443\u0447\u0435\u043D\u043D\u044F \u0434\u043E \u043F\u043E\u0442\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0434\u0456\u043B\u043E\u0432\u043E\u0457 \u0441\u043F\u0456\u0432\u043F\u0440\u0430\u0446\u0456.\\n\\n\u0432.
-      \u0412\u0436\u0438\u0432\u0430\u0442\u0438 \u0432\u0441\u0456\u0445 \u043D\u0435\u043E\u0431\u0445\u0456\u0434\u043D\u0438\u0445
-      \u0437\u0430\u043F\u043E\u0431\u0456\u0436\u043D\u0438\u0445 \u0437\u0430\u0445\u043E\u0434\u0456\u0432
-      \u0434\u043B\u044F \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457, \u044F\u043A\u0456
-      \u043F\u043E\u0432\u0438\u043D\u043D\u0456 \u0431\u0443\u0442\u0438 \u043D\u0435
-      \u043C\u0435\u043D\u0448\u0438\u043C\u0438, \u043D\u0456\u0436 \u0437\u0430\u043F\u043E\u0431\u0456\u0436\u043D\u0456
-      \u0437\u0430\u0445\u043E\u0434\u0438, \u0432\u0436\u0438\u0442\u0456 \u0434\u043B\u044F
-      \u0437\u0430\u0445\u0438\u0441\u0442\u0443 \u0432\u043B\u0430\u0441\u043D\u043E\u0457
-      \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457.\\n\\n4. \u0412\u0438\u043D\u044F\u0442\u043A\u0438
-      \u0437 \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457:\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u043D\u0435 \u0432\u043A\u043B\u044E\u0447\u0430\u0454
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u044F\u043A\u0430:\\n\\na.
-      \u0404 \u0430\u0431\u043E \u0441\u0442\u0430\u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0432\u0456\u0434\u043E\u043C\u0438\u043C
-      \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u043F\u0440\u0430\u0432\u043E\u043C\u0456\u0440\u043D\u0456
-      \u0434\u0456\u0457 \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E
-      \u043E\u0442\u0440\u0438\u043C\u0443\u0454.\\n\\nb. \u0412\u0436\u0435 \u0432\u0456\u0434\u043E\u043C\u0438\u0439
-      \u041E\u0442\u0440\u0438\u043C\u0443\u044E\u0447\u0456\u0439 \u0441\u0442\u043E\u0440\u043E\u043D\u0456
-      \u043D\u0430 \u043C\u043E\u043C\u0435\u043D\u0442 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0442\u044F.\\n\\n\u0432.
-      \u041E\u0442\u0440\u0438\u043C\u0430\u043D\u043E \u043D\u0430 \u0437\u0430\u043A\u043E\u043D\u043D\u0438\u0445
-      \u043F\u0456\u0434\u0441\u0442\u0430\u0432\u0430\u0445 \u0432\u0456\u0434 \u0442\u0440\u0435\u0442\u044C\u043E\u0457
-      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 \u0431\u0435\u0437 \u043F\u043E\u0440\u0443\u0448\u0435\u043D\u043D\u044F
-      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438.\\n\\nd. \u0420\u043E\u0437\u0440\u043E\u0431\u043B\u044F\u0454\u0442\u044C\u0441\u044F
-      \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E \u041E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C
-      \u0431\u0435\u0437 \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F
-      \u0430\u0431\u043E \u043F\u043E\u0441\u0438\u043B\u0430\u043D\u043D\u044F \u043D\u0430
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
-      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\n6.
-      \u041F\u043E\u0432\u0435\u0440\u043D\u0435\u043D\u043D\u044F \u043C\u0430\u0442\u0435\u0440\u0456\u0430\u043B\u0456\u0432:\\n\\n\u041F\u0456\u0441\u043B\u044F
+      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
+      ...,\\n                \\\"justification\\\": str,\\n                \\\"reference_paragraphs\\\":
+      [\\n                    {\\n                        \\\"reference_paragraph_id\\\":
+      str,\\n                        \\\"reference_sentence_ids\\\": [\\n                            str,\\n
+      \                           ...\\n                        ]\\n                    },\\n
+      \                   ...\\n                ]\\n            },\\n            ...\\n
+      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      Concept ID: C0\\nConcept name: Duration\\n\\nConcept description:\\nContract
+      duration in years\\n\\nAmount of extracted items: This concept may have zero,
+      one, or multiple extracted items.\\n\\nConcept extracted item type: int\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\\n````\\n- Paragraph ID: P0\\nParagraph sentences:\\n
+      \   -- Sentence ID: P0-S0\\n    Sentence text: \u041F\u0456\u0441\u043B\u044F
       \u043F\u0440\u0438\u043F\u0438\u043D\u0435\u043D\u043D\u044F \u0434\u0456\u0457
       \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0430\u0431\u043E \u0437\u0430
       \u0437\u0430\u043F\u0438\u0442\u043E\u043C \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
@@ -6065,78 +6103,15 @@ interactions:
       \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0421\u0442\u043E\u0440\u043E\u043D\u0456,
       \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0430\u0431\u043E
       \u0437\u043D\u0438\u0449\u0443\u0454 \u0457\u0445 \u043D\u0430 \u0440\u043E\u0437\u0441\u0443\u0434
-      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\n7.
-      \u0411\u0435\u0437 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0457:\\n\\n\u041D\u0456\u0449\u043E
-      \u0432 \u0446\u0456\u0439 \u0423\u0433\u043E\u0434\u0456 \u043D\u0435 \u043F\u043E\u0432\u0438\u043D\u043D\u043E
-      \u0442\u043B\u0443\u043C\u0430\u0447\u0438\u0442\u0438\u0441\u044F \u044F\u043A
-      \u043D\u0430\u0434\u0430\u043D\u043D\u044F \u0431\u0443\u0434\u044C-\u044F\u043A\u0438\u0445
-      \u043F\u0440\u0430\u0432 \u0421\u0442\u043E\u0440\u043E\u043D\u0456, \u0449\u043E
-      \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u0437\u0430 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0454\u044E
-      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C \u043D\u0430
-      \u0431\u0443\u0434\u044C-\u044F\u043A\u0443 \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
-      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0437\u0430
-      \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C \u0432\u0438\u043F\u0430\u0434\u043A\u0456\u0432,
-      \u043F\u0440\u044F\u043C\u043E \u0432\u0438\u043A\u043B\u0430\u0434\u0435\u043D\u0438\u0445
-      \u0443 \u0446\u0456\u0439 \u0423\u0433\u043E\u0434\u0456.\\n\\n8. \u0417\u0430\u0441\u0442\u043E\u0441\u043E\u0432\u043D\u0435
-      \u0437\u0430\u043A\u043E\u043D\u043E\u0434\u0430\u0432\u0441\u0442\u0432\u043E
-      \u0442\u0430 \u0441\u043F\u043E\u0440\u0438:\\n\\n\u0426\u044F \u0423\u0433\u043E\u0434\u0430
-      \u0440\u0435\u0433\u0443\u043B\u044E\u0454\u0442\u044C\u0441\u044F \u0442\u0430
-      \u0442\u043B\u0443\u043C\u0430\u0447\u0438\u0442\u044C\u0441\u044F \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u043D\u043E
-      \u0434\u043E \u0437\u0430\u043A\u043E\u043D\u0456\u0432 \u0448\u0442\u0430\u0442\u0443
-      \u041A\u0430\u043B\u0456\u0444\u043E\u0440\u043D\u0456\u044F \u0431\u0435\u0437
-      \u0443\u0440\u0430\u0445\u0443\u0432\u0430\u043D\u043D\u044F \u043F\u0440\u0438\u043D\u0446\u0438\u043F\u0456\u0432
-      \u043A\u043E\u043B\u0456\u0437\u0456\u0439\u043D\u043E\u0433\u043E \u043F\u0440\u0430\u0432\u0430.\\n\\n\u0423\u0441\u0456
-      \u0441\u0443\u043F\u0435\u0440\u0435\u0447\u043A\u0438 \u0432\u0438\u0440\u0456\u0448\u0443\u044E\u0442\u044C\u0441\u044F
-      \u0441\u0443\u0434\u0430\u043C\u0438 \u0448\u0442\u0430\u0442\u0443 \u041A\u0430\u043B\u0456\u0444\u043E\u0440\u043D\u0456\u044F.
-      \u0414\u043E\u0433\u043E\u0432\u0456\u0440 \u0434\u0456\u0454 \u043F\u0440\u043E\u0442\u044F\u0433\u043E\u043C
-      5 (\u043F\u2019\u044F\u0442\u0438) \u0440\u043E\u043A\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438
-      \u043F\u0456\u0434\u043F\u0438\u0441\u0430\u043D\u043D\u044F \u0446\u044C\u043E\u0433\u043E
-      \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0443.\\n\\n9. \u0420\u0456\u0437\u043D\u0435:\\n\\na.
-      \u0426\u044F \u0423\u0433\u043E\u0434\u0430 \u044F\u0432\u043B\u044F\u0454 \u0441\u043E\u0431\u043E\u044E
-      \u043F\u043E\u0432\u043D\u0443 \u0443\u0433\u043E\u0434\u0443 \u043C\u0456\u0436
-      \u0441\u0442\u043E\u0440\u043E\u043D\u0430\u043C\u0438 \u0449\u043E\u0434\u043E
-      \u0457\u0457 \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u0430 \u0442\u0430 \u0437\u0430\u043C\u0456\u043D\u044E\u0454
-      \u0432\u0441\u0456 \u043F\u043E\u043F\u0435\u0440\u0435\u0434\u043D\u0456 \u0430\u0431\u043E
-      \u043E\u0434\u043D\u043E\u0447\u0430\u0441\u043D\u0456 \u0443\u0441\u043D\u0456
-      \u0447\u0438 \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u0456 \u0443\u0433\u043E\u0434\u0438
-      \u0449\u043E\u0434\u043E \u0442\u0430\u043A\u043E\u0433\u043E \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u0430.\\n\\nb.
-      \u0411\u0443\u0434\u044C-\u044F\u043A\u0456 \u043F\u043E\u043F\u0440\u0430\u0432\u043A\u0438
-      \u0430\u0431\u043E \u0437\u043C\u0456\u043D\u0438 \u0434\u043E \u0446\u0456\u0454\u0457
-      \u0423\u0433\u043E\u0434\u0438 \u043F\u043E\u0432\u0438\u043D\u043D\u0456 \u0431\u0443\u0442\u0438
-      \u0437\u0440\u043E\u0431\u043B\u0435\u043D\u0456 \u0432 \u043F\u0438\u0441\u044C\u043C\u043E\u0432\u0456\u0439
-      \u0444\u043E\u0440\u043C\u0456 \u0442\u0430 \u043F\u0456\u0434\u043F\u0438\u0441\u0430\u043D\u0456
-      \u043E\u0431\u043E\u043C\u0430 \u0441\u0442\u043E\u0440\u043E\u043D\u0430\u043C\u0438.\\n\\n\u0432.
-      \u042F\u043A\u0449\u043E \u0431\u0443\u0434\u044C-\u044F\u043A\u0435 \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u043D\u044F
-      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0431\u0443\u0434\u0435
-      \u0432\u0438\u0437\u043D\u0430\u043D\u043E \u0442\u0430\u043A\u0438\u043C, \u0449\u043E
-      \u043D\u0435 \u043C\u0430\u0454 \u043F\u043E\u0437\u043E\u0432\u043D\u043E\u0457
-      \u0441\u0438\u043B\u0438, \u0440\u0435\u0448\u0442\u0430 \u043C\u0430\u0454
-      \u0431\u0443\u0442\u0438 \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u0430 \u044F\u043A\u043E\u043C\u043E\u0433\u0430
-      \u043F\u043E\u0432\u043D\u0456\u0448\u0435, \u0430 \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u043D\u044F,
-      \u044F\u043A\u0435 \u043D\u0435 \u043C\u0430\u0454 \u043F\u043E\u0437\u043E\u0432\u043D\u043E\u0457
-      \u0441\u0438\u043B\u0438, \u0431\u0443\u0434\u0435 \u0432\u0432\u0430\u0436\u0430\u0442\u0438\u0441\u044F
-      \u0437\u043C\u0456\u043D\u0435\u043D\u0438\u043C \u0443 \u043E\u0431\u043C\u0435\u0436\u0435\u043D\u043E\u043C\u0443
-      \u043E\u0431\u0441\u044F\u0437\u0456, \u043D\u0435\u043E\u0431\u0445\u0456\u0434\u043D\u043E\u043C\u0443
-      \u0434\u043B\u044F \u0437\u0430\u0431\u0435\u0437\u043F\u0435\u0447\u0435\u043D\u043D\u044F
-      \u0439\u043E\u0433\u043E \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
-      \u0443 \u0441\u043F\u043E\u0441\u0456\u0431, \u044F\u043A\u0438\u0439 \u043D\u0430\u0439\u0431\u0456\u043B\u044C\u0448\u0435
-      \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u0430\u0454 \u043D\u0430\u043C\u0456\u0440\u0430\u043C
-      \u0441\u0442\u043E\u0440\u0456\u043D.\\n\\nd. \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
-      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E,
-      \u043F\u043E\u0432\u0438\u043D\u043D\u0430 \u0431\u0443\u0442\u0438 \u043D\u0430\u043B\u0435\u0436\u043D\u043E\u044E
-      \u043E\u0441\u043E\u0431\u043E\u044E \u0434\u043B\u044F \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
-      \u0446\u044C\u043E\u0433\u043E \u043A\u043E\u043D\u0442\u0440\u0430\u043A\u0442\u0443.\\n\\n\u041D\u0410
-      \u041F\u041E\u0421\u0412\u0406\u0414\u0427\u0415\u041D\u041D\u042F \u0427\u041E\u0413\u041E
-      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 \u0443\u043A\u043B\u0430\u043B\u0438
-      \u0446\u044E \u0423\u0433\u043E\u0434\u0443 \u043F\u0440\u043E \u043D\u0435\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F
-      \u043D\u0430 \u043F\u0435\u0440\u0448\u0443 \u0434\u0430\u0442\u0443, \u0437\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0443
-      \u0432\u0438\u0449\u0435.\\n\\n_____\\n\u0410\u0432\u0442\u043E\u0440: ___________________________\\n\u0406\u043C'\u044F:
-      _____\\n\u041D\u0430\u0437\u0432\u0430: _____\\n\u0414\u0430\u0442\u0430: ___________________________\\n\\n\u0422\u041E\u0412
-      \xAB\u041F\u0440\u0438\u043A\u043B\u0430\u0434.\u041A\u043E\u043C\xBB.\\n\u0410\u0432\u0442\u043E\u0440:
-      ___________________________\\n\u0406\u043C'\u044F: \u0414\u0436\u0435\u0439\u043D
-      \u0414\u043E\u0443\\n\u0417\u0432\u0430\u043D\u043D\u044F: \u041A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
-      \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\u0414\u0430\u0442\u0430: ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n````\\n\\n````\\n-
+      Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
+      text: \u0423\u0441\u0456 \u0441\u0443\u043F\u0435\u0440\u0435\u0447\u043A\u0438
+      \u0432\u0438\u0440\u0456\u0448\u0443\u044E\u0442\u044C\u0441\u044F \u0441\u0443\u0434\u0430\u043C\u0438
+      \u0448\u0442\u0430\u0442\u0443 \u041A\u0430\u043B\u0456\u0444\u043E\u0440\u043D\u0456\u044F.\\n
+      \   -- Sentence ID: P1-S1\\n    Sentence text: \u0414\u043E\u0433\u043E\u0432\u0456\u0440
+      \u0434\u0456\u0454 \u043F\u0440\u043E\u0442\u044F\u0433\u043E\u043C 5 (\u043F\u2019\u044F\u0442\u0438)
+      \u0440\u043E\u043A\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043F\u0456\u0434\u043F\u0438\u0441\u0430\u043D\u043D\u044F
+      \u0446\u044C\u043E\u0433\u043E \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0443.\\n````\\n\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -6149,7 +6124,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18922'
+      - '12023'
       content-type:
       - application/json
       host:
@@ -6177,30 +6152,37 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"\u0423\u0433\u043e\u0434\u0430
-        \u043f\u0440\u043e \u043d\u0435\u0440\u043e\u0437\u0433\u043e\u043b\u043e\u0448\u0435\u043d\u043d\u044f
-        (NDA)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1750175505, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
-        {"completion_tokens": 40, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 3540, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        1408}, "total_tokens": 3580}}'
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": 5,\n                \"justification\":
+        \"\u0423 \u0440\u0435\u0447\u0435\u043d\u043d\u0456 \u0437\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u043e,
+        \u0449\u043e \u0434\u043e\u0433\u043e\u0432\u0456\u0440 \u0434\u0456\u0454
+        \u043f\u0440\u043e\u0442\u044f\u0433\u043e\u043c 5 (\u043f\u2019\u044f\u0442\u0438)
+        \u0440\u043e\u043a\u0456\u0432 \u0437 \u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f.\",\n                \"reference_paragraphs\":
+        [\n                    {\n                        \"reference_paragraph_id\":
+        \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750338872, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 113,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        2292, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
+        "total_tokens": 2405}}'
     headers:
       Content-Length:
-      - '1259'
+      - '1851'
       Content-Type:
       - application/json
       Date:
@@ -6212,7 +6194,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1199'
+      - '1369'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

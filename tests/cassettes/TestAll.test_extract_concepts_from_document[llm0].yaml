@@ -241,7 +241,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -252,7 +252,7 @@ interactions:
         \"C0\",\n        \"extracted_items\": [\n            \"16-07-2024\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement
         (NDA)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1750174195, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        1750338542, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
         "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
         {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
         false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
@@ -276,7 +276,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '576'
+      - '779'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -554,7 +554,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -563,24 +563,25 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
-        [\n      {\n        \"value\": true,\n        \"justification\": \"The document
-        is titled ''Non-Disclosure Agreement'' and contains typical contract elements
-        such as parties, obligations, liability, governing law, and execution signatures.\"\n      }\n    ]\n  },\n  {\n    \"concept_id\":
-        \"C1\",\n    \"extracted_items\": []\n  }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1750174196, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": true,\n                \"justification\":
+        \"The document is titled ''Non-Disclosure Agreement'' and contains typical
+        contract clauses such as obligations, liability, governing law, and execution
+        by parties.\"\n            }\n        ]\n    },\n    {\n        \"concept_id\":
+        \"C1\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1750338543, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 91, "completion_tokens_details":
+        "fp_178c8d546f", "usage": {"completion_tokens": 90, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 3166, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3257}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3256}}'
     headers:
       Content-Length:
-      - '1610'
+      - '1656'
       Content-Type:
       - application/json
       Date:
@@ -592,7 +593,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '729'
+      - '1117'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -919,7 +920,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -929,26 +930,26 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": \"Example.Com LLC\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P10\",\n                    \"P57\"\n                ]\n            },\n            {\n                \"value\":
-        \"Jane Doe\",\n                \"reference_paragraph_ids\": [\n                    \"P13\",\n                    \"P59\"\n                ]\n            }\n        ]\n    },\n    {\n        \"concept_id\":
+        [\n            {\n                \"value\": \"Party A\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P2\"\n                ]\n            },\n            {\n                \"value\":
+        \"Example.Com LLC\",\n                \"reference_paragraph_ids\": [\n                    \"P10\",\n                    \"P57\"\n                ]\n            }\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            {\n                \"value\":
         \"five (5) years from the date of signing this agreement\",\n                \"reference_paragraph_ids\":
         [\n                    \"P45\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174197, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338545, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 149,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 144,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         4372, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        4521}}'
+        4516}}'
     headers:
       Content-Length:
-      - '2020'
+      - '1988'
       Content-Type:
       - application/json
       Date:
@@ -960,7 +961,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1144'
+      - '1641'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1236,7 +1237,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1247,29 +1248,29 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            {\n                \"value\": 8,\n                \"justification\":
-        \"The NDA is comprehensive, covering key elements such as clear definitions
+        \"The NDA is comprehensive, covering key elements such as a clear definition
         of confidential information, obligations of the receiving party, exclusions,
         liability caps, penalties for breach, return of materials, no license grant,
-        governing law, dispute resolution, and miscellaneous provisions. It includes
-        a reasonable liquidated damages clause and specifies a five-year term, which
-        aligns with best practices. The agreement also requires written amendments
-        and addresses unenforceable provisions, enhancing its robustness. Minor informal
-        language and placeholders for Party A''s details slightly reduce professionalism
-        but do not significantly undermine contract quality.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174198, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 150,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3152, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3302}}'
+        governing law, dispute resolution, and miscellaneous provisions including
+        amendment and severability clauses. The inclusion of liquidated damages and
+        injunctive relief provisions enhances enforceability. The agreement also specifies
+        a reasonable term of five years and clearly states the parties involved. Minor
+        informal language and placeholders for party A''s details slightly reduce
+        the overall professionalism but do not significantly undermine the contract''s
+        quality.\"\n            }\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1750338546, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 156, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 3152, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1152}, "total_tokens": 3308}}'
     headers:
       Content-Length:
-      - '2083'
+      - '2116'
       Content-Type:
       - application/json
       Date:
@@ -1281,7 +1282,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1312'
+      - '1644'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1543,7 +1544,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1552,16 +1553,16 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [5]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750174200, "id": "chatcmpl-DUMMY", "model": "o4-mini-2025-04-16",
+        "assistant"}}], "created": 1750338549, "id": "chatcmpl-DUMMY", "model": "o4-mini-2025-04-16",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        null, "usage": {"completion_tokens": 235, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 192, "rejected_prediction_tokens":
+        null, "usage": {"completion_tokens": 171, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 128, "rejected_prediction_tokens":
         0}, "prompt_tokens": 2942, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 3177}}'
+        0}, "total_tokens": 3113}}'
     headers:
       Content-Length:
       - '1164'
@@ -1576,601 +1577,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3042'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array. If the concept is not found or there are no items to extract,
-      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
-      of extracted items for the concept is specified under \\\"Amount of extracted
-      items\\\". Each extracted item, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
-      structure is provided for a concept under \\\"Expected structure,\\\" you must
-      follow that structure for all extracted items corresponding to that concept.\\n
-      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
-      the extracted item value must be within that scale.\\n    -- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
-      to follow the same style and formatting for your extracted items.\\n    -- When
-      extracting string values, translate them in English if the original language
-      of the document is not English.\\n\\n- Types of extracted items:\\n    -- Each
-      concept specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
-      item type\\\"). Ensure your extracted items strictly match that type. Python
-      types are provided (e.g., str for string, int for integer, float for floating-point
-      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
-      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
-      \   -- If a concept is not mentioned at all, your output should still contain
-      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
-      For concepts that have an \\\"Available labels:\\\" section: if none of the
-      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
-      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
-      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
-      name: Title\\n\\nConcept description:\\nContract title\\n\\nAmount of extracted
-      items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
-      extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT TEXT:\\nNon-Disclosure
-      Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
-      made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
-      _____\\nPhone: _____\\nEmail: _____\\n\\nParty B:\\n\\nExample.Com LLC\\n5678
-      Random Drive\\nNew York, NY 00000\\nContact: Jane Doe, Managing Partner\\nPhone:
-      (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1. Purpose:\\n\\nThe purpose
-      of this Agreement is to protect the confidential information that may be disclosed
-      between the parties during discussions and engagements regarding potential business
-      collaborations and partnerships.\\n\\n2. Definition of Confidential Information:\\n\\nFor
-      purposes of this Agreement, \\\"Confidential Information\\\" means any and all
-      non-public information, conveyed in all forms, whether in oral, written, electronic,
-      or other form or media, whether or not marked, designated, or otherwise identified
-      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
-      or observed by Receiving Party, which (i) has actual or potential economic value
-      by virtue of not being generally known to, and not being readily ascertainable
-      by proper means by, other persons who can obtain economic value from its disclosure
-      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
-      its secrecy and confidentiality.\\n\\nConfidential Information includes, but
-      is not limited to, the following categories: (1) business information (business
-      plans, strategies, and models), (2) technical information (technical specifications
-      and documentation, research and development activities), (3) customer and market
-      information (customer lists and contact information, sales histories and patterns),
-      (4) personnel and internal information (employee lists and contact information,
-      employment agreements and personnel files), (5) intellectual property (trade
-      secrets and know-how, patents and patent applications, copyrights and copyright
-      applications, trademarks and trademark applications), (6) strategic information
-      (merger and acquisition plans, competitive analyses and strategies). Software
-      code shall also be included into the confidential information.\\n\\nConfidential
-      Information shall not include information that: (a) is or becomes generally
-      available to the public other than as a result of disclosure by Receiving Party
-      or its Representatives; (b) was available to Receiving Party on a non-confidential
-      basis prior to its disclosure by Disclosing Party; (c) becomes available to
-      Receiving Party on a non-confidential basis from a person other than Disclosing
-      Party who is not otherwise bound by a confidentiality obligation to Disclosing
-      Party; or (d) was independently developed by Receiving Party without reference
-      to or use of any Confidential Information. The name of the dog of the Receiving
-      Party is Bob.\\nThe designation of information as Confidential Information shall
-      not be determinative of whether such information constitutes a trade secret
-      under applicable law. All Confidential Information shall remain the exclusive
-      property of Disclosing Party, and Receiving Party shall have no rights, by license
-      or otherwise, to use the Confidential Information except as expressly provided
-      herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe party receiving Confidential
-      Information (\\\"Receiving Party\\\") shall:\\n\\na. Maintain the confidentiality
-      of the Confidential Information and not disclose it to any third party without
-      the prior written consent of the Disclosing Party.\\n\\nb. Use the Confidential
-      Information solely for the purpose of evaluating or engaging in the potential
-      business collaboration.\\n\\nc. Take all necessary precautions to protect the
-      confidentiality of the Confidential Information, which shall be no less than
-      the precautions it takes to protect its own confidential information.\\n\\n4.
-      Exclusions from Confidential Information:\\n\\nConfidential Information does
-      not include information that:\\n\\na. Is or becomes publicly known through no
-      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
-      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
-      without breach of this Agreement.\\n\\nd. Is independently developed by the
-      Receiving Party without use of or reference to the Disclosing Party's Confidential
-      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
-      or upon request, the Receiving Party shall return all materials containing Confidential
-      Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
-      of either party for any and all claims arising out of or related to this Agreement,
-      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
-      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
-      Party under any separate business agreement between the parties during the twelve
-      (12) months preceding the event giving rise to the claim. This limitation of
-      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
-      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
-      Party shall be entitled to seek injunctive relief in addition to any other remedy
-      available at law or in equity. The Receiving Party acknowledges that a breach
-      of this Agreement may cause irreparable harm to the Disclosing Party for which
-      monetary damages would be an inadequate remedy. In addition to injunctive relief,
-      the Receiving Party shall be liable for liquidated damages in the amount of
-      $25,000 for each instance of unauthorized disclosure or use of Confidential
-      Information, which the parties agree represents a reasonable estimate of the
-      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
-      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
-      accordance with the laws of the State of California, without regard to its conflict
-      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
-      State of California. This Agreement shall remain in effect for a period of five
-      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
-      This Agreement constitutes the entire agreement between the parties with respect
-      to the subject matter hereof and supersedes all prior or contemporaneous oral
-      or written agreements concerning such subject matter.\\n\\nb. Any amendments
-      or modifications to this Agreement must be made in writing and signed by both
-      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
-      the remainder shall be enforced as fully as possible and the unenforceable provision
-      shall be deemed modified to the limited extent required to permit its enforcement
-      in a manner most closely representing the intention of the parties.\\n\\nd.
-      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
-      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
-      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
-      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
-      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '15629'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.88.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.88.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement
-        (NDA)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1750174204, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
-        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
-        {"completion_tokens": 35, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 2939, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        1408}, "total_tokens": 2974}}'
-    headers:
-      Content-Length:
-      - '1237'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '326'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array. If the concept is not found or there are no items to extract,
-      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
-      of extracted items for the concept is specified under \\\"Amount of extracted
-      items\\\". Each extracted item, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
-      structure is provided for a concept under \\\"Expected structure,\\\" you must
-      follow that structure for all extracted items corresponding to that concept.\\n
-      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
-      the extracted item value must be within that scale.\\n    -- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
-      to follow the same style and formatting for your extracted items.\\n    -- When
-      extracting string values, translate them in English if the original language
-      of the document is not English.\\n\\n- Types of extracted items:\\n    -- Each
-      concept specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
-      item type\\\"). Ensure your extracted items strictly match that type. Python
-      types are provided (e.g., str for string, int for integer, float for floating-point
-      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
-      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
-      \   -- If a concept is not mentioned at all, your output should still contain
-      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
-      For concepts that have an \\\"Available labels:\\\" section: if none of the
-      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
-      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
-      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
-      name: Effective Date\\n\\nConcept description:\\nContract start date\\n\\nAmount
-      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
-      extracted item type: str (in 'DD-MM-YYYY' format)\\n````\\n\\n______\\n\\n------\\nDOCUMENT
-      TEXT:\\nNon-Disclosure Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the
-      \\\"Agreement\\\") is made and entered into as of July 16, 2024, by and between:\\n\\nParty
-      A:\\n\\n_____\\n_____\\n_____\\nContact: _____\\nPhone: _____\\nEmail: _____\\n\\nParty
-      B:\\n\\nExample.Com LLC\\n5678 Random Drive\\nNew York, NY 00000\\nContact:
-      Jane Doe, Managing Partner\\nPhone: (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1.
-      Purpose:\\n\\nThe purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\\n\\n2. Definition
-      of Confidential Information:\\n\\nFor purposes of this Agreement, \\\"Confidential
-      Information\\\" means any and all non-public information, conveyed in all forms,
-      whether in oral, written, electronic, or other form or media, whether or not
-      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
-      been or may be disclosed to, accessed by, or observed by Receiving Party, which
-      (i) has actual or potential economic value by virtue of not being generally
-      known to, and not being readily ascertainable by proper means by, other persons
-      who can obtain economic value from its disclosure or use, or (ii) is subject
-      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n\\nConfidential
-      Information includes, but is not limited to, the following categories: (1) business
-      information (business plans, strategies, and models), (2) technical information
-      (technical specifications and documentation, research and development activities),
-      (3) customer and market information (customer lists and contact information,
-      sales histories and patterns), (4) personnel and internal information (employee
-      lists and contact information, employment agreements and personnel files), (5)
-      intellectual property (trade secrets and know-how, patents and patent applications,
-      copyrights and copyright applications, trademarks and trademark applications),
-      (6) strategic information (merger and acquisition plans, competitive analyses
-      and strategies). Software code shall also be included into the confidential
-      information.\\n\\nConfidential Information shall not include information that:
-      (a) is or becomes generally available to the public other than as a result of
-      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
-      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
-      (c) becomes available to Receiving Party on a non-confidential basis from a
-      person other than Disclosing Party who is not otherwise bound by a confidentiality
-      obligation to Disclosing Party; or (d) was independently developed by Receiving
-      Party without reference to or use of any Confidential Information. The name
-      of the dog of the Receiving Party is Bob.\\nThe designation of information as
-      Confidential Information shall not be determinative of whether such information
-      constitutes a trade secret under applicable law. All Confidential Information
-      shall remain the exclusive property of Disclosing Party, and Receiving Party
-      shall have no rights, by license or otherwise, to use the Confidential Information
-      except as expressly provided herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe
-      party receiving Confidential Information (\\\"Receiving Party\\\") shall:\\n\\na.
-      Maintain the confidentiality of the Confidential Information and not disclose
-      it to any third party without the prior written consent of the Disclosing Party.\\n\\nb.
-      Use the Confidential Information solely for the purpose of evaluating or engaging
-      in the potential business collaboration.\\n\\nc. Take all necessary precautions
-      to protect the confidentiality of the Confidential Information, which shall
-      be no less than the precautions it takes to protect its own confidential information.\\n\\n4.
-      Exclusions from Confidential Information:\\n\\nConfidential Information does
-      not include information that:\\n\\na. Is or becomes publicly known through no
-      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
-      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
-      without breach of this Agreement.\\n\\nd. Is independently developed by the
-      Receiving Party without use of or reference to the Disclosing Party's Confidential
-      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
-      or upon request, the Receiving Party shall return all materials containing Confidential
-      Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
-      of either party for any and all claims arising out of or related to this Agreement,
-      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
-      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
-      Party under any separate business agreement between the parties during the twelve
-      (12) months preceding the event giving rise to the claim. This limitation of
-      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
-      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
-      Party shall be entitled to seek injunctive relief in addition to any other remedy
-      available at law or in equity. The Receiving Party acknowledges that a breach
-      of this Agreement may cause irreparable harm to the Disclosing Party for which
-      monetary damages would be an inadequate remedy. In addition to injunctive relief,
-      the Receiving Party shall be liable for liquidated damages in the amount of
-      $25,000 for each instance of unauthorized disclosure or use of Confidential
-      Information, which the parties agree represents a reasonable estimate of the
-      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
-      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
-      accordance with the laws of the State of California, without regard to its conflict
-      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
-      State of California. This Agreement shall remain in effect for a period of five
-      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
-      This Agreement constitutes the entire agreement between the parties with respect
-      to the subject matter hereof and supersedes all prior or contemporaneous oral
-      or written agreements concerning such subject matter.\\n\\nb. Any amendments
-      or modifications to this Agreement must be made in writing and signed by both
-      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
-      the remainder shall be enforced as fully as possible and the unenforceable provision
-      shall be deemed modified to the limited extent required to permit its enforcement
-      in a manner most closely representing the intention of the parties.\\n\\nd.
-      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
-      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
-      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
-      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
-      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '15668'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.88.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.88.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"16-07-2024\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174204, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2950, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        2984}}'
-    headers:
-      Content-Length:
-      - '1214'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '519'
+      - '3176'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2445,7 +1852,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2453,23 +1860,20 @@ interactions:
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        false,\n                \"justification\": \"The document is titled ''Non-Disclosure
-        Agreement (NDA)'' and does not mention being a shareholder''s agreement.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174204, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 64,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3114, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
-        "total_tokens": 3178}}'
+        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1750338552, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 3114, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3137}}'
     headers:
       Content-Length:
-      - '1404'
+      - '1176'
       Content-Type:
       - application/json
       Date:
@@ -2481,7 +1885,601 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '593'
+      - '417'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \\\"Expected structure,\\\" you must
+      follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If available labels
+      are provided for a concept under \\\"Available labels,\\\" the extracted item
+      value must be a list containing only labels from the predefined set. If none
+      of the predefined labels apply, do not extract any items for that concept.\\n
+      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
+      to follow the same style and formatting for your extracted items.\\n    -- When
+      extracting string values, translate them in English if the original language
+      of the document is not English.\\n\\n- Types of extracted items:\\n    -- Each
+      concept specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
+      item type\\\"). Ensure your extracted items strictly match that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if none of the
+      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
+      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
+      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
+      name: Title\\n\\nConcept description:\\nContract title\\n\\nAmount of extracted
+      items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT TEXT:\\nNon-Disclosure
+      Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
+      made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
+      _____\\nPhone: _____\\nEmail: _____\\n\\nParty B:\\n\\nExample.Com LLC\\n5678
+      Random Drive\\nNew York, NY 00000\\nContact: Jane Doe, Managing Partner\\nPhone:
+      (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1. Purpose:\\n\\nThe purpose
+      of this Agreement is to protect the confidential information that may be disclosed
+      between the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\\n\\n2. Definition of Confidential Information:\\n\\nFor
+      purposes of this Agreement, \\\"Confidential Information\\\" means any and all
+      non-public information, conveyed in all forms, whether in oral, written, electronic,
+      or other form or media, whether or not marked, designated, or otherwise identified
+      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
+      or observed by Receiving Party, which (i) has actual or potential economic value
+      by virtue of not being generally known to, and not being readily ascertainable
+      by proper means by, other persons who can obtain economic value from its disclosure
+      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
+      its secrecy and confidentiality.\\n\\nConfidential Information includes, but
+      is not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.\\n\\nConfidential
+      Information shall not include information that: (a) is or becomes generally
+      available to the public other than as a result of disclosure by Receiving Party
+      or its Representatives; (b) was available to Receiving Party on a non-confidential
+      basis prior to its disclosure by Disclosing Party; (c) becomes available to
+      Receiving Party on a non-confidential basis from a person other than Disclosing
+      Party who is not otherwise bound by a confidentiality obligation to Disclosing
+      Party; or (d) was independently developed by Receiving Party without reference
+      to or use of any Confidential Information. The name of the dog of the Receiving
+      Party is Bob.\\nThe designation of information as Confidential Information shall
+      not be determinative of whether such information constitutes a trade secret
+      under applicable law. All Confidential Information shall remain the exclusive
+      property of Disclosing Party, and Receiving Party shall have no rights, by license
+      or otherwise, to use the Confidential Information except as expressly provided
+      herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:\\n\\na. Maintain the confidentiality
+      of the Confidential Information and not disclose it to any third party without
+      the prior written consent of the Disclosing Party.\\n\\nb. Use the Confidential
+      Information solely for the purpose of evaluating or engaging in the potential
+      business collaboration.\\n\\nc. Take all necessary precautions to protect the
+      confidentiality of the Confidential Information, which shall be no less than
+      the precautions it takes to protect its own confidential information.\\n\\n4.
+      Exclusions from Confidential Information:\\n\\nConfidential Information does
+      not include information that:\\n\\na. Is or becomes publicly known through no
+      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
+      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
+      without breach of this Agreement.\\n\\nd. Is independently developed by the
+      Receiving Party without use of or reference to the Disclosing Party's Confidential
+      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
+      of either party for any and all claims arising out of or related to this Agreement,
+      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
+      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
+      Party under any separate business agreement between the parties during the twelve
+      (12) months preceding the event giving rise to the claim. This limitation of
+      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
+      in this Agreement shall be construed as granting any rights to the Receiving
+      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
+      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
+      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
+      accordance with the laws of the State of California, without regard to its conflict
+      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
+      State of California. This Agreement shall remain in effect for a period of five
+      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
+      This Agreement constitutes the entire agreement between the parties with respect
+      to the subject matter hereof and supersedes all prior or contemporaneous oral
+      or written agreements concerning such subject matter.\\n\\nb. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
+      the remainder shall be enforced as fully as possible and the unenforceable provision
+      shall be deemed modified to the limited extent required to permit its enforcement
+      in a manner most closely representing the intention of the parties.\\n\\nd.
+      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
+      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
+      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
+      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '15629'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement
+        (NDA)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
+        1750338552, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
+        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
+        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
+        {"completion_tokens": 35, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 2939, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        1408}, "total_tokens": 2974}}'
+    headers:
+      Content-Length:
+      - '1237'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '467'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not found or there are no items to extract,
+      leave the array empty ([]).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified under \\\"Amount of extracted
+      items\\\". Each extracted item, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item structure:\\n    -- If a specific
+      structure is provided for a concept under \\\"Expected structure,\\\" you must
+      follow that structure for all extracted items corresponding to that concept.\\n
+      \   -- If a rating scale is provided for a concept under \\\"Rating scale,\\\"
+      the extracted item value must be within that scale.\\n    -- If available labels
+      are provided for a concept under \\\"Available labels,\\\" the extracted item
+      value must be a list containing only labels from the predefined set. If none
+      of the predefined labels apply, do not extract any items for that concept.\\n
+      \   -- If there are example items (\\\"Extracted concept examples\\\"), try
+      to follow the same style and formatting for your extracted items.\\n    -- When
+      extracting string values, translate them in English if the original language
+      of the document is not English.\\n\\n- Types of extracted items:\\n    -- Each
+      concept specifies an \\\"extracted item type\\\" (found under \\\"Concept extracted
+      item type\\\"). Ensure your extracted items strictly match that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.).\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if none of the
+      predefined labels apply to the content, leave the \\\"extracted_items\\\" array
+      empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            ...\\n        ],\\n    },\\n
+      \   ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n- Concept ID: C0\\nConcept
+      name: Effective Date\\n\\nConcept description:\\nContract start date\\n\\nAmount
+      of extracted items: This concept may have zero, one, or multiple extracted items.\\n\\nConcept
+      extracted item type: str (in 'DD-MM-YYYY' format)\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      TEXT:\\nNon-Disclosure Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the
+      \\\"Agreement\\\") is made and entered into as of July 16, 2024, by and between:\\n\\nParty
+      A:\\n\\n_____\\n_____\\n_____\\nContact: _____\\nPhone: _____\\nEmail: _____\\n\\nParty
+      B:\\n\\nExample.Com LLC\\n5678 Random Drive\\nNew York, NY 00000\\nContact:
+      Jane Doe, Managing Partner\\nPhone: (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1.
+      Purpose:\\n\\nThe purpose of this Agreement is to protect the confidential information
+      that may be disclosed between the parties during discussions and engagements
+      regarding potential business collaborations and partnerships.\\n\\n2. Definition
+      of Confidential Information:\\n\\nFor purposes of this Agreement, \\\"Confidential
+      Information\\\" means any and all non-public information, conveyed in all forms,
+      whether in oral, written, electronic, or other form or media, whether or not
+      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
+      been or may be disclosed to, accessed by, or observed by Receiving Party, which
+      (i) has actual or potential economic value by virtue of not being generally
+      known to, and not being readily ascertainable by proper means by, other persons
+      who can obtain economic value from its disclosure or use, or (ii) is subject
+      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n\\nConfidential
+      Information includes, but is not limited to, the following categories: (1) business
+      information (business plans, strategies, and models), (2) technical information
+      (technical specifications and documentation, research and development activities),
+      (3) customer and market information (customer lists and contact information,
+      sales histories and patterns), (4) personnel and internal information (employee
+      lists and contact information, employment agreements and personnel files), (5)
+      intellectual property (trade secrets and know-how, patents and patent applications,
+      copyrights and copyright applications, trademarks and trademark applications),
+      (6) strategic information (merger and acquisition plans, competitive analyses
+      and strategies). Software code shall also be included into the confidential
+      information.\\n\\nConfidential Information shall not include information that:
+      (a) is or becomes generally available to the public other than as a result of
+      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
+      (c) becomes available to Receiving Party on a non-confidential basis from a
+      person other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information. The name
+      of the dog of the Receiving Party is Bob.\\nThe designation of information as
+      Confidential Information shall not be determinative of whether such information
+      constitutes a trade secret under applicable law. All Confidential Information
+      shall remain the exclusive property of Disclosing Party, and Receiving Party
+      shall have no rights, by license or otherwise, to use the Confidential Information
+      except as expressly provided herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe
+      party receiving Confidential Information (\\\"Receiving Party\\\") shall:\\n\\na.
+      Maintain the confidentiality of the Confidential Information and not disclose
+      it to any third party without the prior written consent of the Disclosing Party.\\n\\nb.
+      Use the Confidential Information solely for the purpose of evaluating or engaging
+      in the potential business collaboration.\\n\\nc. Take all necessary precautions
+      to protect the confidentiality of the Confidential Information, which shall
+      be no less than the precautions it takes to protect its own confidential information.\\n\\n4.
+      Exclusions from Confidential Information:\\n\\nConfidential Information does
+      not include information that:\\n\\na. Is or becomes publicly known through no
+      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
+      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
+      without breach of this Agreement.\\n\\nd. Is independently developed by the
+      Receiving Party without use of or reference to the Disclosing Party's Confidential
+      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
+      of either party for any and all claims arising out of or related to this Agreement,
+      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
+      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
+      Party under any separate business agreement between the parties during the twelve
+      (12) months preceding the event giving rise to the claim. This limitation of
+      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
+      in this Agreement shall be construed as granting any rights to the Receiving
+      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
+      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
+      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
+      accordance with the laws of the State of California, without regard to its conflict
+      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
+      State of California. This Agreement shall remain in effect for a period of five
+      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
+      This Agreement constitutes the entire agreement between the parties with respect
+      to the subject matter hereof and supersedes all prior or contemporaneous oral
+      or written agreements concerning such subject matter.\\n\\nb. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
+      the remainder shall be enforced as fully as possible and the unenforceable provision
+      shall be deemed modified to the limited extent required to permit its enforcement
+      in a manner most closely representing the intention of the parties.\\n\\nd.
+      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
+      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
+      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
+      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '15668'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            \"16-07-2024\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750338552, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        2950, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        2984}}'
+    headers:
+      Content-Length:
+      - '1214'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '509'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2755,34 +2753,32 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": true,\n                \"justification\":
-        \"The document is titled ''Non-Disclosure Agreement'' and contains typical
-        contract elements such as parties involved, definitions, obligations, liability
-        clauses, governing law, and signatures.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174204, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
+        true,\n                \"justification\": \"The document is titled ''Non-Disclosure
+        Agreement'' and contains typical contract elements such as parties, purpose,
+        obligations, liability, governing law, and signatures.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750338552, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 74,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 72,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3112, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3186}}'
+        3184}}'
     headers:
       Content-Length:
-      - '1605'
+      - '1460'
       Content-Type:
       - application/json
       Date:
@@ -2794,7 +2790,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '755'
+      - '794'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3118,7 +3114,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3129,7 +3125,7 @@ interactions:
         \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
         \"five (5) years from the date of signing this agreement\",\n                \"reference_paragraph_ids\":
         [\n                    \"P45\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174204, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338552, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3154,326 +3150,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '977'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- General Documents: Any other types of files
-      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
-      you may be working with document fragments rather than complete documents. These
-      fragments represent portions of a larger document and should be analyzed within
-      their limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\n2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
-      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
-      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
-      as instructed, considering their relevance and context within the document.\\n\\n3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
-      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
-      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
-      identifications.\\n- Reasoned conclusions: Such as determining whether a document
-      meets specific criteria or answers particular questions.\\n- Interpretative
-      judgments: Such as ratings, classifications, or qualitative assessments based
-      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
-      Before processing the document, ensure you comprehend the nature of the document
-      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
-      Each task will include detailed instructions, such as which aspects or concepts
-      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
-      precise extractions and analysis, ensuring your outputs align with the document's
-      intent and context.\\n- Adapt to variability: Documents may differ in structure,
-      language, or formatting. Be flexible and apply reasoning to handle variations
-      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\\n- Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\\n- Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\\n- References (when required): When required by
-      the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
-      you will ensure consistent and high-quality performance across diverse document
-      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
-      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
-      text provided.\\n2. Identify whether each concept in the concepts list is addressed
-      within the document text.\\n3. For each concept that appears, extract zero or
-      more items relevant to that concept. The item format and structure are specified
-      for each concept.\\n4. Produce a JSON array containing your extracted data,
-      in the provided format.\\n\\nIf a concept is not addressed in the document text,
-      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
-      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
-      answer in only the following answer format (do not include backticks, code fences,
-      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
-      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
-      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
-      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
-      must be an array of objects with mandatory fields \\\"value\\\" and \\\"justification\\\".
-      If the concept is not found or there are no items to extract, leave the array
-      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
-      items for the concept is specified under \\\"Amount of extracted items\\\".
-      Each extracted item's object, even if there is only one, must be part of the
-      \\\"extracted_items\\\" array.\\n\\n- Item object structure:\\n    -- value:
-      Mandatory field holding the extracted item.\\n        --- If a specific structure
-      is provided for a concept under \\\"Expected structure,\\\" the extracted item
-      value must follow that structure for all extracted items corresponding to that
-      concept.\\n        --- If a rating scale is provided for a concept under \\\"Rating
-      scale,\\\" the extracted item value must be within that scale.\\n        ---
-      If available labels are provided for a concept under \\\"Available labels,\\\"
-      the extracted item value must be a list containing only labels from the predefined
-      set. If none of the predefined labels apply, do not extract any items for that
-      concept.\\n        --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\\n    -- justification: Mandatory field holding
-      a justification of why the item was extracted for the concept. Ensure the justification
-      is specific and directly ties the extracted item to the concept's defining features.
-      Never reference the concept's ID or any of the structural IDs provided in this
-      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
-      in the justification.\\n        --- Justification should be balanced, i.e. cover
-      the key insights with enough detail to be informative, while remaining concise.\\n
-      \       --- Justification should be no longer than 5 sentences.\\n        ---
-      Justification should be in English.\\n\\n- Types of extracted items:\\n    --
-      Each concept specifies an \\\"extracted item type\\\" (found under \\\"Concept
-      extracted item type\\\"). Ensure that the value of each of the extracted items
-      for the concept strictly matches that type. Python types are provided (e.g.,
-      str for string, int for integer, float for floating-point number, dict for object,
-      etc.).\\n    -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
-      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
-      all, your output should still contain an entry for that concept with an empty
-      \\\"extracted_items\\\" array.\\n    -- For concepts that have an \\\"Available
-      labels:\\\" section: if none of the predefined labels apply to the content,
-      leave the \\\"extracted_items\\\" array empty.\\n    -- For concepts that have
-      an \\\"Available labels:\\\" section: if multiple labels apply to the same instance
-      or context, include them all in a single extracted item with multiple labels
-      in the \\\"labels\\\" array (e.g., {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}).
-      Only create multiple extracted items if there are genuinely distinct instances
-      or contexts that warrant separate classification.\\n    -- For concepts that
-      do not have an \\\"Available labels:\\\" section: if multiple items are found
-      for a concept, include each as a separate entry within the \\\"extracted_items\\\"
-      array.\\n\\n- No additional text:\\n    -- Do not include any headers, explanations,
-      or text outside of the JSON array.\\n    -- Do not wrap your JSON response in
-      backticks or any other formatting characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n
-      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
-      \           {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
-      str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
-      Concept ID: C0\\nConcept name: Contract quality\\n\\nConcept description:\\nContract
-      quality from NDA best practice perspective.\\n\\nRating scale:\\nBased on the
-      concept description, assign and output a rating on the scale from 1 (inclusive)
-      to 10 (inclusive).\\n\\nAmount of extracted items: This concept may have zero,
-      one, or multiple extracted items.\\n\\nConcept extracted item type: int\\n````\\n\\n______\\n\\n------\\nDOCUMENT
-      TEXT:\\nNon-Disclosure Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the
-      \\\"Agreement\\\") is made and entered into as of July 16, 2024, by and between:\\n\\nParty
-      A:\\n\\n_____\\n_____\\n_____\\nContact: _____\\nPhone: _____\\nEmail: _____\\n\\nParty
-      B:\\n\\nExample.Com LLC\\n5678 Random Drive\\nNew York, NY 00000\\nContact:
-      Jane Doe, Managing Partner\\nPhone: (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1.
-      Purpose:\\n\\nThe purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\\n\\n2. Definition
-      of Confidential Information:\\n\\nFor purposes of this Agreement, \\\"Confidential
-      Information\\\" means any and all non-public information, conveyed in all forms,
-      whether in oral, written, electronic, or other form or media, whether or not
-      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
-      been or may be disclosed to, accessed by, or observed by Receiving Party, which
-      (i) has actual or potential economic value by virtue of not being generally
-      known to, and not being readily ascertainable by proper means by, other persons
-      who can obtain economic value from its disclosure or use, or (ii) is subject
-      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n\\nConfidential
-      Information includes, but is not limited to, the following categories: (1) business
-      information (business plans, strategies, and models), (2) technical information
-      (technical specifications and documentation, research and development activities),
-      (3) customer and market information (customer lists and contact information,
-      sales histories and patterns), (4) personnel and internal information (employee
-      lists and contact information, employment agreements and personnel files), (5)
-      intellectual property (trade secrets and know-how, patents and patent applications,
-      copyrights and copyright applications, trademarks and trademark applications),
-      (6) strategic information (merger and acquisition plans, competitive analyses
-      and strategies). Software code shall also be included into the confidential
-      information.\\n\\nConfidential Information shall not include information that:
-      (a) is or becomes generally available to the public other than as a result of
-      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
-      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
-      (c) becomes available to Receiving Party on a non-confidential basis from a
-      person other than Disclosing Party who is not otherwise bound by a confidentiality
-      obligation to Disclosing Party; or (d) was independently developed by Receiving
-      Party without reference to or use of any Confidential Information. The name
-      of the dog of the Receiving Party is Bob.\\nThe designation of information as
-      Confidential Information shall not be determinative of whether such information
-      constitutes a trade secret under applicable law. All Confidential Information
-      shall remain the exclusive property of Disclosing Party, and Receiving Party
-      shall have no rights, by license or otherwise, to use the Confidential Information
-      except as expressly provided herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe
-      party receiving Confidential Information (\\\"Receiving Party\\\") shall:\\n\\na.
-      Maintain the confidentiality of the Confidential Information and not disclose
-      it to any third party without the prior written consent of the Disclosing Party.\\n\\nb.
-      Use the Confidential Information solely for the purpose of evaluating or engaging
-      in the potential business collaboration.\\n\\nc. Take all necessary precautions
-      to protect the confidentiality of the Confidential Information, which shall
-      be no less than the precautions it takes to protect its own confidential information.\\n\\n4.
-      Exclusions from Confidential Information:\\n\\nConfidential Information does
-      not include information that:\\n\\na. Is or becomes publicly known through no
-      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
-      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
-      without breach of this Agreement.\\n\\nd. Is independently developed by the
-      Receiving Party without use of or reference to the Disclosing Party's Confidential
-      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
-      or upon request, the Receiving Party shall return all materials containing Confidential
-      Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
-      of either party for any and all claims arising out of or related to this Agreement,
-      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
-      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
-      Party under any separate business agreement between the parties during the twelve
-      (12) months preceding the event giving rise to the claim. This limitation of
-      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
-      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
-      Party shall be entitled to seek injunctive relief in addition to any other remedy
-      available at law or in equity. The Receiving Party acknowledges that a breach
-      of this Agreement may cause irreparable harm to the Disclosing Party for which
-      monetary damages would be an inadequate remedy. In addition to injunctive relief,
-      the Receiving Party shall be liable for liquidated damages in the amount of
-      $25,000 for each instance of unauthorized disclosure or use of Confidential
-      Information, which the parties agree represents a reasonable estimate of the
-      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
-      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
-      accordance with the laws of the State of California, without regard to its conflict
-      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
-      State of California. This Agreement shall remain in effect for a period of five
-      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
-      This Agreement constitutes the entire agreement between the parties with respect
-      to the subject matter hereof and supersedes all prior or contemporaneous oral
-      or written agreements concerning such subject matter.\\n\\nb. Any amendments
-      or modifications to this Agreement must be made in writing and signed by both
-      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
-      the remainder shall be enforced as fully as possible and the unenforceable provision
-      shall be deemed modified to the limited extent required to permit its enforcement
-      in a manner most closely representing the intention of the parties.\\n\\nd.
-      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
-      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
-      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
-      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
-      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '16789'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.88.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.88.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": 8,\n                \"justification\":
-        \"The NDA is comprehensive and includes clear definitions of confidential
-        information, obligations of the receiving party, exclusions, liability caps,
-        penalties for breach, return of materials, governing law, and dispute resolution.
-        It also specifies the term of the agreement and includes clauses on amendments
-        and enforceability. The inclusion of liquidated damages and injunctive relief
-        strengthens protection. However, some minor informal language and placeholders
-        reduce the overall professionalism slightly, preventing a perfect score.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174204, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 130,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3152, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3282}}'
-    headers:
-      Content-Length:
-      - '1952'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '1173'
+      - '824'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3797,7 +3474,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3810,7 +3487,7 @@ interactions:
         [\n            {\n                \"value\": \"Example.Com LLC\",\n                \"reference_paragraph_ids\":
         [\n                    \"P10\",\n                    \"P57\"\n                ]\n            },\n            {\n                \"value\":
         \"Jane Doe\",\n                \"reference_paragraph_ids\": [\n                    \"P13\",\n                    \"P59\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174204, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338552, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3835,7 +3512,327 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1315'
+      - '1044'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array of objects with mandatory fields \\\"value\\\" and \\\"justification\\\".
+      If the concept is not found or there are no items to extract, leave the array
+      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
+      items for the concept is specified under \\\"Amount of extracted items\\\".
+      Each extracted item's object, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item object structure:\\n    -- value:
+      Mandatory field holding the extracted item.\\n        --- If a specific structure
+      is provided for a concept under \\\"Expected structure,\\\" the extracted item
+      value must follow that structure for all extracted items corresponding to that
+      concept.\\n        --- If a rating scale is provided for a concept under \\\"Rating
+      scale,\\\" the extracted item value must be within that scale.\\n        ---
+      If available labels are provided for a concept under \\\"Available labels,\\\"
+      the extracted item value must be a list containing only labels from the predefined
+      set. If none of the predefined labels apply, do not extract any items for that
+      concept.\\n        --- If there are example items (\\\"Extracted concept examples\\\"),
+      the extracted item value should follow the same style and formatting.\\n        ---
+      When extracting string values, translate them in English if the original language
+      of the document is not English.\\n    -- justification: Mandatory field holding
+      a justification of why the item was extracted for the concept. Ensure the justification
+      is specific and directly ties the extracted item to the concept's defining features.
+      Never reference the concept's ID or any of the structural IDs provided in this
+      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
+      in the justification.\\n        --- Justification should be balanced, i.e. cover
+      the key insights with enough detail to be informative, while remaining concise.\\n
+      \       --- Justification should be no longer than 5 sentences.\\n        ---
+      Justification should be in English.\\n\\n- Types of extracted items:\\n    --
+      Each concept specifies an \\\"extracted item type\\\" (found under \\\"Concept
+      extracted item type\\\"). Ensure that the value of each of the extracted items
+      for the concept strictly matches that type. Python types are provided (e.g.,
+      str for string, int for integer, float for floating-point number, dict for object,
+      etc.).\\n    -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- For concepts that have an \\\"Available
+      labels:\\\" section: if none of the predefined labels apply to the content,
+      leave the \\\"extracted_items\\\" array empty.\\n    -- For concepts that have
+      an \\\"Available labels:\\\" section: if multiple labels apply to the same instance
+      or context, include them all in a single extracted item with multiple labels
+      in the \\\"labels\\\" array (e.g., {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}).
+      Only create multiple extracted items if there are genuinely distinct instances
+      or contexts that warrant separate classification.\\n    -- For concepts that
+      do not have an \\\"Available labels:\\\" section: if multiple items are found
+      for a concept, include each as a separate entry within the \\\"extracted_items\\\"
+      array.\\n\\n- No additional text:\\n    -- Do not include any headers, explanations,
+      or text outside of the JSON array.\\n    -- Do not wrap your JSON response in
+      backticks or any other formatting characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
+      str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      Concept ID: C0\\nConcept name: Contract quality\\n\\nConcept description:\\nContract
+      quality from NDA best practice perspective.\\n\\nRating scale:\\nBased on the
+      concept description, assign and output a rating on the scale from 1 (inclusive)
+      to 10 (inclusive).\\n\\nAmount of extracted items: This concept may have zero,
+      one, or multiple extracted items.\\n\\nConcept extracted item type: int\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      TEXT:\\nNon-Disclosure Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the
+      \\\"Agreement\\\") is made and entered into as of July 16, 2024, by and between:\\n\\nParty
+      A:\\n\\n_____\\n_____\\n_____\\nContact: _____\\nPhone: _____\\nEmail: _____\\n\\nParty
+      B:\\n\\nExample.Com LLC\\n5678 Random Drive\\nNew York, NY 00000\\nContact:
+      Jane Doe, Managing Partner\\nPhone: (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1.
+      Purpose:\\n\\nThe purpose of this Agreement is to protect the confidential information
+      that may be disclosed between the parties during discussions and engagements
+      regarding potential business collaborations and partnerships.\\n\\n2. Definition
+      of Confidential Information:\\n\\nFor purposes of this Agreement, \\\"Confidential
+      Information\\\" means any and all non-public information, conveyed in all forms,
+      whether in oral, written, electronic, or other form or media, whether or not
+      marked, designated, or otherwise identified as \\\"confidential,\\\" that has
+      been or may be disclosed to, accessed by, or observed by Receiving Party, which
+      (i) has actual or potential economic value by virtue of not being generally
+      known to, and not being readily ascertainable by proper means by, other persons
+      who can obtain economic value from its disclosure or use, or (ii) is subject
+      to reasonable efforts by Disclosing Party to maintain its secrecy and confidentiality.\\n\\nConfidential
+      Information includes, but is not limited to, the following categories: (1) business
+      information (business plans, strategies, and models), (2) technical information
+      (technical specifications and documentation, research and development activities),
+      (3) customer and market information (customer lists and contact information,
+      sales histories and patterns), (4) personnel and internal information (employee
+      lists and contact information, employment agreements and personnel files), (5)
+      intellectual property (trade secrets and know-how, patents and patent applications,
+      copyrights and copyright applications, trademarks and trademark applications),
+      (6) strategic information (merger and acquisition plans, competitive analyses
+      and strategies). Software code shall also be included into the confidential
+      information.\\n\\nConfidential Information shall not include information that:
+      (a) is or becomes generally available to the public other than as a result of
+      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
+      (c) becomes available to Receiving Party on a non-confidential basis from a
+      person other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information. The name
+      of the dog of the Receiving Party is Bob.\\nThe designation of information as
+      Confidential Information shall not be determinative of whether such information
+      constitutes a trade secret under applicable law. All Confidential Information
+      shall remain the exclusive property of Disclosing Party, and Receiving Party
+      shall have no rights, by license or otherwise, to use the Confidential Information
+      except as expressly provided herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe
+      party receiving Confidential Information (\\\"Receiving Party\\\") shall:\\n\\na.
+      Maintain the confidentiality of the Confidential Information and not disclose
+      it to any third party without the prior written consent of the Disclosing Party.\\n\\nb.
+      Use the Confidential Information solely for the purpose of evaluating or engaging
+      in the potential business collaboration.\\n\\nc. Take all necessary precautions
+      to protect the confidentiality of the Confidential Information, which shall
+      be no less than the precautions it takes to protect its own confidential information.\\n\\n4.
+      Exclusions from Confidential Information:\\n\\nConfidential Information does
+      not include information that:\\n\\na. Is or becomes publicly known through no
+      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
+      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
+      without breach of this Agreement.\\n\\nd. Is independently developed by the
+      Receiving Party without use of or reference to the Disclosing Party's Confidential
+      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
+      of either party for any and all claims arising out of or related to this Agreement,
+      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
+      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
+      Party under any separate business agreement between the parties during the twelve
+      (12) months preceding the event giving rise to the claim. This limitation of
+      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
+      in this Agreement shall be construed as granting any rights to the Receiving
+      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
+      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
+      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
+      accordance with the laws of the State of California, without regard to its conflict
+      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
+      State of California. This Agreement shall remain in effect for a period of five
+      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
+      This Agreement constitutes the entire agreement between the parties with respect
+      to the subject matter hereof and supersedes all prior or contemporaneous oral
+      or written agreements concerning such subject matter.\\n\\nb. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
+      the remainder shall be enforced as fully as possible and the unenforceable provision
+      shall be deemed modified to the limited extent required to permit its enforcement
+      in a manner most closely representing the intention of the parties.\\n\\nd.
+      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
+      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
+      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
+      ___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '16789'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": 8,\n                \"justification\":
+        \"The NDA is comprehensive, covering key elements such as a clear definition
+        of confidential information, obligations of the receiving party, exclusions,
+        liability caps, penalties for breach, return of materials, no license grant,
+        governing law, dispute resolution, and miscellaneous provisions including
+        amendment and severability clauses. The inclusion of liquidated damages and
+        injunctive relief provisions enhances enforceability. The agreement is well-structured
+        and aligns with best practices for NDAs, though some minor informal language
+        and placeholders reduce formality slightly.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750338552, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 141,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        3152, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3072},
+        "total_tokens": 3293}}'
+    headers:
+      Content-Length:
+      - '2002'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '1547'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4097,7 +4094,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4106,16 +4103,16 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [5]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750174205, "id": "chatcmpl-DUMMY", "model": "o4-mini-2025-04-16",
+        "assistant"}}], "created": 1750338553, "id": "chatcmpl-DUMMY", "model": "o4-mini-2025-04-16",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        null, "usage": {"completion_tokens": 235, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 192, "rejected_prediction_tokens":
+        null, "usage": {"completion_tokens": 427, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 384, "rejected_prediction_tokens":
         0}, "prompt_tokens": 2942, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        2816}, "total_tokens": 3177}}'
+        2816}, "total_tokens": 3369}}'
     headers:
       Content-Length:
       - '1167'
@@ -4130,7 +4127,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2626'
+      - '6682'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4393,7 +4390,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4402,7 +4399,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"16-07-2024\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174208, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338560, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -4411,7 +4408,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2950, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        2950, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2816},
         "total_tokens": 2984}}'
     headers:
       Content-Length:
@@ -4427,7 +4424,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '358'
+      - '414'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4610,7 +4607,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4619,7 +4616,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"16-07-2024\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750174209, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750338561, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -4628,7 +4625,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1833, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
+        1833, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
         "total_tokens": 1867}}'
     headers:
       Content-Length:
@@ -4644,7 +4641,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '320'
+      - '431'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4857,7 +4854,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4866,7 +4863,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750174209, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750338561, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -4875,10 +4872,10 @@ interactions:
         "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 2219, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 2242}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 2242}}'
     headers:
       Content-Length:
-      - '1179'
+      - '1176'
       Content-Type:
       - application/json
       Date:
@@ -4890,7 +4887,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '257'
+      - '334'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5088,7 +5085,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -5097,7 +5094,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750174210, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750338562, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -5106,7 +5103,7 @@ interactions:
         "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 1996, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 2019}}'
+        {"audio_tokens": 0, "cached_tokens": 1536}, "total_tokens": 2019}}'
     headers:
       Content-Length:
       - '1179'
@@ -5121,7 +5118,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '246'
+      - '317'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5288,7 +5285,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -5297,7 +5294,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750174210, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750338562, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -5306,7 +5303,7 @@ interactions:
         "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 1564, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1536}, "total_tokens": 1587}}'
+        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 1587}}'
     headers:
       Content-Length:
       - '1179'
@@ -5321,7 +5318,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '260'
+      - '428'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

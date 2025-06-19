@@ -75,7 +75,9 @@ from contextgem.internal.loggers import (
 )
 from contextgem.internal.utils import _get_sat_model, _split_text_into_paragraphs
 from contextgem.public.utils import JsonObjectClassStruct
+from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
+from tests.url_security import validate_existing_cassettes_urls_security
 from tests.utils import (
     VCR_FILTER_HEADERS,
     TestUtils,
@@ -101,7 +103,7 @@ TEST_LLM_PROVIDER: Literal["azure_openai", "openai"] = "azure_openai"
 @pytest.fixture(scope="module")
 def vcr_config():
     return {
-        "filter_headers": [(i, "DUMMY") for i in VCR_FILTER_HEADERS],
+        "filter_headers": [(i, VCR_REDACTION_MARKER) for i in VCR_FILTER_HEADERS],
         "before_record_request": vcr_before_record_request,
         "before_record_response": vcr_before_record_response,
         "match_on": ["method", "host", "path", "body"],
@@ -5909,6 +5911,15 @@ class TestAll(TestUtils):
         check_locals_memory_usage(
             locals(), test_name="test_very_long_doc_extraction", max_obj_memory=5.0
         )  # higher value for a very long document (200+ pages)
+
+    def test_cassette_url_security(self):
+        """
+        Test that validates URL security in all existing cassette files.
+
+        This test ensures that all URLs in VCR cassette files are from approved domains.
+        If any violations are found, the test will fail with URLSecurityError.
+        """
+        validate_existing_cassettes_urls_security()
 
     @memory_profile_and_capture
     def test_total_cost_and_reset(self):

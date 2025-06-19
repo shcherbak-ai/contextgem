@@ -323,7 +323,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -332,7 +332,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750175983, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750339267, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -341,7 +341,7 @@ interactions:
         "fp_178c8d546f", "usage": {"completion_tokens": 22, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 3026, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1152}, "total_tokens": 3048}}'
+        {"audio_tokens": 0, "cached_tokens": 2944}, "total_tokens": 3048}}'
     headers:
       Content-Length:
       - '1176'
@@ -356,7 +356,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '275'
+      - '330'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -618,7 +618,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -627,7 +627,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P10\",\n            \"P5\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175984, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339268, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -636,7 +636,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2376, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
+        2376, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
         "total_tokens": 2410}}'
     headers:
       Content-Length:
@@ -652,7 +652,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '334'
+      - '375'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1034,7 +1034,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1074,23 +1074,21 @@ interactions:
         \"P14\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
         \"P14-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
         \"P15\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P15-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P21\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P21-S2\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175984, "id": "chatcmpl-DUMMY",
+        \"P15-S0\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750339268, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 615,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 579,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3570, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        4185}}'
+        3570, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3456},
+        "total_tokens": 4149}}'
     headers:
       Content-Length:
-      - '5018'
+      - '4794'
       Content-Type:
       - application/json
       Date:
@@ -1102,7 +1100,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '4934'
+      - '6631'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1392,7 +1390,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1425,7 +1423,7 @@ interactions:
         \"P25-S1\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
         \"P26\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
         \"P26-S0\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175989, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339275, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1450,7 +1448,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3646'
+      - '4200'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1676,7 +1674,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1693,7 +1691,7 @@ interactions:
         \u0437 \u0434\u0430\u0442\u0438 \u043f\u0456\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u044f.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175993, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339279, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1718,7 +1716,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1037'
+      - '1146'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1905,7 +1903,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1914,7 +1912,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n  {\n    \"concept_id\":
         \"C0\",\n    \"extracted_items\": [\n      {\n        \"years\": 5\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175994, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339281, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1923,7 +1921,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 36,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1707, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
+        1707, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
         "total_tokens": 1743}}'
     headers:
       Content-Length:
@@ -1939,7 +1937,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '387'
+      - '385'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2138,7 +2136,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2161,7 +2159,7 @@ interactions:
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457 \u0431\u0435\u0437
         \u043d\u0430\u0434\u043c\u0456\u0440\u043d\u043e\u0433\u043e \u043e\u0431\u043c\u0435\u0436\u0435\u043d\u043d\u044f
         \u0441\u0442\u043e\u0440\u0456\u043d.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175995, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339281, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -2170,11 +2168,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 117,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1891, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 2008}}'
+        1891, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        2008}}'
     headers:
       Content-Length:
-      - '1837'
+      - '1834'
       Content-Type:
       - application/json
       Date:
@@ -2186,7 +2184,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1421'
+      - '1068'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2338,36 +2336,7 @@ interactions:
       \u0414\u0436\u0435\u0439\u043D \u0414\u043E\u0443, \u043A\u0435\u0440\u0443\u044E\u0447\u0438\u0439
       \u043F\u0430\u0440\u0442\u043D\u0435\u0440\\n\\n\u0422\u0435\u043B\u0435\u0444\u043E\u043D:
       (012) 345-6789\\n\\n\u0415\u043B\u0435\u043A\u0442\u0440\u043E\u043D\u043D\u0430
-      \u0430\u0434\u0440\u0435\u0441\u0430: jane.doe@example.com\\n\\n\u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u043D\u0435 \u0432\u043A\u043B\u044E\u0447\u0430\u0442\u0438\u043C\u0435
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u044F\u043A\u0430:
-      (a) \u0454 \u0430\u0431\u043E \u0441\u0442\u0430\u0454 \u0437\u0430\u0433\u0430\u043B\u044C\u043D\u043E\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E\u044E
-      \u0437\u0430 \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u0456\u0432
-      \u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0435\u043D\u043D\u044F \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E,
-      \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u0430\u0431\u043E
-      \u0457\u0457 \u041F\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043D\u0438\u043A\u0430\u043C\u0438;
-      (b) \u0431\u0443\u043B\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430
-      \u0421\u0442\u043E\u0440\u043E\u043D\u0456-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0443
-      \u043D\u0430 \u043D\u0435\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0439
-      \u043E\u0441\u043D\u043E\u0432\u0456 \u0434\u043E \u0457\u0457 \u0440\u043E\u0437\u043A\u0440\u0438\u0442\u0442\u044F
-      \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454;
-      (c) \u0441\u0442\u0430\u0454 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0438\u043C
-      \u0434\u043B\u044F \u0421\u0442\u043E\u0440\u043E\u043D\u0438-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0430
-      \u043D\u0430 \u043D\u0435\u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0456\u0439
-      \u043E\u0441\u043D\u043E\u0432\u0456 \u0432\u0456\u0434 \u043E\u0441\u043E\u0431\u0438,
-      \u0456\u043D\u0448\u043E\u0457 \u043D\u0456\u0436 \u0421\u0442\u043E\u0440\u043E\u043D\u0430-\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0447,
-      \u044F\u043A\u0430 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C
-      \u043D\u0435 \u043F\u043E\u0432\u2019\u044F\u0437\u0430\u043D\u0430 \u0437\u043E\u0431\u043E\u0432\u2019\u044F\u0437\u0430\u043D\u043D\u044F\u043C\u0438
-      \u0449\u043E\u0434\u043E \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0441\u0442\u0456
-      \u043F\u0435\u0440\u0435\u0434 \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u0440\u043E\u0437\u0433\u043E\u043B\u043E\u0448\u0443\u0432\u0430\u0447\u0435\u043C;
-      \u0430\u0431\u043E (d) \u0431\u0443\u043B\u0430 \u043D\u0435\u0437\u0430\u043B\u0435\u0436\u043D\u043E
-      \u0440\u043E\u0437\u0440\u043E\u0431\u043B\u0435\u043D\u0430 \u0421\u0442\u043E\u0440\u043E\u043D\u043E\u044E-\u043E\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0435\u043C
-      \u0431\u0435\u0437 \u043F\u043E\u0441\u0438\u043B\u0430\u043D\u043D\u044F \u0430\u0431\u043E
-      \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F \u0431\u0443\u0434\u044C-\u044F\u043A\u043E\u0457
-      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
-      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457. \u0406\u043C'\u044F
-      \u0441\u043E\u0431\u0430\u043A\u0438 \u041F\u0440\u0438\u0439\u043C\u0430\u044E\u0447\u043E\u0457
-      \u0441\u0442\u043E\u0440\u043E\u043D\u0438 - \u0411\u043E\u0431.\\n\\nd. \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
+      \u0430\u0434\u0440\u0435\u0441\u0430: jane.doe@example.com\\n\\nd. \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
       \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E,
       \u043F\u043E\u0432\u0438\u043D\u043D\u0430 \u0431\u0443\u0442\u0438 \u043D\u0430\u043B\u0435\u0436\u043D\u043E\u044E
       \u043E\u0441\u043E\u0431\u043E\u044E \u0434\u043B\u044F \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
@@ -2394,7 +2363,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '11394'
+      - '10207'
       content-type:
       - application/json
       host:
@@ -2422,7 +2391,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2434,21 +2403,20 @@ interactions:
         \u00ab\u041f\u0440\u0438\u043a\u043b\u0430\u0434.\u041a\u043e\u043c\u00bb
         (\u0421\u0442\u043e\u0440\u043e\u043d\u0430 B)\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            {\n                \"labels\":
-        [\n                    \"Corporation\",\n                    \"Partnership\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175996, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 84,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2199, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 2283}}'
+        [\"Corporation\"]\n            }\n        ]\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1750339282, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 75, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1973, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1920}, "total_tokens": 2048}}'
     headers:
       Content-Length:
-      - '1504'
+      - '1426'
       Content-Type:
       - application/json
       Date:
@@ -2460,7 +2428,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '692'
+      - '811'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2894,7 +2862,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2908,24 +2876,25 @@ interactions:
         \"\u0414\u0430\u0442\u0430 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f
         \u0423\u0433\u043e\u0434\u0438 \u043f\u0440\u043e \u043d\u0435\u0440\u043e\u0437\u0433\u043e\u043b\u043e\u0448\u0435\u043d\u043d\u044f
         \u0432\u043a\u0430\u0437\u0430\u043d\u0430 \u044f\u043a 16 \u043b\u0438\u043f\u043d\u044f
-        2024 \u0440\u043e\u043a\u0443, \u0449\u043e \u0454 \u0434\u0430\u0442\u043e\u044e
-        \u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u0434\u0456\u0457 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0443.\",\n                \"reference_paragraphs\":
+        2024 \u0440\u043e\u043a\u0443, \u0449\u043e \u0454 \u043b\u043e\u0433\u0456\u0447\u043d\u043e\u044e
+        \u0434\u0430\u0442\u043e\u044e \u043f\u043e\u0447\u0430\u0442\u043a\u0443
+        \u0434\u0456\u0457 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0443.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S0\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175997, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339283, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 125,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 128,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4354, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
-        "total_tokens": 4479}}'
+        4354, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
+        "total_tokens": 4482}}'
     headers:
       Content-Length:
-      - '1906'
+      - '1923'
       Content-Type:
       - application/json
       Date:
@@ -2937,7 +2906,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '970'
+      - '1680'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3297,7 +3266,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3331,13 +3300,18 @@ interactions:
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\"\n          },\n          {\n            \"aspect_name\":
         \"\u041e\u0431\u043e\u0432''\u044f\u0437\u043a\u0438 \u043f\u0440\u0438\u0439\u043c\u0430\u044e\u0447\u043e\u0457
         \u0441\u0442\u043e\u0440\u043e\u043d\u0438\",\n            \"aspect_summary\":
-        \"\u0412\u0438\u0437\u043d\u0430\u0447\u0430\u0454 \u043e\u0431\u043e\u0432''\u044f\u0437\u043a\u0438
+        \"\u0412\u0438\u0437\u043d\u0430\u0447\u0430\u0454 \u043e\u0431\u043e\u0432\u2019\u044f\u0437\u043a\u0438
         \u0441\u0442\u043e\u0440\u043e\u043d\u0438, \u0449\u043e \u043e\u0442\u0440\u0438\u043c\u0443\u0454
         \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u0443
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e, \u0449\u043e\u0434\u043e
         \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043d\u044f \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0441\u0442\u0456,
         \u0432\u0438\u043a\u043e\u0440\u0438\u0441\u0442\u0430\u043d\u043d\u044f \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457
-        \u0442\u0430 \u0437\u0430\u0445\u043e\u0434\u0456\u0432 \u0437\u0430\u0445\u0438\u0441\u0442\u0443.\"\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
+        \u0442\u0430 \u0437\u0430\u0445\u043e\u0434\u0456\u0432 \u0437\u0430\u0445\u0438\u0441\u0442\u0443.\"\n          },\n          {\n            \"aspect_name\":
+        \"\u0412\u0438\u043d\u044f\u0442\u043a\u0438 \u0437 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457\",\n            \"aspect_summary\":
+        \"\u041f\u0435\u0440\u0435\u043b\u0456\u0447\u0443\u0454 \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e,
+        \u044f\u043a\u0430 \u043d\u0435 \u0432\u0432\u0430\u0436\u0430\u0454\u0442\u044c\u0441\u044f
+        \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u044e.\"\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
         \"C2\",\n    \"extracted_items\": [\n      \"1. \u041f\u0440\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f:\",\n      \"2.
         \u0412\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457:\",\n      \"3.
@@ -3345,20 +3319,20 @@ interactions:
         \u0441\u0442\u043e\u0440\u043e\u043d\u0438:\",\n      \"4. \u0412\u0438\u043d\u044f\u0442\u043a\u0438
         \u0437 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457:\"\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750175999, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339285, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 374,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 421,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2988, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3362}}'
+        2988, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
+        "total_tokens": 3409}}'
     headers:
       Content-Length:
-      - '3148'
+      - '3424'
       Content-Type:
       - application/json
       Date:
@@ -3370,7 +3344,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3637'
+      - '3826'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3636,7 +3610,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3649,7 +3623,7 @@ interactions:
         \u0411\u0435\u0437 \u043b\u0456\u0446\u0435\u043d\u0437\u0456\u0457:\",\n            \"8.
         \u0417\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u043d\u0435 \u0437\u0430\u043a\u043e\u043d\u043e\u0434\u0430\u0432\u0441\u0442\u0432\u043e
         \u0442\u0430 \u0441\u043f\u043e\u0440\u0438:\",\n            \"9. \u0420\u0456\u0437\u043d\u0435:\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750176002, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339289, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3658,7 +3632,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 70,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2246, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        2246, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
         "total_tokens": 2316}}'
     headers:
       Content-Length:
@@ -3674,7 +3648,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '679'
+      - '708'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4040,7 +4014,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4054,62 +4028,54 @@ interactions:
         \"\u0414\u043e\u043a\u0443\u043c\u0435\u043d\u0442 \u0454 \u0442\u0438\u043f\u043e\u0432\u043e\u044e
         \u0443\u0433\u043e\u0434\u043e\u044e \u043f\u0440\u043e \u043d\u0435\u0440\u043e\u0437\u0433\u043e\u043b\u043e\u0448\u0435\u043d\u043d\u044f
         (NDA), \u044f\u043a\u0430 \u043c\u0456\u0441\u0442\u0438\u0442\u044c \u043e\u0441\u043d\u043e\u0432\u043d\u0456
-        \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u043d\u044f, \u0442\u0430\u043a\u0456
-        \u044f\u043a \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f
+        \u0435\u043b\u0435\u043c\u0435\u043d\u0442\u0438, \u0449\u043e \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u044e\u0442\u044c
+        \u043d\u0430\u0439\u043a\u0440\u0430\u0449\u0438\u043c \u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0430\u043c:
+        \u0447\u0456\u0442\u043a\u0435 \u0432\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f
         \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u043e\u0431\u043e\u0432''\u044f\u0437\u043a\u0438
-        \u0441\u0442\u043e\u0440\u0456\u043d \u0449\u043e\u0434\u043e \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043d\u044f
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u043f\u0435\u0440\u0435\u043b\u0456\u043a
+        \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u0439 \u0442\u0430\u043a\u043e\u0457
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u043e\u0431\u043e\u0432\u2019\u044f\u0437\u043a\u0438
+        \u0441\u0442\u043e\u0440\u043e\u043d\u0438-\u043e\u0434\u0435\u0440\u0436\u0443\u0432\u0430\u0447\u0430
+        \u0449\u043e\u0434\u043e \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043d\u044f
         \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0441\u0442\u0456,
         \u0430 \u0442\u0430\u043a\u043e\u0436 \u0432\u0438\u043a\u043b\u044e\u0447\u0435\u043d\u043d\u044f
         \u0437 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457. \u0423\u0433\u043e\u0434\u0430
-        \u0432\u0438\u0437\u043d\u0430\u0447\u0430\u0454 \u0448\u0438\u0440\u043e\u043a\u0438\u0439
-        \u0441\u043f\u0435\u043a\u0442\u0440 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u0432\u043a\u043b\u044e\u0447\u0430\u044e\u0447\u0438
-        \u0431\u0456\u0437\u043d\u0435\u0441-\u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e,
-        \u0442\u0435\u0445\u043d\u0456\u0447\u043d\u0456 \u0434\u0430\u043d\u0456,
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e \u043f\u0440\u043e
-        \u043a\u043b\u0456\u0454\u043d\u0442\u0456\u0432, \u0456\u043d\u0442\u0435\u043b\u0435\u043a\u0442\u0443\u0430\u043b\u044c\u043d\u0443
-        \u0432\u043b\u0430\u0441\u043d\u0456\u0441\u0442\u044c \u0442\u043e\u0449\u043e,
-        \u0449\u043e \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u0454
-        \u043a\u0440\u0430\u0449\u0438\u043c \u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0430\u043c.
-        \u041f\u0440\u043e\u0442\u0435 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442
-        \u043d\u0435 \u043c\u0456\u0441\u0442\u0438\u0442\u044c \u0434\u0435\u0442\u0430\u043b\u044c\u043d\u0438\u0445
-        \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u044c \u043f\u0440\u043e \u0442\u0435\u0440\u043c\u0456\u043d
-        \u0434\u0456\u0457 \u0443\u0433\u043e\u0434\u0438, \u0441\u0430\u043d\u043a\u0446\u0456\u0457
-        \u0437\u0430 \u043f\u043e\u0440\u0443\u0448\u0435\u043d\u043d\u044f, \u043f\u0440\u043e\u0446\u0435\u0434\u0443\u0440\u0438
-        \u043f\u043e\u0432\u0435\u0440\u043d\u0435\u043d\u043d\u044f \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457
-        \u0430\u0431\u043e \u0447\u0456\u0442\u043a\u0438\u0445 \u043c\u0435\u0445\u0430\u043d\u0456\u0437\u043c\u0456\u0432
-        \u0432\u0438\u0440\u0456\u0448\u0435\u043d\u043d\u044f \u0441\u043f\u043e\u0440\u0456\u0432,
-        \u0449\u043e \u0454 \u0432\u0430\u0436\u043b\u0438\u0432\u0438\u043c\u0438
-        \u0435\u043b\u0435\u043c\u0435\u043d\u0442\u0430\u043c\u0438 \u0434\u043b\u044f
-        \u0432\u0438\u0441\u043e\u043a\u043e\u044f\u043a\u0456\u0441\u043d\u043e\u0433\u043e
-        NDA. \u0422\u0430\u043a\u043e\u0436 \u0432\u0456\u0434\u0441\u0443\u0442\u043d\u0456
-        \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u043d\u044f \u043f\u0440\u043e
-        \u044e\u0440\u0438\u0441\u0434\u0438\u043a\u0446\u0456\u044e \u0442\u0430
-        \u0437\u0430\u0441\u0442\u043e\u0441\u043e\u0432\u043d\u0435 \u043f\u0440\u0430\u0432\u043e.
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457. \u041f\u0440\u043e\u0442\u0435
+        \u0432\u0456\u0434\u0441\u0443\u0442\u043d\u0456 \u0434\u0435\u044f\u043a\u0456
+        \u0432\u0430\u0436\u043b\u0438\u0432\u0456 \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u043d\u044f,
+        \u0442\u0430\u043a\u0456 \u044f\u043a \u0442\u0435\u0440\u043c\u0456\u043d
+        \u0434\u0456\u0457 \u0443\u0433\u043e\u0434\u0438, \u0443\u043c\u043e\u0432\u0438
+        \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f, \u0441\u0430\u043d\u043a\u0446\u0456\u0457
+        \u0437\u0430 \u043f\u043e\u0440\u0443\u0448\u0435\u043d\u043d\u044f, \u0430
+        \u0442\u0430\u043a\u043e\u0436 \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u043d\u044f
+        \u043f\u0440\u043e \u044e\u0440\u0438\u0441\u0434\u0438\u043a\u0446\u0456\u044e
+        \u0442\u0430 \u0432\u0438\u0440\u0456\u0448\u0435\u043d\u043d\u044f \u0441\u043f\u043e\u0440\u0456\u0432.
+        \u0422\u0430\u043a\u043e\u0436 \u0443 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0456
+        \u043d\u0435 \u0432\u043a\u0430\u0437\u0430\u043d\u0456 \u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u0456
+        \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0456 \u0434\u0430\u043d\u0456
+        \u0434\u043b\u044f \u0421\u0442\u043e\u0440\u043e\u043d\u0438 \u0410, \u0449\u043e
+        \u0437\u043d\u0438\u0436\u0443\u0454 \u0439\u043e\u0433\u043e \u043f\u043e\u0432\u043d\u043e\u0442\u0443.
         \u0417\u0430\u0433\u0430\u043b\u043e\u043c, \u0443\u0433\u043e\u0434\u0430
-        \u0454 \u0434\u043e\u0441\u0442\u0430\u0442\u043d\u044c\u043e \u043f\u043e\u0432\u043d\u043e\u044e
-        \u0434\u043b\u044f \u0431\u0430\u0437\u043e\u0432\u043e\u0433\u043e \u0437\u0430\u0445\u0438\u0441\u0442\u0443,
-        \u0430\u043b\u0435 \u043d\u0435 \u043c\u0430\u043a\u0441\u0438\u043c\u0430\u043b\u044c\u043d\u043e
-        \u0434\u0435\u0442\u0430\u043b\u0456\u0437\u043e\u0432\u0430\u043d\u043e\u044e,
-        \u0449\u043e \u0434\u0430\u0454 \u043f\u0456\u0434\u0441\u0442\u0430\u0432\u0438
-        \u043e\u0446\u0456\u043d\u0438\u0442\u0438 \u0457\u0457 \u044f\u043a\u0456\u0441\u0442\u044c
-        \u043d\u0430 7 \u0437 10.\"\n            }\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1750176003, "id": "chatcmpl-DUMMY",
+        \u0454 \u0444\u0443\u043d\u043a\u0446\u0456\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u044e,
+        \u0430\u043b\u0435 \u043d\u0435 \u043f\u043e\u0432\u043d\u0456\u0441\u0442\u044e
+        \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0441\u043d\u043e\u044e, \u0449\u043e
+        \u043e\u0431\u043c\u0435\u0436\u0443\u0454 \u0457\u0457 \u044f\u043a\u0456\u0441\u0442\u044c
+        \u0437 \u0442\u043e\u0447\u043a\u0438 \u0437\u043e\u0440\u0443 \u043d\u0430\u0439\u043a\u0440\u0430\u0449\u0438\u0445
+        \u043f\u0440\u0430\u043a\u0442\u0438\u043a NDA.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750339290, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 292,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 254,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         3065, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2944},
-        "total_tokens": 3357}}'
+        "total_tokens": 3319}}'
     headers:
       Content-Length:
-      - '2925'
+      - '2663'
       Content-Type:
       - application/json
       Date:
@@ -4121,7 +4087,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2908'
+      - '2291'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4589,7 +4555,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4598,7 +4564,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750176011, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750339293, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -4607,7 +4573,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 69,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4214, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
+        4214, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
         "total_tokens": 4283}}'
     headers:
       Content-Length:
@@ -4623,7 +4589,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '600'
+      - '759'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5100,28 +5066,74 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
-        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1750176012, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 22, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 4356, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 4224}, "total_tokens": 4378}}'
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
+        \"P22\",\n        \"justification\": \"\u0426\u0435\u0439 \u043f\u0443\u043d\u043a\u0442
+        \u0432\u0438\u0437\u043d\u0430\u0447\u0430\u0454, \u0449\u043e \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u0430
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044f \u0437\u0430\u043b\u0438\u0448\u0430\u0454\u0442\u044c\u0441\u044f
+        \u0432\u043b\u0430\u0441\u043d\u0456\u0441\u0442\u044e \u0441\u0442\u043e\u0440\u043e\u043d\u0438,
+        \u0449\u043e \u0440\u043e\u0437\u043a\u0440\u0438\u0432\u0430\u0454, \u0456
+        \u0441\u0442\u043e\u0440\u043e\u043d\u0430, \u0449\u043e \u043e\u0442\u0440\u0438\u043c\u0443\u0454,
+        \u043d\u0435 \u043c\u0430\u0454 \u043f\u0440\u0430\u0432 \u043d\u0430 \u0457\u0457
+        \u0432\u0438\u043a\u043e\u0440\u0438\u0441\u0442\u0430\u043d\u043d\u044f,
+        \u0449\u043e \u0441\u0442\u043e\u0441\u0443\u0454\u0442\u044c\u0441\u044f
+        \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u043b\u044c\u043d\u043e\u0441\u0442\u0456
+        \u0437\u0430 \u0432\u0438\u043a\u043e\u0440\u0438\u0441\u0442\u0430\u043d\u043d\u044f
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P35\",\n        \"justification\": \"\u041e\u043f\u0438\u0441\u0443\u0454
+        \u043e\u0431\u043e\u0432\u2019\u044f\u0437\u043e\u043a \u0441\u0442\u043e\u0440\u043e\u043d\u0438,
+        \u0449\u043e \u043e\u0442\u0440\u0438\u043c\u0443\u0454, \u043f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u0438
+        \u0430\u0431\u043e \u0437\u043d\u0438\u0449\u0438\u0442\u0438 \u043c\u0430\u0442\u0435\u0440\u0456\u0430\u043b\u0438
+        \u0437 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u044e
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0454\u044e \u043f\u0456\u0441\u043b\u044f
+        \u043f\u0440\u0438\u043f\u0438\u043d\u0435\u043d\u043d\u044f \u0443\u0433\u043e\u0434\u0438,
+        \u0449\u043e \u0454 \u0447\u0430\u0441\u0442\u0438\u043d\u043e\u044e \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u043b\u044c\u043d\u043e\u0441\u0442\u0456
+        \u0441\u0442\u043e\u0440\u0456\u043d.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P37\",\n        \"justification\": \"\u041f\u0456\u0434\u043a\u0440\u0435\u0441\u043b\u044e\u0454,
+        \u0449\u043e \u0443\u0433\u043e\u0434\u0430 \u043d\u0435 \u043d\u0430\u0434\u0430\u0454
+        \u043b\u0456\u0446\u0435\u043d\u0437\u0456\u0439\u043d\u0438\u0445 \u043f\u0440\u0430\u0432
+        \u043d\u0430 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u0443
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e, \u0449\u043e
+        \u0432\u0438\u0437\u043d\u0430\u0447\u0430\u0454 \u043c\u0435\u0436\u0456
+        \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u043b\u044c\u043d\u043e\u0441\u0442\u0456
+        \u0441\u0442\u043e\u0440\u0456\u043d \u0449\u043e\u0434\u043e \u0432\u0438\u043a\u043e\u0440\u0438\u0441\u0442\u0430\u043d\u043d\u044f
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P44\",\n        \"justification\": \"\u0420\u0435\u0433\u0443\u043b\u044e\u0454
+        \u0434\u0456\u0457 \u0443 \u0432\u0438\u043f\u0430\u0434\u043a\u0443 \u0432\u0438\u0437\u043d\u0430\u043d\u043d\u044f
+        \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u044c \u0443\u0433\u043e\u0434\u0438
+        \u043d\u0435\u0434\u0456\u0439\u0441\u043d\u0438\u043c\u0438, \u0449\u043e
+        \u0441\u0442\u043e\u0441\u0443\u0454\u0442\u044c\u0441\u044f \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u043b\u044c\u043d\u043e\u0441\u0442\u0456
+        \u0441\u0442\u043e\u0440\u0456\u043d \u0437\u0430 \u0432\u0438\u043a\u043e\u043d\u0430\u043d\u043d\u044f
+        \u0443\u0433\u043e\u0434\u0438.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P45\",\n        \"justification\": \"\u0412\u043a\u0430\u0437\u0443\u0454,
+        \u0449\u043e \u0441\u0442\u043e\u0440\u043e\u043d\u0430, \u0449\u043e \u0440\u043e\u0437\u043a\u0440\u0438\u0432\u0430\u0454
+        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044e, \u043c\u0430\u0454
+        \u0431\u0443\u0442\u0438 \u0443\u043f\u043e\u0432\u043d\u043e\u0432\u0430\u0436\u0435\u043d\u043e\u044e
+        \u043e\u0441\u043e\u0431\u043e\u044e, \u0449\u043e \u0454 \u0430\u0441\u043f\u0435\u043a\u0442\u043e\u043c
+        \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0430\u043b\u044c\u043d\u043e\u0441\u0442\u0456
+        \u0437\u0430 \u0443\u043a\u043b\u0430\u0434\u0435\u043d\u043d\u044f \u0434\u043e\u0433\u043e\u0432\u043e\u0440\u0443.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750339294, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 349,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        4356, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4224},
+        "total_tokens": 4705}}'
     headers:
       Content-Length:
-      - '1173'
+      - '3133'
       Content-Type:
       - application/json
       Date:
@@ -5133,7 +5145,283 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '235'
+      - '3409'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- General Documents: Any other types of files
+      that may contain text, tables, images, or mixed formats.\\nNote that occasionally
+      you may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\\n-
+      CV Aspects: Work experience, education, or skills.\\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n\\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\\n- Interpretative
+      judgments: Such as ratings, classifications, or qualitative assessments based
+      on document content.\\n\\nGUIDELINES FOR YOUR WORK:\\n- Understand the context:
+      Before processing the document, ensure you comprehend the nature of the document
+      and the aspects or concepts you need to focus on.\\n- Follow specific instructions:
+      Each task will include detailed instructions, such as which aspects or concepts
+      to focus on and how the data should be presented.\\n- Maintain accuracy: Provide
+      precise extractions and analysis, ensuring your outputs align with the document's
+      intent and context.\\n- Adapt to variability: Documents may differ in structure,
+      language, or formatting. Be flexible and apply reasoning to handle variations
+      effectively.\\n\\nEXPECTED DELIVERABLES:\\n- Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n- Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n- Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n- References (when required): When required by
+      the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n\\n\\nBy adhering to this framework,
+      you will ensure consistent and high-quality performance across diverse document
+      analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below you will find document
+      text and a list of concepts.\\n\\nYour task is to:\\n1. Read through the document
+      text provided.\\n2. Identify whether each concept in the concepts list is addressed
+      within the document text.\\n3. For each concept that appears, extract zero or
+      more items relevant to that concept. The item format and structure are specified
+      for each concept.\\n4. Produce a JSON array containing your extracted data,
+      in the provided format.\\n\\nIf a concept is not addressed in the document text,
+      you must still include an entry in the final JSON output but with an empty \\\"extracted_items\\\"
+      list.\\n\\nFollow these additional rules:\\n\\n- Output format:\\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\\n\\n- Consistency:\\n    -- Each JSON
+      object in the list must have two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n
+      \   -- The value of \\\"concept_id\\\" must match exactly the ID of the concept
+      (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array of objects with mandatory fields \\\"value\\\" and \\\"justification\\\".
+      If the concept is not found or there are no items to extract, leave the array
+      empty ([]).\\n        --- Guidance regarding the possible amount of extracted
+      items for the concept is specified under \\\"Amount of extracted items\\\".
+      Each extracted item's object, even if there is only one, must be part of the
+      \\\"extracted_items\\\" array.\\n\\n- Item object structure:\\n    -- value:
+      Mandatory field holding the extracted item.\\n        --- If a specific structure
+      is provided for a concept under \\\"Expected structure,\\\" the extracted item
+      value must follow that structure for all extracted items corresponding to that
+      concept.\\n        --- If a rating scale is provided for a concept under \\\"Rating
+      scale,\\\" the extracted item value must be within that scale.\\n        ---
+      If available labels are provided for a concept under \\\"Available labels,\\\"
+      the extracted item value must be a list containing only labels from the predefined
+      set. If none of the predefined labels apply, do not extract any items for that
+      concept.\\n        --- If there are example items (\\\"Extracted concept examples\\\"),
+      the extracted item value should follow the same style and formatting.\\n        ---
+      When extracting string values, retain them in the original language of the document
+      without translating them.\\n    -- justification: Mandatory field holding a
+      justification of why the item was extracted for the concept. Ensure the justification
+      is specific and directly ties the extracted item to the concept's defining features.
+      Never reference the concept's ID or any of the structural IDs provided in this
+      prompt (such as paragraph IDs like \\\"P0\\\", or sentence IDs like \\\"P0-S0\\\")
+      in the justification.\\n        --- Justification should be brief, i.e. highlight
+      only the essential details.\\n        --- Justification should be no longer
+      than 2 sentences.\\n        --- Justification should be in the original language
+      of the document.\\n\\n- Types of extracted items:\\n    -- Each concept specifies
+      an \\\"extracted item type\\\" (found under \\\"Concept extracted item type\\\").
+      Ensure that the value of each of the extracted items for the concept strictly
+      matches that type. Python types are provided (e.g., str for string, int for
+      integer, float for floating-point number, dict for object, etc.).\\n    -- Do
+      not introduce any extra fields or modify the specified structure.\\n\\n- Handling
+      missing or multiple items:\\n    -- If a concept is not mentioned at all, your
+      output should still contain an entry for that concept with an empty \\\"extracted_items\\\"
+      array.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if none of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
+      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
+      \   -- Do not include any headers, explanations, or text outside of the JSON
+      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
+      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
+      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
+      ...,\\n                \\\"justification\\\": str\\n            },\\n            ...\\n
+      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      Concept ID: C0\\nConcept name: Liability cap\\n\\nConcept description:\\nProvisions
+      on liability cap\\n\\nAmount of extracted items: This concept may have zero,
+      one, or multiple extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      TEXT:\\n\u041F\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457
+      \u044F\u043A \u043A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u043E\u0457
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u0457 \u043D\u0435 \u0454
+      \u0432\u0438\u0437\u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043C \u0434\u043B\u044F
+      \u0442\u043E\u0433\u043E, \u0447\u0438 \u0454 \u0442\u0430\u043A\u0430 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F
+      \u043A\u043E\u043C\u0435\u0440\u0446\u0456\u0439\u043D\u043E\u044E \u0442\u0430\u0454\u043C\u043D\u0438\u0446\u0435\u044E
+      \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u043D\u043E \u0434\u043E \u0447\u0438\u043D\u043D\u043E\u0433\u043E
+      \u0437\u0430\u043A\u043E\u043D\u043E\u0434\u0430\u0432\u0441\u0442\u0432\u0430.
+      \u0423\u0441\u044F \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0430
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u0437\u0430\u043B\u0438\u0448\u0430\u0454\u0442\u044C\u0441\u044F
+      \u0432\u0438\u043A\u043B\u044E\u0447\u043D\u043E\u044E \u0432\u043B\u0430\u0441\u043D\u0456\u0441\u0442\u044E
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454,
+      \u0456 \u0421\u0442\u043E\u0440\u043E\u043D\u0430, \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454,
+      \u043D\u0435 \u043C\u0430\u0454 \u0436\u043E\u0434\u043D\u0438\u0445 \u043F\u0440\u0430\u0432,
+      \u0437\u0433\u0456\u0434\u043D\u043E \u0437 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0454\u044E
+      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C,
+      \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u043E\u0432\u0443\u0432\u0430\u0442\u0438
+      \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0437\u0430 \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C
+      \u0432\u0438\u043F\u0430\u0434\u043A\u0456\u0432, \u043F\u0440\u044F\u043C\u043E
+      \u043F\u0435\u0440\u0435\u0434\u0431\u0430\u0447\u0435\u043D\u0438\u0445 \u0443
+      \u0446\u044C\u043E\u043C\u0443 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0456.\\n\\n\u041F\u0456\u0441\u043B\u044F
+      \u043F\u0440\u0438\u043F\u0438\u043D\u0435\u043D\u043D\u044F \u0434\u0456\u0457
+      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0430\u0431\u043E \u0437\u0430
+      \u0437\u0430\u043F\u0438\u0442\u043E\u043C \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
+      \u0449\u043E \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u043F\u043E\u0432\u0435\u0440\u0442\u0430\u0454
+      \u0432\u0441\u0456 \u043C\u0430\u0442\u0435\u0440\u0456\u0430\u043B\u0438, \u0449\u043E
+      \u043C\u0456\u0441\u0442\u044F\u0442\u044C \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E, \u0421\u0442\u043E\u0440\u043E\u043D\u0456,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0430\u0431\u043E
+      \u0437\u043D\u0438\u0449\u0443\u0454 \u0457\u0445 \u043D\u0430 \u0440\u043E\u0437\u0441\u0443\u0434
+      \u0421\u0442\u043E\u0440\u043E\u043D\u0438, \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454.\\n\\n\u041D\u0456\u0449\u043E
+      \u0432 \u0446\u0456\u0439 \u0423\u0433\u043E\u0434\u0456 \u043D\u0435 \u043F\u043E\u0432\u0438\u043D\u043D\u043E
+      \u0442\u043B\u0443\u043C\u0430\u0447\u0438\u0442\u0438\u0441\u044F \u044F\u043A
+      \u043D\u0430\u0434\u0430\u043D\u043D\u044F \u0431\u0443\u0434\u044C-\u044F\u043A\u0438\u0445
+      \u043F\u0440\u0430\u0432 \u0421\u0442\u043E\u0440\u043E\u043D\u0456, \u0449\u043E
+      \u043E\u0442\u0440\u0438\u043C\u0443\u0454, \u0437\u0430 \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0454\u044E
+      \u0447\u0438 \u0456\u043D\u0448\u0438\u043C \u0447\u0438\u043D\u043E\u043C \u043D\u0430
+      \u0431\u0443\u0434\u044C-\u044F\u043A\u0443 \u041A\u043E\u043D\u0444\u0456\u0434\u0435\u043D\u0446\u0456\u0439\u043D\u0443
+      \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E \u0421\u0442\u043E\u0440\u043E\u043D\u0438,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454, \u0437\u0430
+      \u0432\u0438\u043D\u044F\u0442\u043A\u043E\u043C \u0432\u0438\u043F\u0430\u0434\u043A\u0456\u0432,
+      \u043F\u0440\u044F\u043C\u043E \u0432\u0438\u043A\u043B\u0430\u0434\u0435\u043D\u0438\u0445
+      \u0443 \u0446\u0456\u0439 \u0423\u0433\u043E\u0434\u0456.\\n\\n\u0432. \u042F\u043A\u0449\u043E
+      \u0431\u0443\u0434\u044C-\u044F\u043A\u0435 \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u043D\u044F
+      \u0446\u0456\u0454\u0457 \u0423\u0433\u043E\u0434\u0438 \u0431\u0443\u0434\u0435
+      \u0432\u0438\u0437\u043D\u0430\u043D\u043E \u0442\u0430\u043A\u0438\u043C, \u0449\u043E
+      \u043D\u0435 \u043C\u0430\u0454 \u043F\u043E\u0437\u043E\u0432\u043D\u043E\u0457
+      \u0441\u0438\u043B\u0438, \u0440\u0435\u0448\u0442\u0430 \u043C\u0430\u0454
+      \u0431\u0443\u0442\u0438 \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u0430 \u044F\u043A\u043E\u043C\u043E\u0433\u0430
+      \u043F\u043E\u0432\u043D\u0456\u0448\u0435, \u0430 \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u043D\u044F,
+      \u044F\u043A\u0435 \u043D\u0435 \u043C\u0430\u0454 \u043F\u043E\u0437\u043E\u0432\u043D\u043E\u0457
+      \u0441\u0438\u043B\u0438, \u0431\u0443\u0434\u0435 \u0432\u0432\u0430\u0436\u0430\u0442\u0438\u0441\u044F
+      \u0437\u043C\u0456\u043D\u0435\u043D\u0438\u043C \u0443 \u043E\u0431\u043C\u0435\u0436\u0435\u043D\u043E\u043C\u0443
+      \u043E\u0431\u0441\u044F\u0437\u0456, \u043D\u0435\u043E\u0431\u0445\u0456\u0434\u043D\u043E\u043C\u0443
+      \u0434\u043B\u044F \u0437\u0430\u0431\u0435\u0437\u043F\u0435\u0447\u0435\u043D\u043D\u044F
+      \u0439\u043E\u0433\u043E \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
+      \u0443 \u0441\u043F\u043E\u0441\u0456\u0431, \u044F\u043A\u0438\u0439 \u043D\u0430\u0439\u0431\u0456\u043B\u044C\u0448\u0435
+      \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u0430\u0454 \u043D\u0430\u043C\u0456\u0440\u0430\u043C
+      \u0441\u0442\u043E\u0440\u0456\u043D.\\n\\nd. \u0421\u0442\u043E\u0440\u043E\u043D\u0430,
+      \u0449\u043E \u0440\u043E\u0437\u043A\u0440\u0438\u0432\u0430\u0454 \u0456\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044E,
+      \u043F\u043E\u0432\u0438\u043D\u043D\u0430 \u0431\u0443\u0442\u0438 \u043D\u0430\u043B\u0435\u0436\u043D\u043E\u044E
+      \u043E\u0441\u043E\u0431\u043E\u044E \u0434\u043B\u044F \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F
+      \u0446\u044C\u043E\u0433\u043E \u043A\u043E\u043D\u0442\u0440\u0430\u043A\u0442\u0443.\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '11410'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1750339298, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2132, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1536}, "total_tokens": 2155}}'
+    headers:
+      Content-Length:
+      - '1179'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '293'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5648,7 +5936,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -5658,84 +5946,38 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": \"\u0431\u0456\u0437\u043d\u0435\u0441-\u043f\u043b\u0430\u043d\u0438,
-        \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457 \u0442\u0430 \u043c\u043e\u0434\u0435\u043b\u0456\",\n                \"justification\":
-        \"\u0426\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u044f \u0431\u0456\u0437\u043d\u0435\u0441-\u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457,
-        \u044f\u043a\u0430 \u0437\u0433\u0430\u0434\u0443\u0454\u0442\u044c\u0441\u044f
-        \u044f\u043a \u0447\u0430\u0441\u0442\u0438\u043d\u0430 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"\u0442\u0435\u0445\u043d\u0456\u0447\u043d\u0456 \u0441\u043f\u0435\u0446\u0438\u0444\u0456\u043a\u0430\u0446\u0456\u0457
-        \u0442\u0430 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0456\u044f,
-        \u043d\u0430\u0443\u043a\u043e\u0432\u043e-\u0434\u043e\u0441\u043b\u0456\u0434\u043d\u0430
-        \u0434\u0456\u044f\u043b\u044c\u043d\u0456\u0441\u0442\u044c\",\n                \"justification\":
-        \"\u0426\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u044f \u0442\u0435\u0445\u043d\u0456\u0447\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u0430
-        \u0434\u043e \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"\u0441\u043f\u0438\u0441\u043a\u0438 \u043a\u043b\u0456\u0454\u043d\u0442\u0456\u0432
-        \u0456 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0430 \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044f,
-        \u0456\u0441\u0442\u043e\u0440\u0456\u0457 \u043f\u0440\u043e\u0434\u0430\u0436\u0456\u0432
-        \u0456 \u0448\u0430\u0431\u043b\u043e\u043d\u0438\",\n                \"justification\":
-        \"\u0426\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u044f \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457
-        \u043f\u0440\u043e \u043a\u043b\u0456\u0454\u043d\u0442\u0456\u0432 \u0456
-        \u0440\u0438\u043d\u043e\u043a, \u044f\u043a\u0430 \u0454 \u0447\u0430\u0441\u0442\u0438\u043d\u043e\u044e
+        [\n            {\n                \"value\": \"\u0431\u0456\u0437\u043d\u0435\u0441-\u043f\u043b\u0430\u043d\u0438\",\n                \"justification\":
+        \"\u0412\u043a\u0430\u0437\u0430\u043d\u043e \u044f\u043a \u043e\u0434\u043d\u0430
+        \u0437 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u0439 \u0431\u0456\u0437\u043d\u0435\u0441-\u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457,
+        \u0449\u043e \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u0430 \u0434\u043e
         \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"\u0441\u043f\u0438\u0441\u043a\u0438 \u0441\u043f\u0456\u0432\u0440\u043e\u0431\u0456\u0442\u043d\u0438\u043a\u0456\u0432
-        \u0456 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u0430 \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u044f,
-        \u0442\u0440\u0443\u0434\u043e\u0432\u0456 \u0443\u0433\u043e\u0434\u0438
-        \u0442\u0430 \u043e\u0441\u043e\u0431\u0438\u0441\u0442\u0456 \u0441\u043f\u0440\u0430\u0432\u0438\",\n                \"justification\":
-        \"\u0426\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u044f \u043f\u0435\u0440\u0441\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u0457
-        \u0456 \u0432\u043d\u0443\u0442\u0440\u0456\u0448\u043d\u044c\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u0449\u043e
-        \u043d\u0430\u043b\u0435\u0436\u0438\u0442\u044c \u0434\u043e \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
+        [\"P20\"]\n            },\n            {\n                \"value\": \"\u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457\",\n                \"justification\":
+        \"\u0412\u043a\u0430\u0437\u0430\u043d\u043e \u044f\u043a \u043e\u0434\u043d\u0430
+        \u0437 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u0439 \u0431\u0456\u0437\u043d\u0435\u0441-\u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457,
+        \u0449\u043e \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u0430 \u0434\u043e
+        \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"\u043a\u043e\u043c\u0435\u0440\u0446\u0456\u0439\u043d\u0456 \u0441\u0435\u043a\u0440\u0435\u0442\u0438
-        \u0442\u0430 \u043d\u043e\u0443-\u0445\u0430\u0443, \u043f\u0430\u0442\u0435\u043d\u0442\u0438
-        \u0442\u0430 \u0437\u0430\u044f\u0432\u043a\u0438 \u043d\u0430 \u043f\u0430\u0442\u0435\u043d\u0442\u0438,
-        \u0430\u0432\u0442\u043e\u0440\u0441\u044c\u043a\u0456 \u043f\u0440\u0430\u0432\u0430
-        \u0442\u0430 \u0437\u0430\u044f\u0432\u043a\u0438 \u043d\u0430 \u0430\u0432\u0442\u043e\u0440\u0441\u044c\u043a\u0456
-        \u043f\u0440\u0430\u0432\u0430, \u0442\u043e\u0440\u0433\u043e\u0432\u0456
-        \u043c\u0430\u0440\u043a\u0438 \u0442\u0430 \u0437\u0430\u044f\u0432\u043a\u0438
-        \u043d\u0430 \u0442\u043e\u0440\u0433\u043e\u0432\u0435\u043b\u044c\u043d\u0456
-        \u043c\u0430\u0440\u043a\u0438\",\n                \"justification\": \"\u0426\u0435
-        \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u044f \u0456\u043d\u0442\u0435\u043b\u0435\u043a\u0442\u0443\u0430\u043b\u044c\u043d\u043e\u0457
-        \u0432\u043b\u0430\u0441\u043d\u043e\u0441\u0442\u0456, \u044f\u043a\u0430
-        \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u0430 \u0434\u043e \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
+        [\"P20\"]\n            },\n            {\n                \"value\": \"\u043c\u043e\u0434\u0435\u043b\u0456\",\n                \"justification\":
+        \"\u0412\u043a\u0430\u0437\u0430\u043d\u043e \u044f\u043a \u043e\u0434\u043d\u0430
+        \u0437 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u0439 \u0431\u0456\u0437\u043d\u0435\u0441-\u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457,
+        \u0449\u043e \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u0430 \u0434\u043e
+        \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
         \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"\u043f\u043b\u0430\u043d\u0438 \u0437\u043b\u0438\u0442\u0442\u044f \u0442\u0430
-        \u043f\u043e\u0433\u043b\u0438\u043d\u0430\u043d\u043d\u044f, \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u043d\u0438\u0439
-        \u0430\u043d\u0430\u043b\u0456\u0437 \u0442\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0457\",\n                \"justification\":
-        \"\u0426\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0456\u044f \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0447\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457, \u0449\u043e
-        \u0454 \u0447\u0430\u0441\u0442\u0438\u043d\u043e\u044e \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"\u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043d\u0438\u0439 \u043a\u043e\u0434\",\n                \"justification\":
-        \"\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043d\u0438\u0439 \u043a\u043e\u0434
-        \u0442\u0430\u043a\u043e\u0436 \u0437\u0433\u0430\u0434\u0443\u0454\u0442\u044c\u0441\u044f
-        \u044f\u043a \u0447\u0430\u0441\u0442\u0438\u043d\u0430 \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u0457
-        \u0456\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0456\u0457.\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P20\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750176012, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 548,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4962, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        5510}}'
+        [\"P20\"]\n            }\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1750339298, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 197, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 4962, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 4864}, "total_tokens": 5159}}'
     headers:
       Content-Length:
-      - '4660'
+      - '2344'
       Content-Type:
       - application/json
       Date:
@@ -5747,7 +5989,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '5798'
+      - '2188'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

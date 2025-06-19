@@ -55,6 +55,7 @@ from contextgem.internal.utils import (
     _group_instances_by_fields,
     _is_json_serializable,
 )
+from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
 
 # A global VCR recordings counter
 vcr_new_recording_count = 0
@@ -102,14 +103,17 @@ def vcr_before_record_request(request):
         deployment_and_rest = path_parts[1]
         deployment_parts = deployment_and_rest.split("/", 1)
 
+        deployment_name = f"{VCR_REDACTION_MARKER}-DEPLOYMENT"
+
         if len(deployment_parts) > 1:
             # We have a deployment name and a path after it
-            deployment_name = "DUMMY-DEPLOYMENT"
             rest_of_path = deployment_parts[1]
-            request.uri = f"https://DUMMY-ENDPOINT/openai/deployments/{deployment_name}/{rest_of_path}"
+            request.uri = f"{VCR_DUMMY_ENDPOINT_PREFIX}openai/deployments/{deployment_name}/{rest_of_path}"
         else:
             # Just a deployment name
-            request.uri = f"https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT"
+            request.uri = (
+                f"{VCR_DUMMY_ENDPOINT_PREFIX}openai/deployments/{deployment_name}"
+            )
     return request
 
 
@@ -118,13 +122,13 @@ def vcr_before_record_response(response):
     headers = response.get("headers", {})
     for header in VCR_FILTER_HEADERS:
         if header.lower() in [h.lower() for h in headers]:
-            headers[header] = ["DUMMY"]
+            headers[header] = [VCR_REDACTION_MARKER]
     # Redact body
     if response["body"]["string"]:
         try:
             body = json.loads(response["body"]["string"])
             if "id" in body:
-                body["id"] = "chatcmpl-DUMMY"
+                body["id"] = f"chatcmpl-{VCR_REDACTION_MARKER}"
             response["body"]["string"] = json.dumps(body)
         except (json.JSONDecodeError, TypeError, UnicodeDecodeError):
             # Skip redaction if response body is not valid JSON or lacks expected structure
@@ -271,7 +275,9 @@ class TestUtils:
                 assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
 
         # Saving to disk / loading from disk
-        disk_path = f"instance_{str(uuid4())}.json"
+        disk_path = os.path.join(
+            get_project_root_path(), "tests", f"instance_{str(uuid4())}.json"
+        )
         instance.to_disk(disk_path)
         new_instance = instance.__class__.from_disk(disk_path)
         assert new_instance.__dict__ == instance.__dict__
@@ -319,7 +325,9 @@ class TestUtils:
         assert instance._eq_deserialized_llm_config(new_instance)
 
         # From disk
-        disk_path = f"instance_{str(uuid4())}.json"
+        disk_path = os.path.join(
+            get_project_root_path(), "tests", f"instance_{str(uuid4())}.json"
+        )
         instance.to_disk(disk_path)
         new_instance = instance.__class__.from_disk(disk_path)
         assert instance._eq_deserialized_llm_config(new_instance)
