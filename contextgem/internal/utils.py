@@ -27,7 +27,6 @@ import concurrent.futures
 import json
 import re
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Literal, TypeVar, get_args
 
@@ -649,10 +648,9 @@ def _validate_parsed_llm_output(
     return parsed_json
 
 
-@lru_cache(maxsize=3)
-def _get_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
+def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     """
-    Retrieves and caches a SaT model to be used for paragraphs and sentence segmentation.
+    Loads a SaT model to be used for paragraphs and sentence segmentation.
     Performs validation of the model ID or path before attempting to load the model.
 
     :param model_id:

@@ -73,7 +73,7 @@ from contextgem.internal.loggers import (
     dedicated_stream,
     logger,
 )
-from contextgem.internal.utils import _get_sat_model, _split_text_into_paragraphs
+from contextgem.internal.utils import _load_sat_model, _split_text_into_paragraphs
 from contextgem.public.utils import JsonObjectClassStruct
 from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
@@ -415,6 +415,471 @@ class TestAll(TestUtils):
 
             with pytest.raises(AttributeError):
                 TestNoRequiredAttrs()  # initialized with no required attributes
+
+    @memory_profile_and_capture(
+        max_memory=500.0
+    )  # higher limit due to multiple SaT models loading
+    def test_sat_model_no_cache(self):
+        """
+        Tests that the SaT model is not cached.
+        """
+        sat_model_id = "sat-3l-sm"
+        assert _load_sat_model(sat_model_id) != _load_sat_model(sat_model_id)
+        assert id(_load_sat_model(sat_model_id)) != id(_load_sat_model(sat_model_id))
+
+        check_locals_memory_usage(locals(), test_name="test_sat_model_no_cache")
+
+    @memory_profile_and_capture
+    def test_local_sat_model(self):
+        """
+        Tests the loading of a local SAT model.
+        """
+
+        # Test nonexistent path
+        with pytest.raises(ValueError) as exc_info:
+            non_existent_path = "/nonexistent/path/to/model"
+            _load_sat_model(non_existent_path)
+            assert "does not exist or is not a directory" in str(exc_info.value)
+            # Document creation should also fail
+            with pytest.raises(ValueError):
+                Document(
+                    raw_text="Sample text",
+                    paragraph_segmentation_mode="sat",
+                    sat_model_id=non_existent_path,
+                )
+
+        # Test file path (not a directory)
+        with tempfile.NamedTemporaryFile() as temp_file:
+            with pytest.raises(ValueError) as exc_info:
+                _load_sat_model(temp_file.name)
+            assert "does not exist or is not a directory" in str(exc_info.value)
+            # Document creation should also fail
+            with pytest.raises(ValueError):
+                Document(
+                    raw_text="Sample text",
+                    paragraph_segmentation_mode="sat",
+                    sat_model_id=temp_file.name,
+                )
+
+        # Test valid path but invalid model
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(RuntimeError) as exc_info:
+                _load_sat_model(temp_dir)
+            assert "does not contain a valid SaT model" in str(exc_info.value)
+            # Document creation should also fail
+            with pytest.raises(RuntimeError):
+                Document(
+                    raw_text="Sample text",
+                    paragraph_segmentation_mode="sat",
+                    sat_model_id=temp_dir,
+                )
+
+        check_locals_memory_usage(locals(), test_name="test_local_sat_model")
+
+    @memory_profile_and_capture
+    def test_requires_sentence_segmentation(self):
+        """
+        Tests the `_requires_sentence_segmentation` method of the Document class.
+        """
+        # === Direct aspect/concept assignment ===
+
+        document = Document(raw_text="This is a sentence.")
+
+        # Aspects
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Aspect 1", description="Aspect 1", reference_depth="sentences"
+                ),
+            ]
+        )
+        assert document._requires_sentence_segmentation()
+        document.remove_all_aspects()
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Aspect 1",
+                    description="Aspect 1",
+                    reference_depth="paragraphs",
+                ),
+            ]
+        )
+        assert not document._requires_sentence_segmentation()
+        document.remove_all_aspects()
+
+        # Concepts
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Concept 1",
+                    description="Concept 1",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ]
+        )
+        assert document._requires_sentence_segmentation()
+        document.remove_all_concepts()
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Concept 1",
+                    description="Concept 1",
+                    add_references=False,
+                    reference_depth="sentences",
+                ),
+            ]
+        )
+        assert not document._requires_sentence_segmentation()
+        document.remove_all_concepts()
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Concept 1",
+                    description="Concept 1",
+                    add_references=True,
+                    reference_depth="paragraphs",
+                ),
+            ]
+        )
+        assert not document._requires_sentence_segmentation()
+
+        # Sub-aspects
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Aspect 1",
+                    description="Aspect 1",
+                    aspects=[
+                        Aspect(
+                            name="Sub-aspect 1",
+                            description="Sub-aspect 1",
+                            reference_depth="sentences",
+                        ),
+                    ],
+                ),
+            ]
+        )
+        assert document._requires_sentence_segmentation()
+        document.remove_all_aspects()
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Aspect 1",
+                    description="Aspect 1",
+                    aspects=[
+                        Aspect(
+                            name="Sub-aspect 1",
+                            description="Sub-aspect 1",
+                            reference_depth="paragraphs",
+                        ),
+                    ],
+                ),
+            ]
+        )
+        assert not document._requires_sentence_segmentation()
+
+        # === Assignment of aspects/concepts via DocumentPipeline ===
+
+        document = Document(raw_text="This is a sentence.")
+
+        # Aspects
+        document_pipeline = DocumentPipeline(
+            aspects=[
+                Aspect(
+                    name="Aspect 1", description="Aspect 1", reference_depth="sentences"
+                ),
+            ],
+        )
+        document.assign_pipeline(document_pipeline)
+        assert document._requires_sentence_segmentation()
+        document.remove_all_aspects()
+
+        # Concepts
+        document_pipeline = DocumentPipeline(
+            concepts=[
+                StringConcept(
+                    name="Concept 1",
+                    description="Concept 1",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ],
+        )
+        document.assign_pipeline(document_pipeline)
+        assert document._requires_sentence_segmentation()
+
+        check_locals_memory_usage(
+            locals(), test_name="test_requires_sentence_segmentation"
+        )
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture(
+        max_memory=500.0
+    )  # higher limit due to multiple SaT models loading
+    def test_sat_model_deferred_segmentation(self):
+        """
+        Tests for the SaT model deferred segmentation.
+        """
+
+        # Trigger based on param
+        document = Document(
+            raw_text=get_test_document_text(),
+            pre_segment_sentences=True,
+        )
+        assert document.paragraphs
+        assert document.sentences
+
+        # Trigger manually
+        document = Document(raw_text=get_test_document_text())
+        assert document.paragraphs
+        # By default, sentences are not segmented.
+        assert not document.sentences
+        document._segment_sents()  # called when sentence-level refs are needed for aspects/concepts
+        assert document.sentences
+
+        # Selective segmentation of paragraphs
+        document = Document(
+            paragraphs=[
+                Paragraph(
+                    raw_text="This is sentence 1. This is sentence 2.",
+                    sentences=[
+                        Sentence(raw_text="This is sentence 1."),
+                        Sentence(raw_text="This is sentence 2."),
+                    ],
+                ),
+                Paragraph(
+                    raw_text="This is a short sentence. And this is a bit longer sentence."
+                ),  # this paragraph will be segmented
+            ],
+            pre_segment_sentences=True,
+        )
+        assert len(document.paragraphs[1].sentences) == 2
+        assert len(document.sentences) == 4
+
+        # === Segmentation is triggered when LLM extraction method is called for aspects/concepts
+        # that require sentence segmentation ===
+
+        # Some aspects require sentence segmentation (assignment during Document initialization)
+        document = Document(
+            raw_text=get_test_document_text(),
+            aspects=[
+                Aspect(
+                    name="Aspect 1", description="Aspect 1", reference_depth="sentences"
+                ),
+            ],
+        )
+        assert not document.sentences
+
+        # Some concepts require sentence segmentation (assignment during Document initialization)
+        document = Document(
+            raw_text=get_test_document_text(),
+            concepts=[
+                StringConcept(
+                    name="Concept 1",
+                    description="Concept 1",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ],
+        )
+        assert not document.sentences
+
+        # Some sub-aspects require sentence segmentation (assignment during Document initialization)
+        document = Document(raw_text=get_test_document_text())
+        document.aspects = [
+            Aspect(
+                name="Liability",
+                description="Liability",
+                aspects=[
+                    Aspect(
+                        name="Liability cap",
+                        description="Total liability cap",
+                        reference_depth="sentences",
+                    ),
+                ],
+            ),
+        ]
+        assert not document.sentences
+
+        # Mixed - some aspects and concepts require sentence segmentation, some do not
+        # (assignment during Document initialization)
+        document = Document(
+            raw_text=get_test_document_text(),
+            aspects=[
+                Aspect(
+                    name="Aspect 1",
+                    description="Aspect 1",
+                    reference_depth="paragraphs",
+                ),
+                Aspect(
+                    name="Aspect 2", description="Aspect 2", reference_depth="sentences"
+                ),
+            ],
+            concepts=[
+                StringConcept(
+                    name="Concept 1",
+                    description="Concept 1",
+                    add_references=True,
+                    reference_depth="paragraphs",
+                ),
+                StringConcept(
+                    name="Concept 2",
+                    description="Concept 2",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ],
+        )
+        assert not document.sentences
+
+        # Some aspects require sentence segmentation (assignment after Document initialization)
+        document = Document(raw_text=get_test_document_text())
+        document.aspects = [
+            Aspect(
+                name="Liability", description="Liability", reference_depth="sentences"
+            ),
+        ]
+        assert not document.sentences
+        # Segmentation is triggered when LLM extraction method is called
+        self.llm_extractor_text.extract_aspects_from_document(document)
+        assert document.sentences
+
+        # Some concepts require sentence segmentation (assignment after Document initialization)
+        document = Document(raw_text=get_test_document_text())
+        document.concepts = [
+            StringConcept(
+                name="Liability cap",
+                description="Liability cap",
+                add_references=True,
+                reference_depth="sentences",
+            ),
+        ]
+        assert not document.sentences
+        # Segmentation is triggered when LLM extraction method is called
+        self.llm_extractor_text.extract_concepts_from_document(document)
+
+        # Some sub-aspects require sentence segmentation (assignment during Document initialization)
+        document = Document(raw_text=get_test_document_text())
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Liability",
+                    description="Liability",
+                    aspects=[
+                        Aspect(
+                            name="Liability cap",
+                            description="Total liability cap",
+                            reference_depth="sentences",
+                        ),
+                    ],
+                ),
+            ]
+        )
+        assert not document.sentences
+        # Segmentation is triggered when LLM extraction method is called
+        self.llm_extractor_text.extract_aspects_from_document(document)
+        assert document.sentences
+
+        # Mixed - some aspects and concepts require sentence segmentation, some do not
+        # (assignment after Document initialization)
+        document = Document(raw_text=get_test_document_text())
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Confidentiality",
+                    description="Confidentiality",
+                    reference_depth="paragraphs",
+                ),
+                Aspect(
+                    name="Liability",
+                    description="Liability",
+                    reference_depth="sentences",
+                ),
+            ]
+        )
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Confidential information",
+                    description="Confidential information",
+                    add_references=True,
+                    reference_depth="paragraphs",
+                ),
+                StringConcept(
+                    name="Liability cap",
+                    description="Liability cap",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ]
+        )
+        assert not document.sentences
+        # Segmentation is triggered when LLM extraction method is called
+        self.llm_extractor_text.extract_all(document)
+        assert document.sentences
+
+        # Test "from_aspects" and "from_concepts" methods
+        document = Document(raw_text=get_test_document_text())
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Liability",
+                    description="Liability",
+                    reference_depth="sentences",
+                ),
+            ]
+        )
+        assert not document.sentences
+        self.llm_extractor_text.extract_aspects_from_document(
+            document, from_aspects=[document.aspects[0]]
+        )
+        assert document.sentences
+        document = Document(raw_text=get_test_document_text())
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Liability cap",
+                    description="Liability cap",
+                    add_references=True,
+                    reference_depth="sentences",
+                )
+            ]
+        )
+        assert not document.sentences
+        self.llm_extractor_text.extract_concepts_from_document(
+            document, from_concepts=[document.concepts[0]]
+        )
+        assert document.sentences
+
+        # === Assignment via DocumentPipeline ===
+
+        document = Document(raw_text=get_test_document_text())
+        document_pipeline = DocumentPipeline(
+            aspects=[
+                Aspect(
+                    name="Liability",
+                    description="Liability",
+                    reference_depth="sentences",
+                ),
+            ],
+            concepts=[
+                StringConcept(
+                    name="Liability cap",
+                    description="Liability cap",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ],
+        )
+        document.assign_pipeline(document_pipeline)
+        assert not document.sentences
+        self.llm_extractor_text.extract_all(document)
+        assert document.sentences
+
+        check_locals_memory_usage(
+            locals(), test_name="test_sat_model_deferred_segmentation"
+        )
 
     @pytest.mark.vcr
     @memory_profile_and_capture
@@ -2206,20 +2671,13 @@ class TestAll(TestUtils):
         assert '"description": str' in structure_str
         assert '"is_active": bool' in structure_str
 
-        # Configure the LLM for testing
-        llm = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-            role="extractor_text",
+        # Extract the concept
+        extracted_concepts = self.llm_extractor_text.extract_concepts_from_document(
+            document
         )
 
-        # Extract the concept
-        extracted_concepts = llm.extract_concepts_from_document(document)
-
         # Verify prompt content from the LLM call log
-        prompt_string = llm.get_usage()[0].usage.calls[-1].prompt
+        prompt_string = self.llm_extractor_text.get_usage()[-1].usage.calls[-1].prompt
         assert structure_str in prompt_string
 
         # Validate extraction results
@@ -2722,11 +3180,12 @@ class TestAll(TestUtils):
                         raw_text=get_test_document_text(lang=lang),
                         sat_model_id=sat_model_id,
                         paragraph_segmentation_mode="sat",
+                        pre_segment_sentences=True,
                     )
                     assert document.paragraphs  # to be segmented from text
                     assert all(
                         i.sentences for i in document.paragraphs
-                    )  # to be segmented from paragraphs
+                    )  # segmented from paragraphs since `pre_segment_sentences` is True
             Document(
                 raw_text="Random text",
                 paragraphs=[
@@ -2744,9 +3203,9 @@ class TestAll(TestUtils):
             assert (
                 not document._md_text
             )  # markdown text is not populated from paragraphs
-            assert all(
+            assert not any(
                 i.sentences for i in document.paragraphs
-            )  # to be segmented from paragraphs
+            )  # sentences not segmented yet since `pre_segment_sentences` is False (default)
             with pytest.raises(ValueError):
                 document.raw_text = "Random text 1"  # cannot be set once populated
             with pytest.raises(ValueError):
@@ -3039,51 +3498,6 @@ class TestAll(TestUtils):
             context.add_concepts([concept, concept])
 
         check_locals_memory_usage(locals(), test_name="test_init_document_and_pipeline")
-
-    @memory_profile_and_capture
-    def test_local_sat_model(self):
-        """
-        Tests the loading of a local SAT model.
-        """
-
-        # Test nonexistent path
-        with pytest.raises(ValueError) as exc_info:
-            non_existent_path = "/nonexistent/path/to/model"
-            _get_sat_model(non_existent_path)
-            assert "does not exist or is not a directory" in str(exc_info.value)
-            # Document creation should also fail
-            with pytest.raises(ValueError):
-                Document(
-                    raw_text="Sample text",
-                    paragraph_segmentation_mode="sat",
-                    sat_model_id=non_existent_path,
-                )
-
-        # Test file path (not a directory)
-        with tempfile.NamedTemporaryFile() as temp_file:
-            with pytest.raises(ValueError) as exc_info:
-                _get_sat_model(temp_file.name)
-            assert "does not exist or is not a directory" in str(exc_info.value)
-            # Document creation should also fail
-            with pytest.raises(ValueError):
-                Document(
-                    raw_text="Sample text",
-                    paragraph_segmentation_mode="sat",
-                    sat_model_id=temp_file.name,
-                )
-
-        # Test valid path but invalid model
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with pytest.raises(RuntimeError) as exc_info:
-                _get_sat_model(temp_dir)
-            assert "does not contain a valid SaT model" in str(exc_info.value)
-            # Document creation should also fail
-            with pytest.raises(RuntimeError):
-                Document(
-                    raw_text="Sample text",
-                    paragraph_segmentation_mode="sat",
-                    sat_model_id=temp_dir,
-                )
 
     @memory_profile_and_capture
     def test_input_output_token_validation(self):
@@ -4907,7 +5321,9 @@ class TestAll(TestUtils):
             log_messages()
 
     @pytest.mark.vcr
-    @memory_profile_and_capture
+    @memory_profile_and_capture(
+        max_memory=1000.0
+    )  # higher limit for multiple SaT models loading and splitting
     def test_usage_examples(self):
         """
         Tests for usage examples in project's documentation and README.md.
@@ -5802,22 +6218,6 @@ class TestAll(TestUtils):
         check_locals_memory_usage(
             locals(), test_name="test_docx_converter_extract_paragraph_text"
         )
-
-    @memory_profile_and_capture
-    def test_sat_model_cache(self):
-        """
-        Tests for the SaT model cache.
-        """
-        sat_model_id = "sat-3l-sm"
-        sat_model = _get_sat_model(sat_model_id)
-        for _ in range(5):
-            # Must return the same model instance from the cache
-            sat_model_same = _get_sat_model(sat_model_id)
-            assert sat_model is sat_model_same
-
-        check_locals_memory_usage(
-            locals(), test_name="test_sat_model_cache"
-        )  # here, a SaT wrapper object is measured, not the full model
 
     @pytest.mark.vcr
     @memory_profile_and_capture(max_memory=1000.0)

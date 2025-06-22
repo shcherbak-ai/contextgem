@@ -40,6 +40,8 @@ APPROVED_URL_DOMAINS_BEFORE_RECORDING = {
     "api.openai.com",  # OpenAI
     "localhost:11434",  # Ollama
     "localhost:1234",  # LM Studio
+    "huggingface.co",  # Hugging Face for loading SaT models
+    "hf.co",  # Hugging Face for loading SaT models
 }
 
 # Cache for domain validation results to avoid repeated parsing and validation

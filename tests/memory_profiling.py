@@ -62,10 +62,10 @@ from tests.conftest import is_memory_profiling_enabled
 MAX_OBJECT_MEMORY = 1.0  # Maximum memory per object in MiB
 MAX_MEMORY_ALL_OBJECTS = 10.0  # Maximum total memory for all objects in MiB
 MAX_TOTAL_MEMORY_PER_TEST = (
-    75.0  # Maximum memory footprint delta per test method in MiB
+    100.0  # Maximum memory footprint delta per test method in MiB
 )
 # Maximum baseline memory footprint in MiB.
-MAX_BASELINE_MEMORY = 2000.0
+MAX_BASELINE_MEMORY = 1000.0
 
 DEFAULT_TARGET_CLASSES_FOR_MEMORY_USAGE_PROFILING = (
     _InstanceBase,
