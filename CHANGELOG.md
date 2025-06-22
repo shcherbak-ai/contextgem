@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.8.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.8.1) - 2025-06-23
+### Added
+- Documentation on troubleshooting issues with small models.
+
 ## [0.8.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.8.0) - 2025-06-22
 ### Changed
 - Deferred SaT segmentation: SaT segmentation is now performed only when actually needed, improving both document initialization and extraction performance, as some extraction workflows may not require SaT segmentation.
