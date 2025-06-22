@@ -308,7 +308,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -318,7 +318,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -330,7 +330,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -339,7 +339,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P35\",\n            \"P45\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031608, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604009, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -364,7 +364,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '467'
+      - '410'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -707,7 +707,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -717,7 +717,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -729,12 +729,12 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -742,10 +742,9 @@ interactions:
         \"P1\",\n        \"justification\": \"This paragraph introduces the agreement
         and states it is made between parties, indicating the start of identifying
         the parties involved.\"\n      },\n      {\n        \"paragraph_id\": \"P2\",\n        \"justification\":
-        \"This paragraph labels ''Party A'', indicating the identification of one
-        party to the agreement.\"\n      },\n      {\n        \"paragraph_id\": \"P9\",\n        \"justification\":
-        \"This paragraph labels ''Party B'', indicating the identification of the
-        other party to the agreement.\"\n      },\n      {\n        \"paragraph_id\":
+        \"This paragraph labels ''Party A'', indicating one of the parties to the
+        agreement.\"\n      },\n      {\n        \"paragraph_id\": \"P9\",\n        \"justification\":
+        \"This paragraph labels ''Party B'', indicating the other party to the agreement.\"\n      },\n      {\n        \"paragraph_id\":
         \"P10\",\n        \"justification\": \"This paragraph names ''Example.Com
         LLC'', identifying one of the parties involved.\"\n      },\n      {\n        \"paragraph_id\":
         \"P11\",\n        \"justification\": \"This paragraph provides the address
@@ -753,44 +752,41 @@ interactions:
         \"P12\",\n        \"justification\": \"This paragraph continues the address
         details of one party, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
         \"P13\",\n        \"justification\": \"This paragraph provides contact information
-        including a named individual and title for one party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P14\",\n        \"justification\": \"This paragraph provides phone contact
-        details for one party.\"\n      },\n      {\n        \"paragraph_id\": \"P15\",\n        \"justification\":
-        \"This paragraph provides email contact details for one party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P51\",\n        \"justification\": \"This paragraph references the execution
+        including a named individual and title, identifying a representative of a
+        party.\"\n      },\n      {\n        \"paragraph_id\": \"P14\",\n        \"justification\":
+        \"This paragraph provides phone contact details for a party representative.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P15\",\n        \"justification\": \"This paragraph provides email contact
+        details for a party representative.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P51\",\n        \"justification\": \"This paragraph refers to the execution
         of the agreement by the parties, indicating their involvement.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P53\",\n        \"justification\": \"This paragraph provides a signature
-        line for one party, indicating party identification.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P54\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the name of a signing party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P55\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the title of a signing party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P56\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the date of signature by a party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P53\",\n        \"justification\": \"This paragraph is a signature line
+        for a party, indicating party involvement.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P54\",\n        \"justification\": \"This paragraph is a placeholder for
+        a party''s name, identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P55\",\n        \"justification\": \"This paragraph is a placeholder for
+        a party''s title, identifying the party''s representative.\"\n      },\n      {\n        \"paragraph_id\":
         \"P57\",\n        \"justification\": \"This paragraph repeats the name ''Example.Com
-        LLC'', identifying the other party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P58\",\n        \"justification\": \"This paragraph provides a signature
-        line for the other party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P59\",\n        \"justification\": \"This paragraph provides the name ''Jane
-        Doe'', identifying a signing party.\"\n      },\n      {\n        \"paragraph_id\":
+        LLC'', identifying a party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P58\",\n        \"justification\": \"This paragraph is a signature line
+        for a party, indicating party involvement.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P59\",\n        \"justification\": \"This paragraph names ''Jane Doe'',
+        identifying a party representative.\"\n      },\n      {\n        \"paragraph_id\":
         \"P60\",\n        \"justification\": \"This paragraph provides the title ''Managing
-        Partner'' for the signing party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P61\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the date of signature by the other party.\"\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031609, "id": "chatcmpl-DUMMY",
+        Partner'', identifying the role of a party representative.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604009, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 663,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 608,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         5029, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        5692}}'
+        5637}}'
     headers:
       Content-Length:
-      - '4548'
+      - '4274'
       Content-Type:
       - application/json
       Date:
@@ -802,7 +798,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '5565'
+      - '5665'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -953,7 +949,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -963,7 +959,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -975,7 +971,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -985,10 +981,10 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"five (5) years from
         the date of signing this agreement\"\n        ]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1750031614, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1750604015, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 40,
@@ -1010,7 +1006,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '403'
+      - '671'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1199,7 +1195,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1209,7 +1205,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1221,7 +1217,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1232,23 +1228,23 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            {\n                \"value\": 5,\n                \"justification\":
-        \"The agreement duration is explicitly stated as five years from the date
+        \"The agreement duration is explicitly stated as five (5) years from the date
         of signing.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031615, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604016, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 98,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 101,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2296, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        2394}}'
+        2296, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
+        "total_tokens": 2397}}'
     headers:
       Content-Length:
-      - '1788'
+      - '1796'
       Content-Type:
       - application/json
       Date:
@@ -1260,7 +1256,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1073'
+      - '908'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1398,9 +1394,8 @@ interactions:
       York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail:
       jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties hereto have executed
       this Non-Disclosure Agreement as of the date first above written.\n\nBy: ___________________________\n\nName:
-      _____\n\nTitle: _____\n\nDate: ___________________________\n\nExample.Com LLC\n\nBy:
-      ___________________________\n\nName: Jane Doe\n\nTitle: Managing Partner\n\nDate:
-      ___________________________\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+      _____\n\nTitle: _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName:
+      Jane Doe\n\nTitle: Managing Partner\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -1413,13 +1408,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '9443'
+      - '9369'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1429,7 +1424,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1441,7 +1436,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1451,17 +1446,17 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031616, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604017, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 59,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1818, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 1877}}'
+        1808, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        "total_tokens": 1867}}'
     headers:
       Content-Length:
       - '1346'
@@ -1476,7 +1471,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '596'
+      - '643'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1724,7 +1719,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1734,7 +1729,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1746,7 +1741,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1761,7 +1756,7 @@ interactions:
         of Confidential Information\",\n          \"Obligations of Receiving Party\",\n          \"Exclusions
         from Confidential Information\",\n          \"Return of Materials\",\n          \"Liability\",\n          \"No
         License\",\n          \"Governing Law and Disputes\",\n          \"Miscellaneous\"\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031617, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604018, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1770,11 +1765,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 129,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3035, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 3164}}'
+        3035, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3164}}'
     headers:
       Content-Length:
-      - '1817'
+      - '1814'
       Content-Type:
       - application/json
       Date:
@@ -1786,7 +1781,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1112'
+      - '1298'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2042,7 +2037,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2052,7 +2047,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2064,7 +2059,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2076,7 +2071,7 @@ interactions:
         \"July 16, 2024\",\n                \"justification\": \"The agreement is
         stated to be made and entered into as of July 16, 2024, indicating the contract
         start date.\"\n            }\n        ]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750031618, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750604019, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -2100,7 +2095,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '653'
+      - '766'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2343,7 +2338,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2353,7 +2348,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2365,7 +2360,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2373,20 +2368,20 @@ interactions:
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            true\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031619, "id": "chatcmpl-DUMMY",
-        "model": "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
+        \"C0\",\n        \"extracted_items\": [true]\n    }\n]", "refusal": null,
+        "role": "assistant"}}], "created": 1750604021, "id": "chatcmpl-DUMMY", "model":
+        "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 238, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
+        "system_fingerprint": null, "usage": {"completion_tokens": 363, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 320,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 2965, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3203}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3328}}'
     headers:
       Content-Length:
-      - '1191'
+      - '1167'
       Content-Type:
       - application/json
       Date:
@@ -2398,7 +2393,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2313'
+      - '3289'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2731,7 +2726,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2741,7 +2736,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2753,7 +2748,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2762,7 +2757,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraph_ids\": [\n            \"P35\",\n            \"P45\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031622, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604026, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -2787,12 +2782,14 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '425'
+      - '443'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -3128,7 +3125,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3138,7 +3135,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3150,12 +3147,12 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3173,46 +3170,31 @@ interactions:
         of one party, contributing to the identification of the parties.\"\n      },\n      {\n        \"paragraph_id\":
         \"P12\",\n        \"justification\": \"This paragraph continues the address
         details of one party, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P13\",\n        \"justification\": \"This paragraph provides the contact
-        name and title for one party, specifying the party''s representative.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P14\",\n        \"justification\": \"This paragraph provides the phone number
-        for one party, adding to the party''s contact information.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P15\",\n        \"justification\": \"This paragraph provides the email address
-        for one party, completing the contact details.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P51\",\n        \"justification\": \"This paragraph states that the parties
-        have executed the agreement, confirming the involvement of parties.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P53\",\n        \"justification\": \"This paragraph provides a signature
-        line for one party, indicating party execution.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P54\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the name of the signing party, identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P55\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the title of the signing party, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P56\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the date of signature, relevant to party execution.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P57\",\n        \"justification\": \"This paragraph repeats the name ''Example.Com
-        LLC'', identifying the other party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P58\",\n        \"justification\": \"This paragraph provides a signature
-        line for the other party, indicating party execution.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P59\",\n        \"justification\": \"This paragraph provides the name ''Jane
-        Doe'', identifying the signing party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P60\",\n        \"justification\": \"This paragraph provides the title ''Managing
-        Partner'', identifying the signing party''s role.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P61\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the date of signature for the other party.\"\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031622, "id": "chatcmpl-DUMMY",
+        \"P13\",\n        \"justification\": \"This paragraph provides contact information
+        including a named individual and title for one party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P14\",\n        \"justification\": \"This paragraph provides phone contact
+        details for one party.\"\n      },\n      {\n        \"paragraph_id\": \"P15\",\n        \"justification\":
+        \"This paragraph provides email contact details for one party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P57\",\n        \"justification\": \"This paragraph repeats the name of
+        one party, reinforcing party identification.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P59\",\n        \"justification\": \"This paragraph provides the name of
+        a representative of one party, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P60\",\n        \"justification\": \"This paragraph provides the title of
+        the representative of one party, adding to party identification.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604026, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 697,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 438,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5029, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4992},
-        "total_tokens": 5726}}'
+        5029, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        5467}}'
     headers:
       Content-Length:
-      - '4746'
+      - '3432'
       Content-Type:
       - application/json
       Date:
@@ -3224,12 +3206,430 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '6140'
+      - '3857'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\nNote that occasionally you may be working
+      with document fragments rather than complete documents. These fragments represent
+      portions of a larger document and should be analyzed within their limited context.
+      When working with fragments, focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n2. Aspect: A defined
+      area or topic within a document that requires focused attention. Each aspect
+      corresponds to a specific subject or theme described in the task. For example:\n-
+      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
+      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
+      Work experience, education, or skills.\nYou will analyze aspects as instructed,
+      considering their relevance and context within the document.\n\n3. Concept:
+      A unit of information or an entity relevant to the task. Concepts may be derived
+      from an aspect or the broader document context. They represent a wide range
+      of data points and insights, from simple entities (names, dates, monetary values)
+      to complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
+      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
+      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
+      Reasoned conclusions: Such as determining whether a document meets specific
+      criteria or answers particular questions.\n- Interpretative judgments: Such
+      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
+      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
+      you comprehend the nature of the document and the aspects or concepts you need
+      to focus on.\n- Follow specific instructions: Each task will include detailed
+      instructions, such as which aspects or concepts to focus on and how the data
+      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
+      ensuring your outputs align with the document''s intent and context.\n- Adapt
+      to variability: Documents may differ in structure, language, or formatting.
+      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks."},{"role":"user","content":"Below
+      you will find document text and a list of concepts.\n\nYour task is to:\n1.
+      Read through the document text provided.\n    - Note that the document text
+      is provided in markdown format, which may include formatting elements such as
+      headings, links, lists, and other markdown syntax.\n2. Identify whether each
+      concept in the concepts list is addressed within the document text.\n3. For
+      each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\n4. Produce a
+      JSON array containing your extracted data, in the provided format.\n\nIf a concept
+      is not addressed in the document text, you must still include an entry in the
+      final JSON output but with an empty \"extracted_items\" list.\n\nFollow these
+      additional rules:\n\n- Output format:\nProvide your answer in only the following
+      answer format (do not include backticks, code fences, or any introductory/explanatory
+      text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
+      keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
+      must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
+      The value of \"extracted_items\" must be an array. If the concept is not found
+      or there are no items to extract, leave the array empty ([]).\n        --- Guidance
+      regarding the possible amount of extracted items for the concept is specified
+      under \"Amount of extracted items\". Each extracted item, even if there is only
+      one, must be part of the \"extracted_items\" array.\n\n- Item structure:\n    --
+      If a specific structure is provided for a concept under \"Expected structure,\"
+      you must follow that structure for all extracted items corresponding to that
+      concept.\n    -- If a rating scale is provided for a concept under \"Rating
+      scale,\" the extracted item value must be within that scale.\n    -- If available
+      labels are provided for a concept under \"Available labels,\" the extracted
+      item value must be a list containing only labels from the predefined set. If
+      none of the predefined labels apply, do not extract any items for that concept.\n    --
+      If there are example items (\"Extracted concept examples\"), try to follow the
+      same style and formatting for your extracted items.\n    -- When extracting
+      string values, translate them in English if the original language of the document
+      is not English.\n\n- Types of extracted items:\n    -- Each concept specifies
+      an \"extracted item type\" (found under \"Concept extracted item type\"). Ensure
+      your extracted items strictly match that type. Python types are provided (e.g.,
+      str for string, int for integer, float for floating-point number, dict for object,
+      etc.).\n    -- Do not introduce any extra fields or modify the specified structure.\n\n-
+      Handling missing or multiple items:\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \"extracted_items\" array.\n    -- For concepts that have an \"Available labels:\"
+      section: if none of the predefined labels apply to the content, leave the \"extracted_items\"
+      array empty.\n    -- For concepts that have an \"Available labels:\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \"labels\" array (e.g.,
+      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
+      if there are genuinely distinct instances or contexts that warrant separate
+      classification.\n    -- For concepts that do not have an \"Available labels:\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
+      Do not include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n======\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
+      Concept ID: C0\nConcept name: Contract party name and role\n\nConcept description:\nContract
+      party name and role in the contract. Exclude information on individual signatories.\n\nAmount
+      of extracted items: This concept may have zero, one, or multiple extracted items.\n\nExtracted
+      concept examples:\n- custom_data={} content=''Company ABC (Supplier)''\n\nConcept
+      extracted item type: str\n````\n\n______\n\n------\nDOCUMENT TEXT:\nThis Non-Disclosure
+      Agreement (the \"Agreement\") is made and entered into as of July 16, 2024,
+      by and between:\n\nParty A:\n\nParty B:\n\nExample.Com LLC\n\n5678 Random Drive\n\nNew
+      York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail:
+      jane.doe@example.com\n\nExample.Com LLC\n\nName: Jane Doe\n\nTitle: Managing
+      Partner\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '8842'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1750604030, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1702, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 1725}}'
+    headers:
+      Content-Length:
+      - '1179'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '308'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\nNote that occasionally you may be working
+      with document fragments rather than complete documents. These fragments represent
+      portions of a larger document and should be analyzed within their limited context.
+      When working with fragments, focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n2. Aspect: A defined
+      area or topic within a document that requires focused attention. Each aspect
+      corresponds to a specific subject or theme described in the task. For example:\n-
+      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
+      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
+      Work experience, education, or skills.\nYou will analyze aspects as instructed,
+      considering their relevance and context within the document.\n\n3. Concept:
+      A unit of information or an entity relevant to the task. Concepts may be derived
+      from an aspect or the broader document context. They represent a wide range
+      of data points and insights, from simple entities (names, dates, monetary values)
+      to complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
+      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
+      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
+      Reasoned conclusions: Such as determining whether a document meets specific
+      criteria or answers particular questions.\n- Interpretative judgments: Such
+      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
+      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
+      you comprehend the nature of the document and the aspects or concepts you need
+      to focus on.\n- Follow specific instructions: Each task will include detailed
+      instructions, such as which aspects or concepts to focus on and how the data
+      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
+      ensuring your outputs align with the document''s intent and context.\n- Adapt
+      to variability: Documents may differ in structure, language, or formatting.
+      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
+      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
+      performance across diverse document analysis tasks."},{"role":"user","content":"Below
+      you will find document text and a list of concepts.\n\nYour task is to:\n1.
+      Read through the document text provided.\n    - Note that the document text
+      is provided in markdown format, which may include formatting elements such as
+      headings, links, lists, and other markdown syntax.\n2. Identify whether each
+      concept in the concepts list is addressed within the document text.\n3. For
+      each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\n4. Produce a
+      JSON array containing your extracted data, in the provided format.\n\nIf a concept
+      is not addressed in the document text, you must still include an entry in the
+      final JSON output but with an empty \"extracted_items\" list.\n\nFollow these
+      additional rules:\n\n- Output format:\nProvide your answer in only the following
+      answer format (do not include backticks, code fences, or any introductory/explanatory
+      text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
+      keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
+      must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
+      The value of \"extracted_items\" must be an array. If the concept is not found
+      or there are no items to extract, leave the array empty ([]).\n        --- Guidance
+      regarding the possible amount of extracted items for the concept is specified
+      under \"Amount of extracted items\". Each extracted item, even if there is only
+      one, must be part of the \"extracted_items\" array.\n\n- Item structure:\n    --
+      If a specific structure is provided for a concept under \"Expected structure,\"
+      you must follow that structure for all extracted items corresponding to that
+      concept.\n    -- If a rating scale is provided for a concept under \"Rating
+      scale,\" the extracted item value must be within that scale.\n    -- If available
+      labels are provided for a concept under \"Available labels,\" the extracted
+      item value must be a list containing only labels from the predefined set. If
+      none of the predefined labels apply, do not extract any items for that concept.\n    --
+      If there are example items (\"Extracted concept examples\"), try to follow the
+      same style and formatting for your extracted items.\n    -- When extracting
+      string values, translate them in English if the original language of the document
+      is not English.\n\n- Types of extracted items:\n    -- Each concept specifies
+      an \"extracted item type\" (found under \"Concept extracted item type\"). Ensure
+      your extracted items strictly match that type. Python types are provided (e.g.,
+      str for string, int for integer, float for floating-point number, dict for object,
+      etc.).\n    -- Do not introduce any extra fields or modify the specified structure.\n\n-
+      Handling missing or multiple items:\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \"extracted_items\" array.\n    -- For concepts that have an \"Available labels:\"
+      section: if none of the predefined labels apply to the content, leave the \"extracted_items\"
+      array empty.\n    -- For concepts that have an \"Available labels:\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \"labels\" array (e.g.,
+      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
+      if there are genuinely distinct instances or contexts that warrant separate
+      classification.\n    -- For concepts that do not have an \"Available labels:\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
+      Do not include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n======\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
+      Concept ID: C0\nConcept name: Contract party name\n\nConcept description:\nContract
+      party name in the contract. Exclude information on individual signatories.\n\nAmount
+      of extracted items: This concept may have zero, one, or multiple extracted items.\n\nConcept
+      extracted item type: str\n````\n\n______\n\n------\nDOCUMENT TEXT:\nThis Non-Disclosure
+      Agreement (the \"Agreement\") is made and entered into as of July 16, 2024,
+      by and between:\n\nParty A:\n\nParty B:\n\nExample.Com LLC\n\n5678 Random Drive\n\nNew
+      York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail:
+      jane.doe@example.com\n\nExample.Com LLC\n\nName: Jane Doe\n\nTitle: Managing
+      Partner\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '8742'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AsyncAzureOpenAI/Python 1.88.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.88.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"Example.Com LLC\"\n        ]\n    }\n]", "refusal": null,
+        "role": "assistant"}}], "created": 1750604030, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 31,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        1681, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        "total_tokens": 1712}}'
+    headers:
+      Content-Length:
+      - '1346'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '367'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
       - DUMMY
       x-ms-region:
       - DUMMY
@@ -3373,7 +3773,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3383,7 +3783,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3395,7 +3795,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3403,21 +3803,22 @@ interactions:
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"five (5) years\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031628, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        \"C0\",\n        \"extracted_items\": [\n            \"five (5) years from
+        the date of signing this agreement\"\n        ]\n    }\n]", "refusal": null,
+        "role": "assistant"}}], "created": 1750604030, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 33,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 40,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1648, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
-        "total_tokens": 1681}}'
+        1648, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        1688}}'
     headers:
       Content-Length:
-      - '1221'
+      - '1258'
       Content-Type:
       - application/json
       Date:
@@ -3429,215 +3830,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '362'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
-      the extraction, analysis, and interpretation of data within various types of
-      documents. Your role is to carefully process the information and provide accurate,
-      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
-      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
-      written or visual content. Documents can vary in type and purpose, including
-      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
-      Invoices: Financial documents detailing transactions and payments.\n- Curricula
-      Vitae (CVs): Resumes outlining an individual''s professional experience and
-      qualifications.\n- General Documents: Any other types of files that may contain
-      text, tables, images, or mixed formats.\nNote that occasionally you may be working
-      with document fragments rather than complete documents. These fragments represent
-      portions of a larger document and should be analyzed within their limited context.
-      When working with fragments, focus on extracting information from the available
-      content without making assumptions about missing parts.\n\n2. Aspect: A defined
-      area or topic within a document that requires focused attention. Each aspect
-      corresponds to a specific subject or theme described in the task. For example:\n-
-      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
-      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
-      Work experience, education, or skills.\nYou will analyze aspects as instructed,
-      considering their relevance and context within the document.\n\n3. Concept:
-      A unit of information or an entity relevant to the task. Concepts may be derived
-      from an aspect or the broader document context. They represent a wide range
-      of data points and insights, from simple entities (names, dates, monetary values)
-      to complex evaluations, conclusions, and answers to specific questions. Concepts
-      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
-      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
-      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
-      Reasoned conclusions: Such as determining whether a document meets specific
-      criteria or answers particular questions.\n- Interpretative judgments: Such
-      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
-      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
-      you comprehend the nature of the document and the aspects or concepts you need
-      to focus on.\n- Follow specific instructions: Each task will include detailed
-      instructions, such as which aspects or concepts to focus on and how the data
-      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
-      ensuring your outputs align with the document''s intent and context.\n- Adapt
-      to variability: Documents may differ in structure, language, or formatting.
-      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
-      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
-      based on the task requirements.\n- Explanations (when required): When required
-      by the instructions, include justifications or reasoning for your interpretations.\n-
-      Insights (when required): When required by the instructions, highlight trends,
-      patterns, or noteworthy findings that could add value to the task.\n- References
-      (when required): When required by the instructions, output references based
-      on which you extracted data, provided insights, or made conclusions during the
-      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
-      performance across diverse document analysis tasks."},{"role":"user","content":"Below
-      you will find document text and a list of concepts.\n\nYour task is to:\n1.
-      Read through the document text provided.\n    - Note that the document text
-      is provided in markdown format, which may include formatting elements such as
-      headings, links, lists, and other markdown syntax.\n2. Identify whether each
-      concept in the concepts list is addressed within the document text.\n3. For
-      each concept that appears, extract zero or more items relevant to that concept.
-      The item format and structure are specified for each concept.\n4. Produce a
-      JSON array containing your extracted data, in the provided format.\n\nIf a concept
-      is not addressed in the document text, you must still include an entry in the
-      final JSON output but with an empty \"extracted_items\" list.\n\nFollow these
-      additional rules:\n\n- Output format:\nProvide your answer in only the following
-      answer format (do not include backticks, code fences, or any introductory/explanatory
-      text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
-      keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
-      must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
-      The value of \"extracted_items\" must be an array. If the concept is not found
-      or there are no items to extract, leave the array empty ([]).\n        --- Guidance
-      regarding the possible amount of extracted items for the concept is specified
-      under \"Amount of extracted items\". Each extracted item, even if there is only
-      one, must be part of the \"extracted_items\" array.\n\n- Item structure:\n    --
-      If a specific structure is provided for a concept under \"Expected structure,\"
-      you must follow that structure for all extracted items corresponding to that
-      concept.\n    -- If a rating scale is provided for a concept under \"Rating
-      scale,\" the extracted item value must be within that scale.\n    -- If available
-      labels are provided for a concept under \"Available labels,\" the extracted
-      item value must be a list containing only labels from the predefined set. If
-      none of the predefined labels apply, do not extract any items for that concept.\n    --
-      If there are example items (\"Extracted concept examples\"), try to follow the
-      same style and formatting for your extracted items.\n    -- When extracting
-      string values, translate them in English if the original language of the document
-      is not English.\n\n- Types of extracted items:\n    -- Each concept specifies
-      an \"extracted item type\" (found under \"Concept extracted item type\"). Ensure
-      your extracted items strictly match that type. Python types are provided (e.g.,
-      str for string, int for integer, float for floating-point number, dict for object,
-      etc.).\n    -- Do not introduce any extra fields or modify the specified structure.\n\n-
-      Handling missing or multiple items:\n    -- If a concept is not mentioned at
-      all, your output should still contain an entry for that concept with an empty
-      \"extracted_items\" array.\n    -- For concepts that have an \"Available labels:\"
-      section: if none of the predefined labels apply to the content, leave the \"extracted_items\"
-      array empty.\n    -- For concepts that have an \"Available labels:\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \"labels\" array (e.g.,
-      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
-      if there are genuinely distinct instances or contexts that warrant separate
-      classification.\n    -- For concepts that do not have an \"Available labels:\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
-      Do not include any headers, explanations, or text outside of the JSON array.\n    --
-      Do not wrap your JSON response in backticks or any other formatting characters.\n\n======\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
-      [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
-      Concept ID: C0\nConcept name: Contract party name\n\nConcept description:\nContract
-      party name in the contract. Exclude information on individual signatories.\n\nAmount
-      of extracted items: This concept may have zero, one, or multiple extracted items.\n\nConcept
-      extracted item type: str\n````\n\n______\n\n------\nDOCUMENT TEXT:\nThis Non-Disclosure
-      Agreement (the \"Agreement\") is made and entered into as of July 16, 2024,
-      by and between:\n\nParty A:\n\nParty B:\n\nExample.Com LLC\n\n5678 Random Drive\n\nNew
-      York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail:
-      jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties hereto have executed
-      this Non-Disclosure Agreement as of the date first above written.\n\nBy: ___________________________\n\nName:
-      _____\n\nTitle: _____\n\nDate: ___________________________\n\nExample.Com LLC\n\nBy:
-      ___________________________\n\nName: Jane Doe\n\nTitle: Managing Partner\n\nDate:
-      ___________________________\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '9039'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.86.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031628, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 31,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1735, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
-        "total_tokens": 1766}}'
-    headers:
-      Content-Length:
-      - '1222'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '369'
+      - '471'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3880,7 +4073,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3890,7 +4083,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3902,7 +4095,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -3912,19 +4105,19 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement
         (NDA)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
-        1750031628, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        1750604030, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
         "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
-        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"detected":
+        false, "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
         {"completion_tokens": 35, "completion_tokens_details": {"accepted_prediction_tokens":
         0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
         0}, "prompt_tokens": 2962, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        0}, "total_tokens": 2997}}'
+        1408}, "total_tokens": 2997}}'
     headers:
       Content-Length:
-      - '1234'
+      - '1237'
       Content-Type:
       - application/json
       Date:
@@ -3936,7 +4129,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '425'
+      - '401'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4009,70 +4202,104 @@ interactions:
       on which you extracted data, provided insights, or made conclusions during the
       task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
       performance across diverse document analysis tasks."},{"role":"user","content":"Below
-      you will find document text and a list of concepts.\n\nYour task is to:\n1.
-      Read through the document text provided.\n    - Note that the document text
-      is provided in markdown format, which may include formatting elements such as
-      headings, links, lists, and other markdown syntax.\n2. Identify whether each
-      concept in the concepts list is addressed within the document text.\n3. For
-      each concept that appears, extract zero or more items relevant to that concept.
-      The item format and structure are specified for each concept.\n4. Produce a
-      JSON array containing your extracted data, in the provided format.\n\nIf a concept
-      is not addressed in the document text, you must still include an entry in the
+      you will find a list of document paragraphs (including sentences) and a list
+      of concepts.\n\nYour task is to:\n1. Read through the provided document paragraphs
+      and their sentences.\n    - Each paragraph is identified by a paragraph ID (for
+      example, \"P0\", \"P1\", etc.), optionally followed by additional information
+      about the paragraph, which may be helpful during your analysis.\n    - Each
+      paragraph includes sentences, each identified by a sentence ID (for example,
+      \"P0-S0\", \"P0-S1\", etc.), followed by the full text of the sentence and,
+      optionally, additional information about the sentence, which may be helpful
+      during your analysis.\n    - Note that paragraphs are listed in the same order
+      they appear in the original document.\n2. Identify whether each concept in the
+      concepts list is addressed within the document paragraphs.\n3. For each concept
+      that appears, extract zero or more items relevant to that concept. The item
+      format and structure are specified for each concept.\n4. Produce a JSON array
+      containing your extracted data, in the provided format.\n\nIf a concept is not
+      addressed in the document paragraphs, you must still include an entry in the
       final JSON output but with an empty \"extracted_items\" list.\n\nFollow these
       additional rules:\n\n- Output format:\nProvide your answer in only the following
       answer format (do not include backticks, code fences, or any introductory/explanatory
       text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
       keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
       must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
-      The value of \"extracted_items\" must be an array. If the concept is not found
-      or there are no items to extract, leave the array empty ([]).\n        --- Guidance
-      regarding the possible amount of extracted items for the concept is specified
-      under \"Amount of extracted items\". Each extracted item, even if there is only
-      one, must be part of the \"extracted_items\" array.\n\n- Item structure:\n    --
-      If a specific structure is provided for a concept under \"Expected structure,\"
-      you must follow that structure for all extracted items corresponding to that
-      concept.\n    -- If a rating scale is provided for a concept under \"Rating
-      scale,\" the extracted item value must be within that scale.\n    -- If available
-      labels are provided for a concept under \"Available labels,\" the extracted
-      item value must be a list containing only labels from the predefined set. If
-      none of the predefined labels apply, do not extract any items for that concept.\n    --
-      If there are example items (\"Extracted concept examples\"), try to follow the
-      same style and formatting for your extracted items.\n    -- When extracting
-      string values, translate them in English if the original language of the document
-      is not English.\n\n- Types of extracted items:\n    -- Each concept specifies
-      an \"extracted item type\" (found under \"Concept extracted item type\"). Ensure
-      your extracted items strictly match that type. Python types are provided (e.g.,
-      str for string, int for integer, float for floating-point number, dict for object,
-      etc.).\n    -- Do not introduce any extra fields or modify the specified structure.\n\n-
-      Handling missing or multiple items:\n    -- If a concept is not mentioned at
-      all, your output should still contain an entry for that concept with an empty
-      \"extracted_items\" array.\n    -- For concepts that have an \"Available labels:\"
-      section: if none of the predefined labels apply to the content, leave the \"extracted_items\"
-      array empty.\n    -- For concepts that have an \"Available labels:\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \"labels\" array (e.g.,
-      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
-      if there are genuinely distinct instances or contexts that warrant separate
-      classification.\n    -- For concepts that do not have an \"Available labels:\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
-      Do not include any headers, explanations, or text outside of the JSON array.\n    --
-      Do not wrap your JSON response in backticks or any other formatting characters.\n\n======\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
-      [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
-      Concept ID: C0\nConcept name: Contract party name and role\n\nConcept description:\nContract
-      party name and role in the contract. Exclude information on individual signatories.\n\nAmount
-      of extracted items: This concept may have zero, one, or multiple extracted items.\n\nExtracted
-      concept examples:\n- custom_data={} content=''Company ABC (Supplier)''\n\nConcept
-      extracted item type: str\n````\n\n______\n\n------\nDOCUMENT TEXT:\nThis Non-Disclosure
-      Agreement (the \"Agreement\") is made and entered into as of July 16, 2024,
-      by and between:\n\nParty A:\n\nParty B:\n\nExample.Com LLC\n\n5678 Random Drive\n\nNew
-      York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail:
-      jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties hereto have executed
-      this Non-Disclosure Agreement as of the date first above written.\n\nBy: ___________________________\n\nName:
-      _____\n\nTitle: _____\n\nDate: ___________________________\n\nExample.Com LLC\n\nBy:
-      ___________________________\n\nName: Jane Doe\n\nTitle: Managing Partner\n\nDate:
-      ___________________________\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+      The value of \"extracted_items\" must be an array of objects with mandatory
+      fields \"value\", \"justification\", and \"reference_paragraphs\". If the concept
+      is not found or there are no items to extract, leave the array empty ([]).\n        ---
+      Guidance regarding the possible amount of extracted items for the concept is
+      specified under \"Amount of extracted items\". Each extracted item''s object,
+      even if there is only one, must be part of the \"extracted_items\" array.\n        ---
+      The value of \"reference_paragraphs\" must be an array of objects with mandatory
+      fields \"reference_paragraph_id\", which holds the provided ID of the reference
+      paragraph, and \"reference_sentence_ids\", which holds the provided IDs of the
+      reference sentences within the paragraph. Note that not every sentence in the
+      paragraph necessarily serves as a relevant reference.\n\n- Item object structure:\n    --
+      value: Mandatory field holding the extracted item.\n        --- If a specific
+      structure is provided for a concept under \"Expected structure,\" the extracted
+      item value must follow that structure for all extracted items corresponding
+      to that concept.\n        --- If a rating scale is provided for a concept under
+      \"Rating scale,\" the extracted item value must be within that scale.\n        ---
+      If available labels are provided for a concept under \"Available labels,\" the
+      extracted item value must be a list containing only labels from the predefined
+      set. If none of the predefined labels apply, do not extract any items for that
+      concept.\n        --- If there are example items (\"Extracted concept examples\"),
+      the extracted item value should follow the same style and formatting.\n        ---
+      When extracting string values, translate them in English if the original language
+      of the document is not English.\n    -- justification: Mandatory field holding
+      a justification of why the item was extracted for the concept. Ensure the justification
+      is specific and directly ties the extracted item to the concept''s defining
+      features. Never reference the concept''s ID or any of the structural IDs provided
+      in this prompt (such as paragraph IDs like \"P0\", or sentence IDs like \"P0-S0\")
+      in the justification.\n        --- Justification should be brief, i.e. highlight
+      only the essential details.\n        --- Justification should be no longer than
+      2 sentences.\n        --- Justification should be in English.\n    -- reference_paragraphs:
+      An array of objects for each paragraph based on which the item was extracted
+      for the concept. Each object should include:\n        --- reference_paragraph_id:
+      Mandatory field holding the provided ID of the reference paragraph. Each paragraph
+      ID must match exactly the provided ID for the paragraph (for example, \"P0\",
+      \"P1\", etc.).\n        --- reference_sentence_ids: Mandatory field holding
+      an array of the provided IDs of the sentences within the paragraph, based on
+      which the item was extracted for the concept. Each sentence ID must match exactly
+      the provided ID for the sentence (for example, \"P0-S0\", \"P0-S2\", etc.).\n\n-
+      Types of extracted items:\n    -- Each concept specifies an \"extracted item
+      type\" (found under \"Concept extracted item type\"). Ensure that the value
+      of each of the extracted items for the concept strictly matches that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.).\n    -- Do not introduce any extra fields or
+      modify the specified structure.\n\n- Handling missing or multiple items:\n    --
+      If a concept is not mentioned at all, your output should still contain an entry
+      for that concept with an empty \"extracted_items\" array.\n    -- For concepts
+      that have an \"Available labels:\" section: if none of the predefined labels
+      apply to the content, leave the \"extracted_items\" array empty.\n    -- For
+      concepts that have an \"Available labels:\" section: if multiple labels apply
+      to the same instance or context, include them all in a single extracted item
+      with multiple labels in the \"labels\" array (e.g., {\"labels\": [\"label1\",
+      \"label2\"]}). Only create multiple extracted items if there are genuinely distinct
+      instances or contexts that warrant separate classification.\n    -- For concepts
+      that do not have an \"Available labels:\" section: if multiple items are found
+      for a concept, include each as a separate entry within the \"extracted_items\"
+      array.\n\n- No additional text:\n    -- Do not include any headers, explanations,
+      or text outside of the JSON array.\n    -- Do not wrap your JSON response in
+      backticks or any other formatting characters.\n\n======\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
+      str,\n        \"extracted_items: [\n            {\n                \"value\":
+      ...,\n                \"justification\": str,\n                \"reference_paragraphs\":
+      [\n                    {\n                        \"reference_paragraph_id\":
+      str,\n                        \"reference_sentence_ids\": [\n                            str,\n                            ...\n                        ]\n                    },\n                    ...\n                ]\n            },\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
+      Concept ID: C0\nConcept name: Duration\n\nConcept description:\nContract duration
+      in years\n\nAmount of extracted items: This concept may have zero, one, or multiple
+      extracted items.\n\nConcept extracted item type: int\n````\n\n______\n\n------\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\n````\n- Paragraph ID: P0\nAdditional information
+      about the paragraph:\nStyle: Normal\nParagraph sentences:\n    -- Sentence ID:
+      P0-S0\n    Sentence text: Upon termination of this Agreement or upon request,
+      the Receiving Party shall return all materials containing Confidential Information
+      to the Disclosing Party or destroy them, at the Disclosing Party''s discretion.\n    Additional
+      information about the sentence: Style: Normal\n````\n\n````\n- Paragraph ID:
+      P1\nAdditional information about the paragraph:\nStyle: Normal\nParagraph sentences:\n    --
+      Sentence ID: P1-S0\n    Sentence text: All disputes shall be resolved by the
+      courts of the State of California.\n    Additional information about the sentence:
+      Style: Normal\n    -- Sentence ID: P1-S1\n    Sentence text: This Agreement
+      shall remain in effect for a period of five (5) years from the date of signing
+      this agreement.\n    Additional information about the sentence: Style: Normal\n````\n\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -4085,13 +4312,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '9139'
+      - '12116'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4101,7 +4328,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4113,29 +4340,34 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031628, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": 5,\n                \"justification\":
+        \"The agreement duration is explicitly stated as five (5) years from the date
+        of signing.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604030, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 31,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 101,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1756, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 1787}}'
+        2296, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
+        "total_tokens": 2397}}'
     headers:
       Content-Length:
-      - '1222'
+      - '1796'
       Content-Type:
       - application/json
       Date:
@@ -4147,7 +4379,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '590'
+      - '917'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4403,7 +4635,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4413,7 +4645,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4425,31 +4657,33 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        \"July 16, 2024\",\n                \"justification\": \"The agreement is
-        stated to be made and entered into as of July 16, 2024, indicating the contract
-        start date.\"\n            }\n        ]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750031628, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 74, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 3133, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 3072}, "total_tokens": 3207}}'
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": \"July 16, 2024\",\n                \"justification\":
+        \"The agreement is stated to be made and entered into as of July 16, 2024,
+        indicating the contract start date.\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604030, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 74,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        3133, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3207}}'
     headers:
       Content-Length:
-      - '1415'
+      - '1536'
       Content-Type:
       - application/json
       Date:
@@ -4461,7 +4695,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '634'
+      - '822'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4706,7 +4940,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4716,7 +4950,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4728,7 +4962,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -4742,10 +4976,10 @@ interactions:
         of Confidential Information\",\n          \"Obligations of Receiving Party\",\n          \"Exclusions
         from Confidential Information\",\n          \"Return of Materials\",\n          \"Liability\",\n          \"No
         License\",\n          \"Governing Law and Disputes\",\n          \"Miscellaneous\"\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031628, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604030, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 103,
@@ -4767,257 +5001,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '977'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
-      the extraction, analysis, and interpretation of data within various types of
-      documents. Your role is to carefully process the information and provide accurate,
-      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
-      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
-      written or visual content. Documents can vary in type and purpose, including
-      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
-      Invoices: Financial documents detailing transactions and payments.\n- Curricula
-      Vitae (CVs): Resumes outlining an individual''s professional experience and
-      qualifications.\n- General Documents: Any other types of files that may contain
-      text, tables, images, or mixed formats.\nNote that occasionally you may be working
-      with document fragments rather than complete documents. These fragments represent
-      portions of a larger document and should be analyzed within their limited context.
-      When working with fragments, focus on extracting information from the available
-      content without making assumptions about missing parts.\n\n2. Aspect: A defined
-      area or topic within a document that requires focused attention. Each aspect
-      corresponds to a specific subject or theme described in the task. For example:\n-
-      Contract Aspects: Payment terms, parties involved, or termination clauses.\n-
-      Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n- CV Aspects:
-      Work experience, education, or skills.\nYou will analyze aspects as instructed,
-      considering their relevance and context within the document.\n\n3. Concept:
-      A unit of information or an entity relevant to the task. Concepts may be derived
-      from an aspect or the broader document context. They represent a wide range
-      of data points and insights, from simple entities (names, dates, monetary values)
-      to complex evaluations, conclusions, and answers to specific questions. Concepts
-      can be:\n- Factual extractions: Such as a penalty clause in a contract, a total
-      amount due in an invoice, or a certification in a CV.\n- Analytical insights:
-      Such as risk assessments, compliance evaluations, or pattern identifications.\n-
-      Reasoned conclusions: Such as determining whether a document meets specific
-      criteria or answers particular questions.\n- Interpretative judgments: Such
-      as ratings, classifications, or qualitative assessments based on document content.\n\nGUIDELINES
-      FOR YOUR WORK:\n- Understand the context: Before processing the document, ensure
-      you comprehend the nature of the document and the aspects or concepts you need
-      to focus on.\n- Follow specific instructions: Each task will include detailed
-      instructions, such as which aspects or concepts to focus on and how the data
-      should be presented.\n- Maintain accuracy: Provide precise extractions and analysis,
-      ensuring your outputs align with the document''s intent and context.\n- Adapt
-      to variability: Documents may differ in structure, language, or formatting.
-      Be flexible and apply reasoning to handle variations effectively.\n\nEXPECTED
-      DELIVERABLES:\n- Structured outputs: Clearly formatted and well-organized results
-      based on the task requirements.\n- Explanations (when required): When required
-      by the instructions, include justifications or reasoning for your interpretations.\n-
-      Insights (when required): When required by the instructions, highlight trends,
-      patterns, or noteworthy findings that could add value to the task.\n- References
-      (when required): When required by the instructions, output references based
-      on which you extracted data, provided insights, or made conclusions during the
-      task.\n\n\nBy adhering to this framework, you will ensure consistent and high-quality
-      performance across diverse document analysis tasks."},{"role":"user","content":"Below
-      you will find a list of document paragraphs (including sentences) and a list
-      of concepts.\n\nYour task is to:\n1. Read through the provided document paragraphs
-      and their sentences.\n    - Each paragraph is identified by a paragraph ID (for
-      example, \"P0\", \"P1\", etc.), optionally followed by additional information
-      about the paragraph, which may be helpful during your analysis.\n    - Each
-      paragraph includes sentences, each identified by a sentence ID (for example,
-      \"P0-S0\", \"P0-S1\", etc.), followed by the full text of the sentence and,
-      optionally, additional information about the sentence, which may be helpful
-      during your analysis.\n    - Note that paragraphs are listed in the same order
-      they appear in the original document.\n2. Identify whether each concept in the
-      concepts list is addressed within the document paragraphs.\n3. For each concept
-      that appears, extract zero or more items relevant to that concept. The item
-      format and structure are specified for each concept.\n4. Produce a JSON array
-      containing your extracted data, in the provided format.\n\nIf a concept is not
-      addressed in the document paragraphs, you must still include an entry in the
-      final JSON output but with an empty \"extracted_items\" list.\n\nFollow these
-      additional rules:\n\n- Output format:\nProvide your answer in only the following
-      answer format (do not include backticks, code fences, or any introductory/explanatory
-      text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
-      keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
-      must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
-      The value of \"extracted_items\" must be an array of objects with mandatory
-      fields \"value\", \"justification\", and \"reference_paragraphs\". If the concept
-      is not found or there are no items to extract, leave the array empty ([]).\n        ---
-      Guidance regarding the possible amount of extracted items for the concept is
-      specified under \"Amount of extracted items\". Each extracted item''s object,
-      even if there is only one, must be part of the \"extracted_items\" array.\n        ---
-      The value of \"reference_paragraphs\" must be an array of objects with mandatory
-      fields \"reference_paragraph_id\", which holds the provided ID of the reference
-      paragraph, and \"reference_sentence_ids\", which holds the provided IDs of the
-      reference sentences within the paragraph. Note that not every sentence in the
-      paragraph necessarily serves as a relevant reference.\n\n- Item object structure:\n    --
-      value: Mandatory field holding the extracted item.\n        --- If a specific
-      structure is provided for a concept under \"Expected structure,\" the extracted
-      item value must follow that structure for all extracted items corresponding
-      to that concept.\n        --- If a rating scale is provided for a concept under
-      \"Rating scale,\" the extracted item value must be within that scale.\n        ---
-      If available labels are provided for a concept under \"Available labels,\" the
-      extracted item value must be a list containing only labels from the predefined
-      set. If none of the predefined labels apply, do not extract any items for that
-      concept.\n        --- If there are example items (\"Extracted concept examples\"),
-      the extracted item value should follow the same style and formatting.\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\n    -- justification: Mandatory field holding
-      a justification of why the item was extracted for the concept. Ensure the justification
-      is specific and directly ties the extracted item to the concept''s defining
-      features. Never reference the concept''s ID or any of the structural IDs provided
-      in this prompt (such as paragraph IDs like \"P0\", or sentence IDs like \"P0-S0\")
-      in the justification.\n        --- Justification should be brief, i.e. highlight
-      only the essential details.\n        --- Justification should be no longer than
-      2 sentences.\n        --- Justification should be in English.\n    -- reference_paragraphs:
-      An array of objects for each paragraph based on which the item was extracted
-      for the concept. Each object should include:\n        --- reference_paragraph_id:
-      Mandatory field holding the provided ID of the reference paragraph. Each paragraph
-      ID must match exactly the provided ID for the paragraph (for example, \"P0\",
-      \"P1\", etc.).\n        --- reference_sentence_ids: Mandatory field holding
-      an array of the provided IDs of the sentences within the paragraph, based on
-      which the item was extracted for the concept. Each sentence ID must match exactly
-      the provided ID for the sentence (for example, \"P0-S0\", \"P0-S2\", etc.).\n\n-
-      Types of extracted items:\n    -- Each concept specifies an \"extracted item
-      type\" (found under \"Concept extracted item type\"). Ensure that the value
-      of each of the extracted items for the concept strictly matches that type. Python
-      types are provided (e.g., str for string, int for integer, float for floating-point
-      number, dict for object, etc.).\n    -- Do not introduce any extra fields or
-      modify the specified structure.\n\n- Handling missing or multiple items:\n    --
-      If a concept is not mentioned at all, your output should still contain an entry
-      for that concept with an empty \"extracted_items\" array.\n    -- For concepts
-      that have an \"Available labels:\" section: if none of the predefined labels
-      apply to the content, leave the \"extracted_items\" array empty.\n    -- For
-      concepts that have an \"Available labels:\" section: if multiple labels apply
-      to the same instance or context, include them all in a single extracted item
-      with multiple labels in the \"labels\" array (e.g., {\"labels\": [\"label1\",
-      \"label2\"]}). Only create multiple extracted items if there are genuinely distinct
-      instances or contexts that warrant separate classification.\n    -- For concepts
-      that do not have an \"Available labels:\" section: if multiple items are found
-      for a concept, include each as a separate entry within the \"extracted_items\"
-      array.\n\n- No additional text:\n    -- Do not include any headers, explanations,
-      or text outside of the JSON array.\n    -- Do not wrap your JSON response in
-      backticks or any other formatting characters.\n\n======\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
-      str,\n        \"extracted_items: [\n            {\n                \"value\":
-      ...,\n                \"justification\": str,\n                \"reference_paragraphs\":
-      [\n                    {\n                        \"reference_paragraph_id\":
-      str,\n                        \"reference_sentence_ids\": [\n                            str,\n                            ...\n                        ]\n                    },\n                    ...\n                ]\n            },\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
-      Concept ID: C0\nConcept name: Duration\n\nConcept description:\nContract duration
-      in years\n\nAmount of extracted items: This concept may have zero, one, or multiple
-      extracted items.\n\nConcept extracted item type: int\n````\n\n______\n\n------\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n````\n- Paragraph ID: P0\nAdditional information
-      about the paragraph:\nStyle: Normal\nParagraph sentences:\n    -- Sentence ID:
-      P0-S0\n    Sentence text: Upon termination of this Agreement or upon request,
-      the Receiving Party shall return all materials containing Confidential Information
-      to the Disclosing Party or destroy them, at the Disclosing Party''s discretion.\n    Additional
-      information about the sentence: Style: Normal\n````\n\n````\n- Paragraph ID:
-      P1\nAdditional information about the paragraph:\nStyle: Normal\nParagraph sentences:\n    --
-      Sentence ID: P1-S0\n    Sentence text: All disputes shall be resolved by the
-      courts of the State of California.\n    Additional information about the sentence:
-      Style: Normal\n    -- Sentence ID: P1-S1\n    Sentence text: This Agreement
-      shall remain in effect for a period of five (5) years from the date of signing
-      this agreement.\n    Additional information about the sentence: Style: Normal\n````\n\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '12116'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.86.0
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": 5,\n                \"justification\":
-        \"The agreement duration is explicitly stated as five (5) years from the date
-        of signing.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
-        \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031628, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 101,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2296, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
-        "total_tokens": 2397}}'
-    headers:
-      Content-Length:
-      - '1796'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '1001'
+      - '1286'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5260,7 +5244,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5270,7 +5254,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5282,7 +5266,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -5290,20 +5274,20 @@ interactions:
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [true]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1750031629, "id": "chatcmpl-DUMMY", "model":
-        "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
+        \"C0\",\n        \"extracted_items\": [\n            true\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604031, "id": "chatcmpl-DUMMY",
+        "model": "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 235, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
+        "system_fingerprint": null, "usage": {"completion_tokens": 174, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 2965, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2944}, "total_tokens": 3200}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3139}}'
     headers:
       Content-Length:
-      - '1170'
+      - '1191'
       Content-Type:
       - application/json
       Date:
@@ -5315,7 +5299,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2051'
+      - '3691'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -5648,7 +5632,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5658,7 +5642,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5670,16 +5654,18 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
-        \"A0\",\n        \"paragraph_ids\": [\n            \"P35\",\n            \"P45\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031631, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
+        [\n            \"P35\",\n            \"P45\"\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1750604035, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -5688,11 +5674,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4893, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4864},
-        "total_tokens": 4927}}'
+        4893, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        4927}}'
     headers:
       Content-Length:
-      - '1229'
+      - '1350'
       Content-Type:
       - application/json
       Date:
@@ -5704,7 +5690,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '443'
+      - '416'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -6047,7 +6033,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6057,7 +6043,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6069,7 +6055,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -6086,51 +6072,51 @@ interactions:
         \"P9\",\n        \"justification\": \"This paragraph labels ''Party B'', indicating
         the identification of the other party to the agreement.\"\n      },\n      {\n        \"paragraph_id\":
         \"P10\",\n        \"justification\": \"This paragraph names ''Example.Com
-        LLC'', identifying one of the parties involved.\"\n      },\n      {\n        \"paragraph_id\":
+        LLC'', identifying Party B in the agreement.\"\n      },\n      {\n        \"paragraph_id\":
         \"P11\",\n        \"justification\": \"This paragraph provides the address
-        of one party, contributing to the party''s identification.\"\n      },\n      {\n        \"paragraph_id\":
+        of Party B, contributing to the identification of the party.\"\n      },\n      {\n        \"paragraph_id\":
         \"P12\",\n        \"justification\": \"This paragraph continues the address
-        details for one party, further identifying them.\"\n      },\n      {\n        \"paragraph_id\":
+        details for Party B, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
         \"P13\",\n        \"justification\": \"This paragraph provides the contact
-        name and title for one party, identifying a representative.\"\n      },\n      {\n        \"paragraph_id\":
+        name and title for Party B, adding to the party''s identification.\"\n      },\n      {\n        \"paragraph_id\":
         \"P14\",\n        \"justification\": \"This paragraph provides the phone number
-        for one party, aiding in party identification.\"\n      },\n      {\n        \"paragraph_id\":
+        for Party B, relevant to party contact information.\"\n      },\n      {\n        \"paragraph_id\":
         \"P15\",\n        \"justification\": \"This paragraph provides the email address
-        for one party, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P51\",\n        \"justification\": \"This paragraph indicates the execution
-        of the agreement by the parties, confirming their involvement.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P53\",\n        \"justification\": \"This paragraph provides a signature
-        line for one party, indicating party execution.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P54\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the name of a signing party, identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P55\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the title of a signing party, identifying the party''s role.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P56\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the date of signature, related to party execution.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P57\",\n        \"justification\": \"This paragraph repeats the name ''Example.Com
-        LLC'', identifying the other party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P58\",\n        \"justification\": \"This paragraph provides a signature
-        line for the other party, indicating party execution.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P59\",\n        \"justification\": \"This paragraph provides the name ''Jane
-        Doe'', identifying a signing party.\"\n      },\n      {\n        \"paragraph_id\":
+        for Party B, completing the contact details.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P51\",\n        \"justification\": \"This paragraph refers to the execution
+        of the agreement by the parties, indicating their involvement.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P53\",\n        \"justification\": \"This paragraph is a signature line
+        for one party, indicating party execution.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P54\",\n        \"justification\": \"This paragraph is a placeholder for
+        the name of a signing party, identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P55\",\n        \"justification\": \"This paragraph is a placeholder for
+        the title of a signing party, relevant to party identification.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P56\",\n        \"justification\": \"This paragraph is a placeholder for
+        the date of signature by a party, relevant to party execution.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P57\",\n        \"justification\": \"This paragraph names ''Example.Com
+        LLC'' again, identifying Party B as a signing party.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P58\",\n        \"justification\": \"This paragraph is a signature line
+        for the other party, indicating party execution.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P59\",\n        \"justification\": \"This paragraph names ''Jane Doe'',
+        identifying the signing party.\"\n      },\n      {\n        \"paragraph_id\":
         \"P60\",\n        \"justification\": \"This paragraph provides the title ''Managing
-        Partner'', identifying the role of the signing party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P61\",\n        \"justification\": \"This paragraph provides a placeholder
-        for the date of signature for the other party.\"\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031632, "id": "chatcmpl-DUMMY",
+        Partner'' for the signing party, relevant to party identification.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P61\",\n        \"justification\": \"This paragraph is a placeholder for
+        the date of signature by the second party, relevant to party execution.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604036, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 689,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 706,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         5029, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4992},
-        "total_tokens": 5718}}'
+        "total_tokens": 5735}}'
     headers:
       Content-Length:
-      - '4694'
+      - '4725'
       Content-Type:
       - application/json
       Date:
@@ -6142,7 +6128,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '6078'
+      - '6455'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -6293,7 +6279,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6303,7 +6289,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6315,18 +6301,19 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"five (5) years from
-        the date of signing this agreement\"\n        ]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1750031638, "id": "chatcmpl-DUMMY", "model":
-        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"five (5) years from the date of signing this agreement\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1750604042, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
@@ -6334,11 +6321,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 40,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1648, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        1648, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
         "total_tokens": 1688}}'
     headers:
       Content-Length:
-      - '1261'
+      - '1385'
       Content-Type:
       - application/json
       Date:
@@ -6350,7 +6337,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '443'
+      - '432'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -6539,7 +6526,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6549,7 +6536,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6561,7 +6548,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -6575,10 +6562,10 @@ interactions:
         \"The agreement duration is explicitly stated as five (5) years from the date
         of signing.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031639, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604043, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 101,
@@ -6600,7 +6587,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '996'
+      - '863'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -6738,8 +6725,8 @@ interactions:
       York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail:
       jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties hereto have executed
       this Non-Disclosure Agreement as of the date first above written.\n\nBy: ___________________________\n\nName:
-      _____\n\nTitle: _____\n\nDate: ___________________________\n\nExample.Com LLC\n\nBy:
-      ___________________________\n\nName: Jane Doe\n\nTitle: Managing Partner\n\nDate:
+      _____\n\nTitle: _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName:
+      Jane Doe\n\nTitle: Managing Partner\n\nDate: ___________________________\n\nDate:
       ___________________________\n------\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
@@ -6759,7 +6746,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6769,7 +6756,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6781,7 +6768,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -6790,21 +6777,21 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    },\n    {\n        \"concept_id\":
-        \"C1\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031640, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 59,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        1818, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 1877}}'
+        \"C1\",\n        \"extracted_items\": [\n            \"Example.Com LLC (Party
+        B)\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}], "created":
+        1750604044, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
+        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
+        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
+        {"completion_tokens": 62, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 1818, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        1792}, "total_tokens": 1880}}'
     headers:
       Content-Length:
-      - '1346'
+      - '1356'
       Content-Type:
       - application/json
       Date:
@@ -6816,7 +6803,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '620'
+      - '574'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -7064,7 +7051,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7074,7 +7061,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7086,12 +7073,12 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -7101,20 +7088,20 @@ interactions:
         of Confidential Information\",\n          \"Obligations of Receiving Party\",\n          \"Exclusions
         from Confidential Information\",\n          \"Return of Materials\",\n          \"Liability\",\n          \"No
         License\",\n          \"Governing Law and Disputes\",\n          \"Miscellaneous\"\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031641, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604045, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 129,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3035, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2944},
-        "total_tokens": 3164}}'
+        3035, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3164}}'
     headers:
       Content-Length:
-      - '1817'
+      - '1814'
       Content-Type:
       - application/json
       Date:
@@ -7126,7 +7113,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1365'
+      - '970'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -7382,7 +7369,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7392,7 +7379,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7404,31 +7391,33 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        \"July 16, 2024\",\n                \"justification\": \"The agreement is
-        stated to be made and entered into as of July 16, 2024, indicating the contract
-        start date.\"\n            }\n        ]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750031642, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 74, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 3133, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 3072}, "total_tokens": 3207}}'
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
+        [\n      {\n        \"value\": \"July 16, 2024\",\n        \"justification\":
+        \"The agreement is stated to be made and entered into as of July 16, 2024,
+        indicating the contract start date.\"\n      }\n    ]\n  }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1750604046, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 74,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        3133, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        3207}}'
     headers:
       Content-Length:
-      - '1415'
+      - '1492'
       Content-Type:
       - application/json
       Date:
@@ -7440,7 +7429,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '637'
+      - '774'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -7683,7 +7672,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7693,7 +7682,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7705,7 +7694,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -7714,7 +7703,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [true]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1750031643, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1750604047, "id": "chatcmpl-DUMMY", "model":
         "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -7738,7 +7727,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2422'
+      - '3417'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -8073,7 +8062,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8083,7 +8072,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8095,32 +8084,32 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
         [\n            \"P35\",\n            \"P45\"\n        ]\n    },\n    {\n        \"aspect_id\":
         \"A1\",\n        \"paragraph_ids\": [\n            \"P1\",\n            \"P2\",\n            \"P6\",\n            \"P7\",\n            \"P8\",\n            \"P9\",\n            \"P10\",\n            \"P11\",\n            \"P12\",\n            \"P13\",\n            \"P14\",\n            \"P15\",\n            \"P57\",\n            \"P59\",\n            \"P60\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750031646, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1750604051, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 130,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4919, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
-        "total_tokens": 5049}}'
+        4919, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        5049}}'
     headers:
       Content-Length:
-      - '1765'
+      - '1762'
       Content-Type:
       - application/json
       Date:
@@ -8132,7 +8121,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1254'
+      - '1181'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -8378,7 +8367,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8388,7 +8377,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8400,7 +8389,7 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -8411,7 +8400,7 @@ interactions:
         \"C0\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement
         (NDA)\"\n        ]\n    },\n    {\n        \"concept_id\": \"C1\",\n        \"extracted_items\":
         [\n            \"July 16, 2024\"\n        ]\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750031648, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "assistant"}}], "created": 1750604053, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -8420,10 +8409,10 @@ interactions:
         "fp_178c8d546f", "usage": {"completion_tokens": 67, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 3012, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1536}, "total_tokens": 3079}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3079}}'
     headers:
       Content-Length:
-      - '1359'
+      - '1356'
       Content-Type:
       - application/json
       Date:
@@ -8435,7 +8424,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '762'
+      - '715'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -8678,7 +8667,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.86.0
+      - AsyncAzureOpenAI/Python 1.88.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8688,7 +8677,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.86.0
+      - 1.88.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8700,28 +8689,28 @@ interactions:
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://DUMMY-ENDPOINT/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [true]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1750031649, "id": "chatcmpl-DUMMY", "model":
-        "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
+        null, "message": {"annotations": [], "content": "[\n  {\n    \"concept_id\":
+        \"C0\",\n    \"extracted_items\": [\n      true\n    ]\n  }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1750604054, "id": "chatcmpl-DUMMY",
+        "model": "o4-mini-2025-04-16", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 171, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
+        "system_fingerprint": null, "usage": {"completion_tokens": 238, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 2965, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2944}, "total_tokens": 3136}}'
+        {"audio_tokens": 0, "cached_tokens": 2944}, "total_tokens": 3203}}'
     headers:
       Content-Length:
-      - '1170'
+      - '1172'
       Content-Type:
       - application/json
       Date:
@@ -8733,7 +8722,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2028'
+      - '5305'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

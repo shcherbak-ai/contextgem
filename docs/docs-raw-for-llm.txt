@@ -9875,11 +9875,17 @@ or unstructured file containing written or visual content. Documents
 can be processed to extract information, analyze content, and organize
 data into paragraphs, sentences, aspects, and concepts.
 
-The Document class supports various operations including: - Managing
-raw text and structured paragraphs - Handling embedded or attached
-images - Organizing content into aspects for focused analysis -
-Associating concepts for information extraction - Processing documents
-through pipelines for automated analysis
+The Document class supports various operations including:
+
+* Managing raw text and structured paragraphs
+
+* Handling embedded or attached images
+
+* Organizing content into aspects for focused analysis
+
+* Associating concepts for information extraction
+
+* Processing documents through pipelines for automated analysis
 
 Documents serve as the primary container for content analysis within
 the ContextGem framework, enabling complex document understanding and
@@ -9928,6 +9934,13 @@ class contextgem.public.documents.Document(**data)
         paths, provide either a string path or a Path object pointing
         to the directory containing the SaT model.
 
+      * **pre_segment_sentences** -- Whether to pre-segment sentences
+        during Document initialization. When False (default), sentence
+        segmentation is deferred until sentences are actually needed,
+        improving initialization performance. When True, sentences are
+        segmented immediately during Document creation using the SaT
+        model.
+
    Parameters:
       * **custom_data** (*dict*)
 
@@ -9945,6 +9958,8 @@ class contextgem.public.documents.Document(**data)
         **"sat"**]*)
 
       * **sat_model_id** (*SaTModelId*)
+
+      * **pre_segment_sentences** (*bool*)
 
    Note:
       Normally, you do not need to construct/populate paragraphs
@@ -10007,6 +10022,8 @@ class contextgem.public.documents.Document(**data)
    paragraph_segmentation_mode: Literal['newlines', 'sat']
 
    sat_model_id: SaTModelId
+
+   pre_segment_sentences: bool
 
    property sentences: list[Sentence]
 
@@ -10122,8 +10139,9 @@ class contextgem.public.documents.Document(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -10369,8 +10387,9 @@ class contextgem.public.documents.Document(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -10799,8 +10818,9 @@ class contextgem.public.aspects.Aspect(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -11068,8 +11088,9 @@ class contextgem.public.aspects.Aspect(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -11284,8 +11305,9 @@ class contextgem.public.concepts.StringConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -11354,8 +11376,9 @@ class contextgem.public.concepts.StringConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -11550,8 +11573,9 @@ class contextgem.public.concepts.BooleanConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -11620,8 +11644,9 @@ class contextgem.public.concepts.BooleanConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -11835,8 +11860,9 @@ class contextgem.public.concepts.NumericalConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -11905,8 +11931,9 @@ class contextgem.public.concepts.NumericalConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -12126,8 +12153,9 @@ class contextgem.public.concepts.RatingConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -12196,8 +12224,9 @@ class contextgem.public.concepts.RatingConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -12465,8 +12494,9 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -12535,8 +12565,9 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -12730,8 +12761,9 @@ class contextgem.public.concepts.DateConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -12800,8 +12832,9 @@ class contextgem.public.concepts.DateConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -13028,8 +13061,9 @@ class contextgem.public.concepts.LabelConcept(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -13098,8 +13132,9 @@ class contextgem.public.concepts.LabelConcept(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -13259,8 +13294,9 @@ class contextgem.public.examples.StringExample(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -13329,8 +13365,9 @@ class contextgem.public.examples.StringExample(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -13477,8 +13514,9 @@ class contextgem.public.examples.JsonObjectExample(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -13547,8 +13585,9 @@ class contextgem.public.examples.JsonObjectExample(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -14213,8 +14252,9 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -14283,8 +14323,9 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -15136,8 +15177,9 @@ class contextgem.public.llms.DocumentLLM(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -15221,8 +15263,9 @@ class contextgem.public.llms.DocumentLLM(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -15338,8 +15381,9 @@ class contextgem.public.data_models.LLMPricing(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -15408,8 +15452,9 @@ class contextgem.public.data_models.LLMPricing(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -15521,8 +15566,9 @@ class contextgem.public.data_models.RatingScale(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -15591,8 +15637,9 @@ class contextgem.public.data_models.RatingScale(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -15874,8 +15921,9 @@ class contextgem.public.images.Image(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -15944,8 +15992,9 @@ class contextgem.public.images.Image(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -16101,8 +16150,9 @@ class contextgem.public.paragraphs.Paragraph(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -16171,8 +16221,9 @@ class contextgem.public.paragraphs.Paragraph(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -16323,8 +16374,9 @@ class contextgem.public.sentences.Sentence(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -16393,8 +16445,9 @@ class contextgem.public.sentences.Sentence(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"
@@ -16649,8 +16702,9 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
       *from_json* method.
 
       Parameters:
-         **file_path** (*str*) -- Path to the JSON file to load (must
-         end with '.json').
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
 
       Returns:
          An instance of the class populated with the data from the
@@ -16896,8 +16950,9 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
       file with UTF-8 encoding.
 
       Parameters:
-         **file_path** (*str*) -- Path where the JSON file should be
-         saved (must end with '.json').
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
 
       Return type:
          "None"

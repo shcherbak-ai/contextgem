@@ -112,6 +112,12 @@ To sign the agreement:
    pytest
    ```
 
+   **Optional Memory Profiling**: For performance testing, you can enable memory profiling to analyze memory usage during test execution:
+   ```bash
+   pytest --mem-profile
+   ```
+   Note that memory profiling adds significant overhead and tests will run much slower when profiling is enabled.
+
    Please note that we use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#vcr-cassette-management) section below for details.
 
 4. **Commit your changes** using Conventional Commits format:

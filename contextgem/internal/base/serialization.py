@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from decimal import Decimal
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from aiolimiter import AsyncLimiter
@@ -254,7 +255,7 @@ class _InstanceSerializer(BaseModel):
         """
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
-    def to_disk(self, file_path: str) -> None:
+    def to_disk(self, file_path: str | Path) -> None:
         """
         Saves the serialized instance to a JSON file at the specified path.
 
@@ -262,23 +263,26 @@ class _InstanceSerializer(BaseModel):
         then writes it to disk as a formatted JSON file with UTF-8 encoding.
 
         :param file_path: Path where the JSON file should be saved (must end with '.json').
-        :type file_path: str
+            Can be a string or a Path object.
+        :type file_path: str | Path
         :return: None
         :raises ValueError: If the file path doesn't end with '.json'.
         :raises IOError: If there's an error during the file writing process.
         """
-        if not file_path.lower().endswith(".json"):
+        # Convert to Path for consistent handling
+        path_obj = Path(file_path)
+        if path_obj.suffix.lower() != ".json":
             raise ValueError("The file path must end with '.json'")
         try:
             # Dump the JSON representation
             data = self.to_dict()
-            with open(file_path, "w", encoding="utf-8") as file:
+            with open(path_obj, "w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=2)
         except Exception as e:
-            raise IOError(f"Failed to save the instance to {file_path}: {repr(e)}")
+            raise IOError(f"Failed to save the instance to {path_obj}: {e}")
 
     @classmethod
-    def from_disk(cls, file_path: str) -> Self:
+    def from_disk(cls, file_path: str | Path) -> Self:
         """
         Loads an instance of the class from a JSON file stored on disk.
 
@@ -287,27 +291,30 @@ class _InstanceSerializer(BaseModel):
         method.
 
         :param file_path: Path to the JSON file to load (must end with '.json').
-        :type file_path: str
+            Can be a string or a Path object.
+        :type file_path: str | Path
         :return: An instance of the class populated with the data from the file.
         :rtype: Self
         :raises ValueError: If the file path doesn't end with '.json'.
         :raises OSError: If there's an error reading the file.
         :raises RuntimeError: If deserialization fails.
         """
-        if not file_path.lower().endswith(".json"):
+        # Convert to Path for consistent handling
+        path_obj = Path(file_path)
+        if path_obj.suffix.lower() != ".json":
             raise ValueError("The file path must end with '.json'")
         try:
-            with open(file_path, "r", encoding="utf-8") as file:
+            with open(path_obj, "r", encoding="utf-8") as file:
                 # We do not use json.load() here as we need to transform specific attributes,
                 # which are serialized in the JSON string, by using cls.from_json().
                 json_data = file.read()
             # Deserialize the JSON content into an instance
             return cls.from_json(json_data)
         except OSError as e:
-            raise OSError(f"Failed to read file {file_path}: {str(e)}") from e
+            raise OSError(f"Failed to read file {path_obj}: {e}") from e
         except Exception as e:
             raise RuntimeError(
-                f"Failed to load the instance from {file_path}: {repr(e)}"
+                f"Failed to load the instance from {path_obj}: {e}"
             ) from e
 
     @classmethod

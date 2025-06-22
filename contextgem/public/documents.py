@@ -24,6 +24,7 @@ containing written or visual content. Documents can be processed to extract info
 analyze content, and organize data into paragraphs, sentences, aspects, and concepts.
 
 The Document class supports various operations including:
+
 - Managing raw text and structured paragraphs
 - Handling embedded or attached images
 - Organizing content into aspects for focused analysis
@@ -37,7 +38,6 @@ enabling complex document understanding and information extraction workflows.
 from __future__ import annotations
 
 import itertools
-import warnings
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -53,8 +53,8 @@ from contextgem.internal.typings.aliases import NonEmptyStr, SaTModelId, Self
 from contextgem.internal.utils import (
     _check_paragraphs_match_in_text,
     _check_paragraphs_ordering_in_text,
-    _get_sat_model,
     _is_text_content_empty,
+    _load_sat_model,
     _split_text_into_paragraphs,
 )
 from contextgem.public.aspects import Aspect
@@ -94,6 +94,11 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         for the list of available models. For local paths, provide either a string path or a Path
         object pointing to the directory containing the SaT model.
     :type sat_model_id: SaTModelId
+    :ivar pre_segment_sentences: Whether to pre-segment sentences during Document initialization.
+        When False (default), sentence segmentation is deferred until sentences are actually needed,
+        improving initialization performance. When True, sentences are segmented immediately during
+        Document creation using the SaT model.
+    :type pre_segment_sentences: bool
 
     Note:
         Normally, you do not need to construct/populate paragraphs manually, as they are
@@ -113,6 +118,7 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
     concepts: list[_Concept] = Field(default_factory=list)
     paragraph_segmentation_mode: Literal["newlines", "sat"] = Field(default="newlines")
     sat_model_id: SaTModelId = Field(default="sat-3l-sm")
+    pre_segment_sentences: bool = Field(default=False)
 
     def __setattr__(self, name: str, value: Any) -> None:
         """
@@ -153,7 +159,7 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
     @_post_init_method
     def _post_init(self, __context):
         self._set_text_from_paras()
-        self._segment_paras_and_sents()
+        self._segment_document_text()
 
     def assign_pipeline(
         self,
@@ -186,31 +192,40 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         logger.info("Pipeline assigned to the document")
         return self
 
-    def _segment_paras_and_sents(self) -> None:
+    def _segment_document_text(self) -> None:
         """
-        If no paragraphs are provided, but text exists, extracts paragraphs from text and assigns
-        them on the document. The ``paragraph_segmentation_mode`` value determines whether the paragraphs
+        If no paragraphs are provided, but text exists, segments paragraphs in text,
+        creates Paragraph instances, and assigns them on the document.
+        The ``paragraph_segmentation_mode`` value determines whether the paragraphs
         will be segmented by newlines or using a SaT model.
 
-        If paragraphs exist and some of them do not have extracted sentences, extracts sentences
-        for such paragraphs and assigns them on the paragraphs. Sentences are always segmented
-        using the SaT model.
+        If ``pre_segment_sentences`` is True and paragraphs exist, segments sentences
+        in paragraphs that don't have sentences already assigned.
+        Sentences are segmented using the SaT model.
 
         Does nothing if only images are provided without text or paragraphs.
         """
 
         if self.raw_text and not self.paragraphs:
-            # Extract paragraphs from text, if text provided without paragraphs
+            # Segment paragraphs in text, if text provided without paragraphs
             logger.info(
-                "Text is being split into paragraphs, as no custom paragraphs were provided..."
+                "Text is being segmented into paragraphs, as no Paragraph instances were provided..."
             )
             if self.paragraph_segmentation_mode == "newlines":
                 paragraphs: list[str] = _split_text_into_paragraphs(self.raw_text)
             elif self.paragraph_segmentation_mode == "sat":
-                paragraphs: list[list[str]] = _get_sat_model(self.sat_model_id).split(
-                    self.raw_text,
-                    do_paragraph_segmentation=True,
-                )
+                try:
+                    paragraphs: list[list[str]] = _load_sat_model(
+                        self.sat_model_id
+                    ).split(
+                        self.raw_text,
+                        do_paragraph_segmentation=True,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error splitting text into paragraphs using SaT model: {e}"
+                    )
+                    raise
                 paragraphs = ["".join(i) for i in paragraphs]
             else:
                 raise ValueError(
@@ -232,48 +247,141 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                 remaining_text = remaining_text.replace(paragraph.raw_text, "", 1)
             self.paragraphs = paragraphs
 
-        if self.paragraphs:
-            # Extract sentences for each paragraph without sentences provided
-            if not all(i.sentences for i in self.paragraphs):
-                logger.info("Paragraphs are being split into sentences...")
-                if any(i.sentences for i in self.paragraphs):
-                    warnings.warn(
-                        "Some paragraphs already have sentences. "
-                        "These will be used `as is`."
+        # Only segment sentences during initialization if `pre_segment_sentences` is True
+        if self.pre_segment_sentences:
+            self._segment_sents()
+
+    def _segment_sents(self) -> None:
+        """
+        Segments sentences for paragraphs that don't have sentences already assigned.
+
+        :return: None
+        :raises RuntimeError: If no paragraphs exist or if segmented sentences cannot
+            be matched in the parent paragraph's text
+        :raises Exception: If the SaT model fails to process the paragraphs
+        """
+        if not self.paragraphs:
+            raise RuntimeError("No paragraphs available for sentence segmentation")
+
+        # Only process paragraphs that don't have sentences
+        if all(i.sentences for i in self.paragraphs):
+            return
+
+        logger.info("Paragraphs are being split into sentences...")
+        if any(i.sentences for i in self.paragraphs):
+            logger.info(
+                "Some paragraphs already have sentences. These will be used `as is`."
+            )
+        try:
+            split_sents_for_paras = _load_sat_model(self.sat_model_id).split(
+                [p.raw_text for p in self.paragraphs],
+            )
+        except Exception as e:
+            logger.error(
+                f"Error splitting paragraphs into sentences using SaT model: {e}"
+            )
+            raise
+        for paragraph, sent_group in zip(self.paragraphs, split_sents_for_paras):
+            if not paragraph.sentences:
+                # Filter out empty sents, if any
+                sent_group = [i.strip() for i in sent_group]
+                sent_group = [i for i in sent_group if not _is_text_content_empty(i)]
+                unmatched_sentences = [
+                    i for i in sent_group if i not in paragraph.raw_text
+                ]
+                if unmatched_sentences:
+                    raise ValueError(
+                        f"Not all segmented sentences were matched in paragraph text.\n"
+                        f"Paragraph text: {paragraph.raw_text}\n"
+                        f"Unmatched sentences: {unmatched_sentences}"
                     )
-                try:
-                    split_sents_for_paras = _get_sat_model(self.sat_model_id).split(
-                        [p.raw_text for p in self.paragraphs]
-                    )
-                except Exception as e:
-                    logger.error(f"Error splitting paragraphs into sentences: {e}")
-                    raise
-                for paragraph, sent_group in zip(
-                    self.paragraphs, split_sents_for_paras
-                ):
-                    if not paragraph.sentences:
-                        # Filter out empty sents, if any
-                        sent_group = [i.strip() for i in sent_group]
-                        sent_group = [
-                            i for i in sent_group if not _is_text_content_empty(i)
-                        ]
-                        unmatched_sentences = [
-                            i for i in sent_group if i not in paragraph.raw_text
-                        ]
-                        if unmatched_sentences:
-                            raise ValueError(
-                                f"Not all segmented sentences were matched in paragraph text.\n"
-                                f"Paragraph text: {paragraph.raw_text}\n"
-                                f"Unmatched sentences: {unmatched_sentences}"
-                            )
-                        paragraph.sentences = [
-                            Sentence(
-                                raw_text=i,
-                                custom_data=paragraph.custom_data,
-                                additional_context=paragraph.additional_context,
-                            )  # inherit custom data and additional context from paragraph object
-                            for i in sent_group
-                        ]
+                paragraph.sentences = [
+                    Sentence(
+                        raw_text=i,
+                        custom_data=paragraph.custom_data,
+                        additional_context=paragraph.additional_context,
+                    )  # inherit custom data and additional context from paragraph object
+                    for i in sent_group
+                ]
+
+    def _requires_sentence_segmentation(self) -> bool:
+        """
+        Check if any aspect, sub-aspect, or concept attached to the document requires
+        sentence-level segmentation.
+
+        :return: True if any aspect, sub-aspect, or concept requires sentence-level segmentation,
+            False otherwise
+        :rtype: bool
+        """
+
+        # Sentences are already segmented
+        if self.sentences:
+            return False
+
+        def _check_aspect_requires_sentences(aspect: Aspect) -> bool:
+            """
+            Helper function to recursively check if an aspect or its sub-aspects
+            require sentence segmentation.
+
+            :param aspect: The aspect to check for sentence segmentation requirements
+            :type aspect: Aspect
+            :return: True if the aspect or any of its sub-aspects require
+                sentence segmentation
+            :rtype: bool
+            """
+            # Check if this aspect requires sentence-level segmentation
+            if aspect.reference_depth == "sentences":
+                return True
+
+            # Check if any sub-aspects require sentence-level segmentation
+            for sub_aspect in aspect.aspects:
+                if _check_aspect_requires_sentences(sub_aspect):
+                    return True
+
+            # Check if any concepts in this aspect require sentence-level segmentation
+            for concept in aspect.concepts:
+                if concept.add_references and concept.reference_depth == "sentences":
+                    return True
+
+            return False
+
+        # Check if any aspect or sub-aspect requires sentence-level segmentation
+        aspects_requiring_segmentation = [
+            aspect
+            for aspect in self.aspects
+            if _check_aspect_requires_sentences(aspect)
+        ]
+        # Check document concepts
+        concepts_requiring_segmentation = [
+            concept
+            for concept in self.concepts
+            if concept.add_references and concept.reference_depth == "sentences"
+        ]
+
+        if aspects_requiring_segmentation or concepts_requiring_segmentation:
+            if aspects_requiring_segmentation:
+                aspect_names = [
+                    aspect.name for aspect in aspects_requiring_segmentation
+                ]
+                logger.info(
+                    f"Sentence-level segmentation is requested for aspects "
+                    f"(including sub-aspects, if any): {aspect_names}."
+                )
+
+            if concepts_requiring_segmentation:
+                concept_names = [
+                    concept.name for concept in concepts_requiring_segmentation
+                ]
+                logger.info(
+                    f"Sentence-level segmentation is requested for concepts: {concept_names}."
+                )
+
+            logger.info(
+                "SaT model will be used for sentence segmentation of the document."
+            )
+            return True
+
+        return False
 
     def _set_text_from_paras(self) -> None:
         """

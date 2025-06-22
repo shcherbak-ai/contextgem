@@ -209,6 +209,6 @@ Your engagement is what makes this project grow!
 
 **Copyright:** © 2025 [Shcherbak AI AS](https://shcherbak.ai), an AI engineering company building tools for AI/ML/NLP developers.
 
-**Connect:** [LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) for questions or collaboration ideas.
+**Connect:** [LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) or [X](https://x.com/seshch) for questions or collaboration ideas.
 
 Built with ❤️ in Oslo, Norway.

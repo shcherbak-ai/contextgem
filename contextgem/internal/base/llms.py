@@ -185,6 +185,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         self._check_llm_roles_before_extract_all(document)
 
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
+
         # Extract all aspects in the document
         await self.extract_aspects_from_document_async(
             document=document,
@@ -323,6 +327,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             instance_type="aspect",
             overwrite_existing=overwrite_existing,
         )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
 
         extract_instances_kwargs = {
             "context": document,
@@ -486,6 +494,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             instance_type="concept",
             overwrite_existing=overwrite_existing,
         )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
 
         if not aspect._is_processed:
             if aspect.extracted_items:
@@ -661,6 +673,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             instance_type="concept",
             overwrite_existing=overwrite_existing,
         )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
 
         extract_instances_kwargs = {
             "context": document,
@@ -1192,8 +1208,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             """
             if extracted_item_type == "concept" and isinstance(source, Aspect):
                 if source.extracted_items:
-                    if not source.reference_paragraphs or not all(
-                        p.sentences for p in source.reference_paragraphs
+                    if not source.reference_paragraphs or (
+                        source.reference_depth
+                        == "sentences"  # aspects do not have "add_references" attr
+                        and not all(p.sentences for p in source.reference_paragraphs)
                     ):
                         raise ValueError(
                             f"Aspect `{source.name}` has extracted items but no references"

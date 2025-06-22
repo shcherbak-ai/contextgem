@@ -36,4 +36,4 @@ We aim to respond promptly to all valid reports. Please note that we do not curr
 
 ## Questions?
 
-If you’re unsure whether something is a vulnerability or just a bug, feel free to reach out via the email above before submitting a full report.
+If you're unsure whether something is a vulnerability or just a bug, feel free to reach out via the email above before submitting a full report.
