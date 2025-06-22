@@ -288,6 +288,7 @@ Indices and tables
    optimizations/optimization_speed
    optimizations/optimization_cost
    optimizations/optimization_long_docs
+   optimizations/optimization_small_llm_troubleshooting
 
 .. toctree::
    :maxdepth: 2
