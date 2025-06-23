@@ -446,6 +446,27 @@ class DocumentLLM(_GenericLLMProcessor):
         if self.api_base is None:
             logger.info("API base was not provided. Set `api_base`, if applicable.")
 
+        # Log helpful message for local model providers that may use smaller models
+        local_providers = [
+            "ollama/",
+            "ollama_chat/",
+            "lm_studio/",
+        ]
+        if any(self.model.startswith(provider) for provider in local_providers):
+            logger.info(
+                "Using local model provider. If you experience issues like JSON validation errors "
+                "with smaller models, see our troubleshooting guide: "
+                "https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html"
+            )
+
+        # Recommend `ollama_chat` prefix for better responses for Ollama models
+        if self.model.startswith("ollama/"):
+            logger.info(
+                "For better responses with Ollama models, consider using "
+                "'ollama_chat/' prefix instead of 'ollama/', as recommended by LiteLLM: "
+                "https://docs.litellm.ai/docs/providers/ollama"
+            )
+
     @property
     def async_limiter(self) -> AsyncLimiter:
         return self._async_limiter

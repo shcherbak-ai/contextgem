@@ -887,9 +887,12 @@ class TestAll(TestUtils):
         """
         Tests for initialization of and getting a response from local LLMs,
         e.g. models run on Ollama local server.
+
+        Note that using `ollama_chat/` (preferred in live mode) instead of
+        `ollama/` prefix for Ollama models does not work with VCR.
         """
         document = Document(
-            raw_text="The title of this contract is Non-Disclosure Agreement.",
+            raw_text=get_test_document_text()[:1000],
         )
         concept = StringConcept(
             name="Contract title", description="The title of the contract."
@@ -910,13 +913,13 @@ class TestAll(TestUtils):
             self.log_extracted_items_for_instance(extracted_concepts[0])
 
         # Ollama
-        # MoE LLM
-        llm_moe_ollama = DocumentLLM(
-            model="ollama/deepseek-v2:16b",
+        # Non-reasoning LLM
+        llm_non_reasoning_ollama = DocumentLLM(
+            model="ollama/mistral-small:24b",
             api_base="http://localhost:11434",
             seed=123,
         )
-        extract_with_local_llm(llm_moe_ollama)
+        extract_with_local_llm(llm_non_reasoning_ollama)
         # Reasoning (CoT-capable) LLM
         llm_reasoning_ollama = DocumentLLM(
             model="ollama/deepseek-r1:32b",
@@ -926,13 +929,14 @@ class TestAll(TestUtils):
         extract_with_local_llm(llm_reasoning_ollama)
 
         # LM Studio
-        llm_lm_studio = DocumentLLM(
-            model="lm_studio/meta-llama-3.1-8b-instruct",
+        # Non-reasoning LLM
+        llm_non_reasoning_lm_studio = DocumentLLM(
+            model="lm_studio/mistralai/mistral-small-3.2",
             api_base="http://localhost:1234/v1",
             api_key="random-key",  # required for LM Studio API
             seed=123,
         )
-        extract_with_local_llm(llm_lm_studio)
+        extract_with_local_llm(llm_non_reasoning_lm_studio)
 
         check_locals_memory_usage(locals(), test_name="test_local_llms")
 
@@ -6321,7 +6325,6 @@ class TestAll(TestUtils):
         """
         validate_existing_cassettes_urls_security()
 
-    @memory_profile_and_capture
     def test_total_cost_and_reset(self):
         """
         Runs last and outputs total cost details for the test run, as well

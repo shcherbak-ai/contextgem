@@ -1,6 +1,6 @@
 from contextgem import DocumentLLM
 
 local_llm = DocumentLLM(
-    model="ollama/llama3.1:8b",
+    model="ollama_chat/llama3.3:70b",
     api_base="http://localhost:11434",  # Default Ollama endpoint
 )

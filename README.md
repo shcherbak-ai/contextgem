@@ -329,6 +329,8 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. o4-mini) and non-reasoning models (e.g. gpt-4.1)
 - **Simple API**: Unified interface for all LLMs with easy provider switching
 
+> **💡 Model Selection Note:** For reliable structured extraction, we recommend using models with performance equivalent to or exceeding `gpt-4o-mini`. Smaller models (such as 8B parameter models) may struggle with ContextGem's detailed extraction instructions. If you encounter issues with smaller models, see our [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html) for potential solutions.
+
 📖 Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html), how to [configure LLMs](https://contextgem.dev/llms/llm_config.html), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods.html) in the documentation.
 
 ## ⚡ Optimizations
@@ -340,6 +342,7 @@ ContextGem documentation offers guidance on optimization strategies to maximize 
 - [Optimizing for Cost](https://contextgem.dev/optimizations/optimization_cost.html)
 - [Dealing with Long Documents](https://contextgem.dev/optimizations/optimization_long_docs.html)
 - [Choosing the Right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm.html)
+- [Troubleshooting Issues with Small Models](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html)
 
 
 ## 💾 Serializing results

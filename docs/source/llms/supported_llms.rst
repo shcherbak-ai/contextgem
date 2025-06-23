@@ -25,8 +25,8 @@ ContextGem supports all LLM providers and models available through the LiteLLM i
 
 ContextGem works with both types of LLM architectures:
 
-* Reasoning/CoT-capable models (e.g., ``openai/o4-mini``, ``ollama/deepseek-r1:32b``)
-* Non-reasoning models (e.g., ``openai/gpt-4.1``, ``ollama/llama3.1:8b``)
+* Reasoning/CoT-capable models (e.g., ``openai/o4-mini``, ``ollama_chat/deepseek-r1:32b``)
+* Non-reasoning models (e.g., ``openai/gpt-4.1``, ``ollama_chat/llama3.3:70b``)
 
 For a complete list of supported providers, see the `LiteLLM Providers documentation <https://docs.litellm.ai/docs/providers>`_.
 

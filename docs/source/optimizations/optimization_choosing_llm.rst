@@ -37,6 +37,9 @@ Since ContextGem specializes in deep single-document analysis, models with large
    * - A **smaller/distilled non-reasoning model** capable of identifying relevant document sections (e.g., ``gpt-4o-mini``). This extraction resembles multi-label classification. Complex aspects may occasionally require larger or reasoning models.
      - For *basic concepts* (e.g., titles, payment amounts, dates), the same **smaller/distilled non-reasoning model** is often sufficient (e.g., ``gpt-4o-mini``). For *complex concepts* requiring nuanced understanding within specific aspects or the entire document, consider a **larger non-reasoning model** (e.g., ``gpt-4o``). For concepts requiring advanced understanding or complex reasoning (e.g., logical deductions, evaluation), a **reasoning model** like ``o3-mini`` may be appropriate.
 
+.. seealso::
+   **Small Model Issues?** If you're experiencing issues with smaller models (e.g. 8B parameter models), such as JSON validation errors or inconsistent results, see our :doc:`troubleshooting guide <optimization_small_llm_troubleshooting>` for specific solutions and workarounds.
+
 
 .. _llm-roles-label:
 

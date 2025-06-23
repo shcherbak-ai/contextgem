@@ -1388,7 +1388,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         relevant_aspect = instances_enumerated[
                             int(aspect_dict["aspect_id"].lstrip("A"))
                         ]
-                    except KeyError:
+                    except (KeyError, ValueError):
                         logger.error("Aspect ID returned by LLM is invalid")
                         return None, all_usage_data
                     self._check_instances_already_processed(
@@ -1404,10 +1404,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     if add_justifications or reference_depth == "sentences":
                         # References are automatically included for aspects, as paragraphs/sents'
                         # texts are the values of extracted items for the aspects
-                        for para_dict in aspect_dict["paragraphs"]:
-                            para_dict["paragraph_id"] = int(
-                                para_dict["paragraph_id"].lstrip("P")
-                            )
+                        try:
+                            for para_dict in aspect_dict["paragraphs"]:
+                                para_dict["paragraph_id"] = int(
+                                    para_dict["paragraph_id"].lstrip("P")
+                                )
+                        except ValueError:
+                            logger.error("Paragraph ID returned by LLM is invalid")
+                            return None, all_usage_data
                         for para_dict in sorted(
                             aspect_dict["paragraphs"],
                             key=lambda x: x["paragraph_id"],
@@ -1477,10 +1481,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         # Reference depth - paragraph
                         # Each extracted item will have the reference paragraph text as value,
                         # reference paragraph in the list of reference paragraphs, and no reference sentences
-                        aspect_dict["paragraph_ids"] = [
-                            int(para_id.lstrip("P"))
-                            for para_id in aspect_dict["paragraph_ids"]
-                        ]
+                        try:
+                            aspect_dict["paragraph_ids"] = [
+                                int(para_id.lstrip("P"))
+                                for para_id in aspect_dict["paragraph_ids"]
+                            ]
+                        except ValueError:
+                            logger.error("Paragraph ID returned by LLM is invalid")
+                            return None, all_usage_data
                         for para_id in sorted(aspect_dict["paragraph_ids"]):
                             try:
                                 ref_para = paragraphs_enumerated[para_id]
@@ -1503,7 +1511,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         relevant_concept = instances_enumerated[
                             int(concept_dict["concept_id"].lstrip("C"))
                         ]
-                    except KeyError:
+                    except (KeyError, ValueError):
                         logger.error(f"Concept ID returned by LLM is invalid")
                         return None, all_usage_data
                     self._check_instances_already_processed(
@@ -1549,15 +1557,29 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                         "reference_paragraphs"
                                     ]
                                     for para_dict in reference_paragraphs_list:
-                                        para_dict["reference_paragraph_id"] = int(
-                                            para_dict["reference_paragraph_id"].lstrip(
-                                                "P"
+                                        try:
+                                            para_dict["reference_paragraph_id"] = int(
+                                                para_dict[
+                                                    "reference_paragraph_id"
+                                                ].lstrip("P")
                                             )
-                                        )
-                                        para_dict["reference_sentence_ids"] = [
-                                            int(i.split("-S")[-1])
-                                            for i in para_dict["reference_sentence_ids"]
-                                        ]
+                                        except ValueError:
+                                            logger.error(
+                                                f"Reference paragraph ID returned by LLM is invalid"
+                                            )
+                                            return None, all_usage_data
+                                        try:
+                                            para_dict["reference_sentence_ids"] = [
+                                                int(i.split("-S")[-1])
+                                                for i in para_dict[
+                                                    "reference_sentence_ids"
+                                                ]
+                                            ]
+                                        except ValueError:
+                                            logger.error(
+                                                f"Reference sentence ID returned by LLM is invalid"
+                                            )
+                                            return None, all_usage_data
                                     reference_paragraphs_list = sorted(
                                         reference_paragraphs_list,
                                         key=lambda x: x["reference_paragraph_id"],
@@ -1566,12 +1588,20 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 # Each extracted item will have reference paragraph in the list of
                                 # reference paragraphs, and no reference sentences
                                 else:
-                                    reference_paragraphs_list = sorted(
-                                        [
-                                            int(para_id.lstrip("P"))
-                                            for para_id in i["reference_paragraph_ids"]
-                                        ]
-                                    )
+                                    try:
+                                        reference_paragraphs_list = sorted(
+                                            [
+                                                int(para_id.lstrip("P"))
+                                                for para_id in i[
+                                                    "reference_paragraph_ids"
+                                                ]
+                                            ]
+                                        )
+                                    except ValueError:
+                                        logger.error(
+                                            f"Reference paragraph ID returned by LLM is invalid"
+                                        )
+                                        return None, all_usage_data
                                 # Reference depth - paragraph or sentence
                                 for para_obj_or_id in reference_paragraphs_list:
                                     try:
