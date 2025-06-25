@@ -971,6 +971,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         "reference_depth": reference_depth,
                         "output_language": llm.output_language,
                     }
+                    if any(p.additional_context for p in paragraphs_chunk) or any(
+                        s.additional_context
+                        for p in paragraphs_chunk
+                        for s in p.sentences
+                    ):
+                        # Add guidance that the paragraphs or sentences have additional context,
+                        # such as formatting, list context, or table position.
+                        prompt_kwargs["additional_context_for_paras_or_sents"] = True
                     if all(p._md_text for p in paragraphs_chunk):
                         # Add guidance that the paragraphs are in markdown format, e.g. when document
                         # was converted from DOCX using DocxConverter in markdown mode.
@@ -994,6 +1002,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     if add_references:
                         # List of document/aspect paragraphs used for concept extraction with references
                         prompt_kwargs["paragraphs"] = paragraphs_chunk
+                        if any(p.additional_context for p in paragraphs_chunk) or any(
+                            s.additional_context
+                            for p in paragraphs_chunk
+                            for s in p.sentences
+                        ):
+                            # Add guidance that the paragraphs or sentences have additional context,
+                            # such as formatting, list context, or table position.
+                            prompt_kwargs["additional_context_for_paras_or_sents"] = (
+                                True
+                            )
                         if all(p._md_text for p in paragraphs_chunk):
                             # Add guidance that the paragraphs are in markdown format, e.g. when document
                             # was converted from DOCX using DocxConverter in markdown mode.

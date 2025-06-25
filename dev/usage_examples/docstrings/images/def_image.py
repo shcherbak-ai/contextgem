@@ -7,7 +7,7 @@ current_file = Path(__file__).resolve()
 root_path = current_file.parents[4]
 
 # Using the utility function to convert an image file to base64
-image_path = root_path / "tests" / "invoices" / "invoice.jpg"
+image_path = root_path / "tests" / "images" / "invoices" / "invoice.jpg"
 base64_data = image_to_base64(image_path)
 
 # Create an image instance with the base64-encoded data
@@ -21,7 +21,9 @@ png_image = Image(
 # Using a different supported image format
 webp_image = Image(
     mime_type="image/webp",
-    base64_data=image_to_base64(root_path / "tests" / "invoices" / "invoice.webp"),
+    base64_data=image_to_base64(
+        root_path / "tests" / "images" / "invoices" / "invoice.webp"
+    ),
 )
 
 # Attaching an image to a document

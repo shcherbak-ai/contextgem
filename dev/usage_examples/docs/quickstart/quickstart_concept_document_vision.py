@@ -8,7 +8,7 @@ from contextgem import Document, DocumentLLM, Image, NumericalConcept, image_to_
 # Path adapted for testing
 current_file = Path(__file__).resolve()
 root_path = current_file.parents[4]
-image_path = root_path / "tests" / "invoices" / "invoice.jpg"
+image_path = root_path / "tests" / "images" / "invoices" / "invoice.jpg"
 
 # Create an image instance
 doc_image = Image(mime_type="image/jpg", base64_data=image_to_base64(image_path))
