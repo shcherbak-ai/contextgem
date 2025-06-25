@@ -182,6 +182,7 @@ def get_project_root_path() -> Path:
 
 def get_test_img(
     img_filename: str,
+    img_folder: str,
 ) -> Image:
     """
     Retrieves a test image for a given image filename, constructs a `Image`
@@ -190,6 +191,8 @@ def get_test_img(
 
     :param img_filename: The filename of the image to be retrieved.
     :type img_filename: str
+    :param img_folder: The folder under `tests/images/` containing the image.
+    :type img_folder: str
     :return: A `Image` object containing the base64-encoded image data and
         the MIME type corresponding to the given file's extension.
     :rtype: Image
@@ -205,7 +208,7 @@ def get_test_img(
     else:
         raise NotImplementedError("Unsupported image type")
     project_root = get_project_root_path()
-    test_img_path = project_root / "tests" / "invoices" / img_filename
+    test_img_path = project_root / "tests" / "images" / img_folder / img_filename
     test_image = Image(mime_type=mime_type, base64_data=image_to_base64(test_img_path))
     return test_image
 

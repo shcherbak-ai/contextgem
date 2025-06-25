@@ -17,16 +17,29 @@ Your task is to:
     {% if add_references %}
         {% if reference_depth == "sentences" %}
 1. Read through the provided document paragraphs and their sentences.
-    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), optionally followed by additional information about the paragraph, which may be helpful during your analysis.
-    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence and, optionally, additional information about the sentence, which may be helpful during your analysis.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.).
+    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence.
+            {% if additional_context_for_paras_or_sents %}
+    - When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" and "Additional information about the sentence:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
+        -- Understand document hierarchy (e.g., headings indicate section boundaries)
+        -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
+        -- Assess content significance (e.g., styled text may indicate importance)
+            {% endif %}
         {% else %}
 1. Read through the document paragraphs provided.
-    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph and, optionally, additional information about the paragraph, which may be helpful during your analysis.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph.
+            {% if additional_context_for_paras_or_sents %}
+    - When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
+        -- Understand document hierarchy (e.g., headings indicate section boundaries)
+        -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
+        -- Assess content significance (e.g., styled text may indicate importance)
+            {% endif %}
             {% if is_markdown %}
     - Note that paragraphs are provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
             {% endif %}
         {% endif %}
     - Note that paragraphs are listed in the same order they appear in the original document.
+    - You may be working with document fragments rather than complete documents. Focus on extracting information from the available content without making assumptions about missing parts.
 2. Identify whether each concept in the concepts list is addressed within the document paragraphs.
     {% else %}
 1. Read through the document text provided.
@@ -63,29 +76,35 @@ Provide your answer in only the following answer format (do not include backtick
 {% if add_references %}
     {% if add_justifications %}
         {% if reference_depth == "sentences" %}
-    -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraphs". If the concept is not found or there are no items to extract, leave the array empty ([]).
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraphs". If the concept is not addressed or there are no items to extract, leave the array empty ([]).
+        --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
         --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         --- The value of "reference_paragraphs" must be an array of objects with mandatory fields "reference_paragraph_id", which holds the provided ID of the reference paragraph, and "reference_sentence_ids", which holds the provided IDs of the reference sentences within the paragraph. Note that not every sentence in the paragraph necessarily serves as a relevant reference.
         {% else %}
-    -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraph_ids". If the concept is not found or there are no items to extract, leave the array empty ([]).
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraph_ids". If the concept is not addressed or there are no items to extract, leave the array empty ([]).
+        --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
         --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         {% endif %}
     {% else %}
         {% if reference_depth == "sentences" %}
-    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraphs". If the concept is not found or there are no items to extract, leave the array empty ([]).
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraphs". If the concept is not addressed or there are no items to extract, leave the array empty ([]).
+        --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
         --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         --- The value of "reference_paragraphs" must be an array of objects with mandatory fields "reference_paragraph_id", which holds the provided ID of the reference paragraph, and "reference_sentence_ids", which holds the provided IDs of the reference sentences within the paragraph. Note that not every sentence in the paragraph necessarily serves as a relevant reference.
         {% else %}
-    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraph_ids". If the concept is not found or there are no items to extract, leave the array empty ([]).
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraph_ids". If the concept is not addressed or there are no items to extract, leave the array empty ([]).
+        --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
         --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         {% endif %}
     {% endif %}
 {% else %}
     {% if add_justifications %}
-    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "justification". If the concept is not found or there are no items to extract, leave the array empty ([]).
+    -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "justification". If the concept is not addressed or there are no items to extract, leave the array empty ([]).
+        --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
         --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
     {% else %}
-    -- The value of "extracted_items" must be an array. If the concept is not found or there are no items to extract, leave the array empty ([]).
+    -- The value of "extracted_items" must be an array. If the concept is not addressed or there are no items to extract, leave the array empty ([]).
+        --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
         --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item, even if there is only one, must be part of the "extracted_items" array.
     {% endif %}
 {% endif %}

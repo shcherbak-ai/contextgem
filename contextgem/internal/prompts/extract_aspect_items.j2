@@ -6,16 +6,29 @@ Below you will find a list of consecutively ordered paragraphs from a document a
 
 {% if reference_depth == "sentences" %}
 2. Examine each paragraph and its sentences
-- Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), optionally followed by additional information about the paragraph, which may be helpful during your analysis.
-- Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence and, optionally, additional information about the sentence, which may be helpful during your analysis.
+- Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.).
+- Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence.
+    {% if additional_context_for_paras_or_sents %}
+- When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" and "Additional information about the sentence:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
+    -- Understand document hierarchy (e.g., headings indicate section boundaries)
+    -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
+    -- Assess content significance (e.g., styled text may indicate importance)
+    {% endif %}
 {% else %}
 2. Examine each paragraph
-- Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph and, optionally, additional information about the paragraph, which may be helpful during your analysis.
+- Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph.
+    {% if additional_context_for_paras_or_sents %}
+- When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
+    -- Understand document hierarchy (e.g., headings indicate section boundaries)
+    -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
+    -- Assess content significance (e.g., styled text may indicate importance)
+    {% endif %}
     {% if is_markdown %}
 - Note that paragraphs are provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
     {% endif %}
 {% endif %}
 - Note that paragraphs are listed in the same order they appear in the original document; therefore, context from surrounding paragraphs may influence whether a particular paragraph is relevant to an aspect.
+- You may be working with document fragments rather than complete documents. Focus on extracting information from the available content without making assumptions about missing parts.
 
 {% if reference_depth == "sentences" %}
 3. Map paragraphs and their sentences to aspects

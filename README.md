@@ -391,14 +391,14 @@ This project is automatically scanned for security vulnerabilities using multipl
 
 ContextGem relies on these excellent open-source packages:
 
-- [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
+- [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
-- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
-- [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
+- [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
+- [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
 - [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
-- [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
+- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
 
 
 ## 🌱 Support the project

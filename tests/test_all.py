@@ -325,10 +325,13 @@ class TestAll(TestUtils):
         )
 
     # Images
-    test_img_png = get_test_img("invoice.png")
-    test_img_jpg = get_test_img("invoice.jpg")
-    test_img_jpg_2 = get_test_img("invoice2.jpg")
-    test_img_webp = get_test_img("invoice.webp")
+    # Invoices
+    test_img_png_invoice = get_test_img("invoice.png", "invoices")
+    test_img_jpg_invoice = get_test_img("invoice.jpg", "invoices")
+    test_img_jpg_2_invoice = get_test_img("invoice2.jpg", "invoices")
+    test_img_webp_invoice = get_test_img("invoice.webp", "invoices")
+    # Other
+    test_img_png_apt_plan = get_test_img("apt_plan.png", "other")
 
     # Memory profiling
     memory_baseline: float = 0.0  # baseline memory usage
@@ -1210,7 +1213,9 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_update_default_prompt")
 
-    @pytest.mark.parametrize("image", [test_img_png, test_img_jpg, test_img_webp])
+    @pytest.mark.parametrize(
+        "image", [test_img_png_invoice, test_img_jpg_invoice, test_img_webp_invoice]
+    )
     @memory_profile_and_capture
     def test_init_and_attach_image(self, image: Image):
         """
@@ -3218,7 +3223,7 @@ class TestAll(TestUtils):
                 ]  # cannot be set once populated
             Document(
                 images=[
-                    self.test_img_png,
+                    self.test_img_png_invoice,
                 ]
             )
             with pytest.raises(ValueError):
@@ -3281,7 +3286,7 @@ class TestAll(TestUtils):
                     Paragraph(raw_text="Random text 2"),
                 ],
                 images=[
-                    self.test_img_png,
+                    self.test_img_png_invoice,
                 ],
             )
             # List field items' unique IDs
@@ -3291,8 +3296,8 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError):
                 Document(
                     images=[
-                        self.test_img_png,
-                        self.test_img_png,
+                        self.test_img_png_invoice,
+                        self.test_img_png_invoice,
                     ]
                 )
             # Test with non-empty text but containing only control chars
@@ -4733,8 +4738,8 @@ class TestAll(TestUtils):
             ),
         ]
         document_images = [
-            self.test_img_jpg,
-            self.test_img_jpg_2,
+            self.test_img_jpg_invoice,
+            self.test_img_jpg_2_invoice,
         ]
         document_concepts = [
             DateConcept(
@@ -5061,21 +5066,15 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize(
-        "image",
-        [
-            test_img_png,
-            # test_img_jpg,
-            # test_img_webp
-        ],
-    )
     @memory_profile_and_capture
-    def test_vision(self, image: Image):
+    def test_vision(self):
         """
         Tests for data extraction from document images using vision API.
         """
         with pytest.raises(ValueError):
             Document(images=[])
+
+        # Invoice
         document_concepts = [
             StringConcept(
                 name="Invoice number",
@@ -5120,7 +5119,9 @@ class TestAll(TestUtils):
                 add_justifications=True,
             ),
         ]
-        document = Document(images=[image], concepts=document_concepts)
+        document = Document(
+            images=[self.test_img_png_invoice], concepts=document_concepts
+        )
 
         self.config_llm_async_limiter_for_mock_responses(self.llm_group)
 
@@ -5136,6 +5137,56 @@ class TestAll(TestUtils):
             original_container=document_concepts,
             assigned_container=document.concepts,
             assigned_instance_class=_Concept,
+        )
+
+        # Other
+        document_concepts = [
+            NumericalConcept(
+                name="Number of bedrooms",
+                description="Number of bedrooms in the floor plan",
+                llm_role="reasoner_vision",
+                numeric_type="int",
+                add_justifications=True,
+            ),
+            NumericalConcept(
+                name="Number of balconies",
+                description="Number of balconies in the floor plan",
+                llm_role="reasoner_vision",
+                numeric_type="int",
+                add_justifications=True,
+            ),
+            StringConcept(
+                name="Room names",
+                description="Names of the rooms in the floor plan",
+                llm_role="extractor_vision",
+            ),
+        ]
+        document = Document(
+            images=[self.test_img_png_apt_plan], concepts=document_concepts
+        )
+
+        self.compare_with_concurrent_execution(
+            llm=self.llm_group,
+            expected_n_calls_no_concurrency=2,
+            expected_n_calls_with_concurrency=3,
+            expected_n_calls_1_item_per_call=3,
+            func=self.llm_group.extract_concepts_from_document,
+            func_kwargs={
+                "document": document,
+            },
+            original_container=document_concepts,
+            assigned_container=document.concepts,
+            assigned_instance_class=_Concept,
+        )
+
+        self.log_extracted_items_for_instance(
+            document.get_concept_by_name("Number of bedrooms")
+        )
+        self.log_extracted_items_for_instance(
+            document.get_concept_by_name("Number of balconies")
+        )
+        self.log_extracted_items_for_instance(
+            document.get_concept_by_name("Room names")
         )
 
         # Check usage tokens
@@ -5166,11 +5217,12 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError):
                 model.chat(prompt="Test", images=[1])
             with pytest.raises(TypeError):
-                model.chat(images=self.test_img_png)
+                model.chat(images=self.test_img_png_invoice)
             if model == self.llm_extractor_vision:
                 # Check with text + image
                 model.chat(
-                    "What's the type of this document?", images=[self.test_img_png]
+                    "What's the type of this document?",
+                    images=[self.test_img_png_invoice],
                 )
                 response = model.get_usage()[0].usage.calls[-1].response.lower()
                 assert "invoice" in response
@@ -5189,7 +5241,7 @@ class TestAll(TestUtils):
         text_only_model = DocumentLLM(model="openai/gpt-3.5-turbo")
         with pytest.raises(ValueError, match="vision"):
             text_only_model.chat(
-                "What's the type of this document?", images=[self.test_img_png]
+                "What's the type of this document?", images=[self.test_img_png_invoice]
             )
 
         check_locals_memory_usage(locals(), test_name="test_chat")
@@ -5949,8 +6001,33 @@ class TestAll(TestUtils):
                 if apply_markdown:
                     assert "is_markdown" in text_call_obj.prompt_kwargs
                     assert text_call_obj.prompt_kwargs["is_markdown"]
+                    if not (
+                        text_call_obj.prompt_kwargs.get("reference_depth")
+                        == "sentences"  # md is not available for sentences
+                    ):
+                        assert "markdown format" in text_call_obj.prompt
+                    if text_call_obj.prompt_kwargs.get("paragraphs"):
+                        assert (
+                            "additional_context_for_paras_or_sents"
+                            in text_call_obj.prompt_kwargs
+                        )
+                        assert text_call_obj.prompt_kwargs[
+                            "additional_context_for_paras_or_sents"
+                        ]
+                        assert "additional context information" in text_call_obj.prompt
                 else:
                     assert "is_markdown" not in text_call_obj.prompt_kwargs
+                    assert "markdown format" not in text_call_obj.prompt
+                    if text_call_obj.prompt_kwargs.get("paragraphs"):
+                        # Additional context is still provided even when markdown is disabled
+                        assert (
+                            "additional_context_for_paras_or_sents"
+                            in text_call_obj.prompt_kwargs
+                        )
+                        assert text_call_obj.prompt_kwargs[
+                            "additional_context_for_paras_or_sents"
+                        ]
+                        assert "additional context information" in text_call_obj.prompt
 
                 # Check the text of specific param in the prompt
                 if prompt_kwargs_key == "text":
