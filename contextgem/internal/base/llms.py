@@ -53,6 +53,7 @@ from contextgem.internal.data_models import (
     _LLMUsageOutputContainer,
 )
 from contextgem.internal.decorators import _timer_decorator
+from contextgem.internal.exceptions import LLMExtractionError
 from contextgem.internal.items import _StringItem
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import (
@@ -97,6 +98,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> Document:
         """
         Extracts all aspects and concepts from a document and its aspects.
@@ -127,6 +129,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
             Defaults to 0 (all images). Relevant only for document-level concepts.
         :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
         :rtype: Document
         """
@@ -138,6 +144,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 use_concurrency=use_concurrency,
                 max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                 max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
             )
         )
 
@@ -150,6 +157,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> Document:
         """
         Asynchronously extracts all aspects and concepts from a document and its aspects.
@@ -179,6 +187,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
             Defaults to 0 (all images). Relevant only for document-level concepts.
         :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
         :rtype: Document
         """
@@ -196,6 +208,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             max_items_per_call=max_items_per_call,
             use_concurrency=use_concurrency,
             max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+            raise_exception_on_extraction_error=raise_exception_on_extraction_error,
         )
 
         extract_concepts_kwargs = {
@@ -204,6 +217,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "max_items_per_call": max_items_per_call,
             "use_concurrency": use_concurrency,
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
         aspect_kwargs_list = [
             {**extract_concepts_kwargs, "aspect": i} for i in document.aspects
@@ -236,6 +250,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> list[Aspect]:
         """
         Extracts aspects from the provided document using predefined LLMs.
@@ -265,6 +280,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
             Defaults to 0 (all paragraphs).
         :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Aspect objects with extracted items.
         :rtype: list[Aspect]
         """
@@ -276,6 +295,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 max_items_per_call=max_items_per_call,
                 use_concurrency=use_concurrency,
                 max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
             )
         )
 
@@ -288,6 +308,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> list[Aspect]:
         """
         Extracts aspects from the provided document using predefined LLMs asynchronously.
@@ -316,6 +337,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
             Defaults to 0 (all paragraphs).
         :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Aspect objects with extracted items.
         :rtype: list[Aspect]
         """
@@ -341,6 +366,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "max_items_per_call": max_items_per_call,
             "use_concurrency": use_concurrency,
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
 
         if self.is_group:
@@ -362,6 +388,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "max_items_per_call": max_items_per_call,
             "use_concurrency": use_concurrency,
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
         for aspect in document_aspects:
             if aspect.aspects:
@@ -398,6 +425,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
         Extracts concepts associated with a given aspect in a document.
@@ -429,6 +457,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
             single LLM prompt. Defaults to 0 (all paragraphs).
         :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed concept objects.
         :rtype: list[_Concept]
         """
@@ -441,6 +473,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 max_items_per_call=max_items_per_call,
                 use_concurrency=use_concurrency,
                 max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
             )
         )
 
@@ -454,6 +487,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
         Asynchronously extracts concepts from a specified aspect using LLMs.
@@ -483,6 +517,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
             single LLM prompt. Defaults to 0 (all paragraphs).
         :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed concept objects.
         :rtype: list[_Concept]
         """
@@ -518,6 +556,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "max_items_per_call": max_items_per_call,
             "use_concurrency": use_concurrency,
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
 
         if self.is_group:
@@ -537,6 +576,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "max_items_per_call": max_items_per_call,
             "use_concurrency": use_concurrency,
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
         if aspect.aspects:
             # Validate proper nesting level of sub-aspects
@@ -577,6 +617,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
         Extracts concepts from the provided document using predefined LLMs.
@@ -606,6 +647,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
             Defaults to 0 (all images).
         :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Concept objects with extracted items.
         :rtype: list[_Concept]
         """
@@ -618,6 +663,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 use_concurrency=use_concurrency,
                 max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                 max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
             )
         )
 
@@ -631,6 +677,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
         Extracts concepts from the provided document using predefined LLMs asynchronously.
@@ -662,6 +709,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
             Defaults to 0 (all images).
         :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Concept objects with extracted items.
         :rtype: list[_Concept]
         """
@@ -688,6 +739,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "use_concurrency": use_concurrency,
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
             "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
 
         if self.is_group:
@@ -1130,6 +1182,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         num_retries_failed_request: int = 3,
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
+        raise_exception_on_extraction_error: bool = True,
     ) -> tuple[list[Aspect] | list[_Concept] | None, _LLMUsage]:
         """
         Extracts items from either aspects or concepts using a specified LLM.
@@ -1176,6 +1229,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             async LLM API requests, when concurrency is enabled for certain tasks. If not provided,
             such requests will be sent synchronously.
         :type async_limiter: AsyncLimiter | None
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
 
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if LLM processing fails
@@ -1382,6 +1439,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
                 async_limiter=async_limiter,
+                raise_exception_on_llm_api_error=raise_exception_on_extraction_error,
             )
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
             extracted_data = _validate_parsed_llm_output(
@@ -1667,9 +1725,15 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                             reference_sentences = concept_extracted_item_kwargs.pop(
                                 "reference_sentences", []
                             )
-                            extracted_item = relevant_concept._item_class(
-                                **concept_extracted_item_kwargs
-                            )
+                            try:
+                                extracted_item = relevant_concept._item_class(
+                                    **concept_extracted_item_kwargs
+                                )
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error creating {relevant_concept._item_class.__name__}: {e}"
+                                )
+                                return None, all_usage_data
                             extracted_item.reference_paragraphs = reference_paragraphs
                             extracted_item.reference_sentences = reference_sentences
                             sources_mapper[relevant_concept.unique_id][
@@ -1685,9 +1749,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                     f"Error processing extracted item value: {e}"
                                 )
                                 return None, all_usage_data
+                            try:
+                                extracted_item = relevant_concept._item_class(value=i)
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error creating {relevant_concept._item_class.__name__}: {e}"
+                                )
+                                return None, all_usage_data
                             sources_mapper[relevant_concept.unique_id][
                                 "extracted_items"
-                            ].append(relevant_concept._item_class(value=i))
+                            ].append(extracted_item)
 
             else:
                 raise ValueError(
@@ -1740,6 +1811,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         use_concurrency: bool = False,
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
     ) -> None:
         """
         Extracts aspects or concepts from a context (document or aspect) using a specified LLM.
@@ -1772,6 +1844,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
         :type max_images_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
         :return: None
         """
 
@@ -1835,7 +1911,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 :param retry_is_final: Whether the retry is final and will not be repeated by a fallback LLM.
                 :return: bool: True if retry was successful, False otherwise.
                 """
-                if not n_retries:
+                if n_retries <= 0:
                     return False
                 if not _llm_call_result_is_valid(res):
                     for i in range(n_retries):
@@ -1860,6 +1936,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                             num_retries_failed_request=0,  # do not repeat retries already performed by LiteLLM
                             max_retries_failed_request=0,
                             async_limiter=async_limiter,
+                            raise_exception_on_extraction_error=raise_exception_on_extraction_error,
                         )
                         # Update usage stats and cost
                         await llm_instance._update_usage_and_cost(res)
@@ -1869,9 +1946,23 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         return True
                     else:
                         if retry_is_final:
-                            warnings.warn(
-                                f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM."
+                            instance_names = [instance.name for instance in instances]
+                            error_msg = (
+                                f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
+                                f"Failed {instance_type}s: {instance_names}"
                             )
+                            if raise_exception_on_extraction_error:
+                                logger.error(error_msg)
+                                raise LLMExtractionError(
+                                    error_msg, retry_count=n_retries
+                                )
+                            else:
+                                warnings.warn(
+                                    error_msg
+                                    + f" ({n_retries} retries). "
+                                    + " If you want to raise an exception instead, "
+                                    "set `raise_exception_on_extraction_error` to True."
+                                )
                         return False
                 return True
 
@@ -1905,6 +1996,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 "num_retries_failed_request": llm.num_retries_failed_request,
                 "max_retries_failed_request": llm.max_retries_failed_request,
                 "async_limiter": async_limiter,
+                "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
             }
             data_list = [
                 {**base_params, "instances_to_process": chunk} for chunk in data_chunks
@@ -1930,19 +2022,21 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     await llm._update_usage_and_cost(result)
 
                 # Retry failed chunks if needed
-                if any(not _llm_call_result_is_valid(result) for result in results):
-                    for chunk, result in zip(data_chunks, results):
-                        retry_successful = await retry_processing_for_result(
-                            llm_instance=llm,
-                            res=result,
-                            instances=chunk,
-                            n_retries=llm.max_retries_invalid_data,
-                            retry_is_final=False if llm.fallback_llm else True,
-                        )
+                for chunk, result in zip(data_chunks, results):
+                    if not _llm_call_result_is_valid(result):
+                        retry_successful = False
+                        if llm.max_retries_invalid_data > 0:
+                            retry_successful = await retry_processing_for_result(
+                                llm_instance=llm,
+                                res=result,
+                                instances=chunk,
+                                n_retries=llm.max_retries_invalid_data,
+                                retry_is_final=False if llm.fallback_llm else True,
+                            )
                         # Retry with fallback LLM if it is provided
                         if not retry_successful and llm.fallback_llm:
                             logger.info("Trying with fallback LLM")
-                            await retry_processing_for_result(
+                            retry_successful = await retry_processing_for_result(
                                 llm_instance=llm.fallback_llm,
                                 res=result,
                                 instances=chunk,
@@ -1951,6 +2045,31 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 ),  # retry with fallback LLM at least once
                                 retry_is_final=True,
                             )
+                        if not retry_successful:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_llm:
+                                if raise_exception_on_extraction_error:
+                                    # Final retry was already performed, therefore an exception should have
+                                    # been raised in case of extraction error such as invalid JSON.
+                                    raise RuntimeError(
+                                        "Extraction failed after all retries with "
+                                        "`raise_exception_on_extraction_error` set to True, "
+                                        "yet no exception was raised."
+                                    )
+                            else:
+                                instance_names = [instance.name for instance in chunk]
+                                error_msg = (
+                                    f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
+                                    f"Failed {instance_type}s: {instance_names}"
+                                )
+                                if raise_exception_on_extraction_error:
+                                    raise LLMExtractionError(error_msg, retry_count=0)
+                                else:
+                                    warnings.warn(
+                                        error_msg
+                                        + f" (0 retries). "
+                                        + " If you want to raise an exception instead, "
+                                        "set `raise_exception_on_extraction_error` to True."
+                                    )
             else:
                 # Process sequentially
                 for i, data in enumerate(data_list):
@@ -1964,17 +2083,19 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
                     # Retry if needed
                     if not _llm_call_result_is_valid(result):
-                        retry_successful = await retry_processing_for_result(
-                            llm_instance=llm,
-                            res=result,
-                            instances=data["instances_to_process"],
-                            n_retries=llm.max_retries_invalid_data,
-                            retry_is_final=False if llm.fallback_llm else True,
-                        )
+                        retry_successful = False
+                        if llm.max_retries_invalid_data > 0:
+                            retry_successful = await retry_processing_for_result(
+                                llm_instance=llm,
+                                res=result,
+                                instances=data["instances_to_process"],
+                                n_retries=llm.max_retries_invalid_data,
+                                retry_is_final=False if llm.fallback_llm else True,
+                            )
                         # Retry with fallback LLM if it is provided
                         if not retry_successful and llm.fallback_llm:
                             logger.info("Trying with fallback LLM")
-                            await retry_processing_for_result(
+                            retry_successful = await retry_processing_for_result(
                                 llm_instance=llm.fallback_llm,
                                 res=result,
                                 instances=data["instances_to_process"],
@@ -1983,6 +2104,34 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 ),  # retry with fallback LLM at least once
                                 retry_is_final=True,
                             )
+                        if not retry_successful:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_llm:
+                                if raise_exception_on_extraction_error:
+                                    # Final retry was already performed, therefore an exception should have
+                                    # been raised in case of extraction error such as invalid JSON.
+                                    raise RuntimeError(
+                                        "Extraction failed after all retries with "
+                                        "`raise_exception_on_extraction_error` set to True, "
+                                        "yet no exception was raised."
+                                    )
+                            else:
+                                instance_names = [
+                                    instance.name
+                                    for instance in data["instances_to_process"]
+                                ]
+                                error_msg = (
+                                    f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
+                                    f"Failed {instance_type}s: {instance_names}"
+                                )
+                                if raise_exception_on_extraction_error:
+                                    raise LLMExtractionError(error_msg, retry_count=0)
+                                else:
+                                    warnings.warn(
+                                        error_msg
+                                        + f" (0 retries). "
+                                        + " If you want to raise an exception instead, "
+                                        "set `raise_exception_on_extraction_error` to True."
+                                    )
 
         # Group instances for processing, based on the relevant params, with the relevant prompts.
         if instance_type == "aspect":

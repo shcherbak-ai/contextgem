@@ -48,10 +48,10 @@ class Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
     are assigned to a paragraph, they cannot be changed to maintain data integrity during analysis.
 
     :ivar raw_text: The complete text content of the paragraph. This value is frozen after initialization.
-    :type raw_text: NonEmptyStr
+    :vartype raw_text: NonEmptyStr
     :ivar sentences: The individual sentences contained within the paragraph. Defaults to an empty list.
         Cannot be reassigned once populated.
-    :type sentences: list[Sentence]
+    :vartype sentences: list[Sentence]
 
     Note:
         Normally, you do not need to construct paragraphs manually, as they are populated automatically

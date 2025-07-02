@@ -49,7 +49,7 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
     :ivar custom_data: A serializable dictionary for storing additional custom data
         related to the instance. Defaults to an empty dictionary.
-    :type custom_data: dict
+    :vartype custom_data: dict
     """
 
     custom_data: dict = Field(default_factory=dict)

@@ -74,27 +74,27 @@ class Aspect(
     Each aspect corresponds to a specific subject or theme described in the task.
 
     :ivar name: The name of the aspect. Required, non-empty string.
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A detailed description of the aspect. Required, non-empty string.
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar concepts: A list of concepts associated with the aspect. These concepts must be
         unique in both name and description and cannot include concepts with vision LLM roles.
-    :type concepts: list[_Concept]
+    :vartype concepts: list[_Concept]
     :ivar llm_role: The role of the LLM responsible for aspect extraction.
         Default is "extractor_text". Valid roles are "extractor_text" and "reasoner_text".
-    :type llm_role: LLMRoleAspect
+    :vartype llm_role: LLMRoleAspect
     :ivar reference_depth: The structural depth of references (paragraphs or sentences).
         Defaults to "paragraphs". Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar add_justifications: Whether the LLM will output justification for each extracted item.
         Inherited from base class. Defaults to False.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: The level of detail for justifications.
         Inherited from base class. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum number of sentences in a justification.
         Inherited from base class. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/aspects/def_aspect.py

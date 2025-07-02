@@ -428,7 +428,9 @@ class TestUtils:
 
         total_cost_llm_group = get_cost_as_decimal(self.llm_group)
         total_cost_llm = get_cost_as_decimal(self.llm_extractor_text)
-        total_cost_llm_with_fallback = get_cost_as_decimal(self.llm_with_fallback)
+        total_cost_llm_with_fallback = get_cost_as_decimal(
+            self.invalid_llm_with_valid_fallback
+        )
         logger.info(
             "Cost of running tests (LLM 0 - group): "
             + str(total_cost_llm_group if not vcr_new_recording_count else zero_dec),
@@ -623,7 +625,9 @@ class TestUtils:
         with pytest.raises(TypeError):
             instance.custom_data = {self.document: self.document_pipeline}
         with pytest.raises(TypeError):
-            instance.custom_data = {self.llm_extractor_text: self.llm_with_fallback}
+            instance.custom_data = {
+                self.llm_extractor_text: self.invalid_llm_with_valid_fallback
+            }
         instance.custom_data = {"test": True}
         instance.custom_data = {}
         assert _is_json_serializable(instance.custom_data)

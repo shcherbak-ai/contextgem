@@ -29,8 +29,8 @@ from pathlib import Path
 from typing import BinaryIO
 
 from contextgem.internal.converters.docx.base import _DocxConverterBase
-from contextgem.internal.converters.docx.exceptions import DocxConverterError
 from contextgem.internal.converters.docx.package import _DocxPackage
+from contextgem.internal.exceptions import DocxConverterError
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import TextMode
 from contextgem.public.documents import Document
@@ -185,9 +185,9 @@ class DocxConverter(_DocxConverterBase):
             raise
         except Exception as e:
             # Convert generic exceptions to DocxConverterError
-            logger.error(f"Error converting DOCX to {output_format}: {str(e)}")
+            logger.error(f"Error converting DOCX to {output_format}: {e}")
             raise DocxConverterError(
-                f"Error converting DOCX to {output_format}: {str(e)}"
+                f"Error converting DOCX to {output_format}: {e}"
             ) from e
         finally:
             # Ensure the package is closed even if an exception occurs
@@ -328,8 +328,8 @@ class DocxConverter(_DocxConverterBase):
             raise
         except Exception as e:
             # Catch any other exceptions and convert to DocxConverterError
-            logger.error(f"Error converting DOCX file: {str(e)}")
-            raise DocxConverterError(f"Error converting DOCX file: {str(e)}") from e
+            logger.error(f"Error converting DOCX file: {e}")
+            raise DocxConverterError(f"Error converting DOCX file: {e}") from e
         finally:
             # Ensure the package is closed even if an exception occurs
             if package:

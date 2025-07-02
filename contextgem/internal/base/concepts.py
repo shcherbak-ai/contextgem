@@ -41,34 +41,34 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     meaningful data points such as names, dates, values, or conclusions.
 
     :ivar name: The name of the concept.
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept.
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar llm_role: The role of the LLM when processing this concept.
         Options: "extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision".
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
         Defaults to False.
-    :type add_justifications: StrictBool
+    :vartype add_justifications: StrictBool
     :ivar justification_depth: Detail level for justifications. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum number of sentences in a justification.
         Defaults to 2.
-    :type justification_max_sents: StrictInt
+    :vartype justification_max_sents: StrictInt
     :ivar add_references: Whether to include references for extracted items.
         Defaults to False.
-    :type add_references: StrictBool
+    :vartype add_references: StrictBool
     :ivar reference_depth: Structural depth of references ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type.
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
     """
 
     name: NonEmptyStr

@@ -78,7 +78,7 @@ def run_sphinx_text_build() -> None:
         logger.error(e.stderr)
         sys.exit(1)
     except Exception as e:
-        logger.error(f"❌ Unexpected error during Sphinx build: {str(e)}")
+        logger.error(f"❌ Unexpected error during Sphinx build: {e}")
         sys.exit(1)
 
 
@@ -190,5 +190,5 @@ if __name__ == "__main__":
         concatenate_docs(paths, TEXT_DIR, OUTPUT_PATH)
         logger.info(f"\n✅ Concatenated documentation saved to {OUTPUT_PATH}")
     except Exception as e:
-        logger.error(f"❌ Unexpected error: {str(e)}")
+        logger.error(f"❌ Unexpected error: {e}")
         sys.exit(1)

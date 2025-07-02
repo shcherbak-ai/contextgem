@@ -87,6 +87,10 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
      - int
      - ``0``
      - Maximum :class:`~contextgem.public.images.Image` instances to analyze in a single LLM call (single LLM prompt). ``0`` means all images. This parameter is crucial when working with documents containing multiple images that might exceed the LLM's context window. By limiting the number of images per call, you can ensure the LLM processes the document's visual content in manageable batches. Relevant only when extracting document-level concepts from document images. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
+   * - ``raise_exception_on_extraction_error``
+     - bool
+     - ``True``
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -167,6 +171,10 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
      - int
      - ``0``
      - Maximum paragraphs to include in a single LLM call (single LLM prompt). ``0`` means all paragraphs. This parameter is crucial when working with long documents that exceed the LLM's context window. By limiting the number of paragraphs per call, you can ensure the LLM processes the document in manageable segments while maintaining semantic coherence. This prevents token limit errors and often improves extraction quality by allowing the model to focus on smaller portions of text at a time. For more details on handling long documents, see :doc:`../optimizations/optimization_long_docs`.
+   * - ``raise_exception_on_extraction_error``
+     - bool
+     - ``True``
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -255,6 +263,10 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
      - int
      - ``0``
      - Maximum images to include in a single LLM call (single LLM prompt). ``0`` means all images. This parameter is crucial when extracting concepts from documents with multiple images using vision-capable LLMs. It helps prevent overwhelming the model with too many visual inputs at once, manages token usage more effectively, and enables more focused concept extraction from visual content. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
+   * - ``raise_exception_on_extraction_error``
+     - bool
+     - ``True``
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -340,6 +352,10 @@ The aspect must be previously processed before concept extraction can occur. Thi
      - int
      - ``0``
      - Maximum number of the aspect's paragraphs to analyze in a single LLM call (single LLM prompt). ``0`` means all the aspect's paragraphs. This parameter is crucial when working with long documents or aspects that cover extensive portions of text that might exceed the LLM's context window. By limiting the number of paragraphs per call, you can break down analysis into manageable chunks or allow the LLM to focus more deeply on smaller sections of text at a time. For more details on handling long documents, see :doc:`../optimizations/optimization_long_docs`.
+   * - ``raise_exception_on_extraction_error``
+     - bool
+     - ``True``
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 

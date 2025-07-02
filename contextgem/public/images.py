@@ -43,11 +43,11 @@ class Image(_InstanceBase):
     :ivar mime_type: The MIME type of the image. This must be one of the
         predefined valid types ("image/jpg", "image/jpeg", "image/png",
         "image/webp").
-    :type mime_type: Literal["image/jpg", "image/jpeg", "image/png",
+    :vartype mime_type: Literal["image/jpg", "image/jpeg", "image/png",
         "image/webp"]
     :ivar base64_data: The base64-encoded data of the image. The util function
         `image_to_base64()` from contextgem.public.utils can be used to encode images to base64.
-    :type base64_data: NonEmptyStr
+    :vartype base64_data: NonEmptyStr
 
     Note:
         - Attached to documents:

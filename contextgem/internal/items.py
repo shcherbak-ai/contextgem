@@ -40,7 +40,7 @@ class _StringItem(_ExtractedItem):
     Represents an extracted item that holds a string value.
 
     :ivar value: The string value extracted and validated as non-empty string.
-    :type value: NonEmptyStr
+    :vartype value: NonEmptyStr
     """
 
     value: NonEmptyStr = Field(..., frozen=True)
@@ -51,7 +51,7 @@ class _BooleanItem(_ExtractedItem):
     Represents an extracted item that holds a boolean value.
 
     :ivar value: The strict boolean value associated with this item.
-    :type value: StrictBool
+    :vartype value: StrictBool
     """
 
     value: StrictBool = Field(..., frozen=True)
@@ -62,7 +62,7 @@ class _IntegerItem(_ExtractedItem):
     Represents an extracted item that holds a int value.
 
     :ivar value: Represents the int value of the item.
-    :type value: StrictInt
+    :vartype value: StrictInt
     """
 
     value: StrictInt = Field(..., frozen=True)
@@ -73,7 +73,7 @@ class _FloatItem(_ExtractedItem):
     Represents an extracted item that holds a float value.
 
     :ivar value: Represents the float value of the item.
-    :type value: StrictFloat
+    :vartype value: StrictFloat
     """
 
     value: StrictFloat = Field(..., frozen=True)
@@ -85,7 +85,7 @@ class _IntegerOrFloatItem(_ExtractedItem):
 
     :ivar value: Represents the numerical value of the item. It
         can be either an integer or a float value.
-    :type value: StrictInt | StrictFloat
+    :vartype value: StrictInt | StrictFloat
     """
 
     value: StrictInt | StrictFloat = Field(..., frozen=True)
@@ -96,7 +96,7 @@ class _JsonObjectItem(_ExtractedItem):
     Represents an extracted item that holds a JSON object value.
 
     :ivar value: The JSON object of the item, i.e. a dict with minimum length of 1.
-    :type value: dict[Any, Any]
+    :vartype value: dict[Any, Any]
     """
 
     value: dict[Any, Any] = Field(..., min_length=1, frozen=True)
@@ -149,7 +149,7 @@ class _DateItem(_ExtractedItem):
     Represents an extracted item that holds a date value.
 
     :ivar value: The date value extracted and validated as a Python date object.
-    :type value: date
+    :vartype value: date
     """
 
     value: date = Field(..., frozen=True)
@@ -216,7 +216,7 @@ class _LabelItem(_ExtractedItem):
 
     :ivar value: A list of label strings. Always returns a list for API consistency,
         containing one or more labels depending on the classification type.
-    :type value: list[NonEmptyStr]
+    :vartype value: list[NonEmptyStr]
     """
 
     value: list[NonEmptyStr] = Field(..., min_length=1, frozen=True)

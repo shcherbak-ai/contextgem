@@ -30,7 +30,6 @@ from contextgem.internal.base import (
     _RefParasAndSentsAttrituteProcessor,
 )
 from contextgem.internal.converters import (
-    DocxConverterError,
     _DocxConverterBase,
     _DocxPackage,
 )
@@ -42,6 +41,11 @@ from contextgem.internal.data_models import (
     _LLMUsageOutputContainer,
 )
 from contextgem.internal.decorators import _post_init_method, _timer_decorator
+from contextgem.internal.exceptions import (
+    DocxConverterError,
+    LLMAPIError,
+    LLMExtractionError,
+)
 from contextgem.internal.items import (
     _BooleanItem,
     _DateItem,
@@ -194,7 +198,10 @@ __all__ = [
     "_clean_text_for_llm_prompt",
     # Converters
     # DOCX
-    "DocxConverterError",
     "_DocxConverterBase",
     "_DocxPackage",
+    # Exceptions
+    "LLMExtractionError",
+    "LLMAPIError",
+    "DocxConverterError",
 ]

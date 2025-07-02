@@ -73,32 +73,32 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
 
     :ivar raw_text: The main text of the document as a single string.
         Defaults to None.
-    :type raw_text: Optional[NonEmptyStr]
+    :vartype raw_text: Optional[NonEmptyStr]
     :ivar paragraphs: List of Paragraph instances in consecutive order as they appear
         in the document. Defaults to an empty list.
-    :type paragraphs: list[Paragraph]
+    :vartype paragraphs: list[Paragraph]
     :ivar images: List of Image instances attached to or representing the document.
         Defaults to an empty list.
-    :type images: list[Image]
+    :vartype images: list[Image]
     :ivar aspects: List of aspects associated with the document for focused analysis.
         Validated to ensure unique names and descriptions. Defaults to an empty list.
-    :type aspects: list[Aspect]
+    :vartype aspects: list[Aspect]
     :ivar concepts: List of concepts associated with the document for information extraction.
         Validated to ensure unique names and descriptions. Defaults to an empty list.
-    :type concepts: list[_Concept]
+    :vartype concepts: list[_Concept]
     :ivar paragraph_segmentation_mode: Mode for paragraph segmentation. When set to "sat",
         uses a SaT (Segment Any Text https://arxiv.org/abs/2406.16678) model. Defaults to "newlines".
-    :type paragraph_segmentation_mode: Literal["newlines", "sat"]
+    :vartype paragraph_segmentation_mode: Literal["newlines", "sat"]
     :ivar sat_model_id: SaT model ID for paragraph/sentence segmentation or a local path to a SaT model.
         For model IDs, defaults to "sat-3l-sm". See https://github.com/segment-any-text/wtpsplit
         for the list of available models. For local paths, provide either a string path or a Path
         object pointing to the directory containing the SaT model.
-    :type sat_model_id: SaTModelId
+    :vartype sat_model_id: SaTModelId
     :ivar pre_segment_sentences: Whether to pre-segment sentences during Document initialization.
         When False (default), sentence segmentation is deferred until sentences are actually needed,
         improving initialization performance. When True, sentences are segmented immediately during
         Document creation using the SaT model.
-    :type pre_segment_sentences: bool
+    :vartype pre_segment_sentences: bool
 
     Note:
         Normally, you do not need to construct/populate paragraphs manually, as they are

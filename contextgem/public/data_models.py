@@ -41,9 +41,9 @@ class LLMPricing(_InstanceSerializer):
     with prices specified per million tokens.
 
     :ivar input_per_1m_tokens: The cost in currency units for processing 1M input tokens.
-    :type input_per_1m_tokens: StrictFloat
+    :vartype input_per_1m_tokens: StrictFloat
     :ivar output_per_1m_tokens: The cost in currency units for generating 1M output tokens.
-    :type output_per_1m_tokens: StrictFloat
+    :vartype output_per_1m_tokens: StrictFloat
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/data_models/def_llm_pricing.py
@@ -74,10 +74,10 @@ class RatingScale(_InstanceSerializer):
 
     :ivar start: The minimum value of the rating scale (inclusive).
                  Must be greater than or equal to 0.
-    :type start: StrictInt
+    :vartype start: StrictInt
     :ivar end: The maximum value of the rating scale (inclusive).
               Must be greater than 0.
-    :type end: StrictInt
+    :vartype end: StrictInt
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/data_models/def_rating_scale.py

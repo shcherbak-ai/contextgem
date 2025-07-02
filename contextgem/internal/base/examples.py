@@ -40,7 +40,7 @@ class _Example(_InstanceBase):
     demonstrating expected patterns or outputs for specific extraction tasks.
 
     :ivar content: Arbitrary content associated with the example.
-    :type content: Any
+    :vartype content: Any
     """
 
     content: Any

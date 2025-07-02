@@ -132,7 +132,7 @@ class _LabelConceptItemValueModel(BaseModel):
     Expected structure: {"labels": [str, ...]} with at least one label.
 
     :ivar labels: List of selected label strings. Must contain at least one item.
-    :type labels: list[str]
+    :vartype labels: list[str]
     """
 
     labels: list[str] = Field(..., min_length=1)

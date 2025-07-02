@@ -51,12 +51,14 @@ from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.base.llms import _GenericLLMProcessor
 from contextgem.internal.converters.docx import _DocxPackage
-from contextgem.internal.converters.docx.exceptions import (
-    DocxConverterError,
-    DocxFormatError,
-)
 from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import _LLMCost, _LLMUsage
+from contextgem.internal.exceptions import (
+    DocxConverterError,
+    DocxFormatError,
+    LLMAPIError,
+    LLMExtractionError,
+)
 from contextgem.internal.items import (
     _BooleanItem,
     _DateItem,
@@ -313,8 +315,9 @@ class TestAll(TestUtils):
             "api_key": "invalid_api_key",
             "role": "extractor_text",
         }
-        llm_with_fallback = DocumentLLM(**_invalid_llm_kwargs)
-        llm_with_fallback.fallback_llm = DocumentLLM(
+        llm_invalid = DocumentLLM(**_invalid_llm_kwargs)
+        invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)
+        invalid_llm_with_valid_fallback.fallback_llm = DocumentLLM(
             **_llm_extractor_text_kwargs_openai,
             is_fallback=True,
         )
@@ -942,6 +945,231 @@ class TestAll(TestUtils):
         extract_with_local_llm(llm_non_reasoning_lm_studio)
 
         check_locals_memory_usage(locals(), test_name="test_local_llms")
+
+    @pytest.mark.vcr
+    def test_llm_extraction_error_exception(self):
+        """
+        Tests for raising an exception when an LLM extraction error occurs.
+        """
+        document = Document(raw_text=get_test_document_text())
+        aspect = Aspect(name="Liability", description="Liability clauses")
+        aspect_concept = StringConcept(
+            name="Liability cap",
+            description="Liability cap",
+        )
+        aspect.add_concepts([aspect_concept])
+        document_concept = NumericalConcept(
+            name="Contract term", description="Contract term"
+        )
+        document.add_aspects([aspect])
+        document.add_concepts([document_concept])
+
+        # === With retries ===
+        # raise_exception_on_extraction_error is True by default
+        llm = DocumentLLM(
+            model="ollama/llama3.1:8b",
+            api_base="http://localhost:11434",
+            max_retries_invalid_data=1,  # default is 3
+        )
+        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+            llm.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            llm.extract_concepts_from_aspect(
+                document.aspects[0],
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+            llm.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+            llm.extract_all(
+                document,
+                overwrite_existing=True,
+            )
+
+        # But should issue a warning if `raise_exception_on_extraction_error` is False
+        with pytest.warns(UserWarning, match=r"invalid JSON.*1 retries"):
+            llm.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            llm.extract_concepts_from_aspect(
+                document.aspects[0],
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.warns(UserWarning, match=r"invalid JSON.*1 retries"):
+            llm.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            llm.extract_all(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+
+        # === Without retries ===
+        # raise_exception_on_extraction_error is True by default
+        llm = DocumentLLM(
+            model="ollama/llama3.1:8b",
+            api_base="http://localhost:11434",
+            max_retries_invalid_data=0,
+        )
+        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+            llm.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            llm.extract_concepts_from_aspect(
+                document.aspects[0],
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+            llm.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+            llm.extract_all(
+                document,
+                overwrite_existing=True,
+            )
+
+        # But should issue a warning if `raise_exception_on_extraction_error` is False
+        with pytest.warns(UserWarning, match=r"invalid JSON.*0 retries"):
+            llm.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            llm.extract_concepts_from_aspect(
+                document.aspects[0],
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.warns(UserWarning, match=r"invalid JSON.*0 retries"):
+            llm.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            llm.extract_all(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+
+        # === Test invalid LLM without fallback LLM ===
+        # raise_exception_on_extraction_error is True by default
+        with pytest.raises(LLMAPIError, match=r"LLM API.*3 retries"):
+            self.llm_invalid.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            self.llm_invalid.extract_concepts_from_aspect(
+                document.aspects[0],
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(LLMAPIError, match=r"LLM API.*3 retries"):
+            self.llm_invalid.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        with pytest.raises(LLMAPIError, match=r"LLM API.*3 retries"):
+            self.llm_invalid.extract_all(
+                document,
+                overwrite_existing=True,
+            )
+
+        # But should issue a warning if `raise_exception_on_extraction_error` is False
+        with pytest.warns(UserWarning, match="LLM API"):
+            self.llm_invalid.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            self.llm_invalid.extract_concepts_from_aspect(
+                document.aspects[0],
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.warns(UserWarning, match="LLM API"):
+            self.llm_invalid.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+            # Aspect has a concept, and since the aspect was not extracted,
+            # there's no aspect context to extract the concept from
+            self.llm_invalid.extract_all(
+                document,
+                overwrite_existing=True,
+                raise_exception_on_extraction_error=False,
+            )
+
+        # === Test with fallback LLM, with valid (populated) extraction results ===
+        # raise_exception_on_extraction_error is True by default
+        extracted_aspects = (
+            self.invalid_llm_with_valid_fallback.extract_aspects_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        )
+        assert all(i.extracted_items for i in extracted_aspects)
+        extracted_concepts = (
+            self.invalid_llm_with_valid_fallback.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+            )
+        )
+        assert all(i.extracted_items for i in extracted_concepts)
+        processed_document = self.invalid_llm_with_valid_fallback.extract_all(
+            document,
+            overwrite_existing=True,
+        )
+        assert all(i.extracted_items for i in processed_document.aspects)
+        assert all(i.extracted_items for i in processed_document.concepts)
+        assert all(i.extracted_items for i in document.aspects[0].concepts)
+
+        check_locals_memory_usage(locals(), test_name="test_incapable_llm")
 
     @memory_profile_and_capture
     def test_init_api_llm(self):
@@ -4612,23 +4840,25 @@ class TestAll(TestUtils):
         document.concepts = document_concepts
         assert document.concepts is not document_concepts
 
-        self.config_llm_async_limiter_for_mock_responses(self.llm_with_fallback)
+        self.config_llm_async_limiter_for_mock_responses(
+            self.invalid_llm_with_valid_fallback
+        )
 
-        self.llm_with_fallback.extract_all(document)
+        self.invalid_llm_with_valid_fallback.extract_all(document)
         self.check_instance_container_states(
             original_container=document_concepts,
             assigned_container=document.concepts,
             assigned_instance_class=_Concept,
-            llm_roles=self.llm_with_fallback.list_roles,
+            llm_roles=self.invalid_llm_with_valid_fallback.list_roles,
         )
 
         # Check serialization of an LLM with fallback
-        self._check_deserialized_llm_config_eq(self.llm_with_fallback)
+        self._check_deserialized_llm_config_eq(self.invalid_llm_with_valid_fallback)
 
         # Check usage tokens
-        self.check_usage(self.llm_with_fallback)
+        self.check_usage(self.invalid_llm_with_valid_fallback)
         # Check cost
-        self.check_cost(self.llm_with_fallback)
+        self.check_cost(self.invalid_llm_with_valid_fallback)
 
         # Log costs
         self.output_test_costs()
@@ -4973,7 +5203,7 @@ class TestAll(TestUtils):
         self._check_deserialized_llm_config_eq(llm)
 
         # Check serialization of an LLM with fallback
-        self._check_deserialized_llm_config_eq(self.llm_with_fallback)
+        self._check_deserialized_llm_config_eq(self.invalid_llm_with_valid_fallback)
 
         # Check usage tokens
         self.check_usage(llm)
@@ -5208,7 +5438,7 @@ class TestAll(TestUtils):
         for model in [
             self.llm_extractor_text,
             self.llm_extractor_vision,
-            self.llm_with_fallback,
+            self.invalid_llm_with_valid_fallback,
         ]:
             with pytest.raises(ValueError):
                 model.chat("")
@@ -5229,7 +5459,7 @@ class TestAll(TestUtils):
             else:
                 # Check with text
                 model.chat("What's the result of 2+2?")
-                if model == self.llm_with_fallback:
+                if model == self.invalid_llm_with_valid_fallback:
                     response = (
                         model.fallback_llm.get_usage()[0].usage.calls[-1].response
                     )
