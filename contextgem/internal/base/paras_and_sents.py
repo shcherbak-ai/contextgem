@@ -27,12 +27,12 @@ providing shared validation and context handling functionality.
 
 from __future__ import annotations
 
-import warnings
 from typing import Optional
 
 from pydantic import Field, field_validator
 
 from contextgem.internal.base.instances import _InstanceBase
+from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import NonEmptyStr
 from contextgem.internal.utils import _contains_linebreaks
 
@@ -47,7 +47,7 @@ class _ParasAndSentsBase(_InstanceBase):
 
     :ivar additional_context: Optional supplementary information for the paragraph or sentence.
         Should be a non-empty string without linebreaks. Defaults to None.
-    :type additional_context: Optional[NonEmptyStr]
+    :vartype additional_context: Optional[NonEmptyStr]
     """
 
     additional_context: Optional[NonEmptyStr] = Field(default=None)
@@ -59,7 +59,7 @@ class _ParasAndSentsBase(_InstanceBase):
     ) -> Optional[str]:
         """
         Validates the optional 'additional_context' attribute by checking for line breaks
-        in the string, if provided. If line breaks are detected, a warning is issued to inform
+        in the string, if provided. If line breaks are detected, a warning is logged to inform
         the user that such input may lead to unexpected behavior, as the LLM may not be able
         to process such input correctly due to the structure of the prompt.
 
@@ -69,7 +69,7 @@ class _ParasAndSentsBase(_InstanceBase):
         :rtype: Optional[str]
         """
         if additional_context is not None and _contains_linebreaks(additional_context):
-            warnings.warn(
+            logger.warning(
                 f"Additional context of `{cls.__name__}` contains line breaks. "
                 f"This may cause unexpected behavior."
             )

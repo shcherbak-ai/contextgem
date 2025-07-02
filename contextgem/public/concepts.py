@@ -79,33 +79,33 @@ class StringConcept(_Concept):
     as conceptual entities within documents or aspects.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar examples: Example strings illustrating the concept usage.
-    :type examples: list[StringExample]
+    :vartype examples: list[StringExample]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "document title" vs "key findings").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_string_concept.py
@@ -137,32 +137,32 @@ class BooleanConcept(_Concept):
     conceptual properties or attributes within content.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "contains confidential information"
         vs "compliance violations").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_boolean_concept.py
@@ -192,35 +192,35 @@ class NumericalConcept(_Concept):
     or both) that represent conceptual measurements or quantities within content.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar numeric_type: Type constraint for extracted numbers ("int", "float", or "any").
         Defaults to "any" for auto-detection.
-    :type numeric_type: Literal["int", "float", "any"]
+    :vartype numeric_type: Literal["int", "float", "any"]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "total revenue" vs
         "monthly sales figures").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_numerical_concept.py
@@ -264,34 +264,34 @@ class RatingConcept(_Concept):
     the boundaries of a specified rating scale.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar rating_scale: The rating scale defining valid value boundaries.
-    :type rating_scale: RatingScale
+    :vartype rating_scale: RatingScale
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "product rating score" vs
         "customer satisfaction ratings").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_rating_concept.py
@@ -376,9 +376,9 @@ class JsonObjectConcept(_Concept):
     with validation against a predefined schema structure.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar structure: JSON object schema as a class with type annotations or dictionary where keys
         are field names and values are type annotations. All dictionary keys must be strings.
         Supports generic aliases, union types, nested dictionaries for complex hierarchical structures,
@@ -409,32 +409,32 @@ class JsonObjectConcept(_Concept):
         of nested class hierarchies to dictionary representations for serialization.
 
         **Tip**: do not overcomplicate the structure to avoid prompt overloading.
-    :type structure: type | dict[NonEmptyStr, Any]
+    :vartype structure: type | dict[NonEmptyStr, Any]
     :ivar examples: Example JSON objects illustrating the concept usage.
-    :type examples: list[JsonObjectExample]
+    :vartype examples: list[JsonObjectExample]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "product specifications" vs
         "customer order details").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_json_object_concept.py
@@ -797,32 +797,32 @@ class DateConcept(_Concept):
     string representations in a specified format into Python date objects.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "contract signing date" vs
         "meeting dates").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_date_concept.py
@@ -893,37 +893,37 @@ class LabelConcept(_Concept):
     when no appropriate label exists.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :type name: NonEmptyStr
+    :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :type description: NonEmptyStr
+    :vartype description: NonEmptyStr
     :ivar labels: List of predefined labels for classification. Must contain at least 2 unique labels.
-    :type labels: list[NonEmptyStr]
+    :vartype labels: list[NonEmptyStr]
     :ivar classification_type: Classification mode - "multi_class" for single label selection,
         "multi_label" for multiple label selection. Defaults to "multi_class".
-    :type classification_type: ClassificationType
+    :vartype classification_type: ClassificationType
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
-    :type llm_role: LLMRoleAny
+    :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     :ivar add_references: Whether to include source references for extracted items.
-    :type add_references: bool
+    :vartype add_references: bool
     :ivar reference_depth: Source reference granularity ("paragraphs" or "sentences").
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
-    :type reference_depth: ReferenceDepth
+    :vartype reference_depth: ReferenceDepth
     :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
         If True, only a single extracted item will be extracted. Defaults to False (multiple
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "document type" vs
         "content topics").
-    :type singular_occurrence: StrictBool
+    :vartype singular_occurrence: StrictBool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_label_concept.py

@@ -30,13 +30,13 @@ from typing import BinaryIO, Optional
 
 from lxml import etree
 
-from contextgem.internal.converters.docx.exceptions import (
+from contextgem.internal.converters.docx.utils import _docx_get_attr, _docx_xpath
+from contextgem.internal.exceptions import (
     DocxContentError,
     DocxConverterError,
     DocxFormatError,
     DocxXmlError,
 )
-from contextgem.internal.converters.docx.utils import _docx_get_attr, _docx_xpath
 from contextgem.internal.loggers import logger
 
 
@@ -78,9 +78,7 @@ class _DocxPackage:
         except PermissionError:
             raise DocxFormatError(f"Permission denied when accessing '{file_desc}'")
         except Exception as e:
-            raise DocxFormatError(
-                f"Failed to open DOCX file '{file_desc}': {str(e)}"
-            ) from e
+            raise DocxFormatError(f"Failed to open DOCX file '{file_desc}': {e}") from e
 
         try:
             # Check if this is actually a DOCX file by looking for key parts
@@ -102,14 +100,14 @@ class _DocxPackage:
             # Re-raise specific converter errors
             raise
         except etree.XMLSyntaxError as e:
-            raise DocxXmlError(f"XML parsing error in '{file_desc}': {str(e)}") from e
+            raise DocxXmlError(f"XML parsing error in '{file_desc}': {e}") from e
         except KeyError as e:
             raise DocxContentError(
-                f"Missing required content in '{file_desc}': {str(e)}"
+                f"Missing required content in '{file_desc}': {e}"
             ) from e
         except Exception as e:
             raise DocxConverterError(
-                f"Error processing DOCX file '{file_desc}': {str(e)}"
+                f"Error processing DOCX file '{file_desc}': {e}"
             ) from e
 
     def _load_xml_part(self, part_path: str) -> Optional[etree._Element]:
@@ -126,9 +124,9 @@ class _DocxPackage:
             data = self.archive.read(part_path)
             return etree.fromstring(data)
         except etree.XMLSyntaxError as e:
-            raise DocxXmlError(f"Failed to parse XML in '{part_path}': {str(e)}") from e
+            raise DocxXmlError(f"Failed to parse XML in '{part_path}': {e}") from e
         except Exception as e:
-            raise DocxConverterError(f"Error reading '{part_path}': {str(e)}") from e
+            raise DocxConverterError(f"Error reading '{part_path}': {e}") from e
 
     def _load_relationships(self) -> None:
         """
@@ -222,7 +220,7 @@ class _DocxPackage:
                     raise
                 except Exception as e:
                     raise DocxConverterError(
-                        f"Error loading header '{target}': {str(e)}"
+                        f"Error loading header '{target}': {e}"
                     ) from e
 
             # Load footers
@@ -239,7 +237,7 @@ class _DocxPackage:
                     raise
                 except Exception as e:
                     raise DocxConverterError(
-                        f"Error loading footer '{target}': {str(e)}"
+                        f"Error loading footer '{target}': {e}"
                     ) from e
 
     def _load_images(self) -> None:
@@ -270,7 +268,7 @@ class _DocxPackage:
                         }
                 except Exception as e:
                     raise DocxConverterError(
-                        f"Error loading image '{target}': {str(e)}"
+                        f"Error loading image '{target}': {e}"
                     ) from e
 
     def _get_mime_type(self, target: str) -> str:
@@ -296,4 +294,4 @@ class _DocxPackage:
                 self.archive.close()
             except Exception as e:
                 # Just log the error but don't raise, as this is cleanup code
-                logger.warning(f"Error closing DOCX archive: {str(e)}")
+                logger.warning(f"Error closing DOCX archive: {e}")

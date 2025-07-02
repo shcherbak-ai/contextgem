@@ -30,11 +30,6 @@ from typing import Callable, Optional
 
 from lxml import etree
 
-from contextgem.internal.converters.docx.exceptions import (
-    DocxContentError,
-    DocxConverterError,
-    DocxXmlError,
-)
 from contextgem.internal.converters.docx.package import _DocxPackage
 from contextgem.internal.converters.docx.utils import (
     NUMBERED_LIST_FORMATS,
@@ -44,6 +39,11 @@ from contextgem.internal.converters.docx.utils import (
     _extract_comment_id_from_context,
     _extract_footnote_id_from_context,
     _join_text_parts,
+)
+from contextgem.internal.exceptions import (
+    DocxContentError,
+    DocxConverterError,
+    DocxXmlError,
 )
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import _is_text_content_empty
@@ -255,9 +255,9 @@ class _DocxConverterBase:
             raise
         except Exception as e:
             if strict_mode:
-                raise DocxContentError(f"Error processing paragraph: {str(e)}") from e
+                raise DocxContentError(f"Error processing paragraph: {e}") from e
             else:
-                logger.warning(f"Error processing paragraph: {str(e)}")
+                logger.warning(f"Error processing paragraph: {e}")
                 return None
 
     def _extract_paragraph_text(
@@ -621,11 +621,9 @@ class _DocxConverterBase:
             return _join_text_parts(processed_text)
         except Exception as e:
             if strict_mode:
-                raise DocxContentError(
-                    f"Error extracting paragraph text: {str(e)}"
-                ) from e
+                raise DocxContentError(f"Error extracting paragraph text: {e}") from e
             else:
-                logger.warning(f"Error extracting paragraph text: {str(e)}")
+                logger.warning(f"Error extracting paragraph text: {e}")
                 return ""
 
     def _process_docx_elements(
@@ -698,11 +696,9 @@ class _DocxConverterBase:
                 except Exception as e:
                     # In strict mode, re-raise as DocxContentError
                     if strict_mode:
-                        raise DocxContentError(
-                            f"Error processing headers: {str(e)}"
-                        ) from e
+                        raise DocxContentError(f"Error processing headers: {e}") from e
                     # Otherwise, log error and continue without headers
-                    logger.warning(f"Error processing headers: {str(e)}")
+                    logger.warning(f"Error processing headers: {e}")
 
             # Track tables for indexing
             table_count = 0
@@ -793,11 +789,9 @@ class _DocxConverterBase:
                     except Exception as e:
                         if strict_mode:
                             # In strict mode, re-raise as DocxContentError
-                            raise DocxContentError(
-                                f"Error processing paragraph: {str(e)}"
-                            )
+                            raise DocxContentError(f"Error processing paragraph: {e}")
                         # Log error and continue with next paragraph
-                        logger.warning(f"Error processing paragraph: {str(e)}")
+                        logger.warning(f"Error processing paragraph: {e}")
 
                 elif tag == "tbl" and include_tables:
                     # Process table
@@ -819,10 +813,10 @@ class _DocxConverterBase:
                         if strict_mode:
                             # In strict mode, re-raise as DocxContentError
                             raise DocxContentError(
-                                f"Error processing table: {str(e)}"
+                                f"Error processing table: {e}"
                             ) from e
                         # Log error and continue with next element
-                        logger.warning(f"Error processing table: {str(e)}")
+                        logger.warning(f"Error processing table: {e}")
 
             # Process footnotes and add them as regular paragraphs
             if include_footnotes and package.footnotes is not None:
@@ -848,10 +842,10 @@ class _DocxConverterBase:
                     if strict_mode:
                         # In strict mode, re-raise as DocxContentError
                         raise DocxContentError(
-                            f"Error processing footnotes: {str(e)}"
+                            f"Error processing footnotes: {e}"
                         ) from e
                     # Log error and continue without footnotes
-                    logger.warning(f"Error processing footnotes: {str(e)}")
+                    logger.warning(f"Error processing footnotes: {e}")
 
             # Process comments and add them as regular paragraphs
             if include_comments and package.comments is not None:
@@ -876,11 +870,9 @@ class _DocxConverterBase:
                 except Exception as e:
                     if strict_mode:
                         # In strict mode, re-raise as DocxContentError
-                        raise DocxContentError(
-                            f"Error processing comments: {str(e)}"
-                        ) from e
+                        raise DocxContentError(f"Error processing comments: {e}") from e
                     # Log error and continue without comments
-                    logger.warning(f"Error processing comments: {str(e)}")
+                    logger.warning(f"Error processing comments: {e}")
 
             # Process footers
             if include_footers and package.footers:
@@ -901,11 +893,9 @@ class _DocxConverterBase:
                 except Exception as e:
                     if strict_mode:
                         # In strict mode, re-raise as DocxContentError
-                        raise DocxContentError(
-                            f"Error processing footers: {str(e)}"
-                        ) from e
+                        raise DocxContentError(f"Error processing footers: {e}") from e
                     # Log error and continue without footers
-                    logger.warning(f"Error processing footers: {str(e)}")
+                    logger.warning(f"Error processing footers: {e}")
 
             return result
         except DocxConverterError:
@@ -913,7 +903,7 @@ class _DocxConverterBase:
             raise
         except Exception as e:
             # Handle general errors in document processing
-            raise DocxXmlError(f"Error processing document elements: {str(e)}") from e
+            raise DocxXmlError(f"Error processing document elements: {e}") from e
 
     def _process_text_run(
         self,
@@ -1007,7 +997,7 @@ class _DocxConverterBase:
                         return val.title()
         except Exception as e:
             # If there's an error finding the style, log it but continue with default
-            logger.warning(f"Error looking up style '{style_id}': {str(e)}")
+            logger.warning(f"Error looking up style '{style_id}': {e}")
 
         return (style_id or "Normal").title()
 
@@ -1644,11 +1634,9 @@ class _DocxConverterBase:
                 raise
             else:
                 if strict_mode:
-                    raise DocxContentError(f"Error processing table: {str(e)}") from e
+                    raise DocxContentError(f"Error processing table: {e}") from e
                 else:
-                    logger.warning(
-                        f"Error processing table (idx: {table_idx}): {str(e)}"
-                    )
+                    logger.warning(f"Error processing table (idx: {table_idx}): {e}")
                     # Return whatever we've processed so far
                     return result
 
@@ -1744,11 +1732,9 @@ class _DocxConverterBase:
 
         except Exception as e:
             if strict_mode:
-                raise DocxContentError(
-                    f"Error processing {section_name}: {str(e)}"
-                ) from e
+                raise DocxContentError(f"Error processing {section_name}: {e}") from e
             else:
-                logger.warning(f"Error processing {section_name}: {str(e)}")
+                logger.warning(f"Error processing {section_name}: {e}")
 
         return paragraphs
 
@@ -2261,14 +2247,14 @@ class _DocxConverterBase:
                     if strict_mode:
                         raise DocxContentError(
                             f"Error converting image '{image_info.get('target', rel_id)}': "
-                            f"{str(e)}"
+                            f"{e}"
                         ) from e
 
                     # Otherwise log the error and continue with the next image
                     error_count += 1
                     logger.warning(
                         f"Error converting image '{image_info.get('target', rel_id)}': "
-                        f"{str(e)}"
+                        f"{e}"
                     )
                     continue
 
@@ -2282,6 +2268,4 @@ class _DocxConverterBase:
             return images
         except Exception as e:
             # Handle critical errors extracting images
-            raise DocxConverterError(
-                f"Error extracting images from DOCX: {str(e)}"
-            ) from e
+            raise DocxConverterError(f"Error extracting images from DOCX: {e}") from e

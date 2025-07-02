@@ -187,7 +187,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -197,7 +197,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -220,7 +220,7 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            3\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1750861591, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1751467859, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
@@ -229,7 +229,7 @@ interactions:
         "fp_178c8d546f", "usage": {"completion_tokens": 29, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 2532, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2432}, "total_tokens": 2561}}'
+        {"audio_tokens": 0, "cached_tokens": 1792}, "total_tokens": 2561}}'
     headers:
       Content-Length:
       - '1328'
@@ -244,7 +244,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '384'
+      - '324'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -415,7 +415,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -425,7 +425,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -441,27 +441,28 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"$4800\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750861593, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
-        "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
-        {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
-        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
-        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
-        []}}}], "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens":
-        30, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2767, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2688},
-        "total_tokens": 2797}}'
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"$4800\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1751467860, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_result": {"jailbreak": {"filtered": false, "detected": false},
+        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
+        1, "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
+        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "custom_blocklists": {"filtered": false, "details": []}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 30, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2767, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 2688}, "total_tokens": 2797}}'
     headers:
       Content-Length:
-      - '1359'
+      - '1483'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -475,15 +476,15 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '660'
+      - '1286'
       request-id:
-      - 13658b80-c86e-4af6-bd15-fd11cc0903d0
+      - c2ae718d-9ec4-48fc-ab20-f6014dab9a71
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1933'
+      - '2151'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -666,7 +667,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -676,7 +677,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -698,11 +699,11 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1750861594,
+        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1751467862,
         "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
         "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
-        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"detected": false,
+        "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
         {"completion_tokens": 23, "completion_tokens_details": {"accepted_prediction_tokens":
@@ -723,7 +724,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '306'
+      - '262'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -904,7 +905,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -914,7 +915,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -930,24 +931,26 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1751467863,
+        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
+        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"detected": false,
+        "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1750861594, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2114, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2048}, "total_tokens": 2137}}'
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
+        {"completion_tokens": 23, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 2114, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        1920}, "total_tokens": 2137}}'
     headers:
       Content-Length:
-      - '1179'
+      - '1303'
       Content-Type:
       - application/json
       Date:
@@ -959,7 +962,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '319'
+      - '274'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1138,7 +1141,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1148,7 +1151,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1169,7 +1172,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            1\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750861595, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1751467863, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
@@ -1178,11 +1181,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 29,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2077, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        2106}}'
+        2077, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1792},
+        "total_tokens": 2106}}'
     headers:
       Content-Length:
-      - '1201'
+      - '1204'
       Content-Type:
       - application/json
       Date:
@@ -1194,7 +1197,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '443'
+      - '325'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1369,7 +1372,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1379,7 +1382,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1401,7 +1404,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [2, 3]\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1750861595,
+        [2, 3]\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1751467863,
         "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
         "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
         {"filtered": false, "severity": "safe"}, "jailbreak": {"detected": false,
@@ -1411,7 +1414,7 @@ interactions:
         {"completion_tokens": 28, "completion_tokens_details": {"accepted_prediction_tokens":
         0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
         0}, "prompt_tokens": 2046, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        1920}, "total_tokens": 2074}}'
+        1792}, "total_tokens": 2074}}'
     headers:
       Content-Length:
       - '1307'
@@ -1426,7 +1429,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '333'
+      - '314'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1598,7 +1601,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1608,7 +1611,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1624,26 +1627,24 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1750861596,
-        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
-        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
-        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
-        {"completion_tokens": 23, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 1964, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        1920}, "total_tokens": 1987}}'
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1751467864, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1964, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1920}, "total_tokens": 1987}}'
     headers:
       Content-Length:
-      - '1303'
+      - '1179'
       Content-Type:
       - application/json
       Date:
@@ -1655,7 +1656,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '300'
+      - '262'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1826,7 +1827,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1836,7 +1837,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1852,27 +1853,28 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"$4800\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750861597, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
-        "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
-        {"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
-        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
-        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
-        []}}}], "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens":
-        30, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2767, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2688},
-        "total_tokens": 2797}}'
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"$4800\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1751467866, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_result": {"jailbreak": {"filtered": false, "detected": false},
+        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
+        1, "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
+        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "custom_blocklists": {"filtered": false, "details": []}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 30, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2767, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1792}, "total_tokens": 2797}}'
     headers:
       Content-Length:
-      - '1359'
+      - '1483'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -1886,15 +1888,15 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '594'
+      - '778'
       request-id:
-      - 4e6ef2bd-60db-47d1-977c-02501e4c9327
+      - 394c8ed2-80e7-49ef-a983-8b9434c9abc8
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1511'
+      - '2165'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -2286,7 +2288,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2296,7 +2298,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2319,16 +2321,16 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
         [\n            \"P48\",\n            \"P49\",\n            \"P50\",\n            \"P51\",\n            \"P52\",\n            \"P53\",\n            \"P54\",\n            \"P55\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1750861598, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1751467867, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 64,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        6526, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6400},
+        6526, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
         "total_tokens": 6590}}'
     headers:
       Content-Length:
@@ -2344,7 +2346,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '712'
+      - '755'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2940,7 +2942,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.91.0
+      - AsyncAzureOpenAI/Python 1.93.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2950,7 +2952,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.91.0
+      - 1.93.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2971,25 +2973,26 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
-        \"P48\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P48-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P49\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P49-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P50\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P50-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P51\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P51-S0\"\n          },\n          {\n            \"sentence_id\": \"P51-S1\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P52\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P52-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P53\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P53-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P54\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P54-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P55\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P55-S0\"\n          }\n        ]\n      }\n    ]\n  }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1750861600, "id": "chatcmpl-DUMMY", "model":
-        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
+        [\n            {\n                \"paragraph_id\": \"P48\",\n                \"sentences\":
+        [\n                    {\n                        \"sentence_id\": \"P48-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P49\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P49-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P50\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P50-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P51\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P51-S0\"\n                    },\n                    {\n                        \"sentence_id\":
+        \"P51-S1\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P52\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P52-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P53\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P53-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P54\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P54-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        \"P55\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+        \"P55-S0\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1751467869, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
@@ -2997,11 +3000,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 327,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        10479, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        10806}}'
+        10479, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 10368},
+        "total_tokens": 10806}}'
     headers:
       Content-Length:
-      - '2630'
+      - '3226'
       Content-Type:
       - application/json
       Date:
@@ -3013,7 +3016,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3187'
+      - '2863'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

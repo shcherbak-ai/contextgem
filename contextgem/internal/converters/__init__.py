@@ -16,14 +16,9 @@
 # limitations under the License.
 #
 
-from contextgem.internal.converters.docx import (
-    DocxConverterError,
-    _DocxConverterBase,
-    _DocxPackage,
-)
+from contextgem.internal.converters.docx import _DocxConverterBase, _DocxPackage
 
 __all__ = [
-    "DocxConverterError",
     "_DocxConverterBase",
     "_DocxPackage",
 ]

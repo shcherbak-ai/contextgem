@@ -397,7 +397,7 @@ async def _async_multi_executor(
         try:
             results[index] = await func(**kwargs)
         except Exception as e:
-            logger.error(f"Error in worker {index}: {repr(e)}")
+            logger.error(f"Error in worker {index}: {e}")
             results[index] = None
 
     # Create one worker task per item in data_list
@@ -705,14 +705,14 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     except Exception as e:
         if is_local_path:
             # If it's a local path that exists but isn't a valid SaT model
-            logger.error(f"Failed to load SaT model from path '{model_id}': {str(e)}")
+            logger.error(f"Failed to load SaT model from path '{model_id}': {e}")
             raise RuntimeError(
                 f"The directory at '{model_id}' exists but does not contain a valid SaT model. "
-                f"Error: {str(e)}"
+                f"Error: {e}"
             ) from e
         else:
             # For standard model IDs or other errors
-            logger.error(f"Failed to load SaT model '{model_id}': {str(e)}")
+            logger.error(f"Failed to load SaT model '{model_id}': {e}")
             raise
 
 
@@ -754,7 +754,7 @@ def _is_json_serializable(data: Any) -> bool:
     try:
         json.dumps(data, ensure_ascii=False)
     except (TypeError, ValueError, OverflowError, RecursionError) as e:
-        logger.error(f"Data is not JSON serializable. Error: {repr(e)}")
+        logger.error(f"Data is not JSON serializable. Error: {e}")
         return False
     return True
 

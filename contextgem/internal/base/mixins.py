@@ -39,7 +39,7 @@ class _PostInitCollectorMixin(BaseModel):
     customized post-initialization behavior across multiple inheritance levels.
 
     :ivar __post_init_methods__: List of callable methods to be executed after initialization.
-    :type __post_init_methods__: list[Callable[[Any, Any], None]]
+    :vartype __post_init_methods__: list[Callable[[Any, Any], None]]
     """
 
     # Holds all post-init methods for the class.

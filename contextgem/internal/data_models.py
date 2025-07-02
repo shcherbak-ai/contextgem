@@ -39,17 +39,17 @@ class _LLMCall(BaseModel):
     Holds data on an individual call to the LLM.
 
     :ivar timestamp_sent: The epoch timestamp (in ms) when the prompt was sent.
-    :type timestamp_sent: int
+    :vartype timestamp_sent: int
     :ivar prompt_kwargs: The kwargs passed for prompt rendering.
-    :type prompt_kwargs: dict[NonEmptyStr, Any]
+    :vartype prompt_kwargs: dict[NonEmptyStr, Any]
     :ivar prompt: The fully rendered input prompt sent to the LLM.
-    :type prompt: NonEmptyStr
+    :vartype prompt: NonEmptyStr
     :ivar response: The raw text response returned by the LLM for the given prompt.
         Defaults to None if the response is not yet received.
-    :type response: Optional[str]
+    :vartype response: Optional[str]
     :ivar timestamp_received: The epoch timestamp (in ms) when the response was received.
                              Defaults to None if the response is not yet received.
-    :type timestamp_received: Optional[int]
+    :vartype timestamp_received: Optional[int]
     """
 
     timestamp_sent: StrictInt = Field(
@@ -87,11 +87,11 @@ class _LLMUsage(_InstanceSerializer):
     Represents the input and output usage of a LLM.
 
     :ivar input: Represents the number of tokens used for the input of the LLM.
-    :type input: int
+    :vartype input: int
     :ivar output: Represents the number of tokens generated as output by the LLM.
-    :type output: int
+    :vartype output: int
     :ivar calls: A list of _LLMCall objects representing the data on the individual calls made to the LLM.
-    :type calls: list[_LLMCall]
+    :vartype calls: list[_LLMCall]
     """
 
     input: StrictInt = Field(
@@ -113,16 +113,16 @@ class _LLMUsageOutputContainer(BaseModel):
     i.e. part of the list returned by the LLM's get_usage() method.
 
     :ivar model: The name or identifier of the model being used.
-    :type model: NonEmptyStr
+    :vartype model: NonEmptyStr
     :ivar role: The role of the model, which must be one of
         "extractor_text", "reasoner_text", "extractor_vision",
         or "reasoner_vision".
-    :type role: LLMRoleAny
+    :vartype role: LLMRoleAny
     :ivar is_fallback: Indicates whether the LLM is a fallback model.
-    :type is_fallback: StrictBool
+    :vartype is_fallback: StrictBool
     :ivar usage: Detailed usage information encapsulated in a `_LLMUsage`
         object.
-    :type usage: _LLMUsage
+    :vartype usage: _LLMUsage
     """
 
     model: NonEmptyStr
@@ -141,11 +141,11 @@ class _LLMCost(_InstanceSerializer):
     processing inputs, outputs, and the total processing cost.
 
     :ivar input: Cost associated with processing the input.
-    :type input: Decimal
+    :vartype input: Decimal
     :ivar output: Cost associated with generating the output.
-    :type output: Decimal
+    :vartype output: Decimal
     :ivar total: Total cost combining both input and output processing.
-    :type total: Decimal
+    :vartype total: Decimal
     """
 
     input: Decimal = DefaultDecimalField
@@ -161,15 +161,15 @@ class _LLMCostOutputContainer(BaseModel):
     i.e. part of the list returned by the LLM's get_cost() method.
 
     :ivar model: The name of the language model being used.
-    :type model: NonEmptyStr
+    :vartype model: NonEmptyStr
     :ivar role: The role of the model in processing, which can be one of:
                 "extractor_text", "reasoner_text", "extractor_vision",
                 "reasoner_vision".
-    :type role: LLMRoleAny
+    :vartype role: LLMRoleAny
     :ivar is_fallback: Indicates if the LLM is a fallback model.
-    :type is_fallback: bool
+    :vartype is_fallback: bool
     :ivar cost: The _LLMCost object associated with the LLM execution.
-    :type cost: _LLMCost
+    :vartype cost: _LLMCost
     """
 
     model: NonEmptyStr

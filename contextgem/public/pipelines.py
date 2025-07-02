@@ -48,10 +48,10 @@ class DocumentPipeline(_AssignedInstancesProcessor):
 
     :ivar aspects: A list of aspects to extract from documents. Aspects represent structural
                   categories of information. Defaults to an empty list.
-    :type aspects: list[Aspect]
+    :vartype aspects: list[Aspect]
     :ivar concepts: A list of concepts to identify within documents. Concepts represent
                    specific information elements to extract. Defaults to an empty list.
-    :type concepts: list[_Concept]
+    :vartype concepts: list[_Concept]
 
     Note:
         A pipeline is a reusable configuration of extraction steps. You can use the same pipeline

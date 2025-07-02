@@ -44,7 +44,7 @@ class StringExample(_Example):
     Represents a string example that can be provided by users for certain extraction tasks.
 
     :ivar content: A non-empty string that holds the text content of the example.
-    :type content: NonEmptyStr
+    :vartype content: NonEmptyStr
 
     Note:
         Examples are optional and can be used to guide LLM extraction tasks. They serve as reference
@@ -66,7 +66,7 @@ class JsonObjectExample(_Example):
 
     :ivar content: A JSON-serializable dict with the minimum length of 1 that holds
         the content of the example.
-    :type content: dict[str, Any]
+    :vartype content: dict[str, Any]
 
     Note:
         Examples are optional and can be used to guide LLM extraction tasks. They serve as reference

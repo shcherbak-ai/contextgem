@@ -433,12 +433,12 @@ class _ExtractedItemsAttributeProcessor(_PropertyProcessor):
 
     :ivar add_justifications: A boolean flag indicating whether the LLM
         will output justification for each extracted item for the aspect. Defaults to False.
-    :type add_justifications: bool
+    :vartype add_justifications: bool
     :ivar justification_depth: The level of detail of justifications. Details to "brief".
-    :type justification_depth: JustificationDepth
+    :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: The maximum number of sentences in a justification.
         Defaults to 2.
-    :type justification_max_sents: int
+    :vartype justification_max_sents: int
     """
 
     add_justifications: StrictBool = Field(default=False)

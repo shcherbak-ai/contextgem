@@ -45,14 +45,14 @@ class _ExtractedItem(_RefParasAndSentsAttrituteProcessor):
     optional justification and reference data.
 
     :ivar value: The extracted information value.
-    :type value: Any
+    :vartype value: Any
     :ivar justification: Optional explanation providing context for the extraction.
         Defaults to None.
-    :type justification: Optional[NonEmptyStr]
+    :vartype justification: Optional[NonEmptyStr]
     :ivar reference_paragraphs: List of paragraphs referenced by this item.
-    :type reference_paragraphs: list[Paragraph]
+    :vartype reference_paragraphs: list[Paragraph]
     :ivar reference_sentences: List of sentences referenced by this item.
-    :type reference_sentences: list[Sentence]
+    :vartype reference_sentences: list[Sentence]
     """
 
     value: Any = Field(..., frozen=True)

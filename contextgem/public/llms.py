@@ -40,6 +40,8 @@ from typing import TYPE_CHECKING, Any, Optional
 from aiolimiter import AsyncLimiter
 from jinja2 import Template
 
+from contextgem.internal.exceptions import LLMAPIError
+
 with warnings.catch_warnings():
     # Temporarily disable warnings related to Pydantic deprecation in litellm==1.71.1
     # (latest available version as of 2025-05-25)
@@ -101,11 +103,11 @@ class DocumentLLMGroup(_GenericLLMProcessor):
     :ivar llms: A list of DocumentLLM instances, each with a unique role (e.g., `extractor_text`,
                 `reasoner_text`, `extractor_vision`, `reasoner_vision`). At least 2 instances
                 with distinct roles are required.
-    :type llms: list[DocumentLLM]
+    :vartype llms: list[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
                           Values: "en" (always English) or "adapt" (matches document/image language).
                           All LLMs in the group must share the same output_language setting.
-    :type output_language: LanguageRequirement
+    :vartype output_language: LanguageRequirement
 
     Note:
         Refer to the :class:`DocumentLLM` class for more information on constructing LLMs
@@ -303,66 +305,66 @@ class DocumentLLM(_GenericLLMProcessor):
 
     :ivar model: Model identifier in format {model_provider}/{model_name}.
         See https://docs.litellm.ai/docs/providers for supported providers.
-    :type model: NonEmptyStr
+    :vartype model: NonEmptyStr
     :ivar deployment_id: Deployment ID for the LLM. Primarily used with Azure OpenAI.
-    :type deployment_id: Optional[NonEmptyStr]
+    :vartype deployment_id: Optional[NonEmptyStr]
     :ivar api_key: API key for LLM authentication. Not required for local models (e.g., Ollama).
-    :type api_key: Optional[NonEmptyStr]
+    :vartype api_key: Optional[NonEmptyStr]
     :ivar api_base: Base URL of the API endpoint.
-    :type api_base: Optional[NonEmptyStr]
+    :vartype api_base: Optional[NonEmptyStr]
     :ivar api_version: API version. Primarily used with Azure OpenAI.
-    :type api_version: Optional[NonEmptyStr]
+    :vartype api_version: Optional[NonEmptyStr]
     :ivar role: Role type for the LLM (e.g., "extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to "extractor_text".
-    :type role: LLMRoleAny
+    :vartype role: LLMRoleAny
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
-    :type system_message: Optional[NonEmptyStr]
+    :vartype system_message: Optional[NonEmptyStr]
     :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
         Lower values produce more predictable outputs, higher values generate more varied responses.
         Defaults to 0.3.
-    :type temperature: Optional[float]
+    :vartype temperature: Optional[float]
     :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
-    :type max_tokens: Optional[int]
+    :vartype max_tokens: Optional[int]
     :ivar max_completion_tokens: Maximum token size for output completions in reasoning
         (CoT-capable) models. Defaults to 16000.
-    :type max_completion_tokens: Optional[int]
+    :vartype max_completion_tokens: Optional[int]
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
         ``"low"``, ``"medium"``, or ``"high"``. Relevant for reasoning (CoT-capable) models.
         Defaults to None.
-    :type reasoning_effort: Optional[ReasoningEffort]
+    :vartype reasoning_effort: Optional[ReasoningEffort]
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
         Defaults to 0.3.
-    :type top_p: Optional[float]
+    :vartype top_p: Optional[float]
     :ivar num_retries_failed_request: Number of retries when LLM request fails. Defaults to 3.
-    :type num_retries_failed_request: Optional[int]
+    :vartype num_retries_failed_request: Optional[int]
     :ivar max_retries_failed_request: LLM provider-specific retry count for failed requests.
         Defaults to 0.
-    :type max_retries_failed_request: Optional[int]
+    :vartype max_retries_failed_request: Optional[int]
     :ivar max_retries_invalid_data: Number of retries when LLM returns invalid data. Defaults to 3.
-    :type max_retries_invalid_data: Optional[int]
+    :vartype max_retries_invalid_data: Optional[int]
     :ivar timeout: Timeout in seconds for LLM API calls. Defaults to 120 seconds.
-    :type timeout: Optional[int]
+    :vartype timeout: Optional[int]
     :ivar pricing_details: LLMPricing object with pricing details for cost calculation.
-    :type pricing_details: Optional[dict[NonEmptyStr, float]]
+    :vartype pricing_details: Optional[dict[NonEmptyStr, float]]
     :ivar is_fallback: Indicates whether the LLM is a fallback model. Defaults to False.
-    :type is_fallback: bool
+    :vartype is_fallback: bool
     :ivar fallback_llm: DocumentLLM to use as fallback if current one fails.
         Must have the same role as the current LLM.
-    :type fallback_llm: Optional[DocumentLLM]
+    :vartype fallback_llm: Optional[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
-    :type output_language: LanguageRequirement
+    :vartype output_language: LanguageRequirement
     :ivar async_limiter: Controls frequency of async LLM API requests for concurrent tasks.
         Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues.
         See https://github.com/mjpieters/aiolimiter for configuration details.
-    :type async_limiter: AsyncLimiter
+    :vartype async_limiter: AsyncLimiter
     :ivar seed: Seed for random number generation to help produce more consistent outputs
         across multiple runs. When set to a specific integer value, the LLM will attempt
         to use this seed for sampling operations. However, deterministic output is still
         not guaranteed even with the same seed, as other factors may influence the model's
         response. Defaults to None.
-    :type seed: Optional[StrictInt]
+    :vartype seed: Optional[StrictInt]
 
     Note:
 
@@ -560,6 +562,7 @@ class DocumentLLM(_GenericLLMProcessor):
             images=images,
             num_retries_failed_request=self.num_retries_failed_request,
             max_retries_failed_request=self.max_retries_failed_request,
+            raise_exception_on_llm_api_error=True,  # always True for chat
         )
 
         # Update usage and cost statistics
@@ -966,6 +969,7 @@ class DocumentLLM(_GenericLLMProcessor):
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
         drop_params: bool = False,
+        raise_exception_on_llm_api_error: bool = True,
     ) -> tuple[str | None, _LLMUsage]:
         """
         Generates a response from an LLM based on the provided message, optional images,
@@ -995,6 +999,10 @@ class DocumentLLM(_GenericLLMProcessor):
         :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
             Used internally for automatic retry when UnsupportedParamsError occurs.
         :type drop_params: bool
+        :param raise_exception_on_llm_api_error: Whether to raise an exception if the LLM call fails
+            due to an error in the LLM API. If False, a warning will be issued instead, and no data
+            will be returned. Defaults to True.
+        :type raise_exception_on_llm_api_error: bool, optional
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _LLMUsage]
@@ -1121,7 +1129,7 @@ class DocumentLLM(_GenericLLMProcessor):
             if (
                 not drop_params
             ):  # only retry if we haven't already tried with drop_params
-                logger.error(f"Exception occurred while calling LLM API: {repr(e)}")
+                logger.error(f"Exception occurred while calling LLM API: {e}")
                 logger.info("Retrying the call with unsupported parameters dropped...")
 
                 # Recursively call with drop_params=True
@@ -1133,26 +1141,53 @@ class DocumentLLM(_GenericLLMProcessor):
                     max_retries_failed_request=max_retries_failed_request,
                     async_limiter=async_limiter,
                     drop_params=True,
+                    raise_exception_on_llm_api_error=raise_exception_on_llm_api_error,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
                 # fall through to regular error handling
-                logger.error(
-                    f"Exception occurred while calling LLM API with drop_params=True: {repr(e)}"
+                warnings.warn(
+                    f"Exception occurred while calling LLM API with drop_params=True: {e}"
                 )
                 if self.fallback_llm:
                     logger.info(
                         "Call will be retried if retry params provided and/or a fallback LLM is configured."
                     )
                 else:
-                    raise
+                    n_retries = max(
+                        num_retries_failed_request, max_retries_failed_request
+                    )
+                    if raise_exception_on_llm_api_error:
+                        raise LLMAPIError(
+                            f"Exception occurred while calling LLM API",
+                            retry_count=n_retries,
+                            original_error=e,
+                        )
+                    else:
+                        warnings.warn(
+                            f"Exception occurred while calling LLM API with drop_params=True: {e}"
+                            + f" ({n_retries} retries)."
+                        )
         except Exception as e:
             # e.g. rate limit error
-            logger.error(f"Exception occurred while calling LLM API: {repr(e)}")
+            logger.error(f"Exception occurred while calling LLM API: {e}")
             if self.fallback_llm:
                 logger.info(
                     "Call will be retried if retry params provided and/or a fallback LLM is configured."
                 )
+            else:
+                n_retries = max(num_retries_failed_request, max_retries_failed_request)
+                if raise_exception_on_llm_api_error:
+                    raise LLMAPIError(
+                        f"Exception occurred while calling LLM API",
+                        retry_count=n_retries,
+                        original_error=e,
+                    )
+                else:
+                    warnings.warn(
+                        f"Exception occurred while calling LLM API: {e}"
+                        + f" ({n_retries} retries)."
+                    )
 
         usage.calls.append(llm_call_obj)  # record the call details (call unfinished)
         return None, usage

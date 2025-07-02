@@ -8119,6 +8119,14 @@ Note:
 |                 |                 |            | from Document (vision) for an example of extracting concepts |
 |                 |                 |            | from document images.                                        |
 +-----------------+-----------------+------------+--------------------------------------------------------------+
+| "raise_excepti  | bool            | "True"     | Whether to raise an exception if the extraction fails due to |
+| on_on_extracti  |                 |            | invalid data returned by an LLM or an error in the LLM API.  |
+| on_error"       |                 |            | If True (default): if the LLM returns invalid data,          |
+|                 |                 |            | "LLMExtractionError" will be raised, and if the LLM API call |
+|                 |                 |            | fails, "LLMAPIError" will be raised. If False, a warning     |
+|                 |                 |            | will be issued instead, and no extracted items will be       |
+|                 |                 |            | returned.                                                    |
++-----------------+-----------------+------------+--------------------------------------------------------------+
 
 
 
@@ -8268,6 +8276,14 @@ Note:
 |                 |                 |            | extraction quality by allowing the model to focus on smaller |
 |                 |                 |            | portions of text at a time. For more details on handling     |
 |                 |                 |            | long documents, see Dealing with Long Documents.             |
++-----------------+-----------------+------------+--------------------------------------------------------------+
+| "raise_excepti  | bool            | "True"     | Whether to raise an exception if the extraction fails due to |
+| on_on_extracti  |                 |            | invalid data returned by an LLM or an error in the LLM API.  |
+| on_error"       |                 |            | If True (default): if the LLM returns invalid data,          |
+|                 |                 |            | "LLMExtractionError" will be raised, and if the LLM API call |
+|                 |                 |            | fails, "LLMAPIError" will be raised. If False, a warning     |
+|                 |                 |            | will be issued instead, and no extracted items will be       |
+|                 |                 |            | returned.                                                    |
 +-----------------+-----------------+------------+--------------------------------------------------------------+
 
 
@@ -8429,6 +8445,14 @@ Note:
 |                 |                 |            | extraction from visual content. See 🖼️ Concept Extraction    |
 |                 |                 |            | from Document (vision) for an example of extracting concepts |
 |                 |                 |            | from document images.                                        |
++-----------------+-----------------+------------+--------------------------------------------------------------+
+| "raise_excepti  | bool            | "True"     | Whether to raise an exception if the extraction fails due to |
+| on_on_extracti  |                 |            | invalid data returned by an LLM or an error in the LLM API.  |
+| on_error"       |                 |            | If True (default): if the LLM returns invalid data,          |
+|                 |                 |            | "LLMExtractionError" will be raised, and if the LLM API call |
+|                 |                 |            | fails, "LLMAPIError" will be raised. If False, a warning     |
+|                 |                 |            | will be issued instead, and no extracted items will be       |
+|                 |                 |            | returned.                                                    |
 +-----------------+-----------------+------------+--------------------------------------------------------------+
 
 
@@ -8595,6 +8619,14 @@ Note:
 |                 |                 |            | focus more deeply on smaller sections of text at a time. For |
 |                 |                 |            | more details on handling long documents, see Dealing with    |
 |                 |                 |            | Long Documents.                                              |
++-----------------+-----------------+------------+--------------------------------------------------------------+
+| "raise_excepti  | bool            | "True"     | Whether to raise an exception if the extraction fails due to |
+| on_on_extracti  |                 |            | invalid data returned by an LLM or an error in the LLM API.  |
+| on_error"       |                 |            | If True (default): if the LLM returns invalid data,          |
+|                 |                 |            | "LLMExtractionError" will be raised, and if the LLM API call |
+|                 |                 |            | fails, "LLMAPIError" will be raised. If False, a warning     |
+|                 |                 |            | will be issued instead, and no extracted items will be       |
+|                 |                 |            | returned.                                                    |
 +-----------------+-----------------+------------+--------------------------------------------------------------+
 
 
@@ -10090,47 +10122,57 @@ class contextgem.public.documents.Document(**data)
    understanding and information extraction workflows.
 
    Variables:
-      * **raw_text** -- The main text of the document as a single
-        string. Defaults to None.
+      * **raw_text** (*Optional**[**NonEmptyStr**]*) -- The main text
+        of the document as a single string. Defaults to None.
 
-      * **paragraphs** -- List of Paragraph instances in consecutive
-        order as they appear in the document. Defaults to an empty
+      * **paragraphs** (*list**[**Paragraph**]*) -- List of Paragraph
+        instances in consecutive order as they appear in the document.
+        Defaults to an empty list.
+
+      * **images** (*list**[**Image**]*) -- List of Image instances
+        attached to or representing the document. Defaults to an empty
         list.
 
-      * **images** -- List of Image instances attached to or
-        representing the document. Defaults to an empty list.
+      * **aspects** (*list**[**Aspect**]*) -- List of aspects
+        associated with the document for focused analysis. Validated
+        to ensure unique names and descriptions. Defaults to an empty
+        list.
 
-      * **aspects** -- List of aspects associated with the document
-        for focused analysis. Validated to ensure unique names and
-        descriptions. Defaults to an empty list.
+      * **concepts** (*list**[**_Concept**]*) -- List of concepts
+        associated with the document for information extraction.
+        Validated to ensure unique names and descriptions. Defaults to
+        an empty list.
 
-      * **concepts** -- List of concepts associated with the document
-        for information extraction. Validated to ensure unique names
-        and descriptions. Defaults to an empty list.
-
-      * **paragraph_segmentation_mode** -- Mode for paragraph
-        segmentation. When set to "sat", uses a SaT (Segment Any Text
+      * **paragraph_segmentation_mode** (*Literal**[**"newlines"**,
+        **"sat"**]*) -- Mode for paragraph segmentation. When set to
+        "sat", uses a SaT (Segment Any Text
         https://arxiv.org/abs/2406.16678) model. Defaults to
         "newlines".
 
-      * **sat_model_id** -- SaT model ID for paragraph/sentence
-        segmentation or a local path to a SaT model. For model IDs,
-        defaults to "sat-3l-sm". See https://github.com/segment-any-
-        text/wtpsplit for the list of available models. For local
-        paths, provide either a string path or a Path object pointing
-        to the directory containing the SaT model.
+      * **sat_model_id** (*SaTModelId*) -- SaT model ID for
+        paragraph/sentence segmentation or a local path to a SaT
+        model. For model IDs, defaults to "sat-3l-sm". See
+        https://github.com/segment-any-text/wtpsplit for the list of
+        available models. For local paths, provide either a string
+        path or a Path object pointing to the directory containing the
+        SaT model.
 
-      * **pre_segment_sentences** -- Whether to pre-segment sentences
-        during Document initialization. When False (default), sentence
-        segmentation is deferred until sentences are actually needed,
-        improving initialization performance. When True, sentences are
-        segmented immediately during Document creation using the SaT
-        model.
+      * **pre_segment_sentences** (*bool*) -- Whether to pre-segment
+        sentences during Document initialization. When False
+        (default), sentence segmentation is deferred until sentences
+        are actually needed, improving initialization performance.
+        When True, sentences are segmented immediately during Document
+        creation using the SaT model.
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **raw_text** (*Optional**[**NonEmptyStr**]*)
+      * **raw_text** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]
+        **| **None*)
 
       * **paragraphs** (*list**[**Paragraph**]*)
 
@@ -10140,10 +10182,13 @@ class contextgem.public.documents.Document(**data)
 
       * **concepts** (*list**[**_Concept**]*)
 
-      * **paragraph_segmentation_mode** (*Literal**[**"newlines"**,
-        **"sat"**]*)
+      * **paragraph_segmentation_mode** (*Literal**[**'newlines'**,
+        **'sat'**]*)
 
-      * **sat_model_id** (*SaTModelId*)
+      * **sat_model_id** (*Literal**[**'sat-1l'**, **'sat-1l-sm'**,
+        **'sat-3l'**, **'sat-3l-sm'**, **'sat-6l'**, **'sat-6l-sm'**,
+        **'sat-9l'**, **'sat-12l'**, **'sat-12l-sm'**] **| **str** |
+        **~pathlib._local.Path*)
 
       * **pre_segment_sentences** (*bool*)
 
@@ -10833,55 +10878,70 @@ class contextgem.public.aspects.Aspect(**data)
    subject or theme described in the task.
 
    Variables:
-      * **name** -- The name of the aspect. Required, non-empty
-        string.
+      * **name** (*NonEmptyStr*) -- The name of the aspect. Required,
+        non-empty string.
 
-      * **description** -- A detailed description of the aspect.
-        Required, non-empty string.
+      * **description** (*NonEmptyStr*) -- A detailed description of
+        the aspect. Required, non-empty string.
 
-      * **concepts** -- A list of concepts associated with the aspect.
-        These concepts must be unique in both name and description and
-        cannot include concepts with vision LLM roles.
+      * **concepts** (*list**[**_Concept**]*) -- A list of concepts
+        associated with the aspect. These concepts must be unique in
+        both name and description and cannot include concepts with
+        vision LLM roles.
 
-      * **llm_role** -- The role of the LLM responsible for aspect
-        extraction. Default is "extractor_text". Valid roles are
-        "extractor_text" and "reasoner_text".
+      * **llm_role** (*LLMRoleAspect*) -- The role of the LLM
+        responsible for aspect extraction. Default is
+        "extractor_text". Valid roles are "extractor_text" and
+        "reasoner_text".
 
-      * **reference_depth** -- The structural depth of references
-        (paragraphs or sentences). Defaults to "paragraphs". Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- The structural depth
+        of references (paragraphs or sentences). Defaults to
+        "paragraphs". Affects the structure of "extracted_items".
 
-      * **add_justifications** -- Whether the LLM will output
+      * **add_justifications** (*bool*) -- Whether the LLM will output
         justification for each extracted item. Inherited from base
         class. Defaults to False.
 
-      * **justification_depth** -- The level of detail for
-        justifications. Inherited from base class. Defaults to
-        "brief".
+      * **justification_depth** (*JustificationDepth*) -- The level of
+        detail for justifications. Inherited from base class. Defaults
+        to "brief".
 
-      * **justification_max_sents** -- Maximum number of sentences in
-        a justification. Inherited from base class. Defaults to 2.
+      * **justification_max_sents** (*int*) -- Maximum number of
+        sentences in a justification. Inherited from base class.
+        Defaults to 2.
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
       * **aspects** (*list**[**Aspect**]*)
 
       * **concepts** (*list**[**_Concept**]*)
 
-      * **llm_role** (*LLMRoleAspect*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
    Example:
       Aspect definition
@@ -11347,66 +11407,81 @@ class contextgem.public.concepts.StringConcept(**data)
    aspects.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **examples** -- Example strings illustrating the concept
-        usage.
+      * **examples** (*list**[**StringExample**]*) -- Example strings
+        illustrating the concept usage.
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "document title"
-        vs "key findings").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "document title" vs "key findings").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
       * **examples** (*list**[**StringExample**]*)
 
@@ -11627,63 +11702,79 @@ class contextgem.public.concepts.BooleanConcept(**data)
    that represent conceptual properties or attributes within content.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "contains
-        confidential information" vs "compliance violations").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "contains confidential information" vs "compliance
+        violations").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
    Example:
       Boolean concept definition
@@ -11896,70 +11987,85 @@ class contextgem.public.concepts.NumericalConcept(**data)
    or quantities within content.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **numeric_type** -- Type constraint for extracted numbers
-        ("int", "float", or "any"). Defaults to "any" for auto-
-        detection.
+      * **numeric_type** (*Literal**[**"int"**, **"float"**,
+        **"any"**]*) -- Type constraint for extracted numbers ("int",
+        "float", or "any"). Defaults to "any" for auto-detection.
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "total revenue"
-        vs "monthly sales figures").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "total revenue" vs "monthly sales figures").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **numeric_type** (*Literal**[**"int"**, **"float"**,
-        **"any"**]*)
+      * **numeric_type** (*Literal**[**'int'**, **'float'**,
+        **'any'**]*)
 
    Example:
       Numerical concept definition
@@ -12182,66 +12288,81 @@ class contextgem.public.concepts.RatingConcept(**data)
    that must fall within the boundaries of a specified rating scale.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **rating_scale** -- The rating scale defining valid value
-        boundaries.
+      * **rating_scale** (*RatingScale*) -- The rating scale defining
+        valid value boundaries.
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "product rating
-        score" vs "customer satisfaction ratings").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "product rating score" vs "customer satisfaction ratings").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
       * **rating_scale** (*RatingScale*)
 
@@ -12476,13 +12597,14 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
    structure.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **structure** --
+      * **structure** (*type** | **dict**[**NonEmptyStr**, **Any**]*)
+        --
 
         JSON object schema as a class with type annotations or
         dictionary where keys are field names and values are type
@@ -12534,62 +12656,82 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
         **Tip**: do not overcomplicate the structure to avoid prompt
         overloading.
 
-      * **examples** -- Example JSON objects illustrating the concept
-        usage.
+      * **examples** (*list**[**JsonObjectExample**]*) -- Example JSON
+        objects illustrating the concept usage.
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "product
-        specifications" vs "customer order details").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "product specifications" vs "customer order details").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **structure** (*type** | **dict**[**NonEmptyStr**, **Any**]*)
+      * **structure** (*type** | **dict**[**Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]**,
+        **Any**]*)
 
       * **examples** (*list**[**JsonObjectExample**]*)
 
@@ -12817,63 +12959,78 @@ class contextgem.public.concepts.DateConcept(**data)
    into Python date objects.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "contract signing
-        date" vs "meeting dates").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "contract signing date" vs "meeting dates").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
    Example:
       Date concept definition
@@ -13091,74 +13248,97 @@ class contextgem.public.concepts.LabelConcept(**data)
    appropriate label exists.
 
    Variables:
-      * **name** -- The name of the concept (non-empty string,
-        stripped).
+      * **name** (*NonEmptyStr*) -- The name of the concept (non-empty
+        string, stripped).
 
-      * **description** -- A brief description of the concept (non-
-        empty string, stripped).
+      * **description** (*NonEmptyStr*) -- A brief description of the
+        concept (non-empty string, stripped).
 
-      * **labels** -- List of predefined labels for classification.
-        Must contain at least 2 unique labels.
+      * **labels** (*list**[**NonEmptyStr**]*) -- List of predefined
+        labels for classification. Must contain at least 2 unique
+        labels.
 
-      * **classification_type** -- Classification mode - "multi_class"
-        for single label selection, "multi_label" for multiple label
-        selection. Defaults to "multi_class".
+      * **classification_type** (*ClassificationType*) --
+        Classification mode - "multi_class" for single label
+        selection, "multi_label" for multiple label selection.
+        Defaults to "multi_class".
 
-      * **llm_role** -- The role of the LLM responsible for extracting
-        the concept ("extractor_text", "reasoner_text",
+      * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
+        for extracting the concept ("extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to
         "extractor_text".
 
-      * **add_justifications** -- Whether to include justifications
-        for extracted items.
+      * **add_justifications** (*bool*) -- Whether to include
+        justifications for extracted items.
 
-      * **justification_depth** -- Justification detail level.
-        Defaults to "brief".
+      * **justification_depth** (*JustificationDepth*) --
+        Justification detail level. Defaults to "brief".
 
-      * **justification_max_sents** -- Maximum sentences in
+      * **justification_max_sents** (*int*) -- Maximum sentences in
         justification. Defaults to 2.
 
-      * **add_references** -- Whether to include source references for
-        extracted items.
+      * **add_references** (*bool*) -- Whether to include source
+        references for extracted items.
 
-      * **reference_depth** -- Source reference granularity
-        ("paragraphs" or "sentences"). Defaults to "paragraphs". Only
-        relevant when references are added to extracted items. Affects
-        the structure of "extracted_items".
+      * **reference_depth** (*ReferenceDepth*) -- Source reference
+        granularity ("paragraphs" or "sentences"). Defaults to
+        "paragraphs". Only relevant when references are added to
+        extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** -- Whether this concept is restricted
-        to having only one extracted item. If True, only a single
-        extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs,
-        this constraint may not be strictly required as they can often
-        infer the appropriate number of items to extract from the
-        concept's name, description, and type (e.g., "document type"
-        vs "content topics").
+      * **singular_occurrence** (*StrictBool*) -- Whether this concept
+        is restricted to having only one extracted item. If True, only
+        a single extracted item will be extracted. Defaults to False
+        (multiple extracted items are allowed). Note that with
+        advanced LLMs, this constraint may not be strictly required as
+        they can often infer the appropriate number of items to
+        extract from the concept's name, description, and type (e.g.,
+        "document type" vs "content topics").
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **add_justifications** (*bool*)
+      * **add_justifications** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **justification_depth** (*JustificationDepth*)
+      * **justification_depth** (*Literal**[**'brief'**,
+        **'balanced'**, **'comprehensive'**]*)
 
-      * **justification_max_sents** (*int*)
+      * **justification_max_sents** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **name** (*NonEmptyStr*)
+      * **name** (*Annotated**[**str**, **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **description** (*NonEmptyStr*)
+      * **description** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **llm_role** (*LLMRoleAny*)
+      * **llm_role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
 
-      * **add_references** (*bool*)
+      * **add_references** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **reference_depth** (*ReferenceDepth*)
+      * **reference_depth** (*Literal**[**'paragraphs'**,
+        **'sentences'**]*)
 
-      * **singular_occurrence** (*StrictBool*)
+      * **singular_occurrence** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
-      * **labels** (*list**[**NonEmptyStr**]*)
+      * **labels** (*list**[**Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**,
+        **pattern=None**)**]**]*)
 
-      * **classification_type** (*ClassificationType*)
+      * **classification_type** (*Literal**[**'multi_class'**,
+        **'multi_label'**]*)
 
    Example:
       Label concept definition
@@ -13398,13 +13578,17 @@ class contextgem.public.examples.StringExample(**data)
    certain extraction tasks.
 
    Variables:
-      **content** -- A non-empty string that holds the text content of
-      the example.
+      **content** (*NonEmptyStr*) -- A non-empty string that holds the
+      text content of the example.
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **content** (*NonEmptyStr*)
+      * **content** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
    Note:
       Examples are optional and can be used to guide LLM extraction
@@ -13595,8 +13779,9 @@ class contextgem.public.examples.JsonObjectExample(**data)
    certain extraction tasks.
 
    Variables:
-      **content** -- A JSON-serializable dict with the minimum length
-      of 1 that holds the content of the example.
+      **content** (*dict**[**str**, **Any**]*) -- A JSON-serializable
+      dict with the minimum length of 1 that holds the content of the
+      example.
 
    Parameters:
       * **custom_data** (*dict*)
@@ -13838,15 +14023,16 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
    facilitates extraction of aspects and concepts from documents.
 
    Variables:
-      * **llms** -- A list of DocumentLLM instances, each with a
-        unique role (e.g., *extractor_text*, *reasoner_text*,
-        *extractor_vision*, *reasoner_vision*). At least 2 instances
-        with distinct roles are required.
+      * **llms** (*list**[**DocumentLLM**]*) -- A list of DocumentLLM
+        instances, each with a unique role (e.g., *extractor_text*,
+        *reasoner_text*, *extractor_vision*, *reasoner_vision*). At
+        least 2 instances with distinct roles are required.
 
-      * **output_language** -- Language for produced output text
-        (justifications, explanations). Values: "en" (always English)
-        or "adapt" (matches document/image language). All LLMs in the
-        group must share the same output_language setting.
+      * **output_language** (*LanguageRequirement*) -- Language for
+        produced output text (justifications, explanations). Values:
+        "en" (always English) or "adapt" (matches document/image
+        language). All LLMs in the group must share the same
+        output_language setting.
 
    Note:
       Refer to the "DocumentLLM" class for more information on
@@ -14040,7 +14226,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Returns:
          None
 
-   extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts all aspects and concepts from a document and its
       aspects.
@@ -14082,13 +14268,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            to 0 (all images). Relevant only for document-level
            concepts.
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          The document with extracted aspects and concepts.
 
       Return type:
          Document
 
-   async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts all aspects and concepts from a document
       and its aspects.
@@ -14128,13 +14321,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            to 0 (all images). Relevant only for document-level
            concepts.
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          The document with extracted aspects and concepts.
 
       Return type:
          Document
 
-   extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs.
@@ -14175,13 +14375,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            paragraphs to analyze in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed Aspect objects with extracted items.
 
       Return type:
          list[Aspect]
 
-   async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs asynchronously.
@@ -14218,13 +14425,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            paragraphs to analyze in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed Aspect objects with extracted items.
 
       Return type:
          list[Aspect]
 
-   extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts associated with a given aspect in a document.
 
@@ -14265,13 +14479,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            paragraphs to include in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed concept objects.
 
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_aspect_async(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   async extract_concepts_from_aspect_async(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts concepts from a specified aspect using
       LLMs.
@@ -14310,13 +14531,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            paragraphs to include in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed concept objects.
 
       Return type:
          list[_Concept]
 
-   extract_concepts_from_document(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   extract_concepts_from_document(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs.
@@ -14357,13 +14585,20 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            Maximum images to include in a single LLM prompt. Defaults
            to 0 (all images).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed Concept objects with extracted items.
 
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_document_async(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   async extract_concepts_from_document_async(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs asynchronously.
@@ -14402,6 +14637,13 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
          * **max_images_to_analyze_per_call** (*int**, **optional*) --
            Maximum images to include in a single LLM prompt. Defaults
            to 0 (all images).
+
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
 
       Returns:
          List of processed Concept objects with extracted items.
@@ -14552,132 +14794,180 @@ class contextgem.public.llms.DocumentLLM(**data)
    document processing task.
 
    Variables:
-      * **model** -- Model identifier in format
+      * **model** (*NonEmptyStr*) -- Model identifier in format
         {model_provider}/{model_name}. See
         https://docs.litellm.ai/docs/providers for supported
         providers.
 
-      * **deployment_id** -- Deployment ID for the LLM. Primarily used
-        with Azure OpenAI.
+      * **deployment_id** (*Optional**[**NonEmptyStr**]*) --
+        Deployment ID for the LLM. Primarily used with Azure OpenAI.
 
-      * **api_key** -- API key for LLM authentication. Not required
-        for local models (e.g., Ollama).
+      * **api_key** (*Optional**[**NonEmptyStr**]*) -- API key for LLM
+        authentication. Not required for local models (e.g., Ollama).
 
-      * **api_base** -- Base URL of the API endpoint.
+      * **api_base** (*Optional**[**NonEmptyStr**]*) -- Base URL of
+        the API endpoint.
 
-      * **api_version** -- API version. Primarily used with Azure
-        OpenAI.
+      * **api_version** (*Optional**[**NonEmptyStr**]*) -- API
+        version. Primarily used with Azure OpenAI.
 
-      * **role** -- Role type for the LLM (e.g., "extractor_text",
-        "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+      * **role** (*LLMRoleAny*) -- Role type for the LLM (e.g.,
+        "extractor_text", "reasoner_text", "extractor_vision",
+        "reasoner_vision"). Defaults to "extractor_text".
 
-      * **system_message** -- Preparatory system-level message to set
-        context for LLM responses.
+      * **system_message** (*Optional**[**NonEmptyStr**]*) --
+        Preparatory system-level message to set context for LLM
+        responses.
 
-      * **temperature** -- Sampling temperature (0.0 to 1.0)
-        controlling response creativity. Lower values produce more
-        predictable outputs, higher values generate more varied
-        responses. Defaults to 0.3.
+      * **temperature** (*Optional**[**float**]*) -- Sampling
+        temperature (0.0 to 1.0) controlling response creativity.
+        Lower values produce more predictable outputs, higher values
+        generate more varied responses. Defaults to 0.3.
 
-      * **max_tokens** -- Maximum tokens allowed in the generated
-        response. Defaults to 4096.
+      * **max_tokens** (*Optional**[**int**]*) -- Maximum tokens
+        allowed in the generated response. Defaults to 4096.
 
-      * **max_completion_tokens** -- Maximum token size for output
-        completions in reasoning (CoT-capable) models. Defaults to
-        16000.
+      * **max_completion_tokens** (*Optional**[**int**]*) -- Maximum
+        token size for output completions in reasoning (CoT-capable)
+        models. Defaults to 16000.
 
-      * **reasoning_effort** -- The effort level for the LLM to reason
-        about the input. Can be set to ""low"", ""medium"", or
-        ""high"". Relevant for reasoning (CoT-capable) models.
-        Defaults to None.
+      * **reasoning_effort** (*Optional**[**ReasoningEffort**]*) --
+        The effort level for the LLM to reason about the input. Can be
+        set to ""low"", ""medium"", or ""high"". Relevant for
+        reasoning (CoT-capable) models. Defaults to None.
 
-      * **top_p** -- Nucleus sampling value (0.0 to 1.0) controlling
-        output focus/randomness. Lower values make output more
-        deterministic, higher values produce more diverse outputs.
-        Defaults to 0.3.
+      * **top_p** (*Optional**[**float**]*) -- Nucleus sampling value
+        (0.0 to 1.0) controlling output focus/randomness. Lower values
+        make output more deterministic, higher values produce more
+        diverse outputs. Defaults to 0.3.
 
-      * **num_retries_failed_request** -- Number of retries when LLM
-        request fails. Defaults to 3.
+      * **num_retries_failed_request** (*Optional**[**int**]*) --
+        Number of retries when LLM request fails. Defaults to 3.
 
-      * **max_retries_failed_request** -- LLM provider-specific retry
-        count for failed requests. Defaults to 0.
+      * **max_retries_failed_request** (*Optional**[**int**]*) -- LLM
+        provider-specific retry count for failed requests. Defaults to
+        0.
 
-      * **max_retries_invalid_data** -- Number of retries when LLM
-        returns invalid data. Defaults to 3.
+      * **max_retries_invalid_data** (*Optional**[**int**]*) -- Number
+        of retries when LLM returns invalid data. Defaults to 3.
 
-      * **timeout** -- Timeout in seconds for LLM API calls. Defaults
-        to 120 seconds.
-
-      * **pricing_details** -- LLMPricing object with pricing details
-        for cost calculation.
-
-      * **is_fallback** -- Indicates whether the LLM is a fallback
-        model. Defaults to False.
-
-      * **fallback_llm** -- DocumentLLM to use as fallback if current
-        one fails. Must have the same role as the current LLM.
-
-      * **output_language** -- Language for produced output text
-        (justifications, explanations). Can be "en" (English) or
-        "adapt" (adapts to document/image language). Defaults to "en".
-
-      * **async_limiter** -- Controls frequency of async LLM API
-        requests for concurrent tasks. Defaults to allowing 3
-        acquisitions per 10-second period to prevent rate limit
-        issues. See https://github.com/mjpieters/aiolimiter for
-        configuration details.
-
-      * **seed** -- Seed for random number generation to help produce
-        more consistent outputs across multiple runs. When set to a
-        specific integer value, the LLM will attempt to use this seed
-        for sampling operations. However, deterministic output is
-        still not guaranteed even with the same seed, as other factors
-        may influence the model's response. Defaults to None.
-
-   Parameters:
-      * **model** (*NonEmptyStr*)
-
-      * **deployment_id** (*Optional**[**NonEmptyStr**]*)
-
-      * **api_key** (*Optional**[**NonEmptyStr**]*)
-
-      * **api_base** (*Optional**[**NonEmptyStr**]*)
-
-      * **api_version** (*Optional**[**NonEmptyStr**]*)
-
-      * **role** (*LLMRoleAny*)
-
-      * **system_message** (*Optional**[**NonEmptyStr**]*)
-
-      * **temperature** (*Optional**[**float**]*)
-
-      * **max_tokens** (*Optional**[**int**]*)
-
-      * **max_completion_tokens** (*Optional**[**int**]*)
-
-      * **reasoning_effort** (*Optional**[**ReasoningEffort**]*)
-
-      * **top_p** (*Optional**[**float**]*)
-
-      * **num_retries_failed_request** (*Optional**[**int**]*)
-
-      * **max_retries_failed_request** (*Optional**[**int**]*)
-
-      * **max_retries_invalid_data** (*Optional**[**int**]*)
-
-      * **timeout** (*Optional**[**int**]*)
+      * **timeout** (*Optional**[**int**]*) -- Timeout in seconds for
+        LLM API calls. Defaults to 120 seconds.
 
       * **pricing_details** (*Optional**[**dict**[**NonEmptyStr**,
-        **float**]**]*)
+        **float**]**]*) -- LLMPricing object with pricing details for
+        cost calculation.
 
-      * **is_fallback** (*bool*)
+      * **is_fallback** (*bool*) -- Indicates whether the LLM is a
+        fallback model. Defaults to False.
 
-      * **fallback_llm** (*Optional**[**DocumentLLM**]*)
+      * **fallback_llm** (*Optional**[**DocumentLLM**]*) --
+        DocumentLLM to use as fallback if current one fails. Must have
+        the same role as the current LLM.
 
-      * **output_language** (*LanguageRequirement*)
+      * **output_language** (*LanguageRequirement*) -- Language for
+        produced output text (justifications, explanations). Can be
+        "en" (English) or "adapt" (adapts to document/image language).
+        Defaults to "en".
 
-      * **seed** (*Optional**[**StrictInt**]*)
+      * **async_limiter** (*AsyncLimiter*) -- Controls frequency of
+        async LLM API requests for concurrent tasks. Defaults to
+        allowing 3 acquisitions per 10-second period to prevent rate
+        limit issues. See https://github.com/mjpieters/aiolimiter for
+        configuration details.
+
+      * **seed** (*Optional**[**StrictInt**]*) -- Seed for random
+        number generation to help produce more consistent outputs
+        across multiple runs. When set to a specific integer value,
+        the LLM will attempt to use this seed for sampling operations.
+        However, deterministic output is still not guaranteed even
+        with the same seed, as other factors may influence the model's
+        response. Defaults to None.
+
+   Parameters:
+      * **model** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
+
+      * **deployment_id** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]
+        **| **None*)
+
+      * **api_key** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]
+        **| **None*)
+
+      * **api_base** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]
+        **| **None*)
+
+      * **api_version** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]
+        **| **None*)
+
+      * **role** (*Literal**[**'extractor_text'**,
+        **'reasoner_text'**, **'extractor_vision'**,
+        **'reasoner_vision'**]*)
+
+      * **system_message** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]
+        **| **None*)
+
+      * **temperature** (*Annotated**[**float**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **max_tokens** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **max_completion_tokens** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **reasoning_effort** (*Literal**[**'low'**, **'medium'**,
+        **'high'**] **| **None*)
+
+      * **top_p** (*Annotated**[**float**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **num_retries_failed_request** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **max_retries_failed_request** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **max_retries_invalid_data** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **timeout** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **pricing_details** (*LLMPricing** | **None*)
+
+      * **is_fallback** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
+
+      * **fallback_llm** (*DocumentLLM** | **None*)
+
+      * **output_language** (*Literal**[**'en'**, **'adapt'**]*)
+
+      * **seed** (*Annotated**[**int**, **Strict**(**strict=True**)**]
+        **| **None*)
 
    Note:
 
@@ -14965,7 +15255,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          list[_LLMCostOutputContainer]
 
-   extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts all aspects and concepts from a document and its
       aspects.
@@ -15007,13 +15297,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            to 0 (all images). Relevant only for document-level
            concepts.
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          The document with extracted aspects and concepts.
 
       Return type:
          Document
 
-   async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts all aspects and concepts from a document
       and its aspects.
@@ -15053,13 +15350,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            to 0 (all images). Relevant only for document-level
            concepts.
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          The document with extracted aspects and concepts.
 
       Return type:
          Document
 
-   extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs.
@@ -15100,13 +15404,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            paragraphs to analyze in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed Aspect objects with extracted items.
 
       Return type:
          list[Aspect]
 
-   async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs asynchronously.
@@ -15143,13 +15454,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            paragraphs to analyze in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed Aspect objects with extracted items.
 
       Return type:
          list[Aspect]
 
-   extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts associated with a given aspect in a document.
 
@@ -15190,13 +15508,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            paragraphs to include in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed concept objects.
 
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_aspect_async(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0)
+   async extract_concepts_from_aspect_async(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts concepts from a specified aspect using
       LLMs.
@@ -15235,13 +15560,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            paragraphs to include in a single LLM prompt. Defaults to 0
            (all paragraphs).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed concept objects.
 
       Return type:
          list[_Concept]
 
-   extract_concepts_from_document(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   extract_concepts_from_document(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs.
@@ -15282,13 +15614,20 @@ class contextgem.public.llms.DocumentLLM(**data)
            Maximum images to include in a single LLM prompt. Defaults
            to 0 (all images).
 
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
+
       Returns:
          List of processed Concept objects with extracted items.
 
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_document_async(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0)
+   async extract_concepts_from_document_async(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs asynchronously.
@@ -15327,6 +15666,13 @@ class contextgem.public.llms.DocumentLLM(**data)
          * **max_images_to_analyze_per_call** (*int**, **optional*) --
            Maximum images to include in a single LLM prompt. Defaults
            to 0 (all images).
+
+         * **raise_exception_on_extraction_error** (*bool**,
+           **optional*) -- Whether to raise an exception if the
+           extraction fails due to invalid data returned by an LLM or
+           an error in the LLM API. If False, a warning will be issued
+           instead, and no extracted items will be returned. Defaults
+           to True.
 
       Returns:
          List of processed Concept objects with extracted items.
@@ -15497,16 +15843,18 @@ class contextgem.public.data_models.LLMPricing(**data)
    generating output tokens, with prices specified per million tokens.
 
    Variables:
-      * **input_per_1m_tokens** -- The cost in currency units for
-        processing 1M input tokens.
+      * **input_per_1m_tokens** (*StrictFloat*) -- The cost in
+        currency units for processing 1M input tokens.
 
-      * **output_per_1m_tokens** -- The cost in currency units for
-        generating 1M output tokens.
+      * **output_per_1m_tokens** (*StrictFloat*) -- The cost in
+        currency units for generating 1M output tokens.
 
    Parameters:
-      * **input_per_1m_tokens** (*StrictFloat*)
+      * **input_per_1m_tokens** (*Annotated**[**float**,
+        **Strict**(**strict=True**)**]*)
 
-      * **output_per_1m_tokens** (*StrictFloat*)
+      * **output_per_1m_tokens** (*Annotated**[**float**,
+        **Strict**(**strict=True**)**]*)
 
    Example:
       LLM pricing definition
@@ -15679,16 +16027,18 @@ class contextgem.public.data_models.RatingScale(**data)
    for ratings.
 
    Variables:
-      * **start** -- The minimum value of the rating scale
-        (inclusive). Must be greater than or equal to 0.
+      * **start** (*StrictInt*) -- The minimum value of the rating
+        scale (inclusive). Must be greater than or equal to 0.
 
-      * **end** -- The maximum value of the rating scale (inclusive).
-        Must be greater than 0.
+      * **end** (*StrictInt*) -- The maximum value of the rating scale
+        (inclusive). Must be greater than 0.
 
    Parameters:
-      * **start** (*StrictInt*)
+      * **start** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
-      * **end** (*StrictInt*)
+      * **end** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
 
    Example:
       Rating scale definition
@@ -15988,21 +16338,27 @@ class contextgem.public.images.Image(**data)
    represents a document.
 
    Variables:
-      * **mime_type** -- The MIME type of the image. This must be one
-        of the predefined valid types ("image/jpg", "image/jpeg",
-        "image/png", "image/webp").
+      * **mime_type** (*Literal**[**"image/jpg"**, **"image/jpeg"**,
+        **"image/png"**, **"image/webp"**]*) -- The MIME type of the
+        image. This must be one of the predefined valid types
+        ("image/jpg", "image/jpeg", "image/png", "image/webp").
 
-      * **base64_data** -- The base64-encoded data of the image. The
-        util function *image_to_base64()* from contextgem.public.utils
-        can be used to encode images to base64.
+      * **base64_data** (*NonEmptyStr*) -- The base64-encoded data of
+        the image. The util function *image_to_base64()* from
+        contextgem.public.utils can be used to encode images to
+        base64.
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **mime_type** (*Literal**[**"image/jpg"**, **"image/jpeg"**,
-        **"image/png"**, **"image/webp"**]*)
+      * **mime_type** (*Literal**[**'image/jpg'**, **'image/jpeg'**,
+        **'image/png'**, **'image/webp'**]*)
 
-      * **base64_data** (*NonEmptyStr*)
+      * **base64_data** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
    Note:
       * Attached to documents:
@@ -16245,12 +16601,12 @@ class contextgem.public.paragraphs.Paragraph(**data)
    be changed to maintain data integrity during analysis.
 
    Variables:
-      * **raw_text** -- The complete text content of the paragraph.
-        This value is frozen after initialization.
+      * **raw_text** (*NonEmptyStr*) -- The complete text content of
+        the paragraph. This value is frozen after initialization.
 
-      * **sentences** -- The individual sentences contained within the
-        paragraph. Defaults to an empty list. Cannot be reassigned
-        once populated.
+      * **sentences** (*list**[**Sentence**]*) -- The individual
+        sentences contained within the paragraph. Defaults to an empty
+        list. Cannot be reassigned once populated.
 
    Parameters:
       * **custom_data** (*dict*)
@@ -16262,7 +16618,11 @@ class contextgem.public.paragraphs.Paragraph(**data)
         **min_length=1**, **max_length=None**, **pattern=None**)**]
         **| **None*)
 
-      * **raw_text** (*NonEmptyStr*)
+      * **raw_text** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
       * **sentences** (*list**[**Sentence**]*)
 
@@ -16476,8 +16836,8 @@ class contextgem.public.sentences.Sentence(**data)
    data integrity.
 
    Variables:
-      **raw_text** -- The complete text content of the sentence. This
-      value is frozen after initialization.
+      **raw_text** (*NonEmptyStr*) -- The complete text content of the
+      sentence. This value is frozen after initialization.
 
    Parameters:
       * **custom_data** (*dict*)
@@ -16489,7 +16849,11 @@ class contextgem.public.sentences.Sentence(**data)
         **min_length=1**, **max_length=None**, **pattern=None**)**]
         **| **None*)
 
-      * **raw_text** (*NonEmptyStr*)
+      * **raw_text** (*Annotated**[**str**,
+        **Strict**(**strict=True**)**,
+        **StringConstraints**(**strip_whitespace=True**,
+        **to_upper=None**, **to_lower=None**, **strict=None**,
+        **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
    Note:
       Normally, you do not need to construct sentences manually, as
@@ -16703,13 +17067,13 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
    reusable units, allowing for standardized document processing.
 
    Variables:
-      * **aspects** -- A list of aspects to extract from documents.
-        Aspects represent structural categories of information.
-        Defaults to an empty list.
+      * **aspects** (*list**[**Aspect**]*) -- A list of aspects to
+        extract from documents. Aspects represent structural
+        categories of information. Defaults to an empty list.
 
-      * **concepts** -- A list of concepts to identify within
-        documents. Concepts represent specific information elements to
-        extract. Defaults to an empty list.
+      * **concepts** (*list**[**_Concept**]*) -- A list of concepts to
+        identify within documents. Concepts represent specific
+        information elements to extract. Defaults to an empty list.
 
    Parameters:
       * **custom_data** (*dict*)
