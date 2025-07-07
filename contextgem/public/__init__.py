@@ -70,7 +70,7 @@ __all__ = [
     "DocumentLLMGroup",
     # Data models
     "LLMPricing",
-    "RatingScale",
+    "RatingScale",  # deprecated, will be removed in v1.0.0
     # Utils
     "image_to_base64",
     "reload_logger_settings",

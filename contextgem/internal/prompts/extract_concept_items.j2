@@ -260,7 +260,7 @@ Expected structure:
     {% if concept_data.rating_scale %}
 
 Rating scale:
-Based on the concept description, assign and output a rating on the scale from {{ concept_data.rating_scale.start }} (inclusive) to {{ concept_data.rating_scale.end }} (inclusive).
+Based on the concept description, assign and output a rating on the scale from {{ concept_data._rating_start }} (inclusive) to {{ concept_data._rating_end }} (inclusive).
     {% endif %}
     {% if concept_data.labels %}
 

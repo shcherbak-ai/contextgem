@@ -226,8 +226,7 @@ class TestUtils:
     Class with tests-related utility functions.
     """
 
-    @staticmethod
-    def check_instance_serialization_and_cloning(instance: _InstanceBase) -> None:
+    def check_instance_serialization_and_cloning(self, instance: _InstanceBase) -> None:
         """
         Check the serialization and deserialization functionality of an instance.
 
@@ -245,6 +244,7 @@ class TestUtils:
             "examples",
             "structure",
             "rating_scale",
+            "labels",
             "_unique_id",
             "_extracted_items",
             "_reference_paragraphs",
@@ -305,6 +305,10 @@ class TestUtils:
                 assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
         with pytest.raises(NotImplementedError):
             instance.model_copy(deep=True)
+
+        # Custom data serialization
+        if hasattr(instance, "custom_data"):
+            self.check_custom_data_json_serializable(instance)
 
     def _check_deserialized_llm_config_eq(
         self, instance: DocumentLLM | DocumentLLMGroup
@@ -618,6 +622,8 @@ class TestUtils:
         :raises ValueError: If `custom_data` contains non-serializable key-value
                             pairs or unsupported data types.
         """
+        if not hasattr(instance, "custom_data"):
+            return
         with pytest.raises(ValueError):
             instance.custom_data = {int: bool}
         with pytest.raises(ValueError):

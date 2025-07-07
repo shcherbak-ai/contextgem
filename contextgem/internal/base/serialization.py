@@ -136,7 +136,14 @@ class _InstanceSerializer(BaseModel):
                 base_dict[key] = self._serialize_structure_dict(val)
 
             elif key == KEY_RATING_SCALE_PUBLIC:
-                base_dict[key] = val.to_dict()
+                # Handle both RatingScale (deprecated, will be removed in v1.0.0)
+                # objects and tuples
+                if hasattr(val, "to_dict"):
+                    # It's a RatingScale (deprecated, will be removed in v1.0.0) object
+                    base_dict[key] = val.to_dict()
+                else:
+                    # It's a tuple, convert to list for JSON serialization
+                    base_dict[key] = list(val)
 
             elif key in [KEY_LLM_FALLBACK_PUBLIC, KEY_LLM_PRICING_PUBLIC]:
                 # Serialize only when provided
@@ -426,7 +433,9 @@ class _InstanceSerializer(BaseModel):
                 # JsonObjectConcept structure is always converted to a dict
                 _deserialize_structure_dict(val)
             ),
-            KEY_RATING_SCALE_PUBLIC: lambda val: RatingScale.from_dict(val),
+            KEY_RATING_SCALE_PUBLIC: lambda val: (
+                RatingScale.from_dict(val) if isinstance(val, dict) else tuple(val)
+            ),
             # LLM attrs
             KEY_LLM_PRICING_PUBLIC: lambda val: (
                 LLMPricing.from_dict(val) if val is not None else val

@@ -20,7 +20,7 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
@@ -78,7 +78,7 @@ __all__ = [
     "DocumentLLMGroup",
     # Data models
     "LLMPricing",
-    "RatingScale",
+    "RatingScale",  # deprecated, will be removed in v1.0.0
     # Utils
     "image_to_base64",
     "reload_logger_settings",

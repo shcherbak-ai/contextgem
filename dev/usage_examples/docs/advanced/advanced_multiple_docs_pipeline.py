@@ -15,7 +15,6 @@ from contextgem import (
     LLMPricing,
     NumericalConcept,
     RatingConcept,
-    RatingScale,
     StringConcept,
     StringExample,
 )
@@ -123,7 +122,7 @@ contract_pipeline.concepts = [  # or use .add_concepts()
         name="Duration adequacy",
         description="Contract duration adequacy considering the subject matter and best practices.",
         llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
-        rating_scale=RatingScale(start=1, end=10),
+        rating_scale=(1, 10),
         add_justifications=True,  # add justifications for the rating
         justification_depth="balanced",  # provide a balanced justification
         justification_max_sents=3,

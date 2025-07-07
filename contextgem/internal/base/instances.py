@@ -78,7 +78,7 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
     @field_validator("raw_text", check_fields=False)
     @classmethod
-    def _validate_raw_text(cls, raw_text: str) -> str:
+    def _validate_raw_text(cls, raw_text: str | None) -> str | None:
         """
         Validates that the raw text is not empty.
 
@@ -87,12 +87,13 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         would make the text effectively empty despite having a non-zero length.
 
         :param raw_text: The raw text to validate.
-        :type raw_text: str
+        :type raw_text: str | None. None is allowed for Document instances,
+            e.g. when a document has only images.
         :return: The original raw text if it is not empty.
-        :rtype: str
+        :rtype: str | None
         :raises ValueError: If the raw text is empty or contains only whitespace/control characters.
         """
-        if _is_text_content_empty(raw_text):
+        if raw_text is not None and _is_text_content_empty(raw_text):
             raise ValueError(
                 "`raw_text` cannot be empty or contain only whitespace/control characters. "
                 "This includes text with only spaces, tabs, newlines, invisible Unicode characters, "

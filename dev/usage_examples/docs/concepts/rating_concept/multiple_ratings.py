@@ -2,7 +2,7 @@
 
 import os
 
-from contextgem import Document, DocumentLLM, RatingConcept, RatingScale
+from contextgem import Document, DocumentLLM, RatingConcept
 
 # Sample document text about a restaurant review with multiple quality aspects to rate
 restaurant_review = """
@@ -21,7 +21,7 @@ Value: Portion sizes were generous for the price point. The wine list offers sel
 doc = Document(raw_text=restaurant_review)
 
 # Define a consistent rating scale to be used across all rating categories
-restaurant_rating_scale = RatingScale(start=1, end=5)
+restaurant_rating_scale = (1, 5)
 
 # Define multiple rating concepts for different quality aspects of the restaurant
 atmosphere_rating = RatingConcept(
