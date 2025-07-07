@@ -319,7 +319,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.0
+      - AsyncAzureOpenAI/Python 1.93.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -329,7 +329,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.0
+      - 1.93.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -350,25 +350,24 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        [\n            {\n                \"value\": {\n                    \"labels\":
-        [\"NDA\"]\n                },\n                \"justification\": \"The document
-        is explicitly titled ''Non-Disclosure Agreement (NDA)'' and repeatedly refers
-        to itself as such.\",\n                \"reference_paragraph_ids\": [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751466704, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 97,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4945, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        5042}}'
+        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
+        [\n      {\n        \"value\": {\n          \"labels\": [\"NDA\"]\n        },\n        \"justification\":
+        \"The document is explicitly titled ''Non-Disclosure Agreement (NDA)'' and
+        repeatedly refers to itself as such.\",\n        \"reference_paragraph_ids\":
+        [\"P0\", \"P1\", \"P51\"]\n      }\n    ]\n  }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1751910288, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 91, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 4945, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1024}, "total_tokens": 5036}}'
     headers:
       Content-Length:
-      - '1736'
+      - '1587'
       Content-Type:
       - application/json
       Date:
@@ -380,7 +379,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '953'
+      - '712'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -778,7 +777,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.0
+      - AsyncAzureOpenAI/Python 1.93.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -788,7 +787,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.0
+      - 1.93.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -804,8 +803,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -815,37 +814,42 @@ interactions:
         Compliance\",\n                        \"Third Party Relations\",\n                        \"Contract
         Terms\"\n                    ]\n                },\n                \"justification\":
         \"The document is a Non-Disclosure Agreement focusing on protecting confidential
-        information, obligations of parties, liability, and governing law, which relate
-        to confidentiality, legal compliance, third party relations, and contract
-        terms.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+        information, defining obligations, exclusions, liability, and governing law,
+        which relate to confidentiality, legal compliance, third party relations,
+        and contract terms.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P0\",\n                        \"reference_sentence_ids\": [\"P0-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P17\",\n                        \"reference_sentence_ids\": [\"P17-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P19\",\n                        \"reference_sentence_ids\": [\"P19-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P20\",\n                        \"reference_sentence_ids\": [\"P20-S0\",
         \"P20-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P25\",\n                        \"reference_sentence_ids\": [\"P25-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P26\",\n                        \"reference_sentence_ids\": [\"P26-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P27\",\n                        \"reference_sentence_ids\": [\"P27-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\"P38-S0\",
         \"P38-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P40\",\n                        \"reference_sentence_ids\": [\"P40-S0\",
         \"P40-S1\", \"P40-S2\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P42\",\n                        \"reference_sentence_ids\": [\"P42-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P45\",\n                        \"reference_sentence_ids\": [\"P45-S0\",
         \"P45-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751466705, "id": "chatcmpl-DUMMY",
+        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P48\",\n                        \"reference_sentence_ids\": [\"P48-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P49\",\n                        \"reference_sentence_ids\": [\"P49-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1751910289, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 421,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 557,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         5940, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        6361}}'
+        6497}}'
     headers:
       Content-Length:
-      - '3790'
+      - '4675'
       Content-Type:
       - application/json
       Date:
@@ -857,7 +861,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3896'
+      - '4069'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1201,7 +1205,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.0
+      - AsyncAzureOpenAI/Python 1.93.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1211,7 +1215,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.0
+      - 1.93.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1227,29 +1231,31 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
-        [\n      {\n        \"value\": {\n          \"labels\": [\"NDA\"]\n        },\n        \"justification\":
-        \"The document is explicitly titled ''Non-Disclosure Agreement (NDA)'' and
-        repeatedly refers to itself as such.\",\n        \"reference_paragraph_ids\":
-        [\"P0\", \"P1\", \"P51\"]\n      }\n    ]\n  }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1751466711, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 91, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 4945, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1024}, "total_tokens": 5036}}'
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": {\n                    \"labels\":
+        [\"NDA\"]\n                },\n                \"justification\": \"The document
+        is explicitly titled ''Non-Disclosure Agreement (NDA)'' and repeatedly refers
+        to itself as such throughout the paragraphs.\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1751910295, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 100,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        4945, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
+        "total_tokens": 5045}}'
     headers:
       Content-Length:
-      - '1587'
+      - '1766'
       Content-Type:
       - application/json
       Date:
@@ -1261,7 +1267,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '782'
+      - '846'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1659,7 +1665,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.0
+      - AsyncAzureOpenAI/Python 1.93.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1669,7 +1675,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.0
+      - 1.93.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1696,36 +1702,42 @@ interactions:
         Compliance\",\n                        \"Third Party Relations\",\n                        \"Contract
         Terms\"\n                    ]\n                },\n                \"justification\":
         \"The document is a Non-Disclosure Agreement focusing on protecting confidential
-        information, legal obligations, third party consent for disclosure, and contract
-        terms such as liability and governing law.\",\n                \"reference_paragraphs\":
-        [\n                    {\n                        \"reference_paragraph_id\":
+        information, defining obligations, exclusions, liability, and governing law,
+        which relate to confidentiality, legal compliance, third party relations,
+        and contract terms.\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P0\",\n                        \"reference_sentence_ids\": [\"P0-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P17\",\n                        \"reference_sentence_ids\": [\"P17-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P19\",\n                        \"reference_sentence_ids\": [\"P19-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P20\",\n                        \"reference_sentence_ids\": [\"P20-S0\",
         \"P20-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P25\",\n                        \"reference_sentence_ids\": [\"P25-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P26\",\n                        \"reference_sentence_ids\": [\"P26-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P27\",\n                        \"reference_sentence_ids\": [\"P27-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\"P38-S0\",
         \"P38-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P40\",\n                        \"reference_sentence_ids\": [\"P40-S0\",
         \"P40-S1\", \"P40-S2\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P42\",\n                        \"reference_sentence_ids\": [\"P42-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P45\",\n                        \"reference_sentence_ids\": [\"P45-S0\",
-        \"P45-S1\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751466711, "id": "chatcmpl-DUMMY",
+        \"P45-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P48\",\n                        \"reference_sentence_ids\": [\"P48-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P49\",\n                        \"reference_sentence_ids\": [\"P49-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1751910295, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 387,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 557,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5940, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        6327}}'
+        5940, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5888},
+        "total_tokens": 6497}}'
     headers:
       Content-Length:
-      - '3578'
+      - '4678'
       Content-Type:
       - application/json
       Date:
@@ -1737,7 +1749,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3467'
+      - '4320'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2011,7 +2023,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.0
+      - AsyncAzureOpenAI/Python 1.93.1
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2021,7 +2033,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.0
+      - 1.93.1
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2037,26 +2049,24 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1751466715,
-        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
-        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"detected": false,
-        "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_178c8d546f", "usage":
-        {"completion_tokens": 23, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 3415, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        1792}, "total_tokens": 3438}}'
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
+        "assistant"}}], "created": 1751910300, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 23, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 3415, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3438}}'
     headers:
       Content-Length:
-      - '1303'
+      - '1176'
       Content-Type:
       - application/json
       Date:
@@ -2068,7 +2078,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '324'
+      - '303'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

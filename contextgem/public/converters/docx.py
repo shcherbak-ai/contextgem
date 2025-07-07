@@ -198,7 +198,7 @@ class DocxConverter(_DocxConverterBase):
         self,
         docx_path_or_file: str | Path | BinaryIO,
         apply_markdown: bool = True,
-        raw_text_to_md: bool = None,  # Deprecated parameter
+        raw_text_to_md: bool = None,  # TODO: remove this parameter in v1.0.0.
         include_tables: bool = True,
         include_comments: bool = True,
         include_footnotes: bool = True,

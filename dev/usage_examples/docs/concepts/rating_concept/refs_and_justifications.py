@@ -2,7 +2,7 @@
 
 import os
 
-from contextgem import Document, DocumentLLM, RatingConcept, RatingScale
+from contextgem import Document, DocumentLLM, RatingConcept
 
 # Sample document text about a software product with various aspects
 software_review = """
@@ -24,7 +24,7 @@ doc = Document(raw_text=software_review)
 usability_rating_concept = RatingConcept(
     name="Software usability rating",
     description="Evaluate the overall usability of the software on a scale of 1-10 based on UI design, intuitiveness, and learning curve",
-    rating_scale=RatingScale(start=1, end=10),
+    rating_scale=(1, 10),
     add_justifications=True,  # enable justifications to explain the rating
     justification_depth="comprehensive",  # provide detailed reasoning
     justification_max_sents=5,  # allow up to 5 sentences for justification

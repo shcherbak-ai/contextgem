@@ -1021,7 +1021,6 @@ Extraction pipeline example (ContextGem)
        LLMPricing,
        NumericalConcept,
        RatingConcept,
-       RatingScale,
        StringConcept,
        StringExample,
    )
@@ -1129,7 +1128,7 @@ Extraction pipeline example (ContextGem)
            name="Duration adequacy",
            description="Contract duration adequacy considering the subject matter and best practices.",
            llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
-           rating_scale=RatingScale(start=1, end=10),
+           rating_scale=(1, 10),
            add_justifications=True,  # add justifications for the rating
            justification_depth="balanced",  # provide a balanced justification
            justification_max_sents=3,
@@ -6049,7 +6048,7 @@ product rating:
 
    import os
 
-   from contextgem import Document, DocumentLLM, RatingConcept, RatingScale
+   from contextgem import Document, DocumentLLM, RatingConcept
 
    # Create a Document object from text describing a product without an explicit rating
    smartphone_description = (
@@ -6069,7 +6068,7 @@ product rating:
            "Evaluate the overall quality of the smartphone based on its specifications, "
            "features, and adherence to industry best practices"
        ),
-       rating_scale=RatingScale(start=1, end=10),
+       rating_scale=(1, 10),
        add_justifications=True,  # include justification for the rating
        justification_depth="balanced",
        justification_max_sents=5,
@@ -6114,12 +6113,11 @@ parameters:
 |                      |                      | more specific the description, the more consistent and       |
 |                      |                      | accurate the ratings will be.                                |
 +----------------------+----------------------+--------------------------------------------------------------+
-| "rating_scale"       | "RatingScale"        | Defines the boundaries for valid ratings (e.g.,              |
-|                      |                      | "RatingScale(start=1, end=5)" for a 1-5 star rating, or      |
-|                      |                      | "RatingScale(start=0, end=100)" for a percentage-based       |
-|                      |                      | evaluation). This parameter establishes the numerical range  |
-|                      |                      | within which all ratings must fall, ensuring consistency     |
-|                      |                      | across evaluations.                                          |
+| "rating_scale"       | tuple[int, int]      | Defines the boundaries for valid ratings as a tuple of       |
+|                      |                      | (start, end) values (e.g., "(1, 5)" for a 1-5 star rating,   |
+|                      |                      | or "(0, 100)" for a percentage-based evaluation). This       |
+|                      |                      | parameter establishes the numerical range within which all   |
+|                      |                      | ratings must fall, ensuring consistency across evaluations.  |
 +----------------------+----------------------+--------------------------------------------------------------+
 | "llm_role"           | str                  | The role of the LLM responsible for extracting the concept.  |
 |                      |                      | Available values: ""extractor_text"", ""reasoner_text"",     |
@@ -6190,7 +6188,7 @@ justifications to understand the reasoning behind the score:
 
    import os
 
-   from contextgem import Document, DocumentLLM, RatingConcept, RatingScale
+   from contextgem import Document, DocumentLLM, RatingConcept
 
    # Sample document text about a software product with various aspects
    software_review = """
@@ -6212,7 +6210,7 @@ justifications to understand the reasoning behind the score:
    usability_rating_concept = RatingConcept(
        name="Software usability rating",
        description="Evaluate the overall usability of the software on a scale of 1-10 based on UI design, intuitiveness, and learning curve",
-       rating_scale=RatingScale(start=1, end=10),
+       rating_scale=(1, 10),
        add_justifications=True,  # enable justifications to explain the rating
        justification_depth="comprehensive",  # provide detailed reasoning
        justification_max_sents=5,  # allow up to 5 sentences for justification
@@ -6253,7 +6251,7 @@ separate rating concepts:
 
    import os
 
-   from contextgem import Document, DocumentLLM, RatingConcept, RatingScale
+   from contextgem import Document, DocumentLLM, RatingConcept
 
    # Sample document text about a restaurant review with multiple quality aspects to rate
    restaurant_review = """
@@ -6272,7 +6270,7 @@ separate rating concepts:
    doc = Document(raw_text=restaurant_review)
 
    # Define a consistent rating scale to be used across all rating categories
-   restaurant_rating_scale = RatingScale(start=1, end=5)
+   restaurant_rating_scale = (1, 5)
 
    # Define multiple rating concepts for different quality aspects of the restaurant
    atmosphere_rating = RatingConcept(
@@ -9159,7 +9157,6 @@ Tip:
        LLMPricing,
        NumericalConcept,
        RatingConcept,
-       RatingScale,
        StringConcept,
        StringExample,
    )
@@ -9267,7 +9264,7 @@ Tip:
            name="Duration adequacy",
            description="Contract duration adequacy considering the subject matter and best practices.",
            llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
-           rating_scale=RatingScale(start=1, end=10),
+           rating_scale=(1, 10),
            add_justifications=True,  # add justifications for the rating
            justification_depth="balanced",  # provide a balanced justification
            justification_max_sents=3,
@@ -12294,8 +12291,11 @@ class contextgem.public.concepts.RatingConcept(**data)
       * **description** (*NonEmptyStr*) -- A brief description of the
         concept (non-empty string, stripped).
 
-      * **rating_scale** (*RatingScale*) -- The rating scale defining
-        valid value boundaries.
+      * **rating_scale** (*RatingScale** | **tuple**[**int**,
+        **int**]*) -- The rating scale defining valid value
+        boundaries. Can be either a RatingScale object (deprecated,
+        will be removed in v1.0.0) or a tuple of (start, end)
+        integers.
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
@@ -12364,35 +12364,32 @@ class contextgem.public.concepts.RatingConcept(**data)
       * **singular_occurrence** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
 
-      * **rating_scale** (*RatingScale*)
+      * **rating_scale** (*RatingScale** |
+        **tuple**[**Annotated**[**int**,
+        **Strict**(**strict=True**)**]**, **Annotated**[**int**,
+        **Strict**(**strict=True**)**]**]*)
 
    Example:
       Rating concept definition
 
-         from contextgem import RatingConcept, RatingScale
-
-         # Create a rating scale for contract fairness evaluation
-         fairness_scale = RatingScale(start=1, end=5)
+         from contextgem import RatingConcept
 
          # Create a concept to rate the fairness of contract terms
          fairness_rating = RatingConcept(
              name="Contract fairness rating",
              description="Evaluation of how balanced and fair the contract terms are for all parties",
-             rating_scale=fairness_scale,
+             rating_scale=(1, 5),
              llm_role="reasoner_text",
              add_justifications=True,
              justification_depth="comprehensive",
              justification_max_sents=10,
          )
 
-         # Create a clarity scale for contract language evaluation
-         clarity_scale = RatingScale(start=1, end=10)
-
          # Create a concept to rate the clarity of contract language
          clarity_rating = RatingConcept(
              name="Language clarity rating",
              description="Assessment of how clear and unambiguous the contract language is",
-             rating_scale=clarity_scale,
+             rating_scale=(1, 10),
              llm_role="reasoner_text",
              add_justifications=True,
              justification_depth="balanced",
@@ -12408,7 +12405,7 @@ class contextgem.public.concepts.RatingConcept(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   rating_scale: RatingScale
+   rating_scale: RatingScale | tuple[StrictInt, StrictInt]
 
    property extracted_items: list[_IntegerItem]
 
@@ -16016,11 +16013,15 @@ class contextgem.public.data_models.LLMPricing(**data)
       Return type:
          str
 
-class contextgem.public.data_models.RatingScale(**data)
+class contextgem.public.data_models.RatingScale(*, start=0, end=10)
 
    Bases: "_InstanceSerializer"
 
    Represents a rating scale with defined minimum and maximum values.
+
+   Deprecated since version 0.10.0: RatingScale is deprecated and will
+   be removed in v1.0.0. Use a tuple of (start, end) integers instead,
+   e.g. (1, 5) instead of RatingScale(start=1, end=5).
 
    This class defines a numerical scale for rating concepts, with
    configurable start and end values that determine the valid range
@@ -16040,34 +16041,7 @@ class contextgem.public.data_models.RatingScale(**data)
       * **end** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)
 
-   Example:
-      Rating scale definition
-
-         from contextgem import RatingScale
-
-         # Create a rating scale with default values (0 to 10)
-         default_scale = RatingScale()
-
-         # Create a custom rating scale (1 to 5)
-         custom_scale = RatingScale(
-             start=1,
-             end=5,
-         )
-
-         # RatingScale objects are immutable
-         try:
-             custom_scale.end = 7
-         except ValueError as e:
-             print(f"Error when trying to modify rating scale: {e}")
-
-   Create a new model by parsing and validating input data from
-   keyword arguments.
-
-   Raises [*ValidationError*][pydantic_core.ValidationError] if the
-   input data cannot be validated to form a valid model.
-
-   *self* is explicitly positional-only to allow *self* as a field
-   name.
+   Initialize RatingScale with deprecation warning.
 
    start: "typing.Annotated"["int"]
 

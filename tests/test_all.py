@@ -947,6 +947,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_local_llms")
 
     @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_llm_extraction_error_exception(self):
         """
         Tests for raising an exception when an LLM extraction error occurs.
@@ -1463,10 +1464,12 @@ class TestAll(TestUtils):
                 base64_data="base 64 encoded string",
                 extra=True,  # extra fields not permitted
             )
-        image = Document(images=[image])
+        document = Document(images=[image])
         with pytest.raises(ValueError):
             Document(images=[image, image])  # duplicate images with same base64 string
-        self.check_custom_data_json_serializable(image)
+
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(document)
 
         check_locals_memory_usage(locals(), test_name="test_init_and_attach_image")
 
@@ -1478,7 +1481,6 @@ class TestAll(TestUtils):
         paragraph = Paragraph(raw_text="Test paragraph")
         assert paragraph.raw_text
         assert not paragraph._md_text  # markdown text is not populated from raw text
-        self.check_custom_data_json_serializable(paragraph)
         document = Document(paragraphs=[paragraph])
         assert document.raw_text  # to be populated from paragraphs
         assert not document._md_text  # markdown text is not populated from paragraphs
@@ -1512,6 +1514,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="control characters"):
             Paragraph(raw_text=" \u200c ")  # zero-width non-joiner
 
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(paragraph)
+
         check_locals_memory_usage(locals(), test_name="test_init_paragraph")
 
     @memory_profile_and_capture
@@ -1524,7 +1529,6 @@ class TestAll(TestUtils):
         assert not hasattr(
             sentence, "_md_text"
         )  # markdown text does not apply to sentences
-        self.check_custom_data_json_serializable(sentence)
         Paragraph(raw_text=sentence.raw_text, sentences=[sentence])
         # Warning is logged if linebreaks occur in additional context
         with pytest.raises(ValueError):
@@ -1539,6 +1543,9 @@ class TestAll(TestUtils):
         # Test with non-empty text but containing only control chars
         with pytest.raises(ValueError, match="control characters"):
             Sentence(raw_text=" \u200c ")  # zero-width non-joiner
+
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(sentence)
 
         check_locals_memory_usage(locals(), test_name="test_init_sentence")
 
@@ -1580,7 +1587,6 @@ class TestAll(TestUtils):
                 llm_role="reasoner_text",
             ),
         ]
-        self.check_custom_data_json_serializable(aspect)
         aspect.concepts = aspect_concepts
         assert aspect.concepts is not aspect_concepts
         # Validate assignment
@@ -1707,6 +1713,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             aspect.add_concepts([concept, concept])
 
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(aspect)
+
         check_locals_memory_usage(locals(), test_name="test_init_aspect")
 
     @memory_profile_and_capture
@@ -1739,8 +1748,8 @@ class TestAll(TestUtils):
                 _BooleanItem(value=True)
             ]  # must be _StringItem
 
-        # Verify custom data serialization works
-        self.check_custom_data_json_serializable(string_concept)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(string_concept)
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_string_concept"
@@ -1776,8 +1785,8 @@ class TestAll(TestUtils):
                 _StringItem(value="True")
             ]  # must be _BooleanItem
 
-        # Verify custom data serialization works
-        self.check_custom_data_json_serializable(boolean_concept)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(boolean_concept)
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_boolean_concept"
@@ -1848,10 +1857,11 @@ class TestAll(TestUtils):
             reference_depth="sentences",
         )
 
-        # Verify custom data serialization works
-        self.check_custom_data_json_serializable(int_concept)
-        self.check_custom_data_json_serializable(float_concept)
-        self.check_custom_data_json_serializable(any_concept)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(int_concept)
+        self.check_instance_serialization_and_cloning(float_concept)
+        self.check_instance_serialization_and_cloning(any_concept)
+        self.check_instance_serialization_and_cloning(concept_with_refs)
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_numerical_concept"
@@ -1862,39 +1872,73 @@ class TestAll(TestUtils):
         """
         Tests the initialization of the RatingConcept class with valid and invalid input parameters.
         """
+
         # Valid initialization
         valid_rating_concept = RatingConcept(
             name="Customer Satisfaction",
             description="Rating of customer satisfaction",
-            rating_scale=RatingScale(start=1, end=5),
+            rating_scale=(1, 5),
         )
 
-        # Test with default rating scale (0-10)
-        default_scale_concept = RatingConcept(
-            name="Product Quality",
-            description="Rating of product quality",
-            rating_scale=RatingScale(),
-        )
+        # Test property access
+        assert valid_rating_concept._rating_start == 1
+        assert valid_rating_concept._rating_end == 5
 
-        # Test with invalid rating scale parameters
+        # Invalid initialization
         with pytest.raises(ValueError):
-            RatingScale(start=5, end=5)  # start equals end
-
-        with pytest.raises(ValueError):
-            RatingScale(start=10, end=5)  # start greater than end
-
-        with pytest.raises(ValueError):
-            RatingScale(start=-1, end=5)  # negative start value
-
-        with pytest.raises(ValueError):
-            RatingScale(start=0, end=0)  # end must be greater than 0
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(),  # empty tuple
+            )
 
         with pytest.raises(ValueError):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=RatingScale(),
-                extra=True,  # extra fields not permitted
+                rating_scale=(-1, 5),  # negative start
+            )
+
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(1, 0),  # zero end
+            )
+
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(5, 5),  # equal start and end
+            )
+
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(10, 5),  # start greater than end
+            )
+
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(1,),  # tuple with invalid length (1 element)
+            )
+
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(1, 1, 2),  # tuple with invalid length (3 elements)
+            )
+
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=(1.5, 3),  # float element
             )
 
         # Test attaching extracted items
@@ -1930,16 +1974,23 @@ class TestAll(TestUtils):
         concept_with_refs = RatingConcept(
             name="Concept with refs",
             description="Test concept with references",
-            rating_scale=RatingScale(start=1, end=10),
+            rating_scale=(1, 10),
             add_justifications=True,
             add_references=True,
             reference_depth="sentences",
         )
 
-        # Verify custom data serialization works
-        self.check_custom_data_json_serializable(valid_rating_concept)
-        self.check_custom_data_json_serializable(default_scale_concept)
-        self.check_custom_data_json_serializable(concept_with_refs)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(valid_rating_concept)
+        self.check_instance_serialization_and_cloning(concept_with_refs)
+
+        # Test deprecated RatingScale
+        with pytest.warns(DeprecationWarning):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale=RatingScale(start=1, end=5),
+            )
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_rating_concept"
@@ -2585,9 +2636,6 @@ class TestAll(TestUtils):
             # Test instance serialization and cloning
             self.check_instance_serialization_and_cloning(concept)
 
-            # Test custom data serialization
-            self.check_custom_data_json_serializable(concept)
-
             # Test valid extracted data
             validator = concept._get_structure_validator()
             valid_data = validator.model_validate(valid_examples[struct_name])
@@ -2740,7 +2788,9 @@ class TestAll(TestUtils):
             llm_role="extractor_vision",
             add_justifications=True,
         )
-        self.check_custom_data_json_serializable(vision_concept)
+
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(vision_concept)
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_json_object_concept"
@@ -2956,6 +3006,10 @@ class TestAll(TestUtils):
         # Log the extracted item for debugging
         self.log_extracted_items_for_instance(extracted_concept)
 
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(complex_concept)
+        self.check_instance_serialization_and_cloning(document)
+
         check_locals_memory_usage(
             locals(), test_name="test_extract_complex_json_object_concept"
         )
@@ -3009,9 +3063,9 @@ class TestAll(TestUtils):
             reference_depth="sentences",
         )
 
-        # Verify custom data serialization works
-        self.check_custom_data_json_serializable(default_date_concept)
-        self.check_custom_data_json_serializable(date_concept_with_refs)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(default_date_concept)
+        self.check_instance_serialization_and_cloning(date_concept_with_refs)
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_date_concept"
@@ -3141,10 +3195,10 @@ class TestAll(TestUtils):
             singular_occurrence=True,
         )
 
-        # Verify custom data serialization works
-        self.check_custom_data_json_serializable(multi_class_concept)
-        self.check_custom_data_json_serializable(multi_label_concept)
-        self.check_custom_data_json_serializable(concept_with_refs)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(multi_class_concept)
+        self.check_instance_serialization_and_cloning(multi_label_concept)
+        self.check_instance_serialization_and_cloning(concept_with_refs)
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_label_concept"
@@ -3280,6 +3334,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             llm.extract_concepts_from_document(document)
 
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(document)
+
         # Check usage tokens
         self.check_usage(llm)
         # Check cost
@@ -3310,6 +3367,8 @@ class TestAll(TestUtils):
             )
         with pytest.raises(ValueError):
             StringExample(content=1)
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(example)
 
         example = JsonObjectExample(content={"category": "test", "description": "test"})
         JsonObjectConcept(
@@ -3336,6 +3395,8 @@ class TestAll(TestUtils):
             )
         with pytest.raises(ValueError):
             JsonObjectExample(content={"category": str, "valid": bool})
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(example)
 
         check_locals_memory_usage(locals(), test_name="test_init_example")
 
@@ -3391,7 +3452,9 @@ class TestAll(TestUtils):
         item = _IntegerOrFloatItem(value=1)
         with pytest.raises(ValueError):
             item.value = 2.0
-        self.check_custom_data_json_serializable(item)
+
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(item)
 
         check_locals_memory_usage(locals(), test_name="test_init_item")
 
@@ -3403,7 +3466,9 @@ class TestAll(TestUtils):
         the `Document` and `DocumentPipeline` classes.
         """
         context = context.clone()  # clone for method-scoped state modification
-        self.check_custom_data_json_serializable(context)
+
+        # Test instance serialization and cloning
+        self.check_instance_serialization_and_cloning(context)
 
         # Document initialization
         if isinstance(context, Document):
@@ -4496,7 +4561,7 @@ class TestAll(TestUtils):
                 name="Contract quality",
                 description="Contract quality from NDA best practice perspective.",
                 llm_role="extractor_text",
-                rating_scale=RatingScale(start=1, end=10),
+                rating_scale=(1, 10),
                 add_justifications=True,
                 justification_depth="balanced",
                 justification_max_sents=5,
@@ -4929,7 +4994,7 @@ class TestAll(TestUtils):
                         name="NDA term adequacy",
                         description="Rate the adequacy of the length of the NDA term, "
                         "from a best practice perspective.",
-                        rating_scale=RatingScale(start=1, end=5),
+                        rating_scale=(1, 5),
                         add_justifications=True,
                         justification_depth="balanced",
                         justification_max_sents=5,
@@ -5034,7 +5099,7 @@ class TestAll(TestUtils):
                 name="Contract quality",
                 description="Rate contract quality from the perspective "
                 "of its adherence to best practices in NDA drafting.",
-                rating_scale=RatingScale(start=1, end=10),
+                rating_scale=(1, 10),
                 add_justifications=True,
                 justification_depth="comprehensive",
                 justification_max_sents=10,
@@ -5427,7 +5492,9 @@ class TestAll(TestUtils):
         # Log costs
         self.output_test_costs()
 
-        check_locals_memory_usage(locals(), test_name="test_vision")
+        check_locals_memory_usage(
+            locals(), test_name="test_vision", max_obj_memory=5.0
+        )  # higher value for images
 
     @pytest.mark.vcr
     @memory_profile_and_capture
@@ -5726,10 +5793,7 @@ class TestAll(TestUtils):
             def_rating_concept,
             def_string_concept,
         )
-        from dev.usage_examples.docstrings.data_models import (
-            def_llm_pricing,
-            def_rating_scale,
-        )
+        from dev.usage_examples.docstrings.data_models import def_llm_pricing
         from dev.usage_examples.docstrings.documents import def_document
         from dev.usage_examples.docstrings.examples import (
             def_example_json_object,

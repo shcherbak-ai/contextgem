@@ -75,8 +75,8 @@ When creating a ``RatingConcept``, you can specify the following parameters:
      - str
      - A clear description of what should be evaluated and rated, including the criteria for assigning different values within the rating scale (e.g., "Evaluate product quality based on features, durability, and performance where 1 represents poor quality and 10 represents exceptional quality"). The more specific the description, the more consistent and accurate the ratings will be.
    * - ``rating_scale``
-     - :class:`~contextgem.public.data_models.RatingScale`
-     - Defines the boundaries for valid ratings (e.g., ``RatingScale(start=1, end=5)`` for a 1-5 star rating, or ``RatingScale(start=0, end=100)`` for a percentage-based evaluation). This parameter establishes the numerical range within which all ratings must fall, ensuring consistency across evaluations.
+     - tuple[int, int]
+     - Defines the boundaries for valid ratings as a tuple of (start, end) values (e.g., ``(1, 5)`` for a 1-5 star rating, or ``(0, 100)`` for a percentage-based evaluation). This parameter establishes the numerical range within which all ratings must fall, ensuring consistency across evaluations.
    * - ``llm_role``
      - str
      - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.

@@ -2,7 +2,7 @@
 
 import os
 
-from contextgem import Document, DocumentLLM, RatingConcept, RatingScale
+from contextgem import Document, DocumentLLM, RatingConcept
 
 # Create a Document object from text describing a product without an explicit rating
 smartphone_description = (
@@ -22,7 +22,7 @@ product_quality = RatingConcept(
         "Evaluate the overall quality of the smartphone based on its specifications, "
         "features, and adherence to industry best practices"
     ),
-    rating_scale=RatingScale(start=1, end=10),
+    rating_scale=(1, 10),
     add_justifications=True,  # include justification for the rating
     justification_depth="balanced",
     justification_max_sents=5,

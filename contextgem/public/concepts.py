@@ -32,11 +32,19 @@ and references to the source text.
 
 from __future__ import annotations
 
+import warnings
 from datetime import date, datetime
 from types import UnionType
 from typing import Any, List, Literal, Union, get_args, get_origin
 
-from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    PrivateAttr,
+    StrictInt,
+    field_validator,
+    model_validator,
+)
 
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.items import (
@@ -267,8 +275,9 @@ class RatingConcept(_Concept):
     :vartype name: NonEmptyStr
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: NonEmptyStr
-    :ivar rating_scale: The rating scale defining valid value boundaries.
-    :vartype rating_scale: RatingScale
+    :ivar rating_scale: The rating scale defining valid value boundaries. Can be either a RatingScale
+        object (deprecated, will be removed in v1.0.0) or a tuple of (start, end) integers.
+    :vartype rating_scale: RatingScale | tuple[int, int]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
@@ -299,9 +308,54 @@ class RatingConcept(_Concept):
             :caption: Rating concept definition
     """
 
-    rating_scale: RatingScale
+    rating_scale: RatingScale | tuple[StrictInt, StrictInt]
 
     _extracted_items: list[_IntegerItem] = PrivateAttr(default_factory=list)
+
+    @field_validator("rating_scale")
+    @classmethod
+    def _validate_rating_scale(
+        cls, value: RatingScale | tuple[int, int]
+    ) -> RatingScale | tuple[int, int]:
+        """
+        Validates the rating scale and issues deprecation warning for RatingScale.
+
+        :param value: The rating scale value to validate.
+        :type value: RatingScale | tuple[int, int]
+        :return: The validated rating scale.
+        :rtype: RatingScale | tuple[int, int]
+        :raises ValueError: If the rating scale is invalid.
+        """
+        if isinstance(value, RatingScale):
+            warnings.warn(
+                "RatingScale is deprecated and will be removed in v1.0.0. "
+                "Use a tuple of (start, end) integers instead, e.g. (1, 5) "
+                "instead of RatingScale(start=1, end=5).",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return value
+        elif isinstance(value, tuple):
+            if len(value) != 2:
+                raise ValueError(
+                    "Rating scale tuple must contain exactly 2 elements: (start, end)"
+                )
+            start, end = value
+            if not isinstance(start, int) or not isinstance(end, int):
+                raise ValueError("Rating scale tuple elements must be integers")
+            if start < 0:
+                raise ValueError("Rating scale start value must be >= 0")
+            if end <= 0:
+                raise ValueError("Rating scale end value must be > 0")
+            if end <= start:
+                raise ValueError(
+                    f"Rating scale end value ({end}) must be greater than start value ({start})"
+                )
+            return value
+        else:
+            raise ValueError(
+                "Rating scale must be either a RatingScale object or a tuple of (start, end) integers"
+            )
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -310,6 +364,24 @@ class RatingConcept(_Concept):
     @property
     def _item_class(self) -> type[_IntegerItem]:
         return _IntegerItem
+
+    @property
+    def _rating_start(self) -> int:
+        """
+        Gets the start value of the rating scale.
+        """
+        if isinstance(self.rating_scale, RatingScale):
+            return self.rating_scale.start
+        return self.rating_scale[0]
+
+    @property
+    def _rating_end(self) -> int:
+        """
+        Gets the end value of the rating scale.
+        """
+        if isinstance(self.rating_scale, RatingScale):
+            return self.rating_scale.end
+        return self.rating_scale[1]
 
     @property
     def extracted_items(self) -> list[_IntegerItem]:
@@ -345,11 +417,11 @@ class RatingConcept(_Concept):
         :type rating_value: int
         :raises ValueError: If the rating value is outside the allowed rating scale range.
         """
-        if not self.rating_scale.start <= rating_value <= self.rating_scale.end:
+        if not self._rating_start <= rating_value <= self._rating_end:
             raise ValueError(
                 f"Invalid value for scaled rating concept: "
                 f"value {rating_value} is outside of the scale range "
-                f"{self.rating_scale.start} to {self.rating_scale.end}"
+                f"{self._rating_start} to {self._rating_end}"
             )
 
     def _process_item_value(self, value: int) -> int:
