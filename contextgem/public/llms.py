@@ -41,21 +41,10 @@ from aiolimiter import AsyncLimiter
 from jinja2 import Template
 
 from contextgem.internal.exceptions import LLMAPIError
+from contextgem.internal.utils import _suppress_litellm_pydantic_warnings_context
 
-with warnings.catch_warnings():
-    # Temporarily disable warnings related to Pydantic deprecation in litellm==1.71.1
-    # (latest available version as of 2025-05-25)
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="pydantic")
+with _suppress_litellm_pydantic_warnings_context():
     import litellm
-    from litellm import (
-        acompletion,
-        supports_vision,
-        get_supported_openai_params,
-        supports_reasoning,
-        UnsupportedParamsError,
-        get_model_info,
-        token_counter,
-    )
 
 from pydantic import (
     Field,
@@ -549,7 +538,7 @@ class DocumentLLM(_GenericLLMProcessor):
             raise ValueError("Images must be a list of Image instances")
 
         # Check for vision support
-        if images and not supports_vision(self.model):
+        if images and not litellm.supports_vision(self.model):
             raise ValueError(f"Model `{self.model}` does not support vision.")
 
         # Create LLM call object to track the interaction
@@ -800,7 +789,7 @@ class DocumentLLM(_GenericLLMProcessor):
         """
 
         # Vision support validation, when applicable
-        if self.role.endswith("_vision") and not supports_vision(self.model):
+        if self.role.endswith("_vision") and not litellm.supports_vision(self.model):
             raise ValueError(
                 f"Model `{self.model}` does not support vision while its role is `{self.role}`."
             )
@@ -854,7 +843,7 @@ class DocumentLLM(_GenericLLMProcessor):
         context_exceeded = False
         try:
             # Get model information to check context window
-            model_info = get_model_info(self.model)
+            model_info = litellm.get_model_info(self.model)
             max_input_tokens = model_info.get("max_input_tokens")
 
             # If max_input_tokens is not available, skip validation
@@ -866,7 +855,7 @@ class DocumentLLM(_GenericLLMProcessor):
 
             # Count tokens in the messages
             try:
-                token_count = token_counter(model=self.model, messages=messages)
+                token_count = litellm.token_counter(model=self.model, messages=messages)
             except Exception as e:
                 logger.warning(
                     f"Could not count tokens for model `{self.model}`: {e}. Skipping input token validation."
@@ -910,7 +899,7 @@ class DocumentLLM(_GenericLLMProcessor):
         output_exceeded = False
         try:
             # Get model information to check output token limits
-            model_info = get_model_info(self.model)
+            model_info = litellm.get_model_info(self.model)
             max_output_tokens = model_info.get("max_output_tokens")
 
             # If max_output_tokens is not available, fall back to max_tokens
@@ -926,7 +915,7 @@ class DocumentLLM(_GenericLLMProcessor):
                 return
 
             # Determine which token limit to check based on model type
-            if supports_reasoning(self.model):
+            if litellm.supports_reasoning(self.model):
                 configured_tokens = self.max_completion_tokens
                 token_type = "max_completion_tokens"  # nosec B105 - not a password
             else:
@@ -1008,7 +997,7 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: tuple[str | None, _LLMUsage]
         """
 
-        if images and not supports_vision(self.model):
+        if images and not litellm.supports_vision(self.model):
             raise ValueError("Model `{self.model}` does not support vision.")
 
         request_messages = []
@@ -1064,9 +1053,9 @@ class DocumentLLM(_GenericLLMProcessor):
         }
 
         # Add model-specific parameters
-        if supports_reasoning(self.model):
+        if litellm.supports_reasoning(self.model):
             # Reasoning (CoT-capable) models
-            model_params = get_supported_openai_params(self.model)
+            model_params = litellm.get_supported_openai_params(self.model)
             if "max_completion_tokens" in model_params:
                 if not (self.max_completion_tokens):
                     raise ValueError(
@@ -1098,7 +1087,7 @@ class DocumentLLM(_GenericLLMProcessor):
         # Make API call and process response
         try:
             task = asyncio.create_task(
-                acompletion(
+                litellm.acompletion(
                     **request_dict,
                     api_key=self.api_key,
                     api_base=self.api_base,
@@ -1124,7 +1113,7 @@ class DocumentLLM(_GenericLLMProcessor):
             llm_call_obj.response = answer
             usage.calls.append(llm_call_obj)  # record the call details (call finished)
             return answer, usage
-        except UnsupportedParamsError as e:
+        except litellm.UnsupportedParamsError as e:
             # Handle unsupported model parameters error
             if (
                 not drop_params

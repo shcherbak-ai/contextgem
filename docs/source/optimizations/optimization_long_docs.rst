@@ -37,6 +37,7 @@ Unlike many systems that rely on chunking (e.g. RAG), ContextGem intelligently s
 - **🔄 Use Long-Context Models**: Select models with large context windows. (See :doc:`optimization_choosing_llm` for guidance on choosing the right model.)
 - **📏 Limit Paragraphs Per Call**: This will reduce each prompt's length and ensure a more focused analysis.
 - **🔢 Limit Aspects/Concepts Per Call**: Process a smaller number of aspects or concepts in each LLM call, preventing prompt overloading.
+- **⚠️ Use Sentence-Level Reference Depth Sparingly**: Only use sentence-level reference depth for aspects or concepts when absolutely necessary, as it requires loading a SaT model and running sentence segmentation on text, which can be slow for long documents.
 - **⚡ Optional: Enable Concurrency**: Enable running extractions concurrently if your API setup permits. This will reduce the overall processing time. (See :doc:`optimization_speed` for guidance on configuring concurrency.)
 
 Since each use case has unique requirements, experiment with different configurations to find your optimal setup.
