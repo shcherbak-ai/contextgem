@@ -9579,6 +9579,11 @@ your pipeline for speed:
   justifications for simple aspects or concepts. This will reduce the
   number of tokens generated.
 
+* **⚠️ Use Sentence-Level Reference Depth Sparingly**: Only use
+  sentence-level reference depth for aspects or concepts when
+  absolutely necessary, as it requires loading a SaT model and running
+  sentence segmentation on text, which can be slow for long documents.
+
 Example of optimizing extraction for speed
 
    # Example of optimizing extraction for speed
@@ -9704,6 +9709,11 @@ the content while allowing you to configure:
 
 * **🔢 Limit Aspects/Concepts Per Call**: Process a smaller number of
   aspects or concepts in each LLM call, preventing prompt overloading.
+
+* **⚠️ Use Sentence-Level Reference Depth Sparingly**: Only use
+  sentence-level reference depth for aspects or concepts when
+  absolutely necessary, as it requires loading a SaT model and running
+  sentence segmentation on text, which can be slow for long documents.
 
 * **⚡ Optional: Enable Concurrency**: Enable running extractions
   concurrently if your API setup permits. This will reduce the overall

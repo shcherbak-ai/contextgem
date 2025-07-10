@@ -27,6 +27,7 @@ For large-scale processing or time-sensitive applications, optimize your pipelin
 - **🔄 Use a Fallback LLM**: Configure a fallback LLM to retry extractions that failed due to rate limits.
 - **⚙️ Use Default Parameters**: All the extractions will be processed in as few LLM calls as possible.
 - **📉 Enable Justifications Only When Necessary**: Do not use justifications for simple aspects or concepts. This will reduce the number of tokens generated.
+- **⚠️ Use Sentence-Level Reference Depth Sparingly**: Only use sentence-level reference depth for aspects or concepts when absolutely necessary, as it requires loading a SaT model and running sentence segmentation on text, which can be slow for long documents.
 
 
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_speed.py

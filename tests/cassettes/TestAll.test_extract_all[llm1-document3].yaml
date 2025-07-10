@@ -196,17 +196,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -222,25 +222,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
-        \"A0\",\n        \"paragraph_ids\": [\n            \"P36\",\n            \"P41\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910756, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
+        [\n            \"P36\",\n            \"P41\"\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1752157763, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3822, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3856}}'
+        3822, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3712},
+        "total_tokens": 3856}}'
     headers:
       Content-Length:
-      - '1226'
+      - '1353'
       Content-Type:
       - application/json
       Date:
@@ -252,7 +254,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '362'
+      - '339'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -483,17 +485,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -519,35 +521,26 @@ interactions:
         \"\u8be5\u6bb5\u8bf4\u660e\u534f\u8bae\u7531\u4ee5\u4e0b\u5404\u65b9\u7b7e\u7f72\u5e76\u751f\u6548\uff0c\u660e\u786e\u6d89\u53ca\u534f\u8bae\u7684\u5f53\u4e8b\u65b9\u3002\"\n            },\n            {\n                \"paragraph_id\":
         \"P3\",\n                \"justification\": \"\u8be5\u6bb5\u6807\u660e\u201c\u7532\u65b9\u201d\uff0c\u6307\u660e\u534f\u8bae\u4e2d\u7684\u4e00\u65b9\u5f53\u4e8b\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
         \"P10\",\n                \"justification\": \"\u8be5\u6bb5\u6807\u660e\u201c\u4e59\u65b9\u201d\uff0c\u6307\u660e\u534f\u8bae\u4e2d\u7684\u53e6\u4e00\u65b9\u5f53\u4e8b\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P11\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u7684\u516c\u53f8\u540d\u79f0\uff0c\u660e\u786e\u4e86\u534f\u8bae\u4e00\u65b9\u7684\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P14\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u8054\u7cfb\u4eba\u59d3\u540d\u53ca\u804c\u4f4d\uff0c\u5177\u4f53\u8bf4\u660e\u4e86\u534f\u8bae\u4e00\u65b9\u7684\u4ee3\u8868\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P15\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u8054\u7cfb\u4eba\u7684\u7535\u8bdd\u53f7\u7801\uff0c\u5c5e\u4e8e\u5f53\u4e8b\u65b9\u8054\u7cfb\u4fe1\u606f\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P16\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u8054\u7cfb\u4eba\u7684\u7535\u5b50\u90ae\u4ef6\uff0c\u5c5e\u4e8e\u5f53\u4e8b\u65b9\u8054\u7cfb\u4fe1\u606f\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P47\",\n                \"justification\": \"\u8be5\u6bb5\u8bf4\u660e\u534f\u8bae\u5404\u65b9\u5df2\u7b7e\u7f72\u672c\u4fdd\u5bc6\u534f\u8bae\uff0c\u786e\u8ba4\u4e86\u534f\u8bae\u7684\u5f53\u4e8b\u65b9\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P49\",\n                \"justification\": \"\u8be5\u6bb5\u4e3a\u7b7e\u7f72\u4eba\u7b7e\u540d\u680f\uff0c\u6d89\u53ca\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u7b7e\u7f72\u786e\u8ba4\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P50\",\n                \"justification\": \"\u8be5\u6bb5\u4e3a\u7b7e\u7f72\u4eba\u59d3\u540d\u680f\uff0c\u6d89\u53ca\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u8eab\u4efd\u786e\u8ba4\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P51\",\n                \"justification\": \"\u8be5\u6bb5\u4e3a\u7b7e\u7f72\u4eba\u804c\u52a1\u680f\uff0c\u6d89\u53ca\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u804c\u4f4d\u4fe1\u606f\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P52\",\n                \"justification\": \"\u8be5\u6bb5\u4e3a\u7b7e\u7f72\u65e5\u671f\u680f\uff0c\u6d89\u53ca\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u7b7e\u7f72\u65f6\u95f4\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P53\",\n                \"justification\": \"\u8be5\u6bb5\u518d\u6b21\u63d0\u53ca\u4e59\u65b9\u516c\u53f8\u540d\u79f0\uff0c\u786e\u8ba4\u534f\u8bae\u4e00\u65b9\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P54\",\n                \"justification\": \"\u8be5\u6bb5\u4e3a\u53e6\u4e00\u7b7e\u7f72\u4eba\u7b7e\u540d\u680f\uff0c\u6d89\u53ca\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u7b7e\u7f72\u786e\u8ba4\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P55\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u7b7e\u7f72\u4eba\u59d3\u540dJane
-        Doe\uff0c\u660e\u786e\u534f\u8bae\u5f53\u4e8b\u65b9\u4ee3\u8868\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P56\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u7b7e\u7f72\u4eba\u804c\u52a1\u6267\u884c\u5408\u4f19\u4eba\uff0c\u660e\u786e\u534f\u8bae\u5f53\u4e8b\u65b9\u4ee3\u8868\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P57\",\n                \"justification\": \"\u8be5\u6bb5\u4e3a\u7b7e\u7f72\u65e5\u671f\u680f\uff0c\u6d89\u53ca\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u7b7e\u7f72\u65f6\u95f4\u3002\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910757, "id": "chatcmpl-DUMMY",
+        \"P11\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u7684\u540d\u79f0\uff0c\u660e\u786e\u4e86\u534f\u8bae\u4e00\u65b9\u7684\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P14\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u8054\u7cfb\u4eba\u53ca\u5176\u804c\u4f4d\u4fe1\u606f\uff0c\u660e\u786e\u4e86\u534f\u8bae\u4e00\u65b9\u7684\u5177\u4f53\u8054\u7cfb\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P53\",\n                \"justification\": \"\u8be5\u6bb5\u518d\u6b21\u63d0\u53caExample.Com
+        LLC\uff0c\u786e\u8ba4\u534f\u8bae\u4e00\u65b9\u7684\u540d\u79f0\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P55\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u7b7e\u7f72\u4eba\u59d3\u540d\uff0c\u660e\u786e\u534f\u8bae\u7b7e\u7f72\u7684\u5f53\u4e8b\u4eba\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P56\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u7b7e\u7f72\u4eba\u804c\u52a1\uff0c\u8fdb\u4e00\u6b65\u660e\u786e\u534f\u8bae\u7b7e\u7f72\u4eba\u7684\u8eab\u4efd\u3002\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752157764, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 685,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 331,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3963, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        4648}}'
+        3963, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3840},
+        "total_tokens": 4294}}'
     headers:
       Content-Length:
-      - '4512'
+      - '2812'
       Content-Type:
       - application/json
       Date:
@@ -559,7 +552,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '4795'
+      - '2545'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -735,17 +728,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -769,10 +762,10 @@ interactions:
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94
         (5) \u5e74\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1751910762, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1752157767, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
         "fp_178c8d546f", "usage": {"completion_tokens": 41, "completion_tokens_details":
@@ -793,7 +786,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '378'
+      - '420'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1011,17 +1004,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1037,28 +1030,30 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        5,\n                \"justification\": \"\u534f\u8bae\u660e\u786e\u6307\u51fa\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94\u5e74\uff0c\u76f4\u63a5\u4f53\u73b0\u4e86\u5408\u540c\u7684\u6301\u7eed\u65f6\u95f4\u3002\",\n                \"reference_paragraphs\":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": 5,\n                \"justification\":
+        \"\u534f\u8bae\u660e\u786e\u89c4\u5b9a\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94\u5e74\uff0c\u76f4\u63a5\u4f53\u73b0\u5408\u540c\u671f\u9650\u3002\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910762, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752157767, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 105,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 102,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2637, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
-        "total_tokens": 2742}}'
+        2637, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2560},
+        "total_tokens": 2739}}'
     headers:
       Content-Length:
-      - '1681'
+      - '1793'
       Content-Type:
       - application/json
       Date:
@@ -1070,7 +1065,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1458'
+      - '899'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1234,10 +1229,8 @@ interactions:
       extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT TEXT:\\n\u672C\u4FDD\u5BC6\u534F\u8BAE
       (\u4EE5\u4E0B\u7B80\u79F0\u201C\u534F\u8BAE\u201D) \u4E8E 2024 \u5E74 7 \u6708
       16 \u65E5\u7531\u4EE5\u4E0B\u5404\u65B9\u7B7E\u7F72\u5E76\u751F\u6548\uFF1A\\n\\n\u7532\u65B9\uFF1A\\n\\n\u4E59\u65B9\uFF1A\\n\\nExample.Com
-      LLC\\n\\n\u8054\u7CFB\u4EBA\uFF1AJane Doe\uFF0C\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u7535\u8BDD\uFF1A(012)
-      345-6789\\n\\n\u7535\u5B50\u90AE\u4EF6\uFF1Ajane.doe@example.com\\n\\n\u7279\u6B64\u8BC1\u660E\uFF0C\u672C\u534F\u8BAE\u5404\u65B9\u5DF2\u4E8E\u4E0A\u8FF0\u65E5\u671F\u7B7E\u7F72\u672C\u4FDD\u5BC6\u534F\u8BAE\u3002\\n\\n\u7B7E\u7F72\u4EBA\uFF1A___________________________\\n\\n\u59D3\u540D\uFF1A_____\\n\\n\u804C\u52A1\uFF1A_____\\n\\n\u65E5\u671F\uFF1A___________________________\\n\\nExample.Com
-      LLC\\n\\n\u7B7E\u7F72\u4EBA\uFF1A___________________________\\n\\n\u59D3\u540D\uFF1AJane
-      Doe\\n\\n\u804C\u52A1\uFF1A\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u65E5\u671F\uFF1A___________________________\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      LLC\\n\\n\u8054\u7CFB\u4EBA\uFF1AJane Doe\uFF0C\u6267\u884C\u5408\u4F19\u4EBA\\n\\nExample.Com
+      LLC\\n\\n\u59D3\u540D\uFF1AJane Doe\\n\\n\u804C\u52A1\uFF1A\u6267\u884C\u5408\u4F19\u4EBA\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -1250,23 +1243,23 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '11488'
+      - '11144'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1290,17 +1283,17 @@ interactions:
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Example.Com LLC\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910764, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752157768, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 59,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2181, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 2240}}'
+        2106, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
+        "total_tokens": 2165}}'
     headers:
       Content-Length:
       - '1470'
@@ -1315,7 +1308,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '799'
+      - '571'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1529,17 +1522,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1564,7 +1557,7 @@ interactions:
         [\n            \"\u4fdd\u5bc6\u534f\u8bae (NDA)\"\n        ]\n    },\n    {\n        \"concept_id\":
         \"C1\",\n        \"extracted_items\": [\n            {\n                \"aspect_names\":
         [\n                    \"\u76ee\u7684\",\n                    \"\u673a\u5bc6\u4fe1\u606f\u7684\u5b9a\u4e49\",\n                    \"\u63a5\u6536\u65b9\u7684\u4e49\u52a1\",\n                    \"\u4fdd\u5bc6\u4fe1\u606f\u7684\u6392\u9664\",\n                    \"\u6750\u6599\u8fd4\u8fd8\",\n                    \"\u65e0\u8bb8\u53ef\",\n                    \"\u9002\u7528\u6cd5\u5f8b\u548c\u4e89\u8bae\",\n                    \"\u5176\u4ed6\u4e8b\u9879\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910765, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752157769, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
@@ -1573,7 +1566,7 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 123,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3222, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
+        3222, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3200},
         "total_tokens": 3345}}'
     headers:
       Content-Length:
@@ -1589,7 +1582,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '978'
+      - '992'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1811,17 +1804,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1845,10 +1838,10 @@ interactions:
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            {\n                \"value\": \"2024 \u5e74 7 \u6708 16 \u65e5\",\n                \"justification\":
         \"\u534f\u8bae\u6587\u672c\u660e\u786e\u6307\u51fa\u672c\u4fdd\u5bc6\u534f\u8bae\u4e8e2024\u5e747\u670816\u65e5\u7b7e\u7f72\u5e76\u751f\u6548\u3002\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910766, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752157770, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 73,
@@ -1870,7 +1863,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '601'
+      - '667'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2091,17 +2084,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2124,16 +2117,16 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
         [\n            \"P36\",\n            \"P41\"\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1751910767, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1752157771, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3822, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3712},
+        3822, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1152},
         "total_tokens": 3856}}'
     headers:
       Content-Length:
@@ -2149,7 +2142,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '334'
+      - '754'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2380,17 +2373,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2406,35 +2399,36 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
         [\n            {\n                \"paragraph_id\": \"P2\",\n                \"justification\":
         \"\u8be5\u6bb5\u8bf4\u660e\u534f\u8bae\u7531\u4ee5\u4e0b\u5404\u65b9\u7b7e\u7f72\u5e76\u751f\u6548\uff0c\u660e\u786e\u6d89\u53ca\u534f\u8bae\u7684\u5f53\u4e8b\u65b9\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P3\",\n                \"justification\": \"\u8be5\u6bb5\u6807\u660e\u201c\u7532\u65b9\u201d\uff0c\u6307\u660e\u534f\u8bae\u4e2d\u7684\u4e00\u65b9\u5f53\u4e8b\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P10\",\n                \"justification\": \"\u8be5\u6bb5\u6807\u660e\u201c\u4e59\u65b9\u201d\uff0c\u6307\u660e\u534f\u8bae\u4e2d\u7684\u53e6\u4e00\u65b9\u5f53\u4e8b\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P3\",\n                \"justification\": \"\u8be5\u6bb5\u6807\u660e\u201c\u7532\u65b9\u201d\uff0c\u8868\u660e\u534f\u8bae\u4e2d\u7684\u4e00\u65b9\u5f53\u4e8b\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P10\",\n                \"justification\": \"\u8be5\u6bb5\u6807\u660e\u201c\u4e59\u65b9\u201d\uff0c\u8868\u660e\u534f\u8bae\u4e2d\u7684\u53e6\u4e00\u65b9\u5f53\u4e8b\u4eba\u3002\"\n            },\n            {\n                \"paragraph_id\":
         \"P11\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u7684\u540d\u79f0\uff0c\u660e\u786e\u4e86\u534f\u8bae\u4e00\u65b9\u7684\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P14\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u8054\u7cfb\u4eba\u53ca\u5176\u804c\u4f4d\uff0c\u8fdb\u4e00\u6b65\u660e\u786e\u4e86\u534f\u8bae\u4e00\u65b9\u7684\u5177\u4f53\u4ee3\u8868\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P53\",\n                \"justification\": \"\u8be5\u6bb5\u518d\u6b21\u63d0\u53ca\u4e59\u65b9\u540d\u79f0\uff0c\u786e\u8ba4\u534f\u8bae\u5f53\u4e8b\u65b9\u8eab\u4efd\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P55\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u7b7e\u7f72\u4eba\u7684\u59d3\u540d\uff0c\u660e\u786e\u534f\u8bae\u7b7e\u7f72\u4ee3\u8868\u3002\"\n            },\n            {\n                \"paragraph_id\":
-        \"P56\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u7b7e\u7f72\u4eba\u7684\u804c\u52a1\uff0c\u8fdb\u4e00\u6b65\u786e\u8ba4\u7b7e\u7f72\u4eba\u7684\u8eab\u4efd\u3002\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910767, "id": "chatcmpl-DUMMY",
+        \"P14\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u4e86\u4e59\u65b9\u8054\u7cfb\u4eba\u53ca\u5176\u804c\u4f4d\uff0c\u8fdb\u4e00\u6b65\u660e\u786e\u4e86\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u5177\u4f53\u4fe1\u606f\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P53\",\n                \"justification\": \"\u8be5\u6bb5\u518d\u6b21\u63d0\u53caExample.Com
+        LLC\uff0c\u786e\u8ba4\u534f\u8bae\u4e00\u65b9\u7684\u540d\u79f0\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P55\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u7b7e\u7f72\u4eba\u59d3\u540d\uff0c\u660e\u786e\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u7b7e\u7f72\u4ee3\u8868\u3002\"\n            },\n            {\n                \"paragraph_id\":
+        \"P56\",\n                \"justification\": \"\u8be5\u6bb5\u63d0\u4f9b\u7b7e\u7f72\u4eba\u804c\u52a1\uff0c\u8fdb\u4e00\u6b65\u786e\u8ba4\u534f\u8bae\u5f53\u4e8b\u65b9\u7684\u7b7e\u7f72\u8eab\u4efd\u3002\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752157772, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 332,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 335,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3963, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
-        "total_tokens": 4295}}'
+        3963, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3840},
+        "total_tokens": 4298}}'
     headers:
       Content-Length:
-      - '2815'
+      - '2821'
       Content-Type:
       - application/json
       Date:
@@ -2446,239 +2440,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2558'
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
-      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
-      containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\\n- Contracts: Legal agreements defining terms
-      and obligations.\\n- Invoices: Financial documents detailing transactions and
-      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
-      experience and qualifications.\\n- Visual Documents: Images, scanned documents,
-      blueprints, photographs, charts, diagrams, or screenshots that contain relevant
-      information.\\n- General Documents: Any other types of files that may contain
-      text, tables, images, or mixed formats.\\nNote that occasionally you may be
-      working with document fragments rather than complete documents. These fragments
-      represent portions of a larger document and should be analyzed within their
-      limited context. When working with fragments, focus on extracting information
-      from the available content without making assumptions about missing parts.\\n\\nDocuments
-      may contain textual or visual content:\\n- Text-based content: Written information
-      that can be directly read and processed.\\n- Visual content: Images, charts,
-      diagrams, blueprints, tables, handwritten text, or other visual elements that
-      require visual interpretation.\\n\\n2. Aspect: A defined area or topic within
-      a document that requires focused attention. Each aspect corresponds to a specific
-      subject or theme described in the task. For example:\\n- Contract Aspects: Payment
-      terms, parties involved, or termination clauses.\\n- Invoice Aspects: Due dates,
-      line-item breakdowns, or tax details.\\n- CV Aspects: Work experience, education,
-      or skills.\\nYou will analyze aspects as instructed, considering their relevance
-      and context within the document.\\n\\n3. Concept: A unit of information or an
-      entity relevant to the task. Concepts may be derived from an aspect or the broader
-      document context. They represent a wide range of data points and insights, from
-      simple entities (names, dates, monetary values) to complex evaluations, conclusions,
-      and answers to specific questions. Concepts can be:\\n- Factual extractions:
-      Such as a penalty clause in a contract, a total amount due in an invoice, or
-      a certification in a CV.\\n- Analytical insights: Such as risk assessments,
-      compliance evaluations, or pattern identifications.\\n- Reasoned conclusions:
-      Such as determining whether a document meets specific criteria or answers particular
-      questions.\\n- Interpretative judgments: Such as ratings, classifications, or
-      qualitative assessments based on document content.\\n- Label classifications:
-      Content categorization using predefined labels.\\n\\nCRITICAL GUIDELINES FOR
-      YOUR WORK:\\n\\n- Precision and accuracy: Extract only information that is explicitly
-      stated or can be directly inferred from the document content. Avoid speculation
-      or assumptions beyond what the document content clearly supports.\\n\\n- Visual
-      content analysis: When processing visual content (images):\\n  -- Examine all
-      visual elements carefully, including text within images, charts, diagrams, logos,
-      layout structures, etc.\\n  -- Identify and analyze visual patterns, relationships,
-      and structural information that may not be explicitly stated in text.\\n  --
-      Consider the visual context and layout as it may provide important semantic
-      information.\\n  -- Analyze information in tables, forms, charts, and diagrams
-      with attention to their visual structure and relationships.\\n\\n- Contextual
-      understanding: Consider the full context when performing extractions. A single
-      paragraph or sentence may have different meanings depending on surrounding content,
-      document type, and domain-specific terminology.\\n\\n- Systematic analysis:
-      Before extracting, thoroughly understand:\\n  -- The nature and type of the
-      document\\n  -- The specific aspects or concepts you need to focus on\\n  --
-      The expected output format and structure requirements\\n  -- Any constraints
-      or special handling instructions\\n\\n- Quality control: After extraction, verify
-      that:\\n  -- All extracted information directly relates to the specified aspects/concepts\\n
-      \ -- The output format matches the required schema exactly\\n  -- No extraneous
-      information has been included\\n  -- All mandatory fields are present and correctly
-      populated\\n\\n- Conservative approach: When in doubt about whether information
-      qualifies for extraction:\\n  -- If the relevance is unclear, err on the side
-      of exclusion\\n  -- If multiple interpretations are possible, choose the most
-      conservative one\\n  -- If information is ambiguous, do not force an extraction\\n\\n-
-      Structured output compliance: Adhere strictly to the specified JSON format requirements.
-      Do not:\\n  -- Add extra fields beyond what is requested\\n  -- Modify the structure
-      or field names\\n  -- Include explanatory text outside the JSON structure\\n
-      \ -- Use code blocks or formatting markers unless explicitly required\\n\\nEXPECTED
-      DELIVERABLES:\\n- Structured outputs: Clearly formatted and well-organized results
-      based on the task requirements.\\n- Explanations (when required): When required
-      by the instructions, include justifications or reasoning for your interpretations.\\n-
-      Insights (when required): When required by the instructions, highlight trends,
-      patterns, or noteworthy findings that could add value to the task.\\n- References
-      (when required): When required by the instructions, output references based
-      on which you extracted data, provided insights, or made conclusions during the
-      task.\\n\\n\\nBy adhering to this framework, you will ensure consistent and
-      high-quality performance across diverse document analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below
-      you will find document text and a list of concepts.\\n\\nYour task is to:\\n1.
-      Read through the document text provided.\\n2. Identify whether each concept
-      in the concepts list is addressed within the document text.\\n3. For each concept
-      that appears, extract zero or more items relevant to that concept. The item
-      format and structure are specified for each concept.\\n4. Produce a JSON array
-      containing your extracted data, in the provided format.\\n\\nIf a concept is
-      not addressed in the document text, you must still include an entry in the final
-      JSON output but with an empty \\\"extracted_items\\\" list.\\n\\nFollow these
-      additional rules:\\n\\n- Output format:\\nProvide your answer in only the following
-      answer format (do not include backticks, code fences, or any introductory/explanatory
-      text).\\n\\n- Consistency:\\n    -- Each JSON object in the list must have two
-      keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n    -- The value of
-      \\\"concept_id\\\" must match exactly the ID of the concept (for example, \\\"C0\\\",
-      \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\" must be an
-      array. If the concept is not addressed or there are no items to extract, leave
-      the array empty ([]).\\n        --- Extracted items may be found directly (explicitly
-      mentioned) or inferred from the content (implied or derivable from the information
-      present).\\n        --- Guidance regarding the possible amount of extracted
-      items for the concept is specified under \\\"Amount of extracted items\\\".
-      Each extracted item, even if there is only one, must be part of the \\\"extracted_items\\\"
-      array.\\n\\n- Item structure:\\n    -- If a specific structure is provided for
-      a concept under \\\"Expected structure,\\\" you must follow that structure for
-      all extracted items corresponding to that concept.\\n    -- If a rating scale
-      is provided for a concept under \\\"Rating scale,\\\" the extracted item value
-      must be within that scale.\\n    -- If available labels are provided for a concept
-      under \\\"Available labels,\\\" the extracted item value must be a list containing
-      only labels from the predefined set. If none of the predefined labels apply,
-      do not extract any items for that concept.\\n    -- If there are example items
-      (\\\"Extracted concept examples\\\"), try to follow the same style and formatting
-      for your extracted items.\\n    -- When extracting string values, retain them
-      in the original language of the document without translating them.\\n\\n- Types
-      of extracted items:\\n    -- Each concept specifies an \\\"extracted item type\\\"
-      (found under \\\"Concept extracted item type\\\"). Ensure your extracted items
-      strictly match that type. Python types are provided (e.g., str for string, int
-      for integer, float for floating-point number, dict for object, etc.).\\n    --
-      Do not introduce any extra fields or modify the specified structure.\\n\\n-
-      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
-      all, your output should still contain an entry for that concept with an empty
-      \\\"extracted_items\\\" array.\\n    -- For concepts that have an \\\"Available
-      labels:\\\" section: if none of the predefined labels apply to the content,
-      leave the \\\"extracted_items\\\" array empty.\\n    -- For concepts that have
-      an \\\"Available labels:\\\" section: if multiple labels apply to the same instance
-      or context, include them all in a single extracted item with multiple labels
-      in the \\\"labels\\\" array (e.g., {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}).
-      Only create multiple extracted items if there are genuinely distinct instances
-      or contexts that warrant separate classification.\\n    -- For concepts that
-      do not have an \\\"Available labels:\\\" section: if multiple items are found
-      for a concept, include each as a separate entry within the \\\"extracted_items\\\"
-      array.\\n\\n- No additional text:\\n    -- Do not include any headers, explanations,
-      or text outside of the JSON array.\\n    -- Do not wrap your JSON response in
-      backticks or any other formatting characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n
-      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
-      Concept ID: C0\\nConcept name: Contract term\\n\\nConcept description:\\nContract
-      term\\n\\nAmount of extracted items: This concept may have zero, one, or multiple
-      extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
-      TEXT:\\n\u672C\u534F\u8BAE\u7EC8\u6B62\u6216\u7ECF\u8981\u6C42\u540E\uFF0C\u63A5\u6536\u65B9\u5E94\u6839\u636E\u62AB\u9732\u65B9\u7684\u5224\u65AD\uFF0C\u5C06\u6240\u6709\u5305\u542B\u4FDD\u5BC6\u4FE1\u606F\u7684\u6750\u6599\u8FD4\u8FD8\u7ED9\u62AB\u9732\u65B9\u6216\u9500\u6BC1\u3002\\n\\n\u6240\u6709\u4E89\u8BAE\u5747\u7531\u52A0\u5229\u798F\u5C3C\u4E9A\u5DDE\u6CD5\u9662\u89E3\u51B3\u3002\u672C\u534F\u8BAE\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94
-      (5) \u5E74\u3002\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '10654'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - async:asyncio
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.93.1
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94
-        (5) \u5e74\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1751910770, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_178c8d546f", "usage": {"completion_tokens": 41, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2009, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1920}, "total_tokens": 2050}}'
-    headers:
-      Content-Length:
-      - '1248'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      cmp-upstream-response-duration:
-      - '416'
+      - '2677'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2857,17 +2619,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2883,25 +2645,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            \"Example.Com LLC\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910770, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"Example.Com LLC\"\n        ]\n    }\n]", "refusal": null,
+        "role": "assistant"}}], "created": 1752157775, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 31,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2023, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
+        2023, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1792},
         "total_tokens": 2054}}'
     headers:
       Content-Length:
-      - '1222'
+      - '1346'
       Content-Type:
       - application/json
       Date:
@@ -2913,7 +2677,241 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '329'
+      - '319'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\\n\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n1. Document: A structured or unstructured file
+      containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\\n- Contracts: Legal agreements defining terms
+      and obligations.\\n- Invoices: Financial documents detailing transactions and
+      payments.\\n- Curricula Vitae (CVs): Resumes outlining an individual's professional
+      experience and qualifications.\\n- Visual Documents: Images, scanned documents,
+      blueprints, photographs, charts, diagrams, or screenshots that contain relevant
+      information.\\n- General Documents: Any other types of files that may contain
+      text, tables, images, or mixed formats.\\nNote that occasionally you may be
+      working with document fragments rather than complete documents. These fragments
+      represent portions of a larger document and should be analyzed within their
+      limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\nDocuments
+      may contain textual or visual content:\\n- Text-based content: Written information
+      that can be directly read and processed.\\n- Visual content: Images, charts,
+      diagrams, blueprints, tables, handwritten text, or other visual elements that
+      require visual interpretation.\\n\\n2. Aspect: A defined area or topic within
+      a document that requires focused attention. Each aspect corresponds to a specific
+      subject or theme described in the task. For example:\\n- Contract Aspects: Payment
+      terms, parties involved, or termination clauses.\\n- Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\\n- CV Aspects: Work experience, education,
+      or skills.\\nYou will analyze aspects as instructed, considering their relevance
+      and context within the document.\\n\\n3. Concept: A unit of information or an
+      entity relevant to the task. Concepts may be derived from an aspect or the broader
+      document context. They represent a wide range of data points and insights, from
+      simple entities (names, dates, monetary values) to complex evaluations, conclusions,
+      and answers to specific questions. Concepts can be:\\n- Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\\n- Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\\n- Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\\n- Interpretative judgments: Such as ratings, classifications, or
+      qualitative assessments based on document content.\\n- Label classifications:
+      Content categorization using predefined labels.\\n\\nCRITICAL GUIDELINES FOR
+      YOUR WORK:\\n\\n- Precision and accuracy: Extract only information that is explicitly
+      stated or can be directly inferred from the document content. Avoid speculation
+      or assumptions beyond what the document content clearly supports.\\n\\n- Visual
+      content analysis: When processing visual content (images):\\n  -- Examine all
+      visual elements carefully, including text within images, charts, diagrams, logos,
+      layout structures, etc.\\n  -- Identify and analyze visual patterns, relationships,
+      and structural information that may not be explicitly stated in text.\\n  --
+      Consider the visual context and layout as it may provide important semantic
+      information.\\n  -- Analyze information in tables, forms, charts, and diagrams
+      with attention to their visual structure and relationships.\\n\\n- Contextual
+      understanding: Consider the full context when performing extractions. A single
+      paragraph or sentence may have different meanings depending on surrounding content,
+      document type, and domain-specific terminology.\\n\\n- Systematic analysis:
+      Before extracting, thoroughly understand:\\n  -- The nature and type of the
+      document\\n  -- The specific aspects or concepts you need to focus on\\n  --
+      The expected output format and structure requirements\\n  -- Any constraints
+      or special handling instructions\\n\\n- Quality control: After extraction, verify
+      that:\\n  -- All extracted information directly relates to the specified aspects/concepts\\n
+      \ -- The output format matches the required schema exactly\\n  -- No extraneous
+      information has been included\\n  -- All mandatory fields are present and correctly
+      populated\\n\\n- Conservative approach: When in doubt about whether information
+      qualifies for extraction:\\n  -- If the relevance is unclear, err on the side
+      of exclusion\\n  -- If multiple interpretations are possible, choose the most
+      conservative one\\n  -- If information is ambiguous, do not force an extraction\\n\\n-
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\\n  -- Add extra fields beyond what is requested\\n  -- Modify the structure
+      or field names\\n  -- Include explanatory text outside the JSON structure\\n
+      \ -- Use code blocks or formatting markers unless explicitly required\\n\\nEXPECTED
+      DELIVERABLES:\\n- Structured outputs: Clearly formatted and well-organized results
+      based on the task requirements.\\n- Explanations (when required): When required
+      by the instructions, include justifications or reasoning for your interpretations.\\n-
+      Insights (when required): When required by the instructions, highlight trends,
+      patterns, or noteworthy findings that could add value to the task.\\n- References
+      (when required): When required by the instructions, output references based
+      on which you extracted data, provided insights, or made conclusions during the
+      task.\\n\\n\\nBy adhering to this framework, you will ensure consistent and
+      high-quality performance across diverse document analysis tasks.\"},{\"role\":\"user\",\"content\":\"Below
+      you will find document text and a list of concepts.\\n\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n3. For each concept
+      that appears, extract zero or more items relevant to that concept. The item
+      format and structure are specified for each concept.\\n4. Produce a JSON array
+      containing your extracted data, in the provided format.\\n\\nIf a concept is
+      not addressed in the document text, you must still include an entry in the final
+      JSON output but with an empty \\\"extracted_items\\\" list.\\n\\nFollow these
+      additional rules:\\n\\n- Output format:\\nProvide your answer in only the following
+      answer format (do not include backticks, code fences, or any introductory/explanatory
+      text).\\n\\n- Consistency:\\n    -- Each JSON object in the list must have two
+      keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n    -- The value of
+      \\\"concept_id\\\" must match exactly the ID of the concept (for example, \\\"C0\\\",
+      \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\" must be an
+      array. If the concept is not addressed or there are no items to extract, leave
+      the array empty ([]).\\n        --- Extracted items may be found directly (explicitly
+      mentioned) or inferred from the content (implied or derivable from the information
+      present).\\n        --- Guidance regarding the possible amount of extracted
+      items for the concept is specified under \\\"Amount of extracted items\\\".
+      Each extracted item, even if there is only one, must be part of the \\\"extracted_items\\\"
+      array.\\n\\n- Item structure:\\n    -- If a specific structure is provided for
+      a concept under \\\"Expected structure,\\\" you must follow that structure for
+      all extracted items corresponding to that concept.\\n    -- If a rating scale
+      is provided for a concept under \\\"Rating scale,\\\" the extracted item value
+      must be within that scale.\\n    -- If available labels are provided for a concept
+      under \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n    -- If there are example items
+      (\\\"Extracted concept examples\\\"), try to follow the same style and formatting
+      for your extracted items.\\n    -- When extracting string values, retain them
+      in the original language of the document without translating them.\\n\\n- Types
+      of extracted items:\\n    -- Each concept specifies an \\\"extracted item type\\\"
+      (found under \\\"Concept extracted item type\\\"). Ensure your extracted items
+      strictly match that type. Python types are provided (e.g., str for string, int
+      for integer, float for floating-point number, dict for object, etc.).\\n    --
+      Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- For concepts that have an \\\"Available
+      labels:\\\" section: if none of the predefined labels apply to the content,
+      leave the \\\"extracted_items\\\" array empty.\\n    -- For concepts that have
+      an \\\"Available labels:\\\" section: if multiple labels apply to the same instance
+      or context, include them all in a single extracted item with multiple labels
+      in the \\\"labels\\\" array (e.g., {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}).
+      Only create multiple extracted items if there are genuinely distinct instances
+      or contexts that warrant separate classification.\\n    -- For concepts that
+      do not have an \\\"Available labels:\\\" section: if multiple items are found
+      for a concept, include each as a separate entry within the \\\"extracted_items\\\"
+      array.\\n\\n- No additional text:\\n    -- Do not include any headers, explanations,
+      or text outside of the JSON array.\\n    -- Do not wrap your JSON response in
+      backticks or any other formatting characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items: [\\n
+      \           ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      Concept ID: C0\\nConcept name: Contract term\\n\\nConcept description:\\nContract
+      term\\n\\nAmount of extracted items: This concept may have zero, one, or multiple
+      extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      TEXT:\\n\u672C\u534F\u8BAE\u7EC8\u6B62\u6216\u7ECF\u8981\u6C42\u540E\uFF0C\u63A5\u6536\u65B9\u5E94\u6839\u636E\u62AB\u9732\u65B9\u7684\u5224\u65AD\uFF0C\u5C06\u6240\u6709\u5305\u542B\u4FDD\u5BC6\u4FE1\u606F\u7684\u6750\u6599\u8FD4\u8FD8\u7ED9\u62AB\u9732\u65B9\u6216\u9500\u6BC1\u3002\\n\\n\u6240\u6709\u4E89\u8BAE\u5747\u7531\u52A0\u5229\u798F\u5C3C\u4E9A\u5DDE\u6CD5\u9662\u89E3\u51B3\u3002\u672C\u534F\u8BAE\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94
+      (5) \u5E74\u3002\\n------\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '10654'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.93.3
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.93.3
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            \"\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94
+        (5) \u5e74\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1752157774, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 41, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2009, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1408}, "total_tokens": 2050}}'
+    headers:
+      Content-Length:
+      - '1372'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '428'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3093,17 +3091,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3126,16 +3124,16 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Example.Com LLC\"\n        ]\n    }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1751910770, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1752157775, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 31,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2044, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
+        2044, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1792},
         "total_tokens": 2075}}'
     headers:
       Content-Length:
@@ -3151,7 +3149,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '326'
+      - '327'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3361,17 +3359,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3394,16 +3392,16 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"\u4fdd\u5bc6\u534f\u8bae (NDA)\"\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1751910770, "id": "chatcmpl-DUMMY",
+        null, "role": "assistant"}}], "created": 1752157775, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 34,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3149, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
+        3149, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
         "total_tokens": 3183}}'
     headers:
       Content-Length:
@@ -3419,7 +3417,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '353'
+      - '418'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3641,17 +3639,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3674,21 +3672,21 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            {\n                \"value\": \"2024 \u5e74 7 \u6708 16 \u65e5\",\n                \"justification\":
-        \"\u534f\u8bae\u4e8e2024\u5e747\u670816\u65e5\u7531\u53cc\u65b9\u7b7e\u7f72\u5e76\u751f\u6548\uff0c\u660e\u786e\u6307\u51fa\u8be5\u65e5\u671f\u4e3a\u5408\u540c\u751f\u6548\u65e5\u671f\u3002\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910770, "id": "chatcmpl-DUMMY",
+        \"\u534f\u8bae\u4e8e2024\u5e747\u670816\u65e5\u7531\u53cc\u65b9\u7b7e\u7f72\u5e76\u751f\u6548\uff0c\u660e\u786e\u4e86\u5408\u540c\u7684\u5f00\u59cb\u65e5\u671f\u3002\"\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752157775, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 78,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 75,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3325, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
-        "total_tokens": 3403}}'
+        3325, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3200},
+        "total_tokens": 3400}}'
     headers:
       Content-Length:
-      - '1536'
+      - '1524'
       Content-Type:
       - application/json
       Date:
@@ -3700,7 +3698,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '772'
+      - '621'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3911,17 +3909,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3937,13 +3935,14 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"aspect_names\":
-        [\n                    \"\u76ee\u7684\",\n                    \"\u673a\u5bc6\u4fe1\u606f\u7684\u5b9a\u4e49\",\n                    \"\u63a5\u6536\u65b9\u7684\u4e49\u52a1\",\n                    \"\u4fdd\u5bc6\u4fe1\u606f\u7684\u6392\u9664\",\n                    \"\u6750\u6599\u8fd4\u8fd8\",\n                    \"\u65e0\u8bb8\u53ef\",\n                    \"\u9002\u7528\u6cd5\u5f8b\u548c\u4e89\u8bae\",\n                    \"\u5176\u4ed6\u4e8b\u9879\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910770, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"aspect_names\": [\n                    \"\u76ee\u7684\",\n                    \"\u673a\u5bc6\u4fe1\u606f\u7684\u5b9a\u4e49\",\n                    \"\u63a5\u6536\u65b9\u7684\u4e49\u52a1\",\n                    \"\u4fdd\u5bc6\u4fe1\u606f\u7684\u6392\u9664\",\n                    \"\u6750\u6599\u8fd4\u8fd8\",\n                    \"\u65e0\u8bb8\u53ef\",\n                    \"\u9002\u7528\u6cd5\u5f8b\u548c\u4e89\u8bae\",\n                    \"\u5176\u4ed6\u4e8b\u9879\"\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752157775, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
@@ -3952,11 +3951,11 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 92,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3174, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1792},
+        3174, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3072},
         "total_tokens": 3266}}'
     headers:
       Content-Length:
-      - '1610'
+      - '1734'
       Content-Type:
       - application/json
       Date:
@@ -3968,7 +3967,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '865'
+      - '751'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4186,17 +4185,17 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AsyncAzureOpenAI/Python 1.93.1
+      - AzureOpenAI/Python 1.93.3
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
-      - async:asyncio
+      - 'false'
       x-stainless-lang:
       - python
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.1
+      - 1.93.3
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4212,28 +4211,30 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
-        5,\n                \"justification\": \"\u534f\u8bae\u660e\u786e\u6307\u51fa\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94\u5e74\uff0c\u76f4\u63a5\u4f53\u73b0\u4e86\u5408\u540c\u7684\u6301\u7eed\u65f6\u95f4\u3002\",\n                \"reference_paragraphs\":
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"value\": 5,\n                \"justification\":
+        \"\u534f\u8bae\u660e\u786e\u89c4\u5b9a\u81ea\u7b7e\u7f72\u4e4b\u65e5\u8d77\u6709\u6548\u671f\u4e3a\u4e94\u5e74\uff0c\u76f4\u63a5\u4f53\u73b0\u5408\u540c\u671f\u9650\u3002\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P1\",\n                        \"reference_sentence_ids\": [\n                            \"P1-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1751910770, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752157774, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 105,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 102,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         2637, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2560},
-        "total_tokens": 2742}}'
+        "total_tokens": 2739}}'
     headers:
       Content-Length:
-      - '1681'
+      - '1793'
       Content-Type:
       - application/json
       Date:
@@ -4245,7 +4246,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1205'
+      - '838'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

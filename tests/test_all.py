@@ -112,6 +112,7 @@ def vcr_config():
         "record_mode": "once",
         "cassette_library_dir": "tests/cassettes",
         "ignore_localhost": False,
+        "ignore_hosts": ["huggingface.co", "hf.co"],
     }
 
 
