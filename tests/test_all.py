@@ -25,6 +25,7 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+import warnings
 import zipfile
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -75,7 +76,11 @@ from contextgem.internal.loggers import (
     dedicated_stream,
     logger,
 )
-from contextgem.internal.utils import _load_sat_model, _split_text_into_paragraphs
+from contextgem.internal.utils import (
+    _get_template,
+    _load_sat_model,
+    _split_text_into_paragraphs,
+)
 from contextgem.public.utils import JsonObjectClassStruct
 from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
@@ -123,6 +128,18 @@ class TestAll(TestUtils):
 
     Variables are initialized at a class level to be used in the test methods.
     """
+
+    # Default system messages
+    default_system_message_en = _get_template(
+        "default_system_message",
+        template_type="system",
+        template_extension="j2",
+    ).render({"output_language": "en"})
+    default_system_message_non_en = _get_template(
+        "default_system_message",
+        template_type="system",
+        template_extension="j2",
+    ).render({"output_language": "adapt"})
 
     # Documents
     # From raw texts
@@ -3909,6 +3926,54 @@ class TestAll(TestUtils):
             assert "ContextGem" in response
             logger.debug(response)
 
+        # Test empty system message
+        model = DocumentLLM(
+            model="azure/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="",
+        )
+        assert model.system_message == ""
+
+        # Test None system message (set to default system message) with default output language (en)
+        model = DocumentLLM(
+            model="azure/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        )
+        assert (
+            model.system_message is not None
+            and model.system_message == self.default_system_message_en
+        )
+
+        # Test None system message (set to default system message) with non-en output language (adapt)
+        model = DocumentLLM(
+            model="azure/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            output_language="adapt",
+        )
+        assert (
+            model.system_message is not None
+            and model.system_message == self.default_system_message_non_en
+        )
+
+        # Test with custom system message
+        model = DocumentLLM(
+            model="azure/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="You are a helpful assistant that can answer questions and help with tasks.",
+        )
+        assert (
+            model.system_message
+            == "You are a helpful assistant that can answer questions and help with tasks."
+        )
+
         check_locals_memory_usage(locals(), test_name="test_system_messages")
 
     @pytest.mark.vcr
@@ -5518,15 +5583,17 @@ class TestAll(TestUtils):
                 model.chat(images=self.test_img_png_invoice)
             if model == self.llm_extractor_vision:
                 # Check with text + image
-                model.chat(
-                    "What's the type of this document?",
-                    images=[self.test_img_png_invoice],
-                )
+                with pytest.warns(UserWarning, match="default system message"):
+                    model.chat(
+                        "What's the type of this document?",
+                        images=[self.test_img_png_invoice],
+                    )
                 response = model.get_usage()[0].usage.calls[-1].response.lower()
                 assert "invoice" in response
             else:
                 # Check with text
-                model.chat("What's the result of 2+2?")
+                with pytest.warns(UserWarning, match="default system message"):
+                    model.chat("What's the result of 2+2?")
                 if model == self.invalid_llm_with_valid_fallback:
                     response = (
                         model.fallback_llm.get_usage()[0].usage.calls[-1].response
@@ -5541,6 +5608,67 @@ class TestAll(TestUtils):
             text_only_model.chat(
                 "What's the type of this document?", images=[self.test_img_png_invoice]
             )
+
+        # Test for empty system message
+        model = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="",
+        )
+        assert model.system_message == ""
+        with warnings.catch_warnings(record=True) as w:  # expect no warning
+            warnings.simplefilter("always")  # Capture all warnings
+            model.chat("What's the result of 10+10?")
+        assert len(w) == 0, "Expected no warning, but got: " + str(w)
+        response = model.get_usage()[0].usage.calls[-1].response
+        assert "20" in response
+
+        # Test for None system message (output language "en", which is the default)
+        model = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        )
+        assert model.system_message == self.default_system_message_en
+        with pytest.warns(UserWarning, match="default system message"):
+            model.chat("What's the result of 10+10?")
+        response = model.get_usage()[0].usage.calls[-1].response
+        assert "20" in response
+
+        # Test for None system message (output language "adapt")
+        model = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            output_language="adapt",
+        )
+        assert model.system_message == self.default_system_message_non_en
+        with pytest.warns(UserWarning, match="default system message"):
+            model.chat("Hva er resultatet av 30+10?")
+        response = model.get_usage()[0].usage.calls[-1].response
+        assert "40" in response
+
+        # Test with custom system message
+        model = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="Your name is John Doe. Introduce yourself as such.",
+        )
+        assert (
+            model.system_message == "Your name is John Doe. Introduce yourself as such."
+        )
+        with warnings.catch_warnings(record=True) as w:  # expect no warning
+            warnings.simplefilter("always")  # Capture all warnings
+            model.chat("What's your name?")
+        assert len(w) == 0, "Expected no warning, but got: " + str(w)
+        response = model.get_usage()[0].usage.calls[-1].response
+        assert "John Doe" in response
 
         check_locals_memory_usage(locals(), test_name="test_chat")
 

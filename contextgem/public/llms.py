@@ -307,7 +307,7 @@ class DocumentLLM(_GenericLLMProcessor):
         "extractor_vision", "reasoner_vision"). Defaults to "extractor_text".
     :vartype role: LLMRoleAny
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
-    :vartype system_message: Optional[NonEmptyStr]
+    :vartype system_message: Optional[str]
     :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
         Lower values produce more predictable outputs, higher values generate more varied responses.
         Defaults to 0.3.
@@ -383,7 +383,7 @@ class DocumentLLM(_GenericLLMProcessor):
     api_base: Optional[NonEmptyStr] = Field(default=None)
     api_version: Optional[NonEmptyStr] = Field(default=None)  # specific to Azure OpenAI
     role: LLMRoleAny = Field(default="extractor_text")
-    system_message: Optional[NonEmptyStr] = Field(default=None)
+    system_message: Optional[str] = Field(default=None)
     temperature: Optional[StrictFloat] = Field(default=0.3, ge=0)
     max_tokens: Optional[StrictInt] = Field(default=4096, gt=0)
     max_completion_tokens: Optional[StrictInt] = Field(
@@ -429,7 +429,8 @@ class DocumentLLM(_GenericLLMProcessor):
 
     @_post_init_method
     def _post_init(self, __context):
-        self._set_system_message()
+        if self.system_message is None:
+            self._set_system_message()
         self._set_prompts()
         logger.info(f"Using model {self.model}")
         if self.api_key is None:
@@ -543,6 +544,19 @@ class DocumentLLM(_GenericLLMProcessor):
 
         # Create LLM call object to track the interaction
         llm_call = _LLMCall(prompt_kwargs={}, prompt=prompt)
+
+        # Warn if using default system message
+        default_system_message = _get_template(
+            "default_system_message",
+            template_type="system",
+            template_extension="j2",
+        ).render({"output_language": self.output_language})
+        if self.system_message == default_system_message:
+            warnings.warn(
+                "You are using the default system message optimized for extraction tasks. "
+                "For simple chat interactions, consider setting system_message='' to disable it, "
+                "or provide your own custom system message."
+            )
 
         # Send message to LLM
         result = await self._query_llm(
@@ -1003,7 +1017,7 @@ class DocumentLLM(_GenericLLMProcessor):
         request_messages = []
 
         # Handle system message based on model type
-        if self.system_message:
+        if self.system_message and self.system_message.strip():
             if not any(i in self.model for i in ["o1-preview", "o1-mini"]):
                 # o1/o1-mini models don't support system/developer messages
                 request_messages.append(
@@ -1012,9 +1026,8 @@ class DocumentLLM(_GenericLLMProcessor):
                         "content": self.system_message,
                     }
                 )
-
-        if not any(i["role"] == "system" for i in request_messages):
-            logger.warning(f"System message ignored for the model `{self.model}`.")
+            else:
+                warnings.warn(f"System message ignored for the model `{self.model}`.")
 
         # Prepare user message content based on whether images are provided
         if images:
@@ -1195,16 +1208,14 @@ class DocumentLLM(_GenericLLMProcessor):
 
     def _set_system_message(self) -> None:
         """
-        Renders and sets a system message for the LLM if the LLM does not already have it defined.
-
+        Sets the default system message for the LLM.
         :return: None
         """
-        if not self.system_message:
-            self.system_message = _get_template(
-                "default_system_message",
-                template_type="system",
-                template_extension="j2",
-            ).render({"output_language": self.output_language})
+        self.system_message = _get_template(
+            "default_system_message",
+            template_type="system",
+            template_extension="j2",
+        ).render({"output_language": self.output_language})
 
     def _get_raw_usage(self) -> _LLMUsage:
         """

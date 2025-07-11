@@ -21,7 +21,7 @@
 Supported LLMs
 ===============
 
-ContextGem supports all LLM providers and models available through the LiteLLM integration. This means you can use models from major cloud providers like OpenAI, Anthropic, Google, and Azure, as well as run local models through providers like Ollama and LM Studio.
+ContextGem supports all LLM providers and models available through the LiteLLM integration. This means you can use models from major cloud providers like OpenAI, Anthropic, Google, Azure, and xAI, as well as run local models through providers like Ollama and LM Studio.
 
 ContextGem works with both types of LLM architectures:
 
