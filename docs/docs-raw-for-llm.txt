@@ -7769,10 +7769,17 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                      | mapping less advanced and more advanced LLMs as needed. For  |
 |                      |                      | more details, see 🏷️ LLM Roles.                              |
 +----------------------+----------------------+--------------------------------------------------------------+
-| "system_message"     | "None"               | By default, ContextGem sets a default system message that    |
-|                      |                      | primes the LLM for extraction tasks. This default system     |
-|                      |                      | message can be found here in the source code. Overriding     |
-|                      |                      | this is typically only necessary for advanced use cases.     |
+| "system_message"     | "None"               | If not provided (or set to None), ContextGem automatically   |
+|                      |                      | sets a default system message optimized for extraction       |
+|                      |                      | tasks, rendered based on the configured "output_language".   |
+|                      |                      | This default system message template can be found here in    |
+|                      |                      | the source code. Note that for certain models (such as       |
+|                      |                      | OpenAI's o1-preview), system messages are not supported and  |
+|                      |                      | will be ignored. Overriding this is typically only necessary |
+|                      |                      | for advanced use cases, such as custom priming or non-       |
+|                      |                      | extraction tasks. For simple chat interactions, consider     |
+|                      |                      | setting "system_message=''" to disable the default entirely  |
+|                      |                      | (meaning no system message will be sent).                    |
 +----------------------+----------------------+--------------------------------------------------------------+
 | "temperature"        | "0.3"                | Sampling temperature (0.0 to 1.0) controlling response       |
 |                      |                      | creativity. Lower values produce more predictable outputs,   |
@@ -14822,9 +14829,8 @@ class contextgem.public.llms.DocumentLLM(**data)
         "extractor_text", "reasoner_text", "extractor_vision",
         "reasoner_vision"). Defaults to "extractor_text".
 
-      * **system_message** (*Optional**[**NonEmptyStr**]*) --
-        Preparatory system-level message to set context for LLM
-        responses.
+      * **system_message** (*Optional**[**str**]*) -- Preparatory
+        system-level message to set context for LLM responses.
 
       * **temperature** (*Optional**[**float**]*) -- Sampling
         temperature (0.0 to 1.0) controlling response creativity.
@@ -14930,12 +14936,7 @@ class contextgem.public.llms.DocumentLLM(**data)
         **'reasoner_text'**, **'extractor_vision'**,
         **'reasoner_vision'**]*)
 
-      * **system_message** (*Annotated**[**str**,
-        **Strict**(**strict=True**)**,
-        **StringConstraints**(**strip_whitespace=True**,
-        **to_upper=None**, **to_lower=None**, **strict=None**,
-        **min_length=1**, **max_length=None**, **pattern=None**)**]
-        **| **None*)
+      * **system_message** (*str** | **None*)
 
       * **temperature** (*Annotated**[**float**,
         **Strict**(**strict=True**)**] **| **None*)
@@ -15047,7 +15048,7 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    role: LLMRoleAny
 
-   system_message: Optional[NonEmptyStr]
+   system_message: Optional[str]
 
    temperature: Optional[StrictFloat]
 

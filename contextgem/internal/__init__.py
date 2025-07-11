@@ -29,10 +29,7 @@ from contextgem.internal.base import (
     _PostInitCollectorMixin,
     _RefParasAndSentsAttrituteProcessor,
 )
-from contextgem.internal.converters import (
-    _DocxConverterBase,
-    _DocxPackage,
-)
+from contextgem.internal.converters import _DocxConverterBase, _DocxPackage
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,

@@ -168,10 +168,20 @@ def validate_existing_cassettes_urls_security(
                     )
 
         # Raise security error after logging violations
-        raise URLSecurityError(
-            f"URL security violations found in {len(results['violations'])} cassette files. "
-            f"Check logs for details."
-        )
+        error_msg = f"URL security violations found in {len(results['violations'])} cassette files:\n"
+        for violation in results["violations"]:
+            if "error" in violation:
+                error_msg += (
+                    f"Error in file {violation['file']}: {violation['error']}\n"
+                )
+            else:
+                error_msg += f"Security violations in {violation['file']}:\n"
+                for v in violation["violations"]:
+                    error_msg += (
+                        f"  - Unapproved URL: {v['url']} (domain: {v['domain']})\n"
+                    )
+
+        raise URLSecurityError(error_msg)
     else:
         logger.info(
             f"All {results['valid_files']} cassette files passed URL security validation"

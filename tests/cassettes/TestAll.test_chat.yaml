@@ -93,7 +93,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.95.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -103,7 +103,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.95.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -125,7 +125,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\n  \"result\": 4\n}", "refusal": null, "role": "assistant"}}],
-        "created": 1752159462, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1752245217, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
@@ -149,7 +149,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '156'
+      - '161'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -267,7 +267,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.95.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -277,7 +277,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.95.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -299,7 +299,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\n  \"document_type\": \"Invoice\"\n}", "refusal": null,
-        "role": "assistant"}}], "created": 1752159464, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1752245219, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_result": {"jailbreak": {"filtered": false,
         "detected": false}, "custom_blocklists": {"filtered": false, "details": []}}},
@@ -328,15 +328,15 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1035'
+      - '997'
       request-id:
-      - d058fa9b-f879-4ea2-a23f-f50d51d11456
+      - 959ffcb1-cef3-4d1e-8bec-1ef0d8b48b39
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '2312'
+      - '2073'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -450,7 +450,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.95.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -460,7 +460,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.95.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -482,7 +482,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\n  \"result\": 4\n}", "refusal": null, "role": "assistant"}}],
-        "created": 1752159465, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1752245220, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
@@ -506,7 +506,565 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '169'
+      - '311'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"What''s the result of 10+10?"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '156'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.95.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.95.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "The result of 10 + 10 is 20.", "refusal": null, "role": "assistant"}}],
+        "created": 1752245221, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 13, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 16, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 29}}'
+    headers:
+      Content-Length:
+      - '1240'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '246'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- Visual Documents: Images, scanned documents, blueprints,
+      photographs, charts, diagrams, or screenshots that contain relevant information.\n-
+      General Documents: Any other types of files that may contain text, tables, images,
+      or mixed formats.\nNote that occasionally you may be working with document fragments
+      rather than complete documents. These fragments represent portions of a larger
+      document and should be analyzed within their limited context. When working with
+      fragments, focus on extracting information from the available content without
+      making assumptions about missing parts.\n\nDocuments may contain textual or
+      visual content:\n- Text-based content: Written information that can be directly
+      read and processed.\n- Visual content: Images, charts, diagrams, blueprints,
+      tables, handwritten text, or other visual elements that require visual interpretation.\n\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n-
+      CV Aspects: Work experience, education, or skills.\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\n\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\n- Interpretative judgments:
+      Such as ratings, classifications, or qualitative assessments based on document
+      content.\n- Label classifications: Content categorization using predefined labels.\n\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n- Precision and accuracy: Extract only information
+      that is explicitly stated or can be directly inferred from the document content.
+      Avoid speculation or assumptions beyond what the document content clearly supports.\n\n-
+      Visual content analysis: When processing visual content (images):\n  -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n  -- Identify and analyze visual patterns, relationships,
+      and structural information that may not be explicitly stated in text.\n  --
+      Consider the visual context and layout as it may provide important semantic
+      information.\n  -- Analyze information in tables, forms, charts, and diagrams
+      with attention to their visual structure and relationships.\n\n- Contextual
+      understanding: Consider the full context when performing extractions. A single
+      paragraph or sentence may have different meanings depending on surrounding content,
+      document type, and domain-specific terminology.\n\n- Systematic analysis: Before
+      extracting, thoroughly understand:\n  -- The nature and type of the document\n  --
+      The specific aspects or concepts you need to focus on\n  -- The expected output
+      format and structure requirements\n  -- Any constraints or special handling
+      instructions\n\n- Quality control: After extraction, verify that:\n  -- All
+      extracted information directly relates to the specified aspects/concepts\n  --
+      The output format matches the required schema exactly\n  -- No extraneous information
+      has been included\n  -- All mandatory fields are present and correctly populated\n\n-
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n  -- If the relevance is unclear, err on the side of exclusion\n  --
+      If multiple interpretations are possible, choose the most conservative one\n  --
+      If information is ambiguous, do not force an extraction\n\n- Structured output
+      compliance: Adhere strictly to the specified JSON format requirements. Do not:\n  --
+      Add extra fields beyond what is requested\n  -- Modify the structure or field
+      names\n  -- Include explanatory text outside the JSON structure\n  -- Use code
+      blocks or formatting markers unless explicitly required\n\nEXPECTED DELIVERABLES:\n-
+      Structured outputs: Clearly formatted and well-organized results based on the
+      task requirements.\n- Explanations (when required): When required by the instructions,
+      include justifications or reasoning for your interpretations.\n- Insights (when
+      required): When required by the instructions, highlight trends, patterns, or
+      noteworthy findings that could add value to the task.\n- References (when required):
+      When required by the instructions, output references based on which you extracted
+      data, provided insights, or made conclusions during the task.\n\n\nBy adhering
+      to this framework, you will ensure consistent and high-quality performance across
+      diverse document analysis tasks."},{"role":"user","content":"What''s the result
+      of 10+10?"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '6065'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.95.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.95.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "{\n  \"result\": 20\n}", "refusal": null, "role": "assistant"}}],
+        "created": 1752245221, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 10, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1071, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1024}, "total_tokens": 1081}}'
+    headers:
+      Content-Length:
+      - '1241'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '171'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"You will be assigned tasks involving
+      the extraction, analysis, and interpretation of data within various types of
+      documents. Your role is to carefully process the information and provide accurate,
+      relevant outputs based on the specific instructions provided.\n\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n1. Document: A structured or unstructured file containing
+      written or visual content. Documents can vary in type and purpose, including
+      but not limited to:\n- Contracts: Legal agreements defining terms and obligations.\n-
+      Invoices: Financial documents detailing transactions and payments.\n- Curricula
+      Vitae (CVs): Resumes outlining an individual''s professional experience and
+      qualifications.\n- Visual Documents: Images, scanned documents, blueprints,
+      photographs, charts, diagrams, or screenshots that contain relevant information.\n-
+      General Documents: Any other types of files that may contain text, tables, images,
+      or mixed formats.\nNote that occasionally you may be working with document fragments
+      rather than complete documents. These fragments represent portions of a larger
+      document and should be analyzed within their limited context. When working with
+      fragments, focus on extracting information from the available content without
+      making assumptions about missing parts.\n\nDocuments may contain textual or
+      visual content:\n- Text-based content: Written information that can be directly
+      read and processed.\n- Visual content: Images, charts, diagrams, blueprints,
+      tables, handwritten text, or other visual elements that require visual interpretation.\n\n2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n- Contract Aspects: Payment terms, parties involved, or termination
+      clauses.\n- Invoice Aspects: Due dates, line-item breakdowns, or tax details.\n-
+      CV Aspects: Work experience, education, or skills.\nYou will analyze aspects
+      as instructed, considering their relevance and context within the document.\n\n3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n- Factual extractions: Such as a penalty clause
+      in a contract, a total amount due in an invoice, or a certification in a CV.\n-
+      Analytical insights: Such as risk assessments, compliance evaluations, or pattern
+      identifications.\n- Reasoned conclusions: Such as determining whether a document
+      meets specific criteria or answers particular questions.\n- Interpretative judgments:
+      Such as ratings, classifications, or qualitative assessments based on document
+      content.\n- Label classifications: Content categorization using predefined labels.\n\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n- Precision and accuracy: Extract only information
+      that is explicitly stated or can be directly inferred from the document content.
+      Avoid speculation or assumptions beyond what the document content clearly supports.\n\n-
+      Visual content analysis: When processing visual content (images):\n  -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n  -- Identify and analyze visual patterns, relationships,
+      and structural information that may not be explicitly stated in text.\n  --
+      Consider the visual context and layout as it may provide important semantic
+      information.\n  -- Analyze information in tables, forms, charts, and diagrams
+      with attention to their visual structure and relationships.\n\n- Contextual
+      understanding: Consider the full context when performing extractions. A single
+      paragraph or sentence may have different meanings depending on surrounding content,
+      document type, and domain-specific terminology.\n\n- Systematic analysis: Before
+      extracting, thoroughly understand:\n  -- The nature and type of the document\n  --
+      The specific aspects or concepts you need to focus on\n  -- The expected output
+      format and structure requirements\n  -- Any constraints or special handling
+      instructions\n\n- Quality control: After extraction, verify that:\n  -- All
+      extracted information directly relates to the specified aspects/concepts\n  --
+      The output format matches the required schema exactly\n  -- No extraneous information
+      has been included\n  -- All mandatory fields are present and correctly populated\n\n-
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n  -- If the relevance is unclear, err on the side of exclusion\n  --
+      If multiple interpretations are possible, choose the most conservative one\n  --
+      If information is ambiguous, do not force an extraction\n\n- Structured output
+      compliance: Adhere strictly to the specified JSON format requirements. Do not:\n  --
+      Add extra fields beyond what is requested\n  -- Modify the structure or field
+      names\n  -- Include explanatory text outside the JSON structure\n  -- Use code
+      blocks or formatting markers unless explicitly required\n\nEXPECTED DELIVERABLES:\n-
+      Structured outputs: Clearly formatted and well-organized results based on the
+      task requirements.\n- Explanations (when required): When required by the instructions,
+      include justifications or reasoning for your interpretations.\n- Insights (when
+      required): When required by the instructions, highlight trends, patterns, or
+      noteworthy findings that could add value to the task.\n- References (when required):
+      When required by the instructions, output references based on which you extracted
+      data, provided insights, or made conclusions during the task.\n\nLANGUAGE GUIDELINES
+      FOR OUTPUT TEXT:\n- Primary language requirement: Use the original language
+      of the document for all textual output (e.g., justifications, explanations,
+      answers, extracted content string values, etc.).\n- Handling multilingual documents:
+      If the document contains multiple languages, select the language that appears
+      most frequently. If it is unclear which language is predominant (e.g., in a
+      deliberately multilingual document), use the first language that appears.\n-
+      Scope of application: These language guidelines apply only to text-based content.
+      Structural elements (such as IDs, tags, and other identification-related information)
+      are exempt.\n\nBy adhering to this framework, you will ensure consistent and
+      high-quality performance across diverse document analysis tasks."},{"role":"user","content":"Hva
+      er resultatet av 30+10?"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '6734'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.95.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.95.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "{\n  \"result\": 40\n}", "refusal": null, "role": "assistant"}}],
+        "created": 1752245222, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_178c8d546f", "usage": {"completion_tokens": 10, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1193, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1024}, "total_tokens": 1203}}'
+    headers:
+      Content-Length:
+      - '1241'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '168'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"Your name is John Doe. Introduce
+      yourself as such."},{"role":"user","content":"What''s your name?"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '227'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.95.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.95.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
+        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "Hello! My name is John Doe. How can I assist you today?",
+        "refusal": null, "role": "assistant"}}], "created": 1752245222, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 16,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        27, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        43}}'
+    headers:
+      Content-Length:
+      - '1267'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      cmp-upstream-response-duration:
+      - '259'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
