@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.11.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.11.1) - 2025-07-11
+### Fixed
+- Allow disabling system message (e.g. for basic chat interactions): Added support for omitting system messages in DocumentLLM by allowing empty strings, which prevents sending any system message to the LLM. Introduced a warning in `llm.chat()/llm.chat_async()` when the default system message (optimized for extraction tasks) is used. Updated initialization to set default system message only when needed, ensuring flexibility for basic chat without a system message.
+
 ## [0.11.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.11.0) - 2025-07-10
 ### Added
 - Support for litellm versions >1.71.1: ContextGem now supports newer litellm versions that were previously incompatible with tests due to underlying transport changes (removal of httpx-aiohttp dependency) introduced after v1.71.1, which affected VCR recording used in testing.
