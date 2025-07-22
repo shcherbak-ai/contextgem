@@ -30,21 +30,14 @@ import json
 import re
 import warnings
 from collections import defaultdict
+from collections.abc import Callable, Coroutine, Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    Generator,
-    Literal,
-    TypeVar,
-    get_args,
-)
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, get_args
 
 from jinja2 import Environment, Template, nodes
 from wtpsplit_lite import SaT
+
 
 if TYPE_CHECKING:
     from contextgem.public.aspects import Aspect
@@ -67,6 +60,7 @@ from contextgem.internal.typings.aliases import (
     StandardSaTModelId,
     TextMode,
 )
+
 
 T = TypeVar("T")
 F = TypeVar("F", bound=Callable[..., Any])
@@ -116,7 +110,7 @@ def _get_template(
         )
     else:
         raise NotImplementedError(f"Unknown template type: {template_type}")
-    with open(template_path, "r", encoding="utf-8") as file:
+    with open(template_path, encoding="utf-8") as file:
         template_text = file.read().strip()
         if not template_text:
             raise RuntimeError(
@@ -491,7 +485,11 @@ def _suppress_litellm_pydantic_warnings(func: F) -> F:
         with _suppress_litellm_pydantic_warnings_context():
             return func(*args, **kwargs)
 
-    return _async_wrapper if inspect.iscoroutinefunction(func) else _sync_wrapper
+    # Safe cast: tell type checker that functools.wraps preserves the original function's type.
+    # The wrapper functions maintain the same signature as the original function.
+    return cast(
+        F, _async_wrapper if inspect.iscoroutinefunction(func) else _sync_wrapper
+    )
 
 
 @_suppress_litellm_pydantic_warnings
@@ -567,16 +565,14 @@ def _llm_call_result_is_valid(res: tuple[Any, _LLMUsage] | None) -> bool:
     - Any, _LLMUsage - if LLM processing was successful and result is validated. In this case,
         token and cost calculation are performed as normal.
 
-    :param res: The result to check, represented as a sequence where the first element is the relevant
+    :param res: The result to check, represented as a tuple where the first element is the relevant
         result value, and the second element is LLM usage stats dict that follows the _LLMUsage pattern,
         or None if the result is not received or failed validation.
     :type res: tuple[Any, _LLMUsage] | None
     :return: A boolean indicating whether the result is successfully received and validated.
     :rtype: bool
     """
-    if res is None or res[0] is None:
-        return False
-    return True
+    return not (res is None or res[0] is None)
 
 
 def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | None:
@@ -640,6 +636,18 @@ def _parse_llm_output_as_json(
     :rtype: dict | list | None
     """
 
+    # Handle None case
+    if output_str is None:
+        return None
+
+    # Handle already parsed JSON
+    if isinstance(output_str, dict | list):
+        return output_str
+
+    # Only proceed if it's a string
+    if not isinstance(output_str, str):
+        return None
+
     try:
         return json.loads(output_str)
 
@@ -660,14 +668,6 @@ def _parse_llm_output_as_json(
 
             return json.loads(answer)
         except json.JSONDecodeError:
-            return None
-
-    except TypeError:
-        if isinstance(output_str, (dict, list)):
-            # JSON already parsed, e.g. in query_llm_*() method overwritten by user
-            return output_str
-        else:
-            # Invalid data type
             return None
 
 
@@ -706,10 +706,7 @@ def _validate_parsed_llm_output(
 
     validation_context = {}
     if extracted_item_type == "aspect":
-        if justification_provided:
-            with_extra_data = True
-        else:
-            with_extra_data = False
+        with_extra_data = justification_provided
         validation_model = _get_aspect_extraction_output_struct(
             with_extra_data=with_extra_data, reference_depth=reference_depth
         )
@@ -788,7 +785,7 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     # Attempt to load the model
     try:
         model = SaT(model_id)
-        logger.info(f"SaT model loaded successfully.")
+        logger.info("SaT model loaded successfully.")
         return model
     except Exception as e:
         if is_local_path:

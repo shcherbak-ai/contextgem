@@ -2,7 +2,8 @@
 
 import os
 
-from contextgem import Document, DocumentLLM, JsonObjectConcept, JsonObjectExample
+from contextgem import Document, DocumentLLM, JsonObjectConcept
+
 
 # Example document instance
 # Document content is shortened for brevity

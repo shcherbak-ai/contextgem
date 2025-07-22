@@ -1,5 +1,6 @@
 from contextgem import JsonObjectConcept
 
+
 product_info_concept = JsonObjectConcept(
     name="Product Information",
     description="Product details",

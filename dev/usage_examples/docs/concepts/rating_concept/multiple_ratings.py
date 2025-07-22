@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, RatingConcept
 
+
 # Sample document text about a restaurant review with multiple quality aspects to rate
 restaurant_review = """
 Restaurant Review: Bella Cucina

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from contextgem import Document, DocumentLLM, Image, NumericalConcept, image_to_base64
 
+
 # Path adapted for testing
 current_file = Path(__file__).resolve()
 root_path = current_file.parents[4]

@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM
 
+
 # Primary LLM
 primary_llm = DocumentLLM(
     model="openai/gpt-4o-mini",

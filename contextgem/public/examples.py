@@ -44,7 +44,7 @@ class StringExample(_Example):
     Represents a string example that can be provided by users for certain extraction tasks.
 
     :ivar content: A non-empty string that holds the text content of the example.
-    :vartype content: NonEmptyStr
+    :vartype content: str
 
     Note:
         Examples are optional and can be used to guide LLM extraction tasks. They serve as reference
@@ -94,5 +94,5 @@ class JsonObjectExample(_Example):
         :raises ValueError: If the `content` value is not serializable.
         """
         if not _is_json_serializable(value):
-            raise ValueError(f"`content` must be JSON serializable.")
+            raise ValueError("`content` must be JSON serializable.")
         return value

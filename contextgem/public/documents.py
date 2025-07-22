@@ -38,18 +38,21 @@ enabling complex document understanding and information extraction workflows.
 from __future__ import annotations
 
 import itertools
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import BeforeValidator, Field, field_validator, model_validator
+from typing_extensions import Self
 
 from contextgem.internal.base.attrs import _AssignedInstancesProcessor
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.decorators import _post_init_method, _timer_decorator
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.aliases import NonEmptyStr, SaTModelId, Self
+from contextgem.internal.typings.aliases import NonEmptyStr, SaTModelId
+from contextgem.internal.typings.validators import _validate_sequence_is_list
 from contextgem.internal.utils import (
     _check_paragraphs_match_in_text,
     _check_paragraphs_ordering_in_text,
@@ -73,7 +76,7 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
 
     :ivar raw_text: The main text of the document as a single string.
         Defaults to None.
-    :vartype raw_text: Optional[NonEmptyStr]
+    :vartype raw_text: str | None
     :ivar paragraphs: List of Paragraph instances in consecutive order as they appear
         in the document. Defaults to an empty list.
     :vartype paragraphs: list[Paragraph]
@@ -111,11 +114,15 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
             :caption: Document definition
     """
 
-    raw_text: Optional[NonEmptyStr] = Field(default=None)
+    raw_text: NonEmptyStr | None = Field(default=None)
     paragraphs: list[Paragraph] = Field(default_factory=list)
     images: list[Image] = Field(default_factory=list)
     aspects: list[Aspect] = Field(default_factory=list)
-    concepts: list[_Concept] = Field(default_factory=list)
+    concepts: Annotated[
+        Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)
+    ] = Field(
+        default_factory=list
+    )  # using Sequence field with list validator for type checking
     paragraph_segmentation_mode: Literal["newlines", "sat"] = Field(default="newlines")
     sat_model_id: SaTModelId = Field(default="sat-3l-sm")
     pre_segment_sentences: bool = Field(default=False)
@@ -131,13 +138,12 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         :raises ValueError: If attempting to reassign a restricted attribute
             after it has already been assigned to a *truthy* value.
         """
-        if name in ["raw_text", "paragraphs", "_md_text"]:
+        if name in ["raw_text", "paragraphs", "_md_text"] and getattr(self, name, None):
             # Prevent raw_text/paragraphs/_md_text reassignment once populated,
             # to prevent inconsistencies in analysis.
-            if getattr(self, name, None):
-                raise ValueError(
-                    f"The attribute `{name}` cannot be changed once populated."
-                )
+            raise ValueError(
+                f"The attribute `{name}` cannot be changed once populated."
+            )
         if name == "_md_text":
             self._validate_md_text(value)
         super().__setattr__(name, value)
@@ -212,12 +218,10 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                 "Text is being segmented into paragraphs, as no Paragraph instances were provided..."
             )
             if self.paragraph_segmentation_mode == "newlines":
-                paragraphs: list[str] = _split_text_into_paragraphs(self.raw_text)
+                paragraphs = _split_text_into_paragraphs(self.raw_text)
             elif self.paragraph_segmentation_mode == "sat":
                 try:
-                    paragraphs: list[list[str]] = _load_sat_model(
-                        self.sat_model_id
-                    ).split(
+                    paragraphs = _load_sat_model(self.sat_model_id).split(
                         self.raw_text,
                         do_paragraph_segmentation=True,
                     )
@@ -234,7 +238,7 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
             if not paragraphs:
                 raise ValueError("No valid paragraphs in text")
             # Assign paragraphs on the document
-            paragraphs: list[Paragraph] = [Paragraph(raw_text=i) for i in paragraphs]
+            paragraphs = [Paragraph(raw_text=i) for i in paragraphs]
             # Check that each paragraph is found in the document text
             # For duplicate paragraphs, verify each occurrence is matched in the document
             remaining_text = self.raw_text
@@ -281,7 +285,9 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                 f"Error splitting paragraphs into sentences using SaT model: {e}"
             )
             raise
-        for paragraph, sent_group in zip(self.paragraphs, split_sents_for_paras):
+        for paragraph, sent_group in zip(
+            self.paragraphs, split_sents_for_paras, strict=True
+        ):
             if not paragraph.sentences:
                 # Filter out empty sents, if any
                 sent_group = [i.strip() for i in sent_group]
@@ -414,7 +420,7 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         for image in images:
             if image.base64_data in seen:
                 raise ValueError(
-                    f"Image already exists in the document. All images must be unique."
+                    "Image already exists in the document. All images must be unique."
                 )
             seen.add(image.base64_data)
         return images
@@ -447,15 +453,14 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
             The validated data.
         """
 
-        if isinstance(data, dict):
-            if (
-                not data.get("raw_text")
-                and not data.get("paragraphs")
-                and not data.get("images")
-            ):
-                raise ValueError(
-                    "Either raw_text, paragraphs, or images must be provided for the document."
-                )
+        if isinstance(data, dict) and (
+            not data.get("raw_text")
+            and not data.get("paragraphs")
+            and not data.get("images")
+        ):
+            raise ValueError(
+                "Either raw_text, paragraphs, or images must be provided for the document."
+            )
         return data
 
     @model_validator(mode="after")

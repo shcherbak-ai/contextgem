@@ -1,5 +1,6 @@
 from contextgem import RatingConcept
 
+
 # Create a concept to rate the fairness of contract terms
 fairness_rating = RatingConcept(
     name="Contract fairness rating",

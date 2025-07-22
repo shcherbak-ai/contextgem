@@ -19,6 +19,7 @@ from contextgem import (
     StringExample,
 )
 
+
 # Construct documents
 
 # Document 1 - Consultancy Agreement (shortened for brevity)

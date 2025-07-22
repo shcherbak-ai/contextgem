@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM
 
+
 # Sample document text (shortened for brevity)
 doc = Document(
     raw_text=(

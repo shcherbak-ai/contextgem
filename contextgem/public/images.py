@@ -47,7 +47,7 @@ class Image(_InstanceBase):
         "image/webp"]
     :ivar base64_data: The base64-encoded data of the image. The util function
         `image_to_base64()` from contextgem.public.utils can be used to encode images to base64.
-    :vartype base64_data: NonEmptyStr
+    :vartype base64_data: str
 
     Note:
         - Attached to documents:

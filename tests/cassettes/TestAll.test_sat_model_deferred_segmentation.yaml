@@ -314,7 +314,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -324,7 +324,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -340,8 +340,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -360,16 +360,16 @@ interactions:
         \"P40-S0\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S1\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S2\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156736, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965539, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 264,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4992},
+        5012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
         "total_tokens": 5276}}'
     headers:
       Content-Length:
@@ -385,7 +385,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2643'
+      - '1737'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -500,15 +500,25 @@ interactions:
       are specified for each concept.\\n4. Produce a JSON array containing your extracted
       data, in the provided format.\\n\\nIf a concept is not addressed in the document
       paragraphs, you must still include an entry in the final JSON output but with
-      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
-      Output format:\\nProvide your answer in only the following answer format (do
-      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
-      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
-      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      an empty \\\"extracted_items\\\" list. However, for boolean concepts (with extracted
+      item type \\\"bool\\\"), distinguish carefully:\\n- Extract True if the concept
+      is confirmed or strongly supported by the document content (either explicitly
+      stated or reasonably inferred)\\n- Extract False if the concept is contradicted,
+      denied, or if the document content allows you to determine that the concept
+      is not true (e.g., absence of expected content that should be present if the
+      concept were true)\\n- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the document is completely irrelevant
+      to the concept, or (2) the document does not contain enough information to make
+      a conclusion about the concept\\n\\nFollow these additional rules:\\n\\n- Output
+      format:\\nProvide your answer in only the following answer format (do not include
+      backticks, code fences, or any introductory/explanatory text).\\n\\n- Consistency:\\n
+      \   -- Each JSON object in the list must have two keys: \\\"concept_id\\\" and
+      \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
       exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
       \   -- The value of \\\"extracted_items\\\" must be an array of objects with
       mandatory fields \\\"value\\\" and \\\"reference_paragraphs\\\". If the concept
-      is not addressed or there are no items to extract, leave the array empty ([]).\\n
+      is not addressed or there are no items to extract, leave the array empty ([]).
+      For boolean concepts, only leave empty if the concept is impossible to determine.\\n
       \       --- Extracted items may be found directly (explicitly mentioned) or
       inferred from the content (implied or derivable from the information present).\\n
       \       --- Guidance regarding the possible amount of extracted items for the
@@ -520,56 +530,68 @@ interactions:
       which holds the provided IDs of the reference sentences within the paragraph.
       Note that not every sentence in the paragraph necessarily serves as a relevant
       reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
-      the extracted item.\\n        --- If a specific structure is provided for a
-      concept under \\\"Expected structure,\\\" the extracted item value must follow
-      that structure for all extracted items corresponding to that concept.\\n        ---
-      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
-      extracted item value must be within that scale.\\n        --- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \       --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\\n    -- reference_paragraphs: An array of objects
-      for each paragraph based on which the item was extracted for the concept. Each
-      object should include:\\n        --- reference_paragraph_id: Mandatory field
-      holding the provided ID of the reference paragraph. Each paragraph ID must match
-      exactly the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.).\\n        --- reference_sentence_ids: Mandatory field holding an array
-      of the provided IDs of the sentences within the paragraph, based on which the
-      item was extracted for the concept. Each sentence ID must match exactly the
-      provided ID for the sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
-      value of each of the extracted items for the concept strictly matches that type.
-      Python types are provided (e.g., str for string, int for integer, float for
-      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
-      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
-      items:\\n    -- If a concept is not mentioned at all, your output should still
-      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
-      \   -- For concepts that have an \\\"Available labels:\\\" section: if none
-      of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
-      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
-      ...,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
-      \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
-      [\\n                            str,\\n                            ...\\n                        ]\\n
-      \                   },\\n                    ...\\n                ]\\n            },\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      the extracted item. Must match the exact type specified for the concept.\\n
+      \       --- If a specific structure is provided for a concept under \\\"Expected
+      structure,\\\" the extracted item value must follow that structure for all extracted
+      items corresponding to that concept.\\n        --- If a rating scale is provided
+      for a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- reference_paragraphs: An array of objects for each paragraph based on
+      which the item was extracted for the concept. Each object should include:\\n
+      \       --- reference_paragraph_id: Mandatory field holding the provided ID
+      of the reference paragraph. Each paragraph ID must match exactly the provided
+      ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n        ---
+      reference_sentence_ids: Mandatory field holding an array of the provided IDs
+      of the sentences within the paragraph, based on which the item was extracted
+      for the concept. Each sentence ID must match exactly the provided ID for the
+      sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n- Types of
+      extracted items:\\n    -- Each concept specifies an \\\"extracted item type\\\"
+      (found under \\\"Concept extracted item type\\\"). Ensure that the value of
+      each of the extracted items for the concept strictly matches that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.). Type compliance is mandatory - any deviation
+      will result in invalid output.\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For boolean concepts (with extracted item type \\\"bool\\\"): Distinguish carefully
+      between these cases:\\n        --- Extract True if the concept is confirmed
+      or strongly supported by the provided content (either explicitly stated or reasonably
+      inferred)\\n        --- Extract False if the concept is contradicted, denied,
+      or if the provided content allows you to determine that the concept is not true
+      (e.g., absence of expected content that should be present if the concept were
+      true)\\n        --- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the provided content is completely
+      irrelevant to the concept, or (2) the provided content does not contain enough
+      information to make a conclusion about the concept\\n    -- For concepts that
+      have an \\\"Available labels:\\\" section: if none of the predefined labels
+      apply to the content, leave the \\\"extracted_items\\\" array empty.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if multiple labels
+      apply to the same instance or context, include them all in a single extracted
+      item with multiple labels in the \\\"labels\\\" array (e.g., {\\\"labels\\\":
+      [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted items if
+      there are genuinely distinct instances or contexts that warrant separate classification.\\n
+      \   -- For concepts that do not have an \\\"Available labels:\\\" section: if
+      multiple items are found for a concept, include each as a separate entry within
+      the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n    -- Do not
+      include any headers, explanations, or text outside of the JSON array.\\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\\n\\n======\\nANSWER
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraphs\\\":
+      [\\n                    {\\n                        \\\"reference_paragraph_id\\\":
+      str,\\n                        \\\"reference_sentence_ids\\\": [\\n                            str,\\n
+      \                           ...\\n                        ]\\n                    },\\n
+      \                   ...\\n                ]\\n            },\\n            ...\\n
+      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
       Concept ID: C0\\nConcept name: Liability cap\\n\\nConcept description:\\nLiability
       cap\\n\\nAmount of extracted items: This concept may have zero, one, or multiple
-      extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      extracted items.\\n\\nConcept extracted item type: str (must be exactly as specified)\\n````\\n\\n______\\n\\n------\\nDOCUMENT
       PARAGRAPHS INCLUDING SENTENCES:\\n````\\n- Paragraph ID: P0\\nParagraph sentences:\\n
       \   -- Sentence ID: P0-S0\\n    Sentence text: Non-Disclosure Agreement (NDA)\\n````\\n\\n````\\n-
       Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
@@ -763,13 +785,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '27103'
+      - '28814'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -779,7 +801,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -795,8 +817,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -810,17 +832,17 @@ interactions:
         of liability is cumulative and not per incident.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\n                            \"P38-S0\",\n                            \"P38-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156740, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965542, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 176,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5722, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5632},
-        "total_tokens": 5898}}'
+        6044, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2560},
+        "total_tokens": 6220}}'
     headers:
       Content-Length:
       - '2178'
@@ -835,7 +857,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1630'
+      - '1431'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1125,7 +1147,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1135,7 +1157,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1151,27 +1173,25 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P36\",\n            \"P37\",\n            \"P38\",\n            \"P39\",\n            \"P40\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156744, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
+        \"A0\",\n        \"paragraph_ids\": [\n            \"P36\",\n            \"P37\",\n            \"P38\",\n            \"P39\",\n            \"P40\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752965545, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 49,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4074, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3968},
+        4074, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
         "total_tokens": 4123}}'
     headers:
       Content-Length:
-      - '1419'
+      - '1295'
       Content-Type:
       - application/json
       Date:
@@ -1183,7 +1203,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '638'
+      - '447'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1362,7 +1382,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1372,7 +1392,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1388,31 +1408,28 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
-        [\n            {\n                \"paragraph_id\": \"P1\",\n                \"sentences\":
-        [\n                    {\n                        \"sentence_id\": \"P1-S1\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
+        \"A0\",\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
         \"P2\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
         \"P2-S0\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P2-S1\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156744, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965546, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 111,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 75,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2158, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
-        "total_tokens": 2269}}'
+        2158, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1664},
+        "total_tokens": 2233}}'
     headers:
       Content-Length:
-      - '1856'
+      - '1506'
       Content-Type:
       - application/json
       Date:
@@ -1424,7 +1441,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1181'
+      - '585'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -1714,7 +1731,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1724,7 +1741,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1740,27 +1757,27 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P0\",\n            \"P1\",\n            \"P16\",\n            \"P17\",\n            \"P18\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P23\",\n            \"P24\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P28\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P34\",\n            \"P35\",\n            \"P36\",\n            \"P37\",\n            \"P38\",\n            \"P39\",\n            \"P40\",\n            \"P41\",\n            \"P42\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156747, "id": "chatcmpl-DUMMY",
+        [\n            \"P0\",\n            \"P1\",\n            \"P16\",\n            \"P17\",\n            \"P18\",\n            \"P19\",\n            \"P20\",\n            \"P21\",\n            \"P22\",\n            \"P23\",\n            \"P24\",\n            \"P25\",\n            \"P26\",\n            \"P27\",\n            \"P28\",\n            \"P29\",\n            \"P30\",\n            \"P31\",\n            \"P32\",\n            \"P33\",\n            \"P34\",\n            \"P35\",\n            \"P41\",\n            \"P42\"\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752965548, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 169,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 144,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4076, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3968},
-        "total_tokens": 4245}}'
+        4076, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        "total_tokens": 4220}}'
     headers:
       Content-Length:
-      - '1946'
+      - '1836'
       Content-Type:
       - application/json
       Date:
@@ -1772,7 +1789,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1869'
+      - '1046'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2111,7 +2128,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2121,7 +2138,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2137,8 +2154,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -2157,16 +2174,16 @@ interactions:
         \"P40-S0\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S1\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S2\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156749, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965549, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 264,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4992},
+        5012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1280},
         "total_tokens": 5276}}'
     headers:
       Content-Length:
@@ -2182,7 +2199,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2803'
+      - '1762'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2295,45 +2312,66 @@ interactions:
       are specified for each concept.\\n4. Produce a JSON array containing your extracted
       data, in the provided format.\\n\\nIf a concept is not addressed in the document
       paragraphs, you must still include an entry in the final JSON output but with
-      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
-      Output format:\\nProvide your answer in only the following answer format (do
-      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
-      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
-      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      an empty \\\"extracted_items\\\" list. However, for boolean concepts (with extracted
+      item type \\\"bool\\\"), distinguish carefully:\\n- Extract True if the concept
+      is confirmed or strongly supported by the document content (either explicitly
+      stated or reasonably inferred)\\n- Extract False if the concept is contradicted,
+      denied, or if the document content allows you to determine that the concept
+      is not true (e.g., absence of expected content that should be present if the
+      concept were true)\\n- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the document is completely irrelevant
+      to the concept, or (2) the document does not contain enough information to make
+      a conclusion about the concept\\n\\nFollow these additional rules:\\n\\n- Output
+      format:\\nProvide your answer in only the following answer format (do not include
+      backticks, code fences, or any introductory/explanatory text).\\n\\n- Consistency:\\n
+      \   -- Each JSON object in the list must have two keys: \\\"concept_id\\\" and
+      \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
       exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
       \   -- The value of \\\"extracted_items\\\" must be an array of objects with
       mandatory fields \\\"value\\\" and \\\"reference_paragraph_ids\\\". If the concept
-      is not addressed or there are no items to extract, leave the array empty ([]).\\n
+      is not addressed or there are no items to extract, leave the array empty ([]).
+      For boolean concepts, only leave empty if the concept is impossible to determine.\\n
       \       --- Extracted items may be found directly (explicitly mentioned) or
       inferred from the content (implied or derivable from the information present).\\n
       \       --- Guidance regarding the possible amount of extracted items for the
       concept is specified under \\\"Amount of extracted items\\\". Each extracted
       item's object, even if there is only one, must be part of the \\\"extracted_items\\\"
       array.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
-      the extracted item.\\n        --- If a specific structure is provided for a
-      concept under \\\"Expected structure,\\\" the extracted item value must follow
-      that structure for all extracted items corresponding to that concept.\\n        ---
-      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
-      extracted item value must be within that scale.\\n        --- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \       --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\\n    -- reference_paragraph_ids: Mandatory
-      field holding the IDs of the document paragraphs based on which the item was
-      extracted for the concept. Ensure such paragraphs directly tie the extracted
-      item to the concept's defining features. Each paragraph ID must match exactly
-      the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
-      value of each of the extracted items for the concept strictly matches that type.
-      Python types are provided (e.g., str for string, int for integer, float for
-      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
-      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
-      items:\\n    -- If a concept is not mentioned at all, your output should still
-      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
+      the extracted item. Must match the exact type specified for the concept.\\n
+      \       --- If a specific structure is provided for a concept under \\\"Expected
+      structure,\\\" the extracted item value must follow that structure for all extracted
+      items corresponding to that concept.\\n        --- If a rating scale is provided
+      for a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- reference_paragraph_ids: Mandatory field holding the IDs of the document
+      paragraphs based on which the item was extracted for the concept. Ensure such
+      paragraphs directly tie the extracted item to the concept's defining features.
+      Each paragraph ID must match exactly the provided ID for the paragraph (for
+      example, \\\"P0\\\", \\\"P1\\\", etc.).\\n\\n- Types of extracted items:\\n
+      \   -- Each concept specifies an \\\"extracted item type\\\" (found under \\\"Concept
+      extracted item type\\\"). Ensure that the value of each of the extracted items
+      for the concept strictly matches that type. Python types are provided (e.g.,
+      str for string, int for integer, float for floating-point number, dict for object,
+      etc.). Type compliance is mandatory - any deviation will result in invalid output.\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- For boolean concepts (with extracted
+      item type \\\"bool\\\"): Distinguish carefully between these cases:\\n        ---
+      Extract True if the concept is confirmed or strongly supported by the provided
+      content (either explicitly stated or reasonably inferred)\\n        --- Extract
+      False if the concept is contradicted, denied, or if the provided content allows
+      you to determine that the concept is not true (e.g., absence of expected content
+      that should be present if the concept were true)\\n        --- Only leave \\\"extracted_items\\\"
+      empty if the concept is impossible to determine because either: (1) the provided
+      content is completely irrelevant to the concept, or (2) the provided content
+      does not contain enough information to make a conclusion about the concept\\n
       \   -- For concepts that have an \\\"Available labels:\\\" section: if none
       of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
       array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
@@ -2353,20 +2391,20 @@ interactions:
       \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
       Concept ID: C0\\nConcept name: Confidential information\\n\\nConcept description:\\nConfidential
       information\\n\\nAmount of extracted items: This concept may have zero, one,
-      or multiple extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
-      PARAGRAPHS:\\n````\\n- Paragraph ID: P0\\n~~~\\nParagraph text:\\nNon-Disclosure
-      Agreement (NDA)\\n~~~\\n````\\n\\n````\\n- Paragraph ID: P1\\n~~~\\nParagraph
-      text:\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is made and entered
-      into as of July 16, 2024, by and between:\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P2\\n~~~\\nParagraph text:\\nParty A:\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P3\\n~~~\\nParagraph text:\\n_____\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P4\\n~~~\\nParagraph text:\\n_____\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P5\\n~~~\\nParagraph text:\\n_____\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P6\\n~~~\\nParagraph text:\\nContact: _____\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P7\\n~~~\\nParagraph text:\\nPhone: _____\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P8\\n~~~\\nParagraph text:\\nEmail: _____\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P9\\n~~~\\nParagraph text:\\nParty B:\\n~~~\\n````\\n\\n````\\n- Paragraph
-      ID: P10\\n~~~\\nParagraph text:\\nExample.Com LLC\\n~~~\\n````\\n\\n````\\n-
+      or multiple extracted items.\\n\\nConcept extracted item type: str (must be
+      exactly as specified)\\n````\\n\\n______\\n\\n------\\nDOCUMENT PARAGRAPHS:\\n````\\n-
+      Paragraph ID: P0\\n~~~\\nParagraph text:\\nNon-Disclosure Agreement (NDA)\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P1\\n~~~\\nParagraph text:\\nThis Non-Disclosure Agreement (the
+      \\\"Agreement\\\") is made and entered into as of July 16, 2024, by and between:\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P2\\n~~~\\nParagraph text:\\nParty A:\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P3\\n~~~\\nParagraph text:\\n_____\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P4\\n~~~\\nParagraph text:\\n_____\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P5\\n~~~\\nParagraph text:\\n_____\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P6\\n~~~\\nParagraph text:\\nContact: _____\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P7\\n~~~\\nParagraph text:\\nPhone: _____\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P8\\n~~~\\nParagraph text:\\nEmail: _____\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P9\\n~~~\\nParagraph text:\\nParty B:\\n~~~\\n````\\n\\n````\\n-
+      Paragraph ID: P10\\n~~~\\nParagraph text:\\nExample.Com LLC\\n~~~\\n````\\n\\n````\\n-
       Paragraph ID: P11\\n~~~\\nParagraph text:\\n5678 Random Drive\\n~~~\\n````\\n\\n````\\n-
       Paragraph ID: P12\\n~~~\\nParagraph text:\\nNew York, NY 00000\\n~~~\\n````\\n\\n````\\n-
       Paragraph ID: P13\\n~~~\\nParagraph text:\\nContact: Jane Doe, Managing Partner\\n~~~\\n````\\n\\n````\\n-
@@ -2508,13 +2546,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '22902'
+      - '24613'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2524,7 +2562,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2540,8 +2578,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -2556,39 +2594,37 @@ interactions:
         (ii) is subject to reasonable efforts by Disclosing Party to maintain its
         secrecy and confidentiality\",\n                \"reference_paragraph_ids\":
         [\n                    \"P19\"\n                ]\n            },\n            {\n                \"value\":
-        \"business information (business plans, strategies, and models), technical
-        information (technical specifications and documentation, research and development
-        activities), customer and market information (customer lists and contact information,
-        sales histories and patterns), personnel and internal information (employee
-        lists and contact information, employment agreements and personnel files),
-        intellectual property (trade secrets and know-how, patents and patent applications,
-        copyrights and copyright applications, trademarks and trademark applications),
-        strategic information (merger and acquisition plans, competitive analyses
-        and strategies), software code\",\n                \"reference_paragraph_ids\":
+        \"business information (business plans, strategies, and models)\",\n                \"reference_paragraph_ids\":
         [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
-        \"information that: (a) is or becomes generally available to the public other
-        than as a result of disclosure by Receiving Party or its Representatives;
-        (b) was available to Receiving Party on a non-confidential basis prior to
-        its disclosure by Disclosing Party; (c) becomes available to Receiving Party
-        on a non-confidential basis from a person other than Disclosing Party who
-        is not otherwise bound by a confidentiality obligation to Disclosing Party;
-        or (d) was independently developed by Receiving Party without reference to
-        or use of any Confidential Information\",\n                \"reference_paragraph_ids\":
-        [\n                    \"P21\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156752, "id": "chatcmpl-DUMMY",
+        \"technical information (technical specifications and documentation, research
+        and development activities)\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
+        \"customer and market information (customer lists and contact information,
+        sales histories and patterns)\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
+        \"personnel and internal information (employee lists and contact information,
+        employment agreements and personnel files)\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
+        \"intellectual property (trade secrets and know-how, patents and patent applications,
+        copyrights and copyright applications, trademarks and trademark applications)\",\n                \"reference_paragraph_ids\":
+        [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
+        \"strategic information (merger and acquisition plans, competitive analyses
+        and strategies)\",\n                \"reference_paragraph_ids\": [\n                    \"P20\"\n                ]\n            },\n            {\n                \"value\":
+        \"Software code\",\n                \"reference_paragraph_ids\": [\n                    \"P20\"\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1752965551, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 424,
+        "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 440,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4737, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 5161}}'
+        5059, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1408},
+        "total_tokens": 5499}}'
     headers:
       Content-Length:
-      - '3631'
+      - '3860'
       Content-Type:
       - application/json
       Date:
@@ -2600,7 +2636,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3639'
+      - '2850'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -2715,15 +2751,25 @@ interactions:
       are specified for each concept.\\n4. Produce a JSON array containing your extracted
       data, in the provided format.\\n\\nIf a concept is not addressed in the document
       paragraphs, you must still include an entry in the final JSON output but with
-      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
-      Output format:\\nProvide your answer in only the following answer format (do
-      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
-      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
-      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      an empty \\\"extracted_items\\\" list. However, for boolean concepts (with extracted
+      item type \\\"bool\\\"), distinguish carefully:\\n- Extract True if the concept
+      is confirmed or strongly supported by the document content (either explicitly
+      stated or reasonably inferred)\\n- Extract False if the concept is contradicted,
+      denied, or if the document content allows you to determine that the concept
+      is not true (e.g., absence of expected content that should be present if the
+      concept were true)\\n- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the document is completely irrelevant
+      to the concept, or (2) the document does not contain enough information to make
+      a conclusion about the concept\\n\\nFollow these additional rules:\\n\\n- Output
+      format:\\nProvide your answer in only the following answer format (do not include
+      backticks, code fences, or any introductory/explanatory text).\\n\\n- Consistency:\\n
+      \   -- Each JSON object in the list must have two keys: \\\"concept_id\\\" and
+      \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
       exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
       \   -- The value of \\\"extracted_items\\\" must be an array of objects with
       mandatory fields \\\"value\\\" and \\\"reference_paragraphs\\\". If the concept
-      is not addressed or there are no items to extract, leave the array empty ([]).\\n
+      is not addressed or there are no items to extract, leave the array empty ([]).
+      For boolean concepts, only leave empty if the concept is impossible to determine.\\n
       \       --- Extracted items may be found directly (explicitly mentioned) or
       inferred from the content (implied or derivable from the information present).\\n
       \       --- Guidance regarding the possible amount of extracted items for the
@@ -2735,56 +2781,68 @@ interactions:
       which holds the provided IDs of the reference sentences within the paragraph.
       Note that not every sentence in the paragraph necessarily serves as a relevant
       reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
-      the extracted item.\\n        --- If a specific structure is provided for a
-      concept under \\\"Expected structure,\\\" the extracted item value must follow
-      that structure for all extracted items corresponding to that concept.\\n        ---
-      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
-      extracted item value must be within that scale.\\n        --- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \       --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\\n    -- reference_paragraphs: An array of objects
-      for each paragraph based on which the item was extracted for the concept. Each
-      object should include:\\n        --- reference_paragraph_id: Mandatory field
-      holding the provided ID of the reference paragraph. Each paragraph ID must match
-      exactly the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.).\\n        --- reference_sentence_ids: Mandatory field holding an array
-      of the provided IDs of the sentences within the paragraph, based on which the
-      item was extracted for the concept. Each sentence ID must match exactly the
-      provided ID for the sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
-      value of each of the extracted items for the concept strictly matches that type.
-      Python types are provided (e.g., str for string, int for integer, float for
-      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
-      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
-      items:\\n    -- If a concept is not mentioned at all, your output should still
-      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
-      \   -- For concepts that have an \\\"Available labels:\\\" section: if none
-      of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
-      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
-      ...,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
-      \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
-      [\\n                            str,\\n                            ...\\n                        ]\\n
-      \                   },\\n                    ...\\n                ]\\n            },\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      the extracted item. Must match the exact type specified for the concept.\\n
+      \       --- If a specific structure is provided for a concept under \\\"Expected
+      structure,\\\" the extracted item value must follow that structure for all extracted
+      items corresponding to that concept.\\n        --- If a rating scale is provided
+      for a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- reference_paragraphs: An array of objects for each paragraph based on
+      which the item was extracted for the concept. Each object should include:\\n
+      \       --- reference_paragraph_id: Mandatory field holding the provided ID
+      of the reference paragraph. Each paragraph ID must match exactly the provided
+      ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n        ---
+      reference_sentence_ids: Mandatory field holding an array of the provided IDs
+      of the sentences within the paragraph, based on which the item was extracted
+      for the concept. Each sentence ID must match exactly the provided ID for the
+      sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n- Types of
+      extracted items:\\n    -- Each concept specifies an \\\"extracted item type\\\"
+      (found under \\\"Concept extracted item type\\\"). Ensure that the value of
+      each of the extracted items for the concept strictly matches that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.). Type compliance is mandatory - any deviation
+      will result in invalid output.\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For boolean concepts (with extracted item type \\\"bool\\\"): Distinguish carefully
+      between these cases:\\n        --- Extract True if the concept is confirmed
+      or strongly supported by the provided content (either explicitly stated or reasonably
+      inferred)\\n        --- Extract False if the concept is contradicted, denied,
+      or if the provided content allows you to determine that the concept is not true
+      (e.g., absence of expected content that should be present if the concept were
+      true)\\n        --- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the provided content is completely
+      irrelevant to the concept, or (2) the provided content does not contain enough
+      information to make a conclusion about the concept\\n    -- For concepts that
+      have an \\\"Available labels:\\\" section: if none of the predefined labels
+      apply to the content, leave the \\\"extracted_items\\\" array empty.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if multiple labels
+      apply to the same instance or context, include them all in a single extracted
+      item with multiple labels in the \\\"labels\\\" array (e.g., {\\\"labels\\\":
+      [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted items if
+      there are genuinely distinct instances or contexts that warrant separate classification.\\n
+      \   -- For concepts that do not have an \\\"Available labels:\\\" section: if
+      multiple items are found for a concept, include each as a separate entry within
+      the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n    -- Do not
+      include any headers, explanations, or text outside of the JSON array.\\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\\n\\n======\\nANSWER
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraphs\\\":
+      [\\n                    {\\n                        \\\"reference_paragraph_id\\\":
+      str,\\n                        \\\"reference_sentence_ids\\\": [\\n                            str,\\n
+      \                           ...\\n                        ]\\n                    },\\n
+      \                   ...\\n                ]\\n            },\\n            ...\\n
+      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
       Concept ID: C0\\nConcept name: Liability cap\\n\\nConcept description:\\nLiability
       cap\\n\\nAmount of extracted items: This concept may have zero, one, or multiple
-      extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      extracted items.\\n\\nConcept extracted item type: str (must be exactly as specified)\\n````\\n\\n______\\n\\n------\\nDOCUMENT
       PARAGRAPHS INCLUDING SENTENCES:\\n````\\n- Paragraph ID: P0\\nParagraph sentences:\\n
       \   -- Sentence ID: P0-S0\\n    Sentence text: Non-Disclosure Agreement (NDA)\\n````\\n\\n````\\n-
       Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
@@ -2978,13 +3036,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '27103'
+      - '28814'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2994,7 +3052,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3010,8 +3068,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3025,7 +3083,7 @@ interactions:
         of liability is cumulative and not per incident.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\n                            \"P38-S0\",\n                            \"P38-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156756, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965554, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
@@ -3034,8 +3092,8 @@ interactions:
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 176,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5722, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5632},
-        "total_tokens": 5898}}'
+        6044, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6016},
+        "total_tokens": 6220}}'
     headers:
       Content-Length:
       - '2178'
@@ -3050,7 +3108,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1765'
+      - '1291'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3389,7 +3447,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3399,7 +3457,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3415,8 +3473,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3435,10 +3493,10 @@ interactions:
         \"P40-S0\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S1\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S2\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156759, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965556, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 264,
@@ -3460,7 +3518,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2640'
+      - '1974'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -3575,15 +3633,25 @@ interactions:
       are specified for each concept.\\n4. Produce a JSON array containing your extracted
       data, in the provided format.\\n\\nIf a concept is not addressed in the document
       paragraphs, you must still include an entry in the final JSON output but with
-      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
-      Output format:\\nProvide your answer in only the following answer format (do
-      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
-      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
-      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      an empty \\\"extracted_items\\\" list. However, for boolean concepts (with extracted
+      item type \\\"bool\\\"), distinguish carefully:\\n- Extract True if the concept
+      is confirmed or strongly supported by the document content (either explicitly
+      stated or reasonably inferred)\\n- Extract False if the concept is contradicted,
+      denied, or if the document content allows you to determine that the concept
+      is not true (e.g., absence of expected content that should be present if the
+      concept were true)\\n- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the document is completely irrelevant
+      to the concept, or (2) the document does not contain enough information to make
+      a conclusion about the concept\\n\\nFollow these additional rules:\\n\\n- Output
+      format:\\nProvide your answer in only the following answer format (do not include
+      backticks, code fences, or any introductory/explanatory text).\\n\\n- Consistency:\\n
+      \   -- Each JSON object in the list must have two keys: \\\"concept_id\\\" and
+      \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
       exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
       \   -- The value of \\\"extracted_items\\\" must be an array of objects with
       mandatory fields \\\"value\\\" and \\\"reference_paragraphs\\\". If the concept
-      is not addressed or there are no items to extract, leave the array empty ([]).\\n
+      is not addressed or there are no items to extract, leave the array empty ([]).
+      For boolean concepts, only leave empty if the concept is impossible to determine.\\n
       \       --- Extracted items may be found directly (explicitly mentioned) or
       inferred from the content (implied or derivable from the information present).\\n
       \       --- Guidance regarding the possible amount of extracted items for the
@@ -3595,56 +3663,68 @@ interactions:
       which holds the provided IDs of the reference sentences within the paragraph.
       Note that not every sentence in the paragraph necessarily serves as a relevant
       reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
-      the extracted item.\\n        --- If a specific structure is provided for a
-      concept under \\\"Expected structure,\\\" the extracted item value must follow
-      that structure for all extracted items corresponding to that concept.\\n        ---
-      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
-      extracted item value must be within that scale.\\n        --- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \       --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\\n    -- reference_paragraphs: An array of objects
-      for each paragraph based on which the item was extracted for the concept. Each
-      object should include:\\n        --- reference_paragraph_id: Mandatory field
-      holding the provided ID of the reference paragraph. Each paragraph ID must match
-      exactly the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.).\\n        --- reference_sentence_ids: Mandatory field holding an array
-      of the provided IDs of the sentences within the paragraph, based on which the
-      item was extracted for the concept. Each sentence ID must match exactly the
-      provided ID for the sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
-      value of each of the extracted items for the concept strictly matches that type.
-      Python types are provided (e.g., str for string, int for integer, float for
-      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
-      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
-      items:\\n    -- If a concept is not mentioned at all, your output should still
-      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
-      \   -- For concepts that have an \\\"Available labels:\\\" section: if none
-      of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
-      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
-      ...,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
-      \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
-      [\\n                            str,\\n                            ...\\n                        ]\\n
-      \                   },\\n                    ...\\n                ]\\n            },\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      the extracted item. Must match the exact type specified for the concept.\\n
+      \       --- If a specific structure is provided for a concept under \\\"Expected
+      structure,\\\" the extracted item value must follow that structure for all extracted
+      items corresponding to that concept.\\n        --- If a rating scale is provided
+      for a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- reference_paragraphs: An array of objects for each paragraph based on
+      which the item was extracted for the concept. Each object should include:\\n
+      \       --- reference_paragraph_id: Mandatory field holding the provided ID
+      of the reference paragraph. Each paragraph ID must match exactly the provided
+      ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n        ---
+      reference_sentence_ids: Mandatory field holding an array of the provided IDs
+      of the sentences within the paragraph, based on which the item was extracted
+      for the concept. Each sentence ID must match exactly the provided ID for the
+      sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n- Types of
+      extracted items:\\n    -- Each concept specifies an \\\"extracted item type\\\"
+      (found under \\\"Concept extracted item type\\\"). Ensure that the value of
+      each of the extracted items for the concept strictly matches that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.). Type compliance is mandatory - any deviation
+      will result in invalid output.\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For boolean concepts (with extracted item type \\\"bool\\\"): Distinguish carefully
+      between these cases:\\n        --- Extract True if the concept is confirmed
+      or strongly supported by the provided content (either explicitly stated or reasonably
+      inferred)\\n        --- Extract False if the concept is contradicted, denied,
+      or if the provided content allows you to determine that the concept is not true
+      (e.g., absence of expected content that should be present if the concept were
+      true)\\n        --- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the provided content is completely
+      irrelevant to the concept, or (2) the provided content does not contain enough
+      information to make a conclusion about the concept\\n    -- For concepts that
+      have an \\\"Available labels:\\\" section: if none of the predefined labels
+      apply to the content, leave the \\\"extracted_items\\\" array empty.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if multiple labels
+      apply to the same instance or context, include them all in a single extracted
+      item with multiple labels in the \\\"labels\\\" array (e.g., {\\\"labels\\\":
+      [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted items if
+      there are genuinely distinct instances or contexts that warrant separate classification.\\n
+      \   -- For concepts that do not have an \\\"Available labels:\\\" section: if
+      multiple items are found for a concept, include each as a separate entry within
+      the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n    -- Do not
+      include any headers, explanations, or text outside of the JSON array.\\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\\n\\n======\\nANSWER
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraphs\\\":
+      [\\n                    {\\n                        \\\"reference_paragraph_id\\\":
+      str,\\n                        \\\"reference_sentence_ids\\\": [\\n                            str,\\n
+      \                           ...\\n                        ]\\n                    },\\n
+      \                   ...\\n                ]\\n            },\\n            ...\\n
+      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
       Concept ID: C0\\nConcept name: Liability cap\\n\\nConcept description:\\nLiability
       cap\\n\\nAmount of extracted items: This concept may have zero, one, or multiple
-      extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      extracted items.\\n\\nConcept extracted item type: str (must be exactly as specified)\\n````\\n\\n______\\n\\n------\\nDOCUMENT
       PARAGRAPHS INCLUDING SENTENCES:\\n````\\n- Paragraph ID: P0\\nParagraph sentences:\\n
       \   -- Sentence ID: P0-S0\\n    Sentence text: Non-Disclosure Agreement (NDA)\\n````\\n\\n````\\n-
       Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
@@ -3838,13 +3918,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '27103'
+      - '28814'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3854,7 +3934,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3870,8 +3950,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -3885,17 +3965,17 @@ interactions:
         of liability is cumulative and not per incident.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\n                            \"P38-S0\",\n                            \"P38-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156763, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965560, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 176,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5722, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 5898}}'
+        6044, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6016},
+        "total_tokens": 6220}}'
     headers:
       Content-Length:
       - '2178'
@@ -3910,7 +3990,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1657'
+      - '1206'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4249,7 +4329,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4259,7 +4339,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4275,8 +4355,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -4295,16 +4375,16 @@ interactions:
         \"P40-S0\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S1\"\n                    },\n                    {\n                        \"sentence_id\":
         \"P40-S2\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156767, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965562, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 264,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
+        5012, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4992},
         "total_tokens": 5276}}'
     headers:
       Content-Length:
@@ -4320,7 +4400,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '2515'
+      - '1759'
       x-accel-buffering:
       - 'no'
       x-content-type-options:
@@ -4435,15 +4515,25 @@ interactions:
       are specified for each concept.\\n4. Produce a JSON array containing your extracted
       data, in the provided format.\\n\\nIf a concept is not addressed in the document
       paragraphs, you must still include an entry in the final JSON output but with
-      an empty \\\"extracted_items\\\" list.\\n\\nFollow these additional rules:\\n\\n-
-      Output format:\\nProvide your answer in only the following answer format (do
-      not include backticks, code fences, or any introductory/explanatory text).\\n\\n-
-      Consistency:\\n    -- Each JSON object in the list must have two keys: \\\"concept_id\\\"
-      and \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
+      an empty \\\"extracted_items\\\" list. However, for boolean concepts (with extracted
+      item type \\\"bool\\\"), distinguish carefully:\\n- Extract True if the concept
+      is confirmed or strongly supported by the document content (either explicitly
+      stated or reasonably inferred)\\n- Extract False if the concept is contradicted,
+      denied, or if the document content allows you to determine that the concept
+      is not true (e.g., absence of expected content that should be present if the
+      concept were true)\\n- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the document is completely irrelevant
+      to the concept, or (2) the document does not contain enough information to make
+      a conclusion about the concept\\n\\nFollow these additional rules:\\n\\n- Output
+      format:\\nProvide your answer in only the following answer format (do not include
+      backticks, code fences, or any introductory/explanatory text).\\n\\n- Consistency:\\n
+      \   -- Each JSON object in the list must have two keys: \\\"concept_id\\\" and
+      \\\"extracted_items\\\".\\n    -- The value of \\\"concept_id\\\" must match
       exactly the ID of the concept (for example, \\\"C0\\\", \\\"C1\\\", etc.).\\n
       \   -- The value of \\\"extracted_items\\\" must be an array of objects with
       mandatory fields \\\"value\\\" and \\\"reference_paragraphs\\\". If the concept
-      is not addressed or there are no items to extract, leave the array empty ([]).\\n
+      is not addressed or there are no items to extract, leave the array empty ([]).
+      For boolean concepts, only leave empty if the concept is impossible to determine.\\n
       \       --- Extracted items may be found directly (explicitly mentioned) or
       inferred from the content (implied or derivable from the information present).\\n
       \       --- Guidance regarding the possible amount of extracted items for the
@@ -4455,56 +4545,68 @@ interactions:
       which holds the provided IDs of the reference sentences within the paragraph.
       Note that not every sentence in the paragraph necessarily serves as a relevant
       reference.\\n\\n- Item object structure:\\n    -- value: Mandatory field holding
-      the extracted item.\\n        --- If a specific structure is provided for a
-      concept under \\\"Expected structure,\\\" the extracted item value must follow
-      that structure for all extracted items corresponding to that concept.\\n        ---
-      If a rating scale is provided for a concept under \\\"Rating scale,\\\" the
-      extracted item value must be within that scale.\\n        --- If available labels
-      are provided for a concept under \\\"Available labels,\\\" the extracted item
-      value must be a list containing only labels from the predefined set. If none
-      of the predefined labels apply, do not extract any items for that concept.\\n
-      \       --- If there are example items (\\\"Extracted concept examples\\\"),
-      the extracted item value should follow the same style and formatting.\\n        ---
-      When extracting string values, translate them in English if the original language
-      of the document is not English.\\n    -- reference_paragraphs: An array of objects
-      for each paragraph based on which the item was extracted for the concept. Each
-      object should include:\\n        --- reference_paragraph_id: Mandatory field
-      holding the provided ID of the reference paragraph. Each paragraph ID must match
-      exactly the provided ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.).\\n        --- reference_sentence_ids: Mandatory field holding an array
-      of the provided IDs of the sentences within the paragraph, based on which the
-      item was extracted for the concept. Each sentence ID must match exactly the
-      provided ID for the sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n-
-      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
-      type\\\" (found under \\\"Concept extracted item type\\\"). Ensure that the
-      value of each of the extracted items for the concept strictly matches that type.
-      Python types are provided (e.g., str for string, int for integer, float for
-      floating-point number, dict for object, etc.).\\n    -- Do not introduce any
-      extra fields or modify the specified structure.\\n\\n- Handling missing or multiple
-      items:\\n    -- If a concept is not mentioned at all, your output should still
-      contain an entry for that concept with an empty \\\"extracted_items\\\" array.\\n
-      \   -- For concepts that have an \\\"Available labels:\\\" section: if none
-      of the predefined labels apply to the content, leave the \\\"extracted_items\\\"
-      array empty.\\n    -- For concepts that have an \\\"Available labels:\\\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
-      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
-      items if there are genuinely distinct instances or contexts that warrant separate
-      classification.\\n    -- For concepts that do not have an \\\"Available labels:\\\"
-      section: if multiple items are found for a concept, include each as a separate
-      entry within the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n
-      \   -- Do not include any headers, explanations, or text outside of the JSON
-      array.\\n    -- Do not wrap your JSON response in backticks or any other formatting
-      characters.\\n\\n======\\nANSWER FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\":
-      str,\\n        \\\"extracted_items: [\\n            {\\n                \\\"value\\\":
-      ...,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
-      \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
-      [\\n                            str,\\n                            ...\\n                        ]\\n
-      \                   },\\n                    ...\\n                ]\\n            },\\n
-      \           ...\\n        ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
+      the extracted item. Must match the exact type specified for the concept.\\n
+      \       --- If a specific structure is provided for a concept under \\\"Expected
+      structure,\\\" the extracted item value must follow that structure for all extracted
+      items corresponding to that concept.\\n        --- If a rating scale is provided
+      for a concept under \\\"Rating scale,\\\" the extracted item value must be within
+      that scale.\\n        --- If available labels are provided for a concept under
+      \\\"Available labels,\\\" the extracted item value must be a list containing
+      only labels from the predefined set. If none of the predefined labels apply,
+      do not extract any items for that concept.\\n        --- If there are example
+      items (\\\"Extracted concept examples\\\"), the extracted item value should
+      follow the same style and formatting.\\n        --- When extracting string values,
+      translate them in English if the original language of the document is not English.\\n
+      \   -- reference_paragraphs: An array of objects for each paragraph based on
+      which the item was extracted for the concept. Each object should include:\\n
+      \       --- reference_paragraph_id: Mandatory field holding the provided ID
+      of the reference paragraph. Each paragraph ID must match exactly the provided
+      ID for the paragraph (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n        ---
+      reference_sentence_ids: Mandatory field holding an array of the provided IDs
+      of the sentences within the paragraph, based on which the item was extracted
+      for the concept. Each sentence ID must match exactly the provided ID for the
+      sentence (for example, \\\"P0-S0\\\", \\\"P0-S2\\\", etc.).\\n\\n- Types of
+      extracted items:\\n    -- Each concept specifies an \\\"extracted item type\\\"
+      (found under \\\"Concept extracted item type\\\"). Ensure that the value of
+      each of the extracted items for the concept strictly matches that type. Python
+      types are provided (e.g., str for string, int for integer, float for floating-point
+      number, dict for object, etc.). Type compliance is mandatory - any deviation
+      will result in invalid output.\\n    -- Do not introduce any extra fields or
+      modify the specified structure.\\n\\n- Handling missing or multiple items:\\n
+      \   -- If a concept is not mentioned at all, your output should still contain
+      an entry for that concept with an empty \\\"extracted_items\\\" array.\\n    --
+      For boolean concepts (with extracted item type \\\"bool\\\"): Distinguish carefully
+      between these cases:\\n        --- Extract True if the concept is confirmed
+      or strongly supported by the provided content (either explicitly stated or reasonably
+      inferred)\\n        --- Extract False if the concept is contradicted, denied,
+      or if the provided content allows you to determine that the concept is not true
+      (e.g., absence of expected content that should be present if the concept were
+      true)\\n        --- Only leave \\\"extracted_items\\\" empty if the concept
+      is impossible to determine because either: (1) the provided content is completely
+      irrelevant to the concept, or (2) the provided content does not contain enough
+      information to make a conclusion about the concept\\n    -- For concepts that
+      have an \\\"Available labels:\\\" section: if none of the predefined labels
+      apply to the content, leave the \\\"extracted_items\\\" array empty.\\n    --
+      For concepts that have an \\\"Available labels:\\\" section: if multiple labels
+      apply to the same instance or context, include them all in a single extracted
+      item with multiple labels in the \\\"labels\\\" array (e.g., {\\\"labels\\\":
+      [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted items if
+      there are genuinely distinct instances or contexts that warrant separate classification.\\n
+      \   -- For concepts that do not have an \\\"Available labels:\\\" section: if
+      multiple items are found for a concept, include each as a separate entry within
+      the \\\"extracted_items\\\" array.\\n\\n- No additional text:\\n    -- Do not
+      include any headers, explanations, or text outside of the JSON array.\\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\\n\\n======\\nANSWER
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraphs\\\":
+      [\\n                    {\\n                        \\\"reference_paragraph_id\\\":
+      str,\\n                        \\\"reference_sentence_ids\\\": [\\n                            str,\\n
+      \                           ...\\n                        ]\\n                    },\\n
+      \                   ...\\n                ]\\n            },\\n            ...\\n
+      \       ],\\n    },\\n    ...\\n]\\n======\\n\\n______\\nCONCEPTS:\\n````\\n-
       Concept ID: C0\\nConcept name: Liability cap\\n\\nConcept description:\\nLiability
       cap\\n\\nAmount of extracted items: This concept may have zero, one, or multiple
-      extracted items.\\n\\nConcept extracted item type: str\\n````\\n\\n______\\n\\n------\\nDOCUMENT
+      extracted items.\\n\\nConcept extracted item type: str (must be exactly as specified)\\n````\\n\\n______\\n\\n------\\nDOCUMENT
       PARAGRAPHS INCLUDING SENTENCES:\\n````\\n- Paragraph ID: P0\\nParagraph sentences:\\n
       \   -- Sentence ID: P0-S0\\n    Sentence text: Non-Disclosure Agreement (NDA)\\n````\\n\\n````\\n-
       Paragraph ID: P1\\nParagraph sentences:\\n    -- Sentence ID: P1-S0\\n    Sentence
@@ -4698,13 +4800,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '27103'
+      - '28814'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4714,7 +4816,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4730,8 +4832,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -4745,17 +4847,17 @@ interactions:
         of liability is cumulative and not per incident.\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\n                            \"P38-S0\",\n                            \"P38-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1752156769, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1752965564, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": "fp_178c8d546f", "usage": {"completion_tokens": 176,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5722, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5632},
-        "total_tokens": 5898}}'
+        6044, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6016},
+        "total_tokens": 6220}}'
     headers:
       Content-Length:
       - '2178'
@@ -4770,7 +4872,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '1447'
+      - '1158'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

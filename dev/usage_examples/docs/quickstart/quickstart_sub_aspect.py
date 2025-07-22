@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM
 
+
 # Sample document (content shortened for brevity)
 contract_text = """
 EMPLOYMENT AGREEMENT

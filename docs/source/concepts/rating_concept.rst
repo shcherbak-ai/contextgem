@@ -62,45 +62,57 @@ Here's a simple example of how to use ``RatingConcept`` to extract a product rat
 When creating a ``RatingConcept``, you can specify the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the concept
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A clear description of what should be evaluated and rated, including the criteria for assigning different values within the rating scale (e.g., "Evaluate product quality based on features, durability, and performance where 1 represents poor quality and 10 represents exceptional quality"). The more specific the description, the more consistent and accurate the ratings will be.
    * - ``rating_scale``
-     - tuple[int, int]
+     - ``tuple[int, int]``
+     - (Required)
      - Defines the boundaries for valid ratings as a tuple of (start, end) values (e.g., ``(1, 5)`` for a 1-5 star rating, or ``(0, 100)`` for a percentage-based evaluation). This parameter establishes the numerical range within which all ratings must fall, ensuring consistency across evaluations.
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
-     - bool
-     - Whether to include justifications for extracted items (defaults to ``False``). Justifications provide explanations of why the LLM assigned specific rating values and the reasoning behind the evaluation, which is especially useful for understanding the factors that influenced the rating. For example, a justification might explain that a smartphone received an 8/10 quality rating based on its premium build materials, advanced camera system, and long battery life, despite lacking expandable storage.
+     - ``bool``
+     - ``False``
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM assigned specific rating values and the reasoning behind the evaluation, which is especially useful for understanding the factors that influenced the rating. For example, a justification might explain that a smartphone received an 8/10 quality rating based on its premium build materials, advanced camera system, and long battery life, despite lacking expandable storage.
    * - ``justification_depth``
-     - str
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``
+     - ``str``
+     - ``"brief"``
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum sentences in a justification (defaults to ``2``)
+     - ``int``
+     - ``2``
+     - Maximum sentences in a justification.
    * - ``add_references``
-     - bool
-     - Whether to include source references for extracted items (defaults to ``False``). References indicate the specific locations in the document that provided information or evidence used to determine the rating. This is particularly useful for understanding which parts of the document influenced the rating assessment, allowing to trace back evaluations to relevant content that supports the numerical value assigned.
+     - ``bool``
+     - ``False``
+     - Whether to include source references for extracted items. References indicate the specific locations in the document that provided information or evidence used to determine the rating. This is particularly useful for understanding which parts of the document influenced the rating assessment, allowing to trace back evaluations to relevant content that supports the numerical value assigned.
    * - ``reference_depth``
-     - str
-     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``
+     - ``str``
+     - ``"paragraphs"``
+     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
    * - ``singular_occurrence``
-     - bool
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single rating will be extracted. Defaults to ``False`` (multiple ratings are allowed). For rating concepts, this parameter is particularly useful when you want to extract a single overall score (e.g., *"overall product quality"*) rather than identifying multiple ratings throughout the document for different aspects or features. This helps distinguish between a global evaluation versus component-specific ratings. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of ratings to extract from the concept's name, description, and rating context.
+     - ``bool``
+     - ``False``
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single rating will be extracted. For rating concepts, this parameter is particularly useful when you want to extract a single overall score (e.g., *"overall product quality"*) rather than identifying multiple ratings throughout the document for different aspects or features. This helps distinguish between a global evaluation versus component-specific ratings. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of ratings to extract from the concept's name, description, and rating context.
    * - ``custom_data``
-     - dict
-     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks. Defaults to an empty dictionary.
+     - ``dict``
+     - ``{}``
+     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks.
 
 
 🚀 Advanced Usage

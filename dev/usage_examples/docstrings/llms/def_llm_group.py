@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM, DocumentLLMGroup
 
+
 # Create a text extractor LLM with a fallback
 text_extractor = DocumentLLM(
     model="openai/gpt-4o-mini",

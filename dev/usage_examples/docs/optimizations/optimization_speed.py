@@ -6,6 +6,7 @@ from aiolimiter import AsyncLimiter
 
 from contextgem import Document, DocumentLLM
 
+
 # Define document
 document = Document(
     raw_text="document_text",

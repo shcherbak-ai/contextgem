@@ -44,7 +44,7 @@ class Sentence(_ParasAndSentsBase):
     initialization to maintain data integrity.
 
     :ivar raw_text: The complete text content of the sentence. This value is frozen after initialization.
-    :vartype raw_text: NonEmptyStr
+    :vartype raw_text: str
 
     Note:
         Normally, you do not need to construct sentences manually, as they are populated automatically

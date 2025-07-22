@@ -26,7 +26,7 @@ Implemented through the DocxConverter class.
 
 import warnings
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, cast
 
 from contextgem.internal.converters.docx.base import _DocxConverterBase
 from contextgem.internal.converters.docx.package import _DocxPackage
@@ -34,6 +34,7 @@ from contextgem.internal.exceptions import DocxConverterError
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import TextMode
 from contextgem.public.documents import Document
+from contextgem.public.paragraphs import Paragraph
 
 
 class DocxConverter(_DocxConverterBase):
@@ -76,7 +77,7 @@ class DocxConverter(_DocxConverterBase):
         :raises DocxConverterError: If the file doesn't have a valid DOCX extension
         """
         # Skip validation for file-like objects (BinaryIO)
-        if not isinstance(docx_path_or_file, (str, Path)):
+        if not isinstance(docx_path_or_file, str | Path):
             return
 
         file_path = Path(docx_path_or_file)
@@ -159,7 +160,8 @@ class DocxConverter(_DocxConverterBase):
                 )
 
                 # Join all lines and return as a single string
-                return "\n".join(markdown_lines)
+                # Safe cast: markdown_lines is returned as a list of strings
+                return "\n".join(cast(list[str], markdown_lines))
             elif output_format.lower() == "raw":
                 # Process document elements
                 paragraphs = self._process_docx_elements(
@@ -177,7 +179,10 @@ class DocxConverter(_DocxConverterBase):
                 )
 
                 # Combine all paragraph texts
-                return "\n\n".join(para.raw_text for para in paragraphs)
+                # Safe cast: paragraphs is returned as a list of Paragraph objects
+                return "\n\n".join(
+                    para.raw_text for para in cast(list[Paragraph], paragraphs)
+                )
             else:
                 raise DocxConverterError(f"Invalid output format: {output_format}")
         except DocxConverterError:
@@ -198,7 +203,7 @@ class DocxConverter(_DocxConverterBase):
         self,
         docx_path_or_file: str | Path | BinaryIO,
         apply_markdown: bool = True,
-        raw_text_to_md: bool = None,  # TODO: remove this parameter in v1.0.0.
+        raw_text_to_md: bool | None = None,  # TODO: remove this parameter in v1.0.0.
         include_tables: bool = True,
         include_comments: bool = True,
         include_footnotes: bool = True,
@@ -253,7 +258,7 @@ class DocxConverter(_DocxConverterBase):
             # Get file name or descriptor for logging
             file_desc = (
                 docx_path_or_file
-                if isinstance(docx_path_or_file, (str, Path))
+                if isinstance(docx_path_or_file, str | Path)
                 else "file object"
             )
             logger.info(f"Converting DOCX: {file_desc} (strict mode: {strict_mode})")
@@ -281,7 +286,10 @@ class DocxConverter(_DocxConverterBase):
             logger.debug(f"Extracted {len(paragraphs)} paragraphs")
 
             # Generate raw text from the paragraph objects we already have
-            raw_text = "\n\n".join(para.raw_text for para in paragraphs)
+            # Safe cast: paragraphs is returned as a list of Paragraph objects
+            raw_text = "\n\n".join(
+                para.raw_text for para in cast(list[Paragraph], paragraphs)
+            )
             doc_kwargs = {
                 "raw_text": raw_text,
                 "paragraphs": paragraphs,
@@ -305,7 +313,8 @@ class DocxConverter(_DocxConverterBase):
                     include_inline_formatting=include_inline_formatting,
                     strict_mode=strict_mode,
                 )
-                md_text = "\n".join(markdown_lines)
+                # Safe cast: markdown_lines is returned as a list of strings
+                md_text = "\n".join(cast(list[str], markdown_lines))
 
                 # When markdown mode is requested, populate _md_text
                 context_doc._md_text = md_text

@@ -15,6 +15,7 @@ from contextgem import (
     StringConcept,
 )
 
+
 # Example privacy policy document (shortened for brevity)
 doc = Document(
     raw_text=(

@@ -2,7 +2,7 @@
 
 import os
 from textwrap import dedent
-from typing import Any, Optional
+from typing import Any
 
 from llama_index.core import Document, Settings, VectorStoreIndex
 from llama_index.core.base.response.schema import RESPONSE_TYPE
@@ -22,7 +22,7 @@ class Anomaly(BaseModel):
         description="Brief justification for why this is an anomaly"
     )
     # This field will hold the citation info (e.g., node references)
-    source_id: Optional[str] = Field(
+    source_id: str | None = Field(
         description="Automatically added source reference", default=None
     )
 
@@ -97,7 +97,7 @@ class AnomalyExtractorSynthesizer(BaseSynthesizer):
 
 
 def extract_anomalies_with_citations(
-    document_text: str, api_key: Optional[str] = None
+    document_text: str, api_key: str | None = None
 ) -> list[Anomaly]:
     """
     Extract anomalies from a document using LlamaIndex with citation support.

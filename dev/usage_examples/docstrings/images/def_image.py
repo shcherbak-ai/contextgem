@@ -2,6 +2,7 @@ from pathlib import Path
 
 from contextgem import Document, Image, image_to_base64
 
+
 # Path is adapted for doc tests
 current_file = Path(__file__).resolve()
 root_path = current_file.parents[4]
@@ -15,7 +16,8 @@ jpg_image = Image(mime_type="image/jpg", base64_data=base64_data)
 
 # Using pre-encoded base64 data directly
 png_image = Image(
-    mime_type="image/png", base64_data="base64-string"  # image as a base64 string
+    mime_type="image/png",
+    base64_data="base64-string",  # image as a base64 string
 )
 
 # Using a different supported image format

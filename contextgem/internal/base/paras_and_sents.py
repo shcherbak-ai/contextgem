@@ -27,8 +27,6 @@ providing shared validation and context handling functionality.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import Field, field_validator
 
 from contextgem.internal.base.instances import _InstanceBase
@@ -47,16 +45,14 @@ class _ParasAndSentsBase(_InstanceBase):
 
     :ivar additional_context: Optional supplementary information for the paragraph or sentence.
         Should be a non-empty string without linebreaks. Defaults to None.
-    :vartype additional_context: Optional[NonEmptyStr]
+    :vartype additional_context: str | None
     """
 
-    additional_context: Optional[NonEmptyStr] = Field(default=None)
+    additional_context: NonEmptyStr | None = Field(default=None)
 
     @field_validator("additional_context")
     @classmethod
-    def _validate_additional_context(
-        cls, additional_context: Optional[str]
-    ) -> Optional[str]:
+    def _validate_additional_context(cls, additional_context: str | None) -> str | None:
         """
         Validates the optional 'additional_context' attribute by checking for line breaks
         in the string, if provided. If line breaks are detected, a warning is logged to inform
@@ -64,9 +60,9 @@ class _ParasAndSentsBase(_InstanceBase):
         to process such input correctly due to the structure of the prompt.
 
         :param additional_context: The optional string to be validated for line breaks.
-        :type additional_context: Optional[str]
+        :type additional_context: str | None
         :return: The unmodified 'additional_context' value after validation.
-        :rtype: Optional[str]
+        :rtype: str | None
         """
         if additional_context is not None and _contains_linebreaks(additional_context):
             logger.warning(

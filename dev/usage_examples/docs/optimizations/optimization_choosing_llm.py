@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM, DocumentLLMGroup, StringConcept
 
+
 # Define LLMs
 base_llm = DocumentLLM(
     model="openai/gpt-4o-mini",

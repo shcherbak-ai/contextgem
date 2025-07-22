@@ -25,10 +25,10 @@ It works in conjunction with the types_to_strings module to provide bidirectiona
 conversion between type annotations and their string representations.
 """
 
-from types import GenericAlias, UnionType
-from typing import Literal, Union
+from typing import Any, Literal, Union
 
 from contextgem.internal.typings.types_to_strings import PRIMITIVE_TYPES_STRING_MAP
+
 
 PRIMITIVE_TYPES_STRING_MAP_REVERSED = {
     v: k for k, v in PRIMITIVE_TYPES_STRING_MAP.items()
@@ -80,7 +80,7 @@ def _parse_identifier(s: str, i: int) -> tuple[str, int]:
     return s[start:i], i
 
 
-def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionType, int]:
+def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
     """
     Parses a serialized type hint string using a recursive descent parsing approach.
 
@@ -92,9 +92,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
 
     :param s: The serialized string representing the type hints.
     :param i: The starting index in the string for parsing the type hints.
-    :return: A tuple, where the first element is the parsed type hint (which can be
-        a basic type, a generic type, or a union type), and the second element is the
-        updated index position.
+    :return: A tuple, where the first element is the parsed type hint and the second element
+        is the updated index position.
     :raises ValueError: If the serialized string has an invalid structure, missing
         expected characters such as brackets or commas, or contains unknown type
         identifiers.
@@ -169,11 +168,12 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
             return types_list[0], i
         # Otherwise, build a Union.
         if len(types_list) == 2:
-            return Union[types_list[0], types_list[1]], i
+            return Union[types_list[0], types_list[1]], i  # noqa: UP007
         else:
             # For more than two types, unpack them as arguments.
             args = (types_list[0], types_list[1]) + tuple(types_list[2:])
-            union_type = Union.__getitem__(args)
+            # Type checker doesn't recognize Union.__getitem__ method, which works at runtime
+            union_type = Union.__getitem__(args)  # type: ignore
             return union_type, i
 
     elif ident.lower() == "optional":
@@ -196,7 +196,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
 
             # Create union from the collected types
             args = tuple(union_types)
-            inner_type = Union.__getitem__(args)
+            # Type checker doesn't recognize Union.__getitem__ method, which works at runtime
+            inner_type = Union.__getitem__(args)  # type: ignore
 
         i = _skip_whitespace(s, i)
         if i >= len(s) or s[i] != "]":
@@ -204,7 +205,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
                 f"Expected ']' after optional type at position {i} in {s!r}"
             )
         i += 1  # skip ']'
-        return Union[inner_type, type(None)], i
+        return Union[inner_type, type(None)], i  # noqa: UP007
 
     elif ident.lower() == "literal":
         # literal[<value1>, <value2>, ...]
@@ -249,7 +250,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
                     values.append(True)
                 elif literal_str == "false":
                     values.append(False)
-                elif literal_str == "null" or literal_str == "None":
+                elif literal_str == "null":
                     values.append(None)
                 else:
                     # Try to convert to number
@@ -287,7 +288,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
 
         # Create Literal type with the values
         if values:
-            return Literal.__getitem__(tuple(values)), i
+            # Type checker doesn't recognize Literal.__getitem__ method, which works at runtime
+            return Literal.__getitem__(tuple(values)), i  # type: ignore
         else:
             raise ValueError(f"Empty literal type at position {i} in {s!r}")
 
@@ -295,7 +297,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[type | GenericAlias | UnionTyp
         raise ValueError(f"Unknown type identifier: {ident}")
 
 
-def _deserialize_type_hint(s: str) -> type | GenericAlias | UnionType:
+def _deserialize_type_hint(s: str) -> Any:
     """
     Parses a string representation of a type hint and reconstructs the
     corresponding type hint. This function processes the entire string
@@ -307,12 +309,14 @@ def _deserialize_type_hint(s: str) -> type | GenericAlias | UnionType:
     :param s: The string representation of a type hint to be deserialized.
     :type s: str
 
-    :return: The reconstructed type hint as a type, a generic alias,
-        or a union type.
-    :rtype: type | GenericAlias | UnionType
+    :return: The reconstructed type hint.
+    :rtype: Any
 
     :raises ValueError: If extra characters are found after the type hint string.
     """
+    # Preprocess the string to convert new union syntax to old format
+    s = _preprocess_union_syntax_for_struct(s)
+
     result, index = _parse_type_hint(s, 0)
     index = _skip_whitespace(s, index)
     if index != len(s):
@@ -320,3 +324,70 @@ def _deserialize_type_hint(s: str) -> type | GenericAlias | UnionType:
             f"Extra characters found after type hint at position {index} in {s!r}"
         )
     return result
+
+
+def _preprocess_union_syntax_for_struct(s: str) -> str:
+    """
+    Converts new union syntax (A | B) to old format that the parser can handle.
+
+    :param s: The string representation of a type hint
+    :type s: str
+    :return: Preprocessed string with old union syntax
+    :rtype: str
+    """
+    # If there are no | characters, return as is
+    if "|" not in s:
+        return s
+
+    # Find all | operators and group the types
+    parts = []
+    current_part = ""
+    bracket_count = 0
+    i = 0
+
+    while i < len(s):
+        char = s[i]
+        if char == "[":
+            bracket_count += 1
+        elif char == "]":
+            bracket_count -= 1
+        elif char == "|" and bracket_count == 0:
+            if current_part.strip():
+                parts.append(current_part.strip())
+            current_part = ""
+            i += 1
+            continue
+
+        current_part += char
+        i += 1
+
+    if current_part.strip():
+        parts.append(current_part.strip())
+
+    # If we found multiple parts, convert to union format
+    if len(parts) > 1:
+        # Convert "None" to "null" for consistency
+        processed_parts = []
+        for part in parts:
+            if part.strip() == "None":
+                processed_parts.append("null")
+            else:
+                processed_parts.append(part)
+
+        # Check if None is in the parts (for optional types)
+        has_none = any(part.strip() == "null" for part in processed_parts)
+        non_none_parts = [part for part in processed_parts if part.strip() != "null"]
+        if has_none:
+            if len(non_none_parts) == 1:
+                # Simple optional: T | None -> optional[T]
+                return f"optional[{non_none_parts[0]}]"
+            else:
+                # Optional union: T | U | None -> optional[union[T, U]]
+                union_str = ", ".join(non_none_parts)
+                return f"optional[union[{union_str}]]"
+        else:
+            # Regular union: T | U -> union[T, U]
+            union_str = ", ".join(processed_parts)
+            return f"union[{union_str}]"
+
+    return s

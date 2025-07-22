@@ -25,17 +25,13 @@ literal types for configuration options, and compatibility solutions for
 different Python versions.
 """
 
-import sys
+from collections.abc import Callable, Coroutine
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Any, Callable, Coroutine, Literal, TypeVar, Union
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, StrictStr, StringConstraints
 
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    Self = TypeVar("Self")
 
 NonEmptyStr = Annotated[
     StrictStr, StringConstraints(strip_whitespace=True, min_length=1)
@@ -71,11 +67,8 @@ StandardSaTModelId = Literal[
 ]
 
 # Combined type for sat_model_id parameter
-SaTModelId = Union[
-    StandardSaTModelId,
-    str,  # Local path as a string
-    Path,  # Local path as a Path object
-]
+SaTModelId = StandardSaTModelId | str | Path
+
 
 LanguageRequirement = Literal["en", "adapt"]
 

@@ -35,13 +35,14 @@ import asyncio
 import warnings
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, cast
 
 from aiolimiter import AsyncLimiter
 from jinja2 import Template
 
 from contextgem.internal.exceptions import LLMAPIError
 from contextgem.internal.utils import _suppress_litellm_pydantic_warnings_context
+
 
 with _suppress_litellm_pydantic_warnings_context():
     import litellm
@@ -56,11 +57,14 @@ from pydantic import (
     model_validator,
 )
 
+
 if TYPE_CHECKING:
     from contextgem.internal.data_models import (
-        _LLMUsageOutputContainer,
         _LLMCostOutputContainer,
+        _LLMUsageOutputContainer,
     )
+
+from typing_extensions import Self
 
 from contextgem.internal.base.llms import _GenericLLMProcessor
 from contextgem.internal.data_models import _LLMCall, _LLMCost, _LLMUsage
@@ -72,14 +76,13 @@ from contextgem.internal.typings.aliases import (
     LLMRoleAny,
     NonEmptyStr,
     ReasoningEffort,
-    Self,
 )
 from contextgem.internal.utils import _get_template, _run_sync, _setup_jinja2_template
 from contextgem.public.data_models import LLMPricing
 from contextgem.public.images import Image
 
+
 litellm.suppress_debug_info = True
-litellm.set_verbose = False
 
 
 class DocumentLLMGroup(_GenericLLMProcessor):
@@ -96,6 +99,7 @@ class DocumentLLMGroup(_GenericLLMProcessor):
     :ivar output_language: Language for produced output text (justifications, explanations).
                           Values: "en" (always English) or "adapt" (matches document/image language).
                           All LLMs in the group must share the same output_language setting.
+                          Defaults to "en".
     :vartype output_language: LanguageRequirement
 
     Note:
@@ -111,10 +115,10 @@ class DocumentLLMGroup(_GenericLLMProcessor):
     llms: list[DocumentLLM] = Field(..., min_length=2)
     output_language: LanguageRequirement = Field(default="en")
 
-    _llm_extractor_text: DocumentLLM = PrivateAttr()
-    _llm_reasoner_text: DocumentLLM = PrivateAttr()
-    _llm_extractor_vision: DocumentLLM = PrivateAttr()
-    _llm_reasoner_vision: DocumentLLM = PrivateAttr()
+    _llm_extractor_text: DocumentLLM | None = PrivateAttr(default=None)
+    _llm_reasoner_text: DocumentLLM | None = PrivateAttr(default=None)
+    _llm_extractor_vision: DocumentLLM | None = PrivateAttr(default=None)
+    _llm_reasoner_vision: DocumentLLM | None = PrivateAttr(default=None)
 
     @_post_init_method
     def _post_init(self, __context):
@@ -165,7 +169,7 @@ class DocumentLLMGroup(_GenericLLMProcessor):
         :return: True if the instances are equal, False otherwise
         :rtype: bool
         """
-        for self_llm, other_llm in zip(self.llms, other.llms):
+        for self_llm, other_llm in zip(self.llms, other.llms, strict=True):
             if not self_llm._eq_deserialized_llm_config(other_llm):
                 return False
         return True
@@ -195,7 +199,7 @@ class DocumentLLMGroup(_GenericLLMProcessor):
         :return: None
         """
 
-        def get_llm_by_role(role: str) -> DocumentLLM:
+        def get_llm_by_role(role: str) -> DocumentLLM | None:
             return next((i for i in self.llms if i.role == role), None)
 
         self._llm_extractor_text = get_llm_by_role("extractor_text")
@@ -203,41 +207,45 @@ class DocumentLLMGroup(_GenericLLMProcessor):
         self._llm_extractor_vision = get_llm_by_role("extractor_vision")
         self._llm_reasoner_vision = get_llm_by_role("reasoner_vision")
 
-    def get_usage(
-        self, llm_role: Optional[str] = None
-    ) -> list[_LLMUsageOutputContainer]:
+    def get_usage(self, llm_role: str | None = None) -> list[_LLMUsageOutputContainer]:
         """
         Retrieves the usage information of the LLMs in the group, filtered by the specified
         LLM role if provided.
 
         :param llm_role: Optional; A string representing the role of the LLM to filter
             the usage data. If None, returns usage for all LLMs in the group.
-        :type llm_role: Optional[str]
+        :type llm_role: str | None
         :return: A list of usage statistics containers for the specified LLMs and their fallbacks.
         :rtype: list[_LLMUsageOutputContainer]
         :raises ValueError: If no LLM with the specified role exists in the group.
         """
-        return self._get_usage_or_cost(
-            retrieval_type="usage", llm_role=llm_role, is_group=True
+        # Safe cast: _get_usage_or_cost with retrieval_type="usage"
+        # returns only list of _LLMUsageOutputContainer
+        return cast(
+            list["_LLMUsageOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="usage", llm_role=llm_role),
         )
 
-    def get_cost(self, llm_role: Optional[str] = None) -> list[_LLMCostOutputContainer]:
+    def get_cost(self, llm_role: str | None = None) -> list[_LLMCostOutputContainer]:
         """
         Retrieves the accumulated cost information of the LLMs in the group, filtered by the specified
         LLM role if provided.
 
         :param llm_role: Optional; A string representing the role of the LLM to filter
             the cost data. If None, returns cost for all LLMs in the group.
-        :type llm_role: Optional[str]
+        :type llm_role: str | None
         :return: A list of cost statistics containers for the specified LLMs and their fallbacks.
         :rtype: list[_LLMCostOutputContainer]
         :raises ValueError: If no LLM with the specified role exists in the group.
         """
-        return self._get_usage_or_cost(
-            retrieval_type="cost", llm_role=llm_role, is_group=True
+        # Safe cast: _get_usage_or_cost with retrieval_type="cost"
+        # returns only list of _LLMCostOutputContainer
+        return cast(
+            list["_LLMCostOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="cost", llm_role=llm_role),
         )
 
-    def reset_usage_and_cost(self, llm_role: Optional[str] = None) -> None:
+    def reset_usage_and_cost(self, llm_role: str | None = None) -> None:
         """
         Resets the usage and cost statistics for LLMs in the group.
 
@@ -246,7 +254,7 @@ class DocumentLLMGroup(_GenericLLMProcessor):
 
         :param llm_role: Optional; A string representing the role of the LLM to reset statistics for.
             If None, resets statistics for all LLMs in the group.
-        :type llm_role: Optional[str]
+        :type llm_role: str | None
         :raises ValueError: If no LLM with the specified role exists in the group.
         :return: None
         """
@@ -257,7 +265,7 @@ class DocumentLLMGroup(_GenericLLMProcessor):
             except StopIteration:
                 raise ValueError(
                     f"No LLM with the given role `{llm_role}` was found in group."
-                )
+                ) from None
         else:
             for llm in self.llms:
                 llm.reset_usage_and_cost()
@@ -294,53 +302,54 @@ class DocumentLLM(_GenericLLMProcessor):
 
     :ivar model: Model identifier in format {model_provider}/{model_name}.
         See https://docs.litellm.ai/docs/providers for supported providers.
-    :vartype model: NonEmptyStr
+    :vartype model: str
     :ivar deployment_id: Deployment ID for the LLM. Primarily used with Azure OpenAI.
-    :vartype deployment_id: Optional[NonEmptyStr]
+    :vartype deployment_id: str | None
     :ivar api_key: API key for LLM authentication. Not required for local models (e.g., Ollama).
-    :vartype api_key: Optional[NonEmptyStr]
+    :vartype api_key: str | None
     :ivar api_base: Base URL of the API endpoint.
-    :vartype api_base: Optional[NonEmptyStr]
+    :vartype api_base: str | None
     :ivar api_version: API version. Primarily used with Azure OpenAI.
-    :vartype api_version: Optional[NonEmptyStr]
+    :vartype api_version: str | None
     :ivar role: Role type for the LLM (e.g., "extractor_text", "reasoner_text",
         "extractor_vision", "reasoner_vision"). Defaults to "extractor_text".
     :vartype role: LLMRoleAny
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
-    :vartype system_message: Optional[str]
+    :vartype system_message: str | None
     :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
         Lower values produce more predictable outputs, higher values generate more varied responses.
         Defaults to 0.3.
-    :vartype temperature: Optional[float]
+    :vartype temperature: float
     :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
-    :vartype max_tokens: Optional[int]
+    :vartype max_tokens: int
     :ivar max_completion_tokens: Maximum token size for output completions in reasoning
         (CoT-capable) models. Defaults to 16000.
-    :vartype max_completion_tokens: Optional[int]
+    :vartype max_completion_tokens: int
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
         ``"low"``, ``"medium"``, or ``"high"``. Relevant for reasoning (CoT-capable) models.
         Defaults to None.
-    :vartype reasoning_effort: Optional[ReasoningEffort]
+    :vartype reasoning_effort: ReasoningEffort | None
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
         Defaults to 0.3.
-    :vartype top_p: Optional[float]
+    :vartype top_p: float
     :ivar num_retries_failed_request: Number of retries when LLM request fails. Defaults to 3.
-    :vartype num_retries_failed_request: Optional[int]
+    :vartype num_retries_failed_request: int
     :ivar max_retries_failed_request: LLM provider-specific retry count for failed requests.
         Defaults to 0.
-    :vartype max_retries_failed_request: Optional[int]
+    :vartype max_retries_failed_request: int
     :ivar max_retries_invalid_data: Number of retries when LLM returns invalid data. Defaults to 3.
-    :vartype max_retries_invalid_data: Optional[int]
+    :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for LLM API calls. Defaults to 120 seconds.
-    :vartype timeout: Optional[int]
+    :vartype timeout: int
     :ivar pricing_details: LLMPricing object with pricing details for cost calculation.
-    :vartype pricing_details: Optional[dict[NonEmptyStr, float]]
+        Defaults to None.
+    :vartype pricing_details: LLMPricing | None
     :ivar is_fallback: Indicates whether the LLM is a fallback model. Defaults to False.
     :vartype is_fallback: bool
     :ivar fallback_llm: DocumentLLM to use as fallback if current one fails.
-        Must have the same role as the current LLM.
-    :vartype fallback_llm: Optional[DocumentLLM]
+        Must have the same role as the current LLM. Defaults to None.
+    :vartype fallback_llm: DocumentLLM | None
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
     :vartype output_language: LanguageRequirement
@@ -353,7 +362,7 @@ class DocumentLLM(_GenericLLMProcessor):
         to use this seed for sampling operations. However, deterministic output is still
         not guaranteed even with the same seed, as other factors may influence the model's
         response. Defaults to None.
-    :vartype seed: Optional[StrictInt]
+    :vartype seed: int | None
 
     Note:
 
@@ -378,37 +387,35 @@ class DocumentLLM(_GenericLLMProcessor):
 
     # LLM config
     model: NonEmptyStr
-    deployment_id: Optional[NonEmptyStr] = Field(default=None)
-    api_key: Optional[NonEmptyStr] = Field(default=None)
-    api_base: Optional[NonEmptyStr] = Field(default=None)
-    api_version: Optional[NonEmptyStr] = Field(default=None)  # specific to Azure OpenAI
+    deployment_id: NonEmptyStr | None = Field(default=None)
+    api_key: NonEmptyStr | None = Field(default=None)
+    api_base: NonEmptyStr | None = Field(default=None)
+    api_version: NonEmptyStr | None = Field(default=None)  # specific to Azure OpenAI
     role: LLMRoleAny = Field(default="extractor_text")
-    system_message: Optional[str] = Field(default=None)
-    temperature: Optional[StrictFloat] = Field(default=0.3, ge=0)
-    max_tokens: Optional[StrictInt] = Field(default=4096, gt=0)
-    max_completion_tokens: Optional[StrictInt] = Field(
+    system_message: str | None = Field(default=None)
+    temperature: StrictFloat = Field(default=0.3, ge=0)
+    max_tokens: StrictInt = Field(default=4096, gt=0)
+    max_completion_tokens: StrictInt = Field(
         default=16000, gt=0
     )  # for reasoning (CoT-capable) models
-    reasoning_effort: Optional[ReasoningEffort] = Field(default=None)
-    top_p: Optional[StrictFloat] = Field(default=0.3, ge=0)
-    num_retries_failed_request: Optional[StrictInt] = Field(default=3, ge=0)
-    max_retries_failed_request: Optional[StrictInt] = Field(
-        default=0, ge=0
-    )  # provider-specific
-    max_retries_invalid_data: Optional[StrictInt] = Field(default=3, ge=0)
-    timeout: Optional[StrictInt] = Field(default=120, ge=0)
-    pricing_details: Optional[LLMPricing] = Field(default=None)
+    reasoning_effort: ReasoningEffort | None = Field(default=None)
+    top_p: StrictFloat = Field(default=0.3, ge=0)
+    num_retries_failed_request: StrictInt = Field(default=3, ge=0)
+    max_retries_failed_request: StrictInt = Field(default=0, ge=0)  # provider-specific
+    max_retries_invalid_data: StrictInt = Field(default=3, ge=0)
+    timeout: StrictInt = Field(default=120, ge=0)
+    pricing_details: LLMPricing | None = Field(default=None)
     is_fallback: StrictBool = Field(default=False)
-    fallback_llm: Optional[DocumentLLM] = Field(default=None)
+    fallback_llm: DocumentLLM | None = Field(default=None)
     output_language: LanguageRequirement = Field(default="en")
-    seed: Optional[StrictInt] = Field(default=None)
+    seed: StrictInt | None = Field(default=None)
 
     # Prompts
     _extract_aspect_items_prompt: Template = PrivateAttr()
     _extract_concept_items_prompt: Template = PrivateAttr()
 
     # Async
-    _async_limiter: AsyncLimiter = PrivateAttr(default=None)
+    _async_limiter: AsyncLimiter = PrivateAttr()
 
     # Token counting
     _usage: _LLMUsage = PrivateAttr(default_factory=_LLMUsage)
@@ -486,7 +493,7 @@ class DocumentLLM(_GenericLLMProcessor):
         """
         return [self.role]
 
-    def chat(self, prompt: str, images: Optional[list[Image]] = None) -> str:
+    def chat(self, prompt: str, images: list[Image] | None = None) -> str:
         """
         Synchronously sends a prompt to the LLM and gets a response.
         For models supporting vision, attach images to the prompt if needed.
@@ -496,7 +503,7 @@ class DocumentLLM(_GenericLLMProcessor):
         :param prompt: The input prompt to send to the LLM
         :type prompt: str
         :param images: Optional list of Image instances for vision queries
-        :type images: Optional[list[Image]]
+        :type images: list[Image] | None
         :return: The LLM's response
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
@@ -506,9 +513,7 @@ class DocumentLLM(_GenericLLMProcessor):
         """
         return _run_sync(self.chat_async(prompt, images))
 
-    async def chat_async(
-        self, prompt: str, images: Optional[list[Image]] = None
-    ) -> str:
+    async def chat_async(self, prompt: str, images: list[Image] | None = None) -> str:
         """
         Asynchronously sends a prompt to the LLM and gets a response.
         For models supporting vision, attach images to the prompt if needed.
@@ -518,7 +523,7 @@ class DocumentLLM(_GenericLLMProcessor):
         :param prompt: The input prompt to send to the LLM
         :type prompt: str
         :param images: Optional list of Image instances for vision queries
-        :type images: Optional[list[Image]]
+        :type images: list[Image] | None
         :return: The LLM's response
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
@@ -539,23 +544,25 @@ class DocumentLLM(_GenericLLMProcessor):
             raise ValueError("Images must be a list of Image instances")
 
         # Check for vision support
-        if images and not litellm.supports_vision(self.model):
+        if images and not litellm.supports_vision(self.model):  # type: ignore[attr-defined]
             raise ValueError(f"Model `{self.model}` does not support vision.")
 
         # Create LLM call object to track the interaction
         llm_call = _LLMCall(prompt_kwargs={}, prompt=prompt)
 
         # Warn if using default system message
+        # _get_template returns a Template object when template_extension == "j2"
         default_system_message = _get_template(
             "default_system_message",
             template_type="system",
             template_extension="j2",
-        ).render({"output_language": self.output_language})
+        ).render({"output_language": self.output_language})  # type: ignore[attr-defined]
         if self.system_message == default_system_message:
             warnings.warn(
                 "You are using the default system message optimized for extraction tasks. "
                 "For simple chat interactions, consider setting system_message='' to disable it, "
-                "or provide your own custom system message."
+                "or provide your own custom system message.",
+                stacklevel=2,
             )
 
         # Send message to LLM
@@ -623,7 +630,7 @@ class DocumentLLM(_GenericLLMProcessor):
         if not prompt_path_str.endswith(".j2"):
             raise ValueError("Prompt path must end with `.j2`.")
 
-        with open(prompt_path, "r", encoding="utf-8") as file:
+        with open(prompt_path, encoding="utf-8") as file:
             template_text = file.read().strip()
             if not template_text:
                 raise ValueError("Prompt template is empty.")
@@ -672,7 +679,7 @@ class DocumentLLM(_GenericLLMProcessor):
             if not other_fallback_llm:
                 raise RuntimeError("Deserialized fallback LLM was not set")
             if not self_fallback_llm._eq_deserialized_llm_config(other_fallback_llm):
-                logger.debug(f"Fallback LLM config of deserialized LLM is different.")
+                logger.debug("Fallback LLM config of deserialized LLM is different.")
                 return False
 
         # Skip checks for api_key and api_base that were redacted pre-serialization
@@ -688,7 +695,7 @@ class DocumentLLM(_GenericLLMProcessor):
 
         # Compare the modified dictionaries
         if self_dict != other_dict:
-            logger.debug(f"LLM __dict__ of deserialized LLM is different.")
+            logger.debug("LLM __dict__ of deserialized LLM is different.")
             return False
 
         # Special checks for specific private attributes
@@ -699,7 +706,7 @@ class DocumentLLM(_GenericLLMProcessor):
             != other._extract_aspect_items_prompt.render()
         ):
             logger.debug(
-                f"Extract aspect items prompt of deserialized LLM is different."
+                "Extract aspect items prompt of deserialized LLM is different."
             )
             return False
 
@@ -709,7 +716,7 @@ class DocumentLLM(_GenericLLMProcessor):
             != other._extract_concept_items_prompt.render()
         ):
             logger.debug(
-                f"Extract concept items prompt of deserialized LLM is different."
+                "Extract concept items prompt of deserialized LLM is different."
             )
             return False
 
@@ -724,7 +731,7 @@ class DocumentLLM(_GenericLLMProcessor):
             self._async_limiter.time_period != other._async_limiter.time_period
             or self._async_limiter.max_rate != other._async_limiter.max_rate
         ):
-            logger.debug(f"Async limiter params of deserialized LLM are different.")
+            logger.debug("Async limiter params of deserialized LLM are different.")
             return False
 
         # Check _async_lock
@@ -732,7 +739,7 @@ class DocumentLLM(_GenericLLMProcessor):
             isinstance(self._async_lock, asyncio.Lock)
             and isinstance(other._async_lock, asyncio.Lock)
         ):
-            logger.debug(f"Async lock of deserialized LLM is different.")
+            logger.debug("Async lock of deserialized LLM is different.")
             return False
 
         return True
@@ -803,7 +810,7 @@ class DocumentLLM(_GenericLLMProcessor):
         """
 
         # Vision support validation, when applicable
-        if self.role.endswith("_vision") and not litellm.supports_vision(self.model):
+        if self.role.endswith("_vision") and not litellm.supports_vision(self.model):  # type: ignore[attr-defined]
             raise ValueError(
                 f"Model `{self.model}` does not support vision while its role is `{self.role}`."
             )
@@ -816,7 +823,6 @@ class DocumentLLM(_GenericLLMProcessor):
             )
 
         if self.fallback_llm:
-
             # Check for the consistency of the fallback LLM role and output language
             if self.fallback_llm.role != self.role:
                 raise ValueError(
@@ -857,7 +863,7 @@ class DocumentLLM(_GenericLLMProcessor):
         context_exceeded = False
         try:
             # Get model information to check context window
-            model_info = litellm.get_model_info(self.model)
+            model_info = litellm.get_model_info(self.model)  # type: ignore[attr-defined]
             max_input_tokens = model_info.get("max_input_tokens")
 
             # If max_input_tokens is not available, skip validation
@@ -869,7 +875,7 @@ class DocumentLLM(_GenericLLMProcessor):
 
             # Count tokens in the messages
             try:
-                token_count = litellm.token_counter(model=self.model, messages=messages)
+                token_count = litellm.token_counter(model=self.model, messages=messages)  # type: ignore[attr-defined]
             except Exception as e:
                 logger.warning(
                     f"Could not count tokens for model `{self.model}`: {e}. Skipping input token validation."
@@ -913,7 +919,7 @@ class DocumentLLM(_GenericLLMProcessor):
         output_exceeded = False
         try:
             # Get model information to check output token limits
-            model_info = litellm.get_model_info(self.model)
+            model_info = litellm.get_model_info(self.model)  # type: ignore[attr-defined]
             max_output_tokens = model_info.get("max_output_tokens")
 
             # If max_output_tokens is not available, fall back to max_tokens
@@ -929,7 +935,7 @@ class DocumentLLM(_GenericLLMProcessor):
                 return
 
             # Determine which token limit to check based on model type
-            if litellm.supports_reasoning(self.model):
+            if litellm.supports_reasoning(self.model):  # type: ignore[attr-defined]
                 configured_tokens = self.max_completion_tokens
                 token_type = "max_completion_tokens"  # nosec B105 - not a password
             else:
@@ -1011,7 +1017,7 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: tuple[str | None, _LLMUsage]
         """
 
-        if images and not litellm.supports_vision(self.model):
+        if images and not litellm.supports_vision(self.model):  # type: ignore[attr-defined]
             raise ValueError("Model `{self.model}` does not support vision.")
 
         request_messages = []
@@ -1027,11 +1033,16 @@ class DocumentLLM(_GenericLLMProcessor):
                     }
                 )
             else:
-                warnings.warn(f"System message ignored for the model `{self.model}`.")
+                warnings.warn(
+                    f"System message ignored for the model `{self.model}`.",
+                    stacklevel=2,
+                )
 
         # Prepare user message content based on whether images are provided
         if images:
-            user_message_content = [{"type": "text", "text": message}]
+            user_message_content: list[dict[str, str | dict[str, str]]] = [
+                {"type": "text", "text": message}
+            ]
             for image in images:
                 user_message_content.append(
                     {
@@ -1066,20 +1077,23 @@ class DocumentLLM(_GenericLLMProcessor):
         }
 
         # Add model-specific parameters
-        if litellm.supports_reasoning(self.model):
+        if litellm.supports_reasoning(self.model):  # type: ignore[attr-defined]
             # Reasoning (CoT-capable) models
-            model_params = litellm.get_supported_openai_params(self.model)
-            if "max_completion_tokens" in model_params:
-                if not (self.max_completion_tokens):
-                    raise ValueError(
-                        "`max_completion_tokens` must be set for reasoning (CoT-capable) models"
-                    )
-                request_dict["max_completion_tokens"] = self.max_completion_tokens
-            if "reasoning_effort" in model_params and self.reasoning_effort:
-                request_dict["reasoning_effort"] = self.reasoning_effort
+            model_params: list[str] | None = litellm.get_supported_openai_params(  # type: ignore[attr-defined]
+                self.model
+            )
+            if model_params is not None:
+                if "max_completion_tokens" in model_params:
+                    if not (self.max_completion_tokens):
+                        raise ValueError(
+                            "`max_completion_tokens` must be set for reasoning (CoT-capable) models"
+                        )
+                    request_dict["max_completion_tokens"] = self.max_completion_tokens
+                if "reasoning_effort" in model_params and self.reasoning_effort:
+                    request_dict["reasoning_effort"] = self.reasoning_effort
             if self.temperature or self.top_p:
                 logger.info(
-                    f"`temperature` and `top_p` parameters are ignored for reasoning models"
+                    "`temperature` and `top_p` parameters are ignored for reasoning models"
                 )
         else:
             # Non-reasoning models
@@ -1117,16 +1131,18 @@ class DocumentLLM(_GenericLLMProcessor):
                     chat_completion = await task
             else:
                 chat_completion = await task
-            answer = chat_completion.choices[
-                0
-            ].message.content  # str, or None if invalid response
-            usage.input = chat_completion.usage.prompt_tokens
-            usage.output = chat_completion.usage.completion_tokens
+            answer = (
+                chat_completion.choices[  # type: ignore[attr-defined]
+                    0
+                ].message.content  # type: ignore[attr-defined]
+            )  # str, or None if invalid response
+            usage.input = chat_completion.usage.prompt_tokens  # type: ignore[attr-defined]
+            usage.output = chat_completion.usage.completion_tokens  # type: ignore[attr-defined]
             llm_call_obj._record_response_timestamp()
             llm_call_obj.response = answer
             usage.calls.append(llm_call_obj)  # record the call details (call finished)
             return answer, usage
-        except litellm.UnsupportedParamsError as e:
+        except litellm.UnsupportedParamsError as e:  # type: ignore[attr-defined]
             # Handle unsupported model parameters error
             if (
                 not drop_params
@@ -1149,7 +1165,8 @@ class DocumentLLM(_GenericLLMProcessor):
                 # If drop_params was already True and we still got UnsupportedParamsError,
                 # fall through to regular error handling
                 warnings.warn(
-                    f"Exception occurred while calling LLM API with drop_params=True: {e}"
+                    f"Exception occurred while calling LLM API with drop_params=True: {e}",
+                    stacklevel=2,
                 )
                 if self.fallback_llm:
                     logger.info(
@@ -1161,14 +1178,15 @@ class DocumentLLM(_GenericLLMProcessor):
                     )
                     if raise_exception_on_llm_api_error:
                         raise LLMAPIError(
-                            f"Exception occurred while calling LLM API",
+                            "Exception occurred while calling LLM API",
                             retry_count=n_retries,
                             original_error=e,
-                        )
+                        ) from e
                     else:
                         warnings.warn(
                             f"Exception occurred while calling LLM API with drop_params=True: {e}"
-                            + f" ({n_retries} retries)."
+                            + f" ({n_retries} retries).",
+                            stacklevel=2,
                         )
         except Exception as e:
             # e.g. rate limit error
@@ -1181,14 +1199,15 @@ class DocumentLLM(_GenericLLMProcessor):
                 n_retries = max(num_retries_failed_request, max_retries_failed_request)
                 if raise_exception_on_llm_api_error:
                     raise LLMAPIError(
-                        f"Exception occurred while calling LLM API",
+                        "Exception occurred while calling LLM API",
                         retry_count=n_retries,
                         original_error=e,
-                    )
+                    ) from e
                 else:
                     warnings.warn(
                         f"Exception occurred while calling LLM API: {e}"
-                        + f" ({n_retries} retries)."
+                        + f" ({n_retries} retries).",
+                        stacklevel=2,
                     )
 
         usage.calls.append(llm_call_obj)  # record the call details (call unfinished)
@@ -1203,19 +1222,25 @@ class DocumentLLM(_GenericLLMProcessor):
 
         # Templates with placeholders
         # Extraction
-        self._extract_aspect_items_prompt = _get_template("extract_aspect_items")
-        self._extract_concept_items_prompt = _get_template("extract_concept_items")
+        # Safe cast: _get_template with default params returns Template, not str
+        self._extract_aspect_items_prompt = cast(
+            Template, _get_template("extract_aspect_items")
+        )
+        self._extract_concept_items_prompt = cast(
+            Template, _get_template("extract_concept_items")
+        )
 
     def _set_system_message(self) -> None:
         """
         Sets the default system message for the LLM.
         :return: None
         """
+        # _get_template returns a Template object when template_extension == "j2"
         self.system_message = _get_template(
             "default_system_message",
             template_type="system",
             template_extension="j2",
-        ).render({"output_language": self.output_language})
+        ).render({"output_language": self.output_language})  # type: ignore[attr-defined]
 
     def _get_raw_usage(self) -> _LLMUsage:
         """
@@ -1252,7 +1277,12 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: list[_LLMUsageOutputContainer]
         """
 
-        return self._get_usage_or_cost(retrieval_type="usage", is_group=False)
+        # Safe cast: _get_usage_or_cost with retrieval_type="usage"
+        # returns only list of _LLMUsageOutputContainer
+        return cast(
+            list["_LLMUsageOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="usage"),
+        )
 
     def get_cost(self) -> list[_LLMCostOutputContainer]:
         """
@@ -1265,7 +1295,12 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: list[_LLMCostOutputContainer]
         """
 
-        return self._get_usage_or_cost(retrieval_type="cost", is_group=False)
+        # Safe cast: _get_usage_or_cost with retrieval_type="cost"
+        # returns only list of _LLMCostOutputContainer
+        return cast(
+            list["_LLMCostOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="cost"),
+        )
 
     def reset_usage_and_cost(self) -> None:
         """

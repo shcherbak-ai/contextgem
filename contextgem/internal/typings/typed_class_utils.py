@@ -137,10 +137,7 @@ def _is_typed_class(cls) -> bool:
         return True
 
     # Check if it has type annotations
-    if hasattr(cls, "__annotations__") and cls.__annotations__:
-        return True
-
-    return False
+    return bool(hasattr(cls, "__annotations__") and cls.__annotations__)
 
 
 def _get_model_fields(cls) -> dict[str, Any]:

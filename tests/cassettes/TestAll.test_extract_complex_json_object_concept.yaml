@@ -81,19 +81,30 @@ interactions:
       are specified for each concept.\n4. Produce a JSON array containing your extracted
       data, in the provided format.\n\nIf a concept is not addressed in the document
       text, you must still include an entry in the final JSON output but with an empty
-      \"extracted_items\" list.\n\nFollow these additional rules:\n\n- Output format:\nProvide
-      your answer in only the following answer format (do not include backticks, code
-      fences, or any introductory/explanatory text).\n\n- Consistency:\n    -- Each
-      JSON object in the list must have two keys: \"concept_id\" and \"extracted_items\".\n    --
+      \"extracted_items\" list. However, for boolean concepts (with extracted item
+      type \"bool\"), distinguish carefully:\n- Extract True if the concept is confirmed
+      or strongly supported by the document content (either explicitly stated or reasonably
+      inferred)\n- Extract False if the concept is contradicted, denied, or if the
+      document content allows you to determine that the concept is not true (e.g.,
+      absence of expected content that should be present if the concept were true)\n-
+      Only leave \"extracted_items\" empty if the concept is impossible to determine
+      because either: (1) the document is completely irrelevant to the concept, or
+      (2) the document does not contain enough information to make a conclusion about
+      the concept\n\nFollow these additional rules:\n\n- Output format:\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\n\n- Consistency:\n    -- Each JSON object
+      in the list must have two keys: \"concept_id\" and \"extracted_items\".\n    --
       The value of \"concept_id\" must match exactly the ID of the concept (for example,
       \"C0\", \"C1\", etc.).\n    -- The value of \"extracted_items\" must be an array.
       If the concept is not addressed or there are no items to extract, leave the
-      array empty ([]).\n        --- Extracted items may be found directly (explicitly
+      array empty ([]). For boolean concepts, only leave empty if the concept is impossible
+      to determine.\n        --- Extracted items may be found directly (explicitly
       mentioned) or inferred from the content (implied or derivable from the information
       present).\n        --- Guidance regarding the possible amount of extracted items
       for the concept is specified under \"Amount of extracted items\". Each extracted
       item, even if there is only one, must be part of the \"extracted_items\" array.\n\n-
-      Item structure:\n    -- If a specific structure is provided for a concept under
+      Item structure:\n    -- All extracted items must match the exact type specified
+      for the concept.\n    -- If a specific structure is provided for a concept under
       \"Expected structure,\" you must follow that structure for all extracted items
       corresponding to that concept.\n    -- If a rating scale is provided for a concept
       under \"Rating scale,\" the extracted item value must be within that scale.\n    --
@@ -107,23 +118,34 @@ interactions:
       concept specifies an \"extracted item type\" (found under \"Concept extracted
       item type\"). Ensure your extracted items strictly match that type. Python types
       are provided (e.g., str for string, int for integer, float for floating-point
-      number, dict for object, etc.).\n    -- Do not introduce any extra fields or
+      number, dict for object, etc.). Type compliance is mandatory - any deviation
+      will result in invalid output.\n    -- Do not introduce any extra fields or
       modify the specified structure.\n\n- Handling missing or multiple items:\n    --
       If a concept is not mentioned at all, your output should still contain an entry
-      for that concept with an empty \"extracted_items\" array.\n    -- For concepts
-      that have an \"Available labels:\" section: if none of the predefined labels
-      apply to the content, leave the \"extracted_items\" array empty.\n    -- For
-      concepts that have an \"Available labels:\" section: if multiple labels apply
-      to the same instance or context, include them all in a single extracted item
-      with multiple labels in the \"labels\" array (e.g., {\"labels\": [\"label1\",
-      \"label2\"]}). Only create multiple extracted items if there are genuinely distinct
-      instances or contexts that warrant separate classification.\n    -- For concepts
-      that do not have an \"Available labels:\" section: if multiple items are found
-      for a concept, include each as a separate entry within the \"extracted_items\"
-      array.\n\n- No additional text:\n    -- Do not include any headers, explanations,
-      or text outside of the JSON array.\n    -- Do not wrap your JSON response in
-      backticks or any other formatting characters.\n\n======\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
-      str,\n        \"extracted_items: [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
+      for that concept with an empty \"extracted_items\" array.\n    -- For boolean
+      concepts (with extracted item type \"bool\"): Distinguish carefully between
+      these cases:\n        --- Extract True if the concept is confirmed or strongly
+      supported by the provided content (either explicitly stated or reasonably inferred)\n        ---
+      Extract False if the concept is contradicted, denied, or if the provided content
+      allows you to determine that the concept is not true (e.g., absence of expected
+      content that should be present if the concept were true)\n        --- Only leave
+      \"extracted_items\" empty if the concept is impossible to determine because
+      either: (1) the provided content is completely irrelevant to the concept, or
+      (2) the provided content does not contain enough information to make a conclusion
+      about the concept\n    -- For concepts that have an \"Available labels:\" section:
+      if none of the predefined labels apply to the content, leave the \"extracted_items\"
+      array empty.\n    -- For concepts that have an \"Available labels:\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \"labels\" array (e.g.,
+      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
+      if there are genuinely distinct instances or contexts that warrant separate
+      classification.\n    -- For concepts that do not have an \"Available labels:\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
+      Do not include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n======\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
       Concept ID: C0\nConcept name: User System Profile\n\nConcept description:\nComprehensive
       user profile with system access permissions and settings\n\nExpected structure:\n{\n  \"user\":
       {\n    \"name\": str,\n    \"age\": int,\n    \"contact\": {\n      \"email\":
@@ -148,7 +170,7 @@ interactions:
       [{''id'': 1, ''name'': ''Document Review'', ''description'': ''Annual document
       review task'', ''is_active'': True}, {''id'': 2, ''name'': ''Access Audit'',
       ''description'': ''System access verification'', ''is_active'': False}], ''security_level'':
-      ''Advanced''}\n\nConcept extracted item type: dict\n````\n\n______\n\n------\nDOCUMENT
+      ''Advanced''}\n\nConcept extracted item type: dict (must be exactly as specified)\n````\n\n______\n\n------\nDOCUMENT
       TEXT:\nSystem Profile Information\n===========================\n\nUSER PROFILE\nName:
       Charlie Davis\nAge: 42\nContact Information (primary contact):\n Email: charlie@example.com\n
       Phone: 111-222-3333\n Address: 101 Maple Dr, Nowhere, Australia\n\nACCOUNT STATUS:
@@ -172,13 +194,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '13100'
+      - '14839'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.93.3
+      - AzureOpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -188,7 +210,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -204,8 +226,8 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
@@ -226,16 +248,16 @@ interactions:
         2,\n            \"name\": \"Access Audit\",\n            \"description\":
         \"System access verification\",\n            \"is_active\": false\n          }\n        ],\n        \"security_level\":
         \"Advanced\"\n      }\n    ]\n  }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1752156993, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1752965788, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
         "fp_178c8d546f", "usage": {"completion_tokens": 314, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2620, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1792}, "total_tokens": 2934}}'
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2947, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 2176}, "total_tokens": 3261}}'
     headers:
       Content-Length:
       - '2803'
@@ -250,7 +272,7 @@ interactions:
       azureml-model-session:
       - DUMMY
       cmp-upstream-response-duration:
-      - '3329'
+      - '2338'
       x-accel-buffering:
       - 'no'
       x-content-type-options:

@@ -4,6 +4,7 @@ import os
 
 from contextgem import DocumentLLM, LLMPricing
 
+
 llm = DocumentLLM(
     model="openai/gpt-4o-mini",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),

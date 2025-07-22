@@ -1,5 +1,6 @@
 from contextgem import JsonObjectConcept
 
+
 device_config_concept = JsonObjectConcept(
     name="Device Configuration",
     description="Configuration details for a networked device",

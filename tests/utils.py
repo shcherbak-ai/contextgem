@@ -28,20 +28,20 @@ import os
 import re
 import time
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Literal, cast
 from uuid import uuid4
 
 import pytest
 from aiolimiter import AsyncLimiter
+from dotenv import load_dotenv
 
-from contextgem import *
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.instances import _InstanceBase
-from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.data_models import (
     _LLMCost,
     _LLMCostOutputContainer,
@@ -55,7 +55,16 @@ from contextgem.internal.utils import (
     _group_instances_by_fields,
     _is_json_serializable,
 )
+from contextgem.public import (
+    Aspect,
+    Document,
+    DocumentLLM,
+    DocumentLLMGroup,
+    Image,
+    image_to_base64,
+)
 from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
+
 
 # A global VCR recordings counter
 vcr_new_recording_count = 0
@@ -152,7 +161,7 @@ def get_test_document_text(lang: Literal["en", "ua", "zh"] = "en") -> str:
     project_root = get_project_root_path()
     test_doc_fname = lang + "_nda_with_anomalies.txt"
     test_doc_fpath = project_root / "tests" / "ndas" / test_doc_fname
-    test_doc_text = read_text_file(test_doc_fpath)
+    test_doc_text = read_text_file(str(test_doc_fpath))
     return test_doc_text
 
 
@@ -165,7 +174,7 @@ def read_text_file(filepath: str) -> str:
     :return: The content of the text file as a string.
     :rtype: str
     """
-    with open(filepath, "r", encoding="utf-8") as file:
+    with open(filepath, encoding="utf-8") as file:
         return file.read().strip()
 
 
@@ -323,21 +332,33 @@ class TestUtils:
         """
         # From json
         instance_json = instance.to_json()
-        new_instance = instance.__class__.from_json(instance_json)
-        assert instance._eq_deserialized_llm_config(new_instance)
+        if isinstance(instance, DocumentLLM):
+            new_instance = DocumentLLM.from_json(instance_json)
+            assert instance._eq_deserialized_llm_config(new_instance)
+        else:  # DocumentLLMGroup
+            new_instance = DocumentLLMGroup.from_json(instance_json)
+            assert instance._eq_deserialized_llm_config(new_instance)
 
         # From dict
         instance_dict = instance.to_dict()
-        new_instance = instance.__class__.from_dict(instance_dict)
-        assert instance._eq_deserialized_llm_config(new_instance)
+        if isinstance(instance, DocumentLLM):
+            new_instance = DocumentLLM.from_dict(instance_dict)
+            assert instance._eq_deserialized_llm_config(new_instance)
+        else:  # DocumentLLMGroup
+            new_instance = DocumentLLMGroup.from_dict(instance_dict)
+            assert instance._eq_deserialized_llm_config(new_instance)
 
         # From disk
         disk_path = os.path.join(
             get_project_root_path(), "tests", f"instance_{str(uuid4())}.json"
         )
         instance.to_disk(disk_path)
-        new_instance = instance.__class__.from_disk(disk_path)
-        assert instance._eq_deserialized_llm_config(new_instance)
+        if isinstance(instance, DocumentLLM):
+            new_instance = DocumentLLM.from_disk(disk_path)
+            assert instance._eq_deserialized_llm_config(new_instance)
+        else:  # DocumentLLMGroup
+            new_instance = DocumentLLMGroup.from_disk(disk_path)
+            assert instance._eq_deserialized_llm_config(new_instance)
         remove_file(disk_path)
 
         # Check that pydantic-specific methods are disabled
@@ -430,10 +451,10 @@ class TestUtils:
             total = sum((i.cost.total for i in llm.get_cost()), zero_dec)
             return total.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
 
-        total_cost_llm_group = get_cost_as_decimal(self.llm_group)
-        total_cost_llm = get_cost_as_decimal(self.llm_extractor_text)
+        total_cost_llm_group = get_cost_as_decimal(self.llm_group)  # type: ignore
+        total_cost_llm = get_cost_as_decimal(self.llm_extractor_text)  # type: ignore
         total_cost_llm_with_fallback = get_cost_as_decimal(
-            self.invalid_llm_with_valid_fallback
+            self.invalid_llm_with_valid_fallback  # type: ignore
         )
         logger.info(
             "Cost of running tests (LLM 0 - group): "
@@ -492,11 +513,10 @@ class TestUtils:
         :return: None
         """
         items_to_check_lists = []
-        if isinstance(obj, (Aspect, _Concept)):
+        if isinstance(obj, Aspect | _Concept):
             items_to_check_lists.append([obj])
-        if hasattr(obj, "aspects"):
+        if isinstance(obj, Document | Aspect):
             items_to_check_lists.append(obj.aspects)
-        if hasattr(obj, "concepts"):
             items_to_check_lists.append(obj.concepts)
         for i in itertools.chain.from_iterable(items_to_check_lists):
             logger.debug(
@@ -530,8 +550,8 @@ class TestUtils:
 
     def check_instance_container_states(
         self,
-        original_container: list,
-        assigned_container: list,
+        original_container: list[Aspect] | list[_Concept],
+        assigned_container: list[Aspect] | list[_Concept],
         assigned_instance_class: type[Aspect | _Concept],
         llm_roles: list[LLMRoleAny],
     ) -> None:
@@ -541,10 +561,10 @@ class TestUtils:
 
         :param original_container: The original container of instances that will be compared to
             the assigned container.
-        :type original_container: list
+        :type original_container: list[Aspect] | list[_Concept]
         :param assigned_container: The newly assigned container that will be checked for
             correct state and type of instances.
-        :type assigned_container: list
+        :type assigned_container: list[Aspect] | list[_Concept]
         :param assigned_instance_class: The expected class type of the instances in the
             assigned container.
         :type assigned_instance_class: type[Aspect, _Concept]
@@ -559,7 +579,7 @@ class TestUtils:
             assert not any(i._is_processed for i in original_container)
             assert not any(i.extracted_items for i in original_container)
 
-            def check_instances(instances: list) -> None:
+            def check_instances(instances: list[Aspect] | list[_Concept]) -> None:
                 assert all(isinstance(i, assigned_instance_class) for i in instances)
                 # instances may have different LLM roles
                 filtered_instances = [i for i in instances if i.llm_role in llm_roles]
@@ -572,7 +592,8 @@ class TestUtils:
                     "reference_depth",
                 ]
                 instance_groups = _group_instances_by_fields(
-                    fields=fields_to_group_by, instances=filtered_instances
+                    fields=fields_to_group_by,
+                    instances=cast(list[Aspect] | list[_Concept], filtered_instances),
                 )
                 for idx, group in enumerate(instance_groups, start=1):
                     logger.debug(
@@ -593,7 +614,8 @@ class TestUtils:
                         warnings.warn(
                             f"Check has failed for instance group ({len(group)}) "
                             f"with LLM role(s) {[i.llm_role for i in group]}: {e}. "
-                            f"Instance group: {[i.name for i in group]}"
+                            f"Instance group: {[i.name for i in group]}",
+                            stacklevel=2,
                         )
 
             check_instances(assigned_container)
@@ -604,23 +626,16 @@ class TestUtils:
 
     def check_custom_data_json_serializable(
         self,
-        instance: (
-            Document
-            | DocumentPipeline
-            | Aspect
-            | _Concept
-            | Image
-            | Paragraph
-            | Sentence
-            | _ExtractedItem
-        ),
+        instance: _InstanceBase,
     ) -> None:
         """
         Check if custom data assigned to an object is serializable to JSON.
 
-        :param instance: The object whose `custom_data` attribute is being tested.
+        :param instance: The _InstanceBase instance whose `custom_data` attribute is being tested.
+        :type instance: _InstanceBase
         :raises ValueError: If `custom_data` contains non-serializable key-value
                             pairs or unsupported data types.
+        :return: None
         """
         if not hasattr(instance, "custom_data"):
             return
@@ -629,10 +644,10 @@ class TestUtils:
         with pytest.raises(ValueError):
             instance.custom_data = {str: [object]}
         with pytest.raises(TypeError):
-            instance.custom_data = {self.document: self.document_pipeline}
+            instance.custom_data = {self.document: self.document_pipeline}  # type: ignore
         with pytest.raises(TypeError):
             instance.custom_data = {
-                self.llm_extractor_text: self.invalid_llm_with_valid_fallback
+                self.llm_extractor_text: self.invalid_llm_with_valid_fallback  # type: ignore
             }
         instance.custom_data = {"test": True}
         instance.custom_data = {}
@@ -646,8 +661,8 @@ class TestUtils:
         expected_n_calls_with_concurrency: int,
         func: Callable,
         func_kwargs: dict,
-        original_container: list,
-        assigned_container: list,
+        original_container: list[Aspect] | list[_Concept],
+        assigned_container: list[Aspect] | list[_Concept],
         assigned_instance_class: type[Aspect | _Concept],
         compare_sequential_1_item_in_call: bool = False,
     ) -> None:
@@ -744,7 +759,8 @@ class TestUtils:
                 assert time_no_concurrency_1_item_per_call > time_no_concurrency
             except AssertionError:
                 warnings.warn(
-                    f"No concurrency time is same or slower than 1 item per call time"
+                    "No concurrency time is same or slower than 1 item per call time",
+                    stacklevel=2,
                 )
             logger.debug(
                 f"no concurrency time {time_no_concurrency}; N calls {expected_n_calls_no_concurrency}\n"
@@ -772,7 +788,10 @@ class TestUtils:
         try:
             assert time_no_concurrency > time_concurrency
         except AssertionError:
-            warnings.warn(f"No concurrency is faster than default concurrency")
+            warnings.warn(
+                "No concurrency is faster than default concurrency",
+                stacklevel=2,
+            )
         logger.debug(
             f"\nno concurrency time {time_no_concurrency}; N calls {expected_n_calls_no_concurrency}\n"
             f"with concurrency time {time_concurrency}; N calls {expected_n_calls_with_concurrency}\n"
@@ -794,13 +813,13 @@ class TestUtils:
         """
 
         # Configure the output language adaptation for the LLMs based on the document language
-        if document in [self.document_ua, self.document_zh]:
+        if document in [self.document_ua, self.document_zh]:  # type: ignore
             output_language = "adapt"
         else:
             output_language = "en"
-        if llm.is_group:
+        if isinstance(llm, DocumentLLMGroup):
             llm.group_update_output_language(output_language)
-        else:
+        else:  # DocumentLLM
             llm.output_language = output_language
         logger.debug(f"LLM output language set to `{output_language}`")
 
@@ -820,7 +839,6 @@ class TestUtils:
         :rtype: None
         """
         if vcr_new_recording_count:
-
             limiter = AsyncLimiter(
                 100, 60
             )  # considerably increase the rate limit comparing to default limiter, as all responses are mock
@@ -830,7 +848,7 @@ class TestUtils:
                 if model.fallback_llm:
                     model.fallback_llm.async_limiter = limiter
 
-            if llm.is_group:
+            if isinstance(llm, DocumentLLMGroup):
                 for model in llm.llms:
                     set_new_limiter(model)
             else:
@@ -838,14 +856,14 @@ class TestUtils:
 
     @staticmethod
     def log_extracted_items_for_instance(
-        instance: _InstanceBase, full_repr: bool = True
+        instance: Aspect | _Concept, full_repr: bool = True
     ) -> None:
         """
         Logs the extracted items associated with the given instance.
 
-        :param instance: An instance of type `_InstanceBase` that contains the extracted
+        :param instance: An instance of type `Aspect` or `_Concept` that contains the extracted
             items to be logged.
-        :type instance: _InstanceBase
+        :type instance: Aspect | _Concept
         :param full_repr: Whether to log the full representation of the extracted items.
             If True, logs the full dictionary representation. If False, logs a simplified
             representation with just the value and justification.
@@ -859,4 +877,40 @@ class TestUtils:
             else:
                 item_repr = f"{item.value} (justification: {item.justification})"
             logger.debug(f"Extracted item {idx}: {item_repr}")
-        logger.debug(f"===============================")
+        logger.debug("===============================")
+
+
+def set_dummy_env_variables_for_testing_from_cassettes() -> None:
+    """
+    Sets dummy environment variables for testing from VCR cassettes.
+    This function is typically called when load_dotenv() doesn't find a .env file,
+    to ensure tests have the necessary environment variables set with dummy values.
+    It's used in CI as well as locally by new contributors whose changes
+    do not require re-recording VCR cassettes. See CONTRIBUTING.md for more details.
+
+    :return: None
+    """
+
+    if load_dotenv():
+        raise RuntimeError(
+            "A .env file was found, but dummy environment variables "
+            "for testing from VCR cassettes were expected. "
+            "Please remove the .env file and run the tests again."
+        )
+
+    logger.debug(
+        "No .env file found, setting dummy environment variables "
+        "for testing from VCR cassettes"
+    )
+
+    default_env_vars = {
+        "CONTEXTGEM_AZURE_OPENAI_API_KEY": "DUMMY",
+        "CONTEXTGEM_AZURE_OPENAI_API_VERSION": "2025-03-01-preview",
+        "CONTEXTGEM_AZURE_OPENAI_API_BASE": "https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT",
+        "CONTEXTGEM_OPENAI_API_KEY": "DUMMY",
+        "CONTEXTGEM_LOGGER_LEVEL": "DEBUG",
+    }
+
+    for key, value in default_env_vars.items():
+        # Force dummy credentials to be used in tests if no .env file is found
+        os.environ[key] = value

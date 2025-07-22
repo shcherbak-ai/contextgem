@@ -1,5 +1,6 @@
 from contextgem import Document
 
+
 # Create a document with raw text content
 contract_document = Document(
     raw_text=(

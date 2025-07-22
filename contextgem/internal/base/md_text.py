@@ -20,8 +20,6 @@
 Module for processing and managing markdown text attributes.
 """
 
-from typing import Optional
-
 from pydantic import BaseModel, PrivateAttr
 
 from contextgem.internal.typings.aliases import NonEmptyStr
@@ -32,14 +30,14 @@ class _MarkdownTextAttributesProcessor(BaseModel):
     Base class for processing and managing markdown text attributes.
     """
 
-    _md_text: Optional[NonEmptyStr] = PrivateAttr(default=None)
+    _md_text: NonEmptyStr | None = PrivateAttr(default=None)
 
-    def _validate_md_text(self, value: Optional[NonEmptyStr]) -> None:
+    def _validate_md_text(self, value: str | None) -> None:
         """
         Validates the markdown text content.
 
         :param value: The markdown text content to validate. Must be a non-empty string or None.
-        :type value: Optional[NonEmptyStr]
+        :type value: str | None
         :raises ValueError: If the value is an empty string or not a string.
         :return: None
         """

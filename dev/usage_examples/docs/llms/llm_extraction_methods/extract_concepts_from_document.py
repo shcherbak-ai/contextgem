@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, NumericalConcept, StringConcept
 
+
 # Sample text content
 text_content = """
 GreenTech Solutions is an environmental technology company founded in 2018 in Portland, Oregon.

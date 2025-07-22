@@ -33,21 +33,23 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pydantic import Field, StrictBool, StrictInt
 
+
 if TYPE_CHECKING:
-    from contextgem.public.aspects import Aspect
     from contextgem.internal.base.concepts import _Concept
     from contextgem.internal.items import _ExtractedItem
+    from contextgem.public.aspects import Aspect
+
+from typing_extensions import Self
 
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.decorators import _post_init_method
 from contextgem.internal.typings.aliases import (
     AssignedInstancesAttrName,
     JustificationDepth,
-    Self,
 )
 from contextgem.public.paragraphs import Paragraph
 from contextgem.public.sentences import Sentence
@@ -73,7 +75,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
     def _add_instances(
         self,
         attr_name: AssignedInstancesAttrName,
-        instances: list[Aspect | _Concept],
+        instances: list[Aspect] | list[_Concept],
     ) -> Self:
         """
         Adds a list of new instances to an existing attribute's collection. This
@@ -88,7 +90,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
         :rtype: Self
         """
         current_instances = getattr(self, attr_name)
-        new_instances = deepcopy(instances)
+        new_instances = [deepcopy(i) for i in instances]
         combined_instances = current_instances + new_instances
         # Use a temporary instance to test if the combined list would be valid
         # without modifying the current instance
@@ -118,7 +120,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
         except StopIteration:
             raise ValueError(
                 f"{attr_name.title()[:-1]} with name {instance_name} not found."
-            )
+            ) from None
 
     def _remove_instance_by_name(
         self, attr_name: AssignedInstancesAttrName, instance_name: str
@@ -166,6 +168,9 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
     Base class to be inherited by subclasses with assigned aspects.
     """
 
+    if TYPE_CHECKING:
+        aspects: list[Aspect]
+
     @_post_init_method
     def _post_init(self, __context):
         if not hasattr(self, "aspects"):
@@ -203,6 +208,15 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
         :return: Updated instance containing the newly added aspects.
         :rtype: Self
         """
+        from contextgem.public.aspects import Aspect
+
+        if (
+            not isinstance(aspects, list)
+            or not all(isinstance(item, Aspect) for item in aspects)
+            or not aspects
+        ):
+            raise ValueError("Aspects must be a non-empty list of `Aspect` objects")
+
         return self._add_instances(attr_name="aspects", instances=aspects)
 
     def get_aspect_by_name(self, name: str) -> Aspect:
@@ -216,7 +230,12 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
         :rtype: Aspect
         :raises ValueError: If no aspect with the specified name is found.
         """
-        return self._get_instance_by_name(attr_name="aspects", instance_name=name)
+        # Safe cast: _get_instance_by_name returns Aspect | _Concept, but we know it will
+        # return an Aspect since we're passing "aspects" as attr_name
+        return cast(
+            "Aspect",
+            self._get_instance_by_name(attr_name="aspects", instance_name=name),
+        )
 
     def get_aspects_by_names(self, names: list[str]) -> list[Aspect]:
         """
@@ -270,6 +289,9 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
     Base class to be inherited by subclasses with assigned concepts.
     """
 
+    if TYPE_CHECKING:
+        concepts: list[_Concept]
+
     @_post_init_method
     def _post_init(self, __context):
         if not hasattr(self, "concepts"):
@@ -303,6 +325,15 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
         :return: Returns the instance itself after the modification.
         :rtype: Self
         """
+        from contextgem.internal.base.concepts import _Concept
+
+        if (
+            not isinstance(concepts, list)
+            or not all(isinstance(item, _Concept) for item in concepts)
+            or not concepts
+        ):
+            raise ValueError("Concepts must be a non-empty list of `_Concept` objects")
+
         return self._add_instances(attr_name="concepts", instances=concepts)
 
     def get_concept_by_name(self, name: str) -> _Concept:
@@ -316,7 +347,12 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
         :rtype: _Concept
         :raises ValueError: If no concept with the specified name is found.
         """
-        return self._get_instance_by_name(attr_name="concepts", instance_name=name)
+        # Safe cast: _get_instance_by_name returns Aspect | _Concept, but we know it will
+        # return a _Concept since we're passing "concepts" as attr_name
+        return cast(
+            "_Concept",
+            self._get_instance_by_name(attr_name="concepts", instance_name=name),
+        )
 
     def get_concepts_by_names(self, names: list[str]) -> list[_Concept]:
         """
@@ -380,8 +416,8 @@ class _AssignedInstancesProcessor(
         :return: A set containing unique LLM roles gathered from aspects and concepts.
         :rtype: set[str]
         """
-        aspects_roles = _AssignedAspectsProcessor.llm_roles.fget(self)
-        concepts_roles = _AssignedConceptsProcessor.llm_roles.fget(self)
+        aspects_roles = _AssignedAspectsProcessor.llm_roles.__get__(self)
+        concepts_roles = _AssignedConceptsProcessor.llm_roles.__get__(self)
         return aspects_roles | concepts_roles
 
     def remove_all_instances(self) -> Self:
@@ -445,6 +481,9 @@ class _ExtractedItemsAttributeProcessor(_PropertyProcessor):
     justification_depth: JustificationDepth = Field(default="brief")
     justification_max_sents: StrictInt = Field(default=2)
 
+    if TYPE_CHECKING:
+        _extracted_items: list[_ExtractedItem]
+
     @_post_init_method
     def _post_init(self, __context):
         if not hasattr(self, "_extracted_items"):
@@ -498,6 +537,10 @@ class _RefParasAndSentsAttrituteProcessor(_PropertyProcessor):
     """
     Base class that handles processing and validation of reference paragraphs and reference sentences attributes.
     """
+
+    if TYPE_CHECKING:
+        _reference_paragraphs: list[Paragraph]
+        _reference_sentences: list[Sentence]
 
     @_post_init_method
     def _post_init(self, __context):

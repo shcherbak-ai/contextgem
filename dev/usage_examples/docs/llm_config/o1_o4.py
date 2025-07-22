@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM
 
+
 llm = DocumentLLM(
     model="openai/o3-mini",
     api_key="<your-openai-api-key>",

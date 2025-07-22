@@ -30,19 +30,22 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Literal, Optional
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Literal, cast
 
 from aiolimiter import AsyncLimiter
 from pydantic import ConfigDict
 
 from contextgem.internal.base.serialization import _InstanceSerializer
+from contextgem.internal.typings.validators import _validate_sequence_is_list
+
 
 if TYPE_CHECKING:
-    from contextgem.public.paragraphs import Paragraph
-    from contextgem.public.images import Image
-    from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
     from contextgem.internal.data_models import _LLMCost
     from contextgem.internal.items import _ExtractedItem
+    from contextgem.public.images import Image
+    from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
+    from contextgem.public.paragraphs import Paragraph
 
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.mixins import _PostInitCollectorMixin
@@ -57,6 +60,7 @@ from contextgem.internal.exceptions import LLMExtractionError
 from contextgem.internal.items import _StringItem
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import (
+    AsyncCalsAndKwargs,
     ExtractedInstanceType,
     JustificationDepth,
     LLMRoleAny,
@@ -235,7 +239,11 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 },
             )
         ]
-        cals_and_kwargs = aspect_cals_and_kwargs + doc_concepts_cals_and_kwargs
+        # Safe cast: Concatenating two lists of (async_callable, kwargs) tuples
+        # Type checker needs help to understand the result is still AsyncCalsAndKwargs
+        cals_and_kwargs = cast(
+            AsyncCalsAndKwargs, aspect_cals_and_kwargs + doc_concepts_cals_and_kwargs
+        )
         await _run_async_calls(
             cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
         )
@@ -245,7 +253,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     def extract_aspects_from_document(
         self,
         document: Document,
-        from_aspects: Optional[list[Aspect]] = None,
+        from_aspects: list[Aspect] | None = None,
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -264,7 +272,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :type document: Document
         :param from_aspects: Existing aspects to use as a base for extraction. If None, uses all
             document's aspects.
-        :type from_aspects: Optional[list[Aspect]]
+        :type from_aspects: list[Aspect] | None
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
             Defaults to False.
         :type overwrite_existing: bool
@@ -303,7 +311,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     async def extract_aspects_from_document_async(
         self,
         document: Document,
-        from_aspects: Optional[list[Aspect]] = None,
+        from_aspects: list[Aspect] | None = None,
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -320,7 +328,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :type document: Document
         :param from_aspects: Existing aspects to use as a base for extraction. If None, uses all
             document's aspects.
-        :type from_aspects: Optional[list[Aspect]]
+        :type from_aspects: list[Aspect] | None
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
             Defaults to False.
         :type overwrite_existing: bool
@@ -344,6 +352,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :return: List of processed Aspect objects with extracted items.
         :rtype: list[Aspect]
         """
+
+        if from_aspects is not None:
+            from_aspects = _validate_sequence_is_list(from_aspects)
 
         self._check_instances_and_llm_params(
             target=document,
@@ -370,17 +381,24 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         }
 
         if self.is_group:
+            # Safe cast: self is a DocumentLLMGroup because `is_group` is True
             cals_and_kwargs = [
                 (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
-                for llm in self.llms
+                for llm in cast("DocumentLLMGroup", self).llms
             ]
+            # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+            # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
             await _run_async_calls(
                 cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
             )
         else:
-            await self._extract_instances(**extract_instances_kwargs, llm=self)
+            # Safe cast: self is a DocumentLLM because `is_group` is False
+            await self._extract_instances(
+                **extract_instances_kwargs, llm=cast("DocumentLLM", self)
+            )
 
-        document_aspects = document.aspects if not from_aspects else from_aspects
+        document_aspects = from_aspects if from_aspects else document.aspects
 
         # Extract sub-aspects
         extract_sub_aspects_kwargs = {
@@ -393,7 +411,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         for aspect in document_aspects:
             if aspect.aspects:
                 # Validate proper nesting level of sub-aspects
-                self._validate_nesting_level(aspect, aspect.aspects, "sub-aspects")
+                self._validate_sub_aspects_nesting_level(aspect)
                 logger.info(f"Extracting sub-aspects for aspect `{aspect.name}`")
                 if not aspect.reference_paragraphs:
                     logger.info(
@@ -420,7 +438,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         self,
         aspect: Aspect,
         document: Document,
-        from_concepts: Optional[list[_Concept]] = None,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -440,7 +459,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param document: The document that contains the aspect.
         :type document: Document
         :param from_concepts: List of existing concepts to process. Defaults to None.
-        :type from_concepts: Optional[list[_Concept]]
+        :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with newly
             extracted information. Defaults to False.
         :type overwrite_existing: bool
@@ -482,7 +501,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         self,
         aspect: Aspect,
         document: Document,
-        from_concepts: Optional[list[_Concept]] = None,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -500,7 +520,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param document: The document that contains the aspect.
         :type document: Document
         :param from_concepts: List of existing concepts to process. Defaults to None.
-        :type from_concepts: Optional[list[_Concept]]
+        :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with newly
             extracted information. Defaults to False.
         :type overwrite_existing: bool
@@ -524,6 +544,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :return: List of processed concept objects.
         :rtype: list[_Concept]
         """
+
+        if from_concepts is not None:
+            from_concepts = _validate_sequence_is_list(from_concepts)
 
         self._check_instances_and_llm_params(
             target=aspect,
@@ -560,15 +583,22 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         }
 
         if self.is_group:
+            # Safe cast: self is a DocumentLLMGroup because `is_group` is True
             cals_and_kwargs = [
                 (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
-                for llm in self.llms
+                for llm in cast("DocumentLLMGroup", self).llms
             ]
+            # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+            # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
             await _run_async_calls(
                 cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
             )
         else:
-            await self._extract_instances(**extract_instances_kwargs, llm=self)
+            # Safe cast: self is a DocumentLLM because `is_group` is False
+            await self._extract_instances(
+                **extract_instances_kwargs, llm=cast("DocumentLLM", self)
+            )
 
         # Extract concepts from sub-aspects
         extract_concepts_from_sub_aspects_kwargs = {
@@ -580,7 +610,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         }
         if aspect.aspects:
             # Validate proper nesting level of sub-aspects
-            self._validate_nesting_level(aspect, aspect.aspects, "sub-aspects")
+            self._validate_sub_aspects_nesting_level(aspect)
             logger.info(
                 f"Extracting concepts from sub-aspects for aspect `{aspect.name}`"
             )
@@ -606,12 +636,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 # the sub-aspect document.
                 sub_aspect.concepts = sub_aspect_concepts
 
-        return aspect.concepts if not from_concepts else from_concepts
+        # Explicitly return list of concepts for type checking
+        return list(from_concepts) if from_concepts else list(aspect.concepts)
 
     def extract_concepts_from_document(
         self,
         document: Document,
-        from_concepts: Optional[list[_Concept]] = None,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -628,7 +660,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :type document: Document
         :param from_concepts: Existing concepts to use as a base for extraction. If None, uses all
             document's concepts.
-        :type from_concepts: Optional[list[_Concept]]
+        :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
             newly extracted information. Defaults to False.
         :type overwrite_existing: bool
@@ -671,7 +703,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     async def extract_concepts_from_document_async(
         self,
         document: Document,
-        from_concepts: Optional[list[_Concept]] = None,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -688,7 +721,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :type document: Document
         :param from_concepts: Existing concepts to use as a base for extraction. If None, uses all
             document's concepts.
-        :type from_concepts: Optional[list[_Concept]]
+        :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
             newly extracted information. Defaults to False.
             Defaults to False.
@@ -717,6 +750,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :rtype: list[_Concept]
         """
 
+        if from_concepts is not None:
+            from_concepts = _validate_sequence_is_list(from_concepts)
+
         self._check_instances_and_llm_params(
             target=document,
             llm_or_group=self,
@@ -743,17 +779,25 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         }
 
         if self.is_group:
+            # Safe cast: self is a DocumentLLMGroup because `is_group` is True
             cals_and_kwargs = [
                 (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
-                for llm in self.llms
+                for llm in cast("DocumentLLMGroup", self).llms
             ]
+            # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+            # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
             await _run_async_calls(
                 cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
             )
         else:
-            await self._extract_instances(**extract_instances_kwargs, llm=self)
+            # Safe cast: self is a DocumentLLM because `is_group` is False
+            await self._extract_instances(
+                **extract_instances_kwargs, llm=cast("DocumentLLM", self)
+            )
 
-        return document.concepts if not from_concepts else from_concepts
+        # Explicitly return list of concepts for type checking
+        return list(from_concepts) if from_concepts else list(document.concepts)
 
     def _check_llm_roles_before_extract_all(
         self,
@@ -772,9 +816,11 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         """
 
         if self.is_group:
-            llm_roles = {i.role for i in self.llms}
+            # Safe cast: self is a DocumentLLMGroup because `is_group` is True
+            llm_roles = {i.role for i in cast("DocumentLLMGroup", self).llms}
         else:
-            llm_roles = {self.role}
+            # Safe cast: self is a DocumentLLM because `is_group` is False
+            llm_roles = {cast("DocumentLLM", self).role}
         missing_llm_roles = document.llm_roles.difference(llm_roles)
         if missing_llm_roles:
             warnings.warn(
@@ -782,14 +828,17 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 f"in the current {'LLM group' if self.is_group else 'LLM'}: "
                 f"{'LLM group roles' if self.is_group else 'LLM role'} {llm_roles}, "
                 f"missing LLM roles {missing_llm_roles}. "
-                f"Such elements will be ignored."
+                f"Such elements will be ignored.",
+                stacklevel=2,
             )
 
     def _check_instances_and_llm_params(
         self,
         target: Document | Aspect,
-        llm_or_group: DocumentLLM | DocumentLLMGroup,
-        instances_to_process: list[Aspect | _Concept] | None,
+        llm_or_group: _GenericLLMProcessor,
+        instances_to_process: Sequence[Aspect]
+        | Sequence[_Concept]
+        | None,  # using Sequence type with list validator for type checking
         instance_type: ExtractedInstanceType,
         overwrite_existing: bool = False,
     ) -> None:
@@ -814,13 +863,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             mismatches or invalid configurations.
         """
 
+        if instances_to_process is not None:
+            instances_to_process = _validate_sequence_is_list(instances_to_process)
+
         # Check instances
         instance_class_map = {
             "aspect": Aspect,
             "concept": _Concept,
         }
         # Retrieve class or raise error
-        instance_class = instance_class_map.get(instance_type, None)
+        instance_class = instance_class_map.get(instance_type)
         if not instance_class:
             raise ValueError(f"Unsupported instance_type '{instance_type}'.")
         # Check the target attribute
@@ -852,25 +904,29 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         # Check DocumentLLMGroup
         if llm_or_group.is_group:
-            if not llm_or_group.llms:
+            # Safe cast: llm_or_group is a DocumentLLMGroup because `is_group` is True
+            llm_group = cast("DocumentLLMGroup", llm_or_group)
+            if not llm_group.llms:
                 raise ValueError(
                     "The provided DocumentLLMGroup does not contain any defined LLMs."
                 )
 
         # Check DocumentLLM
         else:
+            # Safe cast: llm_or_group is a DocumentLLM because `is_group` is False
+            llm = cast("DocumentLLM", llm_or_group)
             # Inform about inconsistent LLM roles
-            if any(i.llm_role != llm_or_group.role for i in check_instances):
+            if any(i.llm_role != llm.role for i in check_instances):
                 logger.warning(
                     f"Some {instance_type}s rely on the LLM with a role different "
-                    f"than the current LLM's role `{llm_or_group.role}`. "
+                    f"than the current LLM's role `{llm.role}`. "
                     f"This LLM will not extract such {instance_type}s."
                 )
 
     @staticmethod
     def _check_instances_already_processed(
         instance_type: ExtractedInstanceType,
-        instances: list[Aspect | _Concept],
+        instances: list[Aspect] | list[_Concept],
         overwrite_existing: bool,
     ) -> None:
         """
@@ -952,6 +1008,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
             # Aspect (document-level)
             if extracted_instance_type == "aspect":
+                if not isinstance(source, Document):
+                    raise ValueError(
+                        "Aspect extraction is only supported for Document sources."
+                    )
                 if not (source.raw_text or source.paragraphs):
                     raise ValueError(
                         "Document lacks text or paragraphs for aspect extraction."
@@ -992,11 +1052,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         # Text-based extraction
         if extraction_level.endswith("_text"):
+            # Safe cast: source for the other extraction level is Aspect
             paragraphs = (
                 document.paragraphs
                 if extraction_level in {"aspect_document_text", "concept_document_text"}
-                else source.reference_paragraphs
+                else cast(Aspect, source).reference_paragraphs
             )
+            if not paragraphs:
+                raise ValueError("Context lacks paragraphs for text-based extraction.")
             max_paras_per_call = (
                 min(len(paragraphs), max_paragraphs_to_analyze_per_call)
                 if max_paragraphs_to_analyze_per_call
@@ -1081,6 +1144,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 prompt_kwargs["is_markdown"] = True
                             else:
                                 text = source.raw_text
+                            if text is None:
+                                raise ValueError(
+                                    "Document lacks text for concept extraction."
+                                )
                             prompt_kwargs["text"] = _clean_text_for_llm_prompt(
                                 text,
                                 preserve_linebreaks=True,
@@ -1094,7 +1161,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 prompt_kwargs["text"] = "\n\n".join(
                                     [
                                         _clean_text_for_llm_prompt(
-                                            p._md_text,
+                                            p._md_text,  # type: ignore - p._md_text is checked above to not be None
                                             preserve_linebreaks=True,  # preserve markdown markers etc.
                                             strip_text=False,  # preserve markdown list indentation etc.
                                         )
@@ -1127,7 +1194,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         # Images-based extraction
         elif extraction_level.endswith("_vision"):
-
+            # Safe cast: source for extracting data from images is always a Document
+            source = cast(Document, source)
             max_images_per_call = (
                 min(len(source.images), max_images_to_analyze_per_call)
                 if max_images_to_analyze_per_call
@@ -1198,7 +1266,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param instances_to_process: List of aspects or concepts to process
         :type instances_to_process: list[Aspect] | list[_Concept]
         :param document: The document containing the source.
-        :type document: Optional[Document]
+        :type document: Document | None
         :param add_justifications: Whether to include justification for extracted items.
             Defaults to False.
         :type add_justifications: bool
@@ -1281,16 +1349,26 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             If extracting concepts from an Aspect, validates that the aspect's extracted items have
             references.
             """
-            if extracted_item_type == "concept" and isinstance(source, Aspect):
-                if source.extracted_items:
-                    if not source.reference_paragraphs or (
-                        source.reference_depth
-                        == "sentences"  # aspects do not have "add_references" attr
-                        and not all(p.sentences for p in source.reference_paragraphs)
-                    ):
-                        raise ValueError(
-                            f"Aspect `{source.name}` has extracted items but no references"
+            if (
+                extracted_item_type == "concept"
+                and isinstance(source, Aspect)
+                and (
+                    source.extracted_items
+                    and (
+                        not source.reference_paragraphs
+                        or (
+                            source.reference_depth
+                            == "sentences"  # aspects do not have "add_references" attr
+                            and not all(
+                                p.sentences for p in source.reference_paragraphs
+                            )
                         )
+                    )
+                )
+            ):
+                raise ValueError(
+                    f"Aspect `{source.name}` has extracted items but no references"
+                )
 
         # Perform validations
         validate_source_in_document(source=source, document=document)
@@ -1363,8 +1441,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 f"Processing messages chunk {idx + 1}/{len(message_kwargs_list)}"
             )
             # Extract paragraphs and remove them from message_kwargs
-            paragraphs_chunk: list[Paragraph] = message_kwargs.pop(
-                "paragraphs_chunk", None
+            # Safe cast: "paragraphs_chunk" key, when present, always contains list[Paragraph]
+            paragraphs_chunk = cast(
+                list["Paragraph"] | None, message_kwargs.pop("paragraphs_chunk", None)
             )
             if paragraphs_chunk is not None:
                 paragraphs_enumerated = dict(enumerate(paragraphs_chunk))
@@ -1379,7 +1458,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     i_in_source_mapper = sources_mapper.get(i.unique_id, None)
                     if (
                         i_in_source_mapper
-                        and i.singular_occurrence
+                        # Safe cast: i is always a Concept because extracted_item_type is "concept"
+                        and cast(_Concept, i).singular_occurrence
                         and i_in_source_mapper["extracted_items"]
                     ):
                         discarded_instances.append(i)
@@ -1396,9 +1476,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     continue
                 # Do not include instances with a single occurrence that already have extracted items
                 # in the prompt kwargs
-                message_kwargs["prompt_kwargs"][
-                    "concepts"
-                ] = filtered_instances_to_process
+                # Safe cast: "prompt_kwargs" key always contains a dict
+                cast(dict, message_kwargs["prompt_kwargs"])["concepts"] = (
+                    filtered_instances_to_process
+                )
                 if any(i in filtered_instances_to_process for i in discarded_instances):
                     raise RuntimeError(
                         "Discarded instances found in filtered instances list."
@@ -1412,30 +1493,32 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 # even if they are discarded during one of the loop iterations
 
             # Construct a prompt from the message kwargs
+            # Safe cast: "prompt_kwargs" key always contains a dict
             if extracted_item_type == "aspect":
                 message = llm._extract_aspect_items_prompt.render(
-                    **message_kwargs["prompt_kwargs"]
+                    **cast(dict, message_kwargs["prompt_kwargs"])
                 )
             elif extracted_item_type == "concept":
                 message = llm._extract_concept_items_prompt.render(
-                    **message_kwargs["prompt_kwargs"]
+                    **cast(dict, message_kwargs["prompt_kwargs"])
                 )
             else:
                 raise ValueError(
                     f"Unsupported extracted item type: `{extracted_item_type}`"
                 )
 
-            message_kwargs["message"] = message
+            # Safe cast: message_kwargs is always a dict
+            cast(dict, message_kwargs)["message"] = message
             # Initialize the LLM call object to pass to the LLM query method
-            message_kwargs["llm_call_obj"] = _LLMCall(
-                prompt_kwargs=message_kwargs["prompt_kwargs"],
+            cast(dict, message_kwargs)["llm_call_obj"] = _LLMCall(
+                prompt_kwargs=cast(dict, message_kwargs["prompt_kwargs"]),
                 prompt=message,
             )
             del message_kwargs["prompt_kwargs"]
 
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
-                **message_kwargs,
+                **cast(dict, message_kwargs),
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
                 async_limiter=async_limiter,
@@ -1469,7 +1552,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         return None, all_usage_data
                     self._check_instances_already_processed(
                         instance_type=extracted_item_type,
-                        instances=[relevant_aspect],
+                        # Safe cast: relevant_aspect is always an Aspect
+                        # because extracted_item_type is "aspect"
+                        instances=[cast(Aspect, relevant_aspect)],
                         overwrite_existing=overwrite_existing,
                     )
                     if relevant_aspect.unique_id not in sources_mapper:
@@ -1537,9 +1622,13 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                     )
                                     extracted_item.reference_paragraphs = [ref_para]
                                     extracted_item.reference_sentences = [ref_sent]
-                                    sources_mapper[relevant_aspect.unique_id][
-                                        "extracted_items"
-                                    ].append(extracted_item)
+                                    # Safe cast: "extracted_items" key always contains a list
+                                    cast(
+                                        list,
+                                        sources_mapper[relevant_aspect.unique_id][
+                                            "extracted_items"
+                                        ],
+                                    ).append(extracted_item)
                             # Reference depth - paragraph
                             # Each extracted item will have the reference paragraph text as value,
                             # reference paragraph in the list of reference paragraphs, and no reference sentences
@@ -1550,9 +1639,13 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                     custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
                                 )
                                 extracted_item.reference_paragraphs = [ref_para]
-                                sources_mapper[relevant_aspect.unique_id][
-                                    "extracted_items"
-                                ].append(extracted_item)
+                                # Safe cast: "extracted_items" key always contains a list
+                                cast(
+                                    list,
+                                    sources_mapper[relevant_aspect.unique_id][
+                                        "extracted_items"
+                                    ],
+                                ).append(extracted_item)
                     else:
                         # Reference depth - paragraph
                         # Each extracted item will have the reference paragraph text as value,
@@ -1576,9 +1669,13 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
                             )
                             extracted_item.reference_paragraphs = [ref_para]
-                            sources_mapper[relevant_aspect.unique_id][
-                                "extracted_items"
-                            ].append(extracted_item)
+                            # Safe cast: "extracted_items" key always contains a list
+                            cast(
+                                list,
+                                sources_mapper[relevant_aspect.unique_id][
+                                    "extracted_items"
+                                ],
+                            ).append(extracted_item)
 
             # Concept (document- and aspect-levels)
             elif extracted_item_type == "concept":
@@ -1588,11 +1685,13 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                             int(concept_dict["concept_id"].lstrip("C"))
                         ]
                     except (KeyError, ValueError):
-                        logger.error(f"Concept ID returned by LLM is invalid")
+                        logger.error("Concept ID returned by LLM is invalid")
                         return None, all_usage_data
                     self._check_instances_already_processed(
                         instance_type=extracted_item_type,
-                        instances=[relevant_concept],
+                        # Safe cast: relevant_concept is always a _Concept
+                        # because extracted_item_type is "concept"
+                        instances=[cast(_Concept, relevant_concept)],
                         overwrite_existing=overwrite_existing,
                     )
                     if relevant_concept.unique_id not in sources_mapper:
@@ -1605,9 +1704,11 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         for i in concept_dict["extracted_items"]:
                             # Process the item value with a custom function on the concept
                             try:
-                                i["value"] = relevant_concept._process_item_value(
-                                    i["value"]
-                                )
+                                # Safe cast: relevant_concept is always a _Concept
+                                # because extracted_item_type is "concept"
+                                i["value"] = cast(
+                                    _Concept, relevant_concept
+                                )._process_item_value(i["value"])
                             except ValueError as e:
                                 logger.error(
                                     f"Error processing extracted item value: {e}"
@@ -1622,9 +1723,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 concept_extracted_item_kwargs[
                                     "reference_paragraphs"
                                 ] = []
-                                concept_extracted_item_kwargs["reference_sentences"] = (
-                                    []
-                                )
+                                concept_extracted_item_kwargs[
+                                    "reference_sentences"
+                                ] = []
                                 # Reference depth - sentence
                                 # Each extracted item will have reference paragraph in the list of
                                 # reference paragraphs, and reference sentence in the list of reference sentences
@@ -1641,7 +1742,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                             )
                                         except ValueError:
                                             logger.error(
-                                                f"Reference paragraph ID returned by LLM is invalid"
+                                                "Reference paragraph ID returned by LLM is invalid"
                                             )
                                             return None, all_usage_data
                                         try:
@@ -1653,7 +1754,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                             ]
                                         except ValueError:
                                             logger.error(
-                                                f"Reference sentence ID returned by LLM is invalid"
+                                                "Reference sentence ID returned by LLM is invalid"
                                             )
                                             return None, all_usage_data
                                     reference_paragraphs_list = sorted(
@@ -1675,14 +1776,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                         )
                                     except ValueError:
                                         logger.error(
-                                            f"Reference paragraph ID returned by LLM is invalid"
+                                            "Reference paragraph ID returned by LLM is invalid"
                                         )
                                         return None, all_usage_data
                                 # Reference depth - paragraph or sentence
                                 for para_obj_or_id in reference_paragraphs_list:
                                     try:
                                         if reference_depth == "sentences":
-                                            para_id = para_obj_or_id[
+                                            # Safe cast: para_obj_or_id is always a dict
+                                            # when reference_depth is "sentences"
+                                            para_id = cast(dict, para_obj_or_id)[
                                                 "reference_paragraph_id"
                                             ]
                                         else:
@@ -1690,7 +1793,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                         ref_para = paragraphs_enumerated[para_id]
                                     except KeyError:
                                         logger.error(
-                                            f"Reference paragraph ID returned by LLM is invalid"
+                                            "Reference paragraph ID returned by LLM is invalid"
                                         )
                                         return None, all_usage_data
                                     concept_extracted_item_kwargs[
@@ -1701,8 +1804,12 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                         para_sents_enumerated = dict(
                                             enumerate(ref_para.sentences)
                                         )
+                                        # Safe cast: para_obj_or_id is always a dict
+                                        # when reference_depth is "sentences"
                                         reference_sentence_ids = sorted(
-                                            para_obj_or_id["reference_sentence_ids"]
+                                            cast(dict, para_obj_or_id)[
+                                                "reference_sentence_ids"
+                                            ]
                                         )
                                         for sent_id in reference_sentence_ids:
                                             try:
@@ -1736,14 +1843,22 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 return None, all_usage_data
                             extracted_item.reference_paragraphs = reference_paragraphs
                             extracted_item.reference_sentences = reference_sentences
-                            sources_mapper[relevant_concept.unique_id][
-                                "extracted_items"
-                            ].append(extracted_item)
+                            # Safe cast: "extracted_items" key always contains a list
+                            cast(
+                                list,
+                                sources_mapper[relevant_concept.unique_id][
+                                    "extracted_items"
+                                ],
+                            ).append(extracted_item)
                     else:
                         for i in concept_dict["extracted_items"]:
                             # Process the item value with a custom function on the concept
                             try:
-                                i = relevant_concept._process_item_value(i)
+                                # Safe cast: relevant_concept is always a _Concept
+                                # because extracted_item_type is "concept"
+                                i = cast(
+                                    _Concept, relevant_concept
+                                )._process_item_value(i)
                             except ValueError as e:
                                 logger.error(
                                     f"Error processing extracted item value: {e}"
@@ -1756,9 +1871,13 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                     f"Error creating {relevant_concept._item_class.__name__}: {e}"
                                 )
                                 return None, all_usage_data
-                            sources_mapper[relevant_concept.unique_id][
-                                "extracted_items"
-                            ].append(extracted_item)
+                            # Safe cast: "extracted_items" key always contains a list
+                            cast(
+                                list,
+                                sources_mapper[relevant_concept.unique_id][
+                                    "extracted_items"
+                                ],
+                            ).append(extracted_item)
 
             else:
                 raise ValueError(
@@ -1769,18 +1888,26 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         async with (
             llm._async_lock
         ):  # ensure atomicity of the instances' state check and modification
-            for source_id, source_data in sources_mapper.items():
-                source_instance = source_data["source"]
+            for _source_id, source_data in sources_mapper.items():
+                # Safe cast: "source" key always contains Aspect or _Concept
+                source_instance = cast(Aspect | _Concept, source_data["source"])
                 self._check_instances_already_processed(
                     instance_type=extracted_item_type,
-                    instances=[source_instance],
+                    instances=[source_instance],  # type: ignore
                     overwrite_existing=overwrite_existing,
                 )
-                source_instance.extracted_items = source_data["extracted_items"]
+                # Safe cast: "extracted_items" key always contains a list
+                # of _ExtractedItem instances
+                source_instance.extracted_items = cast(
+                    list["_ExtractedItem"], source_data["extracted_items"]
+                )
                 if extracted_item_type == "aspect":
                     # References are automatically included for aspects, as paragraphs/sents'
                     # texts are the values of extracted items for the aspects
                     for ei in source_instance.extracted_items:
+                        # Safe cast: source_instance is always an Aspect
+                        # because extracted_item_type is "aspect"
+                        source_instance = cast(Aspect, source_instance)
                         # Extracted items might have overlapping references
                         ref_paras = ei.reference_paragraphs
                         for ref_para in ref_paras:
@@ -1805,7 +1932,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         llm: DocumentLLM,
         instance_type: ExtractedInstanceType,
         document: Document,
-        from_instances: Optional[list[Aspect] | list[_Concept]] = None,
+        from_instances: list[Aspect] | list[_Concept] | None = None,
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -1825,7 +1952,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param document: The document object associated with the context.
         :type document: Document
         :param from_instances: List of specific instances to process. If None, all instances are processed
-        :type from_instances: Optional[list[Aspect] | list[_Concept]]
+        :type from_instances: list[Aspect] | list[_Concept] | None
         :param overwrite_existing: If True, overwrites existing instances with newly extracted information
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process per
@@ -1917,7 +2044,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     for i in range(n_retries):
                         logger.info(
                             f"Retrying {instance_type}s with invalid JSON "
-                            f"({i+1}/{n_retries})"
+                            f"({i + 1}/{n_retries})"
                         )
                         res = await self._extract_items_from_instances(
                             extracted_item_type=instance_type,
@@ -1961,7 +2088,8 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                     error_msg
                                     + f" ({n_retries} retries). "
                                     + " If you want to raise an exception instead, "
-                                    "set `raise_exception_on_extraction_error` to True."
+                                    "set `raise_exception_on_extraction_error` to True.",
+                                    stacklevel=2,
                                 )
                         return False
                 return True
@@ -2005,7 +2133,6 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             if (
                 use_concurrency and len(data_list) > 1
             ):  # Disable overhead if a single call
-
                 # Process chunks concurrently
                 results = await _async_multi_executor(
                     func=self._extract_items_from_instances,
@@ -2022,7 +2149,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     await llm._update_usage_and_cost(result)
 
                 # Retry failed chunks if needed
-                for chunk, result in zip(data_chunks, results):
+                for chunk, result in zip(data_chunks, results, strict=True):
                     if not _llm_call_result_is_valid(result):
                         retry_successful = False
                         if llm.max_retries_invalid_data > 0:
@@ -2031,7 +2158,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 res=result,
                                 instances=chunk,
                                 n_retries=llm.max_retries_invalid_data,
-                                retry_is_final=False if llm.fallback_llm else True,
+                                retry_is_final=not llm.fallback_llm,
                             )
                         # Retry with fallback LLM if it is provided
                         if not retry_successful and llm.fallback_llm:
@@ -2066,16 +2193,17 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 else:
                                     warnings.warn(
                                         error_msg
-                                        + f" (0 retries). "
+                                        + " (0 retries). "
                                         + " If you want to raise an exception instead, "
-                                        "set `raise_exception_on_extraction_error` to True."
+                                        "set `raise_exception_on_extraction_error` to True.",
+                                        stacklevel=2,
                                     )
             else:
                 # Process sequentially
                 for i, data in enumerate(data_list):
                     result = await self._extract_items_from_instances(**data)
                     logger.debug(
-                        f"Result for chunk ({i+1}/{len(data_list)}) processed."
+                        f"Result for chunk ({i + 1}/{len(data_list)}) processed."
                     )
 
                     # Update usage stats and cost
@@ -2090,7 +2218,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 res=result,
                                 instances=data["instances_to_process"],
                                 n_retries=llm.max_retries_invalid_data,
-                                retry_is_final=False if llm.fallback_llm else True,
+                                retry_is_final=not llm.fallback_llm,
                             )
                         # Retry with fallback LLM if it is provided
                         if not retry_successful and llm.fallback_llm:
@@ -2128,9 +2256,10 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 else:
                                     warnings.warn(
                                         error_msg
-                                        + f" (0 retries). "
+                                        + " (0 retries). "
                                         + " If you want to raise an exception instead, "
-                                        "set `raise_exception_on_extraction_error` to True."
+                                        "set `raise_exception_on_extraction_error` to True.",
+                                        stacklevel=2,
                                     )
 
         # Group instances for processing, based on the relevant params, with the relevant prompts.
@@ -2168,7 +2297,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         # If we are not overwriting, check that none of the instances is already processed.
         self._check_instances_already_processed(
             instance_type=instance_type,
-            instances=filtered_instances,
+            # Safe cast: filtered_instances contains only Aspect or _Concept instances
+            # based on instance_type
+            instances=cast(list[Aspect] | list[_Concept], filtered_instances),
             overwrite_existing=overwrite_existing,
         )
 
@@ -2180,8 +2311,15 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             "add_references",  # references are always added to aspects automatically
             "reference_depth",
         ]
+        # Safe cast: filtered_instances contains only Aspect or _Concept instances
+        # based on instance_type
+        typed_instances = (
+            cast(list[Aspect], filtered_instances)
+            if instance_type == "aspect"
+            else cast(list[_Concept], filtered_instances)
+        )
         instance_groups = _group_instances_by_fields(
-            fields=fields_to_group_by, instances=filtered_instances
+            fields=fields_to_group_by, instances=typed_instances
         )
 
         # Run extraction for each group separately, as prompts will be rendered differently and
@@ -2213,34 +2351,35 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         )
 
     @staticmethod
-    def _validate_nesting_level(
-        parent_item: Aspect | _Concept,
-        child_items: list[Aspect | _Concept],
-        item_type_name: str = "sub-items",
+    def _validate_sub_aspects_nesting_level(
+        parent_aspect: Aspect,
     ) -> None:
         """
-        Validates that all child items have the correct nesting level relative to their parent.
+        Validates that all sub-aspects have the correct nesting level relative
+        to their parent aspect.
 
         Args:
-            parent_item: The parent aspect or concept
-            child_items: List of child aspects or concepts to validate
-            item_type_name: Name of the item type for the error message (e.g., "sub-aspects")
+            parent_aspect: The parent aspect
 
         Raises:
-            ValueError: If any child item has an incorrect nesting level
+            ValueError: If any sub-aspect of the parent aspect has
+            an incorrect nesting level.
         """
-        expected_level = parent_item._nesting_level + 1
-        if not all(item._nesting_level == expected_level for item in child_items):
+        expected_level = parent_aspect._nesting_level + 1
+        if not all(
+            sub_aspect._nesting_level == expected_level
+            for sub_aspect in parent_aspect.aspects
+        ):
             raise ValueError(
-                f"{item_type_name.capitalize()} must have a nesting level of `{expected_level}`. "
-                f"Current nesting levels: {[item._nesting_level for item in child_items]}"
+                f"Sub-aspects must have a nesting level of `{expected_level}`. "
+                f"Current nesting levels: "
+                f"{[sub_aspect._nesting_level for sub_aspect in parent_aspect.aspects]}"
             )
 
     def _get_usage_or_cost(
         self,
         retrieval_type: Literal["usage", "cost"],
-        llm_role: Optional[str] = None,
-        is_group: bool = False,
+        llm_role: str | None = None,
     ) -> list[_LLMUsageOutputContainer | _LLMCostOutputContainer]:
         """
         Retrieves specified information (usage or cost) for either a single LLM or LLMs in a group.
@@ -2254,8 +2393,6 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             only results associated with LLMs matching this role are returned. If no LLM with
             the specified role exists, an exception is raised. If the matching LLM has
             a fallback LLM, its usage or cost details are also collected. Defaults to None.
-        :param is_group: Boolean indicating whether this is being called on an LLM group (True)
-            or individual LLM (False). Defaults to False.
         :return: A list of containers, each representing usage or cost information for
             a primary and fallback LLM, if it exists. The specific container type depends on
             the retrieval type.
@@ -2263,7 +2400,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         info_containers = []
         # For individual LLM, use self and its fallback
         # For group, iterate through all LLMs in self.llms
-        llms_to_process = self.llms if is_group else [self]
+        llms_to_process = self.llms if self.is_group else [self]  # type: ignore[attr-defined]
+        # Safe cast: llms_to_process contains only DocumentLLM instances
+        llms_to_process = cast(list["DocumentLLM"], llms_to_process)
 
         for primary_llm in llms_to_process:
             for llm in [primary_llm, primary_llm.fallback_llm]:

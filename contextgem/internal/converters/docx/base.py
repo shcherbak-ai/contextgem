@@ -26,7 +26,8 @@ tables, images, footnotes, comments, and other elements.
 
 import base64
 import re
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import cast
 
 from lxml import etree
 
@@ -64,11 +65,11 @@ class _DocxConverterBase:
         include_textboxes: bool = True,
         include_links: bool = True,
         include_inline_formatting: bool = True,
-        apply_text_formatting: bool = None,
+        apply_text_formatting: bool | None = None,
         populate_md_text: bool = False,
-        list_counters: dict = None,
+        list_counters: dict | None = None,
         strict_mode: bool = False,
-    ) -> Optional[str | Paragraph]:
+    ) -> str | Paragraph | None:
         """
         Processes a paragraph element and returns appropriate content based on mode.
 
@@ -102,7 +103,7 @@ class _DocxConverterBase:
 
                     - Structured paragraph object with ``raw_text`` and ``additional_context``
                     - Optionally has ``_md_text`` attribute populated when ``populate_md_text=True``
-        :rtype: Optional[str | Paragraph]
+        :rtype: str | Paragraph | None
         """
         try:
             # Check if this is a text box paragraph and we should skip it
@@ -239,11 +240,10 @@ class _DocxConverterBase:
                 )
 
                 # Create paragraph with _md_text if requested
-                paragraph_kwargs = {
-                    "raw_text": raw_text,
-                    "additional_context": metadata,
-                }
-                paragraph = Paragraph(**paragraph_kwargs)
+                paragraph = Paragraph(
+                    raw_text=raw_text,
+                    additional_context=metadata,
+                )
                 if populate_md_text:
                     # Use the properly formatted markdown text
                     paragraph._md_text = markdown_text if markdown_text else raw_text
@@ -329,7 +329,8 @@ class _DocxConverterBase:
                 for text_elem in text_elements:
                     # Get all text including from child elements
                     text_content = (
-                        text_elem.text_content()
+                        # Attribute is defined in _Element
+                        text_elem.text_content()  # type: ignore[attr-defined]
                         if hasattr(text_elem, "text_content")
                         else (text_elem.text or "")
                     )
@@ -393,7 +394,7 @@ class _DocxConverterBase:
 
                 # Process line breaks in this run
                 br_elements = _docx_xpath(run, ".//w:br")
-                for br in br_elements:
+                for _br in br_elements:
                     text_by_location[run_idx] = "\n"
                     ordered_runs.append(run_idx)
                     run_idx += 1
@@ -710,7 +711,10 @@ class _DocxConverterBase:
 
             # Process each element in order
             for element in body:
-                tag = element.tag.split("}")[-1]  # Remove namespace prefix
+                # Attribute is defined in _Element
+                tag = element.tag.split("}")[  # type: ignore[attr-defined]
+                    -1
+                ]  # Remove namespace prefix
 
                 if tag == "p":
                     # Process paragraph
@@ -789,7 +793,9 @@ class _DocxConverterBase:
                     except Exception as e:
                         if strict_mode:
                             # In strict mode, re-raise as DocxContentError
-                            raise DocxContentError(f"Error processing paragraph: {e}")
+                            raise DocxContentError(
+                                f"Error processing paragraph: {e}"
+                            ) from e
                         # Log error and continue with next paragraph
                         logger.warning(f"Error processing paragraph: {e}")
 
@@ -945,7 +951,8 @@ class _DocxConverterBase:
         text_elements = _docx_xpath(run, text_xpath)
         for text_elem in text_elements:
             text_content = (
-                text_elem.text_content()
+                # Attribute is defined in _Element
+                text_elem.text_content()  # type: ignore[attr-defined]
                 if hasattr(text_elem, "text_content")
                 else (text_elem.text or "")
             )
@@ -1029,7 +1036,7 @@ class _DocxConverterBase:
         list_level: int,
         is_numbered: bool,
         para_element: etree._Element,
-        list_counters: dict = None,
+        list_counters: dict | None = None,
     ) -> str:
         """
         Applies document-level markdown formatting to text.
@@ -1463,8 +1470,11 @@ class _DocxConverterBase:
                             )
                             if nested_content:
                                 # Join nested table content as text
+                                # Safe cast: nested_content is a list of str objects
                                 nested_text = "\n".join(
-                                    line for line in nested_content if line.strip()
+                                    cast(str, line)
+                                    for line in nested_content
+                                    if cast(str, line).strip()
                                 )
                                 if nested_text:
                                     cell_text.append(nested_text)
@@ -1516,7 +1526,7 @@ class _DocxConverterBase:
                 result.append("")
             else:
                 # Process table for Paragraph objects - only direct rows, not nested table rows
-                table_metadata = f"Table ID: {table_idx+1}"
+                table_metadata = f"Table ID: {table_idx + 1}"
                 rows = _docx_xpath(table_element, "./w:tr")
 
                 for row_idx, row in enumerate(rows):
@@ -1542,15 +1552,21 @@ class _DocxConverterBase:
                                 list_counters=None,  # list_counters - tables handle their own formatting
                             )
                             if processed_para:
+                                # Safe cast: processed_para is a Paragraph object
+                                processed_para = cast(Paragraph, processed_para)
                                 style_id = self._get_paragraph_style(para)
                                 style_name = self._get_style_name(style_id, package)
                                 cell_style_info = f"Style: {style_name}"
+                                if not processed_para.additional_context:
+                                    raise RuntimeError(
+                                        "Paragraph must have additional context."
+                                    )
 
                                 # Copy the paragraph with added table metadata
-                                cell_para_kwargs = {
-                                    "raw_text": processed_para.raw_text,
-                                    "additional_context": f"{cell_style_info}, {table_metadata}, "
-                                    f"Row: {row_idx+1}, Column: {cell_idx+1}, "
+                                cell_para = Paragraph(
+                                    raw_text=processed_para.raw_text,
+                                    additional_context=f"{cell_style_info}, {table_metadata}, "
+                                    f"Row: {row_idx + 1}, Column: {cell_idx + 1}, "
                                     f"Table Cell"
                                     + (
                                         ", "
@@ -1560,8 +1576,7 @@ class _DocxConverterBase:
                                         if ", " in processed_para.additional_context
                                         else ""
                                     ),
-                                }
-                                cell_para = Paragraph(**cell_para_kwargs)
+                                )
                                 # Assign _md_text if populate_md_text was requested
                                 if populate_md_text:
                                     cell_para._md_text = processed_para._md_text
@@ -1586,6 +1601,10 @@ class _DocxConverterBase:
                                 if isinstance(nested_para, Paragraph):
                                     # Extract style and other info from nested table metadata
                                     nested_context = nested_para.additional_context
+                                    if not nested_context:
+                                        raise RuntimeError(
+                                            "Nested paragraph must have additional context."
+                                        )
                                     parts = nested_context.split(", ")
 
                                     # Find and extract the style (should be first)
@@ -1603,9 +1622,9 @@ class _DocxConverterBase:
                                     # Build the final metadata: Style first, then parent table info,
                                     # then nested table info
                                     final_context = (
-                                        f"{style_part}, {table_metadata}, Row: {row_idx+1}, "
-                                        f"Column: {cell_idx+1}, "
-                                        f"Nested Table ID: {nested_table_idx+1}"
+                                        f"{style_part}, {table_metadata}, Row: {row_idx + 1}, "
+                                        f"Column: {cell_idx + 1}, "
+                                        f"Nested Table ID: {nested_table_idx + 1}"
                                     )
 
                                     # Add remaining parts (like Row, Column, Table Cell from
@@ -1615,11 +1634,10 @@ class _DocxConverterBase:
                                             remaining_parts
                                         )
 
-                                    nested_meta_kwargs = {
-                                        "raw_text": nested_para.raw_text,
-                                        "additional_context": final_context,
-                                    }
-                                    nested_meta = Paragraph(**nested_meta_kwargs)
+                                    nested_meta = Paragraph(
+                                        raw_text=nested_para.raw_text,
+                                        additional_context=final_context,
+                                    )
                                     # Assign _md_text if populate_md_text was requested
                                     if populate_md_text:
                                         nested_meta._md_text = nested_para._md_text
@@ -1687,6 +1705,8 @@ class _DocxConverterBase:
                 # Extract additional metadata for comments
                 extra_metadata = ""
                 if hasattr(content, "attrib"):
+                    # Safe cast: content is an _Element object
+                    content = cast(etree._Element, content)
                     author = _docx_get_namespaced_attr(content, "author")
                     if author:
                         extra_metadata += f", Author: {author}"
@@ -1695,7 +1715,10 @@ class _DocxConverterBase:
                         extra_metadata += f", Date: {date}"
 
                 # Find paragraphs in the content
-                content_paragraphs = _docx_xpath(content, xpath_expr)
+                # Safe cast: content is an _Element object
+                content_paragraphs = _docx_xpath(
+                    cast(etree._Element, content), xpath_expr
+                )
 
                 for para in content_paragraphs:
                     processed_para = self._process_paragraph(
@@ -1713,6 +1736,8 @@ class _DocxConverterBase:
 
                     if processed_para:
                         # Add section-specific metadata
+                        # Safe cast: processed_para is a Paragraph object
+                        processed_para = cast(Paragraph, processed_para)
                         original_context = processed_para.additional_context
                         section_context = (
                             f"{original_context}, {metadata_key}: "
@@ -1720,11 +1745,10 @@ class _DocxConverterBase:
                         )
 
                         # Create paragraph with updated metadata
-                        para_kwargs = {
-                            "raw_text": processed_para.raw_text,
-                            "additional_context": section_context,
-                        }
-                        paragraph = Paragraph(**para_kwargs)
+                        paragraph = Paragraph(
+                            raw_text=processed_para.raw_text,
+                            additional_context=section_context,
+                        )
                         if populate_md_text:
                             paragraph._md_text = processed_para._md_text
 
@@ -1743,7 +1767,7 @@ class _DocxConverterBase:
         paragraphs: list[Paragraph],
         section_title: str,
         result: list[str],
-        extract_id_func: Optional[Callable[[str], str]] = None,
+        extract_id_func: Callable[[str], str] | None = None,
     ) -> None:
         """
         Handles displaying a document section in markdown mode.
@@ -1761,6 +1785,8 @@ class _DocxConverterBase:
             display_title = section_title
             if extract_id_func:
                 try:
+                    if not para.additional_context:
+                        raise RuntimeError("Paragraph must have additional context.")
                     section_id = extract_id_func(para.additional_context)
                     if section_id:
                         display_title = f"{section_title} {section_id}"
@@ -2024,7 +2050,8 @@ class _DocxConverterBase:
             link_text = ""
             for text_elem in text_elements:
                 text_content = (
-                    text_elem.text_content()
+                    # Attribute is defined in _Element
+                    text_elem.text_content()  # type: ignore[attr-defined]
                     if hasattr(text_elem, "text_content")
                     else (text_elem.text or "")
                 )
@@ -2058,10 +2085,7 @@ class _DocxConverterBase:
             return True
 
         # 4. Check for drawing element
-        if _docx_xpath(para_element, ".//w:drawing"):
-            return True
-
-        return False
+        return bool(_docx_xpath(para_element, ".//w:drawing"))
 
     def _process_textbox_runs(
         self,
@@ -2102,10 +2126,13 @@ class _DocxConverterBase:
             )
             text_elements = _docx_xpath(run, text_xpath)
             content_results = [r for r in run_results if r[1]]
-            for text_elem, text_result in zip(text_elements, content_results):
+            for text_elem, text_result in zip(
+                text_elements, content_results, strict=True
+            ):
                 formatted_text, _ = text_result
                 original_content = (
-                    text_elem.text_content()
+                    # Attribute is defined in _Element
+                    text_elem.text_content()  # type: ignore[attr-defined]
                     if hasattr(text_elem, "text_content")
                     else (text_elem.text or "")
                 )

@@ -23,9 +23,9 @@ Module defining public data validation models.
 import warnings
 
 from pydantic import ConfigDict, Field, StrictFloat, StrictInt, model_validator
+from typing_extensions import Self
 
 from contextgem.internal.base.serialization import _InstanceSerializer
-from contextgem.internal.typings.aliases import Self
 
 
 class LLMPricing(_InstanceSerializer):

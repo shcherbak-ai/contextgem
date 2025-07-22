@@ -41,6 +41,7 @@ from contextgem.public.utils import (
     reload_logger_settings,
 )
 
+
 __all__ = [
     # Aspects
     "Aspect",

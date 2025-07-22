@@ -57,75 +57,98 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 20 60
+   :widths: 20 15 15 50
 
    * - Parameter
+     - Type
      - Default Value
      - Description
    * - ``model``
+     - ``str``
      - (Required)
      - Model identifier in format ``<provider>/<model_name>``. See `LiteLLM Providers <https://docs.litellm.ai/docs/providers>`_ for all supported providers.
    * - ``api_key``
+     - ``str | None``
      - ``None``
      - API key for authentication. Required for most cloud providers but not for local models.
    * - ``api_base``
+     - ``str | None``
      - ``None``
      - Base URL of the API endpoint. Required for local models and some cloud providers (e.g. Azure OpenAI).
    * - ``deployment_id``
+     - ``str | None``
      - ``None``
      - Deployment ID for the model. Primarily used with Azure OpenAI.
    * - ``api_version``
+     - ``str | None``
      - ``None``
      - API version. Primarily used with Azure OpenAI.
    * - ``role``
+     - ``str``
      - ``"extractor_text"``
      - Role type for the LLM. Values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. The role parameter is an abstraction that can be explicitly assigned to extraction components (aspects and concepts) in the pipeline. ContextGem then routes extraction tasks based on these assigned roles, matching components with LLMs of the same role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). Note that roles don't imply specific model architectures - they're simply a way for you to organize your workflow by mapping less advanced and more advanced LLMs as needed. For more details, see :ref:`llm-roles-label`.
    * - ``system_message``
+     - ``str | None``
      - ``None``
      - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Note that for certain models (such as OpenAI's o1-preview), system messages are not supported and will be ignored. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
    * - ``temperature``
+     - ``float``
      - ``0.3``
      - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses.
    * - ``max_tokens``
+     - ``int``
      - ``4096``
      - Maximum tokens in the generated response (applicable to most models).
    * - ``max_completion_tokens``
+     - ``int``
      - ``16000``
      - Maximum tokens for output completions in reasoning (CoT-capable) models.
    * - ``reasoning_effort``
+     - ``str | None``
      - ``None``
      - Reasoning effort for reasoning (CoT-capable) models. Values: ``"low"``, ``"medium"``, ``"high"``.
    * - ``top_p``
+     - ``float``
      - ``0.3``
      - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs.
    * - ``timeout``
+     - ``int``
      - ``120``
      - Timeout in seconds for LLM API calls.
    * - ``num_retries_failed_request``
+     - ``int``
      - ``3``
      - Number of retries when LLM request fails.
    * - ``max_retries_failed_request``
+     - ``int``
      - ``0``
      - LLM provider-specific retry count for failed requests.
    * - ``max_retries_invalid_data``
+     - ``int``
      - ``3``
      - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails).
    * - ``pricing_details``
+     - ``LLMPricing | None``
      - ``None``
      - :class:`~contextgem.public.data_models.LLMPricing` object with pricing details for cost calculation.
    * - ``is_fallback``
+     - ``bool``
      - ``False``
      - Indicates whether the LLM is a fallback model. Fallback LLMs are optionally assigned to the primary LLM instance and are used when the primary LLM fails.
    * - ``fallback_llm``
+     - ``DocumentLLM | None``
      - ``None``
      - :class:`~contextgem.public.llms.DocumentLLM` to use as fallback if current one fails. Must have the same role as the primary LLM.
    * - ``output_language``
+     - ``str``
      - ``"en"``
      - Language for output text. Values: ``"en"`` or ``"adapt"`` (adapts to document language). Setting value to ``"adapt"`` ensures that the text output (e.g. justifications, conclusions, explanations) is in the same language as the document. This is particularly useful when working with non-English documents. For example, if you're extracting anomalies from a contract in Spanish, setting ``output_language="adapt"`` ensures that anomaly justifications are also in Spanish, making them immediately understandable by local end users reviewing the document.
    * - ``seed``
+     - ``int | None``
      - ``None``
      - Seed for random number generation to help produce more consistent outputs across multiple runs. When set to a specific integer value, the LLM will attempt to use this seed for sampling operations. However, deterministic output is still not guaranteed even with the same seed, as other factors may influence the model's response.
    * - ``async_limiter``
+     - ``AsyncLimiter``
      - ``AsyncLimiter(3, 10)``
      - Relevant when concurrency is enabled for extraction tasks. Controls frequency of async LLM API requests for concurrent tasks. Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues. See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details. See :doc:`../optimizations/optimization_speed` for an example of how to easily set up concurrency for extraction.
 

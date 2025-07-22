@@ -35,7 +35,7 @@ from __future__ import annotations
 import warnings
 from datetime import date, datetime
 from types import UnionType
-from typing import Any, List, Literal, Union, get_args, get_origin
+from typing import Any, List, Literal, Union, get_args, get_origin  # noqa: UP035
 
 from pydantic import (
     BaseModel,
@@ -45,6 +45,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Self
 
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.items import (
@@ -60,7 +61,7 @@ from contextgem.internal.items import (
 from contextgem.internal.llm_output_structs.concept_structs import (
     _LabelConceptItemValueModel,
 )
-from contextgem.internal.typings.aliases import ClassificationType, NonEmptyStr, Self
+from contextgem.internal.typings.aliases import ClassificationType, NonEmptyStr
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
     _is_typed_class,
@@ -87,9 +88,9 @@ class StringConcept(_Concept):
     as conceptual entities within documents or aspects.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar examples: Example strings illustrating the concept usage.
     :vartype examples: list[StringExample]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
@@ -145,9 +146,9 @@ class BooleanConcept(_Concept):
     conceptual properties or attributes within content.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
@@ -200,9 +201,9 @@ class NumericalConcept(_Concept):
     or both) that represent conceptual measurements or quantities within content.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar numeric_type: Type constraint for extracted numbers ("int", "float", or "any").
         Defaults to "any" for auto-detection.
     :vartype numeric_type: Literal["int", "float", "any"]
@@ -272,9 +273,9 @@ class RatingConcept(_Concept):
     the boundaries of a specified rating scale.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar rating_scale: The rating scale defining valid value boundaries. Can be either a RatingScale
         object (deprecated, will be removed in v1.0.0) or a tuple of (start, end) integers.
     :vartype rating_scale: RatingScale | tuple[int, int]
@@ -405,7 +406,9 @@ class RatingConcept(_Concept):
                 self._validate_rating_value(item.value)
 
         # Then, call the parent class setter for final validation and assignment
-        super(RatingConcept, type(self)).extracted_items.fset(self, value)
+        # Need to call parent setter explicitly after custom validation -
+        # .fset() pattern required when overriding property setter
+        super(RatingConcept, type(self)).extracted_items.fset(self, value)  # type: ignore[attr-defined]
 
     def _validate_rating_value(self, rating_value: int) -> None:
         """
@@ -448,9 +451,9 @@ class JsonObjectConcept(_Concept):
     with validation against a predefined schema structure.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar structure: JSON object schema as a class with type annotations or dictionary where keys
         are field names and values are type annotations. All dictionary keys must be strings.
         Supports generic aliases, union types, nested dictionaries for complex hierarchical structures,
@@ -481,7 +484,7 @@ class JsonObjectConcept(_Concept):
         of nested class hierarchies to dictionary representations for serialization.
 
         **Tip**: do not overcomplicate the structure to avoid prompt overloading.
-    :vartype structure: type | dict[NonEmptyStr, Any]
+    :vartype structure: type | dict[str, Any]
     :ivar examples: Example JSON objects illustrating the concept usage.
     :vartype examples: list[JsonObjectExample]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
@@ -546,7 +549,8 @@ class JsonObjectConcept(_Concept):
         :return: Pydantic model class for structure validation.
         :rtype: type[BaseModel]
         """
-        return _dynamic_pydantic_model(self.structure)
+        # Structure is validated and normalized in field validator, safe to pass to dynamic model creation
+        return _dynamic_pydantic_model(self.structure)  # type: ignore[arg-type]
 
     def _process_item_value(self, value: dict[str, Any]) -> dict[str, Any]:
         """
@@ -721,7 +725,7 @@ class JsonObjectConcept(_Concept):
         # Handle special generic types like list[TypedClass]
         elif hasattr(value, "__origin__") and getattr(value, "__origin__", None) in (
             list,
-            List,
+            List,  # noqa: UP006
         ):
             if len(value.__args__) > 1:
                 raise ValueError(
@@ -805,7 +809,7 @@ class JsonObjectConcept(_Concept):
                             _raise_dict_class_type_error(type_name, path, type_arg)
                         except TypeError as e:
                             # Convert to ValueError to maintain consistent error type
-                            raise ValueError(str(e))
+                            raise ValueError(str(e)) from e
 
             return value
 
@@ -869,9 +873,9 @@ class DateConcept(_Concept):
     string representations in a specified format into Python date objects.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar llm_role: The role of the LLM responsible for extracting the concept
         ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
         Defaults to "extractor_text".
@@ -965,11 +969,11 @@ class LabelConcept(_Concept):
     when no appropriate label exists.
 
     :ivar name: The name of the concept (non-empty string, stripped).
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar labels: List of predefined labels for classification. Must contain at least 2 unique labels.
-    :vartype labels: list[NonEmptyStr]
+    :vartype labels: list[str]
     :ivar classification_type: Classification mode - "multi_class" for single label selection,
         "multi_label" for multiple label selection. Defaults to "multi_class".
     :vartype classification_type: ClassificationType
@@ -1015,9 +1019,9 @@ class LabelConcept(_Concept):
         Validates that all labels are unique.
 
         :param labels: List of labels to validate.
-        :type labels: list[NonEmptyStr]
+        :type labels: list[str]
         :return: The validated list of labels.
-        :rtype: list[NonEmptyStr]
+        :rtype: list[str]
         :raises ValueError: If labels are not unique.
         """
         if len(labels) != len(set(labels)):
@@ -1065,7 +1069,9 @@ class LabelConcept(_Concept):
                 self._validate_label_values(item.value)
 
         # Then, call the parent class setter for final validation and assignment
-        super(LabelConcept, type(self)).extracted_items.fset(self, value)
+        # Need to call parent setter explicitly after custom validation -
+        # .fset() pattern required when overriding property setter
+        super(LabelConcept, type(self)).extracted_items.fset(self, value)  # type: ignore[attr-defined]
 
     def _validate_label_values(self, labels_list: list[str]) -> None:
         """

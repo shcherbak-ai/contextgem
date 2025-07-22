@@ -22,7 +22,8 @@ aspect extraction from a document. Such structures must match the JSON schema sp
 LLM prompt.
 """
 
-from functools import lru_cache
+from functools import cache
+from typing import Any, cast
 
 from pydantic import ConfigDict, RootModel, create_model
 
@@ -30,10 +31,10 @@ from contextgem.internal.llm_output_structs.utils import _create_root_model
 from contextgem.internal.typings.aliases import NonEmptyStr, ReferenceDepth
 
 
-@lru_cache(maxsize=None)
+@cache
 def _get_aspect_extraction_output_struct(
     with_extra_data: bool, reference_depth: ReferenceDepth
-) -> RootModel:
+) -> type[RootModel]:
     """
     Computes, caches and returns a dynamically generated root model for aspect extraction
     based on the specified parameters. The model is used for validating LLM responses parsed as JSON.
@@ -46,9 +47,9 @@ def _get_aspect_extraction_output_struct(
         paragraphs as references or sentences as references. Defaults to "paragraphs".
         ``extracted_items`` will have values based on this parameter.
     :type reference_depth: ReferenceDepth
-    :return: A dynamically generated `RootModel` object encapsulating aspects, each
+    :return: A dynamically generated `RootModel` class encapsulating aspects, each
         containing the relevant fields based on the parameters provided.
-    :rtype: RootModel
+    :rtype: type[RootModel]
     """
 
     if with_extra_data:
@@ -58,14 +59,15 @@ def _get_aspect_extraction_output_struct(
                 "sentence_id": (NonEmptyStr, ...),
                 "justification": (NonEmptyStr, ...),
             }
-            SentenceModel = create_model(
+            # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+            sentence_model = create_model(
                 "SentenceModel",
                 __config__=ConfigDict(extra="forbid"),
-                **sentence_model_kwargs,
+                **cast(Any, sentence_model_kwargs),
             )
             paragraph_model_kwargs = {
                 "paragraph_id": (NonEmptyStr, ...),
-                "sentences": (list[SentenceModel], ...),
+                "sentences": (list[sentence_model], ...),
             }
         # Paragraph-level reference depth
         else:
@@ -73,14 +75,15 @@ def _get_aspect_extraction_output_struct(
                 "paragraph_id": (NonEmptyStr, ...),
                 "justification": (NonEmptyStr, ...),
             }
-        ParagraphModel = create_model(
+        # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+        paragraph_model = create_model(
             "ParagraphModel",
             __config__=ConfigDict(extra="forbid"),
-            **paragraph_model_kwargs,
+            **cast(Any, paragraph_model_kwargs),
         )
         aspect_model_kwargs = {
             "aspect_id": (NonEmptyStr, ...),
-            "paragraphs": (list[ParagraphModel], ...),
+            "paragraphs": (list[paragraph_model], ...),
         }
 
     else:
@@ -89,23 +92,25 @@ def _get_aspect_extraction_output_struct(
             sentence_model_kwargs = {
                 "sentence_id": (NonEmptyStr, ...),
             }
-            SentenceModel = create_model(
+            # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+            sentence_model = create_model(
                 "SentenceModel",
                 __config__=ConfigDict(extra="forbid"),
-                **sentence_model_kwargs,
+                **cast(Any, sentence_model_kwargs),
             )
             paragraph_model_kwargs = {
                 "paragraph_id": (NonEmptyStr, ...),
-                "sentences": (list[SentenceModel], ...),
+                "sentences": (list[sentence_model], ...),
             }
-            ParagraphModel = create_model(
+            # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+            paragraph_model = create_model(
                 "ParagraphModel",
                 __config__=ConfigDict(extra="forbid"),
-                **paragraph_model_kwargs,
+                **cast(Any, paragraph_model_kwargs),
             )
             aspect_model_kwargs = {
                 "aspect_id": (NonEmptyStr, ...),
-                "paragraphs": (list[ParagraphModel], ...),
+                "paragraphs": (list[paragraph_model], ...),
             }
         # Paragraph-level reference depth
         else:
@@ -114,10 +119,11 @@ def _get_aspect_extraction_output_struct(
                 "paragraph_ids": (list[NonEmptyStr], ...),
             }
 
-    AspectModel = create_model(
+    # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+    aspect_model = create_model(
         "AspectModel",
         __config__=ConfigDict(extra="forbid"),
-        **aspect_model_kwargs,
+        **cast(Any, aspect_model_kwargs),
     )
-    DynamicRootModel = _create_root_model("DynamicRootModel", list[AspectModel])
-    return DynamicRootModel
+    dynamic_root_model = _create_root_model("DynamicRootModel", list[aspect_model])
+    return dynamic_root_model

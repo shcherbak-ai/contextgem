@@ -31,10 +31,14 @@ assignable object.
 
 from __future__ import annotations
 
-from pydantic import Field
+from collections.abc import Sequence
+from typing import Annotated
+
+from pydantic import BeforeValidator, Field
 
 from contextgem.internal.base.attrs import _AssignedInstancesProcessor
 from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.typings.validators import _validate_sequence_is_list
 from contextgem.public.aspects import Aspect
 
 
@@ -64,4 +68,8 @@ class DocumentPipeline(_AssignedInstancesProcessor):
     """
 
     aspects: list[Aspect] = Field(default_factory=list)
-    concepts: list[_Concept] = Field(default_factory=list)
+    concepts: Annotated[
+        Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)
+    ] = Field(
+        default_factory=list
+    )  # using Sequence field with list validator for type checking

@@ -29,6 +29,7 @@ import sys
 
 from loguru import logger
 
+
 DEFAULT_LOGGER_LEVEL = "INFO"
 
 # Dynamically control logging state with env vars

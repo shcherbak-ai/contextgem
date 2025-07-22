@@ -11,40 +11,30 @@ repos:
   - repo: local
     hooks:
 
-      # Use locally installed Black
-      - id: black
-        name: Black code formatter
-        entry: poetry run black contextgem dev tests
+      # Use locally installed Ruff for linting and auto-fixing
+      - id: ruff-check
+        name: Ruff linting
+        entry: uv run ruff check
         pass_filenames: false
         language: system
         files: '\.py$'
         stages: [pre-commit]
 
-      # Use locally installed isort
-      - id: isort
-        name: Sort imports
-        entry: poetry run isort contextgem dev tests
+      # Use locally installed Ruff for formatting
+      - id: ruff-format
+        name: Ruff formatting
+        entry: uv run ruff format
         pass_filenames: false
         language: system
         files: '\.py$'
         stages: [pre-commit]
 
-      # Poetry check
-      - id: poetry
-        name: Poetry check
-        entry: poetry check --lock
+      # uv lock check
+      - id: uv-lock
+        name: uv lock check
+        entry: uv lock --check
         pass_filenames: false
         language: system
-        stages: [pre-commit]
-        
-      # Export requirements files
-      - id: export-requirements
-        name: Export requirements files
-        entry: python
-        args: ["-c", "import subprocess; subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.main.txt']); subprocess.run(['poetry', 'export', '-f', 'requirements.txt', '--output', 'dev/requirements/requirements.dev.txt', '--with', 'dev'])"]
-        language: python
-        pass_filenames: false
-        always_run: true
         stages: [pre-commit]
       
       # Update README.md from template
@@ -75,10 +65,19 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+      # Pyright type checking
+      - id: pyright
+        name: Pyright type checking
+        entry: uv run pyright
+        pass_filenames: false
+        language: system
+        files: '\.py$'
+        stages: [pre-commit]
+
       # Bandit security check for contextgem
       - id: bandit-contextgem
         name: Bandit security check (contextgem)
-        entry: poetry run bandit -r contextgem
+        entry: uv run bandit -r contextgem
         pass_filenames: false
         language: system
         files: '\.py$'
@@ -87,8 +86,16 @@ repos:
       # Bandit security check for tests and dev (skip B101 - assert usage)
       - id: bandit-tests-dev
         name: Bandit security check (tests/dev)
-        entry: poetry run bandit -r tests dev --skip B101
+        entry: uv run bandit -r tests dev --skip B101
         pass_filenames: false
         language: system
         files: '\.py$'
+        stages: [pre-commit]
+
+      # Deptry dependency health check
+      - id: deptry
+        name: Deptry dependency health check
+        entry: uv run deptry .
+        pass_filenames: false
+        language: system
         stages: [pre-commit]

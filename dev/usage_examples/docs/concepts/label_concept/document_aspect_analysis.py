@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM, LabelConcept
 
+
 # Create a Document object from contract text
 contract_text = """
 SOFTWARE DEVELOPMENT AGREEMENT

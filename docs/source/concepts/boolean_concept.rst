@@ -54,42 +54,53 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.Boolea
 When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can specify the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the concept
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A clear description of what condition or property the concept evaluates and the criteria for determining true or false values
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
-     - bool
-     - Whether to include justifications for extracted items (defaults to ``False``). Justifications provide explanations of why the LLM extracted specific values and the reasoning behind the extraction, which is especially useful for complex extractions or when debugging results.
+     - ``bool``
+     - ``False``
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM extracted specific values and the reasoning behind the extraction, which is especially useful for complex extractions or when debugging results.
    * - ``justification_depth``
-     - str
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``
+     - ``str``
+     - ``"brief"``
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum sentences in a justification (defaults to ``2``)
+     - ``int``
+     - ``2``
+     - Maximum sentences in a justification.
    * - ``add_references``
-     - bool
-     - Whether to include source references for extracted items (defaults to ``False``). References indicate the specific locations in the document where evidence supporting the boolean determination was found, helping to trace back the true/false value to relevant content that influenced the decision.
+     - ``bool``
+     - ``False``
+     - Whether to include source references for extracted items. References indicate the specific locations in the document where evidence supporting the boolean determination was found, helping to trace back the true/false value to relevant content that influenced the decision.
    * - ``reference_depth``
-     - str
-     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``
+     - ``str``
+     - ``"paragraphs"``
+     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
    * - ``singular_occurrence``
-     - bool
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. Defaults to ``False`` (multiple extracted items are allowed). For boolean concepts, this parameter is particularly useful when you want to make a single true/false determination about the entire document (e.g., "contains confidential information") or a unique determination about a specific aspect (e.g., "is the payment schedule finalized"). This helps distinguish between evaluating overall document properties versus identifying multiple instances where a condition might be true/false. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "contains confidential information" vs "compliance violations").
+     - ``bool``
+     - ``False``
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. For boolean concepts, this parameter is particularly useful when you want to make a single true/false determination about the entire document (e.g., "contains confidential information") or a unique determination about a specific aspect (e.g., "is the payment schedule finalized"). This helps distinguish between evaluating overall document properties versus identifying multiple instances where a condition might be true/false. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "contains confidential information" vs "compliance violations").
    * - ``custom_data``
-     - dict
-     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks. Defaults to an empty dictionary.
+     - ``dict``
+     - ``{}``
+     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks.
 
 
 🚀 Advanced Usage

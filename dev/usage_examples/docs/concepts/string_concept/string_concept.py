@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, StringConcept
 
+
 # Create a Document object from text
 doc = Document(raw_text="My name is John Smith and I am 30 years old.")
 

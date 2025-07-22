@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, StringConcept
 
+
 # Sample document text (shortened for brevity)
 doc = Document(
     raw_text=(
@@ -50,9 +51,9 @@ doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(
 anomalies_concept = doc.concepts[0]
 # or `doc.get_concept_by_name("Anomalies")`
 for item in anomalies_concept.extracted_items:
-    print(f"Anomaly:")
+    print("Anomaly:")
     print(f"  {item.value}")
-    print(f"Justification:")
+    print("Justification:")
     print(f"  {item.justification}")
     print("Reference paragraphs:")
     for p in item.reference_paragraphs:

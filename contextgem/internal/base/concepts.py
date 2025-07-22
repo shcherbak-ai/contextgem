@@ -41,9 +41,9 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     meaningful data points such as names, dates, values, or conclusions.
 
     :ivar name: The name of the concept.
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A brief description of the concept.
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar llm_role: The role of the LLM when processing this concept.
         Options: "extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision".
         Defaults to "extractor_text".
@@ -78,7 +78,7 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     reference_depth: ReferenceDepth = Field(default="paragraphs")
     singular_occurrence: StrictBool = Field(default=False)
 
-    _extracted_items: list[Any] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_ExtractedItem] = PrivateAttr(default_factory=list)
     _is_processed: StrictBool = PrivateAttr(default=False)
 
     @property

@@ -33,10 +33,11 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import Field, model_validator
+from typing_extensions import Self
 
 from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.base.paras_and_sents import _ParasAndSentsBase
-from contextgem.internal.typings.aliases import NonEmptyStr, Self
+from contextgem.internal.typings.aliases import NonEmptyStr
 from contextgem.public.sentences import Sentence
 
 
@@ -48,7 +49,7 @@ class Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
     are assigned to a paragraph, they cannot be changed to maintain data integrity during analysis.
 
     :ivar raw_text: The complete text content of the paragraph. This value is frozen after initialization.
-    :vartype raw_text: NonEmptyStr
+    :vartype raw_text: str
     :ivar sentences: The individual sentences contained within the paragraph. Defaults to an empty list.
         Cannot be reassigned once populated.
     :vartype sentences: list[Sentence]
@@ -78,13 +79,12 @@ class Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
         :raises ValueError: If attempting to reassign a restricted attribute
             after it has already been assigned to a *truthy* value.
         """
-        if name in ["sentences", "_md_text"]:
+        if name in ["sentences", "_md_text"] and getattr(self, name, None):
             # Prevent sentences and _md_text reassignment once populated,
             # to prevent inconsistencies in analysis.
-            if getattr(self, name, None):
-                raise ValueError(
-                    f"The attribute `{name}` cannot be changed once populated."
-                )
+            raise ValueError(
+                f"The attribute `{name}` cannot be changed once populated."
+            )
         if name == "_md_text":
             self._validate_md_text(value)
         super().__setattr__(name, value)
@@ -103,9 +103,10 @@ class Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
             the paragraph's raw text, or if `_md_text` is provided without `raw_text`
             being set.
         """
-        if self.sentences:
-            if not all(i.raw_text in self.raw_text for i in self.sentences):
-                raise ValueError("Not all sentences were matched in paragraph text.")
+        if self.sentences and not all(
+            i.raw_text in self.raw_text for i in self.sentences
+        ):
+            raise ValueError("Not all sentences were matched in paragraph text.")
 
         if self._md_text and not self.raw_text:
             raise ValueError(

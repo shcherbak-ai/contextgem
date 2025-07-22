@@ -1,5 +1,6 @@
 from contextgem import LLMPricing
 
+
 # Create a pricing model for an LLM (openai/o3-mini example)
 pricing = LLMPricing(
     input_per_1m_tokens=1.10,  # $1.10 per million input tokens

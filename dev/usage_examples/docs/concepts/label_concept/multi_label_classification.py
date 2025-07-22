@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, LabelConcept
 
+
 # Create a Document object with business document text covering multiple topics
 business_doc_text = """
 QUARTERLY BUSINESS REVIEW - Q4 2024

@@ -5,6 +5,7 @@ from pprint import pprint
 
 from contextgem import Document, DocumentLLM, JsonObjectConcept, JsonObjectExample
 
+
 # Document object with ambiguous medical report text
 medical_report = """
 PATIENT ASSESSMENT

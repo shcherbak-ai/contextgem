@@ -25,6 +25,7 @@ from contextgem.internal.llm_output_structs.concept_structs import (
 )
 from contextgem.internal.llm_output_structs.utils import _create_root_model
 
+
 __all__ = [
     # Utils
     "_create_root_model",

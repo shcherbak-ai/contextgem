@@ -26,6 +26,7 @@ from lxml import etree
 
 from contextgem.internal.converters.docx.namespaces import WORD_XML_NAMESPACES
 
+
 NUMBERED_LIST_FORMATS = frozenset(
     {
         "decimal",

@@ -7,6 +7,7 @@ from contextgem import (
     StringConcept,
 )
 
+
 # Create a pipeline for NDA (Non-Disclosure Agreement) review
 nda_pipeline = DocumentPipeline(
     aspects=[

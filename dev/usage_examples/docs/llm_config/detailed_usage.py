@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM
 
+
 llm = DocumentLLM(
     model="openai/gpt-4.1",
     api_key="<your-openai-api-key>",

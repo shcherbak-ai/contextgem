@@ -29,10 +29,11 @@ and deserialization process.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 from aiolimiter import AsyncLimiter
 from pydantic import BaseModel, field_validator
@@ -42,13 +43,15 @@ from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
 from contextgem.internal.typings.types_normalization import _normalize_type_annotation
 from contextgem.internal.typings.types_to_strings import _serialize_type_hint
 
+
 if TYPE_CHECKING:
     from contextgem.internal.base.concepts import _Concept
-    from contextgem.internal.base.items import _ExtractedItem
     from contextgem.internal.base.examples import _Example
+    from contextgem.internal.base.items import _ExtractedItem
     from contextgem.internal.data_models import _LLMCost
 
-from contextgem.internal.typings.aliases import Self
+from typing_extensions import Self
+
 
 # Public attrs
 KEY_ASPECTS_PUBLIC = "aspects"
@@ -108,7 +111,7 @@ class _InstanceSerializer(BaseModel):
         from contextgem.internal.data_models import _LLMCost, _LLMUsage
         from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
 
-        if isinstance(self, (DocumentLLM, DocumentLLMGroup)):
+        if isinstance(self, DocumentLLM | DocumentLLMGroup):
             logger.info(
                 "API credentials and usage/cost stats are removed from the serialized LLM/LLM group."
             )
@@ -229,6 +232,8 @@ class _InstanceSerializer(BaseModel):
                 result[key] = [self._serialize_structure_dict(value[0])]
             # Other cases
             else:
+                # Safe cast: After normalization, value should be a type hint
+                # Type checker needs help to recognize this is a valid type hint format
                 result[key] = _serialize_type_hint(value)
 
         return result
@@ -274,7 +279,7 @@ class _InstanceSerializer(BaseModel):
         :type file_path: str | Path
         :return: None
         :raises ValueError: If the file path doesn't end with '.json'.
-        :raises IOError: If there's an error during the file writing process.
+        :raises RuntimeError: If there's an error during the file writing process.
         """
         # Convert to Path for consistent handling
         path_obj = Path(file_path)
@@ -286,7 +291,7 @@ class _InstanceSerializer(BaseModel):
             with open(path_obj, "w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=2)
         except Exception as e:
-            raise IOError(f"Failed to save the instance to {path_obj}: {e}")
+            raise RuntimeError(f"Failed to save the instance to {path_obj}: {e}") from e
 
     @classmethod
     def from_disk(cls, file_path: str | Path) -> Self:
@@ -303,7 +308,6 @@ class _InstanceSerializer(BaseModel):
         :return: An instance of the class populated with the data from the file.
         :rtype: Self
         :raises ValueError: If the file path doesn't end with '.json'.
-        :raises OSError: If there's an error reading the file.
         :raises RuntimeError: If deserialization fails.
         """
         # Convert to Path for consistent handling
@@ -311,14 +315,12 @@ class _InstanceSerializer(BaseModel):
         if path_obj.suffix.lower() != ".json":
             raise ValueError("The file path must end with '.json'")
         try:
-            with open(path_obj, "r", encoding="utf-8") as file:
+            with open(path_obj, encoding="utf-8") as file:
                 # We do not use json.load() here as we need to transform specific attributes,
                 # which are serialized in the JSON string, by using cls.from_json().
                 json_data = file.read()
             # Deserialize the JSON content into an instance
             return cls.from_json(json_data)
-        except OSError as e:
-            raise OSError(f"Failed to read file {path_obj}: {e}") from e
         except Exception as e:
             raise RuntimeError(
                 f"Failed to load the instance from {path_obj}: {e}"
@@ -362,13 +364,19 @@ class _InstanceSerializer(BaseModel):
             entity_d: dict[str, Any], module: Any
         ) -> _Concept | _ExtractedItem | _Example:
             class_name = entity_d.get(KEY_CLASS_PRIVATE)
+            if class_name is None:
+                raise ValueError("Missing class name in serialized dictionary")
+            if not isinstance(class_name, str):
+                raise TypeError(
+                    f"Class name must be a string, got {type(class_name).__name__}"
+                )
             entity_class = getattr(module, class_name, None)
             if entity_class is None:
                 raise TypeError(f"{class_name} not found in module.")
             return entity_class.from_dict(entity_d)
 
         def lambda_list_val(
-            instance_cls: Optional[type] = None, module: Optional[Any] = None
+            instance_cls: type | None = None, module: Any | None = None
         ) -> Callable[[Any], Any]:
             return lambda val: [
                 (
@@ -460,10 +468,7 @@ class _InstanceSerializer(BaseModel):
         private_attrs: dict[str, Any] = {}
 
         for k, v in obj_dict.items():
-            if k in rebuild_map:
-                final_val = rebuild_map[k](v)
-            else:
-                final_val = v
+            final_val = rebuild_map[k](v) if k in rebuild_map else v
             # If it's a private attr, collect for assignment separately
             if k.startswith("_"):
                 private_attrs[k] = final_val
@@ -541,5 +546,5 @@ class _InstanceSerializer(BaseModel):
         from contextgem.internal.utils import _is_json_serializable
 
         if not _is_json_serializable(value):
-            raise ValueError(f"`custom_data` must be JSON serializable.")
+            raise ValueError("`custom_data` must be JSON serializable.")
         return value

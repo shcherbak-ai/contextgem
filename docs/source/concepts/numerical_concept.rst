@@ -55,45 +55,57 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.Numeri
 When creating a :class:`~contextgem.public.concepts.NumericalConcept`, you can specify the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the concept
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A clear description of what numerical value to extract, which can include explicit values to find, calculations to perform, or quantitative assessments to derive from the document content
    * - ``numeric_type``
-     - str
-     - The type of numerical values to extract. Available values: ``"int"``, ``"float"``, ``"any"``. Defaults to ``"any"``. When ``"any"`` is specified, the system will automatically determine whether to use an integer or floating-point representation based on the extracted value, choosing the most appropriate type for each numerical item.
+     - ``str``
+     - ``"any"``
+     - The type of numerical values to extract. Available values: ``"int"``, ``"float"``, ``"any"``. When ``"any"`` is specified, the system will automatically determine whether to use an integer or floating-point representation based on the extracted value, choosing the most appropriate type for each numerical item.
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
-     - bool
-     - Whether to include justifications for extracted items (defaults to ``False``). Justifications provide explanations of why the LLM extracted specific numerical values and the reasoning behind the extraction, which is especially useful for complex calculations, inferred values, or when debugging results.
+     - ``bool``
+     - ``False``
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM extracted specific numerical values and the reasoning behind the extraction, which is especially useful for complex calculations, inferred values, or when debugging results.
    * - ``justification_depth``
-     - str
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``
+     - ``str``
+     - ``"brief"``
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum sentences in a justification (defaults to ``2``)
+     - ``int``
+     - ``2``
+     - Maximum sentences in a justification.
    * - ``add_references``
-     - bool
-     - Whether to include source references for extracted items (defaults to ``False``). References indicate the specific locations in the document where the numerical values were either directly found or from which they were calculated or inferred, helping to trace back extracted values to their source content even when the extraction involves complex calculations or mathematical reasoning.
+     - ``bool``
+     - ``False``
+     - Whether to include source references for extracted items. References indicate the specific locations in the document where the numerical values were either directly found or from which they were calculated or inferred, helping to trace back extracted values to their source content even when the extraction involves complex calculations or mathematical reasoning.
    * - ``reference_depth``
-     - str
-     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``
+     - ``str``
+     - ``"paragraphs"``
+     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
    * - ``singular_occurrence``
-     - bool
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single numerical value will be extracted. Defaults to ``False`` (multiple numerical values are allowed). For numerical concepts, this parameter is particularly useful when you want to extract a single specific value rather than identifying multiple numerical values throughout the document. This helps distinguish between single-value concepts versus multi-value concepts (e.g., *"total contract value"* vs *"all payment amounts"*). Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type.
+     - ``bool``
+     - ``False``
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single numerical value will be extracted. For numerical concepts, this parameter is particularly useful when you want to extract a single specific value rather than identifying multiple numerical values throughout the document. This helps distinguish between single-value concepts versus multi-value concepts (e.g., *"total contract value"* vs *"all payment amounts"*). Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type.
    * - ``custom_data``
-     - dict
-     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks. Defaults to an empty dictionary.
+     - ``dict``
+     - ``{}``
+     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks.
 
 
 🚀 Advanced Usage

@@ -34,6 +34,7 @@ import yaml
 from contextgem.internal.loggers import logger
 from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX
 
+
 # API URL domains used during tests, before any URL redaction occurs
 APPROVED_URL_DOMAINS_BEFORE_RECORDING = {
     "openai.azure.com",  # Azure OpenAI
@@ -124,7 +125,7 @@ def validate_existing_cassettes_urls_security(
         results["total_files"] += 1
 
         try:
-            with open(cassette_file, "r", encoding="utf-8") as f:
+            with open(cassette_file, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             if not data or "interactions" not in data:

@@ -24,11 +24,13 @@ import pytest
 
 from contextgem.internal.utils import _suppress_litellm_pydantic_warnings_context
 
+
 with _suppress_litellm_pydantic_warnings_context():
     import litellm
 
 from contextgem.internal.loggers import logger
 from contextgem.public.utils import reload_logger_settings
+
 
 # Memory profiling behavior
 _ENABLE_MEMORY_PROFILING_FLAG = "--mem-profile"

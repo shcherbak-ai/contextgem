@@ -1,5 +1,6 @@
 from contextgem import BooleanConcept
 
+
 # Create the concept with specific configuration
 has_confidentiality = BooleanConcept(
     name="Contains confidentiality clause",
