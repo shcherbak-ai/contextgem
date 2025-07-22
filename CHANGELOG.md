@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.12.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.12.0) - 2025-07-22
+### Fixed
+- BooleanConcept extraction for valid False values: Improved instructions in the concepts extraction prompt to fix a bug where no items were extracted for BooleanConcept with expected valid False values. The concept could be incorrectly considered "not addressed", resulting in empty extraction results.
+
+### Changed
+- Enhanced documentation: Added more details to parameter tables for Aspects API, Concepts API, and LLM config documentation.
+
 ## [0.11.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.11.1) - 2025-07-11
 ### Fixed
 - Allow disabling system message (e.g. for basic chat interactions): Added support for omitting system messages in DocumentLLM by allowing empty strings, which prevents sending any system message to the LLM. Introduced a warning in `llm.chat()/llm.chat_async()` when the default system message (optimized for extraction tasks) is used. Updated initialization to set default system message only when needed, ensuring flexibility for basic chat without a system message.
