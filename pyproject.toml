@@ -1,26 +1,12 @@
 [project]
 name = "contextgem"
-version = "0.11.1"
+version = "0.12.0"
 description = "Effortless LLM extraction from documents"
-authors = [
-    {name = "shcherbak-ai", email = "sergii@shcherbak.ai"}
-]
-maintainers = [
-    {name = "shcherbak-ai", email = "sergii@shcherbak.ai"}
-]
-readme = "README.md"
+authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 requires-python = ">=3.10,<3.14"
-dependencies = [
-    "aiolimiter (>=1.2.1,<2.0.0)",
-    "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm (>=1.71.1,<2.0.0)",
-    "loguru (>=0.7.3,<0.8.0)",
-    "lxml (>=5.4.0,<6.0.0)",
-    "pydantic (>=2.10.6,<3.0.0)",
-    "python-ulid (>=3.0.0,<4.0.0)",
-    "wtpsplit-lite (>=0.2.0,<0.3.0)",
-]
-license = {text = "Apache-2.0"}
+readme = "README.md"
+license = { text = "Apache-2.0" }
+maintainers = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 keywords = [
     "artificial-intelligence",
     "aspect-extraction",
@@ -36,7 +22,7 @@ keywords = [
     "contract-parsing",
     "contract-review",
     "data-extraction",
-    "document", 
+    "document",
     "document-analysis",
     "document-extraction",
     "document-intelligence",
@@ -56,7 +42,7 @@ keywords = [
     "knowledge-extraction",
     "large-language-models",
     "legaltech",
-    "llm", 
+    "llm",
     "llm-extraction",
     "llm-framework",
     "llm-library",
@@ -72,7 +58,7 @@ keywords = [
     "question-answering",
     "reference-mapping",
     "semantic-analysis",
-    "structured-data", 
+    "structured-data",
     "structured-data-extraction",
     "text-analysis",
     "text-processing",
@@ -105,6 +91,17 @@ classifiers = [
     "Topic :: Text Processing :: General",
     "Topic :: Text Processing :: Linguistic",
 ]
+dependencies = [
+    "aiolimiter (>=1.2.1,<2.0.0)",
+    "jinja2 (>=3.1.5,<4.0.0)",
+    "litellm (>=1.71.1,<2.0.0)",
+    "loguru (>=0.7.3,<0.8.0)",
+    "lxml (>=5.4.0,<6.0.0)",
+    "pydantic (>=2.10.6,<3.0.0)",
+    "python-ulid (>=3.0.0,<4.0.0)",
+    "typing-extensions>=4.14.1",
+    "wtpsplit-lite (>=0.2.0,<0.3.0)",
+]
 
 [project.urls]
 Homepage = "https://github.com/shcherbak-ai/contextgem"
@@ -112,37 +109,82 @@ Documentation = "https://github.com/shcherbak-ai/contextgem/blob/main/README.md"
 Repository = "https://github.com/shcherbak-ai/contextgem.git"
 "Bug Tracker" = "https://github.com/shcherbak-ai/contextgem/issues"
 
-[tool.poetry]
+[dependency-groups]
+dev = [
+    "coverage>=7.6.12,<8",
+    "pytest>=8.3.4,<9",
+    "pytest-cov>=6.0.0,<7",
+    "python-dotenv>=1.0.1,<2",
+    "pip-tools>=7.4.1,<8",
+    "pre-commit>=4.1.0,<5",
+    "sphinx>=7.0.0,<8.0.0",
+    "sphinx-autodoc-typehints<3.0.0",
+    "sphinx-book-theme>=1.1.4,<2",
+    "sphinx-copybutton>=0.5.2,<0.6",
+    "sphinx-design>=0.6.1,<0.7",
+    "sphinxext-opengraph>=0.9.1,<0.10",
+    "nbformat>=5.10.4,<6",
+    "commitizen>=4.5.1,<5",
+    "sphinx-sitemap>=2.6.0,<3",
+    "pytest-recording>=0.13.4,<0.14",
+    "bandit>=1.8.3,<2",
+    "pympler~=1.1",
+    "memory-profiler>=0.61.0,<0.62",
+    "ruff>=0.12.3",
+    "pyright>=1.1.403",
+    "types-lxml>=2025.3.30",
+    "deptry>=0.23.0",
+]
 
-[tool.poetry.group.dev.dependencies]
-coverage = "^7.6.12"
-pytest = "^8.3.4"
-pytest-cov = "^6.0.0"
-python-dotenv = "^1.0.1"
-pip-tools = "^7.4.1"
-pre-commit = "^4.1.0"
-isort = "^6.0.1"
-sphinx = ">=7.0.0,<8.0.0"
-sphinx-autodoc-typehints = "<3.0.0"
-sphinx-book-theme = "^1.1.4"
-sphinx-copybutton = "^0.5.2"
-sphinx-design = "^0.6.1"
-sphinxext-opengraph = "^0.9.1"
-nbformat = "^5.10.4"
-commitizen = "^4.5.1"
-sphinx-sitemap = "^2.6.0"
-pytest-recording = "^0.13.4"
-bandit = "^1.8.3"
-pympler = "^1.1"
-memory-profiler = "^0.61.0"
-black = "^25.1.0"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.black]
+[tool.hatch.build.targets.sdist]
+include = [
+  "/contextgem",
+  "/README.md",
+  "/LICENSE", 
+  "/NOTICE",
+  "/pyproject.toml"
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+  "/contextgem"
+]
+
+[tool.ruff]
 line-length = 88
+target-version = "py310"
+indent-width = 4
+exclude = [
+    ".venv",
+    "notebooks",
+    "dev/usage_examples/vs_other_frameworks",
+]
 
-[tool.isort]
-profile = "black"
-line_length = 88
+[tool.ruff.lint]
+extend-select = ["I", "B", "UP", "N", "SIM"]
+
+[tool.ruff.lint.isort]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+exclude = [
+    ".venv",
+    "notebooks",
+    "dev/usage_examples/vs_other_frameworks",
+]
 
 [tool.pytest.ini_options]
 addopts = "-vv -s"
@@ -152,6 +194,8 @@ log_cli_level = "WARNING"
 [tool.commitizen]
 name = "cz_conventional_commits"
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.deptry]
+extend_exclude = [
+    "dev/usage_examples/vs_other_frameworks",
+    "dev/generate_notebooks.py",
+]

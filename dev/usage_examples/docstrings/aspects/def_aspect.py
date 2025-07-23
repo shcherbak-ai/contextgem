@@ -1,5 +1,6 @@
 from contextgem import Aspect
 
+
 # Define an aspect focused on termination clauses
 termination_aspect = Aspect(
     name="Termination provisions",

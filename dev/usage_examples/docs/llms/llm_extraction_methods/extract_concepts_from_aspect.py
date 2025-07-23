@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM, NumericalConcept, StringConcept
 
+
 # Sample text content
 text_content = """
 DataFlow Systems is an innovative fintech startup that was established in 2020 in Austin, Texas.

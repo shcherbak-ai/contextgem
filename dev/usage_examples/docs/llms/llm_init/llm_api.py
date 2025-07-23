@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM
 
+
 # Pattern for using any cloud LLM provider
 llm = DocumentLLM(
     model="<provider>/<model_name>",

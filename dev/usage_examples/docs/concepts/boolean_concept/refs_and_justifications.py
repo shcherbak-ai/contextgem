@@ -4,6 +4,7 @@ import os
 
 from contextgem import BooleanConcept, Document, DocumentLLM
 
+
 # Sample document text containing policy information
 policy_text = """
 Company Data Retention Policy (Updated 2024)

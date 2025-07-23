@@ -2,25 +2,17 @@
 
 # ContextGem: Effortless LLM extraction from documents
 
-[![tests](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml)
-[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json)](https://github.com/shcherbak-ai/contextgem/actions)
-[![docs](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml)
-[![documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://shcherbak-ai.github.io/contextgem/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-bright.svg)](https://opensource.org/licenses/Apache-2.0)
-![PyPI](https://img.shields.io/pypi/v/contextgem)
-[![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/)
-[![CodeQL](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml)
-[![bandit security](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort/)
-[![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://pydantic.dev)
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
-[![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem)
-[![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit)](https://github.com/shcherbak-ai/contextgem/commits/main)
+|          |        |
+|----------|--------|
+| **Package** | ![PyPI](https://img.shields.io/pypi/v/contextgem?logo=pypi&label=PyPi&logoColor=gold) [![PyPI Downloads](https://static.pepy.tech/badge/contextgem/month)](https://pepy.tech/projects/contextgem) [![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=gold)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-Apache_2.0-bright.svg)](https://opensource.org/licenses/Apache-2.0) |
+| **Quality** | [![tests](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml) [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json)](https://github.com/shcherbak-ai/contextgem/actions) [![CodeQL](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml) [![bandit security](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10489/badge?1)](https://www.bestpractices.dev/projects/10489) |
+| **Tools** | [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://pydantic.dev) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit) [![deptry](https://img.shields.io/badge/deptry-checked-blue)](https://github.com/fpgmaas/deptry) [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch) |
+| **Docs** | [![docs](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml) [![documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://shcherbak-ai.github.io/contextgem/) [![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem) |
+| **Community** | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) [![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit)](https://github.com/shcherbak-ai/contextgem/commits/main) |
 
+<div align="center">
 <img src="https://contextgem.dev/_static/tab_solid.png" alt="ContextGem: 2nd Product of the week" width="250">
+</div>
 <br/><br/>
 
 ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
@@ -183,8 +175,6 @@ With **minimal code**, you can:
 pip install -U contextgem
 ```
 
-> **⚡ v0.5.0+**: ContextGem now installs 7.5x faster with minimal dependencies (no torch/transformers required), making it easier to integrate into existing ML environments.
-
 
 ## 🚀 Quick start
 
@@ -194,6 +184,7 @@ pip install -U contextgem
 import os
 
 from contextgem import Document, DocumentLLM, StringConcept
+
 
 # Sample document text (shortened for brevity)
 doc = Document(
@@ -241,9 +232,9 @@ doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(
 anomalies_concept = doc.concepts[0]
 # or `doc.get_concept_by_name("Anomalies")`
 for item in anomalies_concept.extracted_items:
-    print(f"Anomaly:")
+    print("Anomaly:")
     print(f"  {item.value}")
-    print(f"Justification:")
+    print("Justification:")
     print(f"  {item.justification}")
     print("Reference paragraphs:")
     for p in item.reference_paragraphs:
@@ -290,6 +281,7 @@ ContextGem provides built-in converter to easily transform DOCX files into LLM-r
 # Using ContextGem's DocxConverter
 
 from contextgem import DocxConverter
+
 
 converter = DocxConverter()
 
@@ -398,6 +390,7 @@ ContextGem relies on these excellent open-source packages:
 - [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
 - [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
+- [typing-extensions](https://github.com/python/typing_extensions): Backports of the latest typing features for enhanced type annotations
 - [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
 
 

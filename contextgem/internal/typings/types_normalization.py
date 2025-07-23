@@ -24,7 +24,7 @@ Provides functions to standardize type hints across different typing notations
 with JSON serialization requirements.
 """
 
-from typing import Any, Dict, List, Optional, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, Union, get_args, get_origin  # noqa: UP035
 
 
 def _normalize_type_annotation(tp: Any) -> Any:
@@ -48,9 +48,9 @@ def _normalize_type_annotation(tp: Any) -> Any:
         return tp
 
     # Handle direct typing module types (without args)
-    if tp is List:
+    if tp is List:  # noqa: UP006
         return list
-    if tp is Dict:
+    if tp is Dict:  # noqa: UP006
         return dict
 
     # Get origin and arguments of the type
@@ -63,8 +63,8 @@ def _normalize_type_annotation(tp: Any) -> Any:
 
     # Direct mapping for common roots
     origin_map = {
-        List: list,
-        Dict: dict,
+        List: list,  # noqa: UP006
+        Dict: dict,  # noqa: UP006
     }
 
     # Unsupported types check
@@ -81,7 +81,7 @@ def _normalize_type_annotation(tp: Any) -> Any:
     if normalized_origin is list:
         if not args:
             return list
-        if len(args) > 1:
+        if len(args) != 1:
             raise ValueError(
                 f"List type annotation must have exactly one type argument, got {len(args)}: {tp}"
             )
@@ -100,24 +100,28 @@ def _normalize_type_annotation(tp: Any) -> Any:
 
         # Normalize all arguments
         normalized_args = tuple(_normalize_type_annotation(arg) for arg in args)
+        if len(normalized_args) == 0:
+            raise ValueError(
+                f"Union type annotation must have at least one type argument, got {len(args)}: {tp}"
+            )
 
         # Optional is just Union with NoneType, so standardize to Union
         if origin is Optional:
             if type(None) not in normalized_args:
                 normalized_args = normalized_args + (type(None),)
-            return (
-                Union[normalized_args]
-                if len(normalized_args) > 1
-                else normalized_args[0]
-            )
+            if len(normalized_args) == 1:
+                return normalized_args[0]
+            else:
+                return Union[normalized_args]  # noqa: UP007
 
         # Handle Union
         if len(normalized_args) == 1:
             return normalized_args[0]
         if len(normalized_args) == 2:
-            return Union[normalized_args[0], normalized_args[1]]
+            return Union[normalized_args[0], normalized_args[1]]  # noqa: UP007
         # For more than two types, we need to use __getitem__ with tuple
-        return Union.__getitem__(normalized_args)
+        # Type checker doesn't recognize Union.__getitem__ method, which works at runtime
+        return Union.__getitem__(normalized_args)  # type: ignore
 
     # For other types with origin/args, keep the general structure
     # but normalize the arguments

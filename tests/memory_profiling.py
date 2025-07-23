@@ -44,17 +44,18 @@ import io
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar, cast
 
 from memory_profiler import profile
 from pympler import asizeof
 
-from contextgem import *
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.llms import _GenericLLMProcessor
 from contextgem.internal.loggers import logger
 from tests.conftest import is_memory_profiling_enabled
+
 
 # Default memory limits (in MiB) for memory usage checks.
 # These should be reasonable limits to cover most comprehensive and complex test cases,
@@ -118,7 +119,7 @@ def check_object_memory_usage(
         size_bytes = asizeof.flatsize(obj)
         calculation_type = "shallow"
 
-    size_mib = size_bytes / (1024 * 1024)  # MiB
+    size_mib = cast(int, size_bytes) / (1024 * 1024)  # MiB
 
     logger.debug(
         f"Memory usage of {obj_name} ({calculation_type}): "
@@ -255,7 +256,7 @@ def check_locals_memory_usage(
                 f"Found target object: {var_name} = {var_value.__class__.__name__}"
             )
         # Also check if it's a list/tuple containing target objects
-        elif isinstance(var_value, (list, tuple)):
+        elif isinstance(var_value, list | tuple):
             for i, item in enumerate(var_value):
                 if is_target_object(item):
                     captured_objects.append(item)
@@ -340,8 +341,8 @@ def check_locals_memory_usage(
 
 
 def memory_profile_and_capture(
-    func: Optional[F] = None, *, max_memory: float = MAX_TOTAL_MEMORY_PER_TEST
-) -> Any:
+    func: F | None = None, *, max_memory: float = MAX_TOTAL_MEMORY_PER_TEST
+) -> F | Callable[[F], F]:
     """
     Decorator that wraps a test method with memory_profiler and captures its output.
     Stores the profiling output in the class's `memory_profiles` dictionary.
@@ -370,12 +371,12 @@ def memory_profile_and_capture(
     instance attribute or class attribute. Raises AttributeError if not found.
 
     :param func: The function to be profiled (None when used with parameters)
-    :type func: Optional[F]
+    :type func: F | None
     :param max_memory: Maximum allowed memory delta in MiB. Defaults to
         MAX_TOTAL_MEMORY_PER_TEST.
     :type max_memory: float
     :return: The wrapped function or decorator
-    :rtype: Any
+    :rtype: F | Callable[[F], F]
     :raises AttributeError: If neither `self.memory_profiles` nor
         `self.__class__.memory_profiles` exists
     :raises AssertionError: If the method's memory delta exceeds max_memory
@@ -384,7 +385,6 @@ def memory_profile_and_capture(
     def decorator(f: F) -> F:
         @wraps(f)
         def wrapper(self, *args, **kwargs):
-
             # Check if memory profiling is disabled
             if not is_memory_profiling_enabled():
                 logger.debug(
@@ -394,7 +394,7 @@ def memory_profile_and_capture(
 
             # Helper function to get or set attribute in instance or class
             def get_or_set_memory_attribute(
-                attr_name: str, value: Any = None
+                attr_name: str, value: Any | None = None
             ) -> dict | None:
                 if hasattr(self, attr_name):
                     if value:
@@ -418,26 +418,30 @@ def memory_profile_and_capture(
             # Check if baseline has been established
             baseline_method_name = "test_establish_memory_baseline"
             if (
-                baseline_method_name not in memory_profiles
+                # Safe cast: memory_profiles is a dict
+                baseline_method_name not in cast(dict, memory_profiles)
                 and f.__name__ != baseline_method_name
+                and hasattr(self, baseline_method_name)
             ):
                 # Run the baseline method first
-                if hasattr(self, baseline_method_name):
-                    logger.debug("Running baseline memory profiling first...")
-                    baseline_method = getattr(self, baseline_method_name)
-                    # Run baseline method with profiling
-                    baseline_buf = io.StringIO()
-                    baseline_original_stdout = sys.stdout
-                    sys.stdout = baseline_buf
-                    try:
-                        baseline_profiled_func = profile(baseline_method)
-                        baseline_profiled_func()
-                    finally:
-                        sys.stdout = baseline_original_stdout
-                        # Store the captured profiling output in the class's memory_profiles dictionary
-                        baseline_profile_output = baseline_buf.getvalue()
-                        memory_profiles[baseline_method_name] = baseline_profile_output
-                        logger.debug("Baseline memory profiling completed.")
+                logger.debug("Running baseline memory profiling first...")
+                baseline_method = getattr(self, baseline_method_name)
+                # Run baseline method with profiling
+                baseline_buf = io.StringIO()
+                baseline_original_stdout = sys.stdout
+                sys.stdout = baseline_buf
+                try:
+                    baseline_profiled_func = profile(baseline_method)
+                    baseline_profiled_func()  # type: ignore
+                finally:
+                    sys.stdout = baseline_original_stdout
+                    # Store the captured profiling output in the class's memory_profiles dictionary
+                    baseline_profile_output = baseline_buf.getvalue()
+                    # Safe cast: memory_profiles is a dict
+                    cast(dict, memory_profiles)[baseline_method_name] = (
+                        baseline_profile_output
+                    )
+                    logger.debug("Baseline memory profiling completed.")
 
             # Create a StringIO buffer to capture stdout
             buf = io.StringIO()
@@ -453,30 +457,38 @@ def memory_profile_and_capture(
                 sys.stdout = original_stdout
                 # Store the captured profiling output in the class's memory_profiles dictionary
                 profile_output = buf.getvalue()
-                memory_profiles[f.__name__] = profile_output
+                # Safe cast: memory_profiles is a dict
+                cast(dict, memory_profiles)[f.__name__] = profile_output
 
                 # Only try to extract memory usage if we have valid profiler output
                 if profile_output.strip():
                     try:
-                        current_memory = extract_final_memory_usage(profile_output)
+                        current_memory: float = extract_final_memory_usage(
+                            profile_output
+                        )
                         logger.debug(
                             f"Current memory usage for {f.__name__}: {current_memory:.6f} MiB"
                         )
 
                         # Calculate memory delta if not the baseline method
                         if f.__name__ != baseline_method_name:
-                            baseline_memory = get_or_set_memory_attribute(
-                                "memory_baseline"
+                            # Safe cast: memory_baseline is a float
+                            baseline_memory = cast(
+                                float, get_or_set_memory_attribute("memory_baseline")
                             )
 
                             # If baseline memory is not set yet, extract it from the baseline profile
                             if (
                                 baseline_memory == 0.0
-                                and baseline_method_name in memory_profiles
+                                # Safe cast: memory_profiles is a dict
+                                and baseline_method_name in cast(dict, memory_profiles)
                             ):
                                 try:
                                     baseline_memory = extract_final_memory_usage(
-                                        memory_profiles[baseline_method_name]
+                                        # Safe cast: memory_profiles is a dict
+                                        cast(dict, memory_profiles)[
+                                            baseline_method_name
+                                        ]
                                     )
                                     # Validate against maximum allowed baseline memory limit
                                     if baseline_memory > MAX_BASELINE_MEMORY:
@@ -496,7 +508,10 @@ def memory_profile_and_capture(
 
                             # Calculate cumulative memory deltas from all previous tests
                             cumulative_previous_deltas = 0.0
-                            for prev_method_name, prev_delta in memory_deltas.items():
+                            # Safe cast: memory_deltas is a dict
+                            for prev_method_name, prev_delta in cast(
+                                dict, memory_deltas
+                            ).items():
                                 if prev_method_name != f.__name__:
                                     cumulative_previous_deltas += prev_delta
 
@@ -508,7 +523,8 @@ def memory_profile_and_capture(
                             )
 
                             # Store this test's delta for future calculations
-                            memory_deltas[f.__name__] = memory_delta
+                            # Safe cast: memory_deltas is a dict
+                            cast(dict, memory_deltas)[f.__name__] = memory_delta
 
                             logger.info(
                                 f"~~~ Memory delta for {f.__name__}: {memory_delta:.6f} MiB "
@@ -535,7 +551,8 @@ def memory_profile_and_capture(
                                 "memory_baseline", baseline_memory
                             )
                             # For the baseline method, delta is 0
-                            memory_deltas[f.__name__] = 0.0
+                            # Safe cast: memory_deltas is a dict
+                            cast(dict, memory_deltas)[f.__name__] = 0.0
 
                     except ValueError as e:
                         # If profiler output is malformed, re-raise with more context
@@ -545,15 +562,19 @@ def memory_profile_and_capture(
                         ) from e
 
             # Output the current memory usage statistics in each test method
-            baseline_memory = get_or_set_memory_attribute("memory_baseline")
-            memory_deltas = get_or_set_memory_attribute("memory_deltas")
+            baseline_memory = cast(
+                float, get_or_set_memory_attribute("memory_baseline")
+            )
+            memory_deltas = cast(
+                dict[str, float], get_or_set_memory_attribute("memory_deltas")
+            )
             output_current_memory_usage_stats(
                 baseline_memory, memory_deltas, max_memory
             )
 
             return result
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]  # functools.wraps changes the wrapper type
 
     if func is None:
         # Called with parameters: e.g. `@memory_profile_and_capture(max_memory=1.0)`
@@ -697,6 +718,6 @@ def output_current_memory_usage_stats(
     if all_non_baseline_deltas:
         logger.info(
             f"Overall - Min: {min(all_non_baseline_deltas):.6f} MiB, "
-            f"Avg: {sum(all_non_baseline_deltas)/len(all_non_baseline_deltas):.6f} MiB, "
+            f"Avg: {sum(all_non_baseline_deltas) / len(all_non_baseline_deltas):.6f} MiB, "
             f"Max: {max(all_non_baseline_deltas):.6f} MiB"
         )

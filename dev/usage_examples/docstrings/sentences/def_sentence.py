@@ -1,5 +1,6 @@
 from contextgem import Sentence
 
+
 # Create a sentence with raw text content
 sentence = Sentence(raw_text="This is a simple sentence.")
 

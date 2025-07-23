@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, LabelConcept
 
+
 # Create a Document object from legal document text
 legal_doc_text = """
 NON-DISCLOSURE AGREEMENT

@@ -87,6 +87,7 @@ from contextgem.internal.typings import (
     _raise_dict_class_type_error,
     _raise_json_serializable_type_error,
     _serialize_type_hint,
+    _validate_sequence_is_list,
 )
 from contextgem.internal.utils import (
     _async_multi_executor,
@@ -108,6 +109,7 @@ from contextgem.internal.utils import (
     _split_text_into_paragraphs,
     _validate_parsed_llm_output,
 )
+
 
 __all__ = [
     # Base
@@ -154,6 +156,7 @@ __all__ = [
     "_get_model_fields",
     "_raise_dict_class_type_error",
     "_normalize_type_annotation",
+    "_validate_sequence_is_list",
     # Data models
     "_LLMCall",
     "_LLMUsage",

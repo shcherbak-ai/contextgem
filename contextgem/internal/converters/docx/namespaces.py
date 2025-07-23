@@ -24,7 +24,6 @@ It provides a dictionary of namespace URIs mapped to their prefixes, which are
 used to parse and process the XML content of DOCX files.
 """
 
-
 # Define XML namespaces used in DOCX files
 WORD_XML_NAMESPACES = {
     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",

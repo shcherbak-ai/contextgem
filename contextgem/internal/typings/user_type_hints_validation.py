@@ -25,8 +25,7 @@ type information from different input formats, validating type compatibility wit
 serialization requirements, and ensuring type consistency across the application.
 """
 
-from types import GenericAlias, UnionType
-from typing import Union, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, create_model
 
@@ -37,8 +36,8 @@ from contextgem.internal.typings.types_to_strings import (
 
 
 def _extract_mapper(
-    user_mapper: dict[str, type | GenericAlias | UnionType | dict | list],
-) -> dict[str, type | GenericAlias | UnionType | dict | list]:
+    user_mapper: dict[str, Any],
+) -> dict[str, Any]:
     """
     Validates and returns a dictionary mapping field names to their corresponding type hints.
 
@@ -47,11 +46,11 @@ def _extract_mapper(
 
     :param user_mapper: A dictionary mapping string field names to type hints,
         nested dictionaries, or lists.
-    :type user_mapper: dict[str, type | GenericAlias | UnionType | dict | list]
+    :type user_mapper: dict[str, Any]
 
     :return: The validated dictionary mapping field names to type hints, nested dictionaries,
         or lists.
-    :rtype: dict[str, type | GenericAlias | UnionType | dict | list]
+    :rtype: dict[str, Any]
 
     :raises ValueError: If the input user_mapper is not a dictionary.
     """
@@ -61,16 +60,15 @@ def _extract_mapper(
         raise ValueError("`user_mapper` must be a dict.")
 
 
-def _is_optional(type_hint: type | GenericAlias | UnionType) -> bool:
+def _is_optional(type_hint: Any) -> bool:
     """
     Determines whether a given type hint is of an optional type.
 
     An optional type means that the type hint allows `None` as a valid value. This
     is typically represented by a `Union` that contains `NoneType`.
 
-    :param type_hint: The type hint to check. It can be a standard Python class,
-        a `GenericAlias`, or a `UnionType` defined using `Union` or the `|`
-        operator.
+    :param type_hint: The type hint to check.
+    :type type_hint: Any
     :return: A boolean value indicating whether the provided type hint is optional.
     :rtype: bool
     """
@@ -81,7 +79,7 @@ def _is_optional(type_hint: type | GenericAlias | UnionType) -> bool:
 
 
 def _dynamic_pydantic_model(
-    user_mapper: dict[str, type | GenericAlias | UnionType | dict | list],
+    user_mapper: dict[str, Any],
 ) -> type[BaseModel]:
     """
     Dynamically generates a pydantic model class based on a provided mapping of field names
@@ -93,7 +91,7 @@ def _dynamic_pydantic_model(
         valid type hints (e.g., int, float, str | None, etc.). These hints dictate the types
         of the fields included in the generated model. Can also contain nested dictionaries
         to represent nested object structures or lists of dictionaries for array items.
-    :type user_mapper: dict[str, type | GenericAlias | UnionType | dict | list]
+    :type user_mapper: dict[str, Any]
 
     :return: A dynamically created subclass of pydantic's BaseModel that adheres to the
         type constraints and field definitions supplied in the user_mapper.
@@ -168,9 +166,9 @@ def _dynamic_pydantic_model(
         strict=True,
     )
     try:
-        DynamicModel = create_model("DynamicModel", __config__=model_config, **fields)
+        dynamic_model = create_model("DynamicModel", __config__=model_config, **fields)
     except Exception as e:
         raise RuntimeError(
             "Failed to create dynamic model from user-provided types mapping."
         ) from e
-    return DynamicModel
+    return dynamic_model

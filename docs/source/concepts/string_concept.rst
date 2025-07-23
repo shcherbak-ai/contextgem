@@ -56,45 +56,57 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.String
 When creating a :class:`~contextgem.public.concepts.StringConcept`, you can specify the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the concept
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A clear description of what the concept represents and what should be extracted
    * - ``examples``
-     - list[:class:`~contextgem.public.examples.StringExample`]
+     - ``list[StringExample]``
+     - ``[]``
      - Optional. Example values that help the LLM better understand what to extract and the expected format (e.g., *"Party Name (Role)"* format for contract parties). This additional guidance helps improve extraction accuracy and consistency.
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
-     - bool
-     - Whether to include justifications for extracted items (defaults to ``False``). Justifications provide explanations of why the LLM extracted specific values and the reasoning behind the extraction, which is especially useful for complex extractions or when debugging results.
+     - ``bool``
+     - ``False``
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM extracted specific values and the reasoning behind the extraction, which is especially useful for complex extractions or when debugging results.
    * - ``justification_depth``
-     - str
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``
+     - ``str``
+     - ``"brief"``
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum sentences in a justification (defaults to ``2``)
+     - ``int``
+     - ``2``
+     - Maximum sentences in a justification.
    * - ``add_references``
-     - bool
-     - Whether to include source references for extracted items (defaults to ``False``). References indicate the specific locations in the document where the information was either directly found or from which it was inferred, helping to trace back extracted values to their source content even when the extraction involves reasoning or interpretation.
+     - ``bool``
+     - ``False``
+     - Whether to include source references for extracted items. References indicate the specific locations in the document where the information was either directly found or from which it was inferred, helping to trace back extracted values to their source content even when the extraction involves reasoning or interpretation.
    * - ``reference_depth``
-     - str
-     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``
+     - ``str``
+     - ``"paragraphs"``
+     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
    * - ``singular_occurrence``
-     - bool
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. Defaults to ``False`` (multiple extracted items are allowed). This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total. Note that with advanced LLMs, this constraint may not be strictly required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "document title" vs "key findings").
+     - ``bool``
+     - ``False``
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total. Note that with advanced LLMs, this constraint may not be strictly required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "document title" vs "key findings").
    * - ``custom_data``
-     - dict
-     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks. Defaults to an empty dictionary.
+     - ``dict``
+     - ``{}``
+     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks.
 
 
 🚀 Advanced Usage

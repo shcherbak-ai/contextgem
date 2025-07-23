@@ -36,7 +36,10 @@ class _BaseLLMError(Exception):
     """
 
     def __init__(
-        self, message: str, retry_count: int = None, original_error: Exception = None
+        self,
+        message: str,
+        retry_count: int | None = None,
+        original_error: Exception | None = None,
     ):
         """
         Initialize the exception.

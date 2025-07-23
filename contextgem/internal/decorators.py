@@ -22,13 +22,11 @@ Module defining internal decorators for the framework.
 
 import asyncio
 import timeit
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Awaitable, Callable, ParamSpec, TypeVar, overload
+from typing import Any
 
 from contextgem.internal.loggers import logger
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def _post_init_method(func: Callable[[Any, Any], None]) -> Callable[[Any, Any], None]:
@@ -45,29 +43,14 @@ def _post_init_method(func: Callable[[Any, Any], None]) -> Callable[[Any, Any], 
         as a post-initialization method by setting `__post_init__`.
     :rtype: Callable[[Any, Any], None]
     """
-    func.__post_init__ = True
+    # Dynamically mark function as a post-init method for MRO collection
+    func.__post_init__ = True  # type: ignore[attr-defined]
     return func
 
 
-@overload
-def _timer_decorator(process_name: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """
-    Overload for sync functions returning a non-awaitable R.
-    """
-    ...
-
-
-@overload
 def _timer_decorator(
     process_name: str,
-) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-    """
-    Overload for async functions returning Awaitable[R].
-    """
-    ...
-
-
-def _timer_decorator(process_name: str):
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator to measure execution time for both sync and async functions.
 
@@ -75,8 +58,7 @@ def _timer_decorator(process_name: str):
     :return: A decorator function that wraps the provided function to log its execution time.
     """
 
-    def outer_wrapper(func: Callable[P, R]) -> Callable[P, R]:
-
+    def outer_wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
         def log_end(start_time: float) -> None:
             end_time = timeit.default_timer()
             elapsed_time = round(end_time - start_time, 2)
@@ -87,7 +69,7 @@ def _timer_decorator(process_name: str):
         if asyncio.iscoroutinefunction(func):
             # Async wrapper
             @wraps(func)
-            async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 start_time = timeit.default_timer()
                 result = await func(*args, **kwargs)
                 log_end(start_time)
@@ -98,7 +80,7 @@ def _timer_decorator(process_name: str):
         else:
             # Sync wrapper
             @wraps(func)
-            def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
+            def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 start_time = timeit.default_timer()
                 result = func(*args, **kwargs)
                 log_end(start_time)

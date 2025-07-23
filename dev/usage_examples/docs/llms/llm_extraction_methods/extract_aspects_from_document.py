@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM
 
+
 # Sample text content
 text_content = """
 TechCorp is a leading software development company founded in 2015 with headquarters in San Francisco.

@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM, StringConcept, StringExample
 
+
 # Example document instance
 # Document content is shortened for brevity
 doc = Document(

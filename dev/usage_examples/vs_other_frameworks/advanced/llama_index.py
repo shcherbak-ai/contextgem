@@ -5,9 +5,9 @@
 import asyncio
 import os
 from textwrap import dedent
-from typing import Optional
 
 import nest_asyncio
+
 
 nest_asyncio.apply()
 
@@ -39,9 +39,7 @@ class Attachment(BaseModel):
     """Contract attachment information"""
 
     title: str = Field(description="Title of the attachment")
-    description: Optional[str] = Field(
-        description="Brief description of the attachment"
-    )
+    description: str | None = Field(description="Brief description of the attachment")
 
 
 class ContractRating(BaseModel):
@@ -55,8 +53,8 @@ class ContractInfo(BaseModel):
     """Complete contract information"""
 
     contract_type: str = Field(description="Type of contract")
-    effective_date: Optional[str] = Field(description="Effective date of the contract")
-    governing_law: Optional[str] = Field(description="Governing law of the contract")
+    effective_date: str | None = Field(description="Effective date of the contract")
+    governing_law: str | None = Field(description="Governing law of the contract")
 
 
 class AspectExtraction(BaseModel):
@@ -416,14 +414,18 @@ async def process_document_async(
 
     # Run extractions based on concurrency preference
     if use_concurrency:
-        parties, terms, contract_info, attachments, duration_rating = (
-            await asyncio.gather(
-                process_parties(),
-                process_terms(),
-                process_contract_info(),
-                process_attachments(),
-                process_duration_rating(),
-            )
+        (
+            parties,
+            terms,
+            contract_info,
+            attachments,
+            duration_rating,
+        ) = await asyncio.gather(
+            process_parties(),
+            process_terms(),
+            process_contract_info(),
+            process_attachments(),
+            process_duration_rating(),
         )
     else:
         parties = await process_parties()

@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, LabelConcept
 
+
 # Create a Document with content that might be challenging to classify
 mixed_content_text = """
 QUARTERLY BUSINESS REVIEW AND POLICY UPDATES
@@ -77,10 +78,10 @@ if document_classification_concept.extracted_items:
 
     print("=== DOCUMENT CLASSIFICATION RESULTS ===")
     print(f"Classification: {item.value[0]}")
-    print(f"\nJustification:")
+    print("\nJustification:")
     print(f"{item.justification}")
 
-    print(f"\nEvidence from document:")
+    print("\nEvidence from document:")
     for i, paragraph in enumerate(item.reference_paragraphs, 1):
         print(f"{i}. {paragraph.raw_text}")
 

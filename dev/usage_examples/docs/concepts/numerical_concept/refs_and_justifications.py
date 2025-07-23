@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, NumericalConcept
 
+
 # Document with values that require calculation/inference
 report_text = """
 Quarterly Sales Report - Q2 2023

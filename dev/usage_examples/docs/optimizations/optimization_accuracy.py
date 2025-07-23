@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, StringConcept, StringExample
 
+
 # Define document
 doc = Document(
     raw_text="Non-Disclosure Agreement...",

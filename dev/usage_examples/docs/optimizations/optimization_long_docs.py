@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM
 
+
 # Define document
 long_doc = Document(
     raw_text="long_document_text",

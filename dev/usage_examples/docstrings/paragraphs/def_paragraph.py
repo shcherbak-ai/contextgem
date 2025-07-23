@@ -1,5 +1,6 @@
 from contextgem import Paragraph
 
+
 # Create a paragraph with raw text content
 contract_paragraph = Paragraph(
     raw_text=(

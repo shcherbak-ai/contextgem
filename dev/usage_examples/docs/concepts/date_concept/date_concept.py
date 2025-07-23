@@ -4,6 +4,7 @@ import os
 
 from contextgem import DateConcept, Document, DocumentLLM
 
+
 # Create a Document object from text
 doc = Document(
     raw_text="The research paper was published on March 15, 2025 and has been cited 42 times since."

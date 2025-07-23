@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM, DocumentLLMGroup
 
+
 # Create LLMs with different roles
 text_extractor = DocumentLLM(
     model="openai/gpt-4o-mini",

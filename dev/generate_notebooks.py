@@ -26,10 +26,11 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import nbformat
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
+
 
 # Root directories
 BASE_DIR = Path(__file__).parent
@@ -48,7 +49,7 @@ EXCLUDE_DIRS = [
 ]
 
 
-def extract_first_comment(file_path: str | Path) -> Optional[str]:
+def extract_first_comment(file_path: str | Path) -> str | None:
     """
     Extract comment lines from the beginning of a Python file to use as a title.
     Captures multiple consecutive comment lines.
@@ -61,7 +62,7 @@ def extract_first_comment(file_path: str | Path) -> Optional[str]:
     """
     comment_lines = []
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         for line in f:
             # Skip empty lines at the beginning
             if not line.strip():
@@ -128,7 +129,7 @@ def create_notebook_from_file(file_path: str | Path, output_path: str | Path) ->
         output_path: Path where the notebook will be saved
     """
     # Read the entire file content
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     cells = []

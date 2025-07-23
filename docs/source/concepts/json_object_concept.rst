@@ -56,48 +56,61 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.JsonOb
 When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can specify the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the concept
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A clear description of what the concept represents and what should be extracted
    * - ``structure``
-     - type | dict[str, Any]
+     - ``type | dict[str, Any]``
+     - (Required)
      - JSON object schema defining the data structure to be extracted. Can be specified as a Python class with type annotations or a dictionary with field names as keys and their corresponding types as values. This schema can represent simple flat structures or complex nested hierarchies with multiple levels of organization. The LLM will attempt to extract data that conforms to this structure, enabling precise and consistent extraction of complex information patterns.
    * - ``examples``
-     - List[:class:`~contextgem.public.examples.JsonObjectExample`]
+     - ``list[JsonObjectExample]``
+     - ``[]``
      - Optional. Example JSON objects illustrating the concept usage. Such examples must conform to the ``structure`` schema. Examples significantly improve extraction accuracy by showing the LLM concrete instances of the expected output format and content patterns. This is particularly valuable for complex schemas with nested structures or when there are specific formatting conventions that should be followed (e.g., how dates, identifiers, or specialized fields should be represented). Examples also help clarify how to handle edge cases or ambiguous information in the source document.
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
-     - bool
-     - Whether to include justifications for extracted items (defaults to ``False``). Justifications provide explanations of why the LLM extracted specific JSON structures and the reasoning behind field values. This is especially valuable for complex structures where the extraction process involves inference or when multiple data points must be synthesized. For example, a justification might explain how the LLM determined a product's category based on various features mentioned across different paragraphs, or why certain optional fields were populated or left empty based on available information in the document.
+     - ``bool``
+     - ``False``
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM extracted specific JSON structures and the reasoning behind field values. This is especially valuable for complex structures where the extraction process involves inference or when multiple data points must be synthesized. For example, a justification might explain how the LLM determined a product's category based on various features mentioned across different paragraphs, or why certain optional fields were populated or left empty based on available information in the document.
    * - ``justification_depth``
-     - str
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``
+     - ``str``
+     - ``"brief"``
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum sentences in a justification (defaults to ``2``)
+     - ``int``
+     - ``2``
+     - Maximum sentences in a justification.
    * - ``add_references``
-     - bool
-     - Whether to include source references for extracted items (defaults to ``False``). References indicate the specific locations in the document that informed the extraction of the JSON structure. This is particularly valuable for complex objects where field values may be calculated or inferred from multiple scattered pieces of information throughout the document. References help trace back extracted values to their source evidence, validate the extraction reasoning, and understand which parts of the document contributed to the synthesis of structured data, especially for fields requiring interpretation, not only direct extraction.
+     - ``bool``
+     - ``False``
+     - Whether to include source references for extracted items. References indicate the specific locations in the document that informed the extraction of the JSON structure. This is particularly valuable for complex objects where field values may be calculated or inferred from multiple scattered pieces of information throughout the document. References help trace back extracted values to their source evidence, validate the extraction reasoning, and understand which parts of the document contributed to the synthesis of structured data, especially for fields requiring interpretation, not only direct extraction.
    * - ``reference_depth``
-     - str
-     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``
+     - ``str``
+     - ``"paragraphs"``
+     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
    * - ``singular_occurrence``
-     - bool
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single JSON object will be extracted. Defaults to ``False`` (multiple JSON objects are allowed). For JSON object concepts, this parameter is particularly useful when you want to extract a comprehensive structured representation of a single entity (e.g., "product specifications" or "company profile") rather than multiple instances of structured data scattered throughout the document. This is especially valuable when extracting complex nested objects that aggregate information from different parts of the document into a cohesive whole. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of objects to extract from the concept's name, description, and schema structure.
+     - ``bool``
+     - ``False``
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single JSON object will be extracted. For JSON object concepts, this parameter is particularly useful when you want to extract a comprehensive structured representation of a single entity (e.g., "product specifications" or "company profile") rather than multiple instances of structured data scattered throughout the document. This is especially valuable when extracting complex nested objects that aggregate information from different parts of the document into a cohesive whole. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of objects to extract from the concept's name, description, and schema structure.
    * - ``custom_data``
-     - dict
-     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks. Defaults to an empty dictionary.
+     - ``dict``
+     - ``{}``
+     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks.
 
 
 🏗️ Defining Structure

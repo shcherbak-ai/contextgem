@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM, StringConcept, StringExample
 
+
 # Create a document instance with e.g. a legal contract text
 # The text is shortened for brevity
 doc = Document(

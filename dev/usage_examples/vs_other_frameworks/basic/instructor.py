@@ -2,7 +2,6 @@
 
 import os
 from textwrap import dedent
-from typing import Optional
 
 import instructor
 from openai import OpenAI
@@ -31,7 +30,7 @@ class AnomaliesList(BaseModel):
 
 
 def extract_anomalies_with_instructor(
-    document_text: str, api_key: Optional[str] = None
+    document_text: str, api_key: str | None = None
 ) -> list[Anomaly]:
     """
     Extract anomalies from a document using Instructor.

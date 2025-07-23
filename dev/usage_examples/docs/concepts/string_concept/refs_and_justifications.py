@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, StringConcept
 
+
 # Sample document text containing financial information
 financial_text = """
 2024 Financial Performance Summary

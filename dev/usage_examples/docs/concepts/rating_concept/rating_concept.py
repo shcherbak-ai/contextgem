@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, RatingConcept
 
+
 # Create a Document object from text describing a product without an explicit rating
 smartphone_description = (
     "This smartphone features a 5000mAh battery that lasts all day with heavy use. "

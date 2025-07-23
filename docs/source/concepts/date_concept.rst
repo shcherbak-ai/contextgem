@@ -62,42 +62,53 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.DateCo
 When creating a :class:`~contextgem.public.concepts.DateConcept`, you can specify the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the concept
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A clear description of what date information to extract, which can include explicit dates to find, implicit dates to infer, or temporal relationships to identify. For date concepts, be specific about the exact date information sought (e.g., *"the contract signing date"* rather than just *"dates in the document"*) to ensure consistent and accurate extractions.
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
-     - bool
-     - Whether to include justifications for extracted items (defaults to ``False``). Justifications provide explanations of why specific dates were extracted, which is especially valuable when dates are inferred from contextual clues (e.g., *"next quarter"* or *"30 days after signing"*) or when resolving ambiguous date references in the document.
+     - ``bool``
+     - ``False``
+     - Whether to include justifications for extracted items. Justifications provide explanations of why specific dates were extracted, which is especially valuable when dates are inferred from contextual clues (e.g., *"next quarter"* or *"30 days after signing"*) or when resolving ambiguous date references in the document.
    * - ``justification_depth``
-     - str
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``
+     - ``str``
+     - ``"brief"``
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum sentences in a justification (defaults to ``2``)
+     - ``int``
+     - ``2``
+     - Maximum sentences in a justification.
    * - ``add_references``
-     - bool
-     - Whether to include source references for extracted items (defaults to ``False``). References indicate the specific locations in the document where date information was found, derived, or inferred from. This is particularly useful for tracing dates back to their original context, understanding how relative dates were calculated (e.g., *"30 days after delivery"*), or verifying how the system resolved ambiguous temporal references (e.g., *"next fiscal year"*).
+     - ``bool``
+     - ``False``
+     - Whether to include source references for extracted items. References indicate the specific locations in the document where date information was found, derived, or inferred from. This is particularly useful for tracing dates back to their original context, understanding how relative dates were calculated (e.g., *"30 days after delivery"*), or verifying how the system resolved ambiguous temporal references (e.g., *"next fiscal year"*).
    * - ``reference_depth``
-     - str
-     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``
+     - ``str``
+     - ``"paragraphs"``
+     - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
    * - ``singular_occurrence``
-     - bool
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single date will be extracted. Defaults to ``False`` (multiple dates are allowed). For date concepts, this parameter is particularly useful when you want to extract a specific, unique date in the document (e.g., *"publication date"* or *"contract signing date"*) rather than identifying multiple dates throughout the document. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate cardinality from the concept's name, description, and type.
+     - ``bool``
+     - ``False``
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single date will be extracted. For date concepts, this parameter is particularly useful when you want to extract a specific, unique date in the document (e.g., *"publication date"* or *"contract signing date"*) rather than identifying multiple dates throughout the document. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate cardinality from the concept's name, description, and type.
    * - ``custom_data``
-     - dict
-     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks. Defaults to an empty dictionary.
+     - ``dict``
+     - ``{}``
+     - Optional. Dictionary for storing any additional data that you want to associate with the concept. This data must be JSON-serializable. This data is not used for extraction but can be useful for custom processing or downstream tasks.
 
 
 🚀 Advanced Usage

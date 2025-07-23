@@ -32,7 +32,7 @@ Before installing ContextGem, ensure you have:
 ------------------------
 
 From PyPI
-~~~~~~~~~
+~~~~~~~~~~
 
 The simplest way to install ContextGem is via pip:
 
@@ -40,32 +40,27 @@ The simplest way to install ContextGem is via pip:
 
     pip install -U contextgem
 
-From Source
-~~~~~~~~~~~
+Or using uv (faster alternative):
 
-To install from source:
+.. code-block:: bash
+
+    uv add contextgem
+
+Development Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For development, clone the repository and use uv:
 
 .. code-block:: bash
 
     git clone https://github.com/shcherbak-ai/contextgem.git
     cd contextgem
-    pip install -e .
-
-Development Installation
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-For development, we use Poetry:
-
-.. code-block:: bash
-
-    # Install poetry if you don't have it
-    pip install poetry
+    
+    # Install uv if you don't have it
+    pip install uv
     
     # Install dependencies including development extras
-    poetry install --with dev
-    
-    # Activate the virtual environment
-    poetry shell
+    uv sync --all-groups
 
 ✅ Verifying Installation
 --------------------------

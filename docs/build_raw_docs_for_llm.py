@@ -40,6 +40,7 @@ import os
 import subprocess
 import sys
 
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -61,7 +62,7 @@ def run_sphinx_text_build() -> None:
     logger.info("🔧 Running: sphinx-build -b text")
     try:
         # Run sphinx-build with full path and environment
-        result = subprocess.run(
+        subprocess.run(
             ["sphinx-build", "-b", "text", SOURCE_DIR, TEXT_DIR, "-E"],
             check=True,
             capture_output=True,
@@ -95,10 +96,10 @@ def extract_doc_paths(index_path: str) -> list[str]:
     in_toctree = False
     current_block = []
 
-    with open(index_path, "r", encoding="utf-8") as f:
+    with open(index_path, encoding="utf-8") as f:
         lines = f.readlines()
 
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         stripped = line.strip()
 
         if stripped.startswith(".. toctree::"):
@@ -169,7 +170,7 @@ def concatenate_docs(doc_paths: list[str], text_dir: str, output_file: str) -> N
             txt_file = os.path.join(text_dir, f"{doc}.txt")
             if os.path.exists(txt_file):
                 outfile.write(f"\n\n# ==== {doc} ====\n\n")
-                with open(txt_file, "r", encoding="utf-8") as infile:
+                with open(txt_file, encoding="utf-8") as infile:
                     outfile.write(infile.read())
             else:
                 logger.info(f"⚠️  Warning: {txt_file} not found. Skipping.")

@@ -51,6 +51,8 @@ from contextgem.internal.typings.types_to_strings import (
 from contextgem.internal.typings.user_type_hints_validation import (
     _dynamic_pydantic_model,
 )
+from contextgem.internal.typings.validators import _validate_sequence_is_list
+
 
 __all__ = [
     # Aliases
@@ -86,4 +88,6 @@ __all__ = [
     "_raise_dict_class_type_error",
     # Types normalization
     "_normalize_type_annotation",
+    # Validators
+    "_validate_sequence_is_list",
 ]

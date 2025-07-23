@@ -24,7 +24,8 @@ through multiple inheritance. Currently includes the _PostInitCollectorMixin whi
 post-initialization processing for Pydantic models.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -39,11 +40,11 @@ class _PostInitCollectorMixin(BaseModel):
     customized post-initialization behavior across multiple inheritance levels.
 
     :ivar __post_init_methods__: List of callable methods to be executed after initialization.
-    :vartype __post_init_methods__: list[Callable[[Any, Any], None]]
+    :vartype __post_init_methods__: list[Callable[[Any, Any], Any]]
     """
 
     # Holds all post-init methods for the class.
-    __post_init_methods__: list[Callable[[Any, Any], None]] = []
+    __post_init_methods__: list[Callable[[Any, Any], Any]] = []
 
     def model_post_init(self, __context: Any) -> None:
         """
@@ -66,14 +67,17 @@ class _PostInitCollectorMixin(BaseModel):
             ``__init_subclass__`` implementation.
         """
         super().__init_subclass__(**kwargs)
-        methods: list[Callable[[Any, Any], None]] = []
+        methods: list[Callable[[Any, Any], Any]] = []
         seen_ids = set()
         for base in cls.__mro__:
-            for attr, value in base.__dict__.items():
-                if callable(value) and getattr(value, "__post_init__", False):
+            for _attr, value in base.__dict__.items():
+                if (
+                    callable(value)
+                    and getattr(value, "__post_init__", False)
+                    and id(value) not in seen_ids
+                ):
                     # Use the function's identity to ensure that two distinct functions
                     # with the same name (from different classes) are both added.
-                    if id(value) not in seen_ids:
-                        methods.append(value)
-                        seen_ids.add(id(value))
+                    methods.append(value)
+                    seen_ids.add(id(value))
         cls.__post_init_methods__ = methods

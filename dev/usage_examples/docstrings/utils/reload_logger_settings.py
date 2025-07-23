@@ -2,6 +2,7 @@ import os
 
 from contextgem import reload_logger_settings
 
+
 # Initial logger settings are loaded from environment variables at import time
 
 # Change logger level to WARNING

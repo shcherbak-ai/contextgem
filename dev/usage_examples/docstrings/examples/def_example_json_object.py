@@ -1,5 +1,6 @@
 from contextgem import JsonObjectConcept, JsonObjectExample
 
+
 # Create a JSON object example
 json_example = JsonObjectExample(
     content={

@@ -1,5 +1,6 @@
 from contextgem import LabelConcept
 
+
 # Multi-class classification: single label selection
 document_type_concept = LabelConcept(
     name="Document Type",

@@ -30,9 +30,10 @@ from datetime import date
 from typing import Any
 
 from pydantic import Field, StrictBool, StrictFloat, StrictInt, field_validator
+from typing_extensions import Self
 
 from contextgem.internal.base.items import _ExtractedItem
-from contextgem.internal.typings.aliases import NonEmptyStr, Self
+from contextgem.internal.typings.aliases import NonEmptyStr
 
 
 class _StringItem(_ExtractedItem):
@@ -40,7 +41,7 @@ class _StringItem(_ExtractedItem):
     Represents an extracted item that holds a string value.
 
     :ivar value: The string value extracted and validated as non-empty string.
-    :vartype value: NonEmptyStr
+    :vartype value: str
     """
 
     value: NonEmptyStr = Field(..., frozen=True)
@@ -216,7 +217,7 @@ class _LabelItem(_ExtractedItem):
 
     :ivar value: A list of label strings. Always returns a list for API consistency,
         containing one or more labels depending on the classification type.
-    :vartype value: list[NonEmptyStr]
+    :vartype value: list[str]
     """
 
     value: list[NonEmptyStr] = Field(..., min_length=1, frozen=True)
@@ -228,9 +229,9 @@ class _LabelItem(_ExtractedItem):
         Validates the input list of labels. Ensures there are no duplicates in the list.
 
         :param value: List of label strings to validate.
-        :type value: list[NonEmptyStr]
+        :type value: list[str]
         :return: The same list provided as input, if it passes validation.
-        :rtype: list[NonEmptyStr]
+        :rtype: list[str]
         :raises ValueError: If the list contains duplicate labels.
         """
         if len(value) != len(set(value)):

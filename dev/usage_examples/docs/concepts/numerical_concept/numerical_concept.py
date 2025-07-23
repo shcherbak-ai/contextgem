@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, NumericalConcept
 
+
 # Create a Document object from text
 doc = Document(
     raw_text="The latest smartphone model costs $899.99 and will be available next week."

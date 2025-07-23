@@ -31,9 +31,11 @@ The module integrates with the broader ContextGem framework for document analysi
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Sequence
+from typing import Annotated, Any, cast
 
 from pydantic import (
+    BeforeValidator,
     Field,
     PrivateAttr,
     StrictBool,
@@ -41,6 +43,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Self
 
 from contextgem.internal.base.attrs import (
     _AssignedInstancesProcessor,
@@ -53,10 +56,11 @@ from contextgem.internal.typings.aliases import (
     LLMRoleAspect,
     NonEmptyStr,
     ReferenceDepth,
-    Self,
 )
+from contextgem.internal.typings.validators import _validate_sequence_is_list
 from contextgem.public.paragraphs import Paragraph
 from contextgem.public.sentences import Sentence
+
 
 # Defines the maximum nesting level of sub-aspects.
 MAX_NESTING_LEVEL = 1
@@ -74,9 +78,9 @@ class Aspect(
     Each aspect corresponds to a specific subject or theme described in the task.
 
     :ivar name: The name of the aspect. Required, non-empty string.
-    :vartype name: NonEmptyStr
+    :vartype name: str
     :ivar description: A detailed description of the aspect. Required, non-empty string.
-    :vartype description: NonEmptyStr
+    :vartype description: str
     :ivar concepts: A list of concepts associated with the aspect. These concepts must be
         unique in both name and description and cannot include concepts with vision LLM roles.
     :vartype concepts: list[_Concept]
@@ -105,7 +109,11 @@ class Aspect(
     name: NonEmptyStr
     description: NonEmptyStr
     aspects: list[Aspect] = Field(default_factory=list)  # sub-aspects
-    concepts: list[_Concept] = Field(default_factory=list)
+    concepts: Annotated[
+        Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)
+    ] = Field(
+        default_factory=list
+    )  # using Sequence field with list validator for type checking
     llm_role: LLMRoleAspect = Field(default="extractor_text")
     reference_depth: ReferenceDepth = Field(default="paragraphs")
 
@@ -128,7 +136,10 @@ class Aspect(
 
         if name == "aspects":
             field_validator = Aspect.__pydantic_validator__.validate_assignment
-            aspects = field_validator(self, "aspects", value).aspects
+            # Safe cast: Pydantic validator returns validated instance, we know it's an Aspect
+            # since we're validating the "aspects" field of an Aspect object
+            validated_instance = cast(Aspect, field_validator(self, "aspects", value))
+            aspects = validated_instance.aspects
             self._validate_and_process_sub_aspects(aspects)
             super().__setattr__(name, aspects)
         else:
@@ -153,13 +164,12 @@ class Aspect(
         :rtype: list[_Concept]
         """
 
-        if concepts:
+        if concepts and any(i.llm_role.endswith("_vision") for i in concepts):
             # Validate for Aspect-specific constraints.
-            if any(i.llm_role.endswith("_vision") for i in concepts):
-                raise ValueError(
-                    "Aspect concepts extraction using vision LLMs is not supported. "
-                    "Vision LLMs can be used only for document concept extraction."
-                )
+            raise ValueError(
+                "Aspect concepts extraction using vision LLMs is not supported. "
+                "Vision LLMs can be used only for document concept extraction."
+            )
         return concepts
 
     def _validate_and_process_sub_aspects(self, aspects: list[Aspect]) -> None:

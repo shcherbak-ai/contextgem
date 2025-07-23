@@ -4,6 +4,7 @@ import os
 
 from contextgem import DateConcept, Document, DocumentLLM
 
+
 # Sample document text containing project timeline information
 project_text = """
 Project Timeline: Website Redesign

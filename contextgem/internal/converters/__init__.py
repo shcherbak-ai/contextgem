@@ -18,6 +18,7 @@
 
 from contextgem.internal.converters.docx import _DocxConverterBase, _DocxPackage
 
+
 __all__ = [
     "_DocxConverterBase",
     "_DocxPackage",

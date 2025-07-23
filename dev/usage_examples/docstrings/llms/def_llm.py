@@ -1,5 +1,6 @@
 from contextgem import DocumentLLM, LLMPricing
 
+
 # Create a single LLM for text extraction
 text_extractor = DocumentLLM(
     model="openai/gpt-4o-mini",

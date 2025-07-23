@@ -25,13 +25,14 @@ It handles various type constructs including basic types, generics, unions, and
 custom types, ensuring consistent string formatting across the framework.
 """
 
-from types import GenericAlias, UnionType
+from types import UnionType
 from typing import Any, Literal, Union, get_args, get_origin
 
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
     _is_typed_class,
 )
+
 
 # Define basic JSON primitive types
 JSON_PRIMITIVE_TYPES = (int, float, str, bool, type(None))
@@ -98,7 +99,7 @@ def _raise_json_serializable_type_error(
 
 
 def _is_json_serializable_type(
-    typ: type | GenericAlias | UnionType | dict | list,
+    typ: Any,
 ) -> bool:
     """
     Determines if a given type is JSON serializable by verifying its compatibility
@@ -107,8 +108,8 @@ def _is_json_serializable_type(
     types such as lists and dictionaries. It ensures that any nested type arguments
     are recursively checked for JSON serializability.
 
-    :param typ: The type to be checked for JSON serializability. It may include
-        standard types, generic types (e.g., dict, list), and union types.
+    :param typ: The type to be checked for JSON serializability.
+    :type typ: Any
     :returns: A boolean value indicating whether the given type is JSON serializable
         (i.e., compatible with supported JSON types).
     :rtype: bool
@@ -138,22 +139,19 @@ def _is_json_serializable_type(
 
     # Handle Literal types - check that all literal values are JSON serializable
     if getattr(typ, "__origin__", None) is Literal:
-        for arg in get_args(typ):
-            # All literal values should be of JSON serializable primitive types
-            if not isinstance(arg, JSON_PRIMITIVE_TYPES):
-                return False
-        return True
+        # All literal values should be of JSON serializable primitive types
+        return all(isinstance(arg, JSON_PRIMITIVE_TYPES) for arg in get_args(typ))
 
     # Handle generic types like list[str] or dict[str, int]
     if hasattr(typ, "__origin__"):
-        if typ.__origin__ is list:
+        if typ.__origin__ is list:  # type: ignore[attr-defined]
             # Check if the list item type is a custom class with type annotations
-            item_type = typ.__args__[0]
+            item_type = typ.__args__[0]  # type: ignore[attr-defined]
             if _is_typed_class(item_type):
                 # Validate the class itself recursively
                 return _is_json_serializable_type(item_type)
             return _is_json_serializable_type(item_type)
-        elif typ.__origin__ is dict:
+        elif typ.__origin__ is dict:  # type: ignore[attr-defined]
             return all(_is_json_serializable_type(arg) for arg in get_args(typ))
 
     # Handle list instances with primitive types, unions, or literals
@@ -193,9 +191,7 @@ def _format_dict_structure(dict_structure: dict, indent_level: int = 0) -> str:
     return "{\n" + ",\n".join(parts) + "\n" + indent + "}"
 
 
-def _format_type(
-    typ: type | GenericAlias | UnionType | dict | list, indent_level: int = 0
-) -> str:
+def _format_type(typ: Any, indent_level: int = 0) -> str:
     """
     Formats a type hint into a prompt-compatible string representation.
 
@@ -205,7 +201,9 @@ def _format_type(
     nested and parameterized types using their arguments.
 
     :param typ: A type hint to be formatted.
+    :type typ: Any
     :param indent_level: Current indentation level for formatting
+    :type indent_level: int
     :return: A prompt-compatible string representation of the given type hint.
     :rtype: str
     """
@@ -236,8 +234,34 @@ def _format_type(
 
     # Handle unions (both | syntax and typing.Union)
     if isinstance(typ, UnionType) or getattr(typ, "__origin__", None) is Union:
-        union_types = [_format_type(arg, indent_level) for arg in get_args(typ)]
-        return " or ".join(union_types)
+        # Flatten all union values to avoid duplicates
+        flattened_values = []
+
+        for arg in get_args(typ):
+            if getattr(arg, "__origin__", None) is Literal:
+                # Extract individual literal values
+                for literal_arg in get_args(arg):
+                    if isinstance(literal_arg, str):
+                        flattened_values.append(
+                            '"' + literal_arg.replace('"', '\\"') + '"'
+                        )
+                    elif literal_arg is None:
+                        flattened_values.append("null")
+                    else:
+                        flattened_values.append(str(literal_arg))
+            elif arg is type(None):
+                flattened_values.append("null")
+            else:
+                # For non-literal types, format normally
+                flattened_values.append(_format_type(arg, indent_level))
+
+        # Remove duplicates while preserving order
+        unique_values = []
+        for value in flattened_values:
+            if value not in unique_values:
+                unique_values.append(value)
+
+        return " or ".join(unique_values)
 
     # Handle Literal types
     if getattr(typ, "__origin__", None) is Literal:
@@ -247,6 +271,9 @@ def _format_type(
             if isinstance(arg, str):
                 # Escape quotes in strings and wrap in quotes
                 literal_values.append('"' + arg.replace('"', '\\"') + '"')
+            elif arg is None:
+                # Handle None consistently with standalone None type
+                literal_values.append("null")
             else:
                 # For non-string literals, just convert to string
                 literal_values.append(str(arg))
@@ -257,9 +284,9 @@ def _format_type(
 
     # Handle generic types (like list and dict)
     if hasattr(typ, "__origin__"):
-        if typ.__origin__ is list:
+        if typ.__origin__ is list:  # type: ignore[attr-defined]
             # Get the list item type
-            item_type = typ.__args__[0]
+            item_type = typ.__args__[0]  # type: ignore[attr-defined]
             next_indent = "  " * (indent_level + 1)
             final_indent = "  " * indent_level
 
@@ -270,13 +297,13 @@ def _format_type(
                     f"[\n{next_indent}{item_fields},\n{next_indent}...\n{final_indent}]"
                 )
             return f"[\n{next_indent}{_format_type(item_type, indent_level + 1)},\n{next_indent}...\n{final_indent}]"
-        elif typ.__origin__ is dict:
-            key_type, value_type = typ.__args__
+        elif typ.__origin__ is dict:  # type: ignore[attr-defined]
+            key_type, value_type = typ.__args__  # type: ignore[attr-defined]
             next_indent = "  " * (indent_level + 1)
             final_indent = "  " * indent_level
             key_str = _format_type(key_type, indent_level + 1)
             value_str = _format_type(value_type, indent_level + 1)
-            return f"{{\n{next_indent}{key_str}: {value_str},\n{next_indent}...\n{final_indent}}}"
+            return f"{{\n{next_indent}{key_str}: {value_str}\n{final_indent}}}"
 
     if typ is type(None):
         return "null"
@@ -290,9 +317,7 @@ class _JsonObjectItemStructure:
     and converting them into a prompt-compatible string.
     """
 
-    def __init__(
-        self, schema: type | dict[str, type | GenericAlias | UnionType | dict | list]
-    ):
+    def __init__(self, schema: type | dict[str, Any]):
         """
         Accepts either a class or a dictionary representing field names and types.
         """
@@ -308,7 +333,7 @@ class _JsonObjectItemStructure:
         self._validate_schema(schema_struct)
         self.schema = schema_struct
 
-    def _validate_schema(self, schema, prefix=""):
+    def _validate_schema(self, schema: dict[str, Any], prefix: str = ""):
         """
         Validates that all fields in the schema (including nested ones) have valid types.
         """
@@ -369,7 +394,7 @@ class _JsonObjectItemStructure:
         return _format_type(self.schema)
 
 
-def _serialize_type_hint(tp: type | GenericAlias | UnionType) -> str:
+def _serialize_type_hint(tp: Any) -> str:
     """
     Serializes type hints into a string representation.
 
@@ -379,9 +404,8 @@ def _serialize_type_hint(tp: type | GenericAlias | UnionType) -> str:
     type annotations, such as ensuring that lists have one type argument and
     dictionaries have two type arguments.
 
-    :param tp: A type, generic alias, or union type from which the string
-        representation would be serialized.
-    :type tp: type | GenericAlias | UnionType
+    :param tp: A type from which the string representation would be serialized.
+    :type tp: Any
 
     :return: A string representation of the serialized type hint.
     :rtype: str
@@ -415,9 +439,29 @@ def _serialize_type_hint(tp: type | GenericAlias | UnionType) -> str:
 
     # Handle unions, including new union syntax
     elif origin in (Union, UnionType):
-        # Sorting the serialized parts produces a canonical representation.
-        serialized_parts = sorted(_serialize_type_hint(arg) for arg in args)
-        return f"union[{', '.join(serialized_parts)}]"
+        # Check if this is an optional type (union with None)
+        if type(None) in args:
+            # Extract non-None types
+            non_none_args = [arg for arg in args if arg is not type(None)]
+
+            if len(non_none_args) == 1:
+                # Simple optional: Optional[T] -> optional[T]
+                inner_serialized = _serialize_type_hint(non_none_args[0])
+                return f"optional[{inner_serialized}]"
+            elif len(non_none_args) > 1:
+                # Optional union: Optional[T | U] -> optional[union[T, U]]
+                serialized_parts = sorted(
+                    _serialize_type_hint(arg) for arg in non_none_args
+                )
+                inner_union = f"union[{', '.join(serialized_parts)}]"
+                return f"optional[{inner_union}]"
+            else:
+                # Only None - shouldn't happen, but handle gracefully
+                return "optional[null]"
+        else:
+            # Regular union without None
+            serialized_parts = sorted(_serialize_type_hint(arg) for arg in args)
+            return f"union[{', '.join(serialized_parts)}]"
 
     # Handle Literal types
     elif origin is Literal:

@@ -93,39 +93,49 @@ Breaking down complex topics into components:
 When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure the following parameters:
 
 .. list-table::
-   :widths: 20 20 60
+   :widths: 20 15 15 50
    :header-rows: 1
 
    * - Parameter
      - Type
+     - Default Value
      - Description
    * - ``name``
-     - str
+     - ``str``
+     - (Required)
      - A unique name identifier for the aspect. Must be unique among sibling aspects.
    * - ``description``
-     - str
+     - ``str``
+     - (Required)
      - A detailed description of what the aspect represents and what content should be extracted. Must be unique among sibling aspects.
    * - ``aspects``
-     - list[:class:`~contextgem.public.aspects.Aspect`]
+     - ``list[Aspect]``
+     - ``[]``
      - *Optional*. List of sub-aspects for hierarchical organization. Limited to one nesting level.
    * - ``concepts``
-     - list[:class:`~contextgem.internal.base.concepts._Concept`]
+     - ``list[_Concept]``
+     - ``[]``
      - *Optional*. List of concepts associated with the aspect for detailed data extraction within the aspect's scope. See supported concept types in :doc:`../concepts/supported_concepts`.
    * - ``llm_role``
-     - str
-     - The role of the LLM responsible for aspect extraction. Available values: ``"extractor_text"``, ``"reasoner_text"``. Defaults to ``"extractor_text"``. For more details, see :ref:`llm-roles-label`. Note that aspects only support text-based extraction. For this reason, aspects cannot have vision LLM roles (i.e. ``llm_role`` parameter value ending with "_vision"). Concepts with vision LLM roles cannot be used within aspects.
+     - ``str``
+     - ``"extractor_text"``
+     - The role of the LLM responsible for aspect extraction. Available values: ``"extractor_text"``, ``"reasoner_text"``. For more details, see :ref:`llm-roles-label`. Note that aspects only support text-based extraction. For this reason, aspects cannot have vision LLM roles (i.e. ``llm_role`` parameter value ending with "_vision"). Concepts with vision LLM roles cannot be used within aspects.
    * - ``reference_depth``
-     - str
-     - The structural depth of references. Available values: ``"paragraphs"``, ``"sentences"``. Defaults to ``"paragraphs"``. Paragraph references are always populated for aspect's extracted items, as aspect's extracted items represent existing text segments. Sentence references are only populated when ``reference_depth="sentences"``.
+     - ``str``
+     - ``"paragraphs"``
+     - The structural depth of references. Available values: ``"paragraphs"``, ``"sentences"``. Paragraph references are always populated for aspect's extracted items, as aspect's extracted items represent existing text segments. Sentence references are only populated when ``reference_depth="sentences"``.
    * - ``add_justifications``
-     - bool
-     - Whether the LLM will output justification for each extracted item (defaults to ``False``). Justifications provide valuable insights into why specific text segments were extracted for the aspect, helping you understand the LLM's reasoning, verify extraction accuracy, and debug unexpected results. This is particularly useful when working with complex aspects.
+     - ``bool``
+     - ``False``
+     - Whether the LLM will output justification for each extracted item. Justifications provide valuable insights into why specific text segments were extracted for the aspect, helping you understand the LLM's reasoning, verify extraction accuracy, and debug unexpected results. This is particularly useful when working with complex aspects.
    * - ``justification_depth``
-     - str
-     - The level of detail for justifications. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Defaults to ``"brief"``.
+     - ``str``
+     - ``"brief"``
+     - The level of detail for justifications. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
    * - ``justification_max_sents``
-     - int
-     - Maximum number of sentences in a justification (defaults to ``2``).
+     - ``int``
+     - ``2``
+     - Maximum number of sentences in a justification.
 
 
 📊 Extracted Items

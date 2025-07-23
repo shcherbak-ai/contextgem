@@ -4,6 +4,7 @@ import os
 
 from contextgem import BooleanConcept, Document, DocumentLLM
 
+
 # Create a Document object from text
 doc = Document(
     raw_text="This document contains confidential information and should not be shared publicly."

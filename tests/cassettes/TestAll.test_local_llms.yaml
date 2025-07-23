@@ -15,7 +15,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -803,19 +803,30 @@ interactions:
       to that concept. The item format and structure are specified for each concept.\n4.
       Produce a JSON array containing your extracted data, in the provided format.\n\nIf
       a concept is not addressed in the document text, you must still include an entry
-      in the final JSON output but with an empty \"extracted_items\" list.\n\nFollow
-      these additional rules:\n\n- Output format:\nProvide your answer in only the
-      following answer format (do not include backticks, code fences, or any introductory/explanatory
+      in the final JSON output but with an empty \"extracted_items\" list. However,
+      for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n-
+      Extract True if the concept is confirmed or strongly supported by the document
+      content (either explicitly stated or reasonably inferred)\n- Extract False if
+      the concept is contradicted, denied, or if the document content allows you to
+      determine that the concept is not true (e.g., absence of expected content that
+      should be present if the concept were true)\n- Only leave \"extracted_items\"
+      empty if the concept is impossible to determine because either: (1) the document
+      is completely irrelevant to the concept, or (2) the document does not contain
+      enough information to make a conclusion about the concept\n\nFollow these additional
+      rules:\n\n- Output format:\nProvide your answer in only the following answer
+      format (do not include backticks, code fences, or any introductory/explanatory
       text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
       keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
       must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
       The value of \"extracted_items\" must be an array. If the concept is not addressed
-      or there are no items to extract, leave the array empty ([]).\n        --- Extracted
+      or there are no items to extract, leave the array empty ([]). For boolean concepts,
+      only leave empty if the concept is impossible to determine.\n        --- Extracted
       items may be found directly (explicitly mentioned) or inferred from the content
       (implied or derivable from the information present).\n        --- Guidance regarding
       the possible amount of extracted items for the concept is specified under \"Amount
       of extracted items\". Each extracted item, even if there is only one, must be
-      part of the \"extracted_items\" array.\n\n- Item structure:\n    -- If a specific
+      part of the \"extracted_items\" array.\n\n- Item structure:\n    -- All extracted
+      items must match the exact type specified for the concept.\n    -- If a specific
       structure is provided for a concept under \"Expected structure,\" you must follow
       that structure for all extracted items corresponding to that concept.\n    --
       If a rating scale is provided for a concept under \"Rating scale,\" the extracted
@@ -829,17 +840,27 @@ interactions:
       Types of extracted items:\n    -- Each concept specifies an \"extracted item
       type\" (found under \"Concept extracted item type\"). Ensure your extracted
       items strictly match that type. Python types are provided (e.g., str for string,
-      int for integer, float for floating-point number, dict for object, etc.).\n    --
+      int for integer, float for floating-point number, dict for object, etc.). Type
+      compliance is mandatory - any deviation will result in invalid output.\n    --
       Do not introduce any extra fields or modify the specified structure.\n\n- Handling
       missing or multiple items:\n    -- If a concept is not mentioned at all, your
       output should still contain an entry for that concept with an empty \"extracted_items\"
-      array.\n    -- For concepts that have an \"Available labels:\" section: if none
-      of the predefined labels apply to the content, leave the \"extracted_items\"
-      array empty.\n    -- For concepts that have an \"Available labels:\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \"labels\" array (e.g.,
-      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
-      if there are genuinely distinct instances or contexts that warrant separate
+      array.\n    -- For boolean concepts (with extracted item type \"bool\"): Distinguish
+      carefully between these cases:\n        --- Extract True if the concept is confirmed
+      or strongly supported by the provided content (either explicitly stated or reasonably
+      inferred)\n        --- Extract False if the concept is contradicted, denied,
+      or if the provided content allows you to determine that the concept is not true
+      (e.g., absence of expected content that should be present if the concept were
+      true)\n        --- Only leave \"extracted_items\" empty if the concept is impossible
+      to determine because either: (1) the provided content is completely irrelevant
+      to the concept, or (2) the provided content does not contain enough information
+      to make a conclusion about the concept\n    -- For concepts that have an \"Available
+      labels:\" section: if none of the predefined labels apply to the content, leave
+      the \"extracted_items\" array empty.\n    -- For concepts that have an \"Available
+      labels:\" section: if multiple labels apply to the same instance or context,
+      include them all in a single extracted item with multiple labels in the \"labels\"
+      array (e.g., {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
       classification.\n    -- For concepts that do not have an \"Available labels:\"
       section: if multiple items are found for a concept, include each as a separate
       entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
@@ -849,22 +870,23 @@ interactions:
       [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
       Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
       of the contract.\n\nAmount of extracted items: This concept may have zero, one,
-      or multiple extracted items.\n\nConcept extracted item type: str\n````\n\n______\n\n------\nDOCUMENT
-      TEXT:\nNon-Disclosure Agreement (NDA)\n\nThis Non-Disclosure Agreement (the
-      \"Agreement\") is made and entered into as of July 16, 2024, by and between:\n\nParty
-      A:\n\n_____\n_____\n_____\nContact: _____\nPhone: _____\nEmail: _____\n\nParty
-      B:\n\nExample.Com LLC\n5678 Random Drive\nNew York, NY 00000\nContact: Jane
-      Doe, Managing Partner\nPhone: (012) 345-6789\nEmail: jane.doe@example.com\n\n1.
-      Purpose:\n\nThe purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\n\n2. Definition
-      of Confidential Information:\n\nFor purposes of this Agreement, \"Confidential
-      Information\" means any and all non-public information, conveyed in all forms,
-      whether in oral, written, electronic, or other form or media, whether or not
-      marked, designated, or otherwise identified as \"confidential,\" that has been
-      or may be disclosed to, accessed by, or observed by Receiving Party, which (i)
-      has actual\n------\n\n\n", "options": {"temperature": 0.3, "top_p": 0.3, "num_predict":
-      4096, "seed": 123}, "stream": false, "images": []}'
+      or multiple extracted items.\n\nConcept extracted item type: str (must be exactly
+      as specified)\n````\n\n______\n\n------\nDOCUMENT TEXT:\nNon-Disclosure Agreement
+      (NDA)\n\nThis Non-Disclosure Agreement (the \"Agreement\") is made and entered
+      into as of July 16, 2024, by and between:\n\nParty A:\n\n_____\n_____\n_____\nContact:
+      _____\nPhone: _____\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n5678 Random
+      Drive\nNew York, NY 00000\nContact: Jane Doe, Managing Partner\nPhone: (012)
+      345-6789\nEmail: jane.doe@example.com\n\n1. Purpose:\n\nThe purpose of this
+      Agreement is to protect the confidential information that may be disclosed between
+      the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\n\n2. Definition of Confidential Information:\n\nFor
+      purposes of this Agreement, \"Confidential Information\" means any and all non-public
+      information, conveyed in all forms, whether in oral, written, electronic, or
+      other form or media, whether or not marked, designated, or otherwise identified
+      as \"confidential,\" that has been or may be disclosed to, accessed by, or observed
+      by Receiving Party, which (i) has actual\n------\n\n\n", "options": {"temperature":
+      0.3, "top_p": 0.3, "num_predict": 4096, "seed": 123}, "stream": false, "images":
+      []}'
     headers:
       accept:
       - '*/*'
@@ -873,16 +895,16 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '11488'
+      - '13227'
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "mistral-small:24b", "created_at": "2025-07-10T14:13:18.5337617Z",
+      string: '{"model": "mistral-small:24b", "created_at": "2025-07-19T22:53:07.8828213Z",
         "response": "```json\n[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Non-Disclosure Agreement\"\n        ]\n    }\n]\n```", "done":
         true, "done_reason": "stop", "context": [17, 4568, 1584, 42301, 2784, 29121,
@@ -997,97 +1019,123 @@ interactions:
         1261, 11748, 4460, 8719, 2143, 20158, 2181, 1044, 1294, 1278, 5662, 8174,
         1338, 5475, 1261, 7401, 1395, 1605, 24511, 1294, 1278, 4440, 3403, 1044, 1636,
         4016, 3637, 4626, 1420, 10505, 1294, 1278, 2778, 11748, 4848, 1809, 1454,
-        1420, 9829, 1429, 2510, 33356, 43102, 1034, 2951, 1338, 49939, 2576, 7481,
-        10469, 2100, 1045, 27039, 8174, 1877, 31837, 1675, 2143, 4832, 1294, 2342,
-        1278, 3629, 4832, 8174, 1319, 3846, 1605, 4626, 2595, 1116, 12849, 1044, 3475,
-        1284, 3224, 1044, 1505, 2258, 106626, 29762, 17960, 5030, 3403, 2519, 1045,
-        129946, 3253, 1877, 1293, 4254, 11796, 11748, 3481, 1294, 1278, 2951, 4016,
-        1736, 2295, 16311, 1058, 1429, 1590, 2644, 3384, 1034, 1321, 1429, 2510, 33356,
-        43102, 24483, 1293, 4254, 1531, 2632, 1307, 1429, 1590, 2644, 3384, 1034,
-        4016, 4395, 10693, 1278, 7513, 1307, 1278, 7401, 1319, 2975, 3336, 1044, 1429,
-        1067, 1048, 1897, 1429, 1067, 1049, 1897, 6704, 58226, 1293, 4254, 1531, 2632,
-        1307, 1429, 2510, 33356, 43102, 1034, 4016, 1402, 1420, 4460, 1046, 3367,
-        1278, 7401, 1395, 1605, 24511, 1505, 2156, 1584, 1836, 7748, 1317, 9041, 1044,
-        9288, 1278, 4460, 9829, 1319, 4344, 4342, 1369, 26433, 13575, 33356, 7748,
+        1420, 9829, 1429, 2510, 33356, 43102, 1034, 2951, 1046, 3886, 1044, 1394,
+        8020, 20975, 1319, 6510, 20158, 5610, 2658, 1429, 11474, 11499, 24924, 21966,
+        1877, 1045, 61797, 10344, 1693, 1278, 7401, 1395, 11865, 1505, 16369, 10009,
+        1536, 1278, 4440, 4701, 1319, 73546, 24215, 11383, 1505, 49498, 62275, 1456,
+        1045, 61797, 12819, 1693, 1278, 7401, 1395, 35499, 1286, 1044, 28982, 1044,
+        1505, 1693, 1278, 4440, 4701, 9985, 1636, 1317, 8497, 1455, 1278, 7401, 1395,
+        1605, 2925, 1319, 1101, 3596, 3109, 13730, 1307, 6878, 4701, 1455, 2715, 1402,
+        2988, 1693, 1278, 7401, 1722, 2925, 1456, 1045, 14099, 9288, 1429, 2510, 33356,
+        43102, 1034, 9829, 1693, 1278, 7401, 1395, 16501, 1317, 8497, 3147, 5250,
+        1058, 1319, 1049, 1041, 1278, 4440, 1395, 10185, 57773, 1317, 1278, 7401,
+        1044, 1505, 1319, 1050, 1041, 1278, 4440, 3120, 1605, 4231, 6171, 3686, 1317,
+        3180, 1261, 17565, 2314, 1278, 7401, 1267, 49939, 2576, 7481, 10469, 2100,
+        1045, 27039, 8174, 1877, 31837, 1675, 2143, 4832, 1294, 2342, 1278, 3629,
+        4832, 8174, 1319, 3846, 1605, 4626, 2595, 1116, 12849, 1044, 3475, 1284, 3224,
+        1044, 1505, 2258, 106626, 29762, 17960, 5030, 3403, 2519, 1045, 129946, 3253,
+        1877, 1293, 4254, 11796, 11748, 3481, 1294, 1278, 2951, 4016, 1736, 2295,
+        16311, 1058, 1429, 1590, 2644, 3384, 1034, 1321, 1429, 2510, 33356, 43102,
+        24483, 1293, 4254, 1531, 2632, 1307, 1429, 1590, 2644, 3384, 1034, 4016, 4395,
+        10693, 1278, 7513, 1307, 1278, 7401, 1319, 2975, 3336, 1044, 1429, 1067, 1048,
+        1897, 1429, 1067, 1049, 1897, 6704, 58226, 1293, 4254, 1531, 2632, 1307, 1429,
+        2510, 33356, 43102, 1034, 4016, 1402, 1420, 4460, 1046, 3367, 1278, 7401,
+        1395, 1605, 24511, 1505, 2156, 1584, 1836, 7748, 1317, 9041, 1044, 9288, 1278,
+        4460, 9829, 1319, 4344, 1577, 2898, 8020, 20975, 1044, 2342, 9288, 9829, 1693,
+        1278, 7401, 1395, 16501, 1317, 8497, 1626, 1369, 26433, 13575, 33356, 7748,
         2188, 1402, 2959, 7655, 1319, 1948, 10340, 1405, 10910, 1041, 1505, 62275,
         1562, 1278, 4701, 1319, 1329, 6129, 1505, 13619, 1638, 1562, 1278, 3686, 2988,
         4342, 1369, 26433, 52522, 1741, 12522, 1278, 4171, 5647, 1307, 20158, 7748,
         1394, 1278, 7401, 1395, 12581, 2425, 1429, 19745, 1307, 20158, 7748, 3871,
         11796, 20158, 5610, 1044, 3199, 1693, 2156, 1395, 2342, 1925, 1044, 4016,
         1402, 1805, 1307, 1278, 1429, 2510, 33356, 43102, 1034, 4460, 1338, 1045,
-        19652, 5194, 1877, 1293, 4254, 3367, 1261, 4811, 5194, 1395, 5662, 1394, 1261,
-        7401, 2425, 1429, 50159, 5194, 4225, 1636, 4016, 2685, 1455, 5194, 1394, 1747,
-        20158, 7748, 8366, 1317, 1455, 7401, 1626, 1293, 4254, 3367, 1261, 22802,
-        9065, 1395, 5662, 1394, 1261, 7401, 2425, 1429, 47888, 9065, 4225, 1278, 20158,
-        5610, 2632, 4016, 1402, 3746, 1455, 9065, 1626, 1293, 4254, 3367, 5178, 20344,
-        1584, 5662, 1394, 1261, 7401, 2425, 1429, 39292, 20344, 4225, 1278, 20158,
-        5610, 2632, 4016, 1402, 1261, 2951, 8719, 2342, 20344, 1562, 1278, 68614,
-        2016, 1046, 3367, 11518, 1307, 1278, 68614, 20344, 11145, 1044, 1653, 1605,
-        9041, 2258, 7748, 1394, 1455, 7401, 1626, 1293, 4254, 3367, 2156, 1584, 3336,
-        7748, 7504, 10204, 33356, 7401, 11277, 11499, 3352, 1317, 2685, 1278, 2879,
-        4453, 1321, 58929, 1394, 2143, 20158, 7748, 1626, 1293, 4254, 4925, 69939,
-        3310, 4213, 1044, 28882, 2424, 1294, 7846, 1693, 1278, 4618, 7278, 1307, 1278,
-        4440, 1395, 1605, 7846, 1338, 1045, 46359, 1307, 20158, 7748, 1877, 1293,
-        4254, 11796, 7401, 56612, 1420, 1429, 2510, 33356, 5610, 2658, 1034, 1319,
-        35344, 2425, 1429, 72777, 20158, 5610, 2658, 5588, 87334, 2143, 20158, 7748,
-        36993, 4395, 1455, 2658, 1046, 17616, 6413, 1584, 5662, 1319, 1101, 3596,
-        3109, 2011, 1394, 3310, 1044, 1935, 1394, 15748, 1044, 8103, 1394, 32449,
-        25185, 2782, 1044, 15126, 1394, 3481, 1044, 6704, 58226, 1293, 4254, 5469,
-        1605, 25451, 2258, 7185, 9399, 1505, 22347, 1278, 12581, 5194, 1338, 1045,
-        124632, 11779, 1505, 6245, 7748, 1877, 1293, 4254, 3367, 1261, 7401, 1395,
-        1605, 10910, 1513, 1747, 1044, 2143, 4848, 2715, 3637, 4231, 1420, 10505,
-        1394, 1455, 7401, 1454, 1420, 9829, 1429, 2510, 33356, 43102, 1034, 4460,
-        1626, 1293, 4254, 2898, 20975, 1455, 1736, 1420, 1429, 39292, 20344, 10762,
-        6079, 1058, 1693, 11518, 1307, 1278, 68614, 20344, 11145, 1317, 1278, 4701,
-        1044, 9288, 1278, 1429, 2510, 33356, 43102, 1034, 4460, 9829, 1626, 1293,
-        4254, 2898, 20975, 1455, 1736, 1420, 1429, 39292, 20344, 10762, 6079, 1058,
-        1693, 6245, 20344, 11145, 1317, 1278, 2879, 6599, 1505, 5315, 1044, 4626,
-        2424, 1747, 1294, 1261, 4249, 20158, 5610, 1454, 6245, 20344, 1294, 1278,
-        1429, 63434, 1034, 4460, 1319, 1101, 3596, 3109, 16753, 63434, 2811, 12161,
-        5721, 1049, 1897, 1429, 5721, 1050, 4964, 26317, 14099, 4305, 6245, 20158,
-        7748, 1693, 2156, 1584, 83032, 11074, 20125, 1505, 35954, 1455, 33755, 9960,
-        15040, 1626, 1293, 4254, 2898, 20975, 1455, 1653, 1605, 1736, 1420, 1429,
-        39292, 20344, 10762, 6079, 1058, 1693, 6245, 7748, 1584, 2959, 1394, 1261,
-        7401, 1044, 4626, 2744, 1435, 1261, 9960, 10505, 3746, 1278, 1429, 2510, 33356,
-        43102, 1034, 4460, 1338, 1045, 3501, 7481, 3403, 1877, 1293, 4254, 5469, 1605,
-        4626, 2258, 18460, 1044, 49223, 1044, 1505, 3403, 7805, 1307, 1278, 11748,
-        4460, 1626, 1293, 4254, 5469, 1605, 30711, 2143, 11748, 4005, 1294, 2595,
-        1116, 12849, 1505, 2258, 2147, 58929, 11084, 1338, 6626, 91712, 5010, 74938,
-        2794, 1439, 48599, 1319, 1077, 16807, 3313, 33579, 3640, 33966, 1293, 1512,
-        1369, 1429, 1590, 2644, 3384, 2811, 2011, 1520, 1369, 1429, 2510, 33356, 43102,
-        1058, 6923, 1463, 20213, 1369, 11108, 1293, 3493, 1293, 20213, 2820, 6626,
-        3107, 1267, 31839, 58380, 29846, 9158, 1080, 9983, 1877, 1657, 1657, 1010,
-        1045, 54381, 7513, 1058, 1359, 1048, 1010, 72777, 2564, 1058, 48990, 4798,
-        1267, 72777, 6360, 1877, 1784, 4798, 1307, 1278, 8633, 1338, 19745, 1307,
-        20158, 7748, 1058, 2409, 7401, 2188, 1736, 11118, 1044, 1925, 1044, 1505,
-        6245, 20158, 7748, 1338, 72777, 20158, 5610, 2658, 1058, 2011, 1010, 1657,
-        1657, 1267, 31839, 130200, 2609, 38754, 1068, 11815, 96525, 57484, 1877, 13382,
-        6928, 1275, 17844, 50602, 1319, 6999, 1065, 1801, 4380, 9623, 6928, 1275,
-        17844, 50602, 1319, 3265, 1429, 19068, 33545, 4428, 1395, 3214, 1321, 14063,
-        2203, 1435, 1307, 6776, 1032, 1049, 1054, 1044, 1032, 1050, 1048, 1050, 1052,
-        1044, 1536, 1321, 2396, 2100, 60798, 1349, 2100, 31839, 37541, 31839, 37541,
-        31839, 37541, 20198, 1058, 1957, 31839, 1010, 16742, 1058, 1957, 31839, 1010,
-        11765, 1058, 1957, 31839, 1267, 60798, 1398, 2100, 20396, 34356, 58564, 1010,
-        1053, 1054, 1055, 1056, 25493, 18725, 1010, 6105, 5152, 1044, 25761, 1032,
-        1048, 1048, 1048, 1048, 1048, 1010, 20198, 1058, 15809, 102168, 1044, 116521,
-        57831, 1010, 16742, 1058, 1319, 1048, 1049, 1050, 1041, 1032, 1051, 1052,
-        1053, 1045, 1054, 1055, 1056, 1057, 1010, 11765, 1058, 1475, 2868, 3256, 16122,
-        98739, 2354, 1267, 1049, 1046, 82052, 2100, 1784, 10485, 1307, 1593, 50602,
-        1395, 1317, 9656, 1278, 62817, 3686, 1455, 2188, 1402, 33007, 2396, 1278,
-        14027, 3184, 30225, 1321, 103171, 12522, 5289, 6170, 109959, 1321, 75337,
-        1338, 1050, 1046, 47061, 1307, 15105, 79421, 15696, 2100, 4393, 16427, 1307,
-        1593, 50602, 1044, 1429, 17854, 79421, 15696, 1034, 4938, 2258, 1321, 1747,
-        2767, 1045, 2882, 3686, 1044, 81802, 1294, 1747, 9301, 1044, 5627, 1294, 17580,
-        1044, 8360, 1044, 15356, 1044, 1505, 2147, 2071, 1505, 7165, 1044, 5627, 1505,
-        1605, 13949, 1044, 25026, 1044, 1505, 12233, 7850, 1435, 1429, 12709, 79421,
-        4225, 1455, 1934, 2151, 1505, 2188, 1402, 33007, 1317, 1044, 39257, 1536,
-        1044, 1505, 5802, 1536, 113858, 9296, 1044, 1799, 1319, 1105, 1041, 1934,
-        7293, 1010, 2609, 1742, 4688, 4, 1975, 8353, 1010, 33966, 1293, 1512, 1369,
-        1429, 1590, 2644, 3384, 2811, 1429, 1067, 1048, 2580, 1369, 1429, 2510, 33356,
-        43102, 2811, 6923, 1463, 1429, 13382, 6928, 1275, 17844, 50602, 2241, 1369,
-        14797, 1293, 1826, 2820, 1975], "total_duration": 23027452600, "load_duration":
-        26361900, "prompt_eval_count": 2400, "prompt_eval_duration": 22230361000,
-        "eval_count": 38, "eval_duration": 770211000}'
+        19652, 5194, 1877, 1293, 4254, 3797, 20158, 7748, 4016, 4395, 1278, 7092,
+        2658, 12581, 1394, 1278, 7401, 1626, 1293, 4254, 3367, 1261, 4811, 5194, 1395,
+        5662, 1394, 1261, 7401, 2425, 1429, 50159, 5194, 4225, 1636, 4016, 2685, 1455,
+        5194, 1394, 1747, 20158, 7748, 8366, 1317, 1455, 7401, 1626, 1293, 4254, 3367,
+        1261, 22802, 9065, 1395, 5662, 1394, 1261, 7401, 2425, 1429, 47888, 9065,
+        4225, 1278, 20158, 5610, 2632, 4016, 1402, 3746, 1455, 9065, 1626, 1293, 4254,
+        3367, 5178, 20344, 1584, 5662, 1394, 1261, 7401, 2425, 1429, 39292, 20344,
+        4225, 1278, 20158, 5610, 2632, 4016, 1402, 1261, 2951, 8719, 2342, 20344,
+        1562, 1278, 68614, 2016, 1046, 3367, 11518, 1307, 1278, 68614, 20344, 11145,
+        1044, 1653, 1605, 9041, 2258, 7748, 1394, 1455, 7401, 1626, 1293, 4254, 3367,
+        2156, 1584, 3336, 7748, 7504, 10204, 33356, 7401, 11277, 11499, 3352, 1317,
+        2685, 1278, 2879, 4453, 1321, 58929, 1394, 2143, 20158, 7748, 1626, 1293,
+        4254, 4925, 69939, 3310, 4213, 1044, 28882, 2424, 1294, 7846, 1693, 1278,
+        4618, 7278, 1307, 1278, 4440, 1395, 1605, 7846, 1338, 1045, 46359, 1307, 20158,
+        7748, 1877, 1293, 4254, 11796, 7401, 56612, 1420, 1429, 2510, 33356, 5610,
+        2658, 1034, 1319, 35344, 2425, 1429, 72777, 20158, 5610, 2658, 5588, 87334,
+        2143, 20158, 7748, 36993, 4395, 1455, 2658, 1046, 17616, 6413, 1584, 5662,
+        1319, 1101, 3596, 3109, 2011, 1394, 3310, 1044, 1935, 1394, 15748, 1044, 8103,
+        1394, 32449, 25185, 2782, 1044, 15126, 1394, 3481, 1044, 6704, 14617, 10264,
+        34140, 1395, 45227, 1462, 2258, 26213, 2084, 2282, 1294, 20520, 4848, 1626,
+        1293, 4254, 5469, 1605, 25451, 2258, 7185, 9399, 1505, 22347, 1278, 12581,
+        5194, 1338, 1045, 124632, 11779, 1505, 6245, 7748, 1877, 1293, 4254, 3367,
+        1261, 7401, 1395, 1605, 10910, 1513, 1747, 1044, 2143, 4848, 2715, 3637, 4231,
+        1420, 10505, 1394, 1455, 7401, 1454, 1420, 9829, 1429, 2510, 33356, 43102,
+        1034, 4460, 1626, 1293, 4254, 2898, 8020, 20975, 1319, 6510, 20158, 5610,
+        2658, 1429, 11474, 1034, 4244, 8542, 88185, 21966, 2396, 2576, 5443, 1877,
+        1369, 26433, 61797, 10344, 1693, 1278, 7401, 1395, 11865, 1505, 16369, 10009,
+        1536, 1278, 5662, 4701, 1319, 73546, 24215, 11383, 1505, 49498, 62275, 1456,
+        1369, 26433, 61797, 12819, 1693, 1278, 7401, 1395, 35499, 1286, 1044, 28982,
+        1044, 1505, 1693, 1278, 5662, 4701, 9985, 1636, 1317, 8497, 1455, 1278, 7401,
+        1395, 1605, 2925, 1319, 1101, 3596, 3109, 13730, 1307, 6878, 4701, 1455, 2715,
+        1402, 2988, 1693, 1278, 7401, 1722, 2925, 1456, 1369, 26433, 14099, 9288,
+        1429, 2510, 33356, 43102, 1034, 9829, 1693, 1278, 7401, 1395, 16501, 1317,
+        8497, 3147, 5250, 1058, 1319, 1049, 1041, 1278, 5662, 4701, 1395, 10185, 57773,
+        1317, 1278, 7401, 1044, 1505, 1319, 1050, 1041, 1278, 5662, 4701, 3120, 1605,
+        4231, 6171, 3686, 1317, 3180, 1261, 17565, 2314, 1278, 7401, 1010, 1293, 4254,
+        2898, 20975, 1455, 1736, 1420, 1429, 39292, 20344, 10762, 6079, 1058, 1693,
+        11518, 1307, 1278, 68614, 20344, 11145, 1317, 1278, 4701, 1044, 9288, 1278,
+        1429, 2510, 33356, 43102, 1034, 4460, 9829, 1626, 1293, 4254, 2898, 20975,
+        1455, 1736, 1420, 1429, 39292, 20344, 10762, 6079, 1058, 1693, 6245, 20344,
+        11145, 1317, 1278, 2879, 6599, 1505, 5315, 1044, 4626, 2424, 1747, 1294, 1261,
+        4249, 20158, 5610, 1454, 6245, 20344, 1294, 1278, 1429, 63434, 1034, 4460,
+        1319, 1101, 3596, 3109, 16753, 63434, 2811, 12161, 5721, 1049, 1897, 1429,
+        5721, 1050, 4964, 26317, 14099, 4305, 6245, 20158, 7748, 1693, 2156, 1584,
+        83032, 11074, 20125, 1505, 35954, 1455, 33755, 9960, 15040, 1626, 1293, 4254,
+        2898, 20975, 1455, 1653, 1605, 1736, 1420, 1429, 39292, 20344, 10762, 6079,
+        1058, 1693, 6245, 7748, 1584, 2959, 1394, 1261, 7401, 1044, 4626, 2744, 1435,
+        1261, 9960, 10505, 3746, 1278, 1429, 2510, 33356, 43102, 1034, 4460, 1338,
+        1045, 3501, 7481, 3403, 1877, 1293, 4254, 5469, 1605, 4626, 2258, 18460, 1044,
+        49223, 1044, 1505, 3403, 7805, 1307, 1278, 11748, 4460, 1626, 1293, 4254,
+        5469, 1605, 30711, 2143, 11748, 4005, 1294, 2595, 1116, 12849, 1505, 2258,
+        2147, 58929, 11084, 1338, 6626, 91712, 5010, 74938, 2794, 1439, 48599, 1319,
+        1077, 16807, 3313, 33579, 3640, 33966, 1293, 1512, 1369, 1429, 1590, 2644,
+        3384, 2811, 2011, 1520, 1369, 1429, 2510, 33356, 43102, 1058, 6923, 1463,
+        20213, 1369, 11108, 1293, 3493, 1293, 20213, 2820, 6626, 3107, 1267, 31839,
+        58380, 29846, 9158, 1080, 9983, 1877, 1657, 1657, 1010, 1045, 54381, 7513,
+        1058, 1359, 1048, 1010, 72777, 2564, 1058, 48990, 4798, 1267, 72777, 6360,
+        1877, 1784, 4798, 1307, 1278, 8633, 1338, 19745, 1307, 20158, 7748, 1058,
+        2409, 7401, 2188, 1736, 11118, 1044, 1925, 1044, 1505, 6245, 20158, 7748,
+        1338, 72777, 20158, 5610, 2658, 1058, 2011, 1319, 61925, 1402, 10693, 1435,
+        12581, 1456, 1657, 1657, 1267, 31839, 130200, 2609, 38754, 1068, 11815, 96525,
+        57484, 1877, 13382, 6928, 1275, 17844, 50602, 1319, 6999, 1065, 1801, 4380,
+        9623, 6928, 1275, 17844, 50602, 1319, 3265, 1429, 19068, 33545, 4428, 1395,
+        3214, 1321, 14063, 2203, 1435, 1307, 6776, 1032, 1049, 1054, 1044, 1032, 1050,
+        1048, 1050, 1052, 1044, 1536, 1321, 2396, 2100, 60798, 1349, 2100, 31839,
+        37541, 31839, 37541, 31839, 37541, 20198, 1058, 1957, 31839, 1010, 16742,
+        1058, 1957, 31839, 1010, 11765, 1058, 1957, 31839, 1267, 60798, 1398, 2100,
+        20396, 34356, 58564, 1010, 1053, 1054, 1055, 1056, 25493, 18725, 1010, 6105,
+        5152, 1044, 25761, 1032, 1048, 1048, 1048, 1048, 1048, 1010, 20198, 1058,
+        15809, 102168, 1044, 116521, 57831, 1010, 16742, 1058, 1319, 1048, 1049, 1050,
+        1041, 1032, 1051, 1052, 1053, 1045, 1054, 1055, 1056, 1057, 1010, 11765, 1058,
+        1475, 2868, 3256, 16122, 98739, 2354, 1267, 1049, 1046, 82052, 2100, 1784,
+        10485, 1307, 1593, 50602, 1395, 1317, 9656, 1278, 62817, 3686, 1455, 2188,
+        1402, 33007, 2396, 1278, 14027, 3184, 30225, 1321, 103171, 12522, 5289, 6170,
+        109959, 1321, 75337, 1338, 1050, 1046, 47061, 1307, 15105, 79421, 15696, 2100,
+        4393, 16427, 1307, 1593, 50602, 1044, 1429, 17854, 79421, 15696, 1034, 4938,
+        2258, 1321, 1747, 2767, 1045, 2882, 3686, 1044, 81802, 1294, 1747, 9301, 1044,
+        5627, 1294, 17580, 1044, 8360, 1044, 15356, 1044, 1505, 2147, 2071, 1505,
+        7165, 1044, 5627, 1505, 1605, 13949, 1044, 25026, 1044, 1505, 12233, 7850,
+        1435, 1429, 12709, 79421, 4225, 1455, 1934, 2151, 1505, 2188, 1402, 33007,
+        1317, 1044, 39257, 1536, 1044, 1505, 5802, 1536, 113858, 9296, 1044, 1799,
+        1319, 1105, 1041, 1934, 7293, 1010, 2609, 1742, 4688, 4, 1975, 8353, 1010,
+        33966, 1293, 1512, 1369, 1429, 1590, 2644, 3384, 2811, 1429, 1067, 1048, 2580,
+        1369, 1429, 2510, 33356, 43102, 2811, 6923, 1463, 1429, 13382, 6928, 1275,
+        17844, 50602, 2241, 1369, 14797, 1293, 1826, 2820, 1975], "total_duration":
+        20331860500, "load_duration": 18530911600, "prompt_eval_count": 2727, "prompt_eval_duration":
+        1031472800, "eval_count": 38, "eval_duration": 768319000}'
     headers:
       Content-Type:
       - application/json; charset=utf-8
@@ -1114,7 +1162,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -1836,7 +1884,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -2558,7 +2606,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -3280,7 +3328,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -4002,7 +4050,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -4849,19 +4897,30 @@ interactions:
       to that concept. The item format and structure are specified for each concept.\n4.
       Produce a JSON array containing your extracted data, in the provided format.\n\nIf
       a concept is not addressed in the document text, you must still include an entry
-      in the final JSON output but with an empty \"extracted_items\" list.\n\nFollow
-      these additional rules:\n\n- Output format:\nProvide your answer in only the
-      following answer format (do not include backticks, code fences, or any introductory/explanatory
+      in the final JSON output but with an empty \"extracted_items\" list. However,
+      for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n-
+      Extract True if the concept is confirmed or strongly supported by the document
+      content (either explicitly stated or reasonably inferred)\n- Extract False if
+      the concept is contradicted, denied, or if the document content allows you to
+      determine that the concept is not true (e.g., absence of expected content that
+      should be present if the concept were true)\n- Only leave \"extracted_items\"
+      empty if the concept is impossible to determine because either: (1) the document
+      is completely irrelevant to the concept, or (2) the document does not contain
+      enough information to make a conclusion about the concept\n\nFollow these additional
+      rules:\n\n- Output format:\nProvide your answer in only the following answer
+      format (do not include backticks, code fences, or any introductory/explanatory
       text).\n\n- Consistency:\n    -- Each JSON object in the list must have two
       keys: \"concept_id\" and \"extracted_items\".\n    -- The value of \"concept_id\"
       must match exactly the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    --
       The value of \"extracted_items\" must be an array. If the concept is not addressed
-      or there are no items to extract, leave the array empty ([]).\n        --- Extracted
+      or there are no items to extract, leave the array empty ([]). For boolean concepts,
+      only leave empty if the concept is impossible to determine.\n        --- Extracted
       items may be found directly (explicitly mentioned) or inferred from the content
       (implied or derivable from the information present).\n        --- Guidance regarding
       the possible amount of extracted items for the concept is specified under \"Amount
       of extracted items\". Each extracted item, even if there is only one, must be
-      part of the \"extracted_items\" array.\n\n- Item structure:\n    -- If a specific
+      part of the \"extracted_items\" array.\n\n- Item structure:\n    -- All extracted
+      items must match the exact type specified for the concept.\n    -- If a specific
       structure is provided for a concept under \"Expected structure,\" you must follow
       that structure for all extracted items corresponding to that concept.\n    --
       If a rating scale is provided for a concept under \"Rating scale,\" the extracted
@@ -4875,17 +4934,27 @@ interactions:
       Types of extracted items:\n    -- Each concept specifies an \"extracted item
       type\" (found under \"Concept extracted item type\"). Ensure your extracted
       items strictly match that type. Python types are provided (e.g., str for string,
-      int for integer, float for floating-point number, dict for object, etc.).\n    --
+      int for integer, float for floating-point number, dict for object, etc.). Type
+      compliance is mandatory - any deviation will result in invalid output.\n    --
       Do not introduce any extra fields or modify the specified structure.\n\n- Handling
       missing or multiple items:\n    -- If a concept is not mentioned at all, your
       output should still contain an entry for that concept with an empty \"extracted_items\"
-      array.\n    -- For concepts that have an \"Available labels:\" section: if none
-      of the predefined labels apply to the content, leave the \"extracted_items\"
-      array empty.\n    -- For concepts that have an \"Available labels:\" section:
-      if multiple labels apply to the same instance or context, include them all in
-      a single extracted item with multiple labels in the \"labels\" array (e.g.,
-      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
-      if there are genuinely distinct instances or contexts that warrant separate
+      array.\n    -- For boolean concepts (with extracted item type \"bool\"): Distinguish
+      carefully between these cases:\n        --- Extract True if the concept is confirmed
+      or strongly supported by the provided content (either explicitly stated or reasonably
+      inferred)\n        --- Extract False if the concept is contradicted, denied,
+      or if the provided content allows you to determine that the concept is not true
+      (e.g., absence of expected content that should be present if the concept were
+      true)\n        --- Only leave \"extracted_items\" empty if the concept is impossible
+      to determine because either: (1) the provided content is completely irrelevant
+      to the concept, or (2) the provided content does not contain enough information
+      to make a conclusion about the concept\n    -- For concepts that have an \"Available
+      labels:\" section: if none of the predefined labels apply to the content, leave
+      the \"extracted_items\" array empty.\n    -- For concepts that have an \"Available
+      labels:\" section: if multiple labels apply to the same instance or context,
+      include them all in a single extracted item with multiple labels in the \"labels\"
+      array (e.g., {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
       classification.\n    -- For concepts that do not have an \"Available labels:\"
       section: if multiple items are found for a concept, include each as a separate
       entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
@@ -4895,22 +4964,23 @@ interactions:
       [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
       Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
       of the contract.\n\nAmount of extracted items: This concept may have zero, one,
-      or multiple extracted items.\n\nConcept extracted item type: str\n````\n\n______\n\n------\nDOCUMENT
-      TEXT:\nNon-Disclosure Agreement (NDA)\n\nThis Non-Disclosure Agreement (the
-      \"Agreement\") is made and entered into as of July 16, 2024, by and between:\n\nParty
-      A:\n\n_____\n_____\n_____\nContact: _____\nPhone: _____\nEmail: _____\n\nParty
-      B:\n\nExample.Com LLC\n5678 Random Drive\nNew York, NY 00000\nContact: Jane
-      Doe, Managing Partner\nPhone: (012) 345-6789\nEmail: jane.doe@example.com\n\n1.
-      Purpose:\n\nThe purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\n\n2. Definition
-      of Confidential Information:\n\nFor purposes of this Agreement, \"Confidential
-      Information\" means any and all non-public information, conveyed in all forms,
-      whether in oral, written, electronic, or other form or media, whether or not
-      marked, designated, or otherwise identified as \"confidential,\" that has been
-      or may be disclosed to, accessed by, or observed by Receiving Party, which (i)
-      has actual\n------\n\n\n", "options": {"temperature": 0.3, "top_p": 0.3, "num_predict":
-      4096, "seed": 123}, "stream": false, "images": []}'
+      or multiple extracted items.\n\nConcept extracted item type: str (must be exactly
+      as specified)\n````\n\n______\n\n------\nDOCUMENT TEXT:\nNon-Disclosure Agreement
+      (NDA)\n\nThis Non-Disclosure Agreement (the \"Agreement\") is made and entered
+      into as of July 16, 2024, by and between:\n\nParty A:\n\n_____\n_____\n_____\nContact:
+      _____\nPhone: _____\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n5678 Random
+      Drive\nNew York, NY 00000\nContact: Jane Doe, Managing Partner\nPhone: (012)
+      345-6789\nEmail: jane.doe@example.com\n\n1. Purpose:\n\nThe purpose of this
+      Agreement is to protect the confidential information that may be disclosed between
+      the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\n\n2. Definition of Confidential Information:\n\nFor
+      purposes of this Agreement, \"Confidential Information\" means any and all non-public
+      information, conveyed in all forms, whether in oral, written, electronic, or
+      other form or media, whether or not marked, designated, or otherwise identified
+      as \"confidential,\" that has been or may be disclosed to, accessed by, or observed
+      by Receiving Party, which (i) has actual\n------\n\n\n", "options": {"temperature":
+      0.3, "top_p": 0.3, "num_predict": 4096, "seed": 123}, "stream": false, "images":
+      []}'
     headers:
       accept:
       - '*/*'
@@ -4919,30 +4989,33 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '11486'
+      - '13225'
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/generate
   response:
     body:
-      string: '{"model": "deepseek-r1:32b", "created_at": "2025-07-10T14:13:48.234152Z",
-        "response": "<think>\nAlright, I need to tackle this task step by step. Let''s
-        see what the user is asking for.\n\nFirst, they provided a document text and
-        a list of concepts. My job is to analyze the document and extract information
-        based on these concepts. The specific concept here is C0: Contract title.\n\nLooking
-        at the document text, it starts with \"Non-Disclosure Agreement (NDA)\". That
-        seems like the title of the contract. So, that''s definitely relevant for
-        Concept C0.\n\nThe user wants me to output a JSON array where each entry has
-        \"concept_id\" and \"extracted_items\". Since there''s only one concept here,
-        I''ll focus on C0.\n\nI need to make sure the extracted item is a string.
-        The title is clearly stated at the beginning, so it should be straightforward.\n\nAlso,
-        the guidelines mention that if a concept isn''t addressed, I still include
-        it with an empty array. But in this case, the concept is definitely present.\n\nSo,
-        putting it all together, I''ll structure the JSON accordingly, ensuring no
-        extra fields or markdown are included.\n</think>\n\n[\n    {\n        \"concept_id\":
+      string: '{"model": "deepseek-r1:32b", "created_at": "2025-07-19T22:53:39.9202948Z",
+        "response": "<think>\nAlright, I need to process the user''s query. They provided
+        a document text and a list of concepts, specifically C0: Contract title. My
+        task is to determine if this concept is addressed in the document and extract
+        relevant information.\n\nFirst, I''ll read through the document text carefully.
+        The first line says \"Non-Disclosure Agreement (NDA)\". That seems like the
+        title of the contract. \n\nNext, looking at the structure, the document starts
+        with that phrase, which is typical for contracts to have their titles at the
+        beginning. There''s no other mention of a different title elsewhere in the
+        provided text.\n\nSince the concept C0 asks for the contract title, and I
+        found \"Non-Disclosure Agreement (NDA)\" clearly stated, this should be the
+        extracted item. \n\nI need to ensure that my output follows the specified
+        JSON format with \"concept_id\" as \"C0\" and include the extracted string
+        in an array under \"extracted_items\". Since it''s a single item, the array
+        will have one element.\n\nI also check if there are any other possible titles
+        or mentions, but nothing else stands out. The rest of the document details
+        parties and purposes but doesn''t introduce another title.\n\nSo, I''ll structure
+        my JSON accordingly, making sure to match the exact type (string) as specified.\n</think>\n\n[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\"Non-Disclosure Agreement (NDA)\"]\n    }\n]",
         "done": true, "done_reason": "stop", "context": [151644, 14374, 739, 510,
         2610, 686, 387, 12607, 9079, 15860, 279, 32189, 11, 6358, 11, 323, 22845,
@@ -5032,22 +5105,34 @@ interactions:
         624, 19, 13, 86888, 264, 4718, 1334, 8482, 697, 27432, 821, 11, 304, 279,
         3897, 3561, 382, 2679, 264, 7286, 374, 537, 20068, 304, 279, 2197, 1467, 11,
         498, 1969, 2058, 2924, 458, 4343, 304, 279, 1590, 4718, 2550, 714, 448, 458,
-        4287, 330, 23493, 291, 12134, 1, 1140, 382, 12480, 1493, 5107, 5601, 1447,
-        12, 9258, 3561, 510, 60424, 697, 4226, 304, 1172, 279, 2701, 4226, 3561, 320,
-        2982, 537, 2924, 1182, 35078, 11, 2038, 69155, 11, 476, 894, 61369, 25815,
-        10393, 5269, 1467, 3593, 12, 7292, 47094, 510, 262, 1177, 8886, 4718, 1633,
-        304, 279, 1140, 1969, 614, 1378, 6894, 25, 330, 68487, 842, 1, 323, 330, 23493,
-        291, 12134, 22956, 262, 1177, 576, 897, 315, 330, 68487, 842, 1, 1969, 2432,
-        6896, 279, 3034, 315, 279, 7286, 320, 1958, 3110, 11, 330, 34, 15, 497, 330,
-        34, 16, 497, 4992, 13, 4292, 262, 1177, 576, 897, 315, 330, 23493, 291, 12134,
-        1, 1969, 387, 458, 1334, 13, 1416, 279, 7286, 374, 537, 20068, 476, 1052,
-        525, 902, 3589, 311, 8649, 11, 5274, 279, 1334, 4287, 34923, 4292, 286, 12448,
-        22826, 291, 3589, 1231, 387, 1730, 5961, 320, 93632, 398, 9733, 8, 476, 67595,
-        504, 279, 2213, 320, 318, 3440, 476, 18763, 480, 504, 279, 1995, 3042, 4292,
-        286, 12448, 81561, 8826, 279, 3204, 3311, 315, 27432, 3589, 369, 279, 7286,
-        374, 5189, 1212, 330, 10093, 315, 27432, 3589, 3263, 8886, 27432, 1509, 11,
-        1496, 421, 1052, 374, 1172, 825, 11, 1969, 387, 949, 315, 279, 330, 23493,
-        291, 12134, 1, 1334, 382, 12, 5739, 5944, 510, 262, 1177, 1416, 264, 3151,
+        4287, 330, 23493, 291, 12134, 1, 1140, 13, 4354, 11, 369, 2710, 18940, 320,
+        4197, 27432, 1509, 943, 330, 2641, 3975, 32037, 15516, 510, 12, 22826, 3007,
+        421, 279, 7286, 374, 10774, 476, 16510, 7248, 553, 279, 2197, 2213, 320, 49898,
+        20975, 10982, 476, 28446, 67595, 340, 12, 22826, 3557, 421, 279, 7286, 374,
+        22296, 12770, 11, 14820, 11, 476, 421, 279, 2197, 2213, 6147, 498, 311, 8253,
+        429, 279, 7286, 374, 537, 830, 320, 68, 1302, 2572, 19265, 315, 3601, 2213,
+        429, 1265, 387, 3042, 421, 279, 7286, 1033, 830, 340, 12, 8278, 5274, 330,
+        23493, 291, 12134, 1, 4287, 421, 279, 7286, 374, 11997, 311, 8253, 1576, 2987,
+        25, 320, 16, 8, 279, 2197, 374, 6587, 39715, 311, 279, 7286, 11, 476, 320,
+        17, 8, 279, 2197, 1558, 537, 6644, 3322, 1995, 311, 1281, 264, 16688, 911,
+        279, 7286, 271, 12480, 1493, 5107, 5601, 1447, 12, 9258, 3561, 510, 60424,
+        697, 4226, 304, 1172, 279, 2701, 4226, 3561, 320, 2982, 537, 2924, 1182, 35078,
+        11, 2038, 69155, 11, 476, 894, 61369, 25815, 10393, 5269, 1467, 3593, 12,
+        7292, 47094, 510, 262, 1177, 8886, 4718, 1633, 304, 279, 1140, 1969, 614,
+        1378, 6894, 25, 330, 68487, 842, 1, 323, 330, 23493, 291, 12134, 22956, 262,
+        1177, 576, 897, 315, 330, 68487, 842, 1, 1969, 2432, 6896, 279, 3034, 315,
+        279, 7286, 320, 1958, 3110, 11, 330, 34, 15, 497, 330, 34, 16, 497, 4992,
+        13, 4292, 262, 1177, 576, 897, 315, 330, 23493, 291, 12134, 1, 1969, 387,
+        458, 1334, 13, 1416, 279, 7286, 374, 537, 20068, 476, 1052, 525, 902, 3589,
+        311, 8649, 11, 5274, 279, 1334, 4287, 34923, 568, 1752, 2710, 18940, 11, 1172,
+        5274, 4287, 421, 279, 7286, 374, 11997, 311, 8253, 624, 286, 12448, 22826,
+        291, 3589, 1231, 387, 1730, 5961, 320, 93632, 398, 9733, 8, 476, 67595, 504,
+        279, 2213, 320, 318, 3440, 476, 18763, 480, 504, 279, 1995, 3042, 4292, 286,
+        12448, 81561, 8826, 279, 3204, 3311, 315, 27432, 3589, 369, 279, 7286, 374,
+        5189, 1212, 330, 10093, 315, 27432, 3589, 3263, 8886, 27432, 1509, 11, 1496,
+        421, 1052, 374, 1172, 825, 11, 1969, 387, 949, 315, 279, 330, 23493, 291,
+        12134, 1, 1334, 382, 12, 5739, 5944, 510, 262, 1177, 2009, 27432, 3589, 1969,
+        2432, 279, 4734, 943, 5189, 369, 279, 7286, 624, 262, 1177, 1416, 264, 3151,
         5944, 374, 3897, 369, 264, 7286, 1212, 330, 18896, 5944, 1335, 498, 1969,
         1795, 429, 5944, 369, 678, 27432, 3589, 12159, 311, 429, 7286, 624, 262, 1177,
         1416, 264, 10728, 5452, 374, 3897, 369, 264, 7286, 1212, 330, 22152, 5452,
@@ -5063,31 +5148,43 @@ interactions:
         291, 1509, 943, 1, 320, 15105, 1212, 330, 44576, 27432, 1509, 943, 1827, 29279,
         697, 27432, 3589, 25470, 2432, 429, 943, 13, 13027, 4494, 525, 3897, 320,
         68, 1302, 2572, 607, 369, 914, 11, 526, 369, 7546, 11, 2224, 369, 19057, 16574,
-        1372, 11, 6451, 369, 1633, 11, 4992, 13, 4292, 262, 1177, 3155, 537, 19131,
-        894, 4960, 5043, 476, 5602, 279, 5189, 5944, 382, 12, 55713, 7402, 476, 5248,
-        3589, 510, 262, 1177, 1416, 264, 7286, 374, 537, 9733, 518, 678, 11, 697,
-        2550, 1265, 2058, 6644, 458, 4343, 369, 429, 7286, 448, 458, 4287, 330, 23493,
-        291, 12134, 1, 1334, 624, 262, 1177, 1752, 18940, 429, 614, 458, 330, 16485,
-        9201, 2974, 3772, 25, 421, 6857, 315, 279, 63062, 9201, 3796, 311, 279, 2213,
-        11, 5274, 279, 330, 23493, 291, 12134, 1, 1334, 4287, 624, 262, 1177, 1752,
-        18940, 429, 614, 458, 330, 16485, 9201, 2974, 3772, 25, 421, 5248, 9201, 3796,
-        311, 279, 1852, 2867, 476, 2266, 11, 2924, 1105, 678, 304, 264, 3175, 27432,
-        1509, 448, 5248, 9201, 304, 279, 330, 16873, 1, 1334, 320, 68, 1302, 2572,
-        5212, 16873, 788, 4383, 1502, 16, 497, 330, 1502, 17, 1341, 16630, 8278, 1855,
-        5248, 27432, 3589, 421, 1052, 525, 35197, 12460, 13121, 476, 37597, 429, 7091,
-        8651, 23850, 624, 262, 1177, 1752, 18940, 429, 653, 537, 614, 458, 330, 16485,
-        9201, 2974, 3772, 25, 421, 5248, 3589, 525, 1730, 369, 264, 7286, 11, 2924,
-        1817, 438, 264, 8651, 4343, 2878, 279, 330, 23493, 291, 12134, 1, 1334, 382,
-        12, 2308, 5107, 1467, 510, 262, 1177, 3155, 537, 2924, 894, 7102, 11, 40841,
-        11, 476, 1467, 4889, 315, 279, 4718, 1334, 624, 262, 1177, 3155, 537, 15061,
-        697, 4718, 2033, 304, 1182, 35078, 476, 894, 1008, 36566, 5766, 382, 72929,
-        11692, 39351, 52225, 320, 24958, 87258, 982, 9640, 262, 341, 286, 330, 68487,
-        842, 788, 607, 345, 286, 330, 23493, 291, 12134, 25, 2278, 310, 12236, 286,
-        3211, 262, 1153, 262, 12236, 921, 45347, 271, 2130, 12148, 5790, 21073, 50,
-        510, 73594, 3989, 12, 34355, 3034, 25, 356, 15, 198, 44576, 829, 25, 19185,
-        2265, 271, 44576, 4008, 510, 785, 2265, 315, 279, 5116, 382, 10093, 315, 27432,
-        3589, 25, 1096, 7286, 1231, 614, 7168, 11, 825, 11, 476, 5248, 27432, 3589,
-        382, 44576, 27432, 1509, 943, 25, 607, 198, 13874, 13874, 271, 2130, 24197,
+        1372, 11, 6451, 369, 1633, 11, 4992, 35334, 3990, 8733, 374, 23042, 481, 894,
+        37564, 686, 1102, 304, 8318, 2550, 624, 262, 1177, 3155, 537, 19131, 894,
+        4960, 5043, 476, 5602, 279, 5189, 5944, 382, 12, 55713, 7402, 476, 5248, 3589,
+        510, 262, 1177, 1416, 264, 7286, 374, 537, 9733, 518, 678, 11, 697, 2550,
+        1265, 2058, 6644, 458, 4343, 369, 429, 7286, 448, 458, 4287, 330, 23493, 291,
+        12134, 1, 1334, 624, 262, 1177, 1752, 2710, 18940, 320, 4197, 27432, 1509,
+        943, 330, 2641, 37051, 422, 88647, 15516, 1948, 1493, 5048, 510, 286, 12448,
+        22826, 3007, 421, 279, 7286, 374, 10774, 476, 16510, 7248, 553, 279, 3897,
+        2213, 320, 49898, 20975, 10982, 476, 28446, 67595, 340, 286, 12448, 22826,
+        3557, 421, 279, 7286, 374, 22296, 12770, 11, 14820, 11, 476, 421, 279, 3897,
+        2213, 6147, 498, 311, 8253, 429, 279, 7286, 374, 537, 830, 320, 68, 1302,
+        2572, 19265, 315, 3601, 2213, 429, 1265, 387, 3042, 421, 279, 7286, 1033,
+        830, 340, 286, 12448, 8278, 5274, 330, 23493, 291, 12134, 1, 4287, 421, 279,
+        7286, 374, 11997, 311, 8253, 1576, 2987, 25, 320, 16, 8, 279, 3897, 2213,
+        374, 6587, 39715, 311, 279, 7286, 11, 476, 320, 17, 8, 279, 3897, 2213, 1558,
+        537, 6644, 3322, 1995, 311, 1281, 264, 16688, 911, 279, 7286, 198, 262, 1177,
+        1752, 18940, 429, 614, 458, 330, 16485, 9201, 2974, 3772, 25, 421, 6857, 315,
+        279, 63062, 9201, 3796, 311, 279, 2213, 11, 5274, 279, 330, 23493, 291, 12134,
+        1, 1334, 4287, 624, 262, 1177, 1752, 18940, 429, 614, 458, 330, 16485, 9201,
+        2974, 3772, 25, 421, 5248, 9201, 3796, 311, 279, 1852, 2867, 476, 2266, 11,
+        2924, 1105, 678, 304, 264, 3175, 27432, 1509, 448, 5248, 9201, 304, 279, 330,
+        16873, 1, 1334, 320, 68, 1302, 2572, 5212, 16873, 788, 4383, 1502, 16, 497,
+        330, 1502, 17, 1341, 16630, 8278, 1855, 5248, 27432, 3589, 421, 1052, 525,
+        35197, 12460, 13121, 476, 37597, 429, 7091, 8651, 23850, 624, 262, 1177, 1752,
+        18940, 429, 653, 537, 614, 458, 330, 16485, 9201, 2974, 3772, 25, 421, 5248,
+        3589, 525, 1730, 369, 264, 7286, 11, 2924, 1817, 438, 264, 8651, 4343, 2878,
+        279, 330, 23493, 291, 12134, 1, 1334, 382, 12, 2308, 5107, 1467, 510, 262,
+        1177, 3155, 537, 2924, 894, 7102, 11, 40841, 11, 476, 1467, 4889, 315, 279,
+        4718, 1334, 624, 262, 1177, 3155, 537, 15061, 697, 4718, 2033, 304, 1182,
+        35078, 476, 894, 1008, 36566, 5766, 382, 72929, 11692, 39351, 52225, 320,
+        24958, 87258, 982, 9640, 262, 341, 286, 330, 68487, 842, 788, 607, 345, 286,
+        330, 23493, 291, 12134, 25, 2278, 310, 12236, 286, 3211, 262, 1153, 262, 12236,
+        921, 45347, 271, 2130, 12148, 5790, 21073, 50, 510, 73594, 3989, 12, 34355,
+        3034, 25, 356, 15, 198, 44576, 829, 25, 19185, 2265, 271, 44576, 4008, 510,
+        785, 2265, 315, 279, 5116, 382, 10093, 315, 27432, 3589, 25, 1096, 7286, 1231,
+        614, 7168, 11, 825, 11, 476, 5248, 27432, 3589, 382, 44576, 27432, 1509, 943,
+        25, 607, 320, 24812, 387, 6896, 438, 5189, 340, 13874, 13874, 271, 2130, 24197,
         26409, 44097, 15762, 510, 8121, 9420, 3427, 11653, 22499, 320, 45, 6352, 692,
         1986, 11581, 9420, 3427, 11653, 22499, 320, 1782, 330, 9042, 17150, 899, 374,
         1865, 323, 10636, 1119, 438, 315, 5768, 220, 16, 21, 11, 220, 17, 15, 17,
@@ -5106,27 +5203,30 @@ interactions:
         23195, 11, 476, 5937, 10820, 438, 330, 6135, 11234, 1335, 429, 702, 1012,
         476, 1231, 387, 35389, 311, 11, 24758, 553, 11, 476, 13166, 553, 1032, 46344,
         8554, 11, 892, 320, 72, 8, 702, 5042, 198, 16565, 1406, 151645, 151648, 198,
-        71486, 11, 358, 1184, 311, 21403, 419, 3383, 3019, 553, 3019, 13, 6771, 594,
-        1490, 1128, 279, 1196, 374, 10161, 369, 382, 5338, 11, 807, 3897, 264, 2197,
-        1467, 323, 264, 1140, 315, 18940, 13, 3017, 2618, 374, 311, 23643, 279, 2197,
-        323, 8649, 1995, 3118, 389, 1493, 18940, 13, 576, 3151, 7286, 1588, 374, 356,
-        15, 25, 19185, 2265, 382, 22464, 518, 279, 2197, 1467, 11, 432, 8471, 448,
-        330, 8121, 9420, 3427, 11653, 22499, 320, 45, 6352, 94010, 2938, 4977, 1075,
-        279, 2265, 315, 279, 5116, 13, 2055, 11, 429, 594, 8491, 9760, 369, 34355,
-        356, 15, 382, 785, 1196, 6801, 752, 311, 2550, 264, 4718, 1334, 1380, 1817,
-        4343, 702, 330, 68487, 842, 1, 323, 330, 23493, 291, 12134, 3263, 8704, 1052,
-        594, 1172, 825, 7286, 1588, 11, 358, 3278, 5244, 389, 356, 15, 382, 40, 1184,
-        311, 1281, 2704, 279, 27432, 1509, 374, 264, 914, 13, 576, 2265, 374, 9355,
-        10982, 518, 279, 7167, 11, 773, 432, 1265, 387, 30339, 382, 13394, 11, 279,
-        17501, 6286, 429, 421, 264, 7286, 4436, 944, 20068, 11, 358, 2058, 2924, 432,
-        448, 458, 4287, 1334, 13, 1988, 304, 419, 1142, 11, 279, 7286, 374, 8491,
-        3042, 382, 4416, 11, 10687, 432, 678, 3786, 11, 358, 3278, 5944, 279, 4718,
-        27079, 11, 22573, 902, 4960, 5043, 476, 50494, 525, 5230, 624, 151649, 271,
-        9640, 262, 341, 286, 330, 68487, 842, 788, 330, 34, 15, 756, 286, 330, 23493,
-        291, 12134, 788, 4383, 8121, 9420, 3427, 11653, 22499, 320, 45, 6352, 8, 7026,
-        262, 456, 60], "total_duration": 27360583800, "load_duration": 21777100, "prompt_eval_count":
-        2198, "prompt_eval_duration": 18626510200, "eval_count": 258, "eval_duration":
-        8712296500}'
+        71486, 11, 358, 1184, 311, 1882, 279, 1196, 594, 3239, 13, 2379, 3897, 264,
+        2197, 1467, 323, 264, 1140, 315, 18940, 11, 11689, 356, 15, 25, 19185, 2265,
+        13, 3017, 3383, 374, 311, 8253, 421, 419, 7286, 374, 20068, 304, 279, 2197,
+        323, 8649, 9760, 1995, 382, 5338, 11, 358, 3278, 1349, 1526, 279, 2197, 1467,
+        15516, 13, 576, 1156, 1555, 2727, 330, 8121, 9420, 3427, 11653, 22499, 320,
+        45, 6352, 94010, 2938, 4977, 1075, 279, 2265, 315, 279, 5116, 13, 4710, 5847,
+        11, 3330, 518, 279, 5944, 11, 279, 2197, 8471, 448, 429, 17133, 11, 892, 374,
+        14260, 369, 17080, 311, 614, 862, 15311, 518, 279, 7167, 13, 2619, 594, 902,
+        1008, 6286, 315, 264, 2155, 2265, 17920, 304, 279, 3897, 1467, 382, 12549,
+        279, 7286, 356, 15, 17064, 369, 279, 5116, 2265, 11, 323, 358, 1730, 330,
+        8121, 9420, 3427, 11653, 22499, 320, 45, 6352, 9940, 9355, 10982, 11, 419,
+        1265, 387, 279, 27432, 1509, 13, 4710, 40, 1184, 311, 5978, 429, 847, 2550,
+        11017, 279, 5189, 4718, 3561, 448, 330, 68487, 842, 1, 438, 330, 34, 15, 1,
+        323, 2924, 279, 27432, 914, 304, 458, 1334, 1212, 330, 23493, 291, 12134,
+        3263, 8704, 432, 594, 264, 3175, 1509, 11, 279, 1334, 686, 614, 825, 2392,
+        382, 40, 1083, 1779, 421, 1052, 525, 894, 1008, 3204, 15311, 476, 33845, 11,
+        714, 4302, 770, 13352, 700, 13, 576, 2732, 315, 279, 2197, 3565, 9677, 323,
+        9895, 714, 3171, 944, 19131, 2441, 2265, 382, 4416, 11, 358, 3278, 5944, 847,
+        4718, 27079, 11, 3259, 2704, 311, 2432, 279, 4734, 943, 320, 917, 8, 438,
+        5189, 624, 151649, 271, 9640, 262, 341, 286, 330, 68487, 842, 788, 330, 34,
+        15, 756, 286, 330, 23493, 291, 12134, 788, 4383, 8121, 9420, 3427, 11653,
+        22499, 320, 45, 6352, 8, 7026, 262, 456, 60], "total_duration": 29558200300,
+        "load_duration": 16673212600, "prompt_eval_count": 2523, "prompt_eval_duration":
+        1329528200, "eval_count": 303, "eval_duration": 11535822200}'
     headers:
       Content-Type:
       - application/json; charset=utf-8
@@ -5153,7 +5253,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -5934,7 +6034,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -6715,7 +6815,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -7496,7 +7596,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.74.0.post1
+      - litellm/1.74.6
     method: POST
     uri: http://localhost:11434/api/show
   response:
@@ -8343,19 +8443,30 @@ interactions:
       are specified for each concept.\n4. Produce a JSON array containing your extracted
       data, in the provided format.\n\nIf a concept is not addressed in the document
       text, you must still include an entry in the final JSON output but with an empty
-      \"extracted_items\" list.\n\nFollow these additional rules:\n\n- Output format:\nProvide
-      your answer in only the following answer format (do not include backticks, code
-      fences, or any introductory/explanatory text).\n\n- Consistency:\n    -- Each
-      JSON object in the list must have two keys: \"concept_id\" and \"extracted_items\".\n    --
+      \"extracted_items\" list. However, for boolean concepts (with extracted item
+      type \"bool\"), distinguish carefully:\n- Extract True if the concept is confirmed
+      or strongly supported by the document content (either explicitly stated or reasonably
+      inferred)\n- Extract False if the concept is contradicted, denied, or if the
+      document content allows you to determine that the concept is not true (e.g.,
+      absence of expected content that should be present if the concept were true)\n-
+      Only leave \"extracted_items\" empty if the concept is impossible to determine
+      because either: (1) the document is completely irrelevant to the concept, or
+      (2) the document does not contain enough information to make a conclusion about
+      the concept\n\nFollow these additional rules:\n\n- Output format:\nProvide your
+      answer in only the following answer format (do not include backticks, code fences,
+      or any introductory/explanatory text).\n\n- Consistency:\n    -- Each JSON object
+      in the list must have two keys: \"concept_id\" and \"extracted_items\".\n    --
       The value of \"concept_id\" must match exactly the ID of the concept (for example,
       \"C0\", \"C1\", etc.).\n    -- The value of \"extracted_items\" must be an array.
       If the concept is not addressed or there are no items to extract, leave the
-      array empty ([]).\n        --- Extracted items may be found directly (explicitly
+      array empty ([]). For boolean concepts, only leave empty if the concept is impossible
+      to determine.\n        --- Extracted items may be found directly (explicitly
       mentioned) or inferred from the content (implied or derivable from the information
       present).\n        --- Guidance regarding the possible amount of extracted items
       for the concept is specified under \"Amount of extracted items\". Each extracted
       item, even if there is only one, must be part of the \"extracted_items\" array.\n\n-
-      Item structure:\n    -- If a specific structure is provided for a concept under
+      Item structure:\n    -- All extracted items must match the exact type specified
+      for the concept.\n    -- If a specific structure is provided for a concept under
       \"Expected structure,\" you must follow that structure for all extracted items
       corresponding to that concept.\n    -- If a rating scale is provided for a concept
       under \"Rating scale,\" the extracted item value must be within that scale.\n    --
@@ -8369,40 +8480,51 @@ interactions:
       concept specifies an \"extracted item type\" (found under \"Concept extracted
       item type\"). Ensure your extracted items strictly match that type. Python types
       are provided (e.g., str for string, int for integer, float for floating-point
-      number, dict for object, etc.).\n    -- Do not introduce any extra fields or
+      number, dict for object, etc.). Type compliance is mandatory - any deviation
+      will result in invalid output.\n    -- Do not introduce any extra fields or
       modify the specified structure.\n\n- Handling missing or multiple items:\n    --
       If a concept is not mentioned at all, your output should still contain an entry
-      for that concept with an empty \"extracted_items\" array.\n    -- For concepts
-      that have an \"Available labels:\" section: if none of the predefined labels
-      apply to the content, leave the \"extracted_items\" array empty.\n    -- For
-      concepts that have an \"Available labels:\" section: if multiple labels apply
-      to the same instance or context, include them all in a single extracted item
-      with multiple labels in the \"labels\" array (e.g., {\"labels\": [\"label1\",
-      \"label2\"]}). Only create multiple extracted items if there are genuinely distinct
-      instances or contexts that warrant separate classification.\n    -- For concepts
-      that do not have an \"Available labels:\" section: if multiple items are found
-      for a concept, include each as a separate entry within the \"extracted_items\"
-      array.\n\n- No additional text:\n    -- Do not include any headers, explanations,
-      or text outside of the JSON array.\n    -- Do not wrap your JSON response in
-      backticks or any other formatting characters.\n\n======\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
-      str,\n        \"extracted_items: [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
+      for that concept with an empty \"extracted_items\" array.\n    -- For boolean
+      concepts (with extracted item type \"bool\"): Distinguish carefully between
+      these cases:\n        --- Extract True if the concept is confirmed or strongly
+      supported by the provided content (either explicitly stated or reasonably inferred)\n        ---
+      Extract False if the concept is contradicted, denied, or if the provided content
+      allows you to determine that the concept is not true (e.g., absence of expected
+      content that should be present if the concept were true)\n        --- Only leave
+      \"extracted_items\" empty if the concept is impossible to determine because
+      either: (1) the provided content is completely irrelevant to the concept, or
+      (2) the provided content does not contain enough information to make a conclusion
+      about the concept\n    -- For concepts that have an \"Available labels:\" section:
+      if none of the predefined labels apply to the content, leave the \"extracted_items\"
+      array empty.\n    -- For concepts that have an \"Available labels:\" section:
+      if multiple labels apply to the same instance or context, include them all in
+      a single extracted item with multiple labels in the \"labels\" array (e.g.,
+      {\"labels\": [\"label1\", \"label2\"]}). Only create multiple extracted items
+      if there are genuinely distinct instances or contexts that warrant separate
+      classification.\n    -- For concepts that do not have an \"Available labels:\"
+      section: if multiple items are found for a concept, include each as a separate
+      entry within the \"extracted_items\" array.\n\n- No additional text:\n    --
+      Do not include any headers, explanations, or text outside of the JSON array.\n    --
+      Do not wrap your JSON response in backticks or any other formatting characters.\n\n======\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items:
+      [\n            ...\n        ],\n    },\n    ...\n]\n======\n\n______\nCONCEPTS:\n````\n-
       Concept ID: C0\nConcept name: Contract title\n\nConcept description:\nThe title
       of the contract.\n\nAmount of extracted items: This concept may have zero, one,
-      or multiple extracted items.\n\nConcept extracted item type: str\n````\n\n______\n\n------\nDOCUMENT
-      TEXT:\nNon-Disclosure Agreement (NDA)\n\nThis Non-Disclosure Agreement (the
-      \"Agreement\") is made and entered into as of July 16, 2024, by and between:\n\nParty
-      A:\n\n_____\n_____\n_____\nContact: _____\nPhone: _____\nEmail: _____\n\nParty
-      B:\n\nExample.Com LLC\n5678 Random Drive\nNew York, NY 00000\nContact: Jane
-      Doe, Managing Partner\nPhone: (012) 345-6789\nEmail: jane.doe@example.com\n\n1.
-      Purpose:\n\nThe purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\n\n2. Definition
-      of Confidential Information:\n\nFor purposes of this Agreement, \"Confidential
-      Information\" means any and all non-public information, conveyed in all forms,
-      whether in oral, written, electronic, or other form or media, whether or not
-      marked, designated, or otherwise identified as \"confidential,\" that has been
-      or may be disclosed to, accessed by, or observed by Receiving Party, which (i)
-      has actual\n------\n"}],"model":"mistralai/mistral-small-3.2","max_tokens":4096,"seed":123,"temperature":0.3,"top_p":0.3}'
+      or multiple extracted items.\n\nConcept extracted item type: str (must be exactly
+      as specified)\n````\n\n______\n\n------\nDOCUMENT TEXT:\nNon-Disclosure Agreement
+      (NDA)\n\nThis Non-Disclosure Agreement (the \"Agreement\") is made and entered
+      into as of July 16, 2024, by and between:\n\nParty A:\n\n_____\n_____\n_____\nContact:
+      _____\nPhone: _____\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n5678 Random
+      Drive\nNew York, NY 00000\nContact: Jane Doe, Managing Partner\nPhone: (012)
+      345-6789\nEmail: jane.doe@example.com\n\n1. Purpose:\n\nThe purpose of this
+      Agreement is to protect the confidential information that may be disclosed between
+      the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\n\n2. Definition of Confidential Information:\n\nFor
+      purposes of this Agreement, \"Confidential Information\" means any and all non-public
+      information, conveyed in all forms, whether in oral, written, electronic, or
+      other form or media, whether or not marked, designated, or otherwise identified
+      as \"confidential,\" that has been or may be disclosed to, accessed by, or observed
+      by Receiving Party, which (i) has actual\n------\n"}],"model":"mistralai/mistral-small-3.2","max_tokens":4096,"seed":123,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -8413,13 +8535,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '11471'
+      - '13210'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 1.93.3
+      - OpenAI/Python 1.97.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8429,7 +8551,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.93.3
+      - 1.97.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8444,24 +8566,24 @@ interactions:
     uri: http://localhost:1234/v1/chat/completions
   response:
     body:
-      string: '{"id": "chatcmpl-DUMMY", "object": "chat.completion", "created": 1752156832,
+      string: '{"id": "chatcmpl-DUMMY", "object": "chat.completion", "created": 1752965624,
         "model": "mistralai/mistral-small-3.2", "choices": [{"index": 0, "logprobs":
         null, "finish_reason": "stop", "message": {"role": "assistant", "content":
         "```json\n[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            \"Non-Disclosure Agreement (NDA)\"\n        ]\n    }\n]\n```"}}],
-        "usage": {"prompt_tokens": 2237, "completion_tokens": 40, "total_tokens":
-        2277}, "stats": {}, "system_fingerprint": "mistralai/mistral-small-3.2"}'
+        "usage": {"prompt_tokens": 2564, "completion_tokens": 40, "total_tokens":
+        2604}, "stats": {}, "system_fingerprint": "mistralai/mistral-small-3.2"}'
     headers:
       Connection:
       - keep-alive
       Content-Length:
-      - '651'
+      - '650'
       Content-Type:
       - application/json; charset=utf-8
       Date:
       - DUMMY
       ETag:
-      - W/"28b-cZOv3v5LpmwuvYZeKW8L30pwdtk"
+      - W/"28a-B7By62mR+ON1jAHMUAVSeUGm490"
       Keep-Alive:
       - timeout=5
       X-Powered-By:

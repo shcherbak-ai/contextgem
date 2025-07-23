@@ -26,7 +26,7 @@ extracted from aspects or documents, providing a structured way to store and pro
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field, PrivateAttr
 
@@ -48,7 +48,7 @@ class _ExtractedItem(_RefParasAndSentsAttrituteProcessor):
     :vartype value: Any
     :ivar justification: Optional explanation providing context for the extraction.
         Defaults to None.
-    :vartype justification: Optional[NonEmptyStr]
+    :vartype justification: str | None
     :ivar reference_paragraphs: List of paragraphs referenced by this item.
     :vartype reference_paragraphs: list[Paragraph]
     :ivar reference_sentences: List of sentences referenced by this item.
@@ -56,7 +56,7 @@ class _ExtractedItem(_RefParasAndSentsAttrituteProcessor):
     """
 
     value: Any = Field(..., frozen=True)
-    justification: Optional[NonEmptyStr] = Field(default=None, frozen=True)
+    justification: NonEmptyStr | None = Field(default=None, frozen=True)
 
     _reference_paragraphs: list[Paragraph] = PrivateAttr(default_factory=list)
     _reference_sentences: list[Sentence] = PrivateAttr(default_factory=list)

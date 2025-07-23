@@ -28,8 +28,8 @@ returned in LLM responses
 All structures ensure proper validation of LLM outputs according to the expected response formats.
 """
 
-from functools import lru_cache
-from typing import Any
+from functools import cache
+from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, create_model
 
@@ -37,13 +37,13 @@ from contextgem.internal.llm_output_structs.utils import _create_root_model
 from contextgem.internal.typings.aliases import NonEmptyStr, ReferenceDepth
 
 
-@lru_cache(maxsize=None)
+@cache
 def _get_concept_extraction_output_struct(
     with_extra_data: bool,
     with_references: bool,
     reference_depth: ReferenceDepth,
     with_justification: bool,
-) -> RootModel:
+) -> type[RootModel]:
     """
     Computes, caches and returns a dynamically generated root model for concept extraction
     based on the specified parameters. The model is used for validating LLM responses parsed as JSON.
@@ -61,16 +61,17 @@ def _get_concept_extraction_output_struct(
     :param with_justification: Boolean indicating whether justification fields need
         to be added to the model.
     :type with_justification: bool
-    :return: A dynamically generated `RootModel` object encapsulating concepts, each
+    :return: A dynamically generated `RootModel` class encapsulating concepts, each
         containing the relevant fields based on the parameters provided.
-    :rtype: RootModel
+    :rtype: type[RootModel]
     """
     if with_extra_data:
-        extracted_item_model_kwargs = {
+        extracted_item_model_kwargs: dict[str, Any] = {
             "value": (Any, ...),
         }
         if with_justification:
-            extracted_item_model_kwargs["justification"] = (NonEmptyStr, ...)
+            # Safe cast: type checker can't infer tuple types for create_model field definitions
+            extracted_item_model_kwargs["justification"] = cast(Any, (NonEmptyStr, ...))
         if with_references:
             # Sentence-level reference depth
             if reference_depth == "sentences":
@@ -78,29 +79,37 @@ def _get_concept_extraction_output_struct(
                     "reference_paragraph_id": (NonEmptyStr, ...),
                     "reference_sentence_ids": (list[NonEmptyStr], ...),
                 }
-                ReferenceParagraphModel = create_model(
+                # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+                reference_paragraph_model = create_model(
                     "ReferenceParagraphModel",
                     __config__=ConfigDict(extra="forbid"),
-                    **reference_paragraph_model_kwargs,
+                    **cast(Any, reference_paragraph_model_kwargs),
                 )
-                extracted_item_model_kwargs["reference_paragraphs"] = (
-                    list[ReferenceParagraphModel],
-                    ...,
+                extracted_item_model_kwargs["reference_paragraphs"] = cast(
+                    Any,
+                    (
+                        list[reference_paragraph_model],
+                        ...,
+                    ),
                 )
             # Paragraph-level reference depth
             else:
-                extracted_item_model_kwargs["reference_paragraph_ids"] = (
-                    list[NonEmptyStr],
-                    ...,
+                extracted_item_model_kwargs["reference_paragraph_ids"] = cast(
+                    Any,
+                    (
+                        list[NonEmptyStr],
+                        ...,
+                    ),
                 )
-        ExtractedItemModel = create_model(
+        # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+        extracted_item_model = create_model(
             "ExtractedItemModel",
             __config__=ConfigDict(extra="forbid"),
-            **extracted_item_model_kwargs,
+            **cast(Any, extracted_item_model_kwargs),
         )
         concept_model_kwargs = {
             "concept_id": (NonEmptyStr, ...),
-            "extracted_items": (list[ExtractedItemModel], ...),
+            "extracted_items": (list[extracted_item_model], ...),
         }
 
     else:
@@ -109,14 +118,15 @@ def _get_concept_extraction_output_struct(
             "extracted_items": (list[Any], ...),
         }
 
-    ConceptModel = create_model(
+    # Safe cast: type checker can't infer types when unpacking kwargs to create_model
+    concept_model = create_model(
         "ConceptModel",
         __config__=ConfigDict(extra="forbid"),
-        **concept_model_kwargs,
+        **cast(Any, concept_model_kwargs),
     )
 
-    DynamicRootModel = _create_root_model("DynamicRootModel", list[ConceptModel])
-    return DynamicRootModel
+    dynamic_root_model = _create_root_model("DynamicRootModel", list[concept_model])
+    return dynamic_root_model
 
 
 # Dedicated models for specific concept types' extracted item value validation

@@ -1,5 +1,6 @@
 from contextgem import NumericalConcept
 
+
 # Create concepts for different numerical values in the contract
 payment_amount = NumericalConcept(
     name="Payment amount",

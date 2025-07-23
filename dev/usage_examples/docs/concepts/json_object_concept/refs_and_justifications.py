@@ -6,6 +6,7 @@ from typing import Literal
 
 from contextgem import Document, DocumentLLM, JsonObjectConcept
 
+
 # Sample document text containing a customer complaint
 customer_complaint = """
 CUSTOMER COMPLAINT #CR-2023-0472

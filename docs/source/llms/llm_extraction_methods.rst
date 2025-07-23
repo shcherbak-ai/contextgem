@@ -64,31 +64,31 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
      - Default
      - Description
    * - ``document``
-     - :class:`~contextgem.public.documents.Document`
-     - Required
+     - ``Document``
+     - (Required)
      - The document with attached :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances to extract.
    * - ``overwrite_existing``
-     - bool
+     - ``bool``
      - ``False``
      - Whether to overwrite already processed :class:`~contextgem.public.aspects.Aspect` and :class:`~contextgem.internal.base.concepts._Concept` instances with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
    * - ``max_items_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum number of :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all aspect and/or concept instances with same extraction params in a one call. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
-     - bool
+     - ``bool``
      - ``False``
      - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks in parallel, especially beneficial for documents with many aspects and concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 3 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each aspect/concept will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum paragraphs to include in a single LLM call (single LLM prompt). ``0`` means all paragraphs. This parameter is crucial when working with long documents that exceed the LLM's context window. By limiting the number of paragraphs per call, you can ensure the LLM processes the document in manageable segments while maintaining semantic coherence. This prevents token limit errors and often improves extraction quality by allowing the model to focus on smaller portions of text at a time. For more details on handling long documents, see :doc:`../optimizations/optimization_long_docs`.
    * - ``max_images_to_analyze_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum :class:`~contextgem.public.images.Image` instances to analyze in a single LLM call (single LLM prompt). ``0`` means all images. This parameter is crucial when working with documents containing multiple images that might exceed the LLM's context window. By limiting the number of images per call, you can ensure the LLM processes the document's visual content in manageable batches. Relevant only when extracting document-level concepts from document images. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
    * - ``raise_exception_on_extraction_error``
-     - bool
+     - ``bool``
      - ``True``
      - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
@@ -127,7 +127,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    def extract_aspects_from_document(
        self,
        document: Document,
-       from_aspects: Optional[list[Aspect]] = None,
+       from_aspects: list[Aspect] | None = None,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
@@ -148,31 +148,31 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
      - Default
      - Description
    * - ``document``
-     - :class:`~contextgem.public.documents.Document`
-     - Required
+     - ``Document``
+     - (Required)
      - The document with attached :class:`~contextgem.public.aspects.Aspect` instances to be extracted.
    * - ``from_aspects``
-     - Optional[list[:class:`~contextgem.public.aspects.Aspect`]]
+     - ``list[Aspect] | None``
      - ``None``
      - Specific aspects to extract from the document. If ``None``, extracts all aspects attached to the document. This allows you to selectively process only certain aspects rather than the entire set.
    * - ``overwrite_existing``
-     - bool
+     - ``bool``
      - ``False``
      - Whether to overwrite already processed aspects with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
    * - ``max_items_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum number of :class:`~contextgem.public.aspects.Aspect` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all aspect instances with same extraction params in a one call. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
-     - bool
+     - ``bool``
      - ``False``
      - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many aspects. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 3 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each aspect will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum paragraphs to include in a single LLM call (single LLM prompt). ``0`` means all paragraphs. This parameter is crucial when working with long documents that exceed the LLM's context window. By limiting the number of paragraphs per call, you can ensure the LLM processes the document in manageable segments while maintaining semantic coherence. This prevents token limit errors and often improves extraction quality by allowing the model to focus on smaller portions of text at a time. For more details on handling long documents, see :doc:`../optimizations/optimization_long_docs`.
    * - ``raise_exception_on_extraction_error``
-     - bool
+     - ``bool``
      - ``True``
      - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
@@ -214,7 +214,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    def extract_concepts_from_document(
        self,
        document: Document,
-       from_concepts: Optional[list[_Concept]] = None,
+       from_concepts: list[_Concept] | None = None,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
@@ -236,35 +236,35 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
      - Default
      - Description
    * - ``document``
-     - :class:`~contextgem.public.documents.Document`
-     - Required
+     - ``Document``
+     - (Required)
      - The document from which concepts are to be extracted.
    * - ``from_concepts``
-     - Optional[list[:class:`~contextgem.internal.base.concepts._Concept`]]
+     - ``list[_Concept] | None``
      - ``None``
      - Specific concepts to extract from the document. If ``None``, extracts all concepts attached to the document. This allows you to selectively process only certain concepts rather than the entire set.
    * - ``overwrite_existing``
-     - bool
+     - ``bool``
      - ``False``
      - Whether to overwrite already processed concepts with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
    * - ``max_items_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum number of :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all concept instances with same extraction params in a one call. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
-     - bool
+     - ``bool``
      - ``False``
      - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 3 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each concept will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum paragraphs to include in a single LLM call (single LLM prompt). ``0`` means all paragraphs. This parameter is crucial when working with long documents that exceed the LLM's context window. By limiting the number of paragraphs per call, you can ensure the LLM processes the document in manageable segments while maintaining semantic coherence.
    * - ``max_images_to_analyze_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum images to include in a single LLM call (single LLM prompt). ``0`` means all images. This parameter is crucial when extracting concepts from documents with multiple images using vision-capable LLMs. It helps prevent overwhelming the model with too many visual inputs at once, manages token usage more effectively, and enables more focused concept extraction from visual content. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
    * - ``raise_exception_on_extraction_error``
-     - bool
+     - ``bool``
      - ``True``
      - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
@@ -304,7 +304,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
        self,
        aspect: Aspect,
        document: Document,
-       from_concepts: Optional[list[_Concept]] = None,
+       from_concepts: list[_Concept] | None = None,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
@@ -325,35 +325,35 @@ The aspect must be previously processed before concept extraction can occur. Thi
      - Default
      - Description
    * - ``aspect``
-     - :class:`~contextgem.public.aspects.Aspect`
-     - Required
+     - ``Aspect``
+     - (Required)
      - The aspect from which to extract concepts. Must be previously processed through aspect extraction before concepts can be extracted.
    * - ``document``
-     - :class:`~contextgem.public.documents.Document`
-     - Required
+     - ``Document``
+     - (Required)
      - The document that contains the aspect with the attached concepts to be extracted.
    * - ``from_concepts``
-     - Optional[list[:class:`~contextgem.internal.base.concepts._Concept`]]
+     - ``list[_Concept] | None``
      - ``None``
      - Specific concepts to extract from the aspect. If ``None``, extracts all concepts attached to the aspect. This allows you to selectively process only certain concepts rather than the entire set.
    * - ``overwrite_existing``
-     - bool
+     - ``bool``
      - ``False``
      - Whether to overwrite already processed concepts with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
    * - ``max_items_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum number of :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all concept instances with same extraction params in one call. This is particularly useful for complex tasks to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
-     - bool
+     - ``bool``
      - ``False``
      - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for aspects with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 3 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each concept will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
-     - int
+     - ``int``
      - ``0``
      - Maximum number of the aspect's paragraphs to analyze in a single LLM call (single LLM prompt). ``0`` means all the aspect's paragraphs. This parameter is crucial when working with long documents or aspects that cover extensive portions of text that might exceed the LLM's context window. By limiting the number of paragraphs per call, you can break down analysis into manageable chunks or allow the LLM to focus more deeply on smaller sections of text at a time. For more details on handling long documents, see :doc:`../optimizations/optimization_long_docs`.
    * - ``raise_exception_on_extraction_error``
-     - bool
+     - ``bool``
      - ``True``
      - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 

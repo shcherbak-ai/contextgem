@@ -14,6 +14,7 @@ from contextgem import (
     StringConcept,
 )
 
+
 # Create a document object
 converter = DocxConverter()
 docx_path = str(

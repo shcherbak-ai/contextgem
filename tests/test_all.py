@@ -23,6 +23,7 @@ Module defining tests for the framework.
 from __future__ import annotations
 
 import os
+import platform
 import sys
 import tempfile
 import warnings
@@ -32,7 +33,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
 
 import pytest
 from _pytest.nodes import Item as PytestItem
@@ -40,7 +41,6 @@ from dotenv import load_dotenv
 from lxml import etree
 from pydantic import BaseModel, Field, field_validator
 
-from contextgem import *
 from contextgem.internal.base.attrs import (
     _AssignedAspectsProcessor,
     _AssignedConceptsProcessor,
@@ -81,7 +81,30 @@ from contextgem.internal.utils import (
     _load_sat_model,
     _split_text_into_paragraphs,
 )
-from contextgem.public.utils import JsonObjectClassStruct
+from contextgem.public import (
+    Aspect,
+    BooleanConcept,
+    DateConcept,
+    Document,
+    DocumentLLM,
+    DocumentLLMGroup,
+    DocumentPipeline,
+    DocxConverter,
+    Image,
+    JsonObjectClassStruct,
+    JsonObjectConcept,
+    JsonObjectExample,
+    LabelConcept,
+    LLMPricing,
+    NumericalConcept,
+    Paragraph,
+    RatingConcept,
+    RatingScale,
+    Sentence,
+    StringConcept,
+    StringExample,
+    reload_logger_settings,
+)
 from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.url_security import validate_existing_cassettes_urls_security
@@ -93,14 +116,17 @@ from tests.utils import (
     get_test_img,
     read_text_file,
     remove_file,
+    set_dummy_env_variables_for_testing_from_cassettes,
     vcr_before_record_request,
     vcr_before_record_response,
 )
 
+
 # If .env exists locally, it'll be loaded. If it doesn't exist (e.g. in CI),
 # no error is raised. Then fallback to environment variables set by the workflow.
 
-load_dotenv()  # This will silently skip if no .env is present
+if not load_dotenv():  # Returns False if no .env file is found
+    set_dummy_env_variables_for_testing_from_cassettes()
 
 
 # Add other LLM providers for testing, when needed
@@ -134,12 +160,12 @@ class TestAll(TestUtils):
         "default_system_message",
         template_type="system",
         template_extension="j2",
-    ).render({"output_language": "en"})
+    ).render({"output_language": "en"})  # type: ignore[attr-defined]
     default_system_message_non_en = _get_template(
         "default_system_message",
         template_type="system",
         template_extension="j2",
-    ).render({"output_language": "adapt"})
+    ).render({"output_language": "adapt"})  # type: ignore[attr-defined]
 
     # Documents
     # From raw texts
@@ -234,7 +260,6 @@ class TestAll(TestUtils):
     # LLMs
 
     if TEST_LLM_PROVIDER == "azure_openai":
-
         # Extractor text
         _llm_extractor_text_kwargs_openai = {
             "model": "azure/gpt-4.1-mini",
@@ -266,7 +291,6 @@ class TestAll(TestUtils):
         }
 
     elif TEST_LLM_PROVIDER == "openai":
-
         # Extractor text
         _llm_extractor_text_kwargs_openai = {
             "model": "openai/gpt-4o-mini",
@@ -297,7 +321,6 @@ class TestAll(TestUtils):
         raise ValueError(f"Test LLM provider {TEST_LLM_PROVIDER} is not supported.")
 
     if TEST_LLM_PROVIDER in ["azure_openai", "openai"]:
-
         # Extractor text
         llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
 
@@ -385,7 +408,7 @@ class TestAll(TestUtils):
                 if file.endswith(".j2"):
                     j2_files_found = True
                     file_path = os.path.join(root, file)
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         raw_content = f.read()
                     # For testing, apply the same check as for the rendered prompt
                     self.check_rendered_prompt(raw_content)
@@ -405,7 +428,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             LLMPricing(input_per_1m_tokens=-1, output_per_1m_tokens=0)
         with pytest.raises(ValueError):
-            LLMPricing(input_per_1m_tokens=0.1)
+            LLMPricing(input_per_1m_tokens=0.1)  # type: ignore
         # LLM cost model
         _LLMCost(input=Decimal("0.01"), output=Decimal("0.02"), total=Decimal("0.03"))
         with pytest.raises(ValueError):
@@ -931,9 +954,9 @@ class TestAll(TestUtils):
             assert llm.get_usage()[0].usage.calls[-1].prompt
             assert llm.get_usage()[0].usage.calls[-1].response
             extracted_items = extracted_concepts[0].extracted_items
-            assert len(
-                extracted_items
-            ), f"No extracted items returned with local LLM {llm.model}"
+            assert len(extracted_items), (
+                f"No extracted items returned with local LLM {llm.model}"
+            )
             self.log_extracted_items_for_instance(extracted_concepts[0])
 
         # Ollama
@@ -1188,7 +1211,9 @@ class TestAll(TestUtils):
         assert all(i.extracted_items for i in processed_document.concepts)
         assert all(i.extracted_items for i in document.aspects[0].concepts)
 
-        check_locals_memory_usage(locals(), test_name="test_incapable_llm")
+        check_locals_memory_usage(
+            locals(), test_name="test_llm_extraction_error_exception"
+        )
 
     @memory_profile_and_capture
     def test_init_api_llm(self):
@@ -1202,7 +1227,7 @@ class TestAll(TestUtils):
 
         # Base class direct initialization
         with pytest.raises(TypeError):
-            _GenericLLMProcessor()
+            _GenericLLMProcessor()  # type: ignore
 
         # Unsupported methods
         with pytest.raises(NotImplementedError):
@@ -1263,6 +1288,7 @@ class TestAll(TestUtils):
             model="openai/gpt-4o-mini",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
+        assert document_llm.is_group is False
         document_llm.is_fallback = True
         with pytest.raises(ValueError):
             document_llm.fallback_llm = (
@@ -1335,7 +1361,7 @@ class TestAll(TestUtils):
                 role="extractor_text",
             )
 
-        check_locals_memory_usage(locals(), test_name="test_init_llm")
+        check_locals_memory_usage(locals(), test_name="test_init_api_llm")
 
     @memory_profile_and_capture
     def test_init_llm_group(self):
@@ -1344,17 +1370,17 @@ class TestAll(TestUtils):
         """
         # Base class direct initialization
         with pytest.raises(TypeError):
-            _GenericLLMProcessor()
+            _GenericLLMProcessor()  # type: ignore
 
         # Invalid params
         with pytest.raises(ValueError):
-            DocumentLLMGroup()
+            DocumentLLMGroup()  # type: ignore
         with pytest.raises(ValueError):
             DocumentLLMGroup(llms=[])
         with pytest.raises(ValueError):
             DocumentLLMGroup(llms=[self.llm_reasoner_text])
         with pytest.raises(ValueError):
-            DocumentLLMGroup(llms=[1, True])
+            DocumentLLMGroup(llms=[1, True])  # type: ignore
         # Duplicate roles
         with pytest.raises(ValueError):
             DocumentLLMGroup(
@@ -1367,7 +1393,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             DocumentLLMGroup(
                 llms=[self.llm_extractor_text, self.llm_reasoner_text],
-                extra=True,  # extra fields not permitted
+                extra=True,  # extra fields not permitted # type: ignore
             )
         with pytest.raises(ValueError):
             # Non-consistent output languages of the LLMs in the group
@@ -1381,6 +1407,7 @@ class TestAll(TestUtils):
         document_llm_group = DocumentLLMGroup(
             llms=[self.llm_extractor_text, self.llm_reasoner_text]
         )
+        assert document_llm_group.is_group is True
         # Validate assignment
         with pytest.raises(ValueError):
             document_llm_group.llms = [self.llm_extractor_text, self.llm_extractor_text]
@@ -1434,16 +1461,16 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="no Jinja2 tags"):
             llm_with_updated_prompts._update_default_prompt(
                 prompt_path=prompt_aspects_without_tags_path,
-                prompt_type="aspect",
+                prompt_type="aspect",  # type: ignore
             )
         with pytest.raises(ValueError, match="no Jinja2 tags"):
             llm_with_updated_prompts._update_default_prompt(
                 prompt_path=prompt_concepts_without_tags_path,
-                prompt_type="concept",
+                prompt_type="concept",  # type: ignore
             )
         llm_with_updated_prompts._update_default_prompt(
             prompt_path=prompt_aspects_with_tags_path,
-            prompt_type="aspect",
+            prompt_type="aspect",  # type: ignore
         )
         assert (
             "test custom prompt template for aspects"
@@ -1451,7 +1478,7 @@ class TestAll(TestUtils):
         )
         llm_with_updated_prompts._update_default_prompt(
             prompt_path=prompt_concepts_with_tags_path,
-            prompt_type="concept",
+            prompt_type="concept",  # type: ignore
         )
         assert (
             "test custom prompt template for concepts"
@@ -1470,17 +1497,17 @@ class TestAll(TestUtils):
         """
 
         with pytest.raises(ValueError):
-            Image()
+            Image()  # type: ignore
         with pytest.raises(ValueError):
             Image(
-                mime_type="image/weoighwe",  # invalid MIME type
+                mime_type="image/weoighwe",  # invalid MIME type  # type: ignore
                 base64_data="base 64 encoded string",
             )
         with pytest.raises(ValueError):
             Image(
                 mime_type="image/png",
                 base64_data="base 64 encoded string",
-                extra=True,  # extra fields not permitted
+                extra=True,  # extra fields not permitted  # type: ignore
             )
         document = Document(images=[image])
         with pytest.raises(ValueError):
@@ -1503,11 +1530,11 @@ class TestAll(TestUtils):
         assert document.raw_text  # to be populated from paragraphs
         assert not document._md_text  # markdown text is not populated from paragraphs
         with pytest.raises(ValueError):
-            Paragraph()
+            Paragraph()  # type: ignore
         with pytest.raises(ValueError):
             Paragraph(
                 raw_text="Test paragraph",
-                additional_context=1,
+                additional_context=1,  # type: ignore
             )
         sentence = Sentence(raw_text="Test sentence")
         with pytest.raises(ValueError):
@@ -1550,7 +1577,7 @@ class TestAll(TestUtils):
         Paragraph(raw_text=sentence.raw_text, sentences=[sentence])
         # Warning is logged if linebreaks occur in additional context
         with pytest.raises(ValueError):
-            Sentence()
+            Sentence()  # type: ignore
         Sentence(
             raw_text="Test sentence",
             additional_context="""
@@ -1574,18 +1601,18 @@ class TestAll(TestUtils):
         """
 
         with pytest.raises(ValueError):
-            Aspect()
+            Aspect()  # type: ignore
         with pytest.raises(ValueError):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                extra=True,  # extra fields not permitted
+                extra=True,  # extra fields not permitted  # type: ignore
             )
         with pytest.raises(ValueError):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="extractor_vision",  # invalid LLM role
+                llm_role="extractor_vision",  # invalid LLM role  # type: ignore
             )
         aspect = Aspect(
             name="Categories of confidential information",
@@ -1608,12 +1635,16 @@ class TestAll(TestUtils):
         aspect.concepts = aspect_concepts
         assert aspect.concepts is not aspect_concepts
         # Validate assignment
+        with pytest.raises(ValueError, match="non-empty list"):
+            aspect.add_aspects([])  # empty list
         with pytest.raises(ValueError):
             aspect.add_concepts(
                 [
-                    1,  # invalid type
+                    1,  # invalid type  # type: ignore
                 ]
             )
+        with pytest.raises(ValueError, match="non-empty list"):
+            aspect.add_concepts([])  # empty list
         with pytest.raises(ValueError):
             aspect.add_concepts(
                 [
@@ -1635,6 +1666,28 @@ class TestAll(TestUtils):
                     )
                 ]
             )
+
+        # Invalid sequence types
+        with pytest.raises(ValueError, match="list"):
+            aspect.add_concepts(
+                (
+                    StringConcept(
+                        name="Random",
+                        description="Random",
+                    ),
+                )  # tuple instead of list  # type: ignore
+            )
+        with pytest.raises(ValueError, match="list"):
+            aspect.concepts = (
+                StringConcept(
+                    name="Random",
+                    description="Random",
+                ),
+            )  # tuple instead of list  # type: ignore
+        with pytest.raises(ValueError, match="list"):
+            aspect.concepts = set([1, 2, 3])  # set instead of list  # type: ignore
+        with pytest.raises(ValueError, match="list"):
+            aspect.concepts = range(10)  # range instead of list  # type: ignore
 
         # Test adding a sub-aspect with the same name or description as the main aspect
         sub_aspect_same_name = Aspect(
@@ -1693,7 +1746,7 @@ class TestAll(TestUtils):
 
         # Invalid extracted items
         with pytest.raises(ValueError):
-            aspect.extracted_items = [1, True]
+            aspect.extracted_items = [1, True]  # type: ignore
         # No changes due to invalid assignments
         assert aspect.concepts == aspect_concepts
         assert aspect.concepts is not aspect_concepts
@@ -1754,7 +1807,7 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Invalid Params",
                 description="Test invalid parameters",
-                extra_param=True,
+                extra_param=True,  # type: ignore
             )
 
         # Test attaching extracted items
@@ -1791,7 +1844,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Invalid Params",
                 description="Test invalid parameters",
-                extra_param=True,
+                extra_param=True,  # type: ignore
             )
 
         # Test attaching extracted items
@@ -1802,6 +1855,10 @@ class TestAll(TestUtils):
             boolean_concept.extracted_items = [
                 _StringItem(value="True")
             ]  # must be _BooleanItem
+        with pytest.raises(ValueError):
+            boolean_concept.extracted_items = [  # type: ignore
+                _BooleanItem(value=None)  # type: ignore
+            ]  # must be _BooleanItem
 
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(boolean_concept)
@@ -1809,6 +1866,176 @@ class TestAll(TestUtils):
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_boolean_concept"
         )
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_extract_bool_values(self):
+        """
+        Tests the extraction of a BooleanConcept instance.
+        """
+        concept_positive_1 = BooleanConcept(
+            name="NDA check",
+            description="Document is an NDA",
+            add_justifications=True,
+        )
+        concept_positive_2 = BooleanConcept(
+            name="Liability section check",
+            description="Document has a section on liability",
+            add_justifications=False,
+            add_references=True,
+        )
+        concept_negative_1 = BooleanConcept(
+            name="Supplier agreement check",
+            description="Document is a supplier agreement",
+            add_justifications=True,
+            add_references=True,
+            reference_depth="sentences",
+        )
+        concept_negative_2 = BooleanConcept(
+            name="Payment terms section check",
+            description="Document includes a section on payment terms",
+            add_justifications=False,
+        )
+        concept_impossible_to_determine_1 = BooleanConcept(
+            name="Bitcoin price check",
+            description="Bitcoin price is above $100,000",
+            add_justifications=True,
+        )
+        concept_impossible_to_determine_2 = BooleanConcept(
+            name="Weather check",
+            description="Weather in Oslo is above 30 degrees today",
+            add_justifications=False,
+        )
+        document = self.document.clone()
+        document.add_concepts(
+            [
+                concept_positive_1,
+                concept_positive_2,
+                concept_negative_1,
+                concept_negative_2,
+                concept_impossible_to_determine_1,
+                concept_impossible_to_determine_2,
+            ]
+        )
+        (
+            concept_positive_1,
+            concept_positive_2,
+            concept_negative_1,
+            concept_negative_2,
+            concept_impossible_to_determine_1,
+            concept_impossible_to_determine_2,
+        ) = self.llm_extractor_text.extract_concepts_from_document(
+            document, use_concurrency=True
+        )
+        assert concept_positive_1.extracted_items
+        assert concept_positive_2.extracted_items
+        assert concept_negative_1.extracted_items
+        assert concept_negative_2.extracted_items
+        assert concept_positive_1.extracted_items[0].value is True
+        assert concept_positive_2.extracted_items[0].value is True
+        assert concept_negative_1.extracted_items[0].value is False
+        assert concept_negative_2.extracted_items[0].value is False
+        assert (
+            not concept_impossible_to_determine_1.extracted_items
+            or concept_impossible_to_determine_1.extracted_items[0].value is False
+        )
+        assert (
+            not concept_impossible_to_determine_2.extracted_items
+            or concept_impossible_to_determine_2.extracted_items[0].value is False
+        )
+
+        # Test multiple items of the same concept
+        text = """
+        CONSOLIDATED AUDIT REPORT - Q3 2024
+
+        SUBSIDIARY COMPLIANCE REVIEW:
+
+        1. TechCorp North America: The audit identified several GDPR compliance gaps 
+        in data processing procedures. Immediate remediation required.
+
+        2. XYZ Europe Ltd: All regulatory requirements met. No compliance issues 
+        identified during the review period.
+
+        3. ABC Asia Pacific: GDPR compliance satisfactory, however, local data 
+        residency requirements in Singapore market not fully addressed.
+        """
+        document = Document(raw_text=text)
+        concept_multiple_items = BooleanConcept(
+            name="Has Regulatory Compliance Issues",
+            description="Entity has outstanding regulatory compliance violations or issues. "
+            "Analyze and extract the value for each mentioned entity.",
+            singular_occurrence=False,  # Allow multiple items (default)
+            add_references=True,
+            reference_depth="sentences",
+        )
+        document.add_concepts([concept_multiple_items])
+        (concept_multiple_items,) = (
+            self.llm_extractor_text.extract_concepts_from_document(document)
+        )
+        assert len(concept_multiple_items.extracted_items) == 3
+        assert concept_multiple_items.extracted_items[0].value is True
+        assert concept_multiple_items.extracted_items[1].value is False
+        assert concept_multiple_items.extracted_items[2].value is True
+
+        # Check that we have identical behaviour when bool is a return type
+        # in a JsonObjectConcept field
+        json_obj_concept_positive = JsonObjectConcept(
+            name="NDA check",
+            description="Document is an NDA",
+            add_justifications=True,
+            structure={
+                "is_nda": bool,
+            },
+        )
+        json_obj_concept_negative = JsonObjectConcept(
+            name="Supplier agreement check",
+            description="Document is a supplier agreement",
+            add_justifications=True,
+            add_references=True,
+            reference_depth="sentences",
+            structure={
+                "is_supplier_agreement": bool,
+            },
+        )
+        json_obj_concept_impossible_to_determine = JsonObjectConcept(
+            name="Bitcoin price check",
+            description="Bitcoin price is above $100,000",
+            add_justifications=True,
+            structure={
+                "bitcoin_price_is_above_100k": bool,
+            },
+        )
+        document = self.document.clone()
+        document.add_concepts(
+            [
+                json_obj_concept_positive,
+                json_obj_concept_negative,
+                json_obj_concept_impossible_to_determine,
+            ]
+        )
+        (
+            json_obj_concept_positive,
+            json_obj_concept_negative,
+            json_obj_concept_impossible_to_determine,
+        ) = self.llm_extractor_text.extract_concepts_from_document(
+            document, use_concurrency=True
+        )
+        assert json_obj_concept_positive.extracted_items
+        assert json_obj_concept_negative.extracted_items
+        assert json_obj_concept_positive.extracted_items[0].value["is_nda"] is True
+        assert (
+            json_obj_concept_negative.extracted_items[0].value["is_supplier_agreement"]
+            is False
+        )
+        assert (
+            not json_obj_concept_impossible_to_determine.extracted_items
+            or json_obj_concept_impossible_to_determine.extracted_items[0].value[
+                "bitcoin_price_is_above_100k"
+            ]
+            is False
+        )
+
+        check_locals_memory_usage(locals(), test_name="test_extract_boolean_concept")
 
     @memory_profile_and_capture
     def test_init_and_validate_numerical_concept(self):
@@ -1835,7 +2062,7 @@ class TestAll(TestUtils):
             NumericalConcept(
                 name="Invalid type",
                 description="Test invalid type",
-                numeric_type="string",
+                numeric_type="string",  # type: ignore
             )
 
         # Test attaching extracted items
@@ -1907,7 +2134,7 @@ class TestAll(TestUtils):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(),  # empty tuple
+                rating_scale=(),  # empty tuple  # type: ignore
             )
 
         with pytest.raises(ValueError):
@@ -1942,21 +2169,27 @@ class TestAll(TestUtils):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(1,),  # tuple with invalid length (1 element)
+                rating_scale=(
+                    1,
+                ),  # tuple with invalid length (1 element)  # type: ignore
             )
 
         with pytest.raises(ValueError):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(1, 1, 2),  # tuple with invalid length (3 elements)
+                rating_scale=(
+                    1,
+                    1,
+                    2,
+                ),  # tuple with invalid length (3 elements)  # type: ignore
             )
 
         with pytest.raises(ValueError):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(1.5, 3),  # float element
+                rating_scale=(1.5, 3),  # float element  # type: ignore
             )
 
         # Test attaching extracted items
@@ -1986,7 +2219,7 @@ class TestAll(TestUtils):
 
         # Test with non-integer items
         with pytest.raises(ValueError):
-            valid_rating_concept.extracted_items = [_FloatItem(value=3.5)]
+            valid_rating_concept.extracted_items = [_FloatItem(value=3.5)]  # type: ignore
 
         # Test with justifications and references
         concept_with_refs = RatingConcept(
@@ -2021,9 +2254,9 @@ class TestAll(TestUtils):
         """
         # Base class direct initialization
         with pytest.raises(TypeError):
-            _Concept(name="Test", description="Test")
+            _Concept(name="Test", description="Test")  # type: ignore
         with pytest.raises(ValueError):
-            JsonObjectConcept()
+            JsonObjectConcept()  # type: ignore
         with pytest.raises(ValueError):
             JsonObjectConcept(
                 name="Business Information",
@@ -2031,7 +2264,7 @@ class TestAll(TestUtils):
                 structure={
                     "test": str,
                 },
-                extra=True,  # extra fields not permitted
+                extra=True,  # extra fields not permitted # type: ignore
             )
         with pytest.raises(ValueError):
             JsonObjectConcept(
@@ -2058,7 +2291,7 @@ class TestAll(TestUtils):
         # 1. Simple dictionary structure
         dict_struct = {
             "category": str,
-            "descriptions": List[str],
+            "descriptions": List[str],  # noqa: UP006
         }
 
         # 2. Class structure
@@ -2074,10 +2307,10 @@ class TestAll(TestUtils):
         # 4. Structure with optional types
         optional_struct = {
             "required_field": str,
-            "optional_str": Optional[str],
-            "optional_int": Optional[int],
-            "optional_float": Optional[float],
-            "optional_bool": Optional[bool],
+            "optional_str": Optional[str],  # noqa: UP045
+            "optional_int": Optional[int],  # noqa: UP045
+            "optional_float": float | None,
+            "optional_bool": bool | None,
             "union_syntax": str | None,
         }
 
@@ -2118,12 +2351,10 @@ class TestAll(TestUtils):
             email: str = field(metadata={"description": "test"})
             phone: str = field(metadata={"format": "international"})
             address: Address = field(repr=False)
-            contact_type: Optional[
+            contact_type: Optional[  # noqa: UP045
                 Literal["primary", "secondary", "emergency", None]
                 | Literal["union", "literal", None]
-            ] = field(
-                default=None
-            )  # intentionally messed up type hint for testing
+            ] = field(default=None)  # intentionally messed up type hint for testing
 
         @dataclass
         class Person(JsonObjectClassStruct):
@@ -2183,7 +2414,7 @@ class TestAll(TestUtils):
         # 12. Structure with Dict mapping
         dict_mapping_struct = {
             "name": str,
-            "scores": Dict[str, int],
+            "scores": Dict[str, int],  # noqa: UP006
         }
 
         # 13. Pydantic model with Field() validations
@@ -2221,12 +2452,14 @@ class TestAll(TestUtils):
             age: int
 
             @field_validator("email")
+            @classmethod
             def validate_email(cls, v):
                 if "@" not in v:
                     raise ValueError("Email must contain @ symbol")
                 return v
 
             @field_validator("age")
+            @classmethod
             def validate_age(cls, v):
                 if v < 0 or v > 120:
                     raise ValueError("Age must be between 0 and 120")
@@ -2667,12 +2900,12 @@ class TestAll(TestUtils):
             # Test name assignment
             concept.name = f"Updated {struct_name}"
             with pytest.raises(ValueError):
-                concept.name = True
+                concept.name = True  # type: ignore
             assert concept.name == f"Updated {struct_name}"
 
             # Test invalid extracted items
             with pytest.raises(ValueError):
-                concept.extracted_items = [1, True]
+                concept.extracted_items = [1, True]  # type: ignore
 
             return concept
 
@@ -2685,7 +2918,7 @@ class TestAll(TestUtils):
             JsonObjectConcept(
                 name="Invalid Structure",
                 description="Testing invalid structure",
-                structure={str: str},  # invalid mapping
+                structure={str: str},  # invalid mapping  # type: ignore
                 llm_role="extractor_text",
             )
 
@@ -2693,7 +2926,7 @@ class TestAll(TestUtils):
             JsonObjectConcept(
                 name="Invalid Structure",
                 description="Testing invalid structure",
-                structure={int: "integer"},  # invalid mapping
+                structure={int: "integer"},  # invalid mapping  # type: ignore
                 llm_role="extractor_text",
             )
 
@@ -2718,7 +2951,7 @@ class TestAll(TestUtils):
             JsonObjectConcept(
                 name="Invalid Optional Type",
                 description="Test with invalid Optional type",
-                structure={"field": Optional[Person]},
+                structure={"field": Optional[Person]},  # noqa: UP045
             )
 
         with pytest.raises(ValueError):
@@ -2834,10 +3067,11 @@ class TestAll(TestUtils):
             email: str
             phone: str
             address: Address
-            contact_type: Optional[
+            contact_type: (
                 Literal["primary", "secondary", "emergency"]
                 | Literal["union", "literal"]
-            ]  # intentionally messed up type hint for testing
+                | None
+            )  # intentionally messed up type hint for testing
 
         @dataclass
         class PersonModel(JsonObjectClassStruct):
@@ -2871,7 +3105,7 @@ class TestAll(TestUtils):
             "related_items": [
                 UserItem
             ],  # Add [cls] nested structure (equivalent to list[cls])
-            "security_level": Optional[Literal["Basic", "Advanced", "Enterprise"]],
+            "security_level": Literal["Basic", "Advanced", "Enterprise"] | None,
         }
 
         # Create a JsonObjectConcept with this structure
@@ -2938,7 +3172,6 @@ class TestAll(TestUtils):
                 "other_files",
                 "complex_user_profile.txt",
             ),
-            "r",
             encoding="utf-8",
         ) as f:
             text_content = f.read()
@@ -3049,7 +3282,7 @@ class TestAll(TestUtils):
             DateConcept(
                 name="Invalid Params",
                 description="Test invalid parameters",
-                extra_param=True,
+                extra_param=True,  # type: ignore
             )
 
         # Test attaching extracted items
@@ -3070,7 +3303,7 @@ class TestAll(TestUtils):
             ]  # must be _DateItem
 
         with pytest.raises(ValueError):
-            _DateItem(value="01-01-2025")  # must be a date object
+            _DateItem(value="01-01-2025")  # must be a date object  # type: ignore
 
         # Test with justifications and references
         date_concept_with_refs = DateConcept(
@@ -3121,7 +3354,7 @@ class TestAll(TestUtils):
                 name="Invalid Params",
                 description="Test invalid parameters",
                 labels=["A", "B", "C"],
-                extra_param=True,
+                extra_param=True,  # type: ignore
             )
 
         # Test with insufficient labels (less than 2)
@@ -3146,7 +3379,7 @@ class TestAll(TestUtils):
                 name="Invalid Classification",
                 description="Test invalid classification type",
                 labels=["A", "B", "C"],
-                classification_type="invalid_type",
+                classification_type="invalid_type",  # type: ignore
             )
 
         # Test with invalid label types (non-string types in labels list)
@@ -3154,7 +3387,7 @@ class TestAll(TestUtils):
             LabelConcept(
                 name="Invalid Label Types",
                 description="Test with non-string label types",
-                labels=["A", 123, "C"],  # Integer in labels list
+                labels=["A", 123, "C"],  # Integer in labels list  # type: ignore
             )
 
         # Test attaching extracted items for multi-class
@@ -3168,7 +3401,7 @@ class TestAll(TestUtils):
         # Test with invalid items (wrong type)
         with pytest.raises(ValueError):
             multi_class_concept.extracted_items = [
-                _StringItem(value="NDA")
+                _StringItem(value="NDA")  # type: ignore
             ]  # must be _LabelItem
 
         # Test with invalid labels in extracted item
@@ -3223,7 +3456,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_extract_label_concept(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -3288,8 +3521,8 @@ class TestAll(TestUtils):
             func_kwargs={
                 "document": document,
             },
-            original_container=document_concepts,
-            assigned_container=document.concepts,
+            original_container=list(document_concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
         )
         self.check_extra_data_in_extracted_items(document)
@@ -3384,7 +3617,7 @@ class TestAll(TestUtils):
                 examples=[example, example],
             )
         with pytest.raises(ValueError):
-            StringExample(content=1)
+            StringExample(content=1)  # type: ignore
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(example)
 
@@ -3434,19 +3667,19 @@ class TestAll(TestUtils):
         with pytest.raises(TypeError):
             _ExtractedItem(value=1)
         with pytest.raises(ValueError):
-            _StringItem()
+            _StringItem()  # type: ignore
         with pytest.raises(ValueError):
-            _BooleanItem(value=1)
+            _BooleanItem(value=1)  # type: ignore
         with pytest.raises(ValueError):
-            _BooleanItem()
+            _BooleanItem()  # type: ignore
         with pytest.raises(ValueError):
-            _BooleanItem(value="True")
+            _BooleanItem(value="True")  # type: ignore
         with pytest.raises(ValueError):
-            _IntegerOrFloatItem()
+            _IntegerOrFloatItem()  # type: ignore
         with pytest.raises(ValueError):
-            _IntegerOrFloatItem(value=int)
+            _IntegerOrFloatItem(value=int)  # type: ignore
         with pytest.raises(ValueError):
-            _JsonObjectItem()
+            _JsonObjectItem()  # type: ignore
         with pytest.raises(ValueError):
             _JsonObjectItem(value={})
         with pytest.raises(ValueError):
@@ -3454,17 +3687,17 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             _StringItem(
                 value="Random string",
-                extra=True,  # extra fields not permitted
+                extra=True,  # extra fields not permitted  # type: ignore
             )
         with pytest.raises(ValueError):
             _LabelItem(value=[])
         with pytest.raises(ValueError):
-            _LabelItem(value="NDA")
+            _LabelItem(value="NDA")  # type: ignore
 
         # List field items' unique IDs
         para = Paragraph(raw_text="Test")
         with pytest.raises(ValueError):
-            _IntegerOrFloatItem(value=1.0, reference_paragraphs=[para, para, para])
+            _IntegerOrFloatItem(value=1.0, reference_paragraphs=[para, para, para])  # type: ignore
 
         # Frozen state
         item = _IntegerOrFloatItem(value=1)
@@ -3588,7 +3821,7 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError):
                 Document(
                     raw_text="Random text",
-                    extra=True,  # extra fields not permitted
+                    extra=True,  # extra fields not permitted  # type: ignore
                 )
             Document(
                 raw_text="Random text 1\n\nRandom text 2",
@@ -3614,6 +3847,7 @@ class TestAll(TestUtils):
             # Test with non-empty text but containing only control chars
             with pytest.raises(ValueError, match="control characters"):
                 Document(raw_text=" \u200c ")  # zero-width non-joiner
+
         # Document pipeline initialization
         elif isinstance(context, DocumentPipeline):
             DocumentPipeline()  # works as we can interactive add aspects and concepts after initialization
@@ -3638,7 +3872,7 @@ class TestAll(TestUtils):
                             description="Clauses describing liability of the parties",
                         )
                     ],
-                    extra=True,  # extra fields not permitted
+                    extra=True,  # extra fields not permitted  # type: ignore
                 )
             DocumentPipeline(
                 aspects=[
@@ -3678,11 +3912,16 @@ class TestAll(TestUtils):
         ]
         context.aspects = document_aspects
         assert context.aspects is not document_aspects
+
         # Validate assignment
+        with pytest.raises(ValueError, match="non-empty list"):
+            context.add_aspects([])  # empty list
+        with pytest.raises(ValueError, match="non-empty list"):
+            context.add_concepts([])  # empty list
         with pytest.raises(ValueError):
             context.add_aspects(
                 [
-                    "Random string",
+                    "Random string",  # type: ignore
                 ]  # invalid aspect type
             )
         with pytest.raises(ValueError):
@@ -3702,10 +3941,33 @@ class TestAll(TestUtils):
                     Aspect(
                         name="Business Information",
                         description="Categories of Business Information",
-                        llm_role="extractor_vision",  # unsupported llm role for aspect
+                        llm_role="extractor_vision",  # unsupported llm role for aspect  # type: ignore
                     )
                 ]
             )
+
+        # Invalid sequence types
+        with pytest.raises(ValueError, match="list"):
+            context.add_concepts(
+                (
+                    StringConcept(
+                        name="Random",
+                        description="Random",
+                    ),
+                )  # tuple instead of list  # type: ignore
+            )
+        with pytest.raises(ValueError, match="list"):
+            context.concepts = (
+                StringConcept(
+                    name="Random",
+                    description="Random",
+                ),
+            )  # tuple instead of list  # type: ignore
+        with pytest.raises(ValueError, match="list"):
+            context.concepts = set([1, 2, 3])  # set instead of list  # type: ignore
+        with pytest.raises(ValueError, match="list"):
+            context.concepts = range(10)  # range instead of list  # type: ignore
+
         assert context.aspects == document_aspects
         assert context.aspects is not document_aspects
         context.get_aspect_by_name("Liability")
@@ -3923,6 +4185,7 @@ class TestAll(TestUtils):
         for model in [non_reasoning_model, o1_model, o3_mini_model, o4_mini_model]:
             model.chat("What's your name?")
             response = model.get_usage()[0].usage.calls[-1].response
+            assert response is not None
             assert "ContextGem" in response
             logger.debug(response)
 
@@ -3977,7 +4240,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_system_messages")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -3991,7 +4254,7 @@ class TestAll(TestUtils):
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="extractor_vision",
+                llm_role="extractor_vision",  # type: ignore
             )
 
         document_aspects = [
@@ -4022,6 +4285,18 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             llm.extract_aspects_from_document(
                 self.document, from_aspects=invalid_aspects
+            )
+
+        # Invalid sequence types for "from_aspects"
+        with pytest.raises(ValueError, match="list"):
+            llm.extract_aspects_from_document(
+                self.document,
+                from_aspects=tuple(document_aspects),  # type: ignore
+            )
+        with pytest.raises(ValueError, match="list"):
+            llm.extract_aspects_from_document(
+                self.document,
+                from_aspects=set([1, 2, 3]),  # type: ignore
             )
 
         # Duplicates check
@@ -4205,7 +4480,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_extract_concepts_from_aspect(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -4239,7 +4514,7 @@ class TestAll(TestUtils):
             ),
             StringConcept(
                 name="Intellectual Property",
-                description="Categories of Intellectual Property",
+                description="Categories of Intellectual Property covered in the document",
                 examples=[
                     StringExample(content="patents"),
                     StringExample(content="source code"),
@@ -4305,8 +4580,8 @@ class TestAll(TestUtils):
                 "aspect": attached_aspect,
                 "document": self.document,
             },
-            original_container=aspects[0].concepts,
-            assigned_container=attached_aspect.concepts,
+            original_container=list(aspects[0].concepts),
+            assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
             compare_sequential_1_item_in_call=False,
         )
@@ -4365,6 +4640,20 @@ class TestAll(TestUtils):
                 from_concepts=detached_concepts,
             )
 
+        # Invalid sequence types for "from_concepts"
+        with pytest.raises(ValueError, match="list"):
+            llm.extract_concepts_from_aspect(
+                aspect=attached_aspect,
+                document=self.document,
+                from_concepts=tuple(attached_aspect.concepts),  # type: ignore
+            )
+        with pytest.raises(ValueError, match="list"):
+            llm.extract_concepts_from_aspect(
+                aspect=attached_aspect,
+                document=self.document,
+                from_concepts=set([1, 2, 3]),  # type: ignore
+            )
+
         # Duplicates check
         duplicate_concepts = [
             StringConcept(
@@ -4413,7 +4702,7 @@ class TestAll(TestUtils):
         assert attached_aspect.concepts == extracted_concepts
         self.check_instance_container_states(
             original_container=aspect_concepts,
-            assigned_container=attached_aspect.concepts,
+            assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
         )
@@ -4428,7 +4717,7 @@ class TestAll(TestUtils):
         assert attached_aspect.concepts == extracted_concepts
         self.check_instance_container_states(
             original_container=aspect_concepts,
-            assigned_container=attached_aspect.concepts,
+            assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
         )
@@ -4537,7 +4826,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_extract_concepts_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -4577,6 +4866,18 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             invalid_concepts = [1, True]
             self.document.concepts = invalid_concepts
+
+        # Invalid sequence types for "from_concepts"
+        with pytest.raises(ValueError, match="list"):
+            llm.extract_concepts_from_document(
+                self.document,
+                from_concepts=tuple(self.document.concepts),  # type: ignore
+            )
+        with pytest.raises(ValueError, match="list"):
+            llm.extract_concepts_from_document(
+                self.document,
+                from_concepts=set([1, 2, 3]),  # type: ignore
+            )
 
         # No partial update check
         assert self.document.concepts == document_concepts
@@ -4690,8 +4991,8 @@ class TestAll(TestUtils):
             func_kwargs={
                 "document": self.document,
             },
-            original_container=document_concepts,
-            assigned_container=self.document.concepts,
+            original_container=list(document_concepts),
+            assigned_container=list(self.document.concepts),
             assigned_instance_class=_Concept,
         )
         self.check_extra_data_in_extracted_items(self.document)
@@ -4760,7 +5061,7 @@ class TestAll(TestUtils):
             document_docx_ua,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_extract_all(self, document: Document, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -4854,8 +5155,8 @@ class TestAll(TestUtils):
             func_kwargs={
                 "document": document,
             },
-            original_container=document_aspects,
-            assigned_container=document.aspects,
+            original_container=list(document_aspects),
+            assigned_container=list(document.aspects),
             assigned_instance_class=Aspect,
         )
         if document in [self.document_ua, self.document_zh]:
@@ -4867,14 +5168,14 @@ class TestAll(TestUtils):
             llm.extract_all(document)
         document = llm.extract_all(document, overwrite_existing=True)
         self.check_instance_container_states(
-            original_container=document_aspects,
-            assigned_container=document.aspects,
+            original_container=list(document_aspects),
+            assigned_container=list(document.aspects),
             assigned_instance_class=Aspect,
             llm_roles=llm.list_roles,
         )
         self.check_instance_container_states(
-            original_container=document_concepts,
-            assigned_container=document.concepts,
+            original_container=list(document_concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
         )
@@ -4930,8 +5231,8 @@ class TestAll(TestUtils):
         assert document.concepts is not document_concepts
         document = llm.extract_all(document)
         self.check_instance_container_states(
-            original_container=document_concepts,
-            assigned_container=document.concepts,
+            original_container=list(document_concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
         )
@@ -5007,7 +5308,7 @@ class TestAll(TestUtils):
             document_docx_ua,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_serialization_and_cloning(
         self, document: Document, llm: DocumentLLMGroup | DocumentLLM
@@ -5303,7 +5604,7 @@ class TestAll(TestUtils):
                         self.check_instance_serialization_and_cloning(sentence)
 
         # Document image serialization and deserialization
-        for i, image in enumerate(document.images):
+        for _i, image in enumerate(document.images):
             self.check_instance_serialization_and_cloning(image)
 
         # Check with document pipeline assignment
@@ -5322,8 +5623,8 @@ class TestAll(TestUtils):
             llm_roles=llm.list_roles,
         )
         self.check_instance_container_states(
-            original_container=self.document_pipeline.concepts,
-            assigned_container=document.concepts,
+            original_container=list(self.document_pipeline.concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
         )
@@ -5347,7 +5648,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
     @memory_profile_and_capture
     def test_aspect_extraction_from_paragraphs(
         self, llm: DocumentLLMGroup | DocumentLLM
@@ -5495,8 +5796,8 @@ class TestAll(TestUtils):
             func_kwargs={
                 "document": document,
             },
-            original_container=document_concepts,
-            assigned_container=document.concepts,
+            original_container=list(document_concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
         )
 
@@ -5535,8 +5836,8 @@ class TestAll(TestUtils):
             func_kwargs={
                 "document": document,
             },
-            original_container=document_concepts,
-            assigned_container=document.concepts,
+            original_container=list(document_concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
         )
 
@@ -5576,11 +5877,11 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError):
                 model.chat("")
             with pytest.raises(ValueError):
-                model.chat(prompt="Test", images=1)
+                model.chat(prompt="Test", images=1)  # type: ignore
             with pytest.raises(ValueError):
-                model.chat(prompt="Test", images=[1])
+                model.chat(prompt="Test", images=[1])  # type: ignore
             with pytest.raises(TypeError):
-                model.chat(images=self.test_img_png_invoice)
+                model.chat(images=self.test_img_png_invoice)  # type: ignore
             if model == self.llm_extractor_vision:
                 # Check with text + image
                 with pytest.warns(UserWarning, match="default system message"):
@@ -5588,18 +5889,21 @@ class TestAll(TestUtils):
                         "What's the type of this document?",
                         images=[self.test_img_png_invoice],
                     )
-                response = model.get_usage()[0].usage.calls[-1].response.lower()
-                assert "invoice" in response
+                response = model.get_usage()[0].usage.calls[-1].response
+                assert response is not None
+                assert "invoice" in response.lower()
             else:
                 # Check with text
                 with pytest.warns(UserWarning, match="default system message"):
                     model.chat("What's the result of 2+2?")
                 if model == self.invalid_llm_with_valid_fallback:
+                    assert model.fallback_llm is not None
                     response = (
                         model.fallback_llm.get_usage()[0].usage.calls[-1].response
                     )
                 else:
                     response = model.get_usage()[0].usage.calls[-1].response
+                assert response is not None
                 assert "4" in response
             logger.debug(response)
         # Test for non-vision model
@@ -5623,6 +5927,7 @@ class TestAll(TestUtils):
             model.chat("What's the result of 10+10?")
         assert len(w) == 0, "Expected no warning, but got: " + str(w)
         response = model.get_usage()[0].usage.calls[-1].response
+        assert response is not None
         assert "20" in response
 
         # Test for None system message (output language "en", which is the default)
@@ -5636,6 +5941,7 @@ class TestAll(TestUtils):
         with pytest.warns(UserWarning, match="default system message"):
             model.chat("What's the result of 10+10?")
         response = model.get_usage()[0].usage.calls[-1].response
+        assert response is not None
         assert "20" in response
 
         # Test for None system message (output language "adapt")
@@ -5650,6 +5956,7 @@ class TestAll(TestUtils):
         with pytest.warns(UserWarning, match="default system message"):
             model.chat("Hva er resultatet av 30+10?")
         response = model.get_usage()[0].usage.calls[-1].response
+        assert response is not None
         assert "40" in response
 
         # Test with custom system message
@@ -5668,6 +5975,7 @@ class TestAll(TestUtils):
             model.chat("What's your name?")
         assert len(w) == 0, "Expected no warning, but got: " + str(w)
         response = model.get_usage()[0].usage.calls[-1].response
+        assert response is not None
         assert "John Doe" in response
 
         check_locals_memory_usage(locals(), test_name="test_chat")
@@ -5784,16 +6092,16 @@ class TestAll(TestUtils):
         # 5) Compare actual results with expected booleans
         assert debug_present == should_debug, f"DEBUG unexpected for level {env_level}"
         assert info_present == should_info, f"INFO unexpected for level {env_level}"
-        assert (
-            success_present == should_success
-        ), f"SUCCESS unexpected for level {env_level}"
-        assert (
-            warning_present == should_warning
-        ), f"WARNING unexpected for level {env_level}"
+        assert success_present == should_success, (
+            f"SUCCESS unexpected for level {env_level}"
+        )
+        assert warning_present == should_warning, (
+            f"WARNING unexpected for level {env_level}"
+        )
         assert error_present == should_error, f"ERROR unexpected for level {env_level}"
-        assert (
-            critical_present == should_critical
-        ), f"CRITICAL unexpected for level {env_level}"
+        assert critical_present == should_critical, (
+            f"CRITICAL unexpected for level {env_level}"
+        )
 
         # 6) After the last check, output all messages for visual formatting check
         if env_level == "CRITICAL":
@@ -5812,96 +6120,96 @@ class TestAll(TestUtils):
         Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
         """
         from dev.usage_examples.docs.advanced import (
-            advanced_aspects_and_concepts_document,
-            advanced_aspects_with_concepts,
-            advanced_multiple_docs_pipeline,
+            advanced_aspects_and_concepts_document,  # noqa: F401
+            advanced_aspects_with_concepts,  # noqa: F401
+            advanced_multiple_docs_pipeline,  # noqa: F401
         )
         from dev.usage_examples.docs.aspects import (
-            aspect_with_concepts,
-            aspect_with_justifications,
-            aspect_with_sub_aspects,
-            basic_aspect,
-            complex_hierarchy,
+            aspect_with_concepts,  # noqa: F401
+            aspect_with_justifications,  # noqa: F401
+            aspect_with_sub_aspects,  # noqa: F401
+            basic_aspect,  # noqa: F401
+            complex_hierarchy,  # noqa: F401
         )
         from dev.usage_examples.docs.concepts.boolean_concept import (
-            boolean_concept,
+            boolean_concept,  # noqa: F401
             refs_and_justifications,
         )
         from dev.usage_examples.docs.concepts.date_concept import (
-            date_concept,
-            refs_and_justifications,
+            date_concept,  # noqa: F401
+            refs_and_justifications,  # noqa: F401,F811
         )
         from dev.usage_examples.docs.concepts.json_object_concept import (
-            adding_examples,
-            json_object_concept,
-            refs_and_justifications,
+            adding_examples,  # noqa: F401
+            json_object_concept,  # noqa: F401
+            refs_and_justifications,  # noqa: F401,F811
         )
         from dev.usage_examples.docs.concepts.json_object_concept.structure import (
-            nested_class_structure,
-            nested_structure,
-            simple_class_structure,
-            simple_structure,
+            nested_class_structure,  # noqa: F401
+            nested_structure,  # noqa: F401
+            simple_class_structure,  # noqa: F401
+            simple_structure,  # noqa: F401
         )
         from dev.usage_examples.docs.concepts.label_concept import (
-            document_aspect_analysis,
-            label_concept,
-            multi_label_classification,
-            refs_and_justifications,
+            document_aspect_analysis,  # noqa: F401
+            label_concept,  # noqa: F401
+            multi_label_classification,  # noqa: F401
+            refs_and_justifications,  # noqa: F401,F811
         )
         from dev.usage_examples.docs.concepts.numerical_concept import (
-            numerical_concept,
-            refs_and_justifications,
+            numerical_concept,  # noqa: F401
+            refs_and_justifications,  # noqa: F401,F811
         )
         from dev.usage_examples.docs.concepts.rating_concept import (
-            multiple_ratings,
-            rating_concept,
-            refs_and_justifications,
+            multiple_ratings,  # noqa: F401
+            rating_concept,  # noqa: F401
+            refs_and_justifications,  # noqa: F401,F811
         )
         from dev.usage_examples.docs.concepts.string_concept import (
-            adding_examples,
-            refs_and_justifications,
-            string_concept,
+            adding_examples,  # noqa: F401,F811
+            refs_and_justifications,  # noqa: F401,F811
+            string_concept,  # noqa: F401
         )
         from dev.usage_examples.docs.llm_config import (
-            cost_tracking,
-            detailed_usage,
-            fallback_llm,
-            llm_api,
-            llm_group,
-            llm_local,
-            o1_o4,
-            tracking_usage_and_cost,
+            cost_tracking,  # noqa: F401
+            detailed_usage,  # noqa: F401
+            fallback_llm,  # noqa: F401
+            llm_api,  # noqa: F401
+            llm_group,  # noqa: F401
+            llm_local,  # noqa: F401
+            o1_o4,  # noqa: F401
+            tracking_usage_and_cost,  # noqa: F401
         )
         from dev.usage_examples.docs.llms.llm_extraction_methods import (
-            extract_all,
-            extract_aspects_from_document,
-            extract_concepts_from_aspect,
-            extract_concepts_from_document,
+            extract_all,  # noqa: F401
+            extract_aspects_from_document,  # noqa: F401
+            extract_concepts_from_aspect,  # noqa: F401
+            extract_concepts_from_document,  # noqa: F401
         )
         from dev.usage_examples.docs.llms.llm_init import (
-            llm_api,
-            llm_local,
-            lm_studio_connection_error_fix,
+            llm_api,  # noqa: F401,F811
+            llm_local,  # noqa: F401,F811
+            lm_studio_connection_error_fix,  # noqa: F401
         )
         from dev.usage_examples.docs.optimizations import (
-            optimization_accuracy,
-            optimization_choosing_llm,
-            optimization_cost,
-            optimization_long_docs,
-            optimization_speed,
+            optimization_accuracy,  # noqa: F401
+            optimization_choosing_llm,  # noqa: F401
+            optimization_cost,  # noqa: F401
+            optimization_long_docs,  # noqa: F401
+            optimization_speed,  # noqa: F401
         )
         from dev.usage_examples.docs.quickstart import (
-            quickstart_aspect,
-            quickstart_concept_aspect,
-            quickstart_concept_document_text,
-            quickstart_concept_document_vision,
-            quickstart_sub_aspect,
+            quickstart_aspect,  # noqa: F401
+            quickstart_concept_aspect,  # noqa: F401
+            quickstart_concept_document_text,  # noqa: F401
+            quickstart_concept_document_vision,  # noqa: F401
+            quickstart_sub_aspect,  # noqa: F401
         )
-        from dev.usage_examples.docs.serialization import serialization
+        from dev.usage_examples.docs.serialization import serialization  # noqa: F401
         from dev.usage_examples.readme import (
-            llm_chat,
-            quickstart_aspect,
-            quickstart_concept,
+            llm_chat,  # noqa: F401
+            quickstart_aspect,  # noqa: F401,F811
+            quickstart_concept,  # noqa: F401
         )
 
         check_locals_memory_usage(locals(), test_name="test_usage_examples")
@@ -5912,30 +6220,35 @@ class TestAll(TestUtils):
         Tests for examples in docstrings.
         Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
         """
-        from dev.usage_examples.docstrings.aspects import def_aspect
+        from dev.usage_examples.docstrings.aspects import def_aspect  # noqa: F401
         from dev.usage_examples.docstrings.concepts import (
-            def_boolean_concept,
-            def_date_concept,
-            def_json_object_concept,
-            def_label_concept,
-            def_numerical_concept,
-            def_rating_concept,
-            def_string_concept,
+            def_boolean_concept,  # noqa: F401
+            def_date_concept,  # noqa: F401
+            def_json_object_concept,  # noqa: F401
+            def_label_concept,  # noqa: F401
+            def_numerical_concept,  # noqa: F401
+            def_rating_concept,  # noqa: F401
+            def_string_concept,  # noqa: F401
         )
-        from dev.usage_examples.docstrings.data_models import def_llm_pricing
-        from dev.usage_examples.docstrings.documents import def_document
+        from dev.usage_examples.docstrings.data_models import (
+            def_llm_pricing,  # noqa: F401
+        )
+        from dev.usage_examples.docstrings.documents import def_document  # noqa: F401
         from dev.usage_examples.docstrings.examples import (
-            def_example_json_object,
-            def_example_string,
+            def_example_json_object,  # noqa: F401
+            def_example_string,  # noqa: F401
         )
-        from dev.usage_examples.docstrings.images import def_image
-        from dev.usage_examples.docstrings.llms import def_llm, def_llm_group
-        from dev.usage_examples.docstrings.paragraphs import def_paragraph
-        from dev.usage_examples.docstrings.pipelines import def_pipeline
-        from dev.usage_examples.docstrings.sentences import def_sentence
+        from dev.usage_examples.docstrings.images import def_image  # noqa: F401
+        from dev.usage_examples.docstrings.llms import (  # noqa: F401
+            def_llm,
+            def_llm_group,
+        )
+        from dev.usage_examples.docstrings.paragraphs import def_paragraph  # noqa: F401
+        from dev.usage_examples.docstrings.pipelines import def_pipeline  # noqa: F401
+        from dev.usage_examples.docstrings.sentences import def_sentence  # noqa: F401
         from dev.usage_examples.docstrings.utils import (
-            json_object_cls_struct,
-            reload_logger_settings,
+            json_object_cls_struct,  # noqa: F401
+            reload_logger_settings,  # noqa: F401
         )
 
         check_locals_memory_usage(locals(), test_name="test_docstring_examples")
@@ -6009,9 +6322,9 @@ class TestAll(TestUtils):
                 # Verify all attributes that are present in test DOCX file are populated
                 assert package.archive is not None, "Archive must be populated"
                 assert package.rels != {}, "Relationships must be populated"
-                assert (
-                    package.main_document is not None
-                ), "Main document must be populated"
+                assert package.main_document is not None, (
+                    "Main document must be populated"
+                )
                 assert package.styles is not None, "Styles must be populated"
                 assert package.numbering is not None, "Numbering must be populated"
                 assert package.footnotes is not None, "Footnotes must be populated"
@@ -6057,9 +6370,9 @@ class TestAll(TestUtils):
                         == self.test_badly_formatted_converted_raw_text
                     ), "Raw text does not match"
                 if apply_markdown:
-                    assert (
-                        doc._md_text
-                    ), "Document should have markdown text when markdown is enabled"
+                    assert doc._md_text, (
+                        "Document should have markdown text when markdown is enabled"
+                    )
                     if include_options == "default":  # when all content is included
                         assert (
                             doc._md_text.strip()
@@ -6068,9 +6381,9 @@ class TestAll(TestUtils):
                     with pytest.raises(ValueError):
                         doc._md_text = "Random md text"  # cannot be set once populated
                 else:
-                    assert (
-                        doc._md_text is None
-                    ), "Document should not have markdown text when markdown is disabled"
+                    assert doc._md_text is None, (
+                        "Document should not have markdown text when markdown is disabled"
+                    )
                 assert doc.paragraphs, "Document should have paragraphs"
 
                 # Verify that each sentence inherits additional_context from its paragraph
@@ -6080,31 +6393,33 @@ class TestAll(TestUtils):
                     assert paragraph.raw_text, "Paragraph should have raw text"
                     paragraphs_raw_text += paragraph.raw_text + "\n"
                     if apply_markdown:
-                        assert (
-                            paragraph._md_text
-                        ), "Paragraph should have markdown text when markdown is enabled"
+                        assert paragraph._md_text, (
+                            "Paragraph should have markdown text when markdown is enabled"
+                        )
                         paragraphs_md_text += paragraph._md_text + "\n"
                         with pytest.raises(ValueError):
                             paragraph._md_text = (
                                 "Random md text"  # cannot be set once populated
                             )
                     else:
-                        assert (
-                            paragraph._md_text is None
-                        ), "Paragraph should not have markdown text when markdown is disabled"
-                    assert (
-                        paragraph.additional_context
-                    ), "Paragraph should have additional context"
+                        assert paragraph._md_text is None, (
+                            "Paragraph should not have markdown text when markdown is disabled"
+                        )
+                    assert paragraph.additional_context, (
+                        "Paragraph should have additional context"
+                    )
                     paragraphs_raw_text += paragraph.additional_context + "\n\n"
                     if apply_markdown:
                         paragraphs_md_text += paragraph.additional_context + "\n\n"
                     for sentence in paragraph.sentences:
                         assert (
                             sentence.additional_context == paragraph.additional_context
-                        ), f"Sentence additional_context should match its paragraph's additional_context"
-                        assert (
-                            sentence.custom_data == paragraph.custom_data
-                        ), f"Sentence custom_data should match its paragraph's custom_data"
+                        ), (
+                            "Sentence additional_context should match its paragraph's additional_context"
+                        )
+                        assert sentence.custom_data == paragraph.custom_data, (
+                            "Sentence custom_data should match its paragraph's custom_data"
+                        )
                 if include_options == "default":  # when all content is included
                     assert (
                         paragraphs_raw_text.strip()
@@ -6117,29 +6432,29 @@ class TestAll(TestUtils):
                             == self.test_badly_formatted_converted_md_paras_text
                         ), "Markdown paragraphs text does not match"
                 else:
-                    assert (
-                        paragraphs_md_text == ""
-                    ), "Markdown paragraphs text should be empty when markdown is disabled"
+                    assert paragraphs_md_text == "", (
+                        "Markdown paragraphs text should be empty when markdown is disabled"
+                    )
 
             # Check that all documents have the same content
             first_doc = documents[0]
             for i, doc in enumerate(documents[1:], 1):
                 # Compare full texts
-                assert (
-                    doc.raw_text == first_doc.raw_text
-                ), f"Document {i} has different raw text"
+                assert doc.raw_text == first_doc.raw_text, (
+                    f"Document {i} has different raw text"
+                )
                 if apply_markdown:
-                    assert (
-                        doc._md_text and doc._md_text == first_doc._md_text
-                    ), f"Document {i} has different markdown text"
-                assert len(doc.paragraphs) == len(
-                    first_doc.paragraphs
-                ), f"Document {i} has different paragraph count"
+                    assert doc._md_text and doc._md_text == first_doc._md_text, (
+                        f"Document {i} has different markdown text"
+                    )
+                assert len(doc.paragraphs) == len(first_doc.paragraphs), (
+                    f"Document {i} has different paragraph count"
+                )
                 # Compare paragraphs
                 for p_idx, para in enumerate(doc.paragraphs):
-                    assert (
-                        para.raw_text == first_doc.paragraphs[p_idx].raw_text
-                    ), f"Paragraph {p_idx} has different raw text"
+                    assert para.raw_text == first_doc.paragraphs[p_idx].raw_text, (
+                        f"Paragraph {p_idx} has different raw text"
+                    )
                     if apply_markdown:
                         assert (
                             para._md_text
@@ -6154,9 +6469,9 @@ class TestAll(TestUtils):
 
                 # Check images if they should be included
                 if include_params["include_images"]:
-                    assert len(doc.images) == len(
-                        first_doc.images
-                    ), f"Document {i} has different image count"
+                    assert len(doc.images) == len(first_doc.images), (
+                        f"Document {i} has different image count"
+                    )
 
         # Test 1: Test convert() method with different input sources
         documents = []
@@ -6208,7 +6523,7 @@ class TestAll(TestUtils):
             # Convert from file path
             text_from_path = converter.convert_to_text_format(
                 self.test_docx_badly_formatted_path,
-                output_format=output_format,
+                output_format=output_format,  # type: ignore
                 strict_mode=strict_mode,
                 **text_params,
             )
@@ -6218,7 +6533,7 @@ class TestAll(TestUtils):
             with open_file() as file_obj:
                 text_from_obj = converter.convert_to_text_format(
                     file_obj,
-                    output_format=output_format,
+                    output_format=output_format,  # type: ignore
                     strict_mode=strict_mode,
                     **text_params,
                 )
@@ -6228,7 +6543,7 @@ class TestAll(TestUtils):
             bytesio = create_bytesio()
             text_from_bytesio = converter.convert_to_text_format(
                 bytesio,
-                output_format=output_format,
+                output_format=output_format,  # type: ignore
                 strict_mode=strict_mode,
                 **text_params,
             )
@@ -6237,9 +6552,9 @@ class TestAll(TestUtils):
             # Verify all text results are equal
             first_result = text_results[0]
             for i, result in enumerate(text_results[1:], 1):
-                assert (
-                    result == first_result
-                ), f"Text result {i} is different for format {output_format}"
+                assert result == first_result, (
+                    f"Text result {i} is different for format {output_format}"
+                )
 
             # Match with the converted Document text content (must be the same)
             for text_result in text_results:
@@ -6278,7 +6593,6 @@ class TestAll(TestUtils):
 
         # Try with markdown and without markdown
         for apply_markdown in [True, False]:
-
             # Convert with all parameters True (baseline default)
             baseline_doc = converter.convert(
                 self.test_docx_badly_formatted_path, apply_markdown=apply_markdown
@@ -6297,31 +6611,33 @@ class TestAll(TestUtils):
 
                 # Assert that text content is different when parameter is disabled
                 if param_name not in params_not_affecting_raw_text:
-                    assert (
-                        test_doc.raw_text != baseline_doc.raw_text
-                    ), f"raw_text should differ when {param_name}=False"
+                    assert test_doc.raw_text != baseline_doc.raw_text, (
+                        f"raw_text should differ when {param_name}=False"
+                    )
                     test_doc_raw_paras_merged = "".join(
                         p.raw_text for p in test_doc.paragraphs
                     )
                     baseline_doc_raw_paras_merged = "".join(
                         p.raw_text for p in baseline_doc.paragraphs
                     )
-                    assert (
-                        test_doc_raw_paras_merged != baseline_doc_raw_paras_merged
-                    ), f"Paragraphs' raw_text should differ when {param_name}=False"
+                    assert test_doc_raw_paras_merged != baseline_doc_raw_paras_merged, (
+                        f"Paragraphs' raw_text should differ when {param_name}=False"
+                    )
                 if apply_markdown:
-                    assert (
-                        test_doc._md_text != baseline_doc._md_text
-                    ), f"md_text should differ when {param_name}=False"
+                    assert test_doc._md_text != baseline_doc._md_text, (
+                        f"md_text should differ when {param_name}=False"
+                    )
                     test_doc_md_paras_merged = "".join(
-                        p._md_text for p in test_doc.paragraphs
+                        p._md_text
+                        for p in test_doc.paragraphs  # type: ignore
                     )
                     baseline_doc_md_paras_merged = "".join(
-                        p._md_text for p in baseline_doc.paragraphs
+                        p._md_text
+                        for p in baseline_doc.paragraphs  # type: ignore
                     )
-                    assert (
-                        test_doc_md_paras_merged != baseline_doc_md_paras_merged
-                    ), f"Paragraphs' md_text should differ when {param_name}=False"
+                    assert test_doc_md_paras_merged != baseline_doc_md_paras_merged, (
+                        f"Paragraphs' md_text should differ when {param_name}=False"
+                    )
 
         check_locals_memory_usage(
             locals(), test_name="test_docx_converter_include_params"
@@ -6341,21 +6657,21 @@ class TestAll(TestUtils):
             self.test_docx_badly_formatted_path, apply_markdown=apply_markdown
         )
         if apply_markdown:
-            assert (
-                doc._md_text
-            ), "Document should have markdown text when markdown is enabled"
+            assert doc._md_text, (
+                "Document should have markdown text when markdown is enabled"
+            )
             for para in doc.paragraphs:
-                assert (
-                    para._md_text
-                ), "Paragraph should have markdown text when markdown is enabled"
+                assert para._md_text, (
+                    "Paragraph should have markdown text when markdown is enabled"
+                )
         else:
-            assert (
-                doc._md_text is None
-            ), "Document should not have markdown text when markdown is disabled"
+            assert doc._md_text is None, (
+                "Document should not have markdown text when markdown is disabled"
+            )
             for para in doc.paragraphs:
-                assert (
-                    para._md_text is None
-                ), "Paragraph should not have markdown text when markdown is disabled"
+                assert para._md_text is None, (
+                    "Paragraph should not have markdown text when markdown is disabled"
+                )
 
         # Create a new LLM group with new usage stats for each test iteration,
         # as we will supply markdown or raw text based on apply_markdown flag
@@ -6419,15 +6735,15 @@ class TestAll(TestUtils):
             # i.e. submitting text fragments for extraction in the same pipeline.
             # We need to check each call separately.
             for text_call_obj in text_call_objs:
-
                 # Check for markdown flag in prompt kwargs
                 if apply_markdown:
                     assert "is_markdown" in text_call_obj.prompt_kwargs
                     assert text_call_obj.prompt_kwargs["is_markdown"]
-                    if not (
+                    if (
                         text_call_obj.prompt_kwargs.get("reference_depth")
-                        == "sentences"  # md is not available for sentences
+                        != "sentences"
                     ):
+                        # md is not available for sentences
                         assert "markdown format" in text_call_obj.prompt
                     if text_call_obj.prompt_kwargs.get("paragraphs"):
                         assert (
@@ -6465,9 +6781,9 @@ class TestAll(TestUtils):
                         ]
                         # Check that some paragraphs have non-stripped markdown text,
                         # e.g. to keep indentation in lists
-                        assert any(
-                            t != t.strip() for t in p_md_texts
-                        ), "Expected some paragraphs to have non-stripped markdown text"
+                        assert any(t != t.strip() for t in p_md_texts), (
+                            "Expected some paragraphs to have non-stripped markdown text"
+                        )
                         submitted_text_in_prompt = "".join(p_md_texts)
                     else:
                         submitted_text_in_prompt = "".join(
@@ -6684,7 +7000,7 @@ class TestAll(TestUtils):
             create_run_with_text("Second part."),
         ]
         para = create_paragraph_with_runs(runs)
-        text = converter._extract_paragraph_text(para, package)
+        text = converter._extract_paragraph_text(para, package)  # type: ignore
         assert text == "First part. Second part."
 
         # Paragraph with line breaks
@@ -6696,7 +7012,7 @@ class TestAll(TestUtils):
             create_run_with_text("After break"),
         ]
         para = create_paragraph_with_runs(runs_with_br)
-        text = converter._extract_paragraph_text(para, package)
+        text = converter._extract_paragraph_text(para, package)  # type: ignore
         assert text == "Before break\nAfter break"
 
         # Paragraph with footnote reference
@@ -6707,16 +7023,16 @@ class TestAll(TestUtils):
         para = create_paragraph_with_runs(
             [create_run_with_text("Text with footnote "), run_with_footnote]
         )
-        text = converter._extract_paragraph_text(para, package, markdown_mode=True)
+        text = converter._extract_paragraph_text(para, package, markdown_mode=True)  # type: ignore
         assert text == "Text with footnote [Footnote 1]"
-        text = converter._extract_paragraph_text(para, package, markdown_mode=False)
+        text = converter._extract_paragraph_text(para, package, markdown_mode=False)  # type: ignore
         assert text == "Text with footnote 1"
 
         # Empty paragraph
         # Create a paragraph element that will result in empty text
         empty_para = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
 
-        result = converter._process_paragraph(empty_para, package)
+        result = converter._process_paragraph(empty_para, package)  # type: ignore
         assert result is None
 
         check_locals_memory_usage(
@@ -6739,7 +7055,6 @@ class TestAll(TestUtils):
                 "other_files",
                 "gdpr_modified_for_testing.txt",
             ),
-            "r",
             encoding="utf-8",
         ) as f:
             text_content = f.read()
@@ -6771,7 +7086,7 @@ class TestAll(TestUtils):
             ),  # entry into force date is modified in the test doc
             StringConcept(
                 name="Anomalies",
-                description="Anomalies in the document",
+                description="Anomalies in the document: unusual or unexpected content",
                 llm_role="extractor_text",
             ),  # anomaly is in the middle of the document
         ]
@@ -6781,7 +7096,7 @@ class TestAll(TestUtils):
         # Use params optimized for very long documents (200+ pages)
         extracted_concepts = self.llm_extractor_text.extract_concepts_from_document(
             doc,
-            max_paragraphs_to_analyze_per_call=250,  # split into paragraph chunks
+            max_paragraphs_to_analyze_per_call=500,  # split into paragraph chunks
             use_concurrency=True,
         )
 
@@ -6822,7 +7137,18 @@ class TestAll(TestUtils):
 
         This test ensures that all URLs in VCR cassette files are from approved domains.
         If any violations are found, the test will fail with URLSecurityError.
+
+        Skipped on Windows when coverage is running due to memory pressure causing
+        access violations with large YAML files.
         """
+
+        # Skip test on Windows when coverage is running to avoid access violations
+        if platform.system() == "Windows" and any("--cov" in arg for arg in sys.argv):
+            pytest.skip(
+                "Skipping cassette URL security test on Windows under coverage due to "
+                "access violation with large YAML files"
+            )
+
         validate_existing_cassettes_urls_security()
 
     def test_total_cost_and_reset(self):

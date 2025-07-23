@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, StringConcept, StringExample
 
+
 # Create a Document object from text
 contract_text = """
 SERVICE AGREEMENT

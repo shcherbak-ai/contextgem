@@ -4,6 +4,7 @@ import os
 
 from contextgem import Aspect, Document, DocumentLLM, StringConcept
 
+
 # Sample text content
 text_content = """
 John Smith is a 30-year-old software engineer working at TechCorp. 

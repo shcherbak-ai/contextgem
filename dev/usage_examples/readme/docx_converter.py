@@ -2,6 +2,7 @@
 
 from contextgem import DocxConverter
 
+
 converter = DocxConverter()
 
 # Convert a DOCX file to an LLM-ready ContextGem Document

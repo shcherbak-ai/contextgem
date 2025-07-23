@@ -26,7 +26,7 @@ providing access to its XML parts.
 import os
 import zipfile
 from pathlib import Path
-from typing import BinaryIO, Optional
+from typing import BinaryIO
 
 from lxml import etree
 
@@ -51,7 +51,7 @@ class _DocxPackage:
 
         :param docx_path_or_file: Path to DOCX file (as string or Path object) or file-like object
         """
-        self.archive = None
+        self.archive: zipfile.ZipFile
         self.rels = {}
         self.main_document = None
         self.styles = None
@@ -65,18 +65,20 @@ class _DocxPackage:
 
         file_desc = (
             docx_path_or_file
-            if isinstance(docx_path_or_file, (str, Path))
+            if isinstance(docx_path_or_file, str | Path)
             else "file object"
         )
 
         try:
             self.archive = zipfile.ZipFile(docx_path_or_file)
-        except zipfile.BadZipFile:
-            raise DocxFormatError(f"'{file_desc}' is not a valid ZIP file")
-        except FileNotFoundError:
-            raise DocxFormatError(f"File '{file_desc}' not found")
-        except PermissionError:
-            raise DocxFormatError(f"Permission denied when accessing '{file_desc}'")
+        except zipfile.BadZipFile as e:
+            raise DocxFormatError(f"'{file_desc}' is not a valid ZIP file") from e
+        except FileNotFoundError as e:
+            raise DocxFormatError(f"File '{file_desc}' not found") from e
+        except PermissionError as e:
+            raise DocxFormatError(
+                f"Permission denied when accessing '{file_desc}'"
+            ) from e
         except Exception as e:
             raise DocxFormatError(f"Failed to open DOCX file '{file_desc}': {e}") from e
 
@@ -110,7 +112,7 @@ class _DocxPackage:
                 f"Error processing DOCX file '{file_desc}': {e}"
             ) from e
 
-    def _load_xml_part(self, part_path: str) -> Optional[etree._Element]:
+    def _load_xml_part(self, part_path: str) -> etree._Element | None:
         """
         Loads an XML part from the DOCX package.
 
@@ -200,11 +202,7 @@ class _DocxPackage:
             target = rel_info["target"]
 
             # Handle relative paths
-            if not target.startswith("/"):
-                target = f"word/{target}"
-            else:
-                # Remove leading slash
-                target = target[1:]
+            target = f"word/{target}" if not target.startswith("/") else target[1:]
 
             # Load headers
             if "header" in rel_type:
@@ -251,11 +249,7 @@ class _DocxPackage:
             if "image" in rel_info["type"].lower():
                 target = rel_info["target"]
                 # Handle relative paths
-                if not target.startswith("/"):
-                    target = f"word/{target}"
-                else:
-                    # Remove leading slash
-                    target = target[1:]
+                target = f"word/{target}" if not target.startswith("/") else target[1:]
 
                 try:
                     if target in self.archive.namelist():

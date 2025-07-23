@@ -11,6 +11,7 @@ from contextgem import (
     StringConcept,
 )
 
+
 # Create a document instance
 doc = Document(
     raw_text=(

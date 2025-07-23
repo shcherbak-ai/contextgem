@@ -30,6 +30,7 @@ from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.base.mixins import _PostInitCollectorMixin
 from contextgem.internal.base.paras_and_sents import _ParasAndSentsBase
 
+
 __all__ = [
     # Instances
     "_InstanceBase",

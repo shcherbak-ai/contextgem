@@ -4,6 +4,7 @@ import os
 
 from contextgem import Document, DocumentLLM, RatingConcept
 
+
 # Sample document text about a software product with various aspects
 software_review = """
 Software Review: ProjectManager Pro 5.0

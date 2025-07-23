@@ -6,6 +6,7 @@ from typing import Literal
 
 from contextgem import Document, DocumentLLM, JsonObjectConcept
 
+
 # Define product information text
 product_text = """
 Product: Smart Fitness Watch X7

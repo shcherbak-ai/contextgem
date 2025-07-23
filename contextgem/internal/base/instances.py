@@ -29,14 +29,20 @@ from __future__ import annotations
 
 from abc import ABC
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from pydantic import ConfigDict, Field, PrivateAttr, field_validator
+from typing_extensions import Self
 from ulid import ULID
 
 from contextgem.internal.base.mixins import _PostInitCollectorMixin
 from contextgem.internal.base.serialization import _InstanceSerializer
-from contextgem.internal.typings.aliases import Self
 from contextgem.internal.utils import _is_text_content_empty
+
+
+if TYPE_CHECKING:
+    from contextgem.internal.base.concepts import _Concept
+    from contextgem.public.aspects import Aspect
 
 
 class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
@@ -112,28 +118,31 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         "examples",
         check_fields=False,
     )
-    def _validate_list_uniqueness(cls, l: list[_InstanceBase]) -> list[_InstanceBase]:
+    @classmethod
+    def _validate_list_uniqueness(
+        cls, instances: list[_InstanceBase]
+    ) -> list[_InstanceBase]:
         """
         Validates that all elements in the provided list have unique IDs.
 
-        :param l: List of `_InstanceBase` objects to validate.
-        :type l: list[_InstanceBase]
+        :param instances: List of `_InstanceBase` objects to validate.
+        :type instances: list[_InstanceBase]
         :return: The original list if all elements have unique IDs.
         :rtype: list[_InstanceBase]
         :raises ValueError: If duplicate elements based on unique IDs are found in the list.
         """
-        ids: list[str] = [i.unique_id for i in l]
-        if len(ids) != len(set(ids)):
+        ids: list[str] = [i.unique_id for i in instances]
+        if instances and len(ids) != len(set(ids)):
             raise ValueError(
-                f"List elements of class {l[0].__class__.__name__} contain duplicates."
+                f"List elements of class {instances[0].__class__.__name__} contain duplicates."
             )
-        return l
+        return instances
 
     @field_validator("aspects", "concepts", check_fields=False)
     @classmethod
     def _validate_text_and_description_uniqueness(
-        cls, instances: list[_InstanceBase]
-    ) -> list[_InstanceBase]:
+        cls, instances: list[Aspect | _Concept]
+    ) -> list[Aspect | _Concept]:
         """
         Validates the list field to ensure that the instances on the list have
         unique names and descriptions.
@@ -141,19 +150,19 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         Outputs a deepcopy of the input list to prevent any modifications to the state of
         the original instances that may be reusable across multiple documents.
 
-        :param instances: The list of `_InstanceBase` objects to validate.
-        :type instances: list[_InstanceBase]
-        :return: The validated list of `_InstanceBase` objects if all conditions pass.
-        :rtype: list[_InstanceBase]
+        :param instances: The list of `Aspect` or `_Concept` objects to validate.
+        :type instances: list[Aspect | _Concept]
+        :return: The validated list of `Aspect` or `_Concept` objects if all conditions pass.
+        :rtype: list[Aspect | _Concept]
         :raises ValueError: If there are duplicate names or descriptions in the objects.
         """
 
-        if instances:
-            if len(set([i.name for i in instances])) < len(instances) or len(
-                set([i.description for i in instances])
-            ) < len(instances):
-                raise ValueError(
-                    f"{instances[0].__class__.__name__}s of the document must have "
-                    f"unique names and unique descriptions."
-                )
+        if instances and (
+            len(set([i.name for i in instances])) < len(instances)
+            or len(set([i.description for i in instances])) < len(instances)
+        ):
+            raise ValueError(
+                f"{instances[0].__class__.__name__}s of the document must have "
+                f"unique names and unique descriptions."
+            )
         return deepcopy(instances)

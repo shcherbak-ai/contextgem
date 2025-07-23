@@ -26,13 +26,13 @@ python dev/populate_project_readme.py
 ```
 """
 
-README_TEMPLATE_PATH = "dev/README.TEMPLATE.md"
+README_TEMPLATE_PATH = "dev/readme.template.md"
 README_OUTPUT_PATH = "README.md"
 README_FOOTER = ""
 
 
 def generate_readme():
-    with open(README_TEMPLATE_PATH, "r", encoding="utf-8") as template_file:
+    with open(README_TEMPLATE_PATH, encoding="utf-8") as template_file:
         template = template_file.read()
 
     # Replace markers with actual code examples
@@ -47,7 +47,7 @@ def generate_readme():
 
 
 def extract_code_from_file(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
     return content
 

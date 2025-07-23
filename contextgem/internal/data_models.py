@@ -22,7 +22,7 @@ Module defining internal data validation models.
 
 import time
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 
@@ -41,15 +41,15 @@ class _LLMCall(BaseModel):
     :ivar timestamp_sent: The epoch timestamp (in ms) when the prompt was sent.
     :vartype timestamp_sent: int
     :ivar prompt_kwargs: The kwargs passed for prompt rendering.
-    :vartype prompt_kwargs: dict[NonEmptyStr, Any]
+    :vartype prompt_kwargs: dict[str, Any]
     :ivar prompt: The fully rendered input prompt sent to the LLM.
-    :vartype prompt: NonEmptyStr
+    :vartype prompt: str
     :ivar response: The raw text response returned by the LLM for the given prompt.
         Defaults to None if the response is not yet received.
-    :vartype response: Optional[str]
+    :vartype response: str | None
     :ivar timestamp_received: The epoch timestamp (in ms) when the response was received.
                              Defaults to None if the response is not yet received.
-    :vartype timestamp_received: Optional[int]
+    :vartype timestamp_received: int | None
     """
 
     timestamp_sent: StrictInt = Field(
@@ -57,8 +57,8 @@ class _LLMCall(BaseModel):
     )
     prompt_kwargs: dict[NonEmptyStr, Any] = Field(..., frozen=True)
     prompt: NonEmptyStr = Field(..., frozen=True)
-    response: Optional[StrictStr] = Field(default=None)
-    timestamp_received: Optional[StrictInt] = Field(default=None)
+    response: StrictStr | None = Field(default=None)
+    timestamp_received: StrictInt | None = Field(default=None)
 
     def _record_response_timestamp(self) -> None:
         """
@@ -113,7 +113,7 @@ class _LLMUsageOutputContainer(BaseModel):
     i.e. part of the list returned by the LLM's get_usage() method.
 
     :ivar model: The name or identifier of the model being used.
-    :vartype model: NonEmptyStr
+    :vartype model: str
     :ivar role: The role of the model, which must be one of
         "extractor_text", "reasoner_text", "extractor_vision",
         or "reasoner_vision".
@@ -161,7 +161,7 @@ class _LLMCostOutputContainer(BaseModel):
     i.e. part of the list returned by the LLM's get_cost() method.
 
     :ivar model: The name of the language model being used.
-    :vartype model: NonEmptyStr
+    :vartype model: str
     :ivar role: The role of the model in processing, which can be one of:
                 "extractor_text", "reasoner_text", "extractor_vision",
                 "reasoner_vision".
