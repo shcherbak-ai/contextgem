@@ -77,6 +77,8 @@ KEY_REFERENCE_SENTENCES_PRIVATE = "_reference_sentences"
 KEY_IS_PROCESSED_PRIVATE = "_is_processed"
 KEY_NESTING_LEVEL_PRIVATE = "_nesting_level"
 KEY_MD_TEXT_PRIVATE = "_md_text"
+KEY_LLM_SUPPORTS_VISION_PRIVATE = "_supports_vision"
+KEY_LLM_SUPPORTS_REASONING_PRIVATE = "_supports_reasoning"
 KEY_CLASS_PRIVATE = "__class__"
 # LLM attrs
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
@@ -172,6 +174,8 @@ class _InstanceSerializer(BaseModel):
                 KEY_IS_PROCESSED_PRIVATE,
                 KEY_NESTING_LEVEL_PRIVATE,
                 KEY_MD_TEXT_PRIVATE,
+                KEY_LLM_SUPPORTS_VISION_PRIVATE,
+                KEY_LLM_SUPPORTS_REASONING_PRIVATE,
             ]:
                 base_dict[key] = val
 

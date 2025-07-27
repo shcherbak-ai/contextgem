@@ -27,7 +27,8 @@ tables, images, footnotes, comments, and other elements.
 import base64
 import re
 from collections.abc import Callable
-from typing import cast
+from pathlib import Path
+from typing import BinaryIO, cast
 
 from lxml import etree
 
@@ -56,6 +57,33 @@ class _DocxConverterBase:
     """
     Base class for the DOCX converter.
     """
+
+    def _validate_file_extension(
+        self, docx_path_or_file: str | Path | BinaryIO
+    ) -> None:
+        """
+        Validates that the provided file has a valid DOCX extension.
+
+        :param docx_path_or_file: Path to the file or file-like object
+        :raises DocxConverterError: If the file doesn't have a valid DOCX extension
+        """
+        # Skip validation for file-like objects (BinaryIO)
+        if not isinstance(docx_path_or_file, str | Path):
+            return
+
+        file_path = Path(docx_path_or_file)
+        file_extension = file_path.suffix.lower()
+
+        # Only accept .docx files - the standard XML-based Word document format
+        if not file_extension:
+            raise DocxConverterError(
+                f"File '{file_path.name}' has no extension. Expected a .docx file."
+            )
+        elif file_extension != ".docx":
+            raise DocxConverterError(
+                f"File '{file_path.name}' has extension '{file_extension}'. "
+                f"Only .docx files are supported by this converter."
+            )
 
     def _process_paragraph(
         self,

@@ -7687,6 +7687,13 @@ Using local LLM providers
 
 Note:
 
+  **Vision Models with Ollama**: For local vision models that process
+  images, use the "ollama/" prefix instead of "ollama_chat/", as the
+  latter does not yet support image inputs. For more details, see the
+  relevant Ollama GitHub issue and LiteLLM GitHub issue.
+
+Note:
+
   **LM Studio Connection Error**: If you encounter a connection error
   ("litellm.APIError: APIError: Lm_studioException - Connection
   error") when using LM Studio, check that you have provided a dummy
@@ -8019,6 +8026,34 @@ Using model-specific parameters
        max_completion_tokens=8000,  # Specific to reasoning (CoT-capable) models
        reasoning_effort="medium",  # Optional: "low", "medium", "high"
    )
+
+
+⚙️ Explicit Capability Declaration
+----------------------------------
+
+Model vision capabilities are automatically detected using
+"litellm.supports_vision()". If this function does not correctly
+identify your model's capabilities, ContextGem will typically issue a
+warning, and you can explicitly declare the capability by setting
+"_supports_vision=True" on the LLM instance:
+
+   from contextgem import DocumentLLM
+
+   # Example: Explicitly declare vision capability
+   # Warning will be issued if automatic vision capability detection fails
+   llm = DocumentLLM(
+       model="some_provider/custom_vision_model",
+       api_base="http://localhost:3456/v1",
+       role="extractor_vision"
+   )
+   # Declare capability if automatic detection fails (warning was issued)
+   llm._supports_vision = True
+
+Warning:
+
+  Explicit capability declarations should only be used when automatic
+  capability detection fails. Incorrectly setting this flag may lead
+  to unexpected behavior or API errors.
 
 
 🤖🤖 LLM Groups
@@ -9213,10 +9248,11 @@ Tip:
        api_key=os.environ.get(
            "CONTEXTGEM_OPENAI_API_KEY"
        ),  # your API key for the applicable LLM provider
-       async_limiter=AsyncLimiter(
-           3, 3
-       ),  # customize async limiter for concurrency (optional)
    )
+   llm.async_limiter = AsyncLimiter(
+       3, 3
+   )  # customize async limiter for concurrency (optional)
+
 
    # Extract all information from the document, using concurrency
    doc = llm.extract_all(doc, use_concurrency=True)
@@ -9722,18 +9758,19 @@ Example of optimizing extraction for speed
    llm = DocumentLLM(
        model="openai/gpt-4o-mini",
        api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-       async_limiter=AsyncLimiter(
-           10, 5
-       ),  # e.g. 10 acquisitions per 5-second period; adjust to your LLM API setup
        fallback_llm=DocumentLLM(
            model="openai/gpt-3.5-turbo",
            api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
            is_fallback=True,
-           async_limiter=AsyncLimiter(
-               20, 5
-           ),  # e.g. 20 acquisitions per 5-second period; adjust to your LLM API setup
        ),
    )
+   llm.async_limiter = AsyncLimiter(
+       10, 5
+   )  # e.g. 10 acquisitions per 5-second period; adjust to your LLM API setup
+   llm.fallback_llm.async_limiter = AsyncLimiter(  # type: ignore
+       20, 5
+   )  # e.g. 20 acquisitions per 5-second period; adjust to your LLM API setup
+
 
    # Use the LLM for extraction with concurrency enabled
    llm.extract_all(document, use_concurrency=True)
@@ -15102,6 +15139,14 @@ class contextgem.public.llms.DocumentLLM(**data)
            specific aspect/concept. But for simple use cases, you can
            skip the role assignment completely, in which case the
            "role" will default to "extractor_text".
+
+      * Explicit capability declaration
+           Model vision capabilities are automatically detected using
+           "litellm.supports_vision()". If this function does not
+           correctly identify your model's capabilities, ContextGem
+           will typically issue a warning, and you can explicitly
+           declare the capability by setting "_supports_vision=True"
+           on the LLM instance.
 
    Example:
       LLM definition

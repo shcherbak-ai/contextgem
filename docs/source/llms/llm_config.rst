@@ -185,6 +185,29 @@ For reasoning (CoT-capable) models (such as OpenAI's o1/o3/o4), you can set reas
    :caption: Using model-specific parameters
 
 
+⚙️ Explicit Capability Declaration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Model vision capabilities are automatically detected using ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities, ContextGem will typically issue a warning, and you can explicitly declare the capability by setting ``_supports_vision=True`` on the LLM instance:
+
+.. code-block:: python
+
+   from contextgem import DocumentLLM
+
+   # Example: Explicitly declare vision capability
+   # Warning will be issued if automatic vision capability detection fails
+   llm = DocumentLLM(
+       model="some_provider/custom_vision_model",
+       api_base="http://localhost:3456/v1",
+       role="extractor_vision"
+   )
+   # Declare capability if automatic detection fails (warning was issued)
+   llm._supports_vision = True
+
+.. warning::
+   Explicit capability declarations should only be used when automatic capability detection fails. Incorrectly setting this flag may lead to unexpected behavior or API errors.
+
+
 🤖🤖 LLM Groups
 -----------------
 

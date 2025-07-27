@@ -1,6 +1,6 @@
 [project]
 name = "contextgem"
-version = "0.12.0"
+version = "0.12.1"
 description = "Effortless LLM extraction from documents"
 authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 requires-python = ">=3.10,<3.14"
@@ -97,6 +97,7 @@ dependencies = [
     "litellm (>=1.71.1,<2.0.0)",
     "loguru (>=0.7.3,<0.8.0)",
     "lxml (>=5.4.0,<6.0.0)",
+    "pillow>=11.3.0",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
     "typing-extensions>=4.14.1",
@@ -199,3 +200,6 @@ extend_exclude = [
     "dev/usage_examples/vs_other_frameworks",
     "dev/generate_notebooks.py",
 ]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["pillow"]  # required by litellm for Ollama vision models

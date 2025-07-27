@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.12.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.12.1) - 2025-07-27
+### Added
+- Explicit declaration of model vision capabilities: Added support for explicitly declaring vision capability when `litellm.supports_vision()` does not correctly identify a model's vision support. If a LLM is configured as a vision model and genuinely supports vision, but litellm fails to detect this capability, a warning will be issued. Users can manually set `_supports_vision=True` on the model instance to declare the capability and allow the model to accept image inputs.
+- Warning for Ollama vision models: Added a warning prompting users to use the `ollama/` prefix instead of `ollama_chat/` for vision models, as `ollama_chat/` does not currently support image inputs.
+
+### Changed
+- Updated documentation to address vision capability detection issues and provide guidance on manual overrides.
+
 ## [0.12.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.12.0) - 2025-07-22
 ### Fixed
 - BooleanConcept extraction for valid False values: Improved instructions in the concepts extraction prompt to fix a bug where no items were extracted for BooleanConcept with expected valid False values. The concept could be incorrectly considered "not addressed", resulting in empty extraction results.

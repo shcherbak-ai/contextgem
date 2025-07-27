@@ -133,10 +133,11 @@ llm = DocumentLLM(
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
     ),  # your API key for the applicable LLM provider
-    async_limiter=AsyncLimiter(
-        3, 3
-    ),  # customize async limiter for concurrency (optional)
 )
+llm.async_limiter = AsyncLimiter(
+    3, 3
+)  # customize async limiter for concurrency (optional)
+
 
 # Extract all information from the document, using concurrency
 doc = llm.extract_all(doc, use_concurrency=True)

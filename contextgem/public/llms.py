@@ -120,8 +120,13 @@ class DocumentLLMGroup(_GenericLLMProcessor):
     _llm_extractor_vision: DocumentLLM | None = PrivateAttr(default=None)
     _llm_reasoner_vision: DocumentLLM | None = PrivateAttr(default=None)
 
-    @_post_init_method
-    def _post_init(self, __context):
+    def _set_private_attrs(self) -> None:
+        """
+        Initialize and configure private attributes for the LLM group.
+
+        :return: None
+        :rtype: None
+        """
         self._assign_role_specific_llms()
 
     @property
@@ -283,6 +288,9 @@ class DocumentLLMGroup(_GenericLLMProcessor):
         :return: The LLM group instance after successful validation.
         :rtype: Self
         """
+        # Set private attributes before validation
+        self._set_private_attrs()
+
         if any(i.output_language != self.output_language for i in self.llms):
             raise ValueError(
                 "All LLMs in the group must have the same value of "
@@ -379,6 +387,12 @@ class DocumentLLM(_GenericLLMProcessor):
             appropriate role for a specific aspect/concept. But for simple use cases, you can skip the
             role assignment completely, in which case the ``role`` will default to "extractor_text".
 
+        - Explicit capability declaration
+            Model vision capabilities are automatically detected using
+            ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities,
+            ContextGem will typically issue a warning, and you can explicitly declare the capability by
+            setting ``_supports_vision=True`` on the LLM instance.
+
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_llm.py
             :language: python
@@ -398,7 +412,9 @@ class DocumentLLM(_GenericLLMProcessor):
     max_completion_tokens: StrictInt = Field(
         default=16000, gt=0
     )  # for reasoning (CoT-capable) models
-    reasoning_effort: ReasoningEffort | None = Field(default=None)
+    reasoning_effort: ReasoningEffort | None = Field(
+        default=None
+    )  # for reasoning (CoT-capable) models
     top_p: StrictFloat = Field(default=0.3, ge=0)
     num_retries_failed_request: StrictInt = Field(default=3, ge=0)
     max_retries_failed_request: StrictInt = Field(default=0, ge=0)  # provider-specific
@@ -425,6 +441,11 @@ class DocumentLLM(_GenericLLMProcessor):
     # Async lock to guard shared state during async updates
     _async_lock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
 
+    # Capabilities (can be overridden by users if litellm.supports_*()
+    # is not accurate for the model)
+    _supports_vision: bool = PrivateAttr(default=False)
+    _supports_reasoning: bool = PrivateAttr(default=False)
+
     def __init__(self, **data: Any):
         # Pop the async_limiter if provided; otherwise use a default.
         limiter = data.pop("async_limiter", None)
@@ -436,9 +457,6 @@ class DocumentLLM(_GenericLLMProcessor):
 
     @_post_init_method
     def _post_init(self, __context):
-        if self.system_message is None:
-            self._set_system_message()
-        self._set_prompts()
         logger.info(f"Using model {self.model}")
         if self.api_key is None:
             logger.info("API key was not provided. Set `api_key`, if applicable.")
@@ -458,13 +476,37 @@ class DocumentLLM(_GenericLLMProcessor):
                 "https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html"
             )
 
-        # Recommend `ollama_chat` prefix for better responses for Ollama models
-        if self.model.startswith("ollama/"):
+        # Recommend `ollama_chat` prefix for better responses for Ollama models (text-only processing)
+        if self.model.startswith("ollama/") and not self.role.endswith("_vision"):
             logger.info(
                 "For better responses with Ollama models, consider using "
                 "'ollama_chat/' prefix instead of 'ollama/', as recommended by LiteLLM: "
                 "https://docs.litellm.ai/docs/providers/ollama"
             )
+
+        # Warn to use `ollama/` prefix for image processing when using local vision models,
+        # as the ollama_chat/ does not yet support image inputs
+        if self.model.startswith("ollama_chat/") and self.role.endswith("_vision"):
+            warnings.warn(
+                "Using `ollama_chat/` prefix for local vision models is not recommended, "
+                "as it does not yet support image inputs. Please use `ollama/` prefix instead. "
+                "See https://github.com/ollama/ollama/issues/10255 and "
+                "https://github.com/ollama/ollama/issues/6451 for more details.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+    def _set_private_attrs(self) -> None:
+        """
+        Initialize and configure private attributes for the LLM instance.
+
+        :return: None
+        :rtype: None
+        """
+        if self.system_message is None:
+            self._set_system_message()
+        self._set_prompts()
+        self._set_capabilities()
 
     @property
     def async_limiter(self) -> AsyncLimiter:
@@ -544,8 +586,12 @@ class DocumentLLM(_GenericLLMProcessor):
             raise ValueError("Images must be a list of Image instances")
 
         # Check for vision support
-        if images and not litellm.supports_vision(self.model):  # type: ignore[attr-defined]
-            raise ValueError(f"Model `{self.model}` does not support vision.")
+        if images and not self._supports_vision:
+            raise ValueError(
+                f"Model `{self.model}` does not support vision according to "
+                f"litellm.supports_vision(). To override this detection, "
+                f"manually set `_supports_vision=True` on the LLM instance."
+            )
 
         # Create LLM call object to track the interaction
         llm_call = _LLMCall(prompt_kwargs={}, prompt=prompt)
@@ -742,6 +788,14 @@ class DocumentLLM(_GenericLLMProcessor):
             logger.debug("Async lock of deserialized LLM is different.")
             return False
 
+        # Check capabilities
+        if self._supports_vision != other._supports_vision:
+            logger.debug("`_supports_vision` of deserialized LLM is different.")
+            return False
+        if self._supports_reasoning != other._supports_reasoning:
+            logger.debug("`_supports_reasoning` of deserialized LLM is different.")
+            return False
+
         return True
 
     @field_validator("model")
@@ -809,10 +863,31 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: Self
         """
 
+        # Set private attributes before validation
+        self._set_private_attrs()
+
         # Vision support validation, when applicable
-        if self.role.endswith("_vision") and not litellm.supports_vision(self.model):  # type: ignore[attr-defined]
-            raise ValueError(
-                f"Model `{self.model}` does not support vision while its role is `{self.role}`."
+        if self.role.endswith("_vision") and not self._supports_vision:
+            # Allow the user to override _supports_vision if the model is known to support
+            # vision while litellm does not detect it as vision-capable
+            warnings.warn(
+                f"Model `{self.model}` is assigned vision role `{self.role}` but "
+                f"litellm does not detect it as vision-capable. This may cause "
+                f"vision-related operations to fail. If you know this model supports "
+                f"vision, manually set `_supports_vision=True` on the LLM instance.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        if self.reasoning_effort and not self._supports_reasoning:
+            # Allow the user to override _supports_reasoning if the model is known to support
+            # reasoning while litellm does not detect it as reasoning-capable
+            warnings.warn(
+                f"Model `{self.model}` has `reasoning_effort` set but "
+                f"litellm does not detect it as reasoning-capable. If you know this model "
+                f"supports reasoning, manually set `_supports_reasoning=True` on the LLM instance.",
+                UserWarning,
+                stacklevel=2,
             )
 
         # Fallback model validation
@@ -935,7 +1010,7 @@ class DocumentLLM(_GenericLLMProcessor):
                 return
 
             # Determine which token limit to check based on model type
-            if litellm.supports_reasoning(self.model):  # type: ignore[attr-defined]
+            if self._supports_reasoning:
                 configured_tokens = self.max_completion_tokens
                 token_type = "max_completion_tokens"  # nosec B105 - not a password
             else:
@@ -1017,8 +1092,12 @@ class DocumentLLM(_GenericLLMProcessor):
         :rtype: tuple[str | None, _LLMUsage]
         """
 
-        if images and not litellm.supports_vision(self.model):  # type: ignore[attr-defined]
-            raise ValueError("Model `{self.model}` does not support vision.")
+        if images and not self._supports_vision:
+            raise ValueError(
+                f"Model `{self.model}` does not support vision according to "
+                f"litellm.supports_vision(). To override this detection, "
+                f"manually set `_supports_vision=True` on the LLM instance."
+            )
 
         request_messages = []
 
@@ -1077,7 +1156,7 @@ class DocumentLLM(_GenericLLMProcessor):
         }
 
         # Add model-specific parameters
-        if litellm.supports_reasoning(self.model):  # type: ignore[attr-defined]
+        if self._supports_reasoning:
             # Reasoning (CoT-capable) models
             model_params: list[str] | None = litellm.get_supported_openai_params(  # type: ignore[attr-defined]
                 self.model
@@ -1093,7 +1172,7 @@ class DocumentLLM(_GenericLLMProcessor):
                     request_dict["reasoning_effort"] = self.reasoning_effort
             if self.temperature or self.top_p:
                 logger.info(
-                    "`temperature` and `top_p` parameters are ignored for reasoning models"
+                    "`temperature` and `top_p` parameters are ignored for reasoning (CoT-capable) models"
                 )
         else:
             # Non-reasoning models
@@ -1229,6 +1308,16 @@ class DocumentLLM(_GenericLLMProcessor):
         self._extract_concept_items_prompt = cast(
             Template, _get_template("extract_concept_items")
         )
+
+    def _set_capabilities(self) -> None:
+        """
+        Sets the capabilities of the LLM based on litellm.supports_*()
+        functions.
+
+        :return: None
+        """
+        self._supports_vision = litellm.supports_vision(self.model)  # type: ignore[attr-defined]
+        self._supports_reasoning = litellm.supports_reasoning(self.model)  # type: ignore[attr-defined]
 
     def _set_system_message(self) -> None:
         """
