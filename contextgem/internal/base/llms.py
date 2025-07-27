@@ -2456,6 +2456,15 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         pass
 
     @abstractmethod
+    def _set_private_attrs(self) -> None:
+        """
+        Abstract method, to be implemented by subclasses.
+
+        Sets private attributes for the LLM group or LLM, e.g. prompts, capabilities, etc.
+        """
+        pass
+
+    @abstractmethod
     def get_usage(self, *args, **kwargs) -> list[_LLMUsageOutputContainer]:
         """
         Abstract method, to be implemented by subclasses.

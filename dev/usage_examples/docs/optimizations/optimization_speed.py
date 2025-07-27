@@ -18,18 +18,19 @@ document = Document(
 llm = DocumentLLM(
     model="openai/gpt-4o-mini",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    async_limiter=AsyncLimiter(
-        10, 5
-    ),  # e.g. 10 acquisitions per 5-second period; adjust to your LLM API setup
     fallback_llm=DocumentLLM(
         model="openai/gpt-3.5-turbo",
         api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
         is_fallback=True,
-        async_limiter=AsyncLimiter(
-            20, 5
-        ),  # e.g. 20 acquisitions per 5-second period; adjust to your LLM API setup
     ),
 )
+llm.async_limiter = AsyncLimiter(
+    10, 5
+)  # e.g. 10 acquisitions per 5-second period; adjust to your LLM API setup
+llm.fallback_llm.async_limiter = AsyncLimiter(  # type: ignore
+    20, 5
+)  # e.g. 20 acquisitions per 5-second period; adjust to your LLM API setup
+
 
 # Use the LLM for extraction with concurrency enabled
 llm.extract_all(document, use_concurrency=True)

@@ -930,10 +930,10 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
-    def test_local_llms(self):
+    def test_local_llms_text(self):
         """
         Tests for initialization of and getting a response from local LLMs,
-        e.g. models run on Ollama local server.
+        e.g. models run on Ollama local server. Limited to text processing.
 
         Note that using `ollama_chat/` (preferred in live mode) instead of
         `ollama/` prefix for Ollama models does not work with VCR.
@@ -985,7 +985,67 @@ class TestAll(TestUtils):
         )
         extract_with_local_llm(llm_non_reasoning_lm_studio)
 
-        check_locals_memory_usage(locals(), test_name="test_local_llms")
+        # Check supports_reasoning override
+        with pytest.warns(UserWarning, match="reasoning-capable"):
+            llm = DocumentLLM(
+                model="lm_studio/mistralai/mistral-small-3.2",
+                api_base="http://localhost:1234/v1",
+                api_key="random-key",  # required for LM Studio API
+                seed=123,
+                reasoning_effort="high",
+            )
+        llm._supports_reasoning = True
+
+        # Check serialization of LLM
+        self._check_deserialized_llm_config_eq(llm)
+
+        check_locals_memory_usage(locals(), test_name="test_local_llms_text")
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_local_llms_vision(self):
+        """
+        Tests for initialization of and getting a response from local LLMs
+        with vision capabilities.
+        """
+        document_concepts = [
+            StringConcept(
+                name="Invoice number",
+                description="Number of the invoice",
+                llm_role="extractor_vision",
+                add_justifications=True,
+            ),
+        ]
+        document = Document(
+            images=[self.test_img_png_invoice], concepts=document_concepts
+        )
+        # Warn about using ollama/ prefix for local vision models
+        with pytest.warns(UserWarning, match="use `ollama/` prefix instead"):
+            DocumentLLM(
+                model="ollama_chat/gemma3:27b",
+                api_base="http://localhost:11434",
+                role="extractor_vision",
+            )
+
+        # Ollama
+        # Warn about the model not being detected as vision-capable
+        # TODO: remove this warning once litellm supports vision for this model
+        with pytest.warns(UserWarning, match="vision-capable"):
+            llm_ollama = DocumentLLM(
+                model="ollama/gemma3:27b",
+                api_base="http://localhost:11434",
+                role="extractor_vision",
+            )
+        llm_ollama._supports_vision = True
+        extracted_concepts = llm_ollama.extract_concepts_from_document(document)
+        assert extracted_concepts[0].extracted_items
+        # Log the extracted item for debugging
+        self.log_extracted_items_for_instance(extracted_concepts[0])
+
+        # Check serialization of LLM
+        self._check_deserialized_llm_config_eq(llm_ollama)
+
+        check_locals_memory_usage(locals(), test_name="test_local_llms_vision")
 
     @pytest.mark.vcr
     @memory_profile_and_capture
@@ -1248,7 +1308,7 @@ class TestAll(TestUtils):
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 extra=True,  # extra fields not permitted
             )
-        with pytest.raises(ValueError):
+        with pytest.warns(UserWarning, match="vision-capable"):
             DocumentLLM(
                 model="openai/gpt-3.5-turbo",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
@@ -5858,6 +5918,18 @@ class TestAll(TestUtils):
 
         # Log costs
         self.output_test_costs()
+
+        # Test error when model is not vision-capable
+        with pytest.warns(UserWarning, match="vision-capable"):
+            llm_not_vision_capable = DocumentLLM(
+                model="openai/gpt-3.5-turbo",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                role="extractor_vision",
+            )
+        with pytest.raises(ValueError, match="does not support vision"):
+            llm_not_vision_capable.chat(
+                "What's the type of this document?", images=[self.test_img_png_invoice]
+            )
 
         check_locals_memory_usage(
             locals(), test_name="test_vision", max_obj_memory=5.0
