@@ -49,7 +49,7 @@ document_classification_concept = LabelConcept(
         "Partnership Agreement",
         "Other",
     ],
-    classification_type="multi_class",
+    classification_type="multi_class",  # a single label is always returned
     add_justifications=True,  # enable justifications to understand classification reasoning
     justification_depth="comprehensive",  # provide detailed reasoning
     justification_max_sents=5,  # allow up to 5 sentences for justification

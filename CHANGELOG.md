@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.13.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.13.0) - 2025-07-30
+### Changed
+- Enhanced LLM prompts with XML tags for improved instruction clarity and higher-quality extraction outputs.
+- Updated LabelConcept documentation with clearer distinction between multi-label and multi-class classification types.
+
+### Fixed
+- Fixed a bug where LabelConcept with multi-class classification type did not always return a label, as expected for multi-class classification tasks.
+
 ## [0.12.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.12.1) - 2025-07-27
 ### Added
 - Explicit declaration of model vision capabilities: Added support for explicitly declaring vision capability when `litellm.supports_vision()` does not correctly identify a model's vision support. If a LLM is configured as a vision model and genuinely supports vision, but litellm fails to detect this capability, a warning will be issued. Users can manually set `_supports_vision=True` on the model instance to declare the capability and allow the model to accept image inputs.

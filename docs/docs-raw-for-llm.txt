@@ -7088,21 +7088,37 @@ predefined categories, including:
 
 This concept type supports two classification modes:
 
-* **Multi-class**: Select exactly one label from the predefined set
-  (mutually exclusive labels) - used for classifying the content into
-  a single type or category
+* **Multi-class**: Always selects exactly one label from the
+  predefined set (mutually exclusive labels) - used for classifying
+  the content into a single type or category. A label is always
+  returned, even if none perfectly fit the content.
 
-* **Multi-label**: Select one or more labels from the predefined set
-  (non-exclusive labels) - used when multiple topics or attributes can
-  apply simultaneously
+* **Multi-label**: Selects zero, one, or multiple labels from the
+  predefined set (non-exclusive labels) - used when multiple topics or
+  attributes can apply simultaneously. Returns only applicable labels,
+  or no labels if none apply.
 
 Note:
 
-  When none of the predefined labels apply to the content being
-  classified, no extracted items will be returned for the concept
-  (empty "extracted_items" list). This ensures that only valid,
-  predefined labels are selected and prevents forced classification
-  when no appropriate label exists.
+  **For multi-label classification**: When none of the predefined
+  labels apply to the content being classified, no extracted items
+  will be returned for the concept (empty "extracted_items" list).
+  This ensures that only applicable labels are selected.**For multi-
+  class classification**: A label is always returned, as this
+  classification type requires selecting the best-fitting option from
+  the predefined set, even if none perfectly match the content.
+
+Important:
+
+  **For multi-class classification**: Since multi-class classification
+  always returns exactly one label, you should consider including a
+  general "other" label (such as "N/A", "misc", "unspecified", etc.)
+  to handle cases where none of the specific labels apply, unless your
+  labels are broad enough to cover all cases, or you know that the
+  classified content always falls under one of the predefined labels
+  without edge cases. This ensures appropriate classification even
+  when the content doesn't clearly fit into any of the predefined
+  specific categories.
 
 
 💻 Usage Example
@@ -7241,16 +7257,29 @@ parameters:
 Choose the appropriate classification type based on your use case:
 
 **Multi-Class Classification** ("classification_type="multi_class""):
-- Select exactly one label from the predefined set (mutually exclusive
-labels) - Ideal for: document types, priority levels, status
-categories - Example: A document can only be one type: "NDA",
-"Consultancy Agreement", or "Privacy Policy"
+
+* Always selects exactly one label from the predefined set (mutually
+  exclusive labels)
+
+* A label is always returned, even if none perfectly fit the content
+
+* Ideal for: document types, priority levels, status categories
+
+* Example: A document must be classified as one type: "NDA",
+  "Consultancy Agreement", or "Privacy Policy" (or "Other" if none
+  apply)
 
 **Multi-Label Classification** ("classification_type="multi_label""):
-- Select one or more labels from the predefined set (non-exclusive
-labels) - Ideal for: content topics, applicable regulations, feature
-tags - Example: A document can cover multiple topics: "Finance",
-"Legal", "Technology"
+
+* Selects zero, one, or multiple labels from the predefined set (non-
+  exclusive labels)
+
+* Returns only applicable labels; can return no labels if none apply
+
+* Ideal for: content topics, applicable regulations, feature tags
+
+* Example: A document can cover multiple topics: "Finance", "Legal",
+  "Technology", or none of these topics
 
 Here's an example demonstrating multi-label classification for content
 topic identification:
@@ -7385,7 +7414,7 @@ contain elements of multiple document types:
            "Partnership Agreement",
            "Other",
        ],
-       classification_type="multi_class",
+       classification_type="multi_class",  # a single label is always returned
        add_justifications=True,  # enable justifications to understand classification reasoning
        justification_depth="comprehensive",  # provide detailed reasoning
        justification_max_sents=5,  # allow up to 5 sentences for justification
@@ -7582,21 +7611,27 @@ Here are some best practices to optimize your use of "LabelConcept":
   (insufficient precision) and too many labels (classification
   complexity).
 
-* **Include edge cases**: Consider adding labels like "Other" or
-  "Mixed" for content that doesn't fit standard categories.
+* **For multi-class classification**: Consider including a general
+  "other" label (like "Other", "N/A", "Mixed", etc.) since a label is
+  always returned, even when none of the specific labels perfectly fit
+  the content, unless your labels are broad enough to cover all cases,
+  or you know that the classified content always falls under one of
+  the predefined labels without edge cases.
+
+* **For multi-label classification**: Design your workflow to handle
+  cases where none of the predefined labels apply (resulting in empty
+  "extracted_items"), as this classification type can return zero
+  labels.
 
 * **Use appropriate classification type**: Set
   "classification_type="multi_class"" for mutually exclusive
-  categories, "classification_type="multi_label"" for potentially
-  overlapping attributes.
+  categories where exactly one choice is required,
+  "classification_type="multi_label"" for potentially overlapping
+  attributes where zero, one, or multiple labels can apply.
 
 * **Enable justifications**: Use "add_justifications=True" to
   understand and validate classification decisions, especially for
   complex or ambiguous content.
-
-* **Handle empty results**: Design your workflow to handle cases where
-  none of the predefined labels apply (resulting in empty
-  "extracted_items").
 
 
 # ==== llms/supported_llms ====
@@ -13445,9 +13480,9 @@ class contextgem.public.concepts.LabelConcept(**data)
         "paragraphs". Only relevant when references are added to
         extracted items. Affects the structure of "extracted_items".
 
-      * **singular_occurrence** (*StrictBool*) -- Whether this concept
-        is restricted to having only one extracted item. If True, only
-        a single extracted item will be extracted. Defaults to False
+      * **singular_occurrence** (*bool*) -- Whether this concept is
+        restricted to having only one extracted item. If True, only a
+        single extracted item will be extracted. Defaults to False
         (multiple extracted items are allowed). Note that with
         advanced LLMs, this constraint may not be strictly required as
         they can often infer the appropriate number of items to

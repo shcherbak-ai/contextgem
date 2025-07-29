@@ -52,6 +52,7 @@ from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import LLMRoleAny
 from contextgem.internal.utils import (
     _are_prompt_template_brackets_balanced,
+    _are_prompt_template_xml_tags_balanced,
     _group_instances_by_fields,
     _is_json_serializable,
 )
@@ -498,6 +499,7 @@ class TestUtils:
 
         assert not bool(re.search(r"(\r\n|\r|\n){3,}", prompt))
         assert _are_prompt_template_brackets_balanced(prompt)
+        assert _are_prompt_template_xml_tags_balanced(prompt)
 
     @staticmethod
     def check_extra_data_in_extracted_items(
