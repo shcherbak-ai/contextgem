@@ -35,11 +35,16 @@ LabelConcept
 
 This concept type supports two classification modes:
 
-* **Multi-class**: Select exactly one label from the predefined set (mutually exclusive labels) - used for classifying the content into a single type or category
-* **Multi-label**: Select one or more labels from the predefined set (non-exclusive labels) - used when multiple topics or attributes can apply simultaneously
+* **Multi-class**: Always selects exactly one label from the predefined set (mutually exclusive labels) - used for classifying the content into a single type or category. A label is always returned, even if none perfectly fit the content.
+* **Multi-label**: Selects zero, one, or multiple labels from the predefined set (non-exclusive labels) - used when multiple topics or attributes can apply simultaneously. Returns only applicable labels, or no labels if none apply.
 
 .. note::
-   When none of the predefined labels apply to the content being classified, no extracted items will be returned for the concept (empty ``extracted_items`` list). This ensures that only valid, predefined labels are selected and prevents forced classification when no appropriate label exists.
+   **For multi-label classification**: When none of the predefined labels apply to the content being classified, no extracted items will be returned for the concept (empty ``extracted_items`` list). This ensures that only applicable labels are selected.
+   
+   **For multi-class classification**: A label is always returned, as this classification type requires selecting the best-fitting option from the predefined set, even if none perfectly match the content.
+
+.. important::
+   **For multi-class classification**: Since multi-class classification always returns exactly one label, you should consider including a general "other" label (such as "N/A", "misc", "unspecified", etc.) to handle cases where none of the specific labels apply, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases. This ensures appropriate classification even when the content doesn't clearly fit into any of the predefined specific categories.
 
 
 💻 Usage Example
@@ -129,14 +134,18 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
 Choose the appropriate classification type based on your use case:
 
 **Multi-Class Classification** (``classification_type="multi_class"``):
-- Select exactly one label from the predefined set (mutually exclusive labels)
+
+- Always selects exactly one label from the predefined set (mutually exclusive labels)
+- A label is always returned, even if none perfectly fit the content
 - Ideal for: document types, priority levels, status categories
-- Example: A document can only be one type: "NDA", "Consultancy Agreement", or "Privacy Policy"
+- Example: A document must be classified as one type: "NDA", "Consultancy Agreement", or "Privacy Policy" (or "Other" if none apply)
 
 **Multi-Label Classification** (``classification_type="multi_label"``):
-- Select one or more labels from the predefined set (non-exclusive labels)
+
+- Selects zero, one, or multiple labels from the predefined set (non-exclusive labels)
+- Returns only applicable labels; can return no labels if none apply
 - Ideal for: content topics, applicable regulations, feature tags
-- Example: A document can cover multiple topics: "Finance", "Legal", "Technology"
+- Example: A document can cover multiple topics: "Finance", "Legal", "Technology", or none of these topics
 
 Here's an example demonstrating multi-label classification for content topic identification:
 
@@ -213,7 +222,7 @@ Here are some best practices to optimize your use of :class:`~contextgem.public.
 - **Choose meaningful labels**: Use clear, distinct labels that cover your classification needs without overlap.
 - **Provide clear descriptions**: Explain what each classification represents and when each label should be applied.
 - **Consider label granularity**: Balance between too few labels (insufficient precision) and too many labels (classification complexity).
-- **Include edge cases**: Consider adding labels like "Other" or "Mixed" for content that doesn't fit standard categories.
-- **Use appropriate classification type**: Set ``classification_type="multi_class"`` for mutually exclusive categories, ``classification_type="multi_label"`` for potentially overlapping attributes.
+- **For multi-class classification**: Consider including a general "other" label (like "Other", "N/A", "Mixed", etc.) since a label is always returned, even when none of the specific labels perfectly fit the content, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases.
+- **For multi-label classification**: Design your workflow to handle cases where none of the predefined labels apply (resulting in empty ``extracted_items``), as this classification type can return zero labels.
+- **Use appropriate classification type**: Set ``classification_type="multi_class"`` for mutually exclusive categories where exactly one choice is required, ``classification_type="multi_label"`` for potentially overlapping attributes where zero, one, or multiple labels can apply.
 - **Enable justifications**: Use ``add_justifications=True`` to understand and validate classification decisions, especially for complex or ambiguous content.
-- **Handle empty results**: Design your workflow to handle cases where none of the predefined labels apply (resulting in empty ``extracted_items``). 

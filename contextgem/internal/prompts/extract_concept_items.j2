@@ -1,3 +1,4 @@
+<introduction>
 {% if data_type == "text" %}
     {% if add_references %}
         {% if reference_depth == "sentences" %}
@@ -11,25 +12,31 @@ Below you will find document text and a list of concepts.
 {% elif data_type == "image" %}
 Below you will find a list of concepts.
 {% endif %}
+</introduction>
 
+<guidance_on_task_structure>
+All structured information in these instructions is provided using semantic XML tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text, sentence_text, additional_context, etc.).
+</guidance_on_task_structure>
+
+<task_description>
 Your task is to:
 {% if data_type == "text" %}
     {% if add_references %}
         {% if reference_depth == "sentences" %}
 1. Read through the provided document paragraphs and their sentences.
-    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.).
-    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.) specified within <paragraph_id></paragraph_id> tags.
+    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.) specified within <sentence_id></sentence_id> tags, followed by the full text of the sentence specified within <sentence_text></sentence_text> tags.
             {% if additional_context_for_paras_or_sents %}
-    - When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" and "Additional information about the sentence:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
+    - When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided within <additional_context></additional_context> tags, which provides important context for understanding their structural role and position within the document. Use this information to:
         -- Understand document hierarchy (e.g., headings indicate section boundaries)
         -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
         -- Assess content significance (e.g., styled text may indicate importance)
             {% endif %}
         {% else %}
 1. Read through the document paragraphs provided.
-    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text> tags.
             {% if additional_context_for_paras_or_sents %}
-    - When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
+    - When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided within <additional_context></additional_context> tags, which provides important context for understanding their structural role and position within the document. Use this information to:
         -- Understand document hierarchy (e.g., headings indicate section boundaries)
         -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
         -- Assess content significance (e.g., styled text may indicate importance)
@@ -48,33 +55,39 @@ Your task is to:
         {% endif %}
 2. Identify whether each concept in the concepts list is addressed within the document text.
     {% endif %}
+    - Each concept is identified by a concept ID (for example, "C0", "C1", etc.) specified within <concept_id></concept_id> tags.
+    - Each concept is described by a concept name specified within <concept_name></concept_name> tags and a concept description specified within <concept_description></concept_description> tags.
 {% elif data_type == "image" %}
 1. Examine the attached image(s).
 2. Identify whether each concept in the concepts list is addressed within the image(s).
+    - Each concept is identified by a concept ID (for example, "C0", "C1", etc.) specified within <concept_id></concept_id> tags.
+    - Each concept is described by a concept name specified within <concept_name></concept_name> tags and a concept description specified within <concept_description></concept_description> tags.
 {% endif %}
 3. For each concept that appears, extract zero or more items relevant to that concept. The item format and structure are specified for each concept.
 4. Produce a JSON array containing your extracted data, in the provided format.
+</task_description>
 
+<concept_extraction_rules>
 {% if data_type == "text" %}
     {% if add_references %}
 If a concept is not addressed in the document paragraphs, you must still include an entry in the final JSON output but with an empty "extracted_items" list. However, for boolean concepts (with extracted item type "bool"), distinguish carefully:
     {% else %}
 If a concept is not addressed in the document text, you must still include an entry in the final JSON output but with an empty "extracted_items" list. However, for boolean concepts (with extracted item type "bool"), distinguish carefully:
     {% endif %}
-- Extract True if the concept is confirmed or strongly supported by the document content (either explicitly stated or reasonably inferred)
-- Extract False if the concept is contradicted, denied, or if the document content allows you to determine that the concept is not true (e.g., absence of expected content that should be present if the concept were true)
-- Only leave "extracted_items" empty if the concept is impossible to determine because either: (1) the document is completely irrelevant to the concept, or (2) the document does not contain enough information to make a conclusion about the concept
+    - Extract True if the concept is confirmed or strongly supported by the document content (either explicitly stated or reasonably inferred)
+    - Extract False if the concept is contradicted, denied, or if the document content allows you to determine that the concept is not true (e.g., absence of expected content that should be present if the concept were true)
+    - Only leave "extracted_items" empty if the concept is impossible to determine because either: (1) the document is completely irrelevant to the concept, or (2) the document does not contain enough information to make a conclusion about the concept
 {% elif data_type == "image" %}
 If a concept is not addressed in the image(s), you must still include an entry in the final JSON output but with an empty "extracted_items" list. However, for boolean concepts (with extracted item type "bool"), distinguish carefully:
-- Extract True if the concept is confirmed or strongly supported by the image content (either explicitly shown or reasonably inferred)
-- Extract False if the concept is contradicted, denied, or if the image content allows you to determine that the concept is not true (e.g., absence of expected visual elements that should be present if the concept were true)
-- Only leave "extracted_items" empty if the concept is impossible to determine because either: (1) the image is completely irrelevant to the concept, or (2) the image does not contain enough information to make a conclusion about the concept
+    - Extract True if the concept is confirmed or strongly supported by the image content (either explicitly shown or reasonably inferred)
+    - Extract False if the concept is contradicted, denied, or if the image content allows you to determine that the concept is not true (e.g., absence of expected visual elements that should be present if the concept were true)
+    - Only leave "extracted_items" empty if the concept is impossible to determine because either: (1) the image is completely irrelevant to the concept, or (2) the image does not contain enough information to make a conclusion about the concept
 {% endif %}
 
 Follow these additional rules:
 
 - Output format:
-Provide your answer in only the following answer format (do not include backticks, code fences, or any introductory/explanatory text).
+    -- Provide your answer in the JSON format specified within <answer_format></answer_format> tags (do not include backticks, code fences, or any introductory/explanatory text). Follow this format exactly.
 
 - Consistency:
     -- Each JSON object in the list must have two keys: "concept_id" and "extracted_items".
@@ -84,44 +97,47 @@ Provide your answer in only the following answer format (do not include backtick
         {% if reference_depth == "sentences" %}
     -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraphs". If the concept is not addressed or there are no items to extract, leave the array empty ([]). For boolean concepts, only leave empty if the concept is impossible to determine.
         --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
-        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- Guidance regarding the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items> tags. Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         --- The value of "reference_paragraphs" must be an array of objects with mandatory fields "reference_paragraph_id", which holds the provided ID of the reference paragraph, and "reference_sentence_ids", which holds the provided IDs of the reference sentences within the paragraph. Note that not every sentence in the paragraph necessarily serves as a relevant reference.
         {% else %}
     -- The value of "extracted_items" must be an array of objects with mandatory fields "value", "justification", and "reference_paragraph_ids". If the concept is not addressed or there are no items to extract, leave the array empty ([]). For boolean concepts, only leave empty if the concept is impossible to determine.
         --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
-        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- Guidance regarding the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items> tags. Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         {% endif %}
     {% else %}
         {% if reference_depth == "sentences" %}
     -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraphs". If the concept is not addressed or there are no items to extract, leave the array empty ([]). For boolean concepts, only leave empty if the concept is impossible to determine.
         --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
-        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- Guidance regarding the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items> tags. Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         --- The value of "reference_paragraphs" must be an array of objects with mandatory fields "reference_paragraph_id", which holds the provided ID of the reference paragraph, and "reference_sentence_ids", which holds the provided IDs of the reference sentences within the paragraph. Note that not every sentence in the paragraph necessarily serves as a relevant reference.
         {% else %}
     -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "reference_paragraph_ids". If the concept is not addressed or there are no items to extract, leave the array empty ([]). For boolean concepts, only leave empty if the concept is impossible to determine.
         --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
-        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- Guidance regarding the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items> tags. Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
         {% endif %}
     {% endif %}
 {% else %}
     {% if add_justifications %}
     -- The value of "extracted_items" must be an array of objects with mandatory fields "value" and "justification". If the concept is not addressed or there are no items to extract, leave the array empty ([]). For boolean concepts, only leave empty if the concept is impossible to determine.
         --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
-        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
+        --- Guidance regarding the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items> tags. Each extracted item's object, even if there is only one, must be part of the "extracted_items" array.
     {% else %}
     -- The value of "extracted_items" must be an array. If the concept is not addressed or there are no items to extract, leave the array empty ([]). For boolean concepts, only leave empty if the concept is impossible to determine.
         --- Extracted items may be found directly (explicitly mentioned) or inferred from the content (implied or derivable from the information present).
-        --- Guidance regarding the possible amount of extracted items for the concept is specified under "Amount of extracted items". Each extracted item, even if there is only one, must be part of the "extracted_items" array.
+        --- Guidance regarding the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items> tags. Each extracted item, even if there is only one, must be part of the "extracted_items" array.
     {% endif %}
 {% endif %}
+</concept_extraction_rules>
 
 {% if add_justifications or add_references %}
+<extracted_item_object_structure>
 - Item object structure:
     -- value: Mandatory field holding the extracted item. Must match the exact type specified for the concept.
-        --- If a specific structure is provided for a concept under "Expected structure," the extracted item value must follow that structure for all extracted items corresponding to that concept.
-        --- If a rating scale is provided for a concept under "Rating scale," the extracted item value must be within that scale.
-        --- If available labels are provided for a concept under "Available labels," the extracted item value must be a list containing only labels from the predefined set. If none of the predefined labels apply, do not extract any items for that concept.
-        --- If there are example items ("Extracted concept examples"), the extracted item value should follow the same style and formatting.
+        --- If a specific structure is provided for a concept within <expected_structure></expected_structure> tags, the extracted item value must follow that structure for all extracted items corresponding to that concept.
+        --- If a rating scale is provided for a concept within <rating_scale></rating_scale> tags, the extracted item value must be within that scale.
+        --- If available labels are provided for a concept within <available_labels></available_labels> tags, the extracted item value must be a list containing only labels from the predefined set. The classification type is explicitly stated within <classification_type></classification_type> tags for each concept: for multi-class concepts, you must always select exactly one label (the most appropriate one even if not perfect); for multi-label concepts, leave the "extracted_items" array empty if none of the labels apply to the content.
+        --- If there are example items within <extracted_item_examples></extracted_item_examples> tags, the extracted item value should follow the same style and formatting.
+            ---- Each example is provided within separate <extracted_item_example></extracted_item_example> tags.
     {% if output_language == "en" %}
         {% if data_type == "text" %}
         --- When extracting string values, translate them in English if the original language of the document is not English.
@@ -164,13 +180,16 @@ Provide your answer in only the following answer format (do not include backtick
     -- reference_paragraph_ids: Mandatory field holding the IDs of the document paragraphs based on which the item was extracted for the concept. Ensure such paragraphs directly tie the extracted item to the concept's defining features. Each paragraph ID must match exactly the provided ID for the paragraph (for example, "P0", "P1", etc.).
         {% endif %}
     {% endif %}
+</extracted_item_object_structure>
 {% else %}
+<extracted_item_structure>
 - Item structure:
     -- All extracted items must match the exact type specified for the concept.
-    -- If a specific structure is provided for a concept under "Expected structure," you must follow that structure for all extracted items corresponding to that concept.
-    -- If a rating scale is provided for a concept under "Rating scale," the extracted item value must be within that scale.
-    -- If available labels are provided for a concept under "Available labels," the extracted item value must be a list containing only labels from the predefined set. If none of the predefined labels apply, do not extract any items for that concept.
-    -- If there are example items ("Extracted concept examples"), try to follow the same style and formatting for your extracted items.
+    -- If a specific structure is provided for a concept within <expected_structure></expected_structure> tags, you must follow that structure for all extracted items corresponding to that concept.
+    -- If a rating scale is provided for a concept within <rating_scale></rating_scale> tags, the extracted item value must be within that scale.
+    -- If available labels are provided for a concept within <available_labels></available_labels> tags, the extracted item value must be a list containing only labels from the predefined set. The classification type is explicitly stated within <classification_type></classification_type> tags for each concept: for multi-class concepts, you must always select exactly one label (the most appropriate one even if not perfect); for multi-label concepts, leave the "extracted_items" array empty if none of the labels apply to the content.
+    -- If there are example items within <extracted_item_examples></extracted_item_examples> tags, try to follow the same style and formatting for your extracted items.
+        --- Each example is provided within separate <extracted_item_example></extracted_item_example> tags.
     {% if output_language == "en" %}
         {% if data_type == "text" %}
     -- When extracting string values, translate them in English if the original language of the document is not English.
@@ -184,31 +203,38 @@ Provide your answer in only the following answer format (do not include backtick
     -- When extracting string values from the image(s) that contain text, retain such values in the original language of the image(s) without translating them.
         {% endif %}
     {% endif %}
+</extracted_item_structure>
 {% endif %}
 
+<type_validation_rules>
 - Types of extracted items:
 {% if add_justifications or add_references %}
-    -- Each concept specifies an "extracted item type" (found under "Concept extracted item type"). Ensure that the value of each of the extracted items for the concept strictly matches that type. Python types are provided (e.g., str for string, int for integer, float for floating-point number, dict for object, etc.). Type compliance is mandatory - any deviation will result in invalid output.
+    -- Each concept specifies an "extracted item type" within <extracted_item_type></extracted_item_type> tags. Ensure that the value of each of the extracted items for the concept strictly matches that type. Python types are provided (e.g., str for string, int for integer, float for floating-point number, dict for object, etc.). Type compliance is mandatory - any deviation will result in invalid output.
 {% else %}
-    -- Each concept specifies an "extracted item type" (found under "Concept extracted item type"). Ensure your extracted items strictly match that type. Python types are provided (e.g., str for string, int for integer, float for floating-point number, dict for object, etc.). Type compliance is mandatory - any deviation will result in invalid output.
+    -- Each concept specifies an "extracted item type" within <extracted_item_type></extracted_item_type> tags. Ensure your extracted items strictly match that type. Python types are provided (e.g., str for string, int for integer, float for floating-point number, dict for object, etc.). Type compliance is mandatory - any deviation will result in invalid output.
 {% endif %}
     -- Do not introduce any extra fields or modify the specified structure.
+</type_validation_rules>
 
+<extracted_item_handling_rules>
 - Handling missing or multiple items:
     -- If a concept is not mentioned at all, your output should still contain an entry for that concept with an empty "extracted_items" array.
     -- For boolean concepts (with extracted item type "bool"): Distinguish carefully between these cases:
         --- Extract True if the concept is confirmed or strongly supported by the provided content (either explicitly stated or reasonably inferred)
         --- Extract False if the concept is contradicted, denied, or if the provided content allows you to determine that the concept is not true (e.g., absence of expected content that should be present if the concept were true)
         --- Only leave "extracted_items" empty if the concept is impossible to determine because either: (1) the provided content is completely irrelevant to the concept, or (2) the provided content does not contain enough information to make a conclusion about the concept
-    -- For concepts that have an "Available labels:" section: if none of the predefined labels apply to the content, leave the "extracted_items" array empty.
-    -- For concepts that have an "Available labels:" section: if multiple labels apply to the same instance or context, include them all in a single extracted item with multiple labels in the "labels" array (e.g., {"labels": ["label1", "label2"]}). Only create multiple extracted items if there are genuinely distinct instances or contexts that warrant separate classification.
-    -- For concepts that do not have an "Available labels:" section: if multiple items are found for a concept, include each as a separate entry within the "extracted_items" array.
+    -- For concepts that have <available_labels></available_labels> tags: behavior depends on the classification type explicitly stated within <classification_type></classification_type> tags. For multi-class concepts, you must always select exactly one label (the most appropriate one even if not perfect). For multi-label concepts, leave the "extracted_items" array empty if none of the labels apply to the content.
+    -- For concepts that have <available_labels></available_labels> tags: if multiple labels apply to the same instance or context, include them all in a single extracted item with multiple labels in the "labels" array (e.g., {"labels": ["label1", "label2"]}). Only create multiple extracted items if there are genuinely distinct instances or contexts that warrant separate classification.
+    -- For concepts that do not have <available_labels></available_labels> tags: if multiple items are found for a concept, include each as a separate entry within the "extracted_items" array.
+</extracted_item_handling_rules>
 
+<output_constraints>
 - No additional text:
     -- Do not include any headers, explanations, or text outside of the JSON array.
     -- Do not wrap your JSON response in backticks or any other formatting characters.
+</output_constraints>
 
-======
+<answer_format>
 ANSWER FORMAT (MANDATORY):
 [
     {
@@ -252,64 +278,78 @@ ANSWER FORMAT (MANDATORY):
     },
     ...
 ]
-======
+</answer_format>
 
-______
+<concepts>
 CONCEPTS:
 {% for concept_index, concept_data in enumerate(concepts) %}
-````
-- Concept ID: C{{ concept_index }}
-Concept name: {{ concept_data.name }}
+<concept id="C{{ concept_index }}">
+    <concept_id>C{{ concept_index }}</concept_id>
+    
+    <concept_name>{{ concept_data.name }}</concept_name>
 
-Concept description:
-{{ concept_data.description }}
+    <concept_description>
+    {{ concept_data.description }}
+    </concept_description>
     {% if concept_data.structure %}
 
-Expected structure:
-{{ concept_data._format_structure_in_prompt() }}
+    <expected_structure>
+    {{ concept_data._format_structure_in_prompt() }}
+    </expected_structure>
     {% endif %}
     {% if concept_data.rating_scale %}
 
-Rating scale:
-Based on the concept description, assign and output a rating on the scale from {{ concept_data._rating_start }} (inclusive) to {{ concept_data._rating_end }} (inclusive).
+    <rating_scale>
+    Based on the concept description, assign and output a rating on the scale from {{ concept_data._rating_start }} (inclusive) to {{ concept_data._rating_end }} (inclusive).
+    </rating_scale>
     {% endif %}
     {% if concept_data.labels %}
 
-Available labels:
+    <available_labels>
         {% if concept_data.classification_type == "multi_class" %}
-Based on the concept description, assign exactly one label from the following list of available labels:
-{{ concept_data._format_labels_in_prompt }}
-The output must be an object with a mandatory field "labels" mapped to an array containing only the selected label, e.g. {"labels": ["label1"]}.
+    <classification_type>Multi-class (exactly one label must be selected)</classification_type>
+    Based on the concept description, you must assign exactly one label from the following list of available labels. You must select the most appropriate label even if none perfectly match the content:
+    
+    {{ concept_data._format_labels_in_prompt }}
+    
+    The output must be an object with a mandatory field "labels" mapped to an array containing only the selected label, e.g. {"labels": ["label1"]}. Never leave the "extracted_items" array empty for this concept.
         {% else %}
-Based on the concept description, assign one or more labels from the following list of available labels:
-{{ concept_data._format_labels_in_prompt }}
-The output must be an object with a mandatory field "labels" mapped to an array containing only the selected labels, e.g. {"labels": ["label1", "label2"]}.
+    <classification_type>Multi-label (zero, one, or more labels can be selected)</classification_type>
+    Based on the concept description, assign one or more labels from the following list of available labels:
+    
+    {{ concept_data._format_labels_in_prompt }}
+    
+    The output must be an object with a mandatory field "labels" mapped to an array containing only the selected labels, e.g. {"labels": ["label1", "label2"]}. If none of the labels apply to the content, leave the "extracted_items" array empty.
         {% endif %}
+    </available_labels>
     {% endif %}
     {% if concept_data.singular_occurrence %}
 
-Amount of extracted items: This concept may have zero or one extracted item, never multiple items.
+    <amount_of_extracted_items>This concept may have zero or one extracted item, never multiple items.</amount_of_extracted_items>
     {% else %}
 
-Amount of extracted items: This concept may have zero, one, or multiple extracted items.
+    <amount_of_extracted_items>This concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>
     {% endif %}
     {% if concept_data.examples %}
 
-Extracted concept examples:
+    <extracted_item_examples>
         {% for example in concept_data.examples %}
-- {{ example }}
+        <extracted_item_example>
+        {{ example }}
+        </extracted_item_example>
         {% endfor %}
+    </extracted_item_examples>
     {% endif %}
 
-Concept extracted item type: {{ concept_data._item_type_in_prompt }} (must be exactly as specified)
-````
+    <extracted_item_type>{{ concept_data._item_type_in_prompt }} (must be exactly as specified)</extracted_item_type>
+</concept>
 
 {% endfor %}
-______
+</concepts>
 
 {% if data_type == "text" %}
-------
     {% if add_references %}
+<document_paragraphs>
         {% if reference_depth == "sentences" %}
 DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
         {% else %}
@@ -322,38 +362,51 @@ DOCUMENT PARAGRAPHS:
                 {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
             {% endif %}
             {% if para_text %}
-````
-- Paragraph ID: P{{ para_index }}
+    <paragraph id="P{{ para_index }}">
+        <paragraph_id>P{{ para_index }}</paragraph_id>
                 {% if reference_depth != "sentences" %}
-~~~
-Paragraph text:
-{{ para_text }}
-~~~
+        
+        <paragraph_text>
+        {{ para_text }}
+        </paragraph_text>
                 {% endif %}
                 {% if para_item.additional_context %}
-Additional information about the paragraph:
-{{ para_item.additional_context }}
+        
+        <additional_context>
+        {{ para_item.additional_context }}
+        </additional_context>
                 {% endif %}
                 {% if reference_depth == "sentences" %}
-Paragraph sentences:
+        
+        <paragraph_sentences>
                     {% for sent_index, sent_item in enumerate(para_item.sentences) %}
                         {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
                         {% if sent_text %}
-    -- Sentence ID: P{{ para_index }}-S{{ sent_index }}
-    Sentence text: {{ sent_text }}
+            <sentence id="P{{ para_index }}-S{{ sent_index }}">
+                <sentence_id>P{{ para_index }}-S{{ sent_index }}</sentence_id>
+                
+                <sentence_text>
+                {{ sent_text }}
+                </sentence_text>
                             {% if sent_item.additional_context %}
-    Additional information about the sentence: {{ sent_item.additional_context }}
+                
+                <additional_context>
+                {{ sent_item.additional_context }}
+                </additional_context>
                             {% endif %}
+            </sentence>
                         {% endif %}
                     {% endfor %}
+        </paragraph_sentences>
                 {% endif %}
-````
+    </paragraph>
 
             {% endif %}
         {% endfor %}
+</document_paragraphs>
     {% else %}
-DOCUMENT TEXT:
+<document_text>
 {{ text }}
+</document_text>
     {% endif %}
-------
 {% endif %}

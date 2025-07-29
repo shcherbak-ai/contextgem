@@ -48,6 +48,7 @@ from pydantic import (
 from typing_extensions import Self
 
 from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.decorators import _post_init_method
 from contextgem.internal.items import (
     _BooleanItem,
     _DateItem,
@@ -61,6 +62,7 @@ from contextgem.internal.items import (
 from contextgem.internal.llm_output_structs.concept_structs import (
     _LabelConceptItemValueModel,
 )
+from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import ClassificationType, NonEmptyStr
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
@@ -999,7 +1001,7 @@ class LabelConcept(_Concept):
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "document type" vs
         "content topics").
-    :vartype singular_occurrence: StrictBool
+    :vartype singular_occurrence: bool
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_label_concept.py
@@ -1011,6 +1013,19 @@ class LabelConcept(_Concept):
     classification_type: ClassificationType = Field(default="multi_class")
 
     _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)
+
+    @_post_init_method
+    def _post_init(self, __context):
+        if self.classification_type == "multi_class":
+            logger.info(
+                f"For multi-class classification in concept '{self.name}', you should consider including "
+                f"a general 'other' (or 'N/A', 'misc', etc.) label to handle cases where none "
+                f"of the specific labels apply, unless you already have such a label, your labels are "
+                f"broad enough to cover all cases, or you know that the classified content always falls "
+                f"under one of the predefined labels without edge cases. Multi-class classification "
+                f"always returns a label, so having a catch-all option ensures appropriate classification "
+                f"when no specific label fits the content."
+            )
 
     @field_validator("labels")
     @classmethod

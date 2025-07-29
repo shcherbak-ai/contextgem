@@ -1,116 +1,130 @@
-Below you will find a list of consecutively ordered paragraphs from a document and a list of aspects. Your task is to:
+<introduction>
+Below you will find a list of consecutively ordered paragraphs from a document and a list of aspects.
+</introduction>
+
+<guidance_on_task_structure>
+All structured information in these instructions is provided using semantic XML tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text, additional_context, etc.).
+</guidance_on_task_structure>
+
+<task_description>
+Your task is to:
 
 1. Read and understand the aspects
-- Each aspect is identified by an Aspect ID (for example, "A0", "A1", etc.), includes a name, and has a description.
-- Aspects describe themes, topics, or criteria that might be addressed in the paragraphs.
+    - Each aspect is identified by an Aspect ID (for example, "A0", "A1", etc.) specified within <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name> tags, and has a description specified within <aspect_description></aspect_description> tags.
+    - Aspects describe themes, topics, or criteria that might be addressed in the paragraphs.
 
 {% if reference_depth == "sentences" %}
 2. Examine each paragraph and its sentences
-- Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.).
-- Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.), followed by the full text of the sentence.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.) specified within <paragraph_id></paragraph_id> tags.
+    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.) specified within <sentence_id></sentence_id> tags, followed by the full text of the sentence specified within <sentence_text></sentence_text> tags.
     {% if additional_context_for_paras_or_sents %}
-- When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" and "Additional information about the sentence:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
-    -- Understand document hierarchy (e.g., headings indicate section boundaries)
-    -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
-    -- Assess content significance (e.g., styled text may indicate importance)
+    - When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided within <additional_context></additional_context> tags, which provides important context for understanding their structural role and position within the document. Use this information to:
+        -- Understand document hierarchy (e.g., headings indicate section boundaries)
+        -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
+        -- Assess content significance (e.g., styled text may indicate importance)
     {% endif %}
 {% else %}
 2. Examine each paragraph
-- Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.), followed by the full text of the paragraph.
+    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text> tags.
     {% if additional_context_for_paras_or_sents %}
-- When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided under "Additional information about the paragraph:" sections, which provides important context for understanding their structural role and position within the document. Use this information to:
-    -- Understand document hierarchy (e.g., headings indicate section boundaries)
-    -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
-    -- Assess content significance (e.g., styled text may indicate importance)
+    - When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided within <additional_context></additional_context> tags, which provides important context for understanding their structural role and position within the document. Use this information to:
+        -- Understand document hierarchy (e.g., headings indicate section boundaries)
+        -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
+        -- Assess content significance (e.g., styled text may indicate importance)
     {% endif %}
     {% if is_markdown %}
-- Note that paragraphs are provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
+    - Note that paragraphs are provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
     {% endif %}
 {% endif %}
-- Note that paragraphs are listed in the same order they appear in the original document; therefore, context from surrounding paragraphs may influence whether a particular paragraph is relevant to an aspect.
-- You may be working with document fragments rather than complete documents. Focus on extracting information from the available content without making assumptions about missing parts.
+    - Note that paragraphs are listed in the same order they appear in the original document; therefore, context from surrounding paragraphs may influence whether a particular paragraph is relevant to an aspect.
+    - You may be working with document fragments rather than complete documents. Focus on extracting information from the available content without making assumptions about missing parts.
 
 {% if reference_depth == "sentences" %}
 3. Map paragraphs and their sentences to aspects
 {% else %}
 3. Map paragraphs to aspects
 {% endif %}
-- A paragraph can address one, multiple, or none of the aspects.
+    - A paragraph can address one, multiple, or none of the aspects.
 {% if reference_depth == "sentences" %}
-- A sentence within the paragraph can address one, multiple, or none of the aspects.
+    - A sentence within the paragraph can address one, multiple, or none of the aspects.
 {% endif %}
 {% if add_justifications %}
     {% if reference_depth == "sentences" %}
-- If a paragraph clearly relates to an aspect (based on the aspect's name and description), include the paragraph's ID and the IDs of all the sentences within the paragraph that address or relate to the aspect. For each such sentence, also include a justification, detailing why the sentence is relevant to the aspect.
+    - If a paragraph clearly relates to an aspect (based on the aspect's name and description), include the paragraph's ID and the IDs of all the sentences within the paragraph that address or relate to the aspect. For each such sentence, also include a justification, detailing why the sentence is relevant to the aspect.
     {% else %}
-- If a paragraph clearly relates to an aspect (based on the aspect's name and description), include the paragraph's ID and provide a justification, detailing why the paragraph is relevant to the aspect.
+    - If a paragraph clearly relates to an aspect (based on the aspect's name and description), include the paragraph's ID and provide a justification, detailing why the paragraph is relevant to the aspect.
     {% endif %}
 {% else %}
     {% if reference_depth == "sentences" %}
-- If a paragraph clearly relates to an aspect (based on the aspect's name and description), include the paragraph's ID and the IDs of all the sentences within the paragraph that address or relate to the aspect.
+    - If a paragraph clearly relates to an aspect (based on the aspect's name and description), include the paragraph's ID and the IDs of all the sentences within the paragraph that address or relate to the aspect.
     {% else %}
-- If a paragraph clearly relates to an aspect (based on the aspect's name and description), include that paragraph's ID under the aspect's list of paragraph IDs.
+    - If a paragraph clearly relates to an aspect (based on the aspect's name and description), include that paragraph's ID under the aspect's list of paragraph IDs.
     {% endif %}
 {% endif %}
-- If a paragraph does not relate to an aspect, do not include it under that aspect's list.
+    - If a paragraph does not relate to an aspect, do not include it under that aspect's list.
 
-4. Produce the final answer in the specified JSON format
-- Your output must be a JSON array of objects, each object corresponding to a single aspect.
-- For each aspect (in the order they are provided), include:
-    -- aspect_id: The aspect's unique identifier, e.g., "A0".
+4. Produce the final answer in the JSON format specified within <answer_format></answer_format> tags
+    - Your output must be a JSON array of objects, each object corresponding to a single aspect.
+    - For each aspect (in the order they are provided), include:
+        -- aspect_id: The aspect's unique identifier, e.g., "A0".
 {% if add_justifications %}
-    -- paragraphs: An array of objects for each paragraph that addresses or relates to the aspect. Each object should include:
-        --- paragraph_id: The provided paragraph ID, e.g., "P0", "P2".
+        -- paragraphs: An array of objects for each paragraph that addresses or relates to the aspect. Each object should include:
+            --- paragraph_id: The provided paragraph ID, e.g., "P0", "P2".
     {% if reference_depth == "sentences" %}
-        --- sentences: An array of objects for each relevant sentence within the paragraph. Each object should include:
-            ---- sentence_id: The provided ID of the sentence, e.g., "P0-S0", "P0-S2".
-            ---- justification: A justification of why the sentence is relevant to the aspect. Ensure the justification is specific and directly ties the content of the sentence to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", paragraph IDs like "P0", or sentence IDs like "P0-S0") in the justification.
+            --- sentences: An array of objects for each relevant sentence within the paragraph. Each object should include:
+                ---- sentence_id: The provided ID of the sentence, e.g., "P0-S0", "P0-S2".
+                ---- justification: A justification of why the sentence is relevant to the aspect. Ensure the justification is specific and directly ties the content of the sentence to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", paragraph IDs like "P0", or sentence IDs like "P0-S0") in the justification.
         {% if justification_depth == "brief" %}
-                ----- Justification should be brief, i.e. highlight only the essential details.
+                    ----- Justification should be brief, i.e. highlight only the essential details.
         {% elif justification_depth == "balanced" %}
-                ----- Justification should be balanced, i.e. cover the key insights with enough detail to be informative, while remaining concise.
+                    ----- Justification should be balanced, i.e. cover the key insights with enough detail to be informative, while remaining concise.
         {% elif justification_depth == "comprehensive" %}
-                ----- Justification should be comprehensive, i.e. deliver an in-depth explanation that thoroughly details the rationale and supporting evidence.
+                    ----- Justification should be comprehensive, i.e. deliver an in-depth explanation that thoroughly details the rationale and supporting evidence.
         {% endif %}
-                ----- Justification should be no longer than {{ justification_max_sents }} sentences.
+                    ----- Justification should be no longer than {{ justification_max_sents }} sentences.
         {% if output_language == "en" %}
-                ----- Justification should be in English.
+                    ----- Justification should be in English.
         {% elif output_language == "adapt" %}
-                ----- Justification should be in the original language of the document.
+                    ----- Justification should be in the original language of the document.
         {% endif %}
     {% else %}
-        --- justification: A justification of why the paragraph is relevant to the aspect. Ensure the justification is specific and directly ties the content of the paragraph to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", or paragraph IDs like "P0") in the justification.
+            --- justification: A justification of why the paragraph is relevant to the aspect. Ensure the justification is specific and directly ties the content of the paragraph to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", or paragraph IDs like "P0") in the justification.
         {% if justification_depth == "brief" %}
-            ---- Justification should be brief, i.e. highlight only the essential details.
+                ---- Justification should be brief, i.e. highlight only the essential details.
         {% elif justification_depth == "balanced" %}
-            ---- Justification should be balanced, i.e. cover the key insights with enough detail to be informative, while remaining concise.
+                ---- Justification should be balanced, i.e. cover the key insights with enough detail to be informative, while remaining concise.
         {% elif justification_depth == "comprehensive" %}
-            ---- Justification should be comprehensive, i.e. deliver an in-depth explanation that thoroughly details the rationale and supporting evidence.
+                ---- Justification should be comprehensive, i.e. deliver an in-depth explanation that thoroughly details the rationale and supporting evidence.
         {% endif %}
-            ---- Justification should be no longer than {{ justification_max_sents }} sentences.
+                ---- Justification should be no longer than {{ justification_max_sents }} sentences.
         {% if output_language == "en" %}
-            ---- Justification should be in English.
+                ---- Justification should be in English.
         {% elif output_language == "adapt" %}
-            ---- Justification should be in the original language of the document.
+                ---- Justification should be in the original language of the document.
         {% endif %}
     {% endif %}
-    -- If an aspect has no related paragraphs, still include it with an empty paragraphs array ([]).
+        -- If an aspect has no related paragraphs, still include it with an empty paragraphs array ([]).
 {% else %}
     {% if reference_depth == "sentences" %}
-    -- paragraphs: An array of objects for each paragraph that addresses or relates to the aspect. Each object should include:
-        --- paragraph_id: The provided paragraph ID, e.g., "P0", "P2".
-        --- sentences: An array of objects for each relevant sentence within the paragraph. Each object should include:
-            --- sentence_id: The provided ID of the sentence, e.g., "P0-S0", "P0-S2".
+        -- paragraphs: An array of objects for each paragraph that addresses or relates to the aspect. Each object should include:
+            --- paragraph_id: The provided paragraph ID, e.g., "P0", "P2".
+            --- sentences: An array of objects for each relevant sentence within the paragraph. Each object should include:
+                ---- sentence_id: The provided ID of the sentence, e.g., "P0-S0", "P0-S2".
     {% else %}
-    -- paragraph_ids: An array of the paragraph IDs that address or relate to the aspect, e.g., ["P0", "P2"].
+        -- paragraph_ids: An array of the paragraph IDs that address or relate to the aspect, e.g., ["P0", "P2"].
     {% endif %}
-    -- If an aspect has no related paragraphs, still include it with an empty paragraph_ids array ([]).
+        -- If an aspect has no related paragraphs, still include it with an empty paragraph_ids array ([]).
 {% endif %}
 - Do not add extra commentary, code block markers, or any other formatting beyond the JSON array.
+</task_description>
 
-Use the following answer format as a guide for your final answer (remember: no surrounding text or ```json delimiters should be included).
+<output_constraints>
+- No additional text:
+    -- Do not include any headers, explanations, or text outside of the JSON array.
+    -- Do not wrap your JSON response in backticks or any other formatting characters.
+</output_constraints>
 
-======
+<answer_format>
 ANSWER FORMAT (MANDATORY):
 {% if add_justifications %}
 [
@@ -163,22 +177,25 @@ ANSWER FORMAT (MANDATORY):
     ...
 ]
 {% endif %}
-======
+</answer_format>
 
-______
+<aspects>
 DOCUMENT ASPECTS:
 {% for aspect_index, aspect_data in enumerate(aspects) %}
-````
-- Aspect ID: A{{ aspect_index }}
-Aspect name: {{ aspect_data.name }}
-Aspect description:
-{{ aspect_data.description }}
-````
+    <aspect id="A{{ aspect_index }}">
+        <aspect_id>A{{ aspect_index }}</aspect_id>
+        
+        <aspect_name>{{ aspect_data.name }}</aspect_name>
+        
+        <aspect_description>
+        {{ aspect_data.description }}
+        </aspect_description>
+    </aspect>
 
 {% endfor %}
-______
+</aspects>
 
-------
+<document_paragraphs>
 {% if reference_depth == "sentences" %}
 DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
 {% else %}
@@ -191,33 +208,45 @@ DOCUMENT PARAGRAPHS:
         {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
     {% endif %}
     {% if para_text %}
-''''
-- Paragraph ID: P{{ para_index }}
+    <paragraph id="P{{ para_index }}">
+        <paragraph_id>P{{ para_index }}</paragraph_id>
         {% if reference_depth != "sentences" %}
-~~~
-Paragraph text:
-{{ para_text }}
-~~~
+        
+        <paragraph_text>
+        {{ para_text }}
+        </paragraph_text>
         {% endif %}
         {% if para_item.additional_context %}
-Additional information about the paragraph:
-{{ para_item.additional_context }}
+        
+        <additional_context>
+        {{ para_item.additional_context }}
+        </additional_context>
         {% endif %}
         {% if reference_depth == "sentences" %}
-Paragraph sentences:
+        
+        <paragraph_sentences>
             {% for sent_index, sent_item in enumerate(para_item.sentences) %}
                 {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
                 {% if sent_text %}
-    -- Sentence ID: P{{ para_index }}-S{{ sent_index }}
-    Sentence text: {{ sent_text }}
+            <sentence id="P{{ para_index }}-S{{ sent_index }}">
+                <sentence_id>P{{ para_index }}-S{{ sent_index }}</sentence_id>
+                
+                <sentence_text>
+                {{ sent_text }}
+                </sentence_text>
                     {% if sent_item.additional_context %}
-    Additional information about the sentence: {{ sent_item.additional_context }}
+                
+                <additional_context>
+                {{ sent_item.additional_context }}
+                </additional_context>
                     {% endif %}
+            </sentence>
                 {% endif %}
             {% endfor %}
+        </paragraph_sentences>
         {% endif %}
-''''
+    </paragraph>
 
     {% endif %}
 {% endfor %}
-------
+</document_paragraphs>

@@ -120,6 +120,8 @@ def _get_template(
         # Validate template text
         if not _are_prompt_template_brackets_balanced(template_text):
             raise RuntimeError("Prompt template brackets are not balanced.")
+        if not _are_prompt_template_xml_tags_balanced(template_text):
+            raise RuntimeError("Prompt template XML tags are not balanced.")
         if bool(re.search(r"(\r\n|\r|\n){3,}", template_text)):
             raise RuntimeError("Too many newlines in template.")
         template = _setup_jinja2_template(template_text)
@@ -344,6 +346,45 @@ def _are_prompt_template_brackets_balanced(prompt: str) -> bool:
             stack.pop()  # Pop the matching opening bracket off the stack
 
     return not stack  # If stack is empty, all brackets were matched
+
+
+def _are_prompt_template_xml_tags_balanced(prompt: str) -> bool:
+    """
+    Checks whether each opening XML tag in prompt template has a matching closing tag.
+    Relevant for XML structure validation in prompts with semantic tags.
+
+    To be used only on a prompt template, not on a rendered prompt, which may contain arbitrary text
+    submitted by users, i.e. may contain any combinations of XML-like content.
+
+    :param prompt: The text prompt to be validated.
+    :type prompt: str
+    :return: bool
+    :rtype: bool
+    """
+
+    stack = []
+
+    # Find all XML tags (both opening and closing)
+    # Pattern matches: <tag>, <tag id="value">, </tag>
+    tag_pattern = r"<(/?)([a-zA-Z_][a-zA-Z0-9_-]*)\s*[^>]*>"
+
+    for match in re.finditer(tag_pattern, prompt):
+        is_closing = match.group(1) == "/"  # True if it's a closing tag
+        tag_name = match.group(2)
+
+        if is_closing:
+            # Closing tag - check if it matches the most recent opening tag
+            if not stack or stack[-1] != tag_name:
+                return False
+            stack.pop()  # Remove the matching opening tag
+        else:
+            # Opening tag - add to stack
+            stack.append(tag_name)
+
+    if stack:
+        logger.error(f"Unmatched XML tags in prompt: {stack}")
+
+    return not stack  # If stack is empty, all tags were matched
 
 
 def _split_text_into_paragraphs(raw_text: str) -> list[str]:

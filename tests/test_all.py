@@ -3617,6 +3617,9 @@ class TestAll(TestUtils):
         self.log_extracted_items_for_instance(extracted_content_topics)
 
         # Test scenario where no labels apply
+        # Note: The framework allows empty extracted_items when multi-label classification
+        # is used and no predefined labels apply. This is the expected behavior
+        # as documented in LabelConcept.
         irrelevant_concept = LabelConcept(
             name="Technical Specifications",
             description="Identify technical specifications mentioned in the document",
@@ -3638,8 +3641,33 @@ class TestAll(TestUtils):
         assert not document.get_concept_by_name(
             "Technical Specifications"
         ).extracted_items
-        # Note: The framework allows empty extracted_items when no predefined labels apply
-        # This is the expected behavior as documented in LabelConcept
+
+        # For multi-class classification, a label is always returned, even if
+        # it does not perfectly fit the content. This is the expected behavior
+        # as documented in LabelConcept.
+        irrelevant_concept = LabelConcept(
+            name="Technical Specifications",
+            description="Identify technical specifications mentioned in the document",
+            labels=[
+                "Cooking Recipes",
+                "Nutrition Information",
+            ],
+            classification_type="multi_class",
+            llm_role="extractor_text",
+        )
+        document.concepts = [irrelevant_concept]
+        llm.extract_concepts_from_document(document)
+        technical_specifications_concept = document.get_concept_by_name(
+            "Technical Specifications"
+        )
+        assert technical_specifications_concept.extracted_items
+        assert (
+            len(technical_specifications_concept.extracted_items[0].value) == 1
+        )  # always returns a single label
+        assert (
+            technical_specifications_concept.extracted_items[0].value[0]
+            in irrelevant_concept.labels
+        )
 
         # Overwrite check
         with pytest.raises(ValueError):
