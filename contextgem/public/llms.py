@@ -327,7 +327,7 @@ class DocumentLLM(_GenericLLMProcessor):
     :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
         Lower values produce more predictable outputs, higher values generate more varied responses.
         Defaults to 0.3.
-    :vartype temperature: float
+    :vartype temperature: float | None
     :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
     :vartype max_tokens: int
     :ivar max_completion_tokens: Maximum token size for output completions in reasoning
@@ -340,7 +340,7 @@ class DocumentLLM(_GenericLLMProcessor):
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
         Defaults to 0.3.
-    :vartype top_p: float
+    :vartype top_p: float | None
     :ivar num_retries_failed_request: Number of retries when LLM request fails. Defaults to 3.
     :vartype num_retries_failed_request: int
     :ivar max_retries_failed_request: LLM provider-specific retry count for failed requests.
@@ -407,7 +407,7 @@ class DocumentLLM(_GenericLLMProcessor):
     api_version: NonEmptyStr | None = Field(default=None)  # specific to Azure OpenAI
     role: LLMRoleAny = Field(default="extractor_text")
     system_message: str | None = Field(default=None)
-    temperature: StrictFloat = Field(default=0.3, ge=0)
+    temperature: StrictFloat | None = Field(default=0.3, ge=0)
     max_tokens: StrictInt = Field(default=4096, gt=0)
     max_completion_tokens: StrictInt = Field(
         default=16000, gt=0
@@ -415,7 +415,7 @@ class DocumentLLM(_GenericLLMProcessor):
     reasoning_effort: ReasoningEffort | None = Field(
         default=None
     )  # for reasoning (CoT-capable) models
-    top_p: StrictFloat = Field(default=0.3, ge=0)
+    top_p: StrictFloat | None = Field(default=0.3, ge=0)
     num_retries_failed_request: StrictInt = Field(default=3, ge=0)
     max_retries_failed_request: StrictInt = Field(default=0, ge=0)  # provider-specific
     max_retries_invalid_data: StrictInt = Field(default=3, ge=0)
@@ -1177,8 +1177,12 @@ class DocumentLLM(_GenericLLMProcessor):
         else:
             # Non-reasoning models
             request_dict["max_tokens"] = self.max_tokens
-            request_dict["temperature"] = self.temperature
-            request_dict["top_p"] = self.top_p
+
+            # temperature and top_p might not be supported by some models
+            if self.temperature is not None:
+                request_dict["temperature"] = self.temperature
+            if self.top_p is not None:
+                request_dict["top_p"] = self.top_p
 
         if self.deployment_id:
             # Azure OpenAI-specific

@@ -15009,10 +15009,10 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **system_message** (*str** | **None*) -- Preparatory system-
         level message to set context for LLM responses.
 
-      * **temperature** (*float*) -- Sampling temperature (0.0 to 1.0)
-        controlling response creativity. Lower values produce more
-        predictable outputs, higher values generate more varied
-        responses. Defaults to 0.3.
+      * **temperature** (*float** | **None*) -- Sampling temperature
+        (0.0 to 1.0) controlling response creativity. Lower values
+        produce more predictable outputs, higher values generate more
+        varied responses. Defaults to 0.3.
 
       * **max_tokens** (*int*) -- Maximum tokens allowed in the
         generated response. Defaults to 4096.
@@ -15026,9 +15026,9 @@ class contextgem.public.llms.DocumentLLM(**data)
         to ""low"", ""medium"", or ""high"". Relevant for reasoning
         (CoT-capable) models. Defaults to None.
 
-      * **top_p** (*float*) -- Nucleus sampling value (0.0 to 1.0)
-        controlling output focus/randomness. Lower values make output
-        more deterministic, higher values produce more diverse
+      * **top_p** (*float** | **None*) -- Nucleus sampling value (0.0
+        to 1.0) controlling output focus/randomness. Lower values make
+        output more deterministic, higher values produce more diverse
         outputs. Defaults to 0.3.
 
       * **num_retries_failed_request** (*int*) -- Number of retries
@@ -15115,7 +15115,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **system_message** (*str** | **None*)
 
       * **temperature** (*Annotated**[**float**,
-        **Strict**(**strict=True**)**]*)
+        **Strict**(**strict=True**)**] **| **None*)
 
       * **max_tokens** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)
@@ -15127,7 +15127,7 @@ class contextgem.public.llms.DocumentLLM(**data)
         **'high'**] **| **None*)
 
       * **top_p** (*Annotated**[**float**,
-        **Strict**(**strict=True**)**]*)
+        **Strict**(**strict=True**)**] **| **None*)
 
       * **num_retries_failed_request** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)
@@ -15235,7 +15235,7 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    system_message: str | None
 
-   temperature: StrictFloat
+   temperature: StrictFloat | None
 
    max_tokens: StrictInt
 
@@ -15243,7 +15243,7 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    reasoning_effort: ReasoningEffort | None
 
-   top_p: StrictFloat
+   top_p: StrictFloat | None
 
    num_retries_failed_request: StrictInt
 

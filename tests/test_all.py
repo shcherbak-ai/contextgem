@@ -1285,6 +1285,14 @@ class TestAll(TestUtils):
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
 
+        # Optional params
+        DocumentLLM(
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            top_p=None,
+            temperature=None,
+        )
+
         # Base class direct initialization
         with pytest.raises(TypeError):
             _GenericLLMProcessor()  # type: ignore
