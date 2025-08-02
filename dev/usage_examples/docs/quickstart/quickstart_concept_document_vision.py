@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from contextgem import Document, DocumentLLM, Image, NumericalConcept, image_to_base64
+from contextgem import Document, DocumentLLM, NumericalConcept, create_image
 
 
 # Path adapted for testing
@@ -11,8 +11,8 @@ current_file = Path(__file__).resolve()
 root_path = current_file.parents[4]
 image_path = root_path / "tests" / "images" / "invoices" / "invoice.jpg"
 
-# Create an image instance
-doc_image = Image(mime_type="image/jpg", base64_data=image_to_base64(image_path))
+# Create an image instance using the create_image utility
+doc_image = create_image(image_path)
 
 # Example document instance holding only the image
 doc = Document(

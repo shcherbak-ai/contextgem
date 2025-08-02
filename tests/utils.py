@@ -62,7 +62,7 @@ from contextgem.public import (
     DocumentLLM,
     DocumentLLMGroup,
     Image,
-    image_to_base64,
+    create_image,
 )
 from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
 
@@ -195,32 +195,27 @@ def get_test_img(
     img_folder: str,
 ) -> Image:
     """
-    Retrieves a test image for a given image filename, constructs a `Image`
-    object with the image data encoded in base64, and includes the appropriate MIME
-    type based on the file extension.
+    Retrieves a test image for a given image filename and constructs an `Image`
+    object using the create_image utility function.
+
+    This function uses the create_image utility which automatically determines the
+    MIME type using PIL and handles base64 encoding.
 
     :param img_filename: The filename of the image to be retrieved.
     :type img_filename: str
     :param img_folder: The folder under `tests/images/` containing the image.
     :type img_folder: str
-    :return: A `Image` object containing the base64-encoded image data and
-        the MIME type corresponding to the given file's extension.
+    :return: An `Image` object containing the base64-encoded image data and
+        the automatically detected MIME type.
     :rtype: Image
 
-    :raises NotImplementedError: If the file extension is not supported.
+    :raises FileNotFoundError: If the image file does not exist.
+    :raises ValueError: If the image format is not supported.
+    :raises OSError: If the image cannot be opened or processed.
     """
-    if img_filename.endswith(".png"):
-        mime_type = "image/png"
-    elif img_filename.endswith(".jpg"):
-        mime_type = "image/jpeg"
-    elif img_filename.endswith(".webp"):
-        mime_type = "image/webp"
-    else:
-        raise NotImplementedError("Unsupported image type")
     project_root = get_project_root_path()
     test_img_path = project_root / "tests" / "images" / img_folder / img_filename
-    test_image = Image(mime_type=mime_type, base64_data=image_to_base64(test_img_path))
-    return test_image
+    return create_image(test_img_path)
 
 
 def remove_file(filepath):

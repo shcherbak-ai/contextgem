@@ -92,7 +92,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``None``
      - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Note that for certain models (such as OpenAI's o1-preview), system messages are not supported and will be ignored. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
    * - ``temperature``
-     - ``float``
+     - ``float | None``
      - ``0.3``
      - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses.
    * - ``max_tokens``
@@ -108,7 +108,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``None``
      - Reasoning effort for reasoning (CoT-capable) models. Values: ``"low"``, ``"medium"``, ``"high"``.
    * - ``top_p``
-     - ``float``
+     - ``float | None``
      - ``0.3``
      - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs.
    * - ``timeout``

@@ -20,7 +20,7 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.13.0"
+__version__ = "0.14.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
@@ -45,6 +45,7 @@ from contextgem.public import (
     Sentence,
     StringConcept,
     StringExample,
+    create_image,
     image_to_base64,
     reload_logger_settings,
 )
@@ -81,6 +82,7 @@ __all__ = [
     "LLMPricing",
     "RatingScale",  # deprecated, will be removed in v1.0.0
     # Utils
+    "create_image",
     "image_to_base64",
     "reload_logger_settings",
     "JsonObjectClassStruct",

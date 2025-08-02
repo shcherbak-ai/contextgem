@@ -37,6 +37,7 @@ from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.sentences import Sentence
 from contextgem.public.utils import (
     JsonObjectClassStruct,
+    create_image,
     image_to_base64,
     reload_logger_settings,
 )
@@ -73,6 +74,7 @@ __all__ = [
     "LLMPricing",
     "RatingScale",  # deprecated, will be removed in v1.0.0
     # Utils
+    "create_image",
     "image_to_base64",
     "reload_logger_settings",
     "JsonObjectClassStruct",
