@@ -157,9 +157,13 @@ def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Imag
         "WEBP": "image/webp",
     }
 
-    # Handle different input types
+    # Handle different input types and get original bytes when possible
+    # Note: We avoid using PIL compression for non-PIL sources to prevent cross-platform
+    # issues (different compression algorithms, library versions, platform-specific defaults)
+    original_bytes = None
+
     if isinstance(source, PILImage.Image):
-        # PIL Image object
+        # PIL Image object - we need to use PIL since we don't have original bytes
         pil_image = source
         image_format = pil_image.format
         if image_format is None:
@@ -167,28 +171,40 @@ def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Imag
                 "Cannot determine image format from PIL Image object. "
                 "Please save the image with a specific format first."
             )
+        # For PIL images, we'll need to save to buffer to get bytes
+
     elif isinstance(source, str | Path):
-        # File path
+        # File path - read original bytes directly, use PIL only for format detection
         image_path = Path(source)
         if not image_path.exists():
             raise FileNotFoundError(f"Image file not found: {image_path}")
 
         try:
-            pil_image = PILImage.open(image_path)
+            # Read original bytes
+            original_bytes = image_path.read_bytes()
+            # Use PIL only to detect format
+            pil_image = PILImage.open(io.BytesIO(original_bytes))
             image_format = pil_image.format
         except Exception as e:
             raise OSError(f"Cannot open image file {image_path}: {e}") from e
+
     elif isinstance(source, bytes):
-        # Raw bytes data
+        # Raw bytes data - use directly
+        original_bytes = source
         try:
-            pil_image = PILImage.open(io.BytesIO(source))
+            # Use PIL only to detect format
+            pil_image = PILImage.open(io.BytesIO(original_bytes))
             image_format = pil_image.format
         except Exception as e:
             raise OSError(f"Cannot open image from bytes data: {e}") from e
+
     else:
-        # File-like object (BinaryIO, BytesIO, file handles, etc.)
+        # File-like object - read original bytes directly
         try:
-            pil_image = PILImage.open(source)
+            # Read original bytes
+            original_bytes = source.read()
+            # Use PIL only to detect format
+            pil_image = PILImage.open(io.BytesIO(original_bytes))
             image_format = pil_image.format
         except Exception as e:
             raise OSError(f"Cannot open image from file-like object: {e}") from e
@@ -202,16 +218,21 @@ def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Imag
 
     mime_type = format_to_mime[image_format]
 
-    # Convert to base64 using the image_to_base64 function
-    buffer = io.BytesIO()
-    try:
-        pil_image.save(buffer, format=image_format)
-        buffer.seek(0)
-        base64_data = image_to_base64(buffer)
-    except Exception as e:
-        raise OSError(f"Cannot convert image to base64: {e}") from e
-    finally:
-        buffer.close()
+    # Convert to base64 - use original bytes when available to avoid recompression
+    if original_bytes is not None:
+        # Use original bytes directly - no compression, no cross-platform issues
+        base64_data = image_to_base64(original_bytes)
+    else:
+        # For PIL Image objects - save to buffer to get bytes
+        buffer = io.BytesIO()
+        try:
+            pil_image.save(buffer, format=image_format, optimize=False)
+            buffer.seek(0)
+            base64_data = image_to_base64(buffer)
+        except Exception as e:
+            raise OSError(f"Cannot convert image to base64: {e}") from e
+        finally:
+            buffer.close()
 
     return Image(mime_type=mime_type, base64_data=base64_data)  # type: ignore[arg-type]
 
