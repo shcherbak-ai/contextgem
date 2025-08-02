@@ -3850,7 +3850,7 @@ Tip:
    import os
    from pathlib import Path
 
-   from contextgem import Document, DocumentLLM, Image, NumericalConcept, image_to_base64
+   from contextgem import Document, DocumentLLM, NumericalConcept, create_image
 
 
    # Path adapted for testing
@@ -3858,8 +3858,8 @@ Tip:
    root_path = current_file.parents[4]
    image_path = root_path / "tests" / "images" / "invoices" / "invoice.jpg"
 
-   # Create an image instance
-   doc_image = Image(mime_type="image/jpg", base64_data=image_to_base64(image_path))
+   # Create an image instance using the create_image utility
+   doc_image = create_image(image_path)
 
    # Example document instance holding only the image
    doc = Document(
@@ -7907,7 +7907,7 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | "system_message=''" to disable the default         |
 |                      |                 |                 | entirely (meaning no system message will be sent). |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
-| "temperature"        | "float"         | "0.3"           | Sampling temperature (0.0 to 1.0) controlling      |
+| "temperature"        | "float | None"  | "0.3"           | Sampling temperature (0.0 to 1.0) controlling      |
 |                      |                 |                 | response creativity. Lower values produce more     |
 |                      |                 |                 | predictable outputs, higher values generate more   |
 |                      |                 |                 | varied responses.                                  |
@@ -7921,7 +7921,7 @@ The "DocumentLLM" class accepts the following parameters:
 | "reasoning_effort"   | "str | None"    | "None"          | Reasoning effort for reasoning (CoT-capable)       |
 |                      |                 |                 | models. Values: ""low"", ""medium"", ""high"".     |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
-| "top_p"              | "float"         | "0.3"           | Nucleus sampling value (0.0 to 1.0) controlling    |
+| "top_p"              | "float | None"  | "0.3"           | Nucleus sampling value (0.0 to 1.0) controlling    |
 |                      |                 |                 | output focus/randomness. Lower values make output  |
 |                      |                 |                 | more deterministic, higher values produce more     |
 |                      |                 |                 | diverse outputs.                                   |
@@ -16376,21 +16376,103 @@ Utility functions and classes
 
 Module defining public utility functions and classes of the framework.
 
-contextgem.public.utils.image_to_base64(image_path)
+contextgem.public.utils.image_to_base64(source)
 
-   Converts an image file to its Base64 encoded string representation.
+   Converts an image to its Base64 encoded string representation.
 
    Helper function that can be used when constructing "Image" objects.
 
    Parameters:
-      **image_path** (*str** | **Path*) -- The path to the image file
-      to be encoded.
+      **source** (*str** | **Path** | **BinaryIO** | **bytes*) -- The
+      image source - can be a file path (str or Path), file-like
+      object (BytesIO, file handle, etc.), or raw bytes data.
 
    Returns:
       A Base64 encoded string representation of the image.
 
    Return type:
       str
+
+   Raises:
+      * **FileNotFoundError** -- If the image file path does not
+        exist.
+
+      * **OSError** -- If the image cannot be read.
+
+   Example:
+      >>> from pathlib import Path
+      >>> import io
+      >>>
+      >>> # From file path
+      >>> base64_str = image_to_base64("path/to/image.jpg")
+      >>>
+      >>> # From file handle
+      >>> with open("image.png", "rb") as f:
+      ...     base64_str = image_to_base64(f)
+      >>>
+      >>> # From bytes data
+      >>> with open("image.webp", "rb") as f:
+      ...     image_bytes = f.read()
+      >>> base64_str = image_to_base64(image_bytes)
+      >>>
+      >>> # From BytesIO
+      >>> buffer = io.BytesIO(image_bytes)
+      >>> base64_str = image_to_base64(buffer)
+
+contextgem.public.utils.create_image(source)
+
+   Creates an Image instance from various image sources.
+
+   This function automatically determines the MIME type and converts
+   the image to base64 format using Pillow functionality. It supports
+   common image formats including JPEG, PNG, and WebP.
+
+   Parameters:
+      **source** (*str** | **Path** | **PILImage.Image** |
+      **BinaryIO** | **bytes*) -- The image source - can be a file
+      path (str or Path), PIL Image object, file-like object (BytesIO,
+      file handle, etc.), or raw bytes data.
+
+   Returns:
+      An Image instance with the appropriate MIME type and base64
+      data.
+
+   Return type:
+      Image
+
+   Raises:
+      * **ValueError** -- If the image format is not supported or
+        cannot be determined.
+
+      * **FileNotFoundError** -- If the image file path does not
+        exist.
+
+      * **OSError** -- If the image cannot be opened or processed.
+
+   Example:
+      >>> from pathlib import Path
+      >>> from PIL import Image as PILImage
+      >>> import io
+      >>>
+      >>> # From file path
+      >>> img = create_image("path/to/image.jpg")
+      >>>
+      >>> # From PIL Image object
+      >>> pil_img = PILImage.open("path/to/image.png")
+      >>> img = create_image(pil_img)
+      >>>
+      >>> # From file-like object
+      >>> with open("image.jpg", "rb") as f:
+      ...     img = create_image(f)
+      >>>
+      >>> # From bytes data
+      >>> with open("image.png", "rb") as f:
+      ...     image_bytes = f.read()
+      >>> img = create_image(image_bytes)
+      >>>
+      >>> # From BytesIO
+      >>> buffer = io.BytesIO(image_bytes)
+      >>> img = create_image(buffer)
 
 contextgem.public.utils.reload_logger_settings()
 
@@ -16503,6 +16585,10 @@ class contextgem.public.images.Image(**data)
    data. An image is typically attached to a document, or fully
    represents a document.
 
+   Util function "create_image()" from "contextgem.public.utils" can
+   be used to create an Image instance from various sources: file
+   paths, PIL Image objects, file-like objects, or raw bytes data.
+
    Variables:
       * **mime_type** (*Literal**[**"image/jpg"**, **"image/jpeg"**,
         **"image/png"**, **"image/webp"**]*) -- The MIME type of the
@@ -16510,8 +16596,8 @@ class contextgem.public.images.Image(**data)
         ("image/jpg", "image/jpeg", "image/png", "image/webp").
 
       * **base64_data** (*str*) -- The base64-encoded data of the
-        image. The util function *image_to_base64()* from
-        contextgem.public.utils can be used to encode images to
+        image. The util function "image_to_base64()" from
+        "contextgem.public.utils" can be used to encode images to
         base64.
 
    Parameters:
@@ -16541,19 +16627,18 @@ class contextgem.public.images.Image(**data)
 
          from pathlib import Path
 
-         from contextgem import Document, Image, image_to_base64
+         from contextgem import Document, Image, create_image, image_to_base64
 
 
          # Path is adapted for doc tests
          current_file = Path(__file__).resolve()
          root_path = current_file.parents[4]
 
-         # Using the utility function to convert an image file to base64
+         # Using the create_image utility function (recommended approach)
          image_path = root_path / "tests" / "images" / "invoices" / "invoice.jpg"
-         base64_data = image_to_base64(image_path)
-
-         # Create an image instance with the base64-encoded data
-         jpg_image = Image(mime_type="image/jpg", base64_data=base64_data)
+         jpg_image = create_image(
+             image_path
+         )  # Automatically detects MIME type and converts to base64
 
          # Using pre-encoded base64 data directly
          png_image = Image(
@@ -16561,13 +16646,11 @@ class contextgem.public.images.Image(**data)
              base64_data="base64-string",  # image as a base64 string
          )
 
-         # Using a different supported image format
-         webp_image = Image(
-             mime_type="image/webp",
-             base64_data=image_to_base64(
-                 root_path / "tests" / "images" / "invoices" / "invoice.webp"
-             ),
-         )
+         # Using a different supported image format with create_image
+         webp_image = create_image(root_path / "tests" / "images" / "invoices" / "invoice.webp")
+
+         # Alternative: Manual approach using image_to_base64 (when you need specific control)
+         manual_image = Image(mime_type="image/jpeg", base64_data=image_to_base64(image_path))
 
          # Attaching an image to a document
          # Documents can contain both text and multiple images, or just images

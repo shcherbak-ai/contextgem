@@ -20,10 +20,15 @@
 Module defining public utility functions and classes of the framework.
 """
 
+from __future__ import annotations
+
 import base64
+import io
 import re
 from pathlib import Path
-from typing import Any, get_type_hints
+from typing import TYPE_CHECKING, Any, BinaryIO, get_type_hints
+
+from PIL import Image as PILImage
 
 from contextgem.internal.loggers import _configure_logger_from_env
 from contextgem.internal.typings.strings_to_types import (
@@ -39,19 +44,176 @@ from contextgem.internal.typings.types_to_strings import (
 )
 
 
-def image_to_base64(image_path: str | Path) -> str:
+if TYPE_CHECKING:
+    from contextgem.public.images import Image
+
+
+def image_to_base64(source: str | Path | BinaryIO | bytes) -> str:
     """
-    Converts an image file to its Base64 encoded string representation.
+    Converts an image to its Base64 encoded string representation.
 
     Helper function that can be used when constructing ``Image`` objects.
 
-    :param image_path: The path to the image file to be encoded.
-    :type image_path: str | Path
+    :param source: The image source - can be a file path (str or Path),
+        file-like object (BytesIO, file handle, etc.), or raw bytes data.
+    :type source: str | Path | BinaryIO | bytes
     :return: A Base64 encoded string representation of the image.
     :rtype: str
+    :raises FileNotFoundError: If the image file path does not exist.
+    :raises OSError: If the image cannot be read.
+
+    Example:
+        >>> from pathlib import Path
+        >>> import io
+        >>>
+        >>> # From file path
+        >>> base64_str = image_to_base64("path/to/image.jpg")
+        >>>
+        >>> # From file handle
+        >>> with open("image.png", "rb") as f:
+        ...     base64_str = image_to_base64(f)
+        >>>
+        >>> # From bytes data
+        >>> with open("image.webp", "rb") as f:
+        ...     image_bytes = f.read()
+        >>> base64_str = image_to_base64(image_bytes)
+        >>>
+        >>> # From BytesIO
+        >>> buffer = io.BytesIO(image_bytes)
+        >>> base64_str = image_to_base64(buffer)
     """
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
+    if isinstance(source, str | Path):
+        # File path
+        image_path = Path(source)
+        if not image_path.exists():
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+        try:
+            with open(image_path, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode("utf-8")
+        except Exception as e:
+            raise OSError(f"Cannot read image file {image_path}: {e}") from e
+    elif isinstance(source, bytes):
+        # Raw bytes data
+        return base64.b64encode(source).decode("utf-8")
+    else:
+        # File-like object (BinaryIO, BytesIO, file handles, etc.)
+        try:
+            return base64.b64encode(source.read()).decode("utf-8")
+        except Exception as e:
+            raise OSError(f"Cannot read from file-like object: {e}") from e
+
+
+def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Image:
+    """
+    Creates an Image instance from various image sources.
+
+    This function automatically determines the MIME type and converts the image to base64
+    format using Pillow functionality. It supports common image formats including JPEG,
+    PNG, and WebP.
+
+    :param source: The image source - can be a file path (str or Path), PIL Image object,
+        file-like object (BytesIO, file handle, etc.), or raw bytes data.
+    :type source: str | Path | PILImage.Image | BinaryIO | bytes
+    :return: An Image instance with the appropriate MIME type and base64 data.
+    :rtype: Image
+    :raises ValueError: If the image format is not supported or cannot be determined.
+    :raises FileNotFoundError: If the image file path does not exist.
+    :raises OSError: If the image cannot be opened or processed.
+
+    Example:
+        >>> from pathlib import Path
+        >>> from PIL import Image as PILImage
+        >>> import io
+        >>>
+        >>> # From file path
+        >>> img = create_image("path/to/image.jpg")
+        >>>
+        >>> # From PIL Image object
+        >>> pil_img = PILImage.open("path/to/image.png")
+        >>> img = create_image(pil_img)
+        >>>
+        >>> # From file-like object
+        >>> with open("image.jpg", "rb") as f:
+        ...     img = create_image(f)
+        >>>
+        >>> # From bytes data
+        >>> with open("image.png", "rb") as f:
+        ...     image_bytes = f.read()
+        >>> img = create_image(image_bytes)
+        >>>
+        >>> # From BytesIO
+        >>> buffer = io.BytesIO(image_bytes)
+        >>> img = create_image(buffer)
+    """
+
+    # Avoid circular imports
+    from contextgem.public.images import Image
+
+    # Format mapping from PIL format to MIME type
+    format_to_mime = {
+        "JPEG": "image/jpeg",
+        "JPG": "image/jpg",
+        "PNG": "image/png",
+        "WEBP": "image/webp",
+    }
+
+    # Handle different input types
+    if isinstance(source, PILImage.Image):
+        # PIL Image object
+        pil_image = source
+        image_format = pil_image.format
+        if image_format is None:
+            raise ValueError(
+                "Cannot determine image format from PIL Image object. "
+                "Please save the image with a specific format first."
+            )
+    elif isinstance(source, str | Path):
+        # File path
+        image_path = Path(source)
+        if not image_path.exists():
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+
+        try:
+            pil_image = PILImage.open(image_path)
+            image_format = pil_image.format
+        except Exception as e:
+            raise OSError(f"Cannot open image file {image_path}: {e}") from e
+    elif isinstance(source, bytes):
+        # Raw bytes data
+        try:
+            pil_image = PILImage.open(io.BytesIO(source))
+            image_format = pil_image.format
+        except Exception as e:
+            raise OSError(f"Cannot open image from bytes data: {e}") from e
+    else:
+        # File-like object (BinaryIO, BytesIO, file handles, etc.)
+        try:
+            pil_image = PILImage.open(source)
+            image_format = pil_image.format
+        except Exception as e:
+            raise OSError(f"Cannot open image from file-like object: {e}") from e
+
+    # Convert format to MIME type
+    if image_format not in format_to_mime:
+        raise ValueError(
+            f"Unsupported image format: {image_format}. "
+            f"Supported formats: {', '.join(format_to_mime.keys())}"
+        )
+
+    mime_type = format_to_mime[image_format]
+
+    # Convert to base64 using the image_to_base64 function
+    buffer = io.BytesIO()
+    try:
+        pil_image.save(buffer, format=image_format)
+        buffer.seek(0)
+        base64_data = image_to_base64(buffer)
+    except Exception as e:
+        raise OSError(f"Cannot convert image to base64: {e}") from e
+    finally:
+        buffer.close()
+
+    return Image(mime_type=mime_type, base64_data=base64_data)  # type: ignore[arg-type]
 
 
 def reload_logger_settings():

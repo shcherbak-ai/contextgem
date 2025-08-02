@@ -39,6 +39,7 @@ import pytest
 from _pytest.nodes import Item as PytestItem
 from dotenv import load_dotenv
 from lxml import etree
+from PIL import Image as PILImage
 from pydantic import BaseModel, Field, field_validator
 
 from contextgem.internal.base.attrs import (
@@ -105,6 +106,7 @@ from contextgem.public import (
     StringExample,
     reload_logger_settings,
 )
+from contextgem.public.utils import create_image, image_to_base64
 from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.url_security import validate_existing_cassettes_urls_security
@@ -1585,6 +1587,171 @@ class TestAll(TestUtils):
         self.check_instance_serialization_and_cloning(document)
 
         check_locals_memory_usage(locals(), test_name="test_init_and_attach_image")
+
+    @pytest.mark.parametrize(
+        "test_image_path",
+        [
+            "tests/images/invoices/invoice.png",
+            "tests/images/invoices/invoice.jpg",
+            "tests/images/invoices/invoice.webp",
+        ],
+    )
+    @memory_profile_and_capture
+    def test_create_image(self, test_image_path: str):
+        """
+        Tests for the `create_image` utility function with various input types.
+        """
+        project_root = get_project_root_path()
+        full_image_path = project_root / test_image_path
+
+        # Ensure test image exists
+        assert full_image_path.exists(), f"Test image not found: {full_image_path}"
+
+        # Test 1: Create Image from file path (string)
+        img_from_str_path = create_image(str(full_image_path))
+        assert isinstance(img_from_str_path, Image)
+        assert img_from_str_path.base64_data
+        assert img_from_str_path.mime_type in ["image/png", "image/jpeg", "image/webp"]
+
+        # Test 2: Create Image from file path (Path object)
+        img_from_path_obj = create_image(full_image_path)
+        assert isinstance(img_from_path_obj, Image)
+        assert img_from_path_obj.base64_data
+        assert img_from_path_obj.mime_type in ["image/png", "image/jpeg", "image/webp"]
+
+        # Test 3: Create Image from PIL Image object
+        pil_image = PILImage.open(full_image_path)
+        img_from_pil = create_image(pil_image)
+        assert isinstance(img_from_pil, Image)
+        assert img_from_pil.base64_data
+        assert img_from_pil.mime_type in ["image/png", "image/jpeg", "image/webp"]
+
+        # Test 4: Create Image from file handle
+        with open(full_image_path, "rb") as f:
+            img_from_file_handle = create_image(f)
+            assert isinstance(img_from_file_handle, Image)
+            assert img_from_file_handle.base64_data
+            assert img_from_file_handle.mime_type in [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+            ]
+
+        # Test 5: Create Image from raw bytes
+        with open(full_image_path, "rb") as f:
+            image_bytes = f.read()
+        img_from_bytes = create_image(image_bytes)
+        assert isinstance(img_from_bytes, Image)
+        assert img_from_bytes.base64_data
+        assert img_from_bytes.mime_type in ["image/png", "image/jpeg", "image/webp"]
+
+        # Test 6: Create Image from BytesIO
+        buffer = BytesIO(image_bytes)
+        img_from_bytesio = create_image(buffer)
+        assert isinstance(img_from_bytesio, Image)
+        assert img_from_bytesio.base64_data
+        assert img_from_bytesio.mime_type in ["image/png", "image/jpeg", "image/webp"]
+
+        # Test 7: Verify all methods produce equivalent results
+        # (they should have the same MIME type and base64 data)
+        expected_mime_type = img_from_str_path.mime_type
+        assert img_from_path_obj.mime_type == expected_mime_type
+        assert img_from_pil.mime_type == expected_mime_type
+        assert img_from_file_handle.mime_type == expected_mime_type
+        assert img_from_bytes.mime_type == expected_mime_type
+        assert img_from_bytesio.mime_type == expected_mime_type
+
+        # All should have same base64 data
+        expected_base64 = img_from_str_path.base64_data
+        assert img_from_path_obj.base64_data == expected_base64
+        assert img_from_pil.base64_data == expected_base64
+        assert img_from_file_handle.base64_data == expected_base64
+        assert img_from_bytes.base64_data == expected_base64
+        assert img_from_bytesio.base64_data == expected_base64
+
+        # Test error scenarios
+        # Test 1: Non-existent file path
+        with pytest.raises(FileNotFoundError):
+            create_image("non_existent_image.jpg")
+
+        # Test 2: PIL Image without format
+        pil_image_no_format = PILImage.new("RGB", (100, 100), color="red")
+        with pytest.raises(ValueError, match="Cannot determine image format"):
+            create_image(pil_image_no_format)
+
+        # Test 3: Invalid bytes data
+        with pytest.raises(OSError, match="Cannot open image from bytes data"):
+            create_image(b"invalid image data")
+
+        # Test 4: Invalid file-like object
+        invalid_buffer = BytesIO(b"not an image")
+        with pytest.raises(OSError, match="Cannot open image from file-like object"):
+            create_image(invalid_buffer)
+
+        check_locals_memory_usage(locals(), test_name="test_create_image")
+
+    @pytest.mark.parametrize(
+        "test_image_path",
+        [
+            "tests/images/invoices/invoice.png",
+            "tests/images/invoices/invoice.jpg",
+            "tests/images/invoices/invoice.webp",
+        ],
+    )
+    @memory_profile_and_capture
+    def test_image_to_base64(self, test_image_path: str):
+        """
+        Tests for the `image_to_base64` utility function with various input types.
+        """
+        project_root = get_project_root_path()
+        full_image_path = project_root / test_image_path
+
+        # Ensure test image exists
+        assert full_image_path.exists(), f"Test image not found: {full_image_path}"
+
+        # Test 1: Convert from file path (string)
+        base64_from_str_path = image_to_base64(str(full_image_path))
+        assert isinstance(base64_from_str_path, str)
+
+        # Test 2: Convert from file path (Path object)
+        base64_from_path_obj = image_to_base64(full_image_path)
+        assert isinstance(base64_from_path_obj, str)
+
+        # Test 3: Convert from file handle
+        with open(full_image_path, "rb") as f:
+            base64_from_file_handle = image_to_base64(f)
+            assert isinstance(base64_from_file_handle, str)
+
+        # Test 4: Convert from raw bytes
+        with open(full_image_path, "rb") as f:
+            image_bytes = f.read()
+        base64_from_bytes = image_to_base64(image_bytes)
+        assert isinstance(base64_from_bytes, str)
+
+        # Test 5: Convert from BytesIO
+        buffer = BytesIO(image_bytes)
+        base64_from_bytesio = image_to_base64(buffer)
+        assert isinstance(base64_from_bytesio, str)
+
+        # Test 6: Verify all methods produce identical results
+        # (they should all have the same base64 data for the same source)
+        assert base64_from_str_path == base64_from_path_obj
+        assert base64_from_str_path == base64_from_file_handle
+        assert base64_from_str_path == base64_from_bytes
+        assert base64_from_str_path == base64_from_bytesio
+
+        # Test error scenarios
+        # Test 1: Non-existent file path
+        with pytest.raises(FileNotFoundError):
+            image_to_base64("non_existent_image.jpg")
+
+        # Test 2: Invalid file-like object that can't be read
+        invalid_buffer = BytesIO(b"some data")
+        invalid_buffer.close()  # Close the buffer to make it unreadable
+        with pytest.raises(OSError, match="Cannot read from file-like object"):
+            image_to_base64(invalid_buffer)
+
+        check_locals_memory_usage(locals(), test_name="test_image_to_base64")
 
     @memory_profile_and_capture
     def test_init_paragraph(self):
