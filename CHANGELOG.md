@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.14.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.0) - 2025-08-02
+### Added
+- Added utility function `create_image()` for flexible image creation from various sources (file paths, PIL objects, file-like objects, raw bytes) with automatic MIME type detection.
+
+### Changed
+- Updated `image_to_base64()` utility function to accept more image source types (file-like objects and raw bytes) in addition to file paths.
+- Made `temperature` and `top_p` parameters for DocumentLLM optional.
+
 ## [0.13.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.13.0) - 2025-07-30
 ### Changed
 - Enhanced LLM prompts with XML tags for improved instruction clarity and higher-quality extraction outputs.
