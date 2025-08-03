@@ -453,32 +453,31 @@ class TestUtils:
             self.invalid_llm_with_valid_fallback  # type: ignore
         )
         logger.info(
-            "Cost of running tests (LLM 0 - group): "
-            + str(total_cost_llm_group if not vcr_new_recording_count else zero_dec),
+            "Cost of running tests (LLM 0 - group): " + str(total_cost_llm_group),
         )
         logger.info(
-            "Cost of running tests (LLM 1 - individual): "
-            + str(total_cost_llm if not vcr_new_recording_count else zero_dec),
+            "Cost of running tests (LLM 1 - individual): " + str(total_cost_llm),
         )
         logger.info(
             "Cost of running tests (LLM with fallback): "
-            + str(
-                total_cost_llm_with_fallback
-                if not vcr_new_recording_count
-                else zero_dec
-            ),
+            + str(total_cost_llm_with_fallback),
         )
         total_cost = (
-            (total_cost_llm_group + total_cost_llm + total_cost_llm_with_fallback)
-            if not vcr_new_recording_count
-            else zero_dec
+            total_cost_llm_group + total_cost_llm + total_cost_llm_with_fallback
         )
         logger.info(
             "Total cost running tests: "
             + str(total_cost.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)),
         )
+        logger.info(
+            "Note: Cost calculations may not include all tests (usage examples from documentation, "
+            "non-module-defined LLMs are excluded)"
+        )
         if vcr_new_recording_count:
-            logger.info("LLM responses are NOT LIVE (mock from cassettes)")
+            logger.info(
+                "Note: Costs may be lower than displayed due to VCR recordings "
+                "(some LLM responses are mocked from cassettes)"
+            )
 
     @staticmethod
     def check_rendered_prompt(prompt: str) -> None:

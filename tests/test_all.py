@@ -3856,9 +3856,6 @@ class TestAll(TestUtils):
         # Check cost
         self.check_cost(llm)
 
-        # Log costs
-        self.output_test_costs()
-
         check_locals_memory_usage(locals(), test_name="test_extract_label_concept")
 
     @memory_profile_and_capture
@@ -4735,9 +4732,6 @@ class TestAll(TestUtils):
         # Check cost
         self.check_cost(llm)
 
-        # Log costs
-        self.output_test_costs()
-
         check_locals_memory_usage(
             locals(), test_name="test_extract_aspects_from_document"
         )
@@ -5081,9 +5075,6 @@ class TestAll(TestUtils):
         # Check cost
         self.check_cost(llm)
 
-        # Log costs
-        self.output_test_costs()
-
         check_locals_memory_usage(
             locals(), test_name="test_extract_concepts_from_aspect"
         )
@@ -5306,9 +5297,6 @@ class TestAll(TestUtils):
         # Check cost
         self.check_cost(llm)
 
-        # Log costs
-        self.output_test_costs()
-
         check_locals_memory_usage(
             locals(), test_name="test_extract_concepts_from_document"
         )
@@ -5509,9 +5497,6 @@ class TestAll(TestUtils):
         # Check cost
         self.check_cost(llm)
 
-        # Log costs
-        self.output_test_costs()
-
         check_locals_memory_usage(locals(), test_name="test_extract_all")
 
     @pytest.mark.vcr
@@ -5554,9 +5539,6 @@ class TestAll(TestUtils):
         self.check_usage(self.invalid_llm_with_valid_fallback)
         # Check cost
         self.check_cost(self.invalid_llm_with_valid_fallback)
-
-        # Log costs
-        self.output_test_costs()
 
         check_locals_memory_usage(locals(), test_name="test_extract_with_fallback")
 
@@ -5905,9 +5887,6 @@ class TestAll(TestUtils):
         # Check cost
         self.check_cost(llm)
 
-        # Log costs
-        self.output_test_costs()
-
         check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")
 
     @pytest.mark.vcr
@@ -5982,9 +5961,6 @@ class TestAll(TestUtils):
         self.check_usage(llm)
         # Check cost
         self.check_cost(llm)
-
-        # Log costs
-        self.output_test_costs()
 
         check_locals_memory_usage(
             locals(), test_name="test_aspect_extraction_from_paragraphs"
@@ -6118,9 +6094,6 @@ class TestAll(TestUtils):
         self.check_usage(self.llm_group)
         # Check cost
         self.check_cost(self.llm_group)
-
-        # Log costs
-        self.output_test_costs()
 
         # Test error when model is not vision-capable
         with pytest.warns(UserWarning, match="vision-capable"):
@@ -7431,6 +7404,11 @@ class TestAll(TestUtils):
         Runs last and outputs total cost details for the test run, as well
         as tests resetting the usage and cost for the test LLMs.
         """
+        # Ensure logger is enabled for cost output (in case previous tests disabled it)
+        os.environ.pop(DISABLE_LOGGER_ENV_VAR_NAME, None)
+        os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = "DEBUG"
+        reload_logger_settings()
+
         # Output total cost of the test run
         self.output_test_costs()
         # Test resetting all usage and cost stats
