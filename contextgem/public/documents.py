@@ -163,7 +163,17 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         "Document initialization",
     )
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that handles document text setup and segmentation.
+
+        This method performs two key operations:
+        1. Sets raw_text from paragraphs if raw_text is not provided
+        2. Segments document text into paragraphs and optionally sentences
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        """
         self._set_text_from_paras()
         self._segment_document_text()
 

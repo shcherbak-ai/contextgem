@@ -73,6 +73,16 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         return deepcopy(self)
 
     def model_copy(self, *args, **kwargs):
+        """
+        Raises NotImplementedError to redirect users to use clone() method instead.
+
+        This method is intentionally disabled in favor of the clone() method which
+        provides clearer semantics for creating deep copies of instances.
+
+        :param args: Positional arguments (ignored).
+        :param kwargs: Keyword arguments (ignored).
+        :raises NotImplementedError: Always raised to direct users to use clone().
+        """
         raise NotImplementedError("Use `clone()` instead")
 
     @property

@@ -443,6 +443,16 @@ async def _async_multi_executor(
     results = [None] * len(data_list)
 
     async def worker(index: int, kwargs: dict[str, Any]) -> None:
+        """
+        Worker coroutine that executes a single async function call and stores the result.
+
+        :param index: Index position where the result should be stored in the results list.
+        :type index: int
+        :param kwargs: Keyword arguments to pass to the async function.
+        :type kwargs: dict[str, Any]
+        :return: None
+        :rtype: None
+        """
         try:
             results[index] = await func(**kwargs)
         except Exception as e:
@@ -517,12 +527,28 @@ def _suppress_litellm_pydantic_warnings(func: F) -> F:
     """
 
     @functools.wraps(func)
-    async def _async_wrapper(*args, **kwargs):
+    async def _async_wrapper(*args, **kwargs) -> Any:
+        """
+        Async wrapper that suppresses Pydantic warnings during async function execution.
+
+        :param args: Positional arguments to pass to the wrapped function.
+        :param kwargs: Keyword arguments to pass to the wrapped function.
+        :return: The result of the wrapped async function.
+        :rtype: Any
+        """
         with _suppress_litellm_pydantic_warnings_context():
             return await func(*args, **kwargs)
 
     @functools.wraps(func)
-    def _sync_wrapper(*args, **kwargs):
+    def _sync_wrapper(*args, **kwargs) -> Any:
+        """
+        Sync wrapper that suppresses Pydantic warnings during sync function execution.
+
+        :param args: Positional arguments to pass to the wrapped function.
+        :param kwargs: Keyword arguments to pass to the wrapped function.
+        :return: The result of the wrapped sync function.
+        :rtype: Any
+        """
         with _suppress_litellm_pydantic_warnings_context():
             return func(*args, **kwargs)
 

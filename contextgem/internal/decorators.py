@@ -59,7 +59,19 @@ def _timer_decorator(
     """
 
     def outer_wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+        """
+        Outer wrapper function that creates appropriate timer wrapper based on function type.
+
+        :param func: The function to be wrapped with timing functionality.
+        :return: Either async_wrapper or sync_wrapper depending on the function type.
+        """
+
         def log_end(start_time: float) -> None:
+            """
+            Logs the end time and duration of a process.
+
+            :param start_time: The start time of the process.
+            """
             end_time = timeit.default_timer()
             elapsed_time = round(end_time - start_time, 2)
             logger.success(
@@ -70,6 +82,13 @@ def _timer_decorator(
             # Async wrapper
             @wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                """
+                Async wrapper that measures execution time for async functions.
+
+                :param args: Positional arguments to pass to the wrapped function.
+                :param kwargs: Keyword arguments to pass to the wrapped function.
+                :return: The result of the wrapped function execution.
+                """
                 start_time = timeit.default_timer()
                 result = await func(*args, **kwargs)
                 log_end(start_time)
@@ -81,6 +100,13 @@ def _timer_decorator(
             # Sync wrapper
             @wraps(func)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+                """
+                Sync wrapper that measures execution time for synchronous functions.
+
+                :param args: Positional arguments to pass to the wrapped function.
+                :param kwargs: Keyword arguments to pass to the wrapped function.
+                :return: The result of the wrapped function execution.
+                """
                 start_time = timeit.default_timer()
                 result = func(*args, **kwargs)
                 log_end(start_time)

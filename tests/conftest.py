@@ -16,6 +16,14 @@
 # limitations under the License.
 #
 
+"""
+Pytest configuration and fixtures for ContextGem tests.
+
+This module provides test configuration, command-line options, fixtures,
+and utilities for running ContextGem tests, including VCR cassette handling
+and memory profiling support.
+"""
+
 import asyncio
 import os
 from unittest.mock import patch
@@ -134,6 +142,16 @@ def vcr_compatible_acompletion(request):
             )
 
             async def vcr_compatible_acompletion(*args, **kwargs):
+                """
+                VCR-compatible wrapper for litellm.acompletion().
+
+                Converts async acompletion to sync completion using asyncio.to_thread()
+                to work around VCR recording limitations with async functions.
+
+                :param args: Arguments to pass to litellm.completion
+                :param kwargs: Keyword arguments to pass to litellm.completion
+                :return: Completion response from litellm
+                """
                 logger.debug("Using monkey-patched acompletion()")
                 return await asyncio.to_thread(litellm.completion, *args, **kwargs)
 

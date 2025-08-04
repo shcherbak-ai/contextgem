@@ -130,13 +130,33 @@ class StringConcept(_Concept):
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts.
+
+        :return: Formatted string representation of the item type.
+        :rtype: str
+        """
         return _format_type(str)
 
     @property
     def _item_class(self) -> type[_StringItem]:
+        """
+        Returns the item class type for string concepts.
+
+        :return: The string item class.
+        :rtype: type[_StringItem]
+        """
         return _StringItem
 
     def _process_item_value(self, value: str) -> str:
+        """
+        Processes and validates a string value for string concepts.
+
+        :param value: The string value to process.
+        :type value: str
+        :return: The processed string value.
+        :rtype: str
+        """
         return value
 
 
@@ -185,13 +205,33 @@ class BooleanConcept(_Concept):
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts.
+
+        :return: Formatted string representation of the boolean type.
+        :rtype: str
+        """
         return _format_type(bool)
 
     @property
     def _item_class(self) -> type[_BooleanItem]:
+        """
+        Returns the item class type for boolean concepts.
+
+        :return: The boolean item class.
+        :rtype: type[_BooleanItem]
+        """
         return _BooleanItem
 
     def _process_item_value(self, value: bool) -> bool:
+        """
+        Processes and validates a boolean value for boolean concepts.
+
+        :param value: The boolean value to process.
+        :type value: bool
+        :return: The processed boolean value.
+        :rtype: bool
+        """
         return value
 
 
@@ -247,6 +287,12 @@ class NumericalConcept(_Concept):
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts based on numeric type.
+
+        :return: Formatted string representation of the numeric type.
+        :rtype: str
+        """
         if self.numeric_type == "int":
             return _format_type(int)
         elif self.numeric_type == "float":
@@ -256,6 +302,12 @@ class NumericalConcept(_Concept):
 
     @property
     def _item_class(self) -> type:
+        """
+        Returns the item class type for numerical concepts based on numeric type.
+
+        :return: The appropriate numerical item class.
+        :rtype: type
+        """
         if self.numeric_type == "int":
             return _IntegerItem
         elif self.numeric_type == "float":
@@ -264,6 +316,14 @@ class NumericalConcept(_Concept):
             return _IntegerOrFloatItem
 
     def _process_item_value(self, value: int | float) -> int | float:
+        """
+        Processes and validates a numerical value for numerical concepts.
+
+        :param value: The numerical value to process.
+        :type value: int | float
+        :return: The processed numerical value.
+        :rtype: int | float
+        """
         return value
 
 
@@ -362,10 +422,22 @@ class RatingConcept(_Concept):
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts.
+
+        :return: Formatted string representation of the integer type.
+        :rtype: str
+        """
         return _format_type(int)
 
     @property
     def _item_class(self) -> type[_IntegerItem]:
+        """
+        Returns the item class type for rating concepts.
+
+        :return: The integer item class.
+        :rtype: type[_IntegerItem]
+        """
         return _IntegerItem
 
     @property
@@ -388,6 +460,12 @@ class RatingConcept(_Concept):
 
     @property
     def extracted_items(self) -> list[_IntegerItem]:
+        """
+        Gets the list of extracted rating items.
+
+        :return: List of extracted integer items representing ratings.
+        :rtype: list[_IntegerItem]
+        """
         return self._extracted_items
 
     @extracted_items.setter
@@ -526,10 +604,22 @@ class JsonObjectConcept(_Concept):
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts.
+
+        :return: Formatted string representation of the dictionary type.
+        :rtype: str
+        """
         return _format_type(dict)
 
     @property
     def _item_class(self) -> type[_JsonObjectItem]:
+        """
+        Returns the item class type for JSON object concepts.
+
+        :return: The JSON object item class.
+        :rtype: type[_JsonObjectItem]
+        """
         return _JsonObjectItem
 
     def _format_structure_in_prompt(self) -> str:
@@ -912,14 +1002,32 @@ class DateConcept(_Concept):
 
     @property
     def _date_format_in_prompt(self) -> str:
+        """
+        Returns the date format string used in LLM prompts.
+
+        :return: Date format string for prompt instructions.
+        :rtype: str
+        """
         return "DD-MM-YYYY"
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts with date format.
+
+        :return: Formatted string representation of the string type with date format.
+        :rtype: str
+        """
         return _format_type(str) + f" (in '{self._date_format_in_prompt}' format)"
 
     @property
     def _item_class(self) -> type[_DateItem]:
+        """
+        Returns the item class type for date concepts.
+
+        :return: The date item class.
+        :rtype: type[_DateItem]
+        """
         return _DateItem
 
     def _process_item_value(self, value: str) -> date:
@@ -1015,7 +1123,13 @@ class LabelConcept(_Concept):
     _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that provides guidance for multi-class classification.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        """
         if self.classification_type == "multi_class":
             logger.info(
                 f"For multi-class classification in concept '{self.name}', you should consider including "
@@ -1045,10 +1159,22 @@ class LabelConcept(_Concept):
 
     @property
     def _item_type_in_prompt(self) -> str:
+        """
+        Returns the formatted type string for use in LLM prompts.
+
+        :return: Formatted string representation of the dictionary type.
+        :rtype: str
+        """
         return _format_type(dict)
 
     @property
     def _item_class(self) -> type[_LabelItem]:
+        """
+        Returns the item class type for label concepts.
+
+        :return: The label item class.
+        :rtype: type[_LabelItem]
+        """
         return _LabelItem
 
     @property
@@ -1063,6 +1189,12 @@ class LabelConcept(_Concept):
 
     @property
     def extracted_items(self) -> list[_LabelItem]:
+        """
+        Gets the list of extracted label items.
+
+        :return: List of extracted label items.
+        :rtype: list[_LabelItem]
+        """
         return self._extracted_items
 
     @extracted_items.setter

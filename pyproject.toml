@@ -135,6 +135,7 @@ dev = [
     "pyright>=1.1.403",
     "types-lxml>=2025.3.30",
     "deptry>=0.23.0",
+    "interrogate>=1.7.0",
 ]
 
 [build-system]
@@ -163,6 +164,7 @@ exclude = [
     ".venv",
     "notebooks",
     "dev/usage_examples/vs_other_frameworks",
+    "code_sample.py",
 ]
 
 [tool.ruff.lint]
@@ -185,6 +187,7 @@ exclude = [
     ".venv",
     "notebooks",
     "dev/usage_examples/vs_other_frameworks",
+    "code_sample.py",
 ]
 
 [tool.pytest.ini_options]
@@ -197,6 +200,20 @@ name = "cz_conventional_commits"
 
 [tool.deptry]
 extend_exclude = [
+    ".venv",
     "dev/usage_examples/vs_other_frameworks",
     "dev/generate_notebooks.py",
+    "code_sample.py",
+]
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = true
+ignore-nested-classes = true
+fail-under = 95
+exclude = [
+    ".venv",
+    "docs",
+    "dev/usage_examples",
+    "code_sample.py",
 ]

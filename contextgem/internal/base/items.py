@@ -62,6 +62,13 @@ class _ExtractedItem(_RefParasAndSentsAttrituteProcessor):
     _reference_sentences: list[Sentence] = PrivateAttr(default_factory=list)
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that prevents direct instantiation of the base class.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        :raises TypeError: If attempting to instantiate the base class directly.
+        """
         if self.__class__ == _ExtractedItem:
             raise TypeError("Cannot instantiate base class directly")

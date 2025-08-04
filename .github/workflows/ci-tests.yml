@@ -46,9 +46,17 @@ jobs:
           uv run ruff check contextgem dev tests
           uv run ruff format --check contextgem dev tests
 
+      - name: Type checking
+        run: |
+          uv run pyright
+
       - name: Dependency health check
         run: |
           uv run deptry .
+
+      - name: Docstring coverage check
+        run: |
+          uv run interrogate
 
       - name: Run coverage (with VCR)
         run: |

@@ -46,10 +46,19 @@ class _DedicatedStream:
         self.base = base
 
     def write(self, message):
+        """
+        Writes a message to the base stream with contextgem prefix.
+
+        :param message: The message to write to the stream.
+        :type message: str
+        """
         # You can add a prefix or other formatting if you wish
         self.base.write(f"[contextgem] {message}")
 
     def flush(self):
+        """
+        Flushes the base stream to ensure all output is written.
+        """
         self.base.flush()
 
 

@@ -30,8 +30,25 @@ README_TEMPLATE_PATH = "dev/readme.template.md"
 README_OUTPUT_PATH = "README.md"
 README_FOOTER = ""
 
+# Map example files to markers in the template
+USAGE_EXAMPLES_MAPPING = {
+    "dev/content_snippets/feature_table.html": "{{FEATURE_TABLE}}",
+    "dev/usage_examples/readme/quickstart_aspect.py": "{{QUICKSTART_ASPECT}}",
+    "dev/usage_examples/readme/quickstart_concept.py": "{{QUICKSTART_CONCEPT}}",
+    "dev/usage_examples/readme/docx_converter.py": "{{DOCX_CONVERTER}}",
+}
 
-def generate_readme():
+
+def generate_readme() -> None:
+    """
+    Generate the project README.md file by populating template with code examples.
+
+    Reads the README template file, replaces placeholder markers with actual code
+    snippets from usage examples, and writes the populated content to README.md.
+
+    :return: None
+    :rtype: None
+    """
     with open(README_TEMPLATE_PATH, encoding="utf-8") as template_file:
         template = template_file.read()
 
@@ -46,19 +63,22 @@ def generate_readme():
     print("Project README.md file populated successfully.")
 
 
-def extract_code_from_file(file_path):
+def extract_code_from_file(file_path: str) -> str:
+    """
+    Extract the complete content from a file.
+
+    Reads and returns the entire content of the specified file as a string.
+    Used to extract code snippets and examples for README template population.
+
+    :param file_path: Path to the file to read content from
+    :type file_path: str
+    :return: Complete file content as a string
+    :rtype: str
+    """
     with open(file_path, encoding="utf-8") as f:
         content = f.read()
     return content
 
-
-# Map example files to markers in the template
-USAGE_EXAMPLES_MAPPING = {
-    "dev/content_snippets/feature_table.html": "{{FEATURE_TABLE}}",
-    "dev/usage_examples/readme/quickstart_aspect.py": "{{QUICKSTART_ASPECT}}",
-    "dev/usage_examples/readme/quickstart_concept.py": "{{QUICKSTART_CONCEPT}}",
-    "dev/usage_examples/readme/docx_converter.py": "{{DOCX_CONVERTER}}",
-}
 
 if __name__ == "__main__":
     generate_readme()

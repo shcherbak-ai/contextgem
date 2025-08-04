@@ -12934,14 +12934,13 @@ class contextgem.public.concepts.RatingConcept(**data)
 
    property extracted_items: list[_IntegerItem]
 
-      Provides access to extracted items.
+      Gets the list of extracted rating items.
 
       Returns:
-         A list containing the extracted items as *_ExtractedItem*
-         objects.
+         List of extracted integer items representing ratings.
 
       Return type:
-         list[_ExtractedItem]
+         list[_IntegerItem]
 
    clone()
 
@@ -13896,14 +13895,13 @@ class contextgem.public.concepts.LabelConcept(**data)
 
    property extracted_items: list[_LabelItem]
 
-      Provides access to extracted items.
+      Gets the list of extracted label items.
 
       Returns:
-         A list containing the extracted items as *_ExtractedItem*
-         objects.
+         List of extracted label items.
 
       Return type:
-         list[_ExtractedItem]
+         list[_LabelItem]
 
    clone()
 
@@ -14631,9 +14629,13 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
 
    property is_group: bool
 
-      Abstract property, to be implemented by subclasses.
+      Returns True indicating this is a group of LLMs.
 
-      Whether the LLM is a single instance or a group.
+      Returns:
+         Always True for DocumentLLMGroup instances.
+
+      Return type:
+         bool
 
    property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
 
@@ -15586,11 +15588,23 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    property async_limiter: AsyncLimiter
 
+      Gets the async rate limiter for this LLM.
+
+      Returns:
+         The AsyncLimiter instance controlling request rate limits.
+
+      Return type:
+         AsyncLimiter
+
    property is_group: bool
 
-      Abstract property, to be implemented by subclasses.
+      Returns False indicating this is a single LLM, not a group.
 
-      Whether the LLM is a single instance or a group.
+      Returns:
+         Always False for DocumentLLM instances.
+
+      Return type:
+         bool
 
    property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
 

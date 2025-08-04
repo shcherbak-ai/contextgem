@@ -136,6 +136,16 @@ TEST_LLM_PROVIDER: Literal["azure_openai", "openai"] = "azure_openai"
 
 @pytest.fixture(scope="module")
 def vcr_config():
+    """
+    Pytest fixture providing VCR configuration for recording and replaying HTTP interactions.
+
+    This fixture configures VCR to record HTTP requests and responses during test execution,
+    allowing tests to replay recorded interactions without making actual network calls.
+
+    :return: Dictionary containing VCR configuration options including header filtering,
+             request/response processing hooks, matching criteria, and cassette settings.
+    :rtype: dict
+    """
     return {
         "filter_headers": [(i, VCR_REDACTION_MARKER) for i in VCR_FILTER_HEADERS],
         "before_record_request": vcr_before_record_request,
@@ -948,6 +958,12 @@ class TestAll(TestUtils):
         document.add_concepts([concept])
 
         def extract_with_local_llm(llm: DocumentLLM):
+            """
+            Helper function to test extraction with a local LLM model.
+
+            :param llm: The DocumentLLM instance to test extraction with.
+            :type llm: DocumentLLM
+            """
             self.config_llm_async_limiter_for_mock_responses(llm)
             extracted_concepts = llm.extract_concepts_from_document(
                 document, overwrite_existing=True
@@ -3108,7 +3124,17 @@ class TestAll(TestUtils):
         }
 
         # Utility function to test a structure
-        def test_structure(struct_name, structure):
+        def test_structure(struct_name: str, structure: Any) -> JsonObjectConcept:
+            """
+            Utility function to test a JsonObjectConcept structure.
+
+            :param struct_name: Name of the structure being tested.
+            :type struct_name: str
+            :param structure: The structure definition to test.
+            :type structure: Any
+            :return: The JsonObjectConcept instance.
+            :rtype: JsonObjectConcept
+            """
             # Create concept with the structure
             concept = JsonObjectConcept(
                 name=f"{struct_name} Concept",
@@ -6314,6 +6340,9 @@ class TestAll(TestUtils):
 
         # 2) Emit one message per level:
         def log_messages():
+            """
+            Helper function to emit log messages at all levels for testing.
+            """
             logger.debug("DEBUG message")
             logger.info("INFO message")
             logger.success("SUCCESS message")
@@ -6562,6 +6591,12 @@ class TestAll(TestUtils):
 
         # Utility function to verify all _DocxPackage attributes are populated
         def verify_docx_package_attributes(test_file_path_or_object):
+            """
+            Utility function to verify all _DocxPackage attributes are populated correctly.
+
+            :param test_file_path_or_object: File path or file object to create DocxPackage from.
+            :type test_file_path_or_object: str | Path | BinaryIO
+            """
             package = _DocxPackage(test_file_path_or_object)
             try:
                 # Verify all attributes that are present in test DOCX file are populated
@@ -6590,10 +6625,22 @@ class TestAll(TestUtils):
 
         # Create a BytesIO object that can be reset
         def create_bytesio():
+            """
+            Creates a BytesIO object from the test file bytes.
+
+            :return: BytesIO object containing the test file data.
+            :rtype: BytesIO
+            """
             return BytesIO(file_bytes)
 
         # Function to open the file
         def open_file():
+            """
+            Opens the test DOCX file in binary read mode.
+
+            :return: File object opened in binary mode.
+            :rtype: BinaryIO
+            """
             return open(self.test_docx_badly_formatted_path, "rb")
 
         # Create converter instance
@@ -6604,7 +6651,14 @@ class TestAll(TestUtils):
             converter.convert("random_path.txt")
 
         # Helper function to verify Document objects
-        def verify_document_equality(documents):
+        def verify_document_equality(documents: list[Document]) -> None:
+            """
+            Helper function to verify Document objects have expected properties that are
+            consistent across documents created from different input sources.
+
+            :param documents: List of Document objects to verify.
+            :type documents: list[Document]
+            """
             # Check that all documents have the expected properties
             for doc in documents:
                 assert isinstance(doc, Document)
@@ -7214,18 +7268,42 @@ class TestAll(TestUtils):
         converter = DocxConverter()
 
         # Create sample XML elements for testing using lxml
-        def create_text_element(text_content):
+        def create_text_element(text_content: str):
+            """
+            Creates a Word XML text element with the given content.
+
+            :param text_content: Text content to include in the element.
+            :type text_content: str
+            :return: XML element representing Word text.
+            :rtype: Element
+            """
             element = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}t")
             element.text = text_content
             return element
 
-        def create_run_with_text(text_content):
+        def create_run_with_text(text_content: str):
+            """
+            Creates a Word XML run element containing a text element.
+
+            :param text_content: Text content for the run.
+            :type text_content: str
+            :return: XML element representing a Word run with text.
+            :rtype: Element
+            """
             run = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
             text_elem = create_text_element(text_content)
             run.append(text_elem)
             return run
 
         def create_paragraph_with_runs(runs):
+            """
+            Creates a Word XML paragraph element containing the given runs.
+
+            :param runs: List of run elements to include in the paragraph.
+            :type runs: list[Element]
+            :return: XML element representing a Word paragraph.
+            :rtype: Element
+            """
             para = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
             for run in runs:
                 para.append(run)

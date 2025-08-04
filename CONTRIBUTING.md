@@ -144,6 +144,7 @@ contextgem/
     - **Pyright**: For static type checking
     - **Bandit**: For Python security vulnerability scanning
     - **Deptry**: For dependency health checks (unused, missing, transitive dependencies)
+    - **Interrogate**: For docstring coverage checking
     - **Pre-commit hooks**: To automatically check and format code before commits
 
     The pre-commit hooks will automatically check and format your code when you commit. There are two scenarios to be aware of:

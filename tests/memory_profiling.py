@@ -383,8 +383,25 @@ def memory_profile_and_capture(
     """
 
     def decorator(f: F) -> F:
+        """
+        Inner decorator function that applies memory profiling to the wrapped function.
+
+        :param f: The function to be decorated with memory profiling.
+        :type f: F
+        :return: The wrapped function with memory profiling capabilities.
+        :rtype: F
+        """
+
         @wraps(f)
         def wrapper(self, *args, **kwargs):
+            """
+            Wrapper function that executes the original function with memory profiling.
+
+            :param self: The test class instance.
+            :param args: Positional arguments passed to the original function.
+            :param kwargs: Keyword arguments passed to the original function.
+            :return: The result of the original function execution.
+            """
             # Check if memory profiling is disabled
             if not is_memory_profiling_enabled():
                 logger.debug(
@@ -395,7 +412,18 @@ def memory_profile_and_capture(
             # Helper function to get or set attribute in instance or class
             def get_or_set_memory_attribute(
                 attr_name: str, value: Any | None = None
-            ) -> dict | None:
+            ) -> Any | None:
+                """
+                Gets or sets a memory-related attribute from instance or class.
+
+                :param attr_name: Name of the attribute to get or set.
+                :type attr_name: str
+                :param value: Value to set (if provided), defaults to None.
+                :type value: Any | None, optional
+                :return: The attribute value, or None if setting.
+                :rtype: Any | None
+                :raises AttributeError: If the attribute doesn't exist in instance or class.
+                """
                 if hasattr(self, attr_name):
                     if value:
                         setattr(self, attr_name, value)
