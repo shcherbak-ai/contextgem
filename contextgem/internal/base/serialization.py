@@ -367,6 +367,18 @@ class _InstanceSerializer(BaseModel):
         def reconstruct_entity_from_dict(
             entity_d: dict[str, Any], module: Any
         ) -> _Concept | _ExtractedItem | _Example:
+            """
+            Reconstructs an entity object from its dictionary representation.
+
+            :param entity_d: Dictionary containing the serialized entity data.
+            :type entity_d: dict[str, Any]
+            :param module: Module containing the entity class to reconstruct.
+            :type module: Any
+            :return: Reconstructed entity object.
+            :rtype: _Concept | _ExtractedItem | _Example
+            :raises ValueError: If class name is missing from the dictionary.
+            :raises TypeError: If class name is not a string or class not found in module.
+            """
             class_name = entity_d.get(KEY_CLASS_PRIVATE)
             if class_name is None:
                 raise ValueError("Missing class name in serialized dictionary")
@@ -382,6 +394,16 @@ class _InstanceSerializer(BaseModel):
         def lambda_list_val(
             instance_cls: type | None = None, module: Any | None = None
         ) -> Callable[[Any], Any]:
+            """
+            Creates a lambda function to reconstruct a list of objects from dictionaries.
+
+            :param instance_cls: Specific class to use for reconstruction, defaults to None.
+            :type instance_cls: type | None, optional
+            :param module: Module containing classes for reconstruction, defaults to None.
+            :type module: Any | None, optional
+            :return: Lambda function that reconstructs objects from a list of dictionaries.
+            :rtype: Callable[[Any], Any]
+            """
             return lambda val: [
                 (
                     instance_cls.from_dict(d)
@@ -530,9 +552,29 @@ class _InstanceSerializer(BaseModel):
         return cls.from_dict(obj_dict)
 
     def model_dump(self, *args, **kwargs):
+        """
+        Raises NotImplementedError to redirect users to use to_dict() method instead.
+
+        This method is intentionally disabled in favor of the to_dict() method which
+        provides proper serialization logic for ContextGem objects.
+
+        :param args: Positional arguments (ignored).
+        :param kwargs: Keyword arguments (ignored).
+        :raises NotImplementedError: Always raised to direct users to use to_dict().
+        """
         raise NotImplementedError("Use `to_dict()` instead")
 
     def model_dump_json(self, *args, **kwargs):
+        """
+        Raises NotImplementedError to redirect users to use to_json() method instead.
+
+        This method is intentionally disabled in favor of the to_json() method which
+        provides proper JSON serialization logic for ContextGem objects.
+
+        :param args: Positional arguments (ignored).
+        :param kwargs: Keyword arguments (ignored).
+        :raises NotImplementedError: Always raised to direct users to use to_json().
+        """
         raise NotImplementedError("Use `to_json()` instead")
 
     @field_validator("custom_data", check_fields=False)

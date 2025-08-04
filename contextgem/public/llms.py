@@ -131,6 +131,12 @@ class DocumentLLMGroup(_GenericLLMProcessor):
 
     @property
     def is_group(self) -> bool:
+        """
+        Returns True indicating this is a group of LLMs.
+
+        :return: Always True for DocumentLLMGroup instances.
+        :rtype: bool
+        """
         return True
 
     @property
@@ -205,6 +211,14 @@ class DocumentLLMGroup(_GenericLLMProcessor):
         """
 
         def get_llm_by_role(role: str) -> DocumentLLM | None:
+            """
+            Finds and returns the first LLM with the specified role.
+
+            :param role: The role to search for among the LLMs.
+            :type role: str
+            :return: The DocumentLLM with the matching role, or None if not found.
+            :rtype: DocumentLLM | None
+            """
             return next((i for i in self.llms if i.role == role), None)
 
         self._llm_extractor_text = get_llm_by_role("extractor_text")
@@ -456,7 +470,13 @@ class DocumentLLM(_GenericLLMProcessor):
             self.async_limiter = AsyncLimiter(3, 10)
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that logs model information and API configuration.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        """
         logger.info(f"Using model {self.model}")
         if self.api_key is None:
             logger.info("API key was not provided. Set `api_key`, if applicable.")
@@ -510,16 +530,35 @@ class DocumentLLM(_GenericLLMProcessor):
 
     @property
     def async_limiter(self) -> AsyncLimiter:
+        """
+        Gets the async rate limiter for this LLM.
+
+        :return: The AsyncLimiter instance controlling request rate limits.
+        :rtype: AsyncLimiter
+        """
         return self._async_limiter
 
     @async_limiter.setter
     def async_limiter(self, value: AsyncLimiter) -> None:
+        """
+        Sets the async rate limiter for this LLM.
+
+        :param value: The AsyncLimiter instance to set.
+        :type value: AsyncLimiter
+        :raises TypeError: If value is not an AsyncLimiter instance.
+        """
         if not isinstance(value, AsyncLimiter):
             raise TypeError("async_limiter must be an AsyncLimiter instance")
         self._async_limiter = value
 
     @property
     def is_group(self) -> bool:
+        """
+        Returns False indicating this is a single LLM, not a group.
+
+        :return: Always False for DocumentLLM instances.
+        :rtype: bool
+        """
         return False
 
     @property

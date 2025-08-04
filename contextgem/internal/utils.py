@@ -32,6 +32,7 @@ import warnings
 from collections import defaultdict
 from collections.abc import Callable, Coroutine, Generator
 from contextlib import contextmanager
+from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, get_args
 
@@ -90,32 +91,31 @@ def _get_template(
     :rtype: Template | str
     :raises NotImplementedError: If the `template_type` provided is unsupported.
     :raises NotImplementedError: If the `template_extension` provided is unsupported.
+    :raises RuntimeError: If the template file is not found in the package resources, is empty, or contains
+        only whitespace, or if the template validation fails (for "j2" extensions).
     """
 
-    current_file = Path(__file__).resolve()
-    project_root = current_file.parents[1]
     if template_type == "prompt":
-        template_path = (
-            project_root
-            / "internal"
-            / "prompts"
-            / f"{template_name}.{template_extension}"
-        )
+        template_package = resources.files("contextgem.internal.prompts")
+        template_file = f"{template_name}.{template_extension}"
     elif template_type == "system":
-        template_path = (
-            project_root
-            / "internal"
-            / "system"
-            / f"{template_name}.{template_extension}"
-        )
+        template_package = resources.files("contextgem.internal.system")
+        template_file = f"{template_name}.{template_extension}"
     else:
         raise NotImplementedError(f"Unknown template type: {template_type}")
-    with open(template_path, encoding="utf-8") as file:
-        template_text = file.read().strip()
+
+    try:
+        template_text = (
+            (template_package / template_file).read_text(encoding="utf-8").strip()
+        )
         if not template_text:
             raise RuntimeError(
-                f"Template file '{template_path}' is empty or contains only whitespace"
+                f"Template file '{template_file}' is empty or contains only whitespace"
             )
+    except FileNotFoundError as e:
+        raise RuntimeError(
+            f"Template file '{template_file}' not found in {template_type} templates"
+        ) from e
     if template_extension == "j2":
         # Validate template text
         if not _are_prompt_template_brackets_balanced(template_text):
@@ -443,6 +443,16 @@ async def _async_multi_executor(
     results = [None] * len(data_list)
 
     async def worker(index: int, kwargs: dict[str, Any]) -> None:
+        """
+        Worker coroutine that executes a single async function call and stores the result.
+
+        :param index: Index position where the result should be stored in the results list.
+        :type index: int
+        :param kwargs: Keyword arguments to pass to the async function.
+        :type kwargs: dict[str, Any]
+        :return: None
+        :rtype: None
+        """
         try:
             results[index] = await func(**kwargs)
         except Exception as e:
@@ -517,12 +527,28 @@ def _suppress_litellm_pydantic_warnings(func: F) -> F:
     """
 
     @functools.wraps(func)
-    async def _async_wrapper(*args, **kwargs):
+    async def _async_wrapper(*args, **kwargs) -> Any:
+        """
+        Async wrapper that suppresses Pydantic warnings during async function execution.
+
+        :param args: Positional arguments to pass to the wrapped function.
+        :param kwargs: Keyword arguments to pass to the wrapped function.
+        :return: The result of the wrapped async function.
+        :rtype: Any
+        """
         with _suppress_litellm_pydantic_warnings_context():
             return await func(*args, **kwargs)
 
     @functools.wraps(func)
-    def _sync_wrapper(*args, **kwargs):
+    def _sync_wrapper(*args, **kwargs) -> Any:
+        """
+        Sync wrapper that suppresses Pydantic warnings during sync function execution.
+
+        :param args: Positional arguments to pass to the wrapped function.
+        :param kwargs: Keyword arguments to pass to the wrapped function.
+        :return: The result of the wrapped sync function.
+        :rtype: Any
+        """
         with _suppress_litellm_pydantic_warnings_context():
             return func(*args, **kwargs)
 

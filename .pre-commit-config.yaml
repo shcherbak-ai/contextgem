@@ -99,3 +99,12 @@ repos:
         pass_filenames: false
         language: system
         stages: [pre-commit]
+
+      # Interrogate docstring coverage check and badge generation
+      - id: interrogate-with-badge
+        name: Interrogate docstring coverage and badge generation
+        entry: uv run interrogate --generate-badge docs/source/_static/interrogate-badge.svg --badge-format svg
+        pass_filenames: false
+        language: system
+        files: '\.py$'
+        stages: [pre-commit]

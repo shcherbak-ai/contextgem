@@ -147,6 +147,12 @@ class Aspect(
 
     @property
     def _item_class(self) -> type[_StringItem]:
+        """
+        Returns the item class type for aspects.
+
+        :return: The string item class used for aspect extracted items.
+        :rtype: type[_StringItem]
+        """
         return _StringItem
 
     @field_validator("concepts")

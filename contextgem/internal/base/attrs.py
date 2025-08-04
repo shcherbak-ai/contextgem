@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import Field, StrictBool, StrictInt
 
@@ -172,7 +172,14 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
         aspects: list[Aspect]
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that validates the presence of the aspects attribute.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        :raises AttributeError: If the instance does not have an 'aspects' attribute.
+        """
         if not hasattr(self, "aspects"):
             raise AttributeError("Instance has no `aspects` attribute.")
 
@@ -293,7 +300,14 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
         concepts: list[_Concept]
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that validates the presence of the concepts attribute.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        :raises AttributeError: If the instance does not have a 'concepts' attribute.
+        """
         if not hasattr(self, "concepts"):
             raise AttributeError("Instance has no `concepts` attribute.")
 
@@ -485,7 +499,14 @@ class _ExtractedItemsAttributeProcessor(_PropertyProcessor):
         _extracted_items: list[_ExtractedItem]
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that validates the presence of the _extracted_items attribute.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        :raises AttributeError: If the instance does not have an '_extracted_items' attribute.
+        """
         if not hasattr(self, "_extracted_items"):
             raise AttributeError("Instance has no `_extracted_items` attribute.")
 
@@ -543,7 +564,15 @@ class _RefParasAndSentsAttrituteProcessor(_PropertyProcessor):
         _reference_sentences: list[Sentence]
 
     @_post_init_method
-    def _post_init(self, __context):
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that validates the presence of reference attributes.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        :raises AttributeError: If the instance does not have
+            '_reference_paragraphs' or '_reference_sentences' attributes.
+        """
         for attr_name in ("_reference_paragraphs", "_reference_sentences"):
             if not hasattr(self, attr_name):
                 raise AttributeError(f"Instance has no `{attr_name}` attribute.")

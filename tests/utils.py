@@ -100,12 +100,27 @@ assert len(set(VCR_FILTER_HEADERS)) == len(VCR_FILTER_HEADERS)
 
 
 def vcr_count_recording(response):
+    """
+    Counts VCR recordings by incrementing the global counter.
+
+    :param response: The VCR response object.
+    :return: The unmodified response object.
+    """
     global vcr_new_recording_count
     vcr_new_recording_count += 1
     return response
 
 
 def vcr_before_record_request(request):
+    """
+    Processes VCR requests before recording to redact sensitive information.
+
+    Redacts Azure OpenAI domain and deployment names from request URIs
+    to protect sensitive configuration details in VCR cassettes.
+
+    :param request: The VCR request object to process.
+    :return: The modified request object with redacted URI.
+    """
     # Redact the Azure OpenAI domain & deployment name
     path_parts = request.uri.split("/openai/deployments/")
     if len(path_parts) > 1:
@@ -128,6 +143,15 @@ def vcr_before_record_request(request):
 
 
 def vcr_before_record_response(response):
+    """
+    Processes VCR responses before recording to redact sensitive information.
+
+    Redacts headers and response body content that might contain sensitive
+    information like API keys, request IDs, and other identifiable data.
+
+    :param response: The VCR response object to process.
+    :return: The modified response object with redacted sensitive data.
+    """
     # Redact headers
     headers = response.get("headers", {})
     for header in VCR_FILTER_HEADERS:
@@ -219,6 +243,15 @@ def get_test_img(
 
 
 def remove_file(filepath):
+    """
+    Removes a file from the filesystem if it exists.
+
+    Attempts to delete the specified file and logs success. If the file
+    doesn't exist, the operation is silently ignored.
+
+    :param filepath: Path to the file to remove.
+    :type filepath: str
+    """
     try:
         os.remove(filepath)
         logger.debug(f"File '{filepath}' has been removed.")
@@ -443,6 +476,14 @@ class TestUtils:
         zero_dec = Decimal("0.00000")
 
         def get_cost_as_decimal(llm):
+            """
+            Helper function to get the total cost as a quantized Decimal for an LLM.
+
+            :param llm: The LLM instance to get cost data from.
+            :type llm: DocumentLLMGroup | DocumentLLM
+            :return: Total cost quantized to 5 decimal places.
+            :rtype: Decimal
+            """
             # Sum all the total costs from each cost item starting from a Decimal zero.
             total = sum((i.cost.total for i in llm.get_cost()), zero_dec)
             return total.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
@@ -453,32 +494,31 @@ class TestUtils:
             self.invalid_llm_with_valid_fallback  # type: ignore
         )
         logger.info(
-            "Cost of running tests (LLM 0 - group): "
-            + str(total_cost_llm_group if not vcr_new_recording_count else zero_dec),
+            "Cost of running tests (LLM 0 - group): " + str(total_cost_llm_group),
         )
         logger.info(
-            "Cost of running tests (LLM 1 - individual): "
-            + str(total_cost_llm if not vcr_new_recording_count else zero_dec),
+            "Cost of running tests (LLM 1 - individual): " + str(total_cost_llm),
         )
         logger.info(
             "Cost of running tests (LLM with fallback): "
-            + str(
-                total_cost_llm_with_fallback
-                if not vcr_new_recording_count
-                else zero_dec
-            ),
+            + str(total_cost_llm_with_fallback),
         )
         total_cost = (
-            (total_cost_llm_group + total_cost_llm + total_cost_llm_with_fallback)
-            if not vcr_new_recording_count
-            else zero_dec
+            total_cost_llm_group + total_cost_llm + total_cost_llm_with_fallback
         )
         logger.info(
             "Total cost running tests: "
             + str(total_cost.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)),
         )
+        logger.info(
+            "Note: Cost calculations may not include all tests (usage examples from documentation, "
+            "non-module-defined LLMs are excluded)"
+        )
         if vcr_new_recording_count:
-            logger.info("LLM responses are NOT LIVE (mock from cassettes)")
+            logger.info(
+                "Note: Costs may be lower than displayed due to VCR recordings "
+                "(some LLM responses are mocked from cassettes)"
+            )
 
     @staticmethod
     def check_rendered_prompt(prompt: str) -> None:
@@ -577,6 +617,14 @@ class TestUtils:
             assert not any(i.extracted_items for i in original_container)
 
             def check_instances(instances: list[Aspect] | list[_Concept]) -> None:
+                """
+                Helper function to check instances for proper processing state and extracted items.
+
+                :param instances: List of Aspect or Concept instances to validate.
+                :type instances: list[Aspect] | list[_Concept]
+                :return: None
+                :rtype: None
+                """
                 assert all(isinstance(i, assigned_instance_class) for i in instances)
                 # instances may have different LLM roles
                 filtered_instances = [i for i in instances if i.llm_role in llm_roles]
@@ -841,6 +889,12 @@ class TestUtils:
             )  # considerably increase the rate limit comparing to default limiter, as all responses are mock
 
             def set_new_limiter(model):
+                """
+                Helper function to set the async limiter on a model and its fallback.
+
+                :param model: The DocumentLLM model to configure.
+                :type model: DocumentLLM
+                """
                 model.async_limiter = limiter
                 if model.fallback_llm:
                     model.fallback_llm.async_limiter = limiter

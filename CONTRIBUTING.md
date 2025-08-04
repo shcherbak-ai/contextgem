@@ -144,6 +144,7 @@ contextgem/
     - **Pyright**: For static type checking
     - **Bandit**: For Python security vulnerability scanning
     - **Deptry**: For dependency health checks (unused, missing, transitive dependencies)
+    - **Interrogate**: For docstring coverage checking
     - **Pre-commit hooks**: To automatically check and format code before commits
 
     The pre-commit hooks will automatically check and format your code when you commit. There are two scenarios to be aware of:
@@ -481,8 +482,9 @@ The log output will show detailed information about test execution.
 Navigate to the `docs/` directory and run:
 
 ```bash
-# Build with verbose output and ignore cache (recommended for structural changes)
-uv run sphinx-build -b html source build/html -v -E
+# Build with verbose output, ignore cache, and treat warnings as errors 
+# (recommended for structural changes)
+uv run sphinx-build -b html source build/html -v -E -W
 ```
 
 The `-E` flag ensures Sphinx completely rebuilds the environment, which is especially important after structural changes like modifying toctree directives or removing files.

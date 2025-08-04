@@ -33,7 +33,6 @@ from loguru import logger
 DEFAULT_LOGGER_LEVEL = "INFO"
 
 # Dynamically control logging state with env vars
-DISABLE_LOGGER_ENV_VAR_NAME = "CONTEXTGEM_DISABLE_LOGGER"
 LOGGER_LEVEL_ENV_VAR_NAME = "CONTEXTGEM_LOGGER_LEVEL"
 
 
@@ -47,10 +46,19 @@ class _DedicatedStream:
         self.base = base
 
     def write(self, message):
+        """
+        Writes a message to the base stream with contextgem prefix.
+
+        :param message: The message to write to the stream.
+        :type message: str
+        """
         # You can add a prefix or other formatting if you wish
         self.base.write(f"[contextgem] {message}")
 
     def flush(self):
+        """
+        Flushes the base stream to ensure all output is written.
+        """
         self.base.flush()
 
 
@@ -62,13 +70,23 @@ def _read_env_vars() -> tuple[bool, str]:
     """
     Returns the (disabled_status, level) read from environment variables.
     """
-    disable_str = os.getenv(DISABLE_LOGGER_ENV_VAR_NAME, "False").lower()
-    disable_logger = disable_str in ["true", "1", "yes"]
     # Default to DEFAULT_LOGGER_LEVEL if no variable is set or invalid
     level_str = os.getenv(LOGGER_LEVEL_ENV_VAR_NAME, DEFAULT_LOGGER_LEVEL).upper()
-    valid_levels = ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
+    valid_levels = [
+        "TRACE",
+        "DEBUG",
+        "INFO",
+        "SUCCESS",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
+        "OFF",
+    ]
     if level_str not in valid_levels:
         level_str = DEFAULT_LOGGER_LEVEL
+
+    # Check if logging should be disabled
+    disable_logger = level_str == "OFF"
     return disable_logger, level_str
 
 
@@ -94,16 +112,16 @@ def _configure_logger_from_env():
     """
     disable_logger, level_str = _read_env_vars()
 
-    # If the library name is used, we can selectively enable/disable it.
-    # But Loguru doesn't use named loggers the same way stdlib does,
-    # so we can do a global enable/disable or apply filter functions instead.
-    if disable_logger:
-        logger.disable("")
-    else:
-        logger.enable("")
-
     # Remove default handlers
     logger.remove()
+
+    # If logging is disabled (OFF level), just disable and don't add any handlers
+    if disable_logger:
+        logger.disable("")
+        return
+
+    # Enable logging and add handler
+    logger.enable("")
 
     # Apply custom level color scheme
     _apply_color_scheme()

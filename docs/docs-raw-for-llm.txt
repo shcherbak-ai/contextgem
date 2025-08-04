@@ -3282,7 +3282,7 @@ span multiple sections.
 
 Multiple concept types are supported: "StringConcept",
 "BooleanConcept", "NumericalConcept", "DateConcept",
-"JsonObjectConcept", "RatingConcept"
+"JsonObjectConcept", "RatingConcept", "LabelConcept"
 
 
 Component Examples
@@ -3934,6 +3934,294 @@ Note:
    # or `response = await main_model.chat_async(...)`
 
    print(response)
+
+
+# ==== documents/document_config ====
+
+Creating Documents
+******************
+
+This guide explains how to create and configure "Document" instances
+to process textual and visual content for analysis.
+
+Documents serve as the container for the content from which
+information (aspects and concepts) can be extracted.
+
+
+⚙️ Configuration Parameters
+===========================
+
+The minimum configuration for a document requires either "raw_text",
+"paragraphs", or "images":
+
+Document creation
+
+   from pathlib import Path
+
+   from contextgem import Document, Paragraph, create_image
+
+
+   # Create a document with raw text content
+   contract_document = Document(
+       raw_text=(
+           "...This agreement is effective as of January 1, 2025.\n\n"
+           "All parties must comply with the terms outlined herein. The terms include "
+           "monthly reporting requirements and quarterly performance reviews.\n\n"
+           "Failure to adhere to these terms may result in termination of the agreement. "
+           "Additionally, any breach of confidentiality will be subject to penalties as "
+           "described in this agreement.\n\n"
+           "This agreement shall remain in force for a period of three (3) years unless "
+           "otherwise terminated according to the provisions stated above..."
+       ),
+       paragraph_segmentation_mode="newlines",  # Default mode, splits on newlines
+   )
+
+   # Create a document with more advanced paragraph segmentation using a SaT model
+   report_document = Document(
+       raw_text=(
+           "Executive Summary "
+           "This report outlines our quarterly performance. "
+           "Revenue increased by [15%] compared to the previous quarter.\n\n"
+           "Customer satisfaction metrics show positive trends across all regions..."
+       ),
+       paragraph_segmentation_mode="sat",  # Use SaT model for intelligent paragraph segmentation
+       sat_model_id="sat-3l-sm",  # Specify which SaT model to use
+   )
+
+   # Create a document with predefined paragraphs, e.g. when you use a custom
+   # paragraph segmentation tool
+   document_from_paragraphs = Document(
+       paragraphs=[
+           Paragraph(raw_text="This is the first paragraph."),
+           Paragraph(raw_text="This is the second paragraph with more content."),
+           Paragraph(raw_text="Final paragraph concluding the document."),
+           # ...
+       ]
+   )
+
+   # Create document with images
+
+   # Path is adapted for doc tests
+   current_file = Path(__file__).resolve()
+   root_path = current_file.parents[4]
+   image_path = root_path / "tests" / "images" / "invoices" / "invoice.png"
+
+   # Create a document with only images (no text)
+   image_document = Document(
+       images=[
+           create_image(image_path),  # contextgem.Image instance
+           # ...
+       ]
+   )
+
+   # Create a document with both text and images
+   mixed_document = Document(
+       raw_text="This document contains both text and visual elements.",
+       images=[
+           create_image(image_path),  # contextgem.Image instance
+           # ...
+       ],
+   )
+
+
+
+The "Document" class accepts the following parameters:
+
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| Parameter                 | Type            | Default Value   | Description                                   |
+|===========================|=================|=================|===============================================|
+| "raw_text"                | "str | None"    | "None"          | The main text of the document as a single     |
+|                           |                 |                 | string.                                       |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "paragraphs"              | "list[Paragrap  | "[]"            | List of "Paragraph" instances in consecutive  |
+|                           | h]"             |                 | order as they appear in the document.         |
+|                           |                 |                 | Normally auto-populated from "raw_text".      |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "images"                  | "list[Image]"   | "[]"            | List of "Image" instances attached to or      |
+|                           |                 |                 | representing the document. Used for visual    |
+|                           |                 |                 | content analysis.                             |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "aspects"                 | "list[Aspect]"  | "[]"            | List of "Aspect" instances associated with    |
+|                           |                 |                 | the document for focused analysis. Must have  |
+|                           |                 |                 | unique names and descriptions. See Aspect     |
+|                           |                 |                 | Extraction for more details.                  |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "concepts"                | "list[_Concept  | "[]"            | List of "_Concept" instances associated with  |
+|                           | ]"              |                 | the document for information extraction. Must |
+|                           |                 |                 | have unique names and descriptions. See       |
+|                           |                 |                 | supported concept types in Supported          |
+|                           |                 |                 | Concepts.                                     |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "paragraph_segmentation_  | "Literal["newl  | ""newlines""    | Mode for paragraph segmentation. ""newlines"" |
+| mode"                     | ines", "sat"]"  |                 | splits on newline characters, ""sat"" uses a  |
+|                           |                 |                 | SaT (Segment Any Text) model for intelligent  |
+|                           |                 |                 | segmentation.                                 |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "sat_model_id"            | "SaTModelId"    | ""sat-3l-sm""   | SaT model ID for paragraph/sentence           |
+|                           |                 |                 | segmentation or a local path to a SaT model.  |
+|                           |                 |                 | See wtpsplit models for available options.    |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+| "pre_segment_sentences"   | "bool"          | "False"         | Whether to pre-segment sentences during       |
+|                           |                 |                 | Document initialization. When "False",        |
+|                           |                 |                 | sentence segmentation is deferred until       |
+|                           |                 |                 | sentences are actually needed, improving      |
+|                           |                 |                 | initialization performance.                   |
++---------------------------+-----------------+-----------------+-----------------------------------------------+
+
+
+🔄 DOCX Document Conversion
+===========================
+
+ContextGem provides a built-in "DocxConverter" to easily transform
+DOCX files into LLM-ready "Document" instances.
+
+For detailed usage examples and configuration options, see DOCX
+Converter.
+
+
+🎯 Adding Aspects and Concepts for Extraction
+=============================================
+
+Before extracting information from a document with an LLM, you must
+define and add **aspects** and **concepts** to your document instance.
+These components serve as the foundation for targeted analysis and
+structured information extraction.
+
+**Aspects** define the text segments (sections, topics, themes) to be
+extracted from the document. They can be combined with concepts for
+comprehensive analysis.
+
+**Concepts** define specific data points to be extracted or inferred
+from the document content: entities, insights, structured objects,
+classifications, numerical calculations, dates, ratings, and
+assessments.
+
+For detailed guidance on creating and configuring these components,
+see:
+
+* Aspect Extraction - Complete guide to defining and using aspects
+
+* Supported Concepts - All available concept types and how to use them
+
+
+# ==== converters/docx ====
+
+DOCX Converter
+**************
+
+ContextGem provides built-in converter to easily transform DOCX files
+into LLM-ready ContextGem document objects.
+
+* 📑 **Comprehensive extraction of document elements**: paragraphs,
+  headings, lists, tables, comments, footnotes, textboxes,
+  headers/footers, links, embedded images, and inline formatting
+
+* 🧩 **Document structure preservation** with rich metadata for
+  improved LLM analysis
+
+* 🛠️ **Built-in converter** that directly processes Word XML
+
+
+🚀 Usage
+========
+
+   # Using ContextGem's DocxConverter
+
+   from contextgem import DocxConverter
+
+
+   converter = DocxConverter()
+
+   # Convert a DOCX file to an LLM-ready ContextGem Document
+   # from path
+   document = converter.convert("path/to/document.docx")
+   # or from file object
+   with open("path/to/document.docx", "rb") as docx_file_object:
+       document = converter.convert(docx_file_object)
+
+   # Perform data extraction on the resulting Document object
+   # document.add_aspects(...)
+   # document.add_concepts(...)
+   # llm.extract_all(document)
+
+   # You can also use DocxConverter instance as a standalone text extractor
+   docx_text = converter.convert_to_text_format(
+       "path/to/document.docx",
+       output_format="markdown",  # or "raw"
+   )
+
+
+🔄 Conversion Process
+=====================
+
+The "DocxConverter" performs the following operations when converting
+a DOCX file to a ContextGem Document with "convert()" method:
+
++---------------------------+----------------------------------------------------+---------------------------+
+| Elements                  | Extraction Details                                 | Control Parameter         |
+|                           |                                                    | (Default)                 |
+|===========================|====================================================|===========================|
+| **Text**                  | Extracts the full document text as raw text, and   | "apply_markdown=True"     |
+|                           | optionally applies markdown processing and         |                           |
+|                           | formatting while preserving raw text separately    |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Paragraphs**            | Extracts "Paragraph" objects with rich metadata    | *Always included*         |
+|                           | serving as additional context for LLM (e.g.,       |                           |
+|                           | *"Style: Normal, Table: 3, Row: 1, Column: 3,      |                           |
+|                           | Table Cell"*)                                      |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Headings**              | Preserves heading levels and formats as markdown   | *Always included*         |
+|                           | headings when in markdown mode                     |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Lists**                 | Maintains list hierarchy, numbering, and           | *Always included*         |
+|                           | formatting with proper indentation and list type   |                           |
+|                           | information                                        |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Tables**                | Preserves table structure and formats tables in    | "include_tables=True"     |
+|                           | markdown mode                                      |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Headers & Footers**     | Captures document headers and footers with         | "include_headers=True" /  |
+|                           | appropriate metadata                               | "include_footers=True"    |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Footnotes**             | Extracts footnotes with references and preserves   | "include_footnotes=True"  |
+|                           | connection to original text                        |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Comments**              | Preserves document comments with author            | "include_comments=True"   |
+|                           | information and timestamps                         |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Links**                 | Processes and formats hyperlinks, preserving both  | "include_links=True"      |
+|                           | link text and target URLs                          |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Text Boxes**            | Extracts text from various text box formats        | "include_textboxes=True"  |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Inline Formatting**     | Applies inline formatting such as bold, italic,    | "include_inline_formatti  |
+|                           | underline, etc. when in markdown mode              | ng=True"                  |
++---------------------------+----------------------------------------------------+---------------------------+
+| **Images**                | Extracts embedded images and converts them to      | "include_images=True"     |
+|                           | "Image" objects for further processing with vision |                           |
+|                           | models                                             |                           |
++---------------------------+----------------------------------------------------+---------------------------+
+
+
+ℹ️ Current Limitations
+======================
+
+DocxConverter has the following limitations:
+
+* Drawings such as charts are skipped as it is challenging to
+  represent them in text format.
+
+* Inline markdown formatting (bold, italic, etc.) and hyperlink
+  formatting are not supported in specially marked sections (headers,
+  footers, footnotes, comments).
+
+* Extraction of generated table of contents (ToC) is not supported. (A
+  ToC is an automatically generated list of document headings with
+  page numbers that Word creates based on heading styles.)
+
+* When converting very long DOCX files with complex formatting,
+  performance may be very slow. (Our goal is to improve this in the
+  future.)
 
 
 # ==== aspects/aspects ====
@@ -8891,126 +9179,6 @@ Extracting concepts from an aspect
        print(f"  {concept.name}: {[item.value for item in concept.extracted_items]}")
 
 
-# ==== converters/docx ====
-
-DOCX Converter
-**************
-
-ContextGem provides built-in converter to easily transform DOCX files
-into LLM-ready ContextGem document objects.
-
-* 📑 **Comprehensive extraction of document elements**: paragraphs,
-  headings, lists, tables, comments, footnotes, textboxes,
-  headers/footers, links, embedded images, and inline formatting
-
-* 🧩 **Document structure preservation** with rich metadata for
-  improved LLM analysis
-
-* 🛠️ **Built-in converter** that directly processes Word XML
-
-
-🚀 Usage
-========
-
-   # Using ContextGem's DocxConverter
-
-   from contextgem import DocxConverter
-
-
-   converter = DocxConverter()
-
-   # Convert a DOCX file to an LLM-ready ContextGem Document
-   # from path
-   document = converter.convert("path/to/document.docx")
-   # or from file object
-   with open("path/to/document.docx", "rb") as docx_file_object:
-       document = converter.convert(docx_file_object)
-
-   # Perform data extraction on the resulting Document object
-   # document.add_aspects(...)
-   # document.add_concepts(...)
-   # llm.extract_all(document)
-
-   # You can also use DocxConverter instance as a standalone text extractor
-   docx_text = converter.convert_to_text_format(
-       "path/to/document.docx",
-       output_format="markdown",  # or "raw"
-   )
-
-
-🔄 Conversion Process
-=====================
-
-The "DocxConverter" performs the following operations when converting
-a DOCX file to a ContextGem Document with "convert()" method:
-
-+---------------------------+----------------------------------------------------+---------------------------+
-| Elements                  | Extraction Details                                 | Control Parameter         |
-|                           |                                                    | (Default)                 |
-|===========================|====================================================|===========================|
-| **Text**                  | Extracts the full document text as raw text, and   | "apply_markdown=True"     |
-|                           | optionally applies markdown processing and         |                           |
-|                           | formatting while preserving raw text separately    |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Paragraphs**            | Extracts "Paragraph" objects with rich metadata    | *Always included*         |
-|                           | serving as additional context for LLM (e.g.,       |                           |
-|                           | *"Style: Normal, Table: 3, Row: 1, Column: 3,      |                           |
-|                           | Table Cell"*)                                      |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Headings**              | Preserves heading levels and formats as markdown   | *Always included*         |
-|                           | headings when in markdown mode                     |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Lists**                 | Maintains list hierarchy, numbering, and           | *Always included*         |
-|                           | formatting with proper indentation and list type   |                           |
-|                           | information                                        |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Tables**                | Preserves table structure and formats tables in    | "include_tables=True"     |
-|                           | markdown mode                                      |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Headers & Footers**     | Captures document headers and footers with         | "include_headers=True" /  |
-|                           | appropriate metadata                               | "include_footers=True"    |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Footnotes**             | Extracts footnotes with references and preserves   | "include_footnotes=True"  |
-|                           | connection to original text                        |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Comments**              | Preserves document comments with author            | "include_comments=True"   |
-|                           | information and timestamps                         |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Links**                 | Processes and formats hyperlinks, preserving both  | "include_links=True"      |
-|                           | link text and target URLs                          |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Text Boxes**            | Extracts text from various text box formats        | "include_textboxes=True"  |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Inline Formatting**     | Applies inline formatting such as bold, italic,    | "include_inline_formatti  |
-|                           | underline, etc. when in markdown mode              | ng=True"                  |
-+---------------------------+----------------------------------------------------+---------------------------+
-| **Images**                | Extracts embedded images and converts them to      | "include_images=True"     |
-|                           | "Image" objects for further processing with vision |                           |
-|                           | models                                             |                           |
-+---------------------------+----------------------------------------------------+---------------------------+
-
-
-ℹ️ Current Limitations
-======================
-
-DocxConverter has the following limitations:
-
-* Drawings such as charts are skipped as it is challenging to
-  represent them in text format.
-
-* Inline markdown formatting (bold, italic, etc.) and hyperlink
-  formatting are not supported in specially marked sections (headers,
-  footers, footnotes, comments).
-
-* Extraction of generated table of contents (ToC) is not supported. (A
-  ToC is an automatically generated list of document headings with
-  page numbers that Word creates based on heading styles.)
-
-* When converting very long DOCX files with complex formatting,
-  performance may be very slow. (Our goal is to improve this in the
-  future.)
-
-
 # ==== advanced_usage ====
 
 Advanced usage examples
@@ -9524,6 +9692,122 @@ Tip:
    # Output processing costs (requires setting the pricing details for each LLM)
    print("\nProcessing costs:")
    print(llm_group.get_cost())
+
+
+# ==== logging_config ====
+
+Logging Configuration
+*********************
+
+ContextGem provides comprehensive logging to help you monitor and
+debug the extraction process. You can control logging behavior using
+environment variables.
+
+
+⚙️ Environment Variables
+========================
+
+ContextGem uses a single environment variable for logging
+configuration:
+
+**CONTEXTGEM_LOGGER_LEVEL**
+   Sets the logging level. Valid values are:
+
+   * "TRACE" - Most verbose, shows all log messages
+
+   * "DEBUG" - Shows debug information and above
+
+   * "INFO" - Shows informational messages and above (default)
+
+   * "SUCCESS" - Shows success messages and above
+
+   * "WARNING" - Shows warnings and errors only
+
+   * "ERROR" - Shows errors and critical messages only
+
+   * "CRITICAL" - Shows only critical messages
+
+   * "OFF" - Completely disables logging
+
+   **Default:** "INFO"
+
+Warning:
+
+  **Not recommended:** Setting the level to "OFF" or above "INFO"
+  (such as "WARNING" or "ERROR") may cause you to miss helpful
+  messages, guidance, recommendations, and important information about
+  the extraction process. The default "INFO" level provides a good
+  balance of useful information without being too verbose.
+
+
+🔧 Setting Environment Variables
+================================
+
+**Before importing ContextGem:**
+
+   # Set logging level to WARNING
+   export CONTEXTGEM_LOGGER_LEVEL=WARNING
+
+   # Disable logging completely
+   export CONTEXTGEM_LOGGER_LEVEL=OFF
+
+**In Python before import:**
+
+   import os
+
+   # Set logging level to DEBUG
+   os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "DEBUG"
+
+   # Import ContextGem after setting environment variables
+   import contextgem
+
+
+🔄 Changing Settings at Runtime
+===============================
+
+If you need to change logging settings after importing ContextGem, use
+the "reload_logger_settings()" function:
+
+Changing logger settings at runtime
+
+   import os
+
+   from contextgem import reload_logger_settings
+
+
+   # Initial logger settings are loaded from environment variables at import time
+
+   # Change logger level to WARNING
+   os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "WARNING"
+   print("Setting logger level to WARNING")
+   reload_logger_settings()
+   # Now the logger will only show WARNING level and above messages
+
+   # Disable the logger completely
+   os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "OFF"
+   print("Disabling the logger")
+   reload_logger_settings()
+   # Now the logger is disabled and won't show any messages
+
+   # You can re-enable the logger by setting it back to a valid level
+   # os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "INFO"
+   # reload_logger_settings()
+
+
+📋 Log Format
+=============
+
+ContextGem logs use the following format:
+
+   [contextgem] 2025-01-11 15:30:45.123 | INFO    | Your log message here
+
+Each log entry includes:
+
+* Timestamp
+
+* Log level
+
+* Log message
 
 
 # ==== optimizations/optimization_choosing_llm ====
@@ -10404,7 +10688,9 @@ class contextgem.public.documents.Document(**data)
    Example:
       Document definition
 
-         from contextgem import Document
+         from pathlib import Path
+
+         from contextgem import Document, Paragraph, create_image
 
 
          # Create a document with raw text content
@@ -10432,6 +10718,41 @@ class contextgem.public.documents.Document(**data)
              ),
              paragraph_segmentation_mode="sat",  # Use SaT model for intelligent paragraph segmentation
              sat_model_id="sat-3l-sm",  # Specify which SaT model to use
+         )
+
+         # Create a document with predefined paragraphs, e.g. when you use a custom
+         # paragraph segmentation tool
+         document_from_paragraphs = Document(
+             paragraphs=[
+                 Paragraph(raw_text="This is the first paragraph."),
+                 Paragraph(raw_text="This is the second paragraph with more content."),
+                 Paragraph(raw_text="Final paragraph concluding the document."),
+                 # ...
+             ]
+         )
+
+         # Create document with images
+
+         # Path is adapted for doc tests
+         current_file = Path(__file__).resolve()
+         root_path = current_file.parents[4]
+         image_path = root_path / "tests" / "images" / "invoices" / "invoice.png"
+
+         # Create a document with only images (no text)
+         image_document = Document(
+             images=[
+                 create_image(image_path),  # contextgem.Image instance
+                 # ...
+             ]
+         )
+
+         # Create a document with both text and images
+         mixed_document = Document(
+             raw_text="This document contains both text and visual elements.",
+             images=[
+                 create_image(image_path),  # contextgem.Image instance
+                 # ...
+             ],
          )
 
    Create a new model by parsing and validating input data from
@@ -12613,14 +12934,13 @@ class contextgem.public.concepts.RatingConcept(**data)
 
    property extracted_items: list[_IntegerItem]
 
-      Provides access to extracted items.
+      Gets the list of extracted rating items.
 
       Returns:
-         A list containing the extracted items as *_ExtractedItem*
-         objects.
+         List of extracted integer items representing ratings.
 
       Return type:
-         list[_ExtractedItem]
+         list[_IntegerItem]
 
    clone()
 
@@ -13575,14 +13895,13 @@ class contextgem.public.concepts.LabelConcept(**data)
 
    property extracted_items: list[_LabelItem]
 
-      Provides access to extracted items.
+      Gets the list of extracted label items.
 
       Returns:
-         A list containing the extracted items as *_ExtractedItem*
-         objects.
+         List of extracted label items.
 
       Return type:
-         list[_ExtractedItem]
+         list[_LabelItem]
 
    clone()
 
@@ -14310,9 +14629,13 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
 
    property is_group: bool
 
-      Abstract property, to be implemented by subclasses.
+      Returns True indicating this is a group of LLMs.
 
-      Whether the LLM is a single instance or a group.
+      Returns:
+         Always True for DocumentLLMGroup instances.
+
+      Return type:
+         bool
 
    property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
 
@@ -15265,11 +15588,23 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    property async_limiter: AsyncLimiter
 
+      Gets the async rate limiter for this LLM.
+
+      Returns:
+         The AsyncLimiter instance controlling request rate limits.
+
+      Return type:
+         AsyncLimiter
+
    property is_group: bool
 
-      Abstract property, to be implemented by subclasses.
+      Returns False indicating this is a single LLM, not a group.
 
-      Whether the LLM is a single instance or a group.
+      Returns:
+         Always False for DocumentLLM instances.
+
+      Return type:
+         bool
 
    property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
 
@@ -16503,13 +16838,13 @@ contextgem.public.utils.reload_logger_settings()
          # Now the logger will only show WARNING level and above messages
 
          # Disable the logger completely
-         os.environ["CONTEXTGEM_DISABLE_LOGGER"] = "True"
+         os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "OFF"
          print("Disabling the logger")
          reload_logger_settings()
          # Now the logger is disabled and won't show any messages
 
-         # You can re-enable the logger by setting CONTEXTGEM_DISABLE_LOGGER to "False"
-         # os.environ["CONTEXTGEM_DISABLE_LOGGER"] = "False"
+         # You can re-enable the logger by setting it back to a valid level
+         # os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "INFO"
          # reload_logger_settings()
 
 class contextgem.public.utils.JsonObjectClassStruct

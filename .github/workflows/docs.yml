@@ -40,7 +40,7 @@ jobs:
       - name: Build documentation
         run: |
           cd docs
-          uv run sphinx-build -b html source _build/html -v -E
+          uv run sphinx-build -b html source _build/html -v -E -W
       
       - name: Create .nojekyll file
         run: touch docs/_build/html/.nojekyll
