@@ -12,11 +12,11 @@ reload_logger_settings()
 # Now the logger will only show WARNING level and above messages
 
 # Disable the logger completely
-os.environ["CONTEXTGEM_DISABLE_LOGGER"] = "True"
+os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "OFF"
 print("Disabling the logger")
 reload_logger_settings()
 # Now the logger is disabled and won't show any messages
 
-# You can re-enable the logger by setting CONTEXTGEM_DISABLE_LOGGER to "False"
-# os.environ["CONTEXTGEM_DISABLE_LOGGER"] = "False"
+# You can re-enable the logger by setting it back to a valid level
+# os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "INFO"
 # reload_logger_settings()

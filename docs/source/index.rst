@@ -69,6 +69,40 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             :expand:
             
             Get Started
+
+    .. grid-item-card:: 📄 Documents
+        :link: documents/document_config
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+        
+        Learn how to create and configure documents to extract information (aspects and concepts) from.
+        
+        +++
+        .. button-ref:: documents/document_config
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+            
+            Create Documents
+
+    .. grid-item-card:: 🔄 Document Converters
+        :link: converters/docx
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to use ContextGem's built-in document converters for files such as DOCX.
+
+        +++
+        .. button-ref:: converters/docx
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Convert Files
     
     .. grid-item-card:: 📋 Extracting Aspects
         :link: aspects/aspects
@@ -121,23 +155,6 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             
             Explore LLMs
 
-    .. grid-item-card:: 🔄 Document Converters
-        :link: converters/docx
-        :link-type: doc
-        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
-
-        Learn how to use ContextGem's built-in document converters for files such as DOCX.
-
-        +++
-        .. button-ref:: converters/docx
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
-
-            Convert Files
-
     .. grid-item-card:: 🔍 Advanced Usage
         :link: advanced_usage
         :link-type: doc
@@ -153,7 +170,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             :outline:
             :expand:
             
-            Explore
+            Learn More
 
     .. grid-item-card:: ⚙️ Optimization Guide
         :link: optimizations/optimization_choosing_llm
@@ -236,6 +253,20 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
+   :caption: Documents
+   :hidden:
+   
+   documents/document_config
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Document Converters
+   :hidden:
+   
+   converters/docx
+
+.. toctree::
+   :maxdepth: 2
    :caption: Extracting Aspects
    :hidden:
    
@@ -266,17 +297,11 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
-   :caption: Document Converters
-   :hidden:
-   
-   converters/docx
-
-.. toctree::
-   :maxdepth: 2
    :caption: Advanced Usage
    :hidden:
    
    advanced_usage
+   logging_config
 
 .. toctree::
    :maxdepth: 2

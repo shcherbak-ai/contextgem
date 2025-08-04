@@ -72,7 +72,6 @@ from contextgem.internal.items import (
     _StringItem,
 )
 from contextgem.internal.loggers import (
-    DISABLE_LOGGER_ENV_VAR_NAME,
     LOGGER_LEVEL_ENV_VAR_NAME,
     dedicated_stream,
     logger,
@@ -6238,7 +6237,7 @@ class TestAll(TestUtils):
         monkeypatch.setattr(dedicated_stream, "base", sys.stdout)
 
         # 1) Set environment variable to disable logger
-        monkeypatch.setenv(DISABLE_LOGGER_ENV_VAR_NAME, "True")
+        monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "OFF")
         reload_logger_settings()
 
         # 2) Attempt to log a message
@@ -6259,9 +6258,8 @@ class TestAll(TestUtils):
         # Ensure our dedicated stream uses the current (monkeypatched) sys.stdout:
         monkeypatch.setattr(dedicated_stream, "base", sys.stdout)
 
-        # 1) Unset environment variable or set to 'False'
-        monkeypatch.delenv(DISABLE_LOGGER_ENV_VAR_NAME, raising=False)
-        # or monkeypatch.setenv(DISABLE_LOGGER_ENV_VAR_NAME, "False")
+        # 1) Set environment variable to enable logger
+        monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "DEBUG")
         reload_logger_settings()
 
         # 2) Log a message
@@ -6310,8 +6308,7 @@ class TestAll(TestUtils):
         # Ensure our dedicated stream uses the current (monkeypatched) sys.stdout:
         monkeypatch.setattr(dedicated_stream, "base", sys.stdout)
 
-        # 1) Ensure the logger is NOT disabled; only set the log level.
-        monkeypatch.setenv(DISABLE_LOGGER_ENV_VAR_NAME, "False")
+        # 1) Set the log level.
         monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, env_level)
         reload_logger_settings()
 
@@ -7405,7 +7402,6 @@ class TestAll(TestUtils):
         as tests resetting the usage and cost for the test LLMs.
         """
         # Ensure logger is enabled for cost output (in case previous tests disabled it)
-        os.environ.pop(DISABLE_LOGGER_ENV_VAR_NAME, None)
         os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = "DEBUG"
         reload_logger_settings()
 

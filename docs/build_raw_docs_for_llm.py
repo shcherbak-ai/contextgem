@@ -59,11 +59,13 @@ def run_sphinx_text_build() -> None:
     Raises:
         SystemExit: If the Sphinx build process fails.
     """
-    logger.info("🔧 Running: sphinx-build -b text")
+    logger.info(
+        "🔧 Running: sphinx-build -b text (with -W to treat warnings as errors)"
+    )
     try:
         # Run sphinx-build with full path and environment
         subprocess.run(
-            ["sphinx-build", "-b", "text", SOURCE_DIR, TEXT_DIR, "-E"],
+            ["sphinx-build", "-b", "text", SOURCE_DIR, TEXT_DIR, "-E", "-W"],
             check=True,
             capture_output=True,
             text=True,
