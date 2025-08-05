@@ -32,6 +32,7 @@ from contextgem.public import (
     DocumentLLMGroup,
     DocumentPipeline,
     DocxConverter,
+    ExtractionPipeline,
     Image,
     JsonObjectClassStruct,
     JsonObjectConcept,
@@ -65,7 +66,8 @@ __all__ = [
     # Documents
     "Document",
     # Pipelines
-    "DocumentPipeline",
+    "ExtractionPipeline",
+    "DocumentPipeline",  # deprecated, will be removed in v1.0.0
     # Paragraphs
     "Paragraph",
     # Sentences

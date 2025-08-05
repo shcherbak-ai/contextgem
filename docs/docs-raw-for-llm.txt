@@ -1013,7 +1013,7 @@ Extraction pipeline example (ContextGem)
        Document,
        DocumentLLM,
        DocumentLLMGroup,
-       DocumentPipeline,
+       ExtractionPipeline,
        JsonObjectConcept,
        JsonObjectExample,
        LLMPricing,
@@ -1058,8 +1058,8 @@ Extraction pipeline example (ContextGem)
        ),
    )
 
-   # Create a reusable document pipeline for extraction
-   contract_pipeline = DocumentPipeline()
+   # Create a reusable extraction pipeline
+   contract_pipeline = ExtractionPipeline()
 
    # Define aspects and aspect-level concepts in the pipeline
    # Concepts in the aspects will be extracted from the extracted aspect context
@@ -7922,6 +7922,554 @@ Here are some best practices to optimize your use of "LabelConcept":
   complex or ambiguous content.
 
 
+# ==== pipelines/extraction_pipelines ====
+
+Extraction Pipelines
+********************
+
+"ExtractionPipeline" is a powerful component that enables you to
+create reusable collections of predefined aspects and concepts for
+consistent document analysis. Pipelines serve as templates that can be
+applied to multiple documents, ensuring standardized data extraction
+across your application.
+
+
+📝 Overview
+===========
+
+Extraction pipelines package common extraction patterns into reusable
+units, allowing you to:
+
+* **Standardize document processing**: Define a consistent set of
+  aspects and concepts once, then apply them to multiple documents
+
+* **Create reusable templates**: Build domain-specific pipelines
+  (e.g., contract analysis, invoice processing, report analysis)
+
+* **Ensure consistent analysis**: Maintain uniform extraction criteria
+  across document batches
+
+* **Simplify workflow management**: Organize complex extraction
+  workflows into manageable, reusable components
+
+Pipelines are particularly valuable when processing multiple documents
+of the same type, where you need to extract the same categories of
+information consistently.
+
+
+⭐ Key Features
+===============
+
+
+Template-Based Extraction
+-------------------------
+
+Pipelines act as extraction templates that define what information to
+extract from documents. Once created, a pipeline can be assigned to
+any number of documents, ensuring consistent analysis criteria.
+
+
+Aspect and Concept Organization
+-------------------------------
+
+Pipelines can contain both:
+
+* **Aspects**: For extracting document sections and organizing content
+  hierarchically
+
+* **Concepts**: For extracting specific data points with intelligent
+  inference
+
+This allows you to create comprehensive extraction workflows that
+combine broad content organization with detailed data extraction.
+
+
+Reusability and Scalability
+---------------------------
+
+A single pipeline can be applied to multiple documents, making it
+ideal for batch processing, automated workflows, and applications that
+need to process similar document types repeatedly.
+
+
+💻 Basic Usage
+==============
+
+
+Simple Pipeline Creation
+------------------------
+
+Here's how to create and use a basic extraction pipeline:
+
+   from contextgem import (
+       Aspect,
+       BooleanConcept,
+       DateConcept,
+       Document,
+       ExtractionPipeline,
+       StringConcept,
+   )
+
+
+   # Create a pipeline for NDA (Non-Disclosure Agreement) review
+   nda_pipeline = ExtractionPipeline(
+       aspects=[
+           Aspect(
+               name="Confidential information",
+               description="Clauses defining the confidential information",
+           ),
+           Aspect(
+               name="Exclusions",
+               description="Clauses defining exclusions from confidential information",
+           ),
+           Aspect(
+               name="Obligations",
+               description="Clauses defining confidentiality obligations",
+           ),
+           Aspect(
+               name="Liability",
+               description="Clauses defining liability for breach of the agreement",
+           ),
+           # ... Add more aspects as needed
+       ],
+       concepts=[
+           StringConcept(
+               name="Anomaly",
+               description="Anomaly in the contract, e.g. out-of-context or nonsensical clauses",
+               llm_role="reasoner_text",
+               add_references=True,  # Add references to the source text
+               reference_depth="sentences",  # Reference to the sentence level
+               add_justifications=True,  # Add justifications for the anomaly
+               justification_depth="balanced",  # Justification at the sentence level
+               justification_max_sents=5,  # Maximum number of sentences in the justification
+           ),
+           BooleanConcept(
+               name="Is mutual",
+               description="Whether the NDA is mutual (bidirectional) or one-way",
+               singular_occurrence=True,
+               llm_role="reasoner_text",  # Use the reasoner role for this concept
+           ),
+           DateConcept(
+               name="Effective date",
+               description="The date when the NDA agreement becomes effective",
+               singular_occurrence=True,
+           ),
+           StringConcept(
+               name="Term",
+               description="The term of the NDA",
+           ),
+           StringConcept(
+               name="Governing law",
+               description="The governing law of the agreement",
+               singular_occurrence=True,
+           ),
+           # ... Add more concepts as needed
+       ],
+   )
+
+   # Assign the pipeline to the NDA document
+   nda_document = Document(raw_text="[NDA text]")
+   nda_document.assign_pipeline(nda_pipeline)
+
+   # Now the document is ready for processing with the NDA review pipeline!
+   # The document can be processed to extract the defined aspects and concepts
+
+   # Extract all aspects and concepts from the NDA using an LLM group
+   # with LLMs with roles "extractor_text" and "reasoner_text".
+   # llm_group.extract_all(nda_document)
+
+
+Pipeline Assignment to Documents
+--------------------------------
+
+Once created, pipelines can be easily assigned to documents:
+
+   from contextgem import Document, ExtractionPipeline
+
+   # Create your pipeline
+   my_pipeline = ExtractionPipeline(aspects=[...], concepts=[...])
+
+   # Create documents
+   doc1 = Document(raw_text="First document content...")
+   doc2 = Document(raw_text="Second document content...")
+
+   # Assign the same pipeline to multiple documents
+   doc1.assign_pipeline(my_pipeline)
+   doc2.assign_pipeline(my_pipeline)
+
+   # Now both documents have the same extraction configuration
+
+
+⚙️ Parameters
+=============
+
+When creating an "ExtractionPipeline", you can configure the following
+parameters:
+
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| Parameter            | Type            | Default Value   | Description                                        |
+|======================|=================|=================|====================================================|
+| "aspects"            | "list[Aspect]"  | "[]"            | *Optional*. List of "Aspect" instances to extract  |
+|                      |                 |                 | from documents. Aspects represent structural       |
+|                      |                 |                 | categories of information and can contain their    |
+|                      |                 |                 | own sub-aspects and concepts for detailed          |
+|                      |                 |                 | analysis. See Aspect Extraction for more           |
+|                      |                 |                 | information.                                       |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "concepts"           | "list[_Concept  | "[]"            | *Optional*. List of "_Concept" instances to        |
+|                      | ]"              |                 | identify within or infer from documents. These are |
+|                      |                 |                 | document-level concepts that apply to the entire   |
+|                      |                 |                 | document content. See supported concept types in   |
+|                      |                 |                 | Supported Concepts.                                |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+
+
+📊 Pipeline Assignment
+======================
+
+The "assign_pipeline()" method is used to apply a pipeline to a
+document. This method:
+
+* **Assigns aspects and concepts**: Transfers the pipeline's aspects
+  and concepts to the document
+
+* **Validates compatibility**: Ensures no conflicts with existing
+  document configuration
+
+
+Assignment Options
+------------------
+
+   # Basic assignment (will raise error if document already has aspects/concepts)
+   document.assign_pipeline(my_pipeline)
+
+   # Overwrite existing configuration
+   document.assign_pipeline(my_pipeline, overwrite_existing=True)
+
+
+🚀 Advanced Usage
+=================
+
+
+Multi-Document Processing
+-------------------------
+
+Pipelines excel at processing multiple documents of the same type.
+Here's a comprehensive example:
+
+   # Advanced Usage Example - analyzing multiple documents with a single pipeline,
+   # with different LLMs, concurrency and cost tracking
+
+   import os
+
+   from contextgem import (
+       Aspect,
+       DateConcept,
+       Document,
+       DocumentLLM,
+       DocumentLLMGroup,
+       ExtractionPipeline,
+       JsonObjectConcept,
+       JsonObjectExample,
+       LLMPricing,
+       NumericalConcept,
+       RatingConcept,
+       StringConcept,
+       StringExample,
+   )
+
+
+   # Construct documents
+
+   # Document 1 - Consultancy Agreement (shortened for brevity)
+   doc1 = Document(
+       raw_text=(
+           "Consultancy Agreement\n"
+           "This agreement between Company A (Supplier) and Company B (Customer)...\n"
+           "The term of the agreement is 1 year from the Effective Date...\n"
+           "The Supplier shall provide consultancy services as described in Annex 2...\n"
+           "The Customer shall pay the Supplier within 30 calendar days of receiving an invoice...\n"
+           "All intellectual property created during the provision of services shall belong to the Customer...\n"
+           "This agreement is governed by the laws of Norway...\n"
+           "Annex 1: Data processing agreement...\n"
+           "Annex 2: Statement of Work...\n"
+           "Annex 3: Service Level Agreement...\n"
+       ),
+   )
+
+   # Document 2 - Service Level Agreement (shortened for brevity)
+   doc2 = Document(
+       raw_text=(
+           "Service Level Agreement\n"
+           "This agreement between TechCorp (Provider) and GlobalInc (Client)...\n"
+           "The agreement shall commence on January 1, 2023 and continue for 2 years...\n"
+           "The Provider shall deliver IT support services as outlined in Schedule A...\n"
+           "The Client shall make monthly payments of $5,000 within 15 days of invoice receipt...\n"
+           "The Provider guarantees [99.9%] uptime for all critical systems...\n"
+           "Either party may terminate with 60 days written notice...\n"
+           "This agreement is governed by the laws of California...\n"
+           "Schedule A: Service Descriptions...\n"
+           "Schedule B: Response Time Requirements...\n"
+       ),
+   )
+
+   # Create a reusable extraction pipeline
+   contract_pipeline = ExtractionPipeline()
+
+   # Define aspects and aspect-level concepts in the pipeline
+   # Concepts in the aspects will be extracted from the extracted aspect context
+   contract_pipeline.aspects = [  # or use .add_aspects([...])
+       Aspect(
+           name="Contract Parties",
+           description="Clauses defining the parties to the agreement",
+           concepts=[  # define aspect-level concepts, if any
+               StringConcept(
+                   name="Party names and roles",
+                   description="Names of all parties entering into the agreement and their roles",
+                   examples=[  # optional
+                       StringExample(
+                           content="X (Client)",  # guidance regarding the expected output format
+                       )
+                   ],
+               )
+           ],
+       ),
+       Aspect(
+           name="Term",
+           description="Clauses defining the term of the agreement",
+           concepts=[
+               NumericalConcept(
+                   name="Contract term",
+                   description="The term of the agreement in years",
+                   numeric_type="int",  # or "float", or "any" for auto-detection
+                   add_references=True,  # extract references to the source text
+                   reference_depth="paragraphs",
+               )
+           ],
+       ),
+   ]
+
+   # Define document-level concepts
+   # Concepts in the document will be extracted from the whole document content
+   contract_pipeline.concepts = [  # or use .add_concepts()
+       DateConcept(
+           name="Effective date",
+           description="The effective date of the agreement",
+       ),
+       StringConcept(
+           name="Contract type",
+           description="The type of agreement",
+           llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
+       ),
+       StringConcept(
+           name="Governing law",
+           description="The law that governs the agreement",
+       ),
+       JsonObjectConcept(
+           name="Attachments",
+           description="The titles and concise descriptions of the attachments to the agreement",
+           structure={"title": str, "description": str | None},
+           examples=[  # optional
+               JsonObjectExample(  # guidance regarding the expected output format
+                   content={
+                       "title": "Appendix A",
+                       "description": "Code of conduct",
+                   }
+               ),
+           ],
+       ),
+       RatingConcept(
+           name="Duration adequacy",
+           description="Contract duration adequacy considering the subject matter and best practices.",
+           llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
+           rating_scale=(1, 10),
+           add_justifications=True,  # add justifications for the rating
+           justification_depth="balanced",  # provide a balanced justification
+           justification_max_sents=3,
+       ),
+   ]
+
+   # Assign pipeline to the documents
+   # You can re-use the same pipeline for multiple documents
+   doc1.assign_pipeline(
+       contract_pipeline
+   )  # assigns pipeline aspects and concepts to the document
+   doc2.assign_pipeline(
+       contract_pipeline
+   )  # assigns pipeline aspects and concepts to the document
+
+   # Create an LLM group for data extraction and reasoning
+   llm_extractor = DocumentLLM(
+       model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
+       api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
+       role="extractor_text",  # signifies the LLM is used for data extraction tasks
+       pricing_details=LLMPricing(  # optional, for costs calculation
+           input_per_1m_tokens=0.150,
+           output_per_1m_tokens=0.600,
+       ),
+   )
+   llm_reasoner = DocumentLLM(
+       model="openai/o3-mini",  # or any other LLM from e.g. Anthropic, etc.
+       api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
+       role="reasoner_text",  # signifies the LLM is used for reasoning tasks
+       pricing_details=LLMPricing(  # optional, for costs calculation
+           input_per_1m_tokens=1.10,
+           output_per_1m_tokens=4.40,
+       ),
+   )
+   # The LLM group is used for all extraction tasks within the pipeline
+   llm_group = DocumentLLMGroup(llms=[llm_extractor, llm_reasoner])
+
+   # Extract all information from the documents at once
+   doc1 = llm_group.extract_all(
+       doc1, use_concurrency=True
+   )  # use concurrency to speed up extraction
+   doc2 = llm_group.extract_all(
+       doc2, use_concurrency=True
+   )  # use concurrency to speed up extraction
+   # Or use async variants .extract_all_async(...)
+
+   # Get the extracted data
+   print("Some extracted data from doc 1:")
+   print("Contract Parties > Party names and roles:")
+   print(
+       doc1.get_aspect_by_name("Contract Parties")
+       .get_concept_by_name("Party names and roles")
+       .extracted_items
+   )
+   print("Attachments:")
+   print(doc1.get_concept_by_name("Attachments").extracted_items)
+   # ...
+
+   print("\nSome extracted data from doc 2:")
+   print("Term > Contract term:")
+   print(
+       doc2.get_aspect_by_name("Term")
+       .get_concept_by_name("Contract term")
+       .extracted_items[0]
+       .value
+   )
+   print("Duration adequacy:")
+   print(doc2.get_concept_by_name("Duration adequacy").extracted_items[0].value)
+   print(doc2.get_concept_by_name("Duration adequacy").extracted_items[0].justification)
+   # ...
+
+   # Output processing costs (requires setting the pricing details for each LLM)
+   print("\nProcessing costs:")
+   print(llm_group.get_cost())
+
+
+Pipeline Serialization
+----------------------
+
+Pipelines can be serialized for storage and later reuse:
+
+   # Serialize the pipeline
+   pipeline_json = pipeline.to_json()  # or to_dict() / to_disk()
+
+   # Deserialize the pipeline
+   pipeline_deserialized = ExtractionPipeline.from_json(
+       pipeline_json
+   )  # or from_dict() / from_disk()
+
+
+💡 Best Practices
+=================
+
+
+Pipeline Design
+---------------
+
+* **Domain-specific organization**: Create pipelines tailored to
+  specific document types (contracts, invoices, reports, etc.)
+
+* **Logical grouping**: Group related aspects and concepts together
+  for coherent analysis
+
+* **Reusable templates**: Design pipelines to be generic enough for
+  reuse across similar documents
+
+
+Concept Placement Strategy
+--------------------------
+
+* **Document-level concepts**: Place concepts that apply to the entire
+  document in the pipeline's "concepts" list
+
+* **Aspect-level concepts**: Place concepts that are specific to
+  particular document sections within the relevant aspects
+
+* **Avoid duplication**: Don't create similar concepts at both
+  document and aspect levels
+
+
+🎯 Example Use Cases
+====================
+
+
+Invoice Processing Pipeline
+---------------------------
+
+   invoice_pipeline = ExtractionPipeline(
+       concepts=[
+           StringConcept(name="Vendor Name", description="Name of the vendor/supplier"),
+           StringConcept(name="Invoice Number", description="Unique invoice identifier"),
+           DateConcept(name="Invoice Date", description="Date the invoice was issued"),
+           DateConcept(name="Due Date", description="Payment due date"),
+           NumericalConcept(name="Total Amount", description="Total invoice amount"),
+           StringConcept(name="Currency", description="Currency of the invoice"),
+       ]
+   )
+
+
+Research Paper Analysis Pipeline
+--------------------------------
+
+   research_pipeline = ExtractionPipeline(
+       aspects=[
+           Aspect(name="Abstract", description="Paper abstract and summary"),
+           Aspect(name="Methodology", description="Research methods and approach"),
+           Aspect(name="Results", description="Findings and outcomes"),
+           Aspect(name="Conclusions", description="Conclusions and implications"),
+       ],
+       concepts=[
+           StringConcept(name="Research Field", description="Primary research domain"),
+           StringConcept(name="Keywords", description="Paper keywords and topics"),
+           DateConcept(name="Publication Date", description="When the paper was published"),
+           RatingConcept(name="Novelty Score", description="Novelty of the research", rating_scale=(1, 10)),
+       ]
+   )
+
+
+⚡ Pipeline Reuse Benefits
+==========================
+
+* **Consistency**: Ensures all documents are processed with identical
+  extraction criteria
+
+* **Efficiency**: Eliminates the need to recreate aspects and concepts
+  for each document
+
+* **Maintainability**: Changes to extraction logic only need to be
+  made in one place
+
+
+📚 Related Documentation
+========================
+
+* Aspect Extraction - Learn about aspect extraction
+
+* Supported Concepts - Explore available concept types and how to use
+  them
+
+* Advanced usage examples - See advanced pipeline usage examples
+
+* Extraction Methods - Understand LLM extraction methods
+
+* Serializing objects and results - Learn about pipeline serialization
+  and storage
+
+
 # ==== llms/supported_llms ====
 
 Supported LLMs
@@ -9503,7 +10051,7 @@ Tip:
        Document,
        DocumentLLM,
        DocumentLLMGroup,
-       DocumentPipeline,
+       ExtractionPipeline,
        JsonObjectConcept,
        JsonObjectExample,
        LLMPricing,
@@ -9548,8 +10096,8 @@ Tip:
        ),
    )
 
-   # Create a reusable document pipeline for extraction
-   contract_pipeline = DocumentPipeline()
+   # Create a reusable extraction pipeline
+   contract_pipeline = ExtractionPipeline()
 
    # Define aspects and aspect-level concepts in the pipeline
    # Concepts in the aspects will be extracted from the extracted aspect context
@@ -10429,7 +10977,7 @@ The following ContextGem objects support serialization:
 
 * "Document" - Contains document content and extracted information
 
-* "DocumentPipeline" - Defines extraction structure and logic
+* "ExtractionPipeline" - Defines extraction structure and logic
 
 * "DocumentLLM" - Stores LLM configuration for document processing
 
@@ -10463,7 +11011,7 @@ corresponding class methods:
 ================
 
    # Example of serializing and deserializing ContextGem document,
-   # document pipeline, and LLM config.
+   # extraction pipeline, and LLM config.
 
    import os
    from pathlib import Path
@@ -10473,8 +11021,8 @@ corresponding class methods:
        BooleanConcept,
        Document,
        DocumentLLM,
-       DocumentPipeline,
        DocxConverter,
+       ExtractionPipeline,
        StringConcept,
    )
 
@@ -10489,8 +11037,8 @@ corresponding class methods:
    )  # your file path here (Path adapted for testing)
    doc = converter.convert(docx_path, strict_mode=True)
 
-   # Create a document pipeline
-   document_pipeline = DocumentPipeline(
+   # Create an extraction pipeline
+   extraction_pipeline = ExtractionPipeline(
        aspects=[
            Aspect(
                name="Categories of confidential information",
@@ -10516,7 +11064,7 @@ corresponding class methods:
    )
 
    # Attach the pipeline to the document
-   doc.assign_pipeline(document_pipeline)
+   doc.assign_pipeline(extraction_pipeline)
 
    # Configure a document LLM with your API parameters
    llm = DocumentLLM(
@@ -10531,15 +11079,15 @@ corresponding class methods:
 
    # Serialize the LLM config, pipeline and document
    llm_config_json = llm.to_json()  # or to_dict() / to_disk()
-   document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disk()
+   extraction_pipeline_json = extraction_pipeline.to_json()  # or to_dict() / to_disk()
    processed_doc_json = doc.to_json()  # or to_dict() / to_disk()
 
    # Deserialize the LLM config, pipeline and document
    llm_deserialized = DocumentLLM.from_json(
        llm_config_json
    )  # or from_dict() / from_disk()
-   document_pipeline_deserialized = DocumentPipeline.from_json(
-       document_pipeline_json
+   extraction_pipeline_deserialized = ExtractionPipeline.from_json(
+       extraction_pipeline_json
    )  # or from_dict() / from_disk()
    processed_doc_deserialized = Document.from_json(
        processed_doc_json
@@ -10803,11 +11351,11 @@ class contextgem.public.documents.Document(**data)
       set to *True*.
 
       Parameters:
-         * **pipeline**
-           ("contextgem.public.pipelines.DocumentPipeline") -- The
-           DocumentPipeline object to attach to the document.
+         * **pipeline** (*ExtractionPipeline** | **DocumentPipeline*)
+           -- The ExtractionPipeline (or deprecated DocumentPipeline)
+           object to attach to the document.
 
-         * **overwrite_existing** ("bool") -- A boolean flag. If set
+         * **overwrite_existing** (*bool*) -- A boolean flag. If set
            to True, any existing aspects and concepts assigned to the
            document will be overwritten by the new pipeline. Defaults
            to False.
@@ -17625,7 +18173,7 @@ Pipelines
 
 Module for handling document processing pipelines.
 
-This module provides the DocumentPipeline class, which represents a
+This module provides the ExtractionPipeline class, which represents a
 reusable collection of pre-defined aspects and concepts that can be
 assigned to documents. Pipelines enable standardized document analysis
 by packaging common extraction patterns into reusable units.
@@ -17636,14 +18184,14 @@ documents. They encapsulate both the structural organization (aspects)
 and the specific information to extract (concepts) in a single,
 assignable object.
 
-class contextgem.public.pipelines.DocumentPipeline(**data)
+class contextgem.public.pipelines.ExtractionPipeline(**data)
 
    Bases: "_AssignedInstancesProcessor"
 
    Represents a reusable collection of predefined aspects and concepts
    for document analysis.
 
-   Document pipelines serve as templates that can be assigned to
+   Extraction pipelines serve as templates that can be assigned to
    multiple documents, ensuring consistent application of the same
    analysis criteria. They package common extraction patterns into
    reusable units, allowing for standardized document processing.
@@ -17673,20 +18221,20 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
       documents.
 
    Example:
-      Document pipeline definition
+      Extraction pipeline definition
 
          from contextgem import (
              Aspect,
              BooleanConcept,
              DateConcept,
              Document,
-             DocumentPipeline,
+             ExtractionPipeline,
              StringConcept,
          )
 
 
          # Create a pipeline for NDA (Non-Disclosure Agreement) review
-         nda_pipeline = DocumentPipeline(
+         nda_pipeline = ExtractionPipeline(
              aspects=[
                  Aspect(
                      name="Confidential information",
@@ -18119,5 +18667,403 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
    property unique_id: str
 
       Returns the ULID of the instance.
+
+   custom_data: dict
+
+class contextgem.public.pipelines.DocumentPipeline(**data)
+
+   Bases: "ExtractionPipeline"
+
+   Deprecated alias for ExtractionPipeline.
+
+   Deprecated since version 0.14.1: DocumentPipeline is deprecated and
+   will be removed in v1.0.0. Use ExtractionPipeline instead.
+
+   This class was renamed to ExtractionPipeline to better reflect its
+   purpose and scope:
+
+   * **Clearer semantics**: "ExtractionPipeline" explicitly describes
+     what the pipeline does
+
+   * **Consistency**: Aligns with the framework's naming conventions
+     for extraction-focused components
+
+   **Migration**: Simply replace "DocumentPipeline" with
+   "ExtractionPipeline" in your imports. All functionality remains
+   identical.
+
+   **Future-proofing**: Update your code before v1.0.0 to avoid
+   breaking changes:
+
+   Initialize DocumentPipeline with deprecation warning.
+
+   Parameters:
+      * **custom_data** (*dict*)
+
+      * **aspects** (*list**[**Aspect**]*)
+
+      * **concepts** (*Annotated**[**Sequence**[**_Concept**]**, **Be
+        foreValidator**(**func=~contextgem.internal.typings.validator
+        s._validate_sequence_is_list**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
+
+   add_aspects(aspects)
+
+      Adds aspects to the existing aspects list of an instance and
+      returns the updated instance. This method ensures that the
+      provided aspects are deeply copied to avoid any unintended state
+      modification of the original reusable aspects.
+
+      Parameters:
+         **aspects** (*list**[**Aspect**]*) -- A list of aspects to be
+         added. Each aspect is deeply copied to ensure the original
+         list remains unaltered.
+
+      Returns:
+         Updated instance containing the newly added aspects.
+
+      Return type:
+         Self
+
+   add_concepts(concepts)
+
+      Adds a list of new concepts to the existing *concepts* attribute
+      of the instance. This method ensures that the provided list of
+      concepts is deep-copied to prevent unintended side effects from
+      modifying the input list outside of this method.
+
+      Parameters:
+         **concepts** (*list**[**_Concept**]*) -- A list of concepts
+         to be added. It will be deep-copied before being added to the
+         instance's *concepts* attribute.
+
+      Returns:
+         Returns the instance itself after the modification.
+
+      Return type:
+         Self
+
+   clone()
+
+      Creates and returns a deep copy of the current instance.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         A deep copy of the current instance.
+
+   classmethod from_dict(obj_dict)
+
+      Reconstructs an instance of the class from a dictionary
+      representation.
+
+      This method deserializes a dictionary containing the object's
+      attributes and values into a new instance of the class. It
+      handles complex nested structures like aspects, concepts, and
+      extracted items, properly reconstructing each component.
+
+      Parameters:
+         **obj_dict** (*dict**[**str**, **Any**]*) -- Dictionary
+         containing the serialized object data.
+
+      Returns:
+         A new instance of the class with restored attributes.
+
+      Return type:
+         Self
+
+   classmethod from_disk(file_path)
+
+      Loads an instance of the class from a JSON file stored on disk.
+
+      This method reads the JSON content from the specified file path
+      and deserializes it into an instance of the class using the
+      *from_json* method.
+
+      Parameters:
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
+
+      Returns:
+         An instance of the class populated with the data from the
+         file.
+
+      Return type:
+         Self
+
+      Raises:
+         * **ValueError** -- If the file path doesn't end with
+           '.json'.
+
+         * **RuntimeError** -- If deserialization fails.
+
+   classmethod from_json(json_string)
+
+      Creates an instance of the class from a JSON string
+      representation.
+
+      This method deserializes the provided JSON string into a
+      dictionary and uses the *from_dict* method to construct the
+      class instance. It validates that the class name in the
+      serialized data matches the current class.
+
+      Parameters:
+         **json_string** (*str*) -- JSON string containing the
+         serialized object data.
+
+      Returns:
+         A new instance of the class with restored state.
+
+      Return type:
+         Self
+
+      Raises:
+         **TypeError** -- If the class name in the serialized data
+         doesn't match.
+
+   get_aspect_by_name(name)
+
+      Finds and returns an aspect with the specified name from the
+      list of available aspects, if the instance has *aspects*
+      attribute.
+
+      Parameters:
+         **name** (*str*) -- The name of the aspect to find.
+
+      Returns:
+         The aspect with the specified name.
+
+      Return type:
+         Aspect
+
+      Raises:
+         **ValueError** -- If no aspect with the specified name is
+         found.
+
+   get_aspects_by_names(names)
+
+      Retrieve a list of Aspect objects corresponding to the provided
+      list of names.
+
+      Parameters:
+         **names** ("list"["str"]) -- List of aspect names to
+         retrieve. The names must be provided as a list of strings.
+
+      Returns:
+         A list of Aspect objects corresponding to provided names.
+
+      Return type:
+         list[Aspect]
+
+   get_concept_by_name(name)
+
+      Retrieves a concept from the list of concepts based on the
+      provided name, if the instance has *concepts* attribute.
+
+      Parameters:
+         **name** (*str*) -- The name of the concept to search for.
+
+      Returns:
+         The *_Concept* object with the specified name.
+
+      Return type:
+         _Concept
+
+      Raises:
+         **ValueError** -- If no concept with the specified name is
+         found.
+
+   get_concepts_by_names(names)
+
+      Retrieve a list of _Concept objects corresponding to the
+      provided list of names.
+
+      Parameters:
+         **names** ("list"["str"]) -- List of concept names to
+         retrieve. The names must be provided as a list of strings.
+
+      Returns:
+         A list of _Concept objects corresponding to provided names.
+
+      Return type:
+         list[_Concept]
+
+   property llm_roles: set[str]
+
+      A set of LLM roles associated with the object's aspects and
+      concepts.
+
+      Returns:
+         A set containing unique LLM roles gathered from aspects and
+         concepts.
+
+      Return type:
+         set[str]
+
+   remove_all_aspects()
+
+      Removes all aspects from the instance and returns the updated
+      instance.
+
+      This method clears the *aspects* attribute of the instance by
+      resetting it to an empty list. It returns the same instance,
+      allowing for method chaining.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         The updated instance with all aspects removed
+
+   remove_all_concepts()
+
+      Removes all concepts from the instance and returns the updated
+      instance.
+
+      This method clears the *concepts* attribute of the instance by
+      resetting it to an empty list. It returns the same instance,
+      allowing for method chaining.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         The updated instance with all concepts removed
+
+   remove_all_instances()
+
+      Removes all assigned instances from the object and resets them
+      as empty lists. Returns the modified instance.
+
+      Returns:
+         The modified object with all assigned instances removed.
+
+      Return type:
+         Self
+
+   remove_aspect_by_name(name)
+
+      Removes an aspect from the assigned aspects by its name.
+
+      Parameters:
+         **name** (*str*) -- The name of the aspect to be removed
+
+      Returns:
+         Updated instance with the aspect removed.
+
+      Return type:
+         Self
+
+   remove_aspects_by_names(names)
+
+      Removes multiple aspects from an object based on the provided
+      list of names.
+
+      Parameters:
+         **names** (*list**[**str**]*) -- A list of names identifying
+         the aspects to be removed.
+
+      Returns:
+         The updated object after the specified aspects have been
+         removed.
+
+      Return type:
+         Self
+
+   remove_concept_by_name(name)
+
+      Removes a concept from the assigned concepts by its name.
+
+      Parameters:
+         **name** (*str*) -- The name of the concept to be removed
+
+      Returns:
+         Updated instance with the concept removed.
+
+      Return type:
+         Self
+
+   remove_concepts_by_names(names)
+
+      Removes concepts from the object by their names.
+
+      Parameters:
+         **names** (*list**[**str**]*) -- A list of concept names to
+         be removed.
+
+      Returns:
+         Returns the updated instance after removing the specified
+         concepts.
+
+      Return type:
+         Self
+
+   to_dict()
+
+      Transforms the current object into a dictionary representation.
+
+      Converts the object to a dictionary that includes: - All public
+      attributes - Special handling for specific public and private
+      attributes
+
+      When an LLM or LLM group is serialized, its API credentials and
+      usage/cost stats are removed.
+
+      Returns:
+         A dictionary representation of the current object with all
+         necessary data for serialization
+
+      Return type:
+         dict[str, Any]
+
+   to_disk(file_path)
+
+      Saves the serialized instance to a JSON file at the specified
+      path.
+
+      This method converts the instance to a dictionary representation
+      using *to_dict()*, then writes it to disk as a formatted JSON
+      file with UTF-8 encoding.
+
+      Parameters:
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
+
+      Return type:
+         "None"
+
+      Returns:
+         None
+
+      Raises:
+         * **ValueError** -- If the file path doesn't end with
+           '.json'.
+
+         * **RuntimeError** -- If there's an error during the file
+           writing process.
+
+   to_json()
+
+      Converts the object to its JSON string representation.
+
+      Serializes the object into a JSON-formatted string using the
+      dictionary representation provided by the *to_dict()* method.
+
+      Returns:
+         A JSON string representation of the object.
+
+      Return type:
+         str
+
+   property unique_id: str
+
+      Returns the ULID of the instance.
+
+   aspects: list[Aspect]
+
+   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
 
    custom_data: dict

@@ -19,6 +19,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
 
 ---
 
+<br>
 
 ## 💎 Why ContextGem?
 
@@ -154,6 +155,8 @@ ContextGem addresses this challenge by providing a flexible, intuitive framework
 
 \* See [descriptions](https://contextgem.dev/motivation.html#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks.html) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
 
+<br>
+
 ## 💡 What you can build
 
 With **minimal code**, you can:
@@ -220,6 +223,30 @@ concept = BooleanConcept(
 # Add these to the document instance for further extraction
 document.add_aspects([aspect])
 document.add_concepts([concept])
+```
+
+<table>
+<thead>
+<tr>
+<th width="100%" align="left">🔄 <strong>Extraction pipeline (advanced)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reusable collection of predefined aspects and concepts that enables consistent extraction across multiple documents. <a href="https://contextgem.dev/pipelines/extraction_pipelines.html">Learn more</a></td>
+</tr>
+</tbody>
+</table>
+
+```python
+# Create a reusable extraction pipeline
+nda_pipeline = ExtractionPipeline(
+    aspects=[aspect],  # predefined aspects
+    concepts=[concept]  # predefined concepts
+)
+document.assign_pipeline(nda_pipeline)
+# document2.assign_pipeline(nda_pipeline)
+# ...
 ```
 
 #### 🚀 Step 3: Run LLM extraction
@@ -347,6 +374,8 @@ for item in anomalies_concept.extracted_items:
 - [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage.html#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
 
 
+<br>
+
 ## 🔄 Document converters
 
 To create a ContextGem document for LLM analysis, you can either pass raw text directly, or use built-in converters that handle various file formats.
@@ -389,6 +418,8 @@ docx_text = converter.convert_to_text_format(
 
 📖 Learn more about [DOCX converter features](https://contextgem.dev/converters/docx.html) in the documentation.
 
+<br>
+
 ## 🎯 Focused document analysis
 
 ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
@@ -429,6 +460,8 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 
 📖 Learn more about [serialization options](https://contextgem.dev/serialization.html) in the documentation.
 
+<br>
+
 ## 📚 Documentation
 
 📖 **Full documentation:** [contextgem.dev](https://contextgem.dev)
@@ -466,15 +499,15 @@ This project is automatically scanned for security vulnerabilities using multipl
 ContextGem relies on these excellent open-source packages:
 
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
-- [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
+- [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
 - [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
 - [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [pillow](https://github.com/python-pillow/Pillow): Image processing library for local model image handling
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
-- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
+- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation for unique object identification
 - [typing-extensions](https://github.com/python/typing_extensions): Backports of the latest typing features for enhanced type annotations
-- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
+- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art paragraph/sentence segmentation using wtpsplit's SaT models
 
 
 ## 🌱 Support the project
@@ -486,6 +519,8 @@ ContextGem is just getting started, and your support means the world to us!
 🔧 **Contribute** with feedback, issues, or code improvements
 
 Your engagement is what makes this project grow!
+
+<br>
 
 ## 📄 License & Contact
 

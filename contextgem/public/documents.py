@@ -63,7 +63,7 @@ from contextgem.internal.utils import (
 from contextgem.public.aspects import Aspect
 from contextgem.public.images import Image
 from contextgem.public.paragraphs import Paragraph
-from contextgem.public.pipelines import DocumentPipeline
+from contextgem.public.pipelines import DocumentPipeline, ExtractionPipeline
 from contextgem.public.sentences import Sentence
 
 
@@ -179,7 +179,7 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
 
     def assign_pipeline(
         self,
-        pipeline: DocumentPipeline,
+        pipeline: ExtractionPipeline | DocumentPipeline,
         overwrite_existing: bool = False,
     ) -> Self:
         """
@@ -188,10 +188,13 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         If the aspects or concepts are already associated with the document, an error is raised
         unless the `overwrite_existing` parameter is explicitly set to `True`.
 
-        :param pipeline: The DocumentPipeline object to attach to the document.
+        :param pipeline: The ExtractionPipeline (or deprecated DocumentPipeline) object to
+            attach to the document.
+        :type pipeline: ExtractionPipeline | DocumentPipeline
         :param overwrite_existing: A boolean flag. If set to True, any existing aspects and
             concepts assigned to the document will be overwritten by the new pipeline.
             Defaults to False.
+        :type overwrite_existing: bool
         :return: Returns the current instance of the document after assigning the pipeline.
         """
         if (self.aspects or self.concepts) and not overwrite_existing:
@@ -200,11 +203,11 @@ class Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                 "Use `overwrite_existing=True` to overwrite existing aspects and concepts "
                 "with the pipeline."
             )
-        document_pipeline = deepcopy(
+        extraction_pipeline = deepcopy(
             pipeline
         )  # deep copy to avoid aspect/concept state modification of the pipeline
-        self.aspects = document_pipeline.aspects
-        self.concepts = document_pipeline.concepts
+        self.aspects = extraction_pipeline.aspects
+        self.concepts = extraction_pipeline.concepts
         logger.info("Pipeline assigned to the document")
         return self
 

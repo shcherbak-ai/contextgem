@@ -88,8 +88,8 @@ from contextgem.public import (
     Document,
     DocumentLLM,
     DocumentLLMGroup,
-    DocumentPipeline,
     DocxConverter,
+    ExtractionPipeline,
     Image,
     JsonObjectClassStruct,
     JsonObjectConcept,
@@ -105,6 +105,7 @@ from contextgem.public import (
     StringExample,
     reload_logger_settings,
 )
+from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.utils import create_image, image_to_base64
 from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
@@ -229,8 +230,8 @@ class TestAll(TestUtils):
         )
     )
 
-    # Document pipeline
-    document_pipeline = DocumentPipeline(
+    # Extraction pipeline
+    extraction_pipeline = ExtractionPipeline(
         aspects=[
             Aspect(
                 name="Categories of confidential information",
@@ -266,6 +267,11 @@ class TestAll(TestUtils):
                 add_justifications=True,
             ),
         ],
+    )
+    # Deprecated DocumentPipeline class (will be removed in v1.0.0)
+    document_pipeline = DocumentPipeline(
+        aspects=extraction_pipeline.aspects,
+        concepts=extraction_pipeline.concepts,
     )
 
     # LLMs
@@ -637,24 +643,24 @@ class TestAll(TestUtils):
         )
         assert not document._requires_sentence_segmentation()
 
-        # === Assignment of aspects/concepts via DocumentPipeline ===
+        # === Assignment of aspects/concepts via ExtractionPipeline ===
 
         document = Document(raw_text="This is a sentence.")
 
         # Aspects
-        document_pipeline = DocumentPipeline(
+        extraction_pipeline = ExtractionPipeline(
             aspects=[
                 Aspect(
                     name="Aspect 1", description="Aspect 1", reference_depth="sentences"
                 ),
             ],
         )
-        document.assign_pipeline(document_pipeline)
+        document.assign_pipeline(extraction_pipeline)
         assert document._requires_sentence_segmentation()
         document.remove_all_aspects()
 
         # Concepts
-        document_pipeline = DocumentPipeline(
+        extraction_pipeline = ExtractionPipeline(
             concepts=[
                 StringConcept(
                     name="Concept 1",
@@ -664,7 +670,7 @@ class TestAll(TestUtils):
                 ),
             ],
         )
-        document.assign_pipeline(document_pipeline)
+        document.assign_pipeline(extraction_pipeline)
         assert document._requires_sentence_segmentation()
 
         check_locals_memory_usage(
@@ -910,10 +916,10 @@ class TestAll(TestUtils):
         )
         assert document.sentences
 
-        # === Assignment via DocumentPipeline ===
+        # === Assignment via ExtractionPipeline ===
 
         document = Document(raw_text=get_test_document_text())
-        document_pipeline = DocumentPipeline(
+        extraction_pipeline = ExtractionPipeline(
             aspects=[
                 Aspect(
                     name="Liability",
@@ -930,7 +936,7 @@ class TestAll(TestUtils):
                 ),
             ],
         )
-        document.assign_pipeline(document_pipeline)
+        document.assign_pipeline(extraction_pipeline)
         assert not document.sentences
         self.llm_extractor_text.extract_all(document)
         assert document.sentences
@@ -3994,12 +4000,16 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_init_item")
 
-    @pytest.mark.parametrize("context", [document, document_pipeline])
+    @pytest.mark.parametrize(
+        "context", [document, extraction_pipeline, document_pipeline]
+    )
     @memory_profile_and_capture(max_memory=2500.0)  # for testing larger SaT models
-    def test_init_document_and_pipeline(self, context: Document | DocumentPipeline):
+    def test_init_document_and_extraction_pipeline(
+        self, context: Document | ExtractionPipeline
+    ):
         """
         Tests different initialization scenarios and validations associated with
-        the `Document` and `DocumentPipeline` classes.
+        the `Document` and `ExtractionPipeline` classes.
         """
         context = context.clone()  # clone for method-scoped state modification
 
@@ -4133,9 +4143,9 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError, match="control characters"):
                 Document(raw_text=" \u200c ")  # zero-width non-joiner
 
-        # Document pipeline initialization
-        elif isinstance(context, DocumentPipeline):
-            DocumentPipeline()  # works as we can interactive add aspects and concepts after initialization
+        # Extraction pipeline initialization
+        elif isinstance(context, ExtractionPipeline):
+            ExtractionPipeline()  # works as we can interactive add aspects and concepts after initialization
             # Pipeline assignment
             document = self.document.clone()
             document.assign_pipeline(context)
@@ -4150,7 +4160,7 @@ class TestAll(TestUtils):
             assert context.concepts is not document.concepts
             # Pipeline params
             with pytest.raises(ValueError):
-                DocumentPipeline(
+                ExtractionPipeline(
                     aspects=[
                         Aspect(
                             name="Liability",
@@ -4159,7 +4169,7 @@ class TestAll(TestUtils):
                     ],
                     extra=True,  # extra fields not permitted  # type: ignore
                 )
-            DocumentPipeline(
+            ExtractionPipeline(
                 aspects=[
                     Aspect(
                         name="Liability",
@@ -4169,7 +4179,7 @@ class TestAll(TestUtils):
                     )
                 ]
             )
-            DocumentPipeline(
+            ExtractionPipeline(
                 concepts=[
                     StringConcept(
                         name="Business Information",
@@ -4180,7 +4190,7 @@ class TestAll(TestUtils):
                 ]
             )
 
-        # Document and document pipeline initialization
+        # Document and extraction pipeline initialization
         # Document aspects
         document_aspects = [
             Aspect(
@@ -4364,7 +4374,9 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             context.add_concepts([concept, concept])
 
-        check_locals_memory_usage(locals(), test_name="test_init_document_and_pipeline")
+        check_locals_memory_usage(
+            locals(), test_name="test_init_document_and_extraction_pipeline"
+        )
 
     @memory_profile_and_capture
     def test_input_output_token_validation(self):
@@ -5592,13 +5604,13 @@ class TestAll(TestUtils):
 
         self.config_llms_for_output_lang(document, llm)
 
-        # Document pipeline serialization
-        self.check_instance_serialization_and_cloning(self.document_pipeline)
-        for aspect in self.document_pipeline.aspects:
+        # Extraction pipeline serialization
+        self.check_instance_serialization_and_cloning(self.extraction_pipeline)
+        for aspect in self.extraction_pipeline.aspects:
             self.check_instance_serialization_and_cloning(aspect)
             for concept in aspect.concepts:
                 self.check_instance_serialization_and_cloning(concept)
-        for concept in self.document_pipeline.concepts:
+        for concept in self.extraction_pipeline.concepts:
             self.check_instance_serialization_and_cloning(concept)
 
         # Processed document serialization
@@ -5877,29 +5889,29 @@ class TestAll(TestUtils):
         for _i, image in enumerate(document.images):
             self.check_instance_serialization_and_cloning(image)
 
-        # Check with document pipeline assignment
+        # Check with extraction pipeline assignment
         with pytest.raises(RuntimeError):
-            document.assign_pipeline(self.document_pipeline)
+            document.assign_pipeline(self.extraction_pipeline)
         document.remove_all_instances()
-        document.assign_pipeline(self.document_pipeline)
+        document.assign_pipeline(self.extraction_pipeline)
         llm.extract_all(document)
         self.log_extracted_items_for_instance(
             document.get_concept_by_name("Invoice number check")
         )
         self.check_instance_container_states(
-            original_container=self.document_pipeline.aspects,
+            original_container=self.extraction_pipeline.aspects,
             assigned_container=document.aspects,
             assigned_instance_class=Aspect,
             llm_roles=llm.list_roles,
         )
         self.check_instance_container_states(
-            original_container=list(self.document_pipeline.concepts),
+            original_container=list(self.extraction_pipeline.concepts),
             assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
         )
         self.check_instance_serialization_and_cloning(document)
-        self.check_instance_serialization_and_cloning(self.document_pipeline)
+        self.check_instance_serialization_and_cloning(self.extraction_pipeline)
 
         # Check serialization of LLM
         self._check_deserialized_llm_config_eq(llm)

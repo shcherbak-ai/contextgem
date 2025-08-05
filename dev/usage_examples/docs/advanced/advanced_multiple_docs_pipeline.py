@@ -9,7 +9,7 @@ from contextgem import (
     Document,
     DocumentLLM,
     DocumentLLMGroup,
-    DocumentPipeline,
+    ExtractionPipeline,
     JsonObjectConcept,
     JsonObjectExample,
     LLMPricing,
@@ -54,8 +54,8 @@ doc2 = Document(
     ),
 )
 
-# Create a reusable document pipeline for extraction
-contract_pipeline = DocumentPipeline()
+# Create a reusable extraction pipeline
+contract_pipeline = ExtractionPipeline()
 
 # Define aspects and aspect-level concepts in the pipeline
 # Concepts in the aspects will be extracted from the extracted aspect context

@@ -3,13 +3,13 @@ from contextgem import (
     BooleanConcept,
     DateConcept,
     Document,
-    DocumentPipeline,
+    ExtractionPipeline,
     StringConcept,
 )
 
 
 # Create a pipeline for NDA (Non-Disclosure Agreement) review
-nda_pipeline = DocumentPipeline(
+nda_pipeline = ExtractionPipeline(
     aspects=[
         Aspect(
             name="Confidential information",
