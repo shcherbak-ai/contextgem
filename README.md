@@ -168,12 +168,14 @@ With **minimal code**, you can:
 
 ![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
 
-### 🧩 Core components
+### 🧠 Extraction workflow
+
+#### 📝 Step 1: Define extraction context
 
 <table>
 <thead>
 <tr>
-<th width="100%">📄 <strong>Document</strong></th>
+<th width="100%" align="left">📄 <strong>Document</strong></th>
 </tr>
 </thead>
 <tbody>
@@ -183,11 +185,17 @@ With **minimal code**, you can:
 </tbody>
 </table>
 
+```python
+document = Document(raw_text="Non-Disclosure Agreement...")
+```
+
+#### 🎯 Step 2: Define what to extract
+
 <table>
 <thead>
 <tr>
-<th width="50%">🔍 <strong>Aspects</strong></th>
-<th width="50%">🎯 <strong>Concepts</strong></th>
+<th width="50%" align="left">🔍 <strong>Aspects</strong></th>
+<th width="50%" align="left">💡 <strong>Concepts</strong></th>
 </tr>
 </thead>
 <tbody>
@@ -198,20 +206,50 @@ With **minimal code**, you can:
 </tbody>
 </table>
 
+```python
+# Extract document sections
+aspect = Aspect(
+    name="Term and termination",
+    description="Clauses on contract term and termination",
+)
+# Extract specific data points
+concept = BooleanConcept(
+    name="NDA check",
+    description="The contract is an NDA",
+)
+# Add these to the document instance for further extraction
+document.add_aspects([aspect])
+document.add_concepts([concept])
+```
+
+#### 🚀 Step 3: Run LLM extraction
+
 <table>
 <thead>
 <tr>
-<th width="50%">🤖 <strong>LLM</strong></th>
-<th width="50%">🤖🤖 <strong>LLM group</strong></th>
+<th width="50%" align="left">🤖 <strong>LLM</strong></th>
+<th width="50%" align="left">🤖🤖 <strong>LLM group (advanced)</strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Configurable cloud or local LLM that extracts aspects and/or concepts from the document. Supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/supported_llms.html">Learn more</a></td>
+<td>Configurable cloud or local LLM that extracts aspects and/or concepts from the document. Supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/llm_extraction_methods.html">Learn more</a></td>
 <td>Group of LLMs with unique roles for complex extraction workflows. Route different aspects and/or concepts to specialized LLMs (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config.html#llm-groups">Learn more</a></td>
 </tr>
 </tbody>
 </table>
+
+```python
+llm = DocumentLLM(
+    model="openai/gpt-4.1-mini",
+    api_key="...",
+)
+document = llm.extract_all(document)
+# print(document.aspects[0].extracted_items)
+# print(document.concepts[0].extracted_items)
+```
+
+<br>
 
 ## 📦 Installation
 
