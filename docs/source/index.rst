@@ -121,7 +121,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
 
             Extract Aspects
 
-    .. grid-item-card:: 🧩 Extracting Concepts
+    .. grid-item-card:: 🎯 Extracting Concepts
         :link: concepts/supported_concepts
         :link-type: doc
         :class-card: sd-border-0 sd-shadow-sm sd-card-hover
@@ -137,6 +137,23 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             :expand:
 
             Extract Concepts
+
+    .. grid-item-card:: 🔀 Extraction Pipelines
+        :link: pipelines/extraction_pipelines
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to create reusable extraction pipelines that combine aspects and concepts for consistent document analysis across multiple files.
+
+        +++
+        .. button-ref:: pipelines/extraction_pipelines
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Build Pipelines
 
     .. grid-item-card:: 🤖 Large Language Models
         :link: llms/supported_llms
@@ -155,7 +172,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             
             Explore LLMs
 
-    .. grid-item-card:: 🔍 Advanced Usage
+    .. grid-item-card:: ⚡ Advanced Usage
         :link: advanced_usage
         :link-type: doc
         :class-card: sd-border-0 sd-shadow-sm sd-card-hover
@@ -285,6 +302,13 @@ Indices and tables
    concepts/rating_concept
    concepts/json_object_concept
    concepts/label_concept
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Extraction Pipelines
+   :hidden:
+   
+   pipelines/extraction_pipelines
 
 .. toctree::
    :maxdepth: 2

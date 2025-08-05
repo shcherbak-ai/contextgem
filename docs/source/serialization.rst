@@ -30,7 +30,7 @@ When using serialization, all extracted data is preserved in the serialized obje
 The following ContextGem objects support serialization:
 
 * :class:`~contextgem.public.documents.Document` - Contains document content and extracted information
-* :class:`~contextgem.public.pipelines.DocumentPipeline` - Defines extraction structure and logic
+* :class:`~contextgem.public.pipelines.ExtractionPipeline` - Defines extraction structure and logic
 * :class:`~contextgem.public.llms.DocumentLLM` - Stores LLM configuration for document processing
 
 Each object supports three serialization methods:

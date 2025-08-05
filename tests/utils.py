@@ -689,7 +689,7 @@ class TestUtils:
         with pytest.raises(ValueError):
             instance.custom_data = {str: [object]}
         with pytest.raises(TypeError):
-            instance.custom_data = {self.document: self.document_pipeline}  # type: ignore
+            instance.custom_data = {self.document: self.extraction_pipeline}  # type: ignore
         with pytest.raises(TypeError):
             instance.custom_data = {
                 self.llm_extractor_text: self.invalid_llm_with_valid_fallback  # type: ignore

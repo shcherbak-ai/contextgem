@@ -19,7 +19,6 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
 
 ---
 
-
 ## 💎 Why ContextGem?
 
 Most popular LLM frameworks for extracting structured data from documents require extensive boilerplate code to extract even basic information. This significantly increases development time and complexity.
@@ -49,50 +48,6 @@ With **minimal code**, you can:
 
 ![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
 
-### 🧩 Core components
-
-<table>
-<thead>
-<tr>
-<th width="100%">📄 <strong>Document</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Contains text and/or visual content representing your document (contracts, invoices, reports, CVs, etc.), from which an LLM extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config.html">Learn more</a></td>
-</tr>
-</tbody>
-</table>
-
-<table>
-<thead>
-<tr>
-<th width="50%">🔍 <strong>Aspects</strong></th>
-<th width="50%">🎯 <strong>Concepts</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Extract text segments from the document (sections, topics, themes). Organize content hierarchically and combine with concepts for comprehensive analysis. <a href="https://contextgem.dev/aspects/aspects.html">Learn more</a></td>
-<td>Extract specific data points with intelligent inference: entities, insights, structured objects, classifications, numerical calculations, dates, ratings, and assessments. <a href="https://contextgem.dev/concepts/supported_concepts.html">Learn more</a></td>
-</tr>
-</tbody>
-</table>
-
-<table>
-<thead>
-<tr>
-<th width="50%">🤖 <strong>LLM</strong></th>
-<th width="50%">🤖🤖 <strong>LLM group</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Configurable cloud or local LLM that extracts aspects and/or concepts from the document. Supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/supported_llms.html">Learn more</a></td>
-<td>Group of LLMs with unique roles for complex extraction workflows. Route different aspects and/or concepts to specialized LLMs (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config.html#llm-groups">Learn more</a></td>
-</tr>
-</tbody>
-</table>
 
 ## 📦 Installation
 
@@ -103,6 +58,8 @@ pip install -U contextgem
 
 ## 🚀 Quick start
 
+The following example demonstrates how to use ContextGem to extract **anomalies** from a legal document - a complex concept that requires contextual understanding. Unlike traditional RAG approaches that might miss subtle inconsistencies, ContextGem analyzes the entire document context to identify content that doesn't belong, complete with source references and justifications.
+
 ```python
 {{QUICKSTART_CONCEPT}}
 ```
@@ -110,9 +67,106 @@ pip install -U contextgem
 
 ---
 
-### 📚 More Examples
 
-**Basic usage:**
+## 🧠 How it works
+
+### 📝 Step 1: Define extraction context
+
+<table>
+<thead>
+<tr>
+<th width="100%" align="left">📄 <strong>Document</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create a Document that contains text and/or visual content representing your document (contract, invoice, report, CV, etc.), from which an LLM extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config.html">Learn more</a></td>
+</tr>
+</tbody>
+</table>
+
+```python
+document = Document(raw_text="Non-Disclosure Agreement...")
+```
+
+### 🎯 Step 2: Define what to extract
+
+<table>
+<thead>
+<tr>
+<th width="50%" align="left">🔍 <strong>Aspects</strong></th>
+<th width="50%" align="left">💡 <strong>Concepts</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Define Aspects to extract text segments from the document (sections, topics, themes). You can organize content hierarchically and combine with concepts for comprehensive analysis. <a href="https://contextgem.dev/aspects/aspects.html">Learn more</a></td>
+<td>Define Concepts to extract specific data points with intelligent inference: entities, insights, structured objects, classifications, numerical calculations, dates, ratings, and assessments. <a href="https://contextgem.dev/concepts/supported_concepts.html">Learn more</a></td>
+</tr>
+</tbody>
+</table>
+
+```python
+# Extract document sections
+aspect = Aspect(
+    name="Term and termination",
+    description="Clauses on contract term and termination",
+)
+# Extract specific data points
+concept = BooleanConcept(
+    name="NDA check",
+    description="Is the contract an NDA?",
+)
+# Add these to the document instance for further extraction
+document.add_aspects([aspect])
+document.add_concepts([concept])
+```
+
+<table>
+<thead>
+<tr>
+<th width="100%" align="left">🔄 <i>Alternative</i>: Configure  <strong>Extraction Pipeline</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create a reusable collection of predefined aspects and concepts that enables consistent extraction across multiple documents. <a href="https://contextgem.dev/pipelines/extraction_pipelines.html">Learn more</a></td>
+</tr>
+</tbody>
+</table>
+
+### 🧠 Step 3: Run LLM extraction
+
+<table>
+<thead>
+<tr>
+<th width="50%" align="left">🤖 <strong>LLM</strong></th>
+<th width="50%" align="left">🤖🤖 <i>Alternative</i>: <strong>LLM Group (advanced)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Configure a cloud or local LLM that will extract aspects and/or concepts from the document. DocumentLLM supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/llm_extraction_methods.html">Learn more</a></td>
+<td>Configure a group of LLMs with unique roles for complex extraction workflows. You can route different aspects and/or concepts to specialized LLMs (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config.html#llm-groups">Learn more</a></td>
+</tr>
+</tbody>
+</table>
+
+```python
+llm = DocumentLLM(
+    model="openai/gpt-4.1-mini",  # or another provider/LLM
+    api_key="...",
+)
+document = llm.extract_all(document)
+# print(document.aspects[0].extracted_items)
+# print(document.concepts[0].extracted_items)
+```
+
+📖 Learn more about ContextGem's [core components](https://contextgem.dev/how_it_works.html) and their practical examples in the documentation.
+
+## 📚 Usage Examples
+
+🌟 **Basic usage:**
 - [Aspect Extraction from Document](https://contextgem.dev/quickstart.html#aspect-extraction-from-document)
 - [Extracting Aspect with Sub-Aspects](https://contextgem.dev/quickstart.html#extracting-aspect-with-sub-aspects)
 - [Concept Extraction from Aspect](https://contextgem.dev/quickstart.html#concept-extraction-from-aspect)
@@ -120,7 +174,7 @@ pip install -U contextgem
 - [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart.html#concept-extraction-from-document-vision)
 - [LLM chat interface](https://contextgem.dev/quickstart.html#lightweight-llm-chat-interface)
 
-**Advanced usage:**
+🚀 **Advanced usage:**
 - [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage.html#extracting-aspects-with-concepts)
 - [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage.html#extracting-aspects-and-concepts-from-a-document)
 - [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage.html#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
@@ -143,6 +197,7 @@ To create a ContextGem document for LLM analysis, you can either pass raw text d
 ```
 
 📖 Learn more about [DOCX converter features](https://contextgem.dev/converters/docx.html) in the documentation.
+
 
 ## 🎯 Focused document analysis
 
@@ -184,6 +239,7 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 
 📖 Learn more about [serialization options](https://contextgem.dev/serialization.html) in the documentation.
 
+
 ## 📚 Documentation
 
 📖 **Full documentation:** [contextgem.dev](https://contextgem.dev)
@@ -221,15 +277,15 @@ This project is automatically scanned for security vulnerabilities using multipl
 ContextGem relies on these excellent open-source packages:
 
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
-- [Jinja2](https://github.com/pallets/jinja): Fast, expressive template engine that powers our dynamic prompt rendering
+- [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
 - [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
 - [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [pillow](https://github.com/python-pillow/Pillow): Image processing library for local model image handling
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
-- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation
+- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation for unique object identification
 - [typing-extensions](https://github.com/python/typing_extensions): Backports of the latest typing features for enhanced type annotations
-- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art text segmentation using wtpsplit's SaT models
+- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art paragraph/sentence segmentation using wtpsplit's SaT models
 
 
 ## 🌱 Support the project
@@ -241,6 +297,7 @@ ContextGem is just getting started, and your support means the world to us!
 🔧 **Contribute** with feedback, issues, or code improvements
 
 Your engagement is what makes this project grow!
+
 
 ## 📄 License & Contact
 

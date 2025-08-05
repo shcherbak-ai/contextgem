@@ -33,7 +33,7 @@ from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.images import Image
 from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
 from contextgem.public.paragraphs import Paragraph
-from contextgem.public.pipelines import DocumentPipeline
+from contextgem.public.pipelines import DocumentPipeline, ExtractionPipeline
 from contextgem.public.sentences import Sentence
 from contextgem.public.utils import (
     JsonObjectClassStruct,
@@ -57,7 +57,8 @@ __all__ = [
     # Documents
     "Document",
     # Pipelines
-    "DocumentPipeline",
+    "ExtractionPipeline",
+    "DocumentPipeline",  # deprecated, will be removed in v1.0.0
     # Paragraphs
     "Paragraph",
     # Sentences

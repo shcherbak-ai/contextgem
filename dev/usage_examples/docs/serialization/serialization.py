@@ -1,5 +1,5 @@
 # Example of serializing and deserializing ContextGem document,
-# document pipeline, and LLM config.
+# extraction pipeline, and LLM config.
 
 import os
 from pathlib import Path
@@ -9,8 +9,8 @@ from contextgem import (
     BooleanConcept,
     Document,
     DocumentLLM,
-    DocumentPipeline,
     DocxConverter,
+    ExtractionPipeline,
     StringConcept,
 )
 
@@ -25,8 +25,8 @@ docx_path = str(
 )  # your file path here (Path adapted for testing)
 doc = converter.convert(docx_path, strict_mode=True)
 
-# Create a document pipeline
-document_pipeline = DocumentPipeline(
+# Create an extraction pipeline
+extraction_pipeline = ExtractionPipeline(
     aspects=[
         Aspect(
             name="Categories of confidential information",
@@ -52,7 +52,7 @@ document_pipeline = DocumentPipeline(
 )
 
 # Attach the pipeline to the document
-doc.assign_pipeline(document_pipeline)
+doc.assign_pipeline(extraction_pipeline)
 
 # Configure a document LLM with your API parameters
 llm = DocumentLLM(
@@ -67,15 +67,15 @@ doc = llm.extract_all(doc)
 
 # Serialize the LLM config, pipeline and document
 llm_config_json = llm.to_json()  # or to_dict() / to_disk()
-document_pipeline_json = document_pipeline.to_json()  # or to_dict() / to_disk()
+extraction_pipeline_json = extraction_pipeline.to_json()  # or to_dict() / to_disk()
 processed_doc_json = doc.to_json()  # or to_dict() / to_disk()
 
 # Deserialize the LLM config, pipeline and document
 llm_deserialized = DocumentLLM.from_json(
     llm_config_json
 )  # or from_dict() / from_disk()
-document_pipeline_deserialized = DocumentPipeline.from_json(
-    document_pipeline_json
+extraction_pipeline_deserialized = ExtractionPipeline.from_json(
+    extraction_pipeline_json
 )  # or from_dict() / from_disk()
 processed_doc_deserialized = Document.from_json(
     processed_doc_json
