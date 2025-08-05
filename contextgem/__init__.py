@@ -20,7 +20,7 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.14.0"
+__version__ = "0.14.1"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (

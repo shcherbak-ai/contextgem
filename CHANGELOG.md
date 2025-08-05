@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.14.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.1) - 2025-08-06
+### Added
+- Added step-by-step usage guide in README, with brief descriptions of core components.
+- Added new documentation on documents, extraction pipelines, and logging configuration.
+
+### Changed
+- Renamed `DocumentPipeline` to `ExtractionPipeline` to better reflect its purpose and scope. `DocumentPipeline` is maintained as a deprecated wrapper class for backwards compatibility until v1.0.0.
+- Simplified logging config to use a single environment variable.
+
 ## [0.14.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.0) - 2025-08-02
 ### Added
 - Added utility function `create_image()` for flexible image creation from various sources (file paths, PIL objects, file-like objects, raw bytes) with automatic MIME type detection.
