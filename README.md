@@ -177,7 +177,7 @@ pip install -U contextgem
 
 ## 🚀 Quick start
 
-The following example demonstrates how to use ContextGem to extract **anomalies** from a legal document - a complex concept that requires contextual understanding. Unlike traditional RAG approaches that might miss subtle inconsistencies, ContextGem analyzes the entire document context to identify content that doesn't belong, complete with source references and reasoning.
+The following example demonstrates how to use ContextGem to extract **anomalies** from a legal document - a complex concept that requires contextual understanding. Unlike traditional RAG approaches that might miss subtle inconsistencies, ContextGem analyzes the entire document context to identify content that doesn't belong, complete with source references and justifications.
 
 ```python
 # Quick Start Example - Extracting anomalies from a document, with source references and justifications
