@@ -1026,6 +1026,62 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
+    def test_local_llms_text_gpt_oss(self):
+        """
+        Tests for initialization of and getting a response from gpt-oss models.
+        """
+
+        def extract_with_local_llm(llm: DocumentLLM):
+            """
+            Test extraction with local LLM.
+
+            :param llm: The DocumentLLM instance to test.
+            """
+
+            document = Document(raw_text=get_test_document_text())
+            aspect = Aspect(name="Liability", description="Liability clauses")
+            aspect_concept = StringConcept(
+                name="Liability cap",
+                description="Liability cap",
+            )
+            aspect.add_concepts([aspect_concept])
+            document_concept = NumericalConcept(
+                name="Contract term",
+                description="Contract term in years",
+                numeric_type="float",
+            )
+            document.add_aspects([aspect])
+            document.add_concepts([document_concept])
+            llm.extract_all(document)
+            assert document.aspects[0].extracted_items
+            self.log_extracted_items_for_instance(document.aspects[0])
+            assert document.concepts[0].extracted_items
+            self.log_extracted_items_for_instance(document.concepts[0])
+            assert document.aspects[0].concepts[0].extracted_items
+            self.log_extracted_items_for_instance(document.aspects[0].concepts[0])
+
+        # gpt-oss works with Ollama
+        llm_gpt_oss_ollama = DocumentLLM(
+            model="ollama_chat/gpt-oss:20b",
+            api_base="http://localhost:11434",
+        )
+        extract_with_local_llm(llm_gpt_oss_ollama)
+
+        # TODO: Remove this once LiteLLM's `lm_studio` gpt-oss support is fixed
+        # But does not work with `lm_studio/` prefix
+        with pytest.raises((LLMAPIError, LLMExtractionError)):
+            with pytest.warns(UserWarning, match="gpt-oss"):
+                llm_gpt_oss_lm_studio = DocumentLLM(
+                    model="lm_studio/openai/gpt-oss-20b",
+                    api_base="http://localhost:1234/v1",
+                    api_key="random-key",  # required for LM Studio API
+                )
+            extract_with_local_llm(llm_gpt_oss_lm_studio)
+
+        check_locals_memory_usage(locals(), test_name="test_local_llms_text_gpt_oss")
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_local_llms_vision(self):
         """
         Tests for initialization of and getting a response from local LLMs

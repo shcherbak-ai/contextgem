@@ -516,6 +516,17 @@ class DocumentLLM(_GenericLLMProcessor):
                 stacklevel=2,
             )
 
+        # TODO: Remove this once LiteLLM's `lm_studio` gpt-oss support is fixed
+        # Warn when gpt-oss models are used with LM Studio due to instability
+        if self.model.startswith("lm_studio/") and "openai/gpt-oss" in self.model:
+            warnings.warn(
+                "Using OpenAI gpt-oss models with `lm_studio/` is currently unstable and may "
+                "cause errors. For a stable alternative, consider using the model via Ollama "
+                "instead (e.g., `ollama_chat/gpt-oss:20b`).",
+                UserWarning,
+                stacklevel=2,
+            )
+
     def _set_private_attrs(self) -> None:
         """
         Initialize and configure private attributes for the LLM instance.
