@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.14.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.2) - 2025-08-06
+### Added
+- Added warning for `gpt-oss` models used with `lm_studio/` provider due to performance issues (according to tests), with a recommendation to use Ollama as a working alternative (e.g., `ollama_chat/gpt-oss:20b`).
+
 ## [0.14.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.1) - 2025-08-06
 ### Added
 - Added step-by-step usage guide in README, with brief descriptions of core components.
