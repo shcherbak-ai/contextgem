@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.14.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.3) - 2025-08-08
+### Fixed
+- Enabled `reasoning_effort` parameter for gpt-5 models by explicitly forwarding it via `allowed_openai_params`, since `litellm.get_supported_openai_params()` does not yet include this parameter for gpt-5 models.
+
 ## [0.14.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.2) - 2025-08-06
 ### Added
 - Added warning for `gpt-oss` models used with `lm_studio/` provider due to performance issues (according to tests), with a recommendation to use Ollama as a working alternative (e.g., `ollama_chat/gpt-oss:20b`).
