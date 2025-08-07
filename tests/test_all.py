@@ -107,7 +107,7 @@ from contextgem.public import (
 )
 from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.utils import create_image, image_to_base64
-from tests.conftest import VCR_REDACTION_MARKER
+from tests.conftest import VCR_REDACTION_MARKER, litellm
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.url_security import validate_existing_cassettes_urls_security
 from tests.utils import (
@@ -4513,6 +4513,7 @@ class TestAll(TestUtils):
                 api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
                 api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
                 system_message=system_message,
+                reasoning_effort="low",
             )
         elif TEST_LLM_PROVIDER == "openai":
             non_reasoning_model = DocumentLLM(
@@ -4591,6 +4592,42 @@ class TestAll(TestUtils):
         )
 
         check_locals_memory_usage(locals(), test_name="test_system_messages")
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_gpt_5_with_reasoning_effort_param(self):
+        """
+        Tests the reasoning effort parameter for gpt-5 models.
+
+        TODO: Remove this test once litellm has "reasoning_effort" param listed for gpt-5 models.
+        """
+        for model_name in ["openai/gpt-5", "azure/gpt-5-mini"]:
+            assert "reasoning_effort" not in litellm.get_supported_openai_params(  # type: ignore[attr-defined]
+                model_name
+            ), (
+                "If this test fails, it means litellm has already added "
+                "'reasoning_effort' param for gpt-5 models, and this test method "
+                "should be removed."
+            )
+
+        llm = DocumentLLM(
+            model="azure/gpt-5-nano",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            reasoning_effort="low",
+            system_message="",  # disable default system message
+        )
+
+        llm.chat("What's the result of 3 x 3?")
+        response = llm.get_usage()[0].usage.calls[-1].response
+        assert response is not None
+        assert "9" in response
+        logger.debug(response)
+
+        check_locals_memory_usage(
+            locals(), test_name="test_gpt_5_reasoning_effort_param"
+        )
 
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore

@@ -1212,6 +1212,13 @@ class DocumentLLM(_GenericLLMProcessor):
                 self.model
             )
             if model_params is not None:
+                if "/gpt-5" in self.model and "reasoning_effort" not in model_params:
+                    # As of 2025-08-07, LiteLLM does not yet list "reasoning effort" as
+                    # a param for gpt-5 models.
+                    # TODO: Remove this conditional logic once litellm has "reasoning_effort"
+                    # param listed for gpt-5 models.
+                    model_params.append("reasoning_effort")
+                    request_dict["allowed_openai_params"] = ["reasoning_effort"]
                 if "max_completion_tokens" in model_params:
                     if not (self.max_completion_tokens):
                         raise ValueError(
