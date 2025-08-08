@@ -24,10 +24,12 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import sys
 import tempfile
 import warnings
 import zipfile
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -1132,6 +1134,28 @@ class TestAll(TestUtils):
         """
         Tests for raising an exception when an LLM extraction error occurs.
         """
+
+        @contextmanager
+        def capture_logger_warnings():
+            """
+            Context manager to capture logger WARNING messages
+            """
+            captured_logs = []
+
+            def capture_warning(message):
+                """
+                Captures a logger WARNING message.
+                """
+                captured_logs.append(message.record["message"])
+
+            handler_id = logger.add(
+                capture_warning, level="WARNING", format="{message}"
+            )
+            try:
+                yield captured_logs
+            finally:
+                logger.remove(handler_id)
+
         document = Document(raw_text=get_test_document_text())
         aspect = Aspect(name="Liability", description="Liability clauses")
         aspect_concept = StringConcept(
@@ -1177,12 +1201,18 @@ class TestAll(TestUtils):
             )
 
         # But should issue a warning if `raise_exception_on_extraction_error` is False
-        with pytest.warns(UserWarning, match=r"invalid JSON.*1 retries"):
+        with capture_logger_warnings() as captured_logs:
             llm.extract_aspects_from_document(
                 document,
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
+            assert any(
+                re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
+            ), (
+                f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
+            )
+
         with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
             # Aspect has a concept, and since the aspect was not extracted,
             # there's no aspect context to extract the concept from
@@ -1192,12 +1222,19 @@ class TestAll(TestUtils):
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
-        with pytest.warns(UserWarning, match=r"invalid JSON.*1 retries"):
+
+        with capture_logger_warnings() as captured_logs:
             llm.extract_concepts_from_document(
                 document,
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
+            assert any(
+                re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
+            ), (
+                f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
+            )
+
         with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
             # Aspect has a concept, and since the aspect was not extracted,
             # there's no aspect context to extract the concept from
@@ -1239,12 +1276,18 @@ class TestAll(TestUtils):
             )
 
         # But should issue a warning if `raise_exception_on_extraction_error` is False
-        with pytest.warns(UserWarning, match=r"invalid JSON.*0 retries"):
+        with capture_logger_warnings() as captured_logs:
             llm.extract_aspects_from_document(
                 document,
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
+            assert any(
+                re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
+            ), (
+                f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
+            )
+
         with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
             # Aspect has a concept, and since the aspect was not extracted,
             # there's no aspect context to extract the concept from
@@ -1254,12 +1297,19 @@ class TestAll(TestUtils):
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
-        with pytest.warns(UserWarning, match=r"invalid JSON.*0 retries"):
+
+        with capture_logger_warnings() as captured_logs:
             llm.extract_concepts_from_document(
                 document,
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
+            assert any(
+                re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
+            ), (
+                f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
+            )
+
         with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
             # Aspect has a concept, and since the aspect was not extracted,
             # there's no aspect context to extract the concept from
@@ -1296,12 +1346,16 @@ class TestAll(TestUtils):
             )
 
         # But should issue a warning if `raise_exception_on_extraction_error` is False
-        with pytest.warns(UserWarning, match="LLM API"):
+        with capture_logger_warnings() as captured_logs:
             self.llm_invalid.extract_aspects_from_document(
                 document,
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
+            assert any(re.search(r"LLM API", log) for log in captured_logs), (
+                f"Expected warning pattern 'LLM API' not found in logs: {captured_logs}"
+            )
+
         with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
             # Aspect has a concept, and since the aspect was not extracted,
             # there's no aspect context to extract the concept from
@@ -1311,12 +1365,17 @@ class TestAll(TestUtils):
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
-        with pytest.warns(UserWarning, match="LLM API"):
+
+        with capture_logger_warnings() as captured_logs:
             self.llm_invalid.extract_concepts_from_document(
                 document,
                 overwrite_existing=True,
                 raise_exception_on_extraction_error=False,
             )
+            assert any(re.search(r"LLM API", log) for log in captured_logs), (
+                f"Expected warning pattern 'LLM API' not found in logs: {captured_logs}"
+            )
+
         with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
             # Aspect has a concept, and since the aspect was not extracted,
             # there's no aspect context to extract the concept from
