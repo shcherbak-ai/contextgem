@@ -41,10 +41,10 @@ from aiolimiter import AsyncLimiter
 from jinja2 import Template
 
 from contextgem.internal.exceptions import LLMAPIError
-from contextgem.internal.utils import _suppress_litellm_pydantic_warnings_context
+from contextgem.internal.utils import _suppress_litellm_warnings_context
 
 
-with _suppress_litellm_pydantic_warnings_context():
+with _suppress_litellm_warnings_context():
     import litellm
 
 from pydantic import (
@@ -1323,9 +1323,13 @@ class DocumentLLM(_GenericLLMProcessor):
                             original_error=e,
                         ) from e
                     else:
-                        warnings.warn(
+                        warning_msg = (
                             f"Exception occurred while calling LLM API with drop_params=True: {e}"
-                            + f" ({n_retries} retries).",
+                            + f" ({n_retries} retries)."
+                        )
+                        logger.warning(warning_msg)
+                        warnings.warn(
+                            warning_msg,
                             stacklevel=2,
                         )
         except Exception as e:
@@ -1344,9 +1348,13 @@ class DocumentLLM(_GenericLLMProcessor):
                         original_error=e,
                     ) from e
                 else:
-                    warnings.warn(
+                    warning_msg = (
                         f"Exception occurred while calling LLM API: {e}"
-                        + f" ({n_retries} retries).",
+                        + f" ({n_retries} retries)."
+                    )
+                    logger.warning(warning_msg)
+                    warnings.warn(
+                        warning_msg,
                         stacklevel=2,
                     )
 

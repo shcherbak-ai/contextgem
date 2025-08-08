@@ -24,6 +24,9 @@ for log level and enabling/disabling logging. It includes a dedicated stream wra
 for consistent log formatting.
 """
 
+from __future__ import annotations
+
+import logging
 import os
 import sys
 
@@ -34,6 +37,12 @@ DEFAULT_LOGGER_LEVEL = "INFO"
 
 # Dynamically control logging state with env vars
 LOGGER_LEVEL_ENV_VAR_NAME = "CONTEXTGEM_LOGGER_LEVEL"
+
+# Singleton used to avoid adding duplicate LiteLLM suppression filters on reloads
+# TODO: Remove this once LiteLLM is fixed to not log proxy logging-related errors
+_CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR_FILTER: (
+    _SuppressLiteLLMProxyErrorFilter | None
+) = None
 
 
 class _DedicatedStream:
@@ -136,6 +145,83 @@ def _configure_logger_from_env():
             "{message}"
         ),
     )
+
+    # Install filters to suppress noisy dependency logs (LiteLLM proxy optional deps)
+    _install_litellm_proxy_dependency_log_filters()
+
+
+# TODO: Remove this once LiteLLM is fixed to not log proxy logging-related errors
+class _SuppressLiteLLMProxyErrorFilter(logging.Filter):
+    """
+    Suppress a specific LiteLLM proxy logging error about missing optional dependency
+    'backoff' suggesting to install `litellm[proxy]`.
+
+    Rationale: ContextGem does not require LiteLLM proxy features. Recent LiteLLM versions
+    attempt to set up proxy logging on import and emit ERROR logs if proxy extras are not
+    installed. This is confusing for users since ContextGem works without those extras.
+    """
+
+    MESSAGE_KEYWORDS = (
+        "Missing dependency",
+        "backoff",
+        "litellm[proxy]",
+    )
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Filter log records to suppress specific LiteLLM proxy error messages.
+
+        This filter suppresses ERROR logs from LiteLLM loggers that contain all the
+        keywords indicating a missing 'backoff' dependency for proxy features.
+        The filter allows all other log messages to pass through.
+
+        :param record: The log record to evaluate
+        :type record: logging.LogRecord
+        :return: True if the record should be logged, False if it should be suppressed
+        :rtype: bool
+        """
+        try:
+            message = record.getMessage()
+        except Exception:
+            message = str(record.msg)
+
+        return not (
+            (record.name == "LiteLLM" or record.name.startswith("litellm"))
+            and all(kw in message for kw in self.MESSAGE_KEYWORDS)
+        )
+
+
+# TODO: Remove this once LiteLLM is fixed to not log proxy logging-related errors
+def _install_litellm_proxy_dependency_log_filters() -> None:
+    """
+    Install standard-logging filters to hide noisy, non-actionable dependency logs.
+
+    Controlled by env var `CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR` (default: "1").
+    Set to "0" to disable suppression and see full LiteLLM proxy error logs.
+
+    :return: None
+    :rtype: None
+    """
+
+    suppress = os.getenv("CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR", "1") != "0"
+    if not suppress:
+        return
+
+    global _CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR_FILTER
+    if _CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR_FILTER is None:
+        _CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR_FILTER = (
+            _SuppressLiteLLMProxyErrorFilter()
+        )
+    filter_obj = _CONTEXTGEM_SUPPRESS_LITELLM_PROXY_ERROR_FILTER
+
+    # Apply only to LiteLLM-related loggers to avoid global side effects
+    for name in ("LiteLLM", "litellm"):
+        lg = logging.getLogger(name)
+        existing_filters = getattr(lg, "filters", [])
+        if not any(
+            isinstance(f, _SuppressLiteLLMProxyErrorFilter) for f in existing_filters
+        ):
+            lg.addFilter(filter_obj)
 
 
 _configure_logger_from_env()

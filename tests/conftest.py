@@ -30,10 +30,10 @@ from unittest.mock import patch
 
 import pytest
 
-from contextgem.internal.utils import _suppress_litellm_pydantic_warnings_context
+from contextgem.internal.utils import _suppress_litellm_warnings_context
 
 
-with _suppress_litellm_pydantic_warnings_context():
+with _suppress_litellm_warnings_context():
     import litellm
 
 from contextgem.internal.loggers import logger
