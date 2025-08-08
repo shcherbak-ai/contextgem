@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.14.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.4) - 2025-08-08
+### Fixed
+- Suppressed noisy LiteLLM proxy missing-dependency error logs (prompting to install `litellm[proxy]`) emitted by `litellm>=1.75.2` during LLM API calls. ContextGem does not require LiteLLM proxy features. Suppression is scoped to LiteLLM loggers.
+
 ## [0.14.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.3) - 2025-08-08
 ### Fixed
 - Enabled `reasoning_effort` parameter for gpt-5 models by explicitly forwarding it via `allowed_openai_params`, since `litellm.get_supported_openai_params()` does not yet include this parameter for gpt-5 models.
