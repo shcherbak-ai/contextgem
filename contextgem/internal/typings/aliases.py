@@ -25,6 +25,8 @@ literal types for configuration options, and compatibility solutions for
 different Python versions.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable, Coroutine
 from decimal import Decimal
 from pathlib import Path

@@ -459,9 +459,9 @@ class TestUtils:
             assert hasattr(cost_item, "is_fallback")
             assert hasattr(cost_item, "cost") and cost_item.cost
             assert isinstance(cost_item.cost, _LLMCost)
-            if cost_item.cost.input > Decimal("0.00000"):
+            if cost_item.cost.input > Decimal("0"):
                 cost_input_updated = True
-            if cost_item.cost.output > Decimal("0.00000"):
+            if cost_item.cost.output > Decimal("0"):
                 cost_output_updated = True
         assert cost_input_updated and cost_output_updated
 

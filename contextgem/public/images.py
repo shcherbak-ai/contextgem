@@ -22,20 +22,16 @@ Module for handling document images.
 This module provides the Image class, which represents visual content that can be attached to
 or fully represent a document. Images are stored in base64-encoded format with specified MIME types
 to ensure proper handling.
-
-The module supports common image formats (JPEG, PNG, WebP) and integrates with the broader ContextGem
-framework for document analysis that includes visual content alongside textual information.
 """
 
 from __future__ import annotations
 
-from typing import Literal
-
-from contextgem.internal.base.instances import _InstanceBase
-from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.base.images import _Image
+from contextgem.internal.decorators import _expose_in_registry
 
 
-class Image(_InstanceBase):
+@_expose_in_registry(additional_key=_Image)
+class Image(_Image):
     """
     Represents an image with specified MIME type and base64-encoded data.
     An image is typically attached to a document, or fully represents a document.
@@ -66,5 +62,4 @@ class Image(_InstanceBase):
             :caption: Image definition
     """
 
-    mime_type: Literal["image/jpg", "image/jpeg", "image/png", "image/webp"]
-    base64_data: NonEmptyStr
+    pass

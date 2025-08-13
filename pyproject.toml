@@ -1,6 +1,6 @@
 [project]
 name = "contextgem"
-version = "0.14.4"
+version = "0.15.0"
 description = "Effortless LLM extraction from documents"
 authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 requires-python = ">=3.10,<3.14"
@@ -93,6 +93,7 @@ classifiers = [
 ]
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
+    "genai-prices==0.0.22",  # pin version since the package's API changes frequently
     "jinja2 (>=3.1.5,<4.0.0)",
     "litellm (>=1.71.1,<2.0.0)",
     "loguru (>=0.7.3,<0.8.0)",
@@ -173,6 +174,12 @@ extend-select = ["I", "B", "UP", "N", "SIM"]
 [tool.ruff.lint.isort]
 force-single-line = false
 lines-after-imports = 2
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.per-file-ignores]
+# ignore the above required-imports for usage examples
+"dev/**" = ["I002"]
+"**/__init__.py" = ["I002"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -24,6 +24,8 @@ Provides functions to standardize type hints across different typing notations
 with JSON serialization requirements.
 """
 
+from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Union, get_args, get_origin  # noqa: UP035
 
 

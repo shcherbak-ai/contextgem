@@ -20,6 +20,9 @@
 Module defining custom exceptions for the ContextGem framework.
 """
 
+from __future__ import annotations
+
+
 # LLM exceptions
 
 

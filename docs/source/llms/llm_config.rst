@@ -91,10 +91,6 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``str | None``
      - ``None``
      - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Note that for certain models (such as OpenAI's o1-preview), system messages are not supported and will be ignored. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
-   * - ``temperature``
-     - ``float | None``
-     - ``0.3``
-     - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses.
    * - ``max_tokens``
      - ``int``
      - ``4096``
@@ -107,10 +103,6 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``str | None``
      - ``None``
      - Reasoning effort for reasoning (CoT-capable) models. Values: ``"low"``, ``"medium"``, ``"high"``.
-   * - ``top_p``
-     - ``float | None``
-     - ``0.3``
-     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs.
    * - ``timeout``
      - ``int``
      - ``120``
@@ -131,6 +123,14 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``LLMPricing | None``
      - ``None``
      - :class:`~contextgem.public.data_models.LLMPricing` object with pricing details for cost calculation.
+   * - ``auto_pricing``
+     - ``bool``
+     - ``False``
+     - Enable automatic cost calculation using ``genai-prices`` based on the configured ``model``. Mutually exclusive with ``pricing_details``. Not supported for local models (e.g., ``ollama/``, ``ollama_chat/``, ``lm_studio/``).
+   * - ``auto_pricing_refresh``
+     - ``bool``
+     - ``False``
+     - When ``auto_pricing`` is enabled, allow ``genai-prices`` to auto-refresh its cached pricing data at runtime.
    * - ``is_fallback``
      - ``bool``
      - ``False``
@@ -143,6 +143,14 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``str``
      - ``"en"``
      - Language for output text. Values: ``"en"`` or ``"adapt"`` (adapts to document language). Setting value to ``"adapt"`` ensures that the text output (e.g. justifications, conclusions, explanations) is in the same language as the document. This is particularly useful when working with non-English documents. For example, if you're extracting anomalies from a contract in Spanish, setting ``output_language="adapt"`` ensures that anomaly justifications are also in Spanish, making them immediately understandable by local end users reviewing the document.
+   * - ``temperature``
+     - ``float | None``
+     - ``0.3``
+     - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses.
+   * - ``top_p``
+     - ``float | None``
+     - ``0.3``
+     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs.
    * - ``seed``
      - ``int | None``
      - ``None``
@@ -151,6 +159,11 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``AsyncLimiter``
      - ``AsyncLimiter(3, 10)``
      - Relevant when concurrency is enabled for extraction tasks. Controls frequency of async LLM API requests for concurrent tasks. Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues. See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details. See :doc:`../optimizations/optimization_speed` for an example of how to easily set up concurrency for extraction.
+
+.. warning::
+   **Auto-pricing accuracy**
+
+   When using ``auto_pricing=True``, cost estimates are approximate. These prices will not be 100% accurate. The price data cannot be exactly correct because model providers do not provide exact price information for their APIs in a format which can be reliably processed. See Pydantic's `genai-prices <https://github.com/pydantic/genai-prices>`_ for more details.
 
 💡 Advanced Configuration Examples
 ------------------------------------
@@ -168,7 +181,7 @@ You can set up a fallback LLM that will be used if the primary LLM fails:
 💰 Setting Up Cost Tracking
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can configure pricing details to track costs:
+You can configure pricing parameters to track costs:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/cost_tracking.py
    :language: python

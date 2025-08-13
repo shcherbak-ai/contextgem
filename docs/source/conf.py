@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
+from __future__ import annotations
+
 import os
 import sys
 
@@ -23,7 +25,7 @@ import sys
 project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
-release = "0.14.4"
+release = "0.15.0"
 
 
 # Add path to the package

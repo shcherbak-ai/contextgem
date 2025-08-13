@@ -19,6 +19,4 @@
 from contextgem.public.converters.docx import DocxConverter
 
 
-__all__ = [
-    "DocxConverter",
-]
+__all__ = ("DocxConverter",)

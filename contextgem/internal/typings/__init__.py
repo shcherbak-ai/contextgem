@@ -54,7 +54,7 @@ from contextgem.internal.typings.user_type_hints_validation import (
 from contextgem.internal.typings.validators import _validate_sequence_is_list
 
 
-__all__ = [
+__all__ = (
     # Aliases
     "NonEmptyStr",
     "LLMRoleAny",
@@ -90,4 +90,4 @@ __all__ = [
     "_normalize_type_annotation",
     # Validators
     "_validate_sequence_is_list",
-]
+)

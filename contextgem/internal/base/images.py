@@ -17,24 +17,29 @@
 #
 
 """
-Module defining utility functions for dynamically computing LLM output validation structures.
+Module defining base classes for Image class.
 """
 
 from __future__ import annotations
 
-from pydantic import RootModel
+from typing import Literal
+
+from pydantic import Field
+
+from contextgem.internal.base.instances import _InstanceBase
+from contextgem.internal.decorators import _disable_direct_initialization
+from contextgem.internal.typings.aliases import NonEmptyStr
 
 
-def _create_root_model(name: str, root_type: type):
+@_disable_direct_initialization
+class _Image(_InstanceBase):
     """
-    Creates a dynamic model class extending RootModel for a specified type.
-
-    :param name: The name of the new class to be created.
-    :type name: str
-    :param root_type: The root type to be used as a parameter for RootModel.
-    :type root_type: type
-    :return: A dynamically created class inheriting from RootModel
-        parameterized with the given type.
-    :rtype: type
+    Internal implementation of the Image class.
     """
-    return type(name, (RootModel[root_type],), {})
+
+    mime_type: Literal["image/jpg", "image/jpeg", "image/png", "image/webp"] = Field(
+        ..., description="The MIME type of the image."
+    )
+    base64_data: NonEmptyStr = Field(
+        ..., description="The base64-encoded data of the image."
+    )

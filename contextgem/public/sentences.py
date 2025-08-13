@@ -29,13 +29,12 @@ structure to maintain the hierarchical organization of document content.
 
 from __future__ import annotations
 
-from pydantic import Field
-
-from contextgem.internal.base.paras_and_sents import _ParasAndSentsBase
-from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.base.paras_and_sents import _Sentence
+from contextgem.internal.decorators import _expose_in_registry
 
 
-class Sentence(_ParasAndSentsBase):
+@_expose_in_registry(additional_key=_Sentence)
+class Sentence(_Sentence):
     """
     Represents a sentence within a document paragraph.
 
@@ -57,4 +56,4 @@ class Sentence(_ParasAndSentsBase):
             :caption: Sentence definition
     """
 
-    raw_text: NonEmptyStr = Field(..., frozen=True)
+    pass

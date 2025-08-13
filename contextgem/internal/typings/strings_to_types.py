@@ -25,6 +25,8 @@ It works in conjunction with the types_to_strings module to provide bidirectiona
 conversion between type annotations and their string representations.
 """
 
+from __future__ import annotations
+
 from typing import Any, Literal, Union
 
 from contextgem.internal.typings.types_to_strings import PRIMITIVE_TYPES_STRING_MAP

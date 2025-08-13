@@ -24,6 +24,8 @@ the low-level functionality for parsing DOCX files, extracting text, formatting,
 tables, images, footnotes, comments, and other elements.
 """
 
+from __future__ import annotations
+
 import base64
 import re
 from collections.abc import Callable
@@ -32,6 +34,8 @@ from typing import BinaryIO, cast
 
 from lxml import etree
 
+from contextgem.internal.base.images import _Image
+from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.converters.docx.package import _DocxPackage
 from contextgem.internal.converters.docx.utils import (
     NUMBERED_LIST_FORMATS,
@@ -48,9 +52,8 @@ from contextgem.internal.exceptions import (
     DocxXmlError,
 )
 from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _publicize
 from contextgem.internal.utils import _is_text_content_empty
-from contextgem.public.images import Image
-from contextgem.public.paragraphs import Paragraph
 
 
 class _DocxConverterBase:
@@ -97,21 +100,21 @@ class _DocxConverterBase:
         populate_md_text: bool = False,
         list_counters: dict | None = None,
         strict_mode: bool = False,
-    ) -> str | Paragraph | None:
+    ) -> str | _Paragraph | None:  # type: ignore
         """
         Processes a paragraph element and returns appropriate content based on mode.
 
         :param para_element: Paragraph XML element
         :param package: _DocxPackage object
         :param markdown_mode: If True, return markdown formatted text,
-            otherwise return a Paragraph object (default: False)
+            otherwise return a _Paragraph object (default: False)
         :param include_textboxes: If True, include textbox content (default: True)
         :param include_links: If True, process and format hyperlinks (default: True)
         :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
             in markdown mode (default: True)
         :param apply_text_formatting: If provided, use this flag for text formatting
             instead of markdown_mode (default: None)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: False)
         :param list_counters: Dictionary to track list numbering counters (default: None)
         :param strict_mode: If True, raise exceptions for any processing error
@@ -127,11 +130,11 @@ class _DocxConverterBase:
 
                     - Markdown-formatted text with appropriate styling
 
-                * **Paragraph** -- When ``markdown_mode=False`` and paragraph has content:
+                * **_Paragraph** -- When ``markdown_mode=False`` and paragraph has content:
 
                     - Structured paragraph object with ``raw_text`` and ``additional_context``
                     - Optionally has ``_md_text`` attribute populated when ``populate_md_text=True``
-        :rtype: str | Paragraph | None
+        :rtype: str | _Paragraph | None
         """
         try:
             # Check if this is a text box paragraph and we should skip it
@@ -235,7 +238,7 @@ class _DocxConverterBase:
                 return text
 
             else:
-                # Return a Paragraph instance with metadata
+                # Return a _Paragraph instance with metadata
                 metadata = style_info
 
                 # Add list information with more details
@@ -268,7 +271,8 @@ class _DocxConverterBase:
                 )
 
                 # Create paragraph with _md_text if requested
-                paragraph = Paragraph(
+                paragraph = _publicize(
+                    _Paragraph,
                     raw_text=raw_text,
                     additional_context=metadata,
                 )
@@ -670,7 +674,7 @@ class _DocxConverterBase:
         use_markdown_text_in_paragraphs: bool = False,
         populate_md_text: bool = False,
         strict_mode: bool = False,
-    ) -> list[str | Paragraph]:
+    ) -> list[str] | list[_Paragraph]:
         """
         Processes all elements in the DOCX document and returns appropriate objects.
 
@@ -687,12 +691,12 @@ class _DocxConverterBase:
         :param include_inline_formatting: If True, apply inline formatting (bold, italic, etc.)
             in markdown mode (default: True)
         :param use_markdown_text_in_paragraphs: If True, format comments and hyperlinks
-            in markdown style even when creating Paragraph objects (default: False)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+            in markdown style even when creating _Paragraph objects (default: False)
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: False)
         :param strict_mode: If True, raise exceptions for any processing
             error instead of skipping problematic elements (default: False)
-        :return: List of markdown lines or Paragraph objects
+        :return: List of markdown lines or _Paragraph objects
         """
         result = []
 
@@ -1422,16 +1426,16 @@ class _DocxConverterBase:
         include_links: bool = True,
         include_inline_formatting: bool = True,
         strict_mode: bool = False,
-    ) -> list[str | Paragraph]:
+    ) -> list[str] | list[_Paragraph]:
         """
         Processes a table element and returns either paragraphs or markdown lines.
 
         :param table_element: Table XML element
         :param package: _DocxPackage object
         :param markdown_mode: If True, return markdown formatted lines,
-            otherwise return Paragraph objects (default: False)
+            otherwise return _Paragraph objects (default: False)
         :param table_idx: Index of the table in the document (default: 0)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: False)
         :param include_textboxes: If True, include textbox content (default: True)
         :param include_links: If True, process and format hyperlinks (default: True)
@@ -1439,7 +1443,7 @@ class _DocxConverterBase:
             in markdown mode (default: True)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :return: List of markdown lines or Paragraph objects
+        :return: List of markdown lines or _Paragraph objects
         """
         result = []
 
@@ -1553,7 +1557,7 @@ class _DocxConverterBase:
                 # Add blank line after table
                 result.append("")
             else:
-                # Process table for Paragraph objects - only direct rows, not nested table rows
+                # Process table for _Paragraph objects - only direct rows, not nested table rows
                 table_metadata = f"Table ID: {table_idx + 1}"
                 rows = _docx_xpath(table_element, "./w:tr")
 
@@ -1580,8 +1584,8 @@ class _DocxConverterBase:
                                 list_counters=None,  # list_counters - tables handle their own formatting
                             )
                             if processed_para:
-                                # Safe cast: processed_para is a Paragraph object
-                                processed_para = cast(Paragraph, processed_para)
+                                # Safe cast: processed_para is a _Paragraph object
+                                processed_para = cast(_Paragraph, processed_para)
                                 style_id = self._get_paragraph_style(para)
                                 style_name = self._get_style_name(style_id, package)
                                 cell_style_info = f"Style: {style_name}"
@@ -1591,7 +1595,8 @@ class _DocxConverterBase:
                                     )
 
                                 # Copy the paragraph with added table metadata
-                                cell_para = Paragraph(
+                                cell_para = _publicize(
+                                    _Paragraph,
                                     raw_text=processed_para.raw_text,
                                     additional_context=f"{cell_style_info}, {table_metadata}, "
                                     f"Row: {row_idx + 1}, Column: {cell_idx + 1}, "
@@ -1626,8 +1631,10 @@ class _DocxConverterBase:
                             )
                             # Add nested table content with proper metadata
                             for nested_para in nested_content:
-                                if isinstance(nested_para, Paragraph):
+                                if isinstance(nested_para, _Paragraph):
                                     # Extract style and other info from nested table metadata
+                                    # Safe cast: nested_para is a _Paragraph object
+                                    nested_para = cast(_Paragraph, nested_para)
                                     nested_context = nested_para.additional_context
                                     if not nested_context:
                                         raise RuntimeError(
@@ -1662,7 +1669,8 @@ class _DocxConverterBase:
                                             remaining_parts
                                         )
 
-                                    nested_meta = Paragraph(
+                                    nested_meta = _publicize(
+                                        _Paragraph,
                                         raw_text=nested_para.raw_text,
                                         additional_context=final_context,
                                     )
@@ -1695,7 +1703,7 @@ class _DocxConverterBase:
         include_textboxes: bool = True,
         populate_md_text: bool = False,
         strict_mode: bool = False,
-    ) -> list[Paragraph]:
+    ) -> list[_Paragraph]:
         """
         Generic processor for document sections (headers, footers, footnotes, comments).
 
@@ -1706,7 +1714,7 @@ class _DocxConverterBase:
         :param include_textboxes: Whether to include textbox content
         :param populate_md_text: Whether to populate _md_text field
         :param strict_mode: Whether to raise exceptions on errors
-        :return: List of Paragraph objects
+        :return: List of _Paragraph objects
         """
         paragraphs = []
 
@@ -1764,8 +1772,8 @@ class _DocxConverterBase:
 
                     if processed_para:
                         # Add section-specific metadata
-                        # Safe cast: processed_para is a Paragraph object
-                        processed_para = cast(Paragraph, processed_para)
+                        # Safe cast: processed_para is a _Paragraph object
+                        processed_para = cast(_Paragraph, processed_para)
                         original_context = processed_para.additional_context
                         section_context = (
                             f"{original_context}, {metadata_key}: "
@@ -1773,7 +1781,8 @@ class _DocxConverterBase:
                         )
 
                         # Create paragraph with updated metadata
-                        paragraph = Paragraph(
+                        paragraph = _publicize(
+                            _Paragraph,
                             raw_text=processed_para.raw_text,
                             additional_context=section_context,
                         )
@@ -1792,7 +1801,7 @@ class _DocxConverterBase:
 
     def _handle_section_in_markdown_mode(
         self,
-        paragraphs: list[Paragraph],
+        paragraphs: list[_Paragraph],
         section_title: str,
         result: list[str],
         extract_id_func: Callable[[str], str] | None = None,
@@ -1879,17 +1888,17 @@ class _DocxConverterBase:
         include_textboxes: bool = True,
         populate_md_text: bool = False,
         strict_mode: bool = False,
-    ) -> list[Paragraph]:
+    ) -> list[_Paragraph]:
         """
-        Processes headers from the header XML files and converts them to Paragraph objects.
+        Processes headers from the header XML files and converts them to _Paragraph objects.
 
         :param package: _DocxPackage object
         :param include_textboxes: If True, include textbox content (default: True)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: False)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :return: List of Paragraph objects representing headers
+        :return: List of _Paragraph objects representing headers
         """
         return self._process_document_section(
             package=package,
@@ -1907,17 +1916,17 @@ class _DocxConverterBase:
         include_textboxes: bool = True,
         populate_md_text: bool = False,
         strict_mode: bool = False,
-    ) -> list[Paragraph]:
+    ) -> list[_Paragraph]:
         """
-        Processes footers from the footer XML files and converts them to Paragraph objects.
+        Processes footers from the footer XML files and converts them to _Paragraph objects.
 
         :param package: _DocxPackage object
         :param include_textboxes: If True, include textbox content (default: True)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: False)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :return: List of Paragraph objects representing footers
+        :return: List of _Paragraph objects representing footers
         """
         return self._process_document_section(
             package=package,
@@ -1935,17 +1944,17 @@ class _DocxConverterBase:
         include_textboxes: bool = True,
         populate_md_text: bool = True,
         strict_mode: bool = False,
-    ) -> list[Paragraph]:
+    ) -> list[_Paragraph]:
         """
-        Processes footnotes from the footnotes.xml file and converts them to Paragraph objects.
+        Processes footnotes from the footnotes.xml file and converts them to _Paragraph objects.
 
         :param package: _DocxPackage object
         :param include_textboxes: If True, include textbox content (default: True)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: True)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :return: List of Paragraph objects representing footnotes
+        :return: List of _Paragraph objects representing footnotes
         """
         if package.footnotes is None:
             return []
@@ -1976,17 +1985,17 @@ class _DocxConverterBase:
         include_textboxes: bool = True,
         populate_md_text: bool = True,
         strict_mode: bool = False,
-    ) -> list[Paragraph]:
+    ) -> list[_Paragraph]:
         """
-        Processes comments from the comments.xml file and converts them to Paragraph objects.
+        Processes comments from the comments.xml file and converts them to _Paragraph objects.
 
         :param package: _DocxPackage object
         :param include_textboxes: If True, include textbox content (default: True)
-        :param populate_md_text: If True, populate the _md_text field in Paragraph objects
+        :param populate_md_text: If True, populate the _md_text field in _Paragraph objects
             with markdown representation (default: True)
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :return: List of Paragraph objects representing comments
+        :return: List of _Paragraph objects representing comments
         """
         if package.comments is None:
             return []
@@ -2243,14 +2252,14 @@ class _DocxConverterBase:
 
     def _extract_images(
         self, package: _DocxPackage, strict_mode: bool = False
-    ) -> list[Image]:
+    ) -> list[_Image]:
         """
         Extracts images from the DOCX document.
 
         :param package: _DocxPackage object
         :param strict_mode: If True, raise exceptions for any processing error
             instead of skipping problematic elements (default: False)
-        :return: List of Image objects
+        :return: List of _Image objects
         """
         images = []
         img_count = 0
@@ -2285,7 +2294,7 @@ class _DocxConverterBase:
                     b64_data = base64.b64encode(image_bytes).decode("utf-8")
 
                     # Check for duplicates based on base64 data content
-                    # If we create duplicate Image objects and add them to the document,
+                    # If we create duplicate _Image objects and add them to the document,
                     # a ValueError will be raised.
                     if b64_data in seen_base64_data:
                         duplicate_count += 1
@@ -2294,7 +2303,9 @@ class _DocxConverterBase:
 
                     # Add to seen set and create image instance
                     seen_base64_data.add(b64_data)
-                    img_instance = Image(base64_data=b64_data, mime_type=mime_type)
+                    img_instance = _publicize(
+                        _Image, base64_data=b64_data, mime_type=mime_type
+                    )
                     images.append(img_instance)
                     img_count += 1
                 except Exception as e:

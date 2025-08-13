@@ -33,9 +33,11 @@ from pydantic import Field, StrictBool, StrictFloat, StrictInt, field_validator
 from typing_extensions import Self
 
 from contextgem.internal.base.items import _ExtractedItem
+from contextgem.internal.decorators import _expose_in_registry
 from contextgem.internal.typings.aliases import NonEmptyStr
 
 
+@_expose_in_registry
 class _StringItem(_ExtractedItem):
     """
     Represents an extracted item that holds a string value.
@@ -47,6 +49,7 @@ class _StringItem(_ExtractedItem):
     value: NonEmptyStr = Field(..., frozen=True)
 
 
+@_expose_in_registry
 class _BooleanItem(_ExtractedItem):
     """
     Represents an extracted item that holds a boolean value.
@@ -58,6 +61,7 @@ class _BooleanItem(_ExtractedItem):
     value: StrictBool = Field(..., frozen=True)
 
 
+@_expose_in_registry
 class _IntegerItem(_ExtractedItem):
     """
     Represents an extracted item that holds a int value.
@@ -69,6 +73,7 @@ class _IntegerItem(_ExtractedItem):
     value: StrictInt = Field(..., frozen=True)
 
 
+@_expose_in_registry
 class _FloatItem(_ExtractedItem):
     """
     Represents an extracted item that holds a float value.
@@ -80,6 +85,7 @@ class _FloatItem(_ExtractedItem):
     value: StrictFloat = Field(..., frozen=True)
 
 
+@_expose_in_registry
 class _IntegerOrFloatItem(_ExtractedItem):
     """
     Represents an extracted item that holds a int or float value.
@@ -92,6 +98,7 @@ class _IntegerOrFloatItem(_ExtractedItem):
     value: StrictInt | StrictFloat = Field(..., frozen=True)
 
 
+@_expose_in_registry
 class _JsonObjectItem(_ExtractedItem):
     """
     Represents an extracted item that holds a JSON object value.
@@ -145,6 +152,7 @@ class _JsonObjectItem(_ExtractedItem):
         return value
 
 
+@_expose_in_registry
 class _DateItem(_ExtractedItem):
     """
     Represents an extracted item that holds a date value.
@@ -211,6 +219,7 @@ class _DateItem(_ExtractedItem):
         return super().from_dict(obj_dict_copy)
 
 
+@_expose_in_registry
 class _LabelItem(_ExtractedItem):
     """
     Represents an extracted item that holds a list of label values.
@@ -226,15 +235,18 @@ class _LabelItem(_ExtractedItem):
     @classmethod
     def _validate_value(cls, value: list[NonEmptyStr]) -> list[NonEmptyStr]:
         """
-        Validates the input list of labels. Ensures there are no duplicates in the list.
+        Validates the input list of labels. Ensures there are no duplicates in the list
+        (case-insensitive).
 
         :param value: List of label strings to validate.
         :type value: list[str]
         :return: The same list provided as input, if it passes validation.
         :rtype: list[str]
-        :raises ValueError: If the list contains duplicate labels.
+        :raises ValueError: If the list contains duplicate labels (case-insensitive).
         """
-        if len(value) != len(set(value)):
-            raise ValueError("_LabelItem value cannot contain duplicate labels.")
+        if len(set(v.lower() for v in value)) < len(value):
+            raise ValueError(
+                "_LabelItem value cannot contain duplicate labels (case-insensitive)."
+            )
 
         return value

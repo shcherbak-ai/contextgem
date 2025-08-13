@@ -20,6 +20,8 @@
 Module defining internal decorators for the framework.
 """
 
+from __future__ import annotations
+
 import asyncio
 import timeit
 from collections.abc import Callable
@@ -27,6 +29,7 @@ from functools import wraps
 from typing import Any
 
 from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _expose_in_registry as _expose_in_registry
 
 
 def _post_init_method(func: Callable[[Any, Any], None]) -> Callable[[Any, Any], None]:
@@ -115,3 +118,74 @@ def _timer_decorator(
             return sync_wrapper
 
     return outer_wrapper
+
+
+def _disable_direct_initialization(cls: type) -> type:
+    """
+    Class decorator that disables direct instantiation of the decorated class.
+
+    Used to ensure that certain internal classes are not instantiated directly and public API
+    returns only the intended classes.
+
+    Usage:
+        @_prevent_direct_initialization
+        class _InternalCls:
+            ...
+
+        # Raises TypeError
+        _InternalCls()
+
+        # Subclasses can still be instantiated (unless they override ``__new__``
+        # to re-use the guard from the parent):
+        class PublicSub(_InternalCls):
+            pass
+
+        PublicSub()  # OK
+
+    The guard is implemented by overriding ``__new__`` on the exact decorated
+    class only. Subclasses are allowed to instantiate normally.
+
+    :param cls: Class to protect from direct instantiation.
+    :return: The same class with guarded ``__new__``.
+    """
+
+    def _guarded_new(inner_cls: type, *args: Any, **kwargs: Any) -> Any:
+        """
+        Replacement for ``__new__`` that blocks direct instantiation of the
+        decorated class while allowing subclasses to instantiate normally.
+
+        If invoked for the exact decorated class, an error is logged and
+        ``TypeError`` is raised. For subclasses, the call is forwarded to the
+        next ``__new__`` in the MRO, preserving base-class behavior (e.g.,
+        Pydantic's ``BaseModel.__new__``).
+
+        :param inner_cls: The class being instantiated (decorated class or
+            its subclass).
+        :param args: Positional constructor arguments.
+        :param kwargs: Keyword constructor arguments.
+        :return: A new instance when called for a subclass.
+        :raises TypeError: When attempting to instantiate the decorated class
+            directly.
+        """
+        if inner_cls is cls:
+            class_name = getattr(inner_cls, "__name__", str(inner_cls))
+            logger.error(
+                f"Attempted to instantiate internal class `{class_name}` directly."
+            )
+            raise TypeError(
+                f"Class `{class_name}` is internal and cannot be instantiated directly. "
+                f"Use the appropriate public factory or API instead."
+            )
+        # Allow normal instantiation for subclasses using the next __new__ in MRO
+        # relative to the decorated class. This preserves behaviors of bases such
+        # as Pydantic's BaseModel.__new__.
+        base_new = super(cls, inner_cls).__new__
+        try:
+            return base_new(inner_cls, *args, **kwargs)
+        except TypeError:
+            # Fallback for bases like object.__new__ that don't accept args
+            return base_new(inner_cls)
+
+    # Bind as __new__ on the class so the guard triggers only for the exact class
+    cls.__new__ = staticmethod(_guarded_new)
+    return cls

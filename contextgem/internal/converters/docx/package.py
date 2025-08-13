@@ -23,6 +23,8 @@ This module provides a class for representing a DOCX file as a package and
 providing access to its XML parts.
 """
 
+from __future__ import annotations
+
 import os
 import zipfile
 from pathlib import Path

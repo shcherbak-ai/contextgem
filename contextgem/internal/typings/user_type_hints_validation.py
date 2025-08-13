@@ -25,6 +25,8 @@ type information from different input formats, validating type compatibility wit
 serialization requirements, and ensuring type consistency across the application.
 """
 
+from __future__ import annotations
+
 from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, create_model

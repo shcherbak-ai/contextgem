@@ -22,6 +22,8 @@ Utility functions for the DOCX converter.
 This module contains helper functions used by the DOCX converter components.
 """
 
+from __future__ import annotations
+
 from lxml import etree
 
 from contextgem.internal.converters.docx.namespaces import WORD_XML_NAMESPACES

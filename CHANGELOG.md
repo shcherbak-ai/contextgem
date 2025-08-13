@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.15.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.15.0) - 2025-08-14
+### Added
+- Auto-pricing for LLMs: enable via `auto_pricing=True` to automatically estimate costs using pydantic's `genai-prices`; optional `auto_pricing_refresh=True` refreshes cached price data at runtime.
+
+### Refactor
+- Public API made more consistent and stable: user-facing classes are now thin, well-documented facades over internal implementations. No behavior changes.
+- Internal reorganization for maintainability and future-proofing.
+
+### Docs
+- Added guidance for configuring auto-pricing for LLMs.
+
 ## [0.14.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.4) - 2025-08-08
 ### Fixed
 - Suppressed noisy LiteLLM proxy missing-dependency error logs (prompting to install `litellm[proxy]`) emitted by `litellm>=1.75.2` during LLM API calls. ContextGem does not require LiteLLM proxy features. Suppression is scoped to LiteLLM loggers.

@@ -30,16 +30,15 @@ to be extracted, improving the accuracy and consistency of LLM-based extraction 
 
 from __future__ import annotations
 
-from typing import Any
-
-from pydantic import Field, field_validator
-
-from contextgem.internal.base.examples import _Example
-from contextgem.internal.typings.aliases import NonEmptyStr
-from contextgem.internal.utils import _is_json_serializable
+from contextgem.internal.base.examples import (
+    _JsonObjectExample,
+    _StringExample,
+)
+from contextgem.internal.decorators import _expose_in_registry
 
 
-class StringExample(_Example):
+@_expose_in_registry(additional_key=_StringExample)
+class StringExample(_StringExample):
     """
     Represents a string example that can be provided by users for certain extraction tasks.
 
@@ -57,10 +56,11 @@ class StringExample(_Example):
             :caption: String example definition
     """
 
-    content: NonEmptyStr
+    pass
 
 
-class JsonObjectExample(_Example):
+@_expose_in_registry(additional_key=_JsonObjectExample)
+class JsonObjectExample(_JsonObjectExample):
     """
     Represents a JSON object example that can be provided by users for certain extraction tasks.
 
@@ -79,20 +79,4 @@ class JsonObjectExample(_Example):
             :caption: JSON object example definition
     """
 
-    content: dict[str, Any] = Field(default_factory=dict, min_length=1)
-
-    @field_validator("content")
-    @classmethod
-    def _validate_content_serializable(cls, value: dict[str, Any]) -> dict[str, Any]:
-        """
-        Validates that the `content` field is serializable to JSON.
-
-        :param value: The value of the `content` field to validate.
-        :type value: dict[str, Any]
-        :return: The validated `content` value.
-        :rtype: dict[str, Any]
-        :raises ValueError: If the `content` value is not serializable.
-        """
-        if not _is_json_serializable(value):
-            raise ValueError("`content` must be JSON serializable.")
-        return value
+    pass

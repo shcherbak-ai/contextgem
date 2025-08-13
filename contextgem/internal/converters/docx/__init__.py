@@ -20,7 +20,7 @@ from contextgem.internal.converters.docx.base import _DocxConverterBase
 from contextgem.internal.converters.docx.package import _DocxPackage
 
 
-__all__ = [
+__all__ = (
     "_DocxConverterBase",
     "_DocxPackage",
-]
+)

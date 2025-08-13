@@ -25,6 +25,8 @@ It handles various type constructs including basic types, generics, unions, and
 custom types, ensuring consistent string formatting across the framework.
 """
 
+from __future__ import annotations
+
 from types import UnionType
 from typing import Any, Literal, Union, get_args, get_origin
 

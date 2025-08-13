@@ -23,6 +23,8 @@ Provides functions to detect classes with type annotations (like Pydantic models
 or dataclasses) and extract their field type definitions for schema generation.
 """
 
+from __future__ import annotations
+
 from dataclasses import MISSING, is_dataclass
 from typing import Any, get_type_hints
 

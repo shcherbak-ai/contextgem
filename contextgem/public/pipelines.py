@@ -31,19 +31,12 @@ assignable object.
 
 from __future__ import annotations
 
-import warnings
-from collections.abc import Sequence
-from typing import Annotated, Any
-
-from pydantic import BeforeValidator, Field
-
-from contextgem.internal.base.attrs import _AssignedInstancesProcessor
-from contextgem.internal.base.concepts import _Concept
-from contextgem.internal.typings.validators import _validate_sequence_is_list
-from contextgem.public.aspects import Aspect
+from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPipeline
+from contextgem.internal.decorators import _expose_in_registry
 
 
-class ExtractionPipeline(_AssignedInstancesProcessor):
+@_expose_in_registry(additional_key=_ExtractionPipeline)
+class ExtractionPipeline(_ExtractionPipeline):
     """
     Represents a reusable collection of predefined aspects and concepts for document analysis.
 
@@ -53,7 +46,7 @@ class ExtractionPipeline(_AssignedInstancesProcessor):
 
     :ivar aspects: A list of aspects to extract from documents. Aspects represent structural
                   categories of information. Defaults to an empty list.
-    :vartype aspects: list[Aspect]
+    :vartype aspects: list[_Aspect]
     :ivar concepts: A list of concepts to identify within documents. Concepts represent
                    specific information elements to extract. Defaults to an empty list.
     :vartype concepts: list[_Concept]
@@ -68,18 +61,14 @@ class ExtractionPipeline(_AssignedInstancesProcessor):
             :caption: Extraction pipeline definition
     """
 
-    aspects: list[Aspect] = Field(default_factory=list)
-    concepts: Annotated[
-        Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)
-    ] = Field(
-        default_factory=list
-    )  # using Sequence field with list validator for type checking
+    pass
 
 
 # TODO: Remove this class in v1.0.0.
-class DocumentPipeline(ExtractionPipeline):
+@_expose_in_registry(additional_key=_DocumentPipeline)
+class DocumentPipeline(_DocumentPipeline):
     """
-    Deprecated alias for ExtractionPipeline.
+    Deprecated wrapper for ExtractionPipeline.
 
     .. deprecated:: 0.14.1
         DocumentPipeline is deprecated and will be removed in v1.0.0.
@@ -92,18 +81,6 @@ class DocumentPipeline(ExtractionPipeline):
 
     **Migration**: Simply replace ``DocumentPipeline`` with ``ExtractionPipeline`` in your imports.
     All functionality remains identical.
-
-    **Future-proofing**: Update your code before v1.0.0 to avoid breaking changes:
     """
 
-    def __init__(self, **data: Any) -> None:
-        """
-        Initialize DocumentPipeline with deprecation warning.
-        """
-        warnings.warn(
-            "DocumentPipeline is deprecated and will be removed in v1.0.0. "
-            "Use ExtractionPipeline instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(**data)
+    pass

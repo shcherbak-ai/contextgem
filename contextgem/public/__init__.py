@@ -43,7 +43,7 @@ from contextgem.public.utils import (
 )
 
 
-__all__ = [
+__all__ = (
     # Aspects
     "Aspect",
     # Concepts
@@ -81,4 +81,4 @@ __all__ = [
     "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
-]
+)

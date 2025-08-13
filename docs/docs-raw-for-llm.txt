@@ -1152,6 +1152,7 @@ Extraction pipeline example (ContextGem)
            input_per_1m_tokens=0.150,
            output_per_1m_tokens=0.600,
        ),
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
    llm_reasoner = DocumentLLM(
        model="openai/o3-mini",  # or any other LLM from e.g. Anthropic, etc.
@@ -1161,6 +1162,7 @@ Extraction pipeline example (ContextGem)
            input_per_1m_tokens=1.10,
            output_per_1m_tokens=4.40,
        ),
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
    # The LLM group is used for all extraction tasks within the pipeline
    llm_group = DocumentLLMGroup(llms=[llm_extractor, llm_reasoner])
@@ -8311,6 +8313,7 @@ Here's a comprehensive example:
            input_per_1m_tokens=0.150,
            output_per_1m_tokens=0.600,
        ),
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
    llm_reasoner = DocumentLLM(
        model="openai/o3-mini",  # or any other LLM from e.g. Anthropic, etc.
@@ -8320,6 +8323,7 @@ Here's a comprehensive example:
            input_per_1m_tokens=1.10,
            output_per_1m_tokens=4.40,
        ),
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
    # The LLM group is used for all extraction tasks within the pipeline
    llm_group = DocumentLLMGroup(llms=[llm_extractor, llm_reasoner])
@@ -8747,11 +8751,6 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | "system_message=''" to disable the default         |
 |                      |                 |                 | entirely (meaning no system message will be sent). |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
-| "temperature"        | "float | None"  | "0.3"           | Sampling temperature (0.0 to 1.0) controlling      |
-|                      |                 |                 | response creativity. Lower values produce more     |
-|                      |                 |                 | predictable outputs, higher values generate more   |
-|                      |                 |                 | varied responses.                                  |
-+----------------------+-----------------+-----------------+----------------------------------------------------+
 | "max_tokens"         | "int"           | "4096"          | Maximum tokens in the generated response           |
 |                      |                 |                 | (applicable to most models).                       |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
@@ -8760,11 +8759,6 @@ The "DocumentLLM" class accepts the following parameters:
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "reasoning_effort"   | "str | None"    | "None"          | Reasoning effort for reasoning (CoT-capable)       |
 |                      |                 |                 | models. Values: ""low"", ""medium"", ""high"".     |
-+----------------------+-----------------+-----------------+----------------------------------------------------+
-| "top_p"              | "float | None"  | "0.3"           | Nucleus sampling value (0.0 to 1.0) controlling    |
-|                      |                 |                 | output focus/randomness. Lower values make output  |
-|                      |                 |                 | more deterministic, higher values produce more     |
-|                      |                 |                 | diverse outputs.                                   |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "timeout"            | "int"           | "120"           | Timeout in seconds for LLM API calls.              |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
@@ -8780,6 +8774,16 @@ The "DocumentLLM" class accepts the following parameters:
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "pricing_details"    | "LLMPricing |   | "None"          | "LLMPricing" object with pricing details for cost  |
 |                      | None"           |                 | calculation.                                       |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "auto_pricing"       | "bool"          | "False"         | Enable automatic cost calculation using "genai-    |
+|                      |                 |                 | prices" based on the configured "model". Mutually  |
+|                      |                 |                 | exclusive with "pricing_details". Not supported    |
+|                      |                 |                 | for local models (e.g., "ollama/", "ollama_chat/", |
+|                      |                 |                 | "lm_studio/").                                     |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "auto_pricing_refre  | "bool"          | "False"         | When "auto_pricing" is enabled, allow "genai-      |
+| sh"                  |                 |                 | prices" to auto-refresh its cached pricing data at |
+|                      |                 |                 | runtime.                                           |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "is_fallback"        | "bool"          | "False"         | Indicates whether the LLM is a fallback model.     |
 |                      |                 |                 | Fallback LLMs are optionally assigned to the       |
@@ -8802,6 +8806,16 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | immediately understandable by local end users      |
 |                      |                 |                 | reviewing the document.                            |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
+| "temperature"        | "float | None"  | "0.3"           | Sampling temperature (0.0 to 1.0) controlling      |
+|                      |                 |                 | response creativity. Lower values produce more     |
+|                      |                 |                 | predictable outputs, higher values generate more   |
+|                      |                 |                 | varied responses.                                  |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "top_p"              | "float | None"  | "0.3"           | Nucleus sampling value (0.0 to 1.0) controlling    |
+|                      |                 |                 | output focus/randomness. Lower values make output  |
+|                      |                 |                 | more deterministic, higher values produce more     |
+|                      |                 |                 | diverse outputs.                                   |
++----------------------+-----------------+-----------------+----------------------------------------------------+
 | "seed"               | "int | None"    | "None"          | Seed for random number generation to help produce  |
 |                      |                 |                 | more consistent outputs across multiple runs. When |
 |                      |                 |                 | set to a specific integer value, the LLM will      |
@@ -8820,6 +8834,15 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | of how to easily set up concurrency for            |
 |                      |                 |                 | extraction.                                        |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
+
+Warning:
+
+  **Auto-pricing accuracy**When using "auto_pricing=True", cost
+  estimates are approximate. These prices will not be 100% accurate.
+  The price data cannot be exactly correct because model providers do
+  not provide exact price information for their APIs in a format which
+  can be reliably processed. See Pydantic's genai-prices for more
+  details.
 
 
 💡 Advanced Configuration Examples
@@ -8862,13 +8885,14 @@ Configuring a fallback LLM
 💰 Setting Up Cost Tracking
 ---------------------------
 
-You can configure pricing details to track costs:
+You can configure pricing parameters to track costs:
 
 Setting up LLM cost tracking
 
    from contextgem import DocumentLLM, LLMPricing
 
 
+   # Option 1: Set up a LLM with pricing details
    llm = DocumentLLM(
        model="openai/gpt-4o-mini",
        api_key="<your-openai-api-key>",
@@ -8876,6 +8900,13 @@ Setting up LLM cost tracking
            input_per_1m_tokens=0.150,  # Cost per 1M input tokens
            output_per_1m_tokens=0.600,  # Cost per 1M output tokens
        ),
+   )
+
+   # Option 2: Set up a LLM with auto-pricing
+   llm = DocumentLLM(
+       model="openai/gpt-4o-mini",
+       api_key="<your-openai-api-key>",
+       auto_pricing=True,
    )
 
    # Perform some extraction tasks
@@ -8985,6 +9016,7 @@ Tracking usage and cost
    llm = DocumentLLM(
        model="anthropic/claude-3-5-haiku",
        api_key="<your-anthropic-api-key>",
+       auto_pricing=True,  # or set `pricing_details=LLMPricing(...)` manually
    )
 
    # Perform some extraction tasks
@@ -10194,6 +10226,7 @@ Tip:
            input_per_1m_tokens=0.150,
            output_per_1m_tokens=0.600,
        ),
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
    llm_reasoner = DocumentLLM(
        model="openai/o3-mini",  # or any other LLM from e.g. Anthropic, etc.
@@ -10203,6 +10236,7 @@ Tip:
            input_per_1m_tokens=1.10,
            output_per_1m_tokens=4.40,
        ),
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
    # The LLM group is used for all extraction tasks within the pipeline
    llm_group = DocumentLLMGroup(llms=[llm_extractor, llm_reasoner])
@@ -10687,6 +10721,7 @@ Example of optimizing extraction for cost
            input_per_1m_tokens=0.150,
            output_per_1m_tokens=0.600,
        ),  # add pricing details to track costs
+       # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
    )
 
    # ... use the LLM for extraction ...
@@ -11128,26 +11163,9 @@ or unstructured file containing written or visual content. Documents
 can be processed to extract information, analyze content, and organize
 data into paragraphs, sentences, aspects, and concepts.
 
-The Document class supports various operations including:
-
-* Managing raw text and structured paragraphs
-
-* Handling embedded or attached images
-
-* Organizing content into aspects for focused analysis
-
-* Associating concepts for information extraction
-
-* Processing documents through pipelines for automated analysis
-
-Documents serve as the primary container for content analysis within
-the ContextGem framework, enabling complex document understanding and
-information extraction workflows.
-
 class contextgem.public.documents.Document(**data)
 
-   Bases: "_AssignedInstancesProcessor",
-   "_MarkdownTextAttributesProcessor"
+   Bases: "_Document"
 
    Represents a document containing textual and visual content for
    analysis.
@@ -11209,11 +11227,14 @@ class contextgem.public.documents.Document(**data)
         **min_length=1**, **max_length=None**, **pattern=None**)**]
         **| **None*)
 
-      * **paragraphs** (*list**[**Paragraph**]*)
+      * **paragraphs** (*list**[**_Paragraph**]*)
 
-      * **images** (*list**[**Image**]*)
+      * **images** (*list**[**_Image**]*)
 
-      * **aspects** (*list**[**Aspect**]*)
+      * **aspects** (*Annotated**[**Sequence**[**_Aspect**]**, **Befo
+        reValidator**(**func=~contextgem.internal.typings.validators.
+        _validate_sequence_is_list**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **concepts** (*Annotated**[**Sequence**[**_Concept**]**, **Be
         foreValidator**(**func=~contextgem.internal.typings.validator
@@ -11316,61 +11337,6 @@ class contextgem.public.documents.Document(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   raw_text: NonEmptyStr | None
-
-   paragraphs: list[Paragraph]
-
-   images: list[Image]
-
-   aspects: list[Aspect]
-
-   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
-
-   paragraph_segmentation_mode: Literal['newlines', 'sat']
-
-   sat_model_id: SaTModelId
-
-   pre_segment_sentences: bool
-
-   property sentences: list[Sentence]
-
-      Provides access to all sentences within the paragraphs of the
-      document by flattening and combining sentences from each
-      paragraph into a single list.
-
-      Returns:
-         A list of Sentence objects that are contained within all
-         paragraphs.
-
-      Return type:
-         list[Sentence]
-
-   assign_pipeline(pipeline, overwrite_existing=False)
-
-      Assigns a given pipeline to the document. The method deep-copies
-      the input pipeline to prevent any modifications to the state of
-      aspects or concepts in the original pipeline. If the aspects or
-      concepts are already associated with the document, an error is
-      raised unless the *overwrite_existing* parameter is explicitly
-      set to *True*.
-
-      Parameters:
-         * **pipeline** (*ExtractionPipeline** | **DocumentPipeline*)
-           -- The ExtractionPipeline (or deprecated DocumentPipeline)
-           object to attach to the document.
-
-         * **overwrite_existing** (*bool*) -- A boolean flag. If set
-           to True, any existing aspects and concepts assigned to the
-           document will be overwritten by the new pipeline. Defaults
-           to False.
-
-      Return type:
-         "typing.Self"
-
-      Returns:
-         Returns the current instance of the document after assigning
-         the pipeline.
-
    add_aspects(aspects)
 
       Adds aspects to the existing aspects list of an instance and
@@ -11379,8 +11345,8 @@ class contextgem.public.documents.Document(**data)
       modification of the original reusable aspects.
 
       Parameters:
-         **aspects** (*list**[**Aspect**]*) -- A list of aspects to be
-         added. Each aspect is deeply copied to ensure the original
+         **aspects** (*list**[**_Aspect**]*) -- A list of aspects to
+         be added. Each aspect is deeply copied to ensure the original
          list remains unaltered.
 
       Returns:
@@ -11406,6 +11372,33 @@ class contextgem.public.documents.Document(**data)
 
       Return type:
          Self
+
+   assign_pipeline(pipeline, overwrite_existing=False)
+
+      Assigns a given pipeline to the document. The method deep-copies
+      the input pipeline to prevent any modifications to the state of
+      aspects or concepts in the original pipeline. If the aspects or
+      concepts are already associated with the document, an error is
+      raised unless the *overwrite_existing* parameter is explicitly
+      set to *True*.
+
+      Parameters:
+         * **pipeline** (*_ExtractionPipeline** |
+           **_DocumentPipeline*) -- The ExtractionPipeline (or
+           deprecated DocumentPipeline) object to attach to the
+           document.
+
+         * **overwrite_existing** (*bool*) -- A boolean flag. If set
+           to True, any existing aspects and concepts assigned to the
+           document will be overwritten by the new pipeline. Defaults
+           to False.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         Returns the current instance of the document after assigning
+         the pipeline.
 
    clone()
 
@@ -11500,7 +11493,7 @@ class contextgem.public.documents.Document(**data)
          The aspect with the specified name.
 
       Return type:
-         Aspect
+         _Aspect
 
       Raises:
          **ValueError** -- If no aspect with the specified name is
@@ -11508,7 +11501,7 @@ class contextgem.public.documents.Document(**data)
 
    get_aspects_by_names(names)
 
-      Retrieve a list of Aspect objects corresponding to the provided
+      Retrieve a list of _Aspect objects corresponding to the provided
       list of names.
 
       Parameters:
@@ -11516,10 +11509,10 @@ class contextgem.public.documents.Document(**data)
          retrieve. The names must be provided as a list of strings.
 
       Returns:
-         A list of Aspect objects corresponding to provided names.
+         A list of _Aspect objects corresponding to provided names.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    get_concept_by_name(name)
 
@@ -11664,6 +11657,19 @@ class contextgem.public.documents.Document(**data)
       Return type:
          Self
 
+   property sentences: list[_Sentence]
+
+      Provides access to all sentences within the paragraphs of the
+      document by flattening and combining sentences from each
+      paragraph into a single list.
+
+      Returns:
+         A list of _Sentence objects that are contained within all
+         paragraphs.
+
+      Return type:
+         list[_Sentence]
+
    to_dict()
 
       Transforms the current object into a dictionary representation.
@@ -11725,6 +11731,22 @@ class contextgem.public.documents.Document(**data)
    property unique_id: str
 
       Returns the ULID of the instance.
+
+   raw_text: NonEmptyStr | None
+
+   paragraphs: list[_Paragraph]
+
+   images: list[_Image]
+
+   aspects: Annotated[Sequence[_Aspect], BeforeValidator(_validate_sequence_is_list)]
+
+   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
+
+   paragraph_segmentation_mode: Literal['newlines', 'sat']
+
+   sat_model_id: SaTModelId
+
+   pre_segment_sentences: bool
 
    custom_data: dict
 
@@ -11932,18 +11954,9 @@ or topic within a document that requires focused attention. Aspects
 are used to identify and extract specific subjects or themes from
 documents according to predefined criteria.
 
-Aspects can be associated with concepts, reference paragraphs and
-sentences from the source document, and can be configured with
-different LLM roles for extraction and reasoning tasks.
-
-The module integrates with the broader ContextGem framework for
-document analysis and information extraction.
-
 class contextgem.public.aspects.Aspect(**data)
 
-   Bases: "_AssignedInstancesProcessor",
-   "_ExtractedItemsAttributeProcessor",
-   "_RefParasAndSentsAttrituteProcessor"
+   Bases: "_Aspect"
 
    Represents an aspect with associated metadata, sub-aspects,
    concepts, and logic for validation.
@@ -12008,7 +12021,10 @@ class contextgem.public.aspects.Aspect(**data)
         **to_upper=None**, **to_lower=None**, **strict=None**,
         **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **aspects** (*list**[**Aspect**]*)
+      * **aspects** (*Annotated**[**Sequence**[**_Aspect**]**, **Befo
+        reValidator**(**func=~contextgem.internal.typings.validators.
+        _validate_sequence_is_list**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **concepts** (*Annotated**[**Sequence**[**_Concept**]**, **Be
         foreValidator**(**func=~contextgem.internal.typings.validator
@@ -12045,18 +12061,6 @@ class contextgem.public.aspects.Aspect(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   name: NonEmptyStr
-
-   description: NonEmptyStr
-
-   aspects: list[Aspect]
-
-   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
-
-   llm_role: LLMRoleAspect
-
-   reference_depth: ReferenceDepth
-
    add_aspects(aspects)
 
       Adds aspects to the existing aspects list of an instance and
@@ -12065,8 +12069,8 @@ class contextgem.public.aspects.Aspect(**data)
       modification of the original reusable aspects.
 
       Parameters:
-         **aspects** (*list**[**Aspect**]*) -- A list of aspects to be
-         added. Each aspect is deeply copied to ensure the original
+         **aspects** (*list**[**_Aspect**]*) -- A list of aspects to
+         be added. Each aspect is deeply copied to ensure the original
          list remains unaltered.
 
       Returns:
@@ -12197,7 +12201,7 @@ class contextgem.public.aspects.Aspect(**data)
          The aspect with the specified name.
 
       Return type:
-         Aspect
+         _Aspect
 
       Raises:
          **ValueError** -- If no aspect with the specified name is
@@ -12205,7 +12209,7 @@ class contextgem.public.aspects.Aspect(**data)
 
    get_aspects_by_names(names)
 
-      Retrieve a list of Aspect objects corresponding to the provided
+      Retrieve a list of _Aspect objects corresponding to the provided
       list of names.
 
       Parameters:
@@ -12213,10 +12217,10 @@ class contextgem.public.aspects.Aspect(**data)
          retrieve. The names must be provided as a list of strings.
 
       Returns:
-         A list of Aspect objects corresponding to provided names.
+         A list of _Aspect objects corresponding to provided names.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    get_concept_by_name(name)
 
@@ -12263,27 +12267,27 @@ class contextgem.public.aspects.Aspect(**data)
       Return type:
          set[str]
 
-   property reference_paragraphs: list[Paragraph]
+   property reference_paragraphs: list[_Paragraph]
 
       Provides access to the instance's reference paragraphs, assigned
       during extraction.
 
       Returns:
-         A list containing the paragraphs as *Paragraph* objects.
+         A list containing the paragraphs as *_Paragraph* objects.
 
       Return type:
-         list[Paragraph]
+         list[_Paragraph]
 
-   property reference_sentences: list[Sentence]
+   property reference_sentences: list[_Sentence]
 
       Provides access to the instance's reference sentences, assigned
       during extraction.
 
       Returns:
-         A list containing the sentences as *Sentence* objects.
+         A list containing the sentences as *_Sentence* objects.
 
       Return type:
-         list[Sentence]
+         list[_Sentence]
 
    remove_all_aspects()
 
@@ -12445,6 +12449,18 @@ class contextgem.public.aspects.Aspect(**data)
 
       Returns the ULID of the instance.
 
+   name: NonEmptyStr
+
+   description: NonEmptyStr
+
+   aspects: Annotated[Sequence[_Aspect], BeforeValidator(_validate_sequence_is_list)]
+
+   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
+
+   llm_role: LLMRoleAspect
+
+   reference_depth: ReferenceDepth
+
    add_justifications: StrictBool
 
    justification_depth: JustificationDepth
@@ -12474,7 +12490,7 @@ the source text.
 
 class contextgem.public.concepts.StringConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_StringConcept"
 
    A concept model for string-based information extraction from
    documents and aspects.
@@ -12560,7 +12576,7 @@ class contextgem.public.concepts.StringConcept(**data)
       * **singular_occurrence** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
 
-      * **examples** (*list**[**StringExample**]*)
+      * **examples** (*list**[**_StringExample**]*)
 
    Example:
       String concept definition
@@ -12590,8 +12606,6 @@ class contextgem.public.concepts.StringConcept(**data)
 
    *self* is explicitly positional-only to allow *self* as a field
    name.
-
-   examples: list[StringExample]
 
    clone()
 
@@ -12746,6 +12760,8 @@ class contextgem.public.concepts.StringConcept(**data)
 
       Returns the ULID of the instance.
 
+   examples: list[_StringExample]
+
    name: NonEmptyStr
 
    description: NonEmptyStr
@@ -12768,7 +12784,7 @@ class contextgem.public.concepts.StringConcept(**data)
 
 class contextgem.public.concepts.BooleanConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_BooleanConcept"
 
    A concept model for boolean (True/False) information extraction
    from documents and aspects.
@@ -13051,7 +13067,7 @@ class contextgem.public.concepts.BooleanConcept(**data)
 
 class contextgem.public.concepts.NumericalConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_NumericalConcept"
 
    A concept model for numerical information extraction from documents
    and aspects.
@@ -13174,8 +13190,6 @@ class contextgem.public.concepts.NumericalConcept(**data)
 
    *self* is explicitly positional-only to allow *self* as a field
    name.
-
-   numeric_type: Literal['int', 'float', 'any']
 
    clone()
 
@@ -13330,6 +13344,8 @@ class contextgem.public.concepts.NumericalConcept(**data)
 
       Returns the ULID of the instance.
 
+   numeric_type: Literal['int', 'float', 'any']
+
    name: NonEmptyStr
 
    description: NonEmptyStr
@@ -13352,7 +13368,7 @@ class contextgem.public.concepts.NumericalConcept(**data)
 
 class contextgem.public.concepts.RatingConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_RatingConcept"
 
    A concept model for rating-based information extraction with
    defined scale boundaries.
@@ -13440,7 +13456,7 @@ class contextgem.public.concepts.RatingConcept(**data)
       * **singular_occurrence** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
 
-      * **rating_scale** (*RatingScale** |
+      * **rating_scale** (*_RatingScale** |
         **tuple**[**Annotated**[**int**,
         **Strict**(**strict=True**)**]**, **Annotated**[**int**,
         **Strict**(**strict=True**)**]**]*)
@@ -13482,7 +13498,15 @@ class contextgem.public.concepts.RatingConcept(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   rating_scale: RatingScale | tuple[StrictInt, StrictInt]
+   clone()
+
+      Creates and returns a deep copy of the current instance.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         A deep copy of the current instance.
 
    property extracted_items: list[_IntegerItem]
 
@@ -13493,16 +13517,6 @@ class contextgem.public.concepts.RatingConcept(**data)
 
       Return type:
          list[_IntegerItem]
-
-   clone()
-
-      Creates and returns a deep copy of the current instance.
-
-      Return type:
-         "typing.Self"
-
-      Returns:
-         A deep copy of the current instance.
 
    classmethod from_dict(obj_dict)
 
@@ -13636,6 +13650,8 @@ class contextgem.public.concepts.RatingConcept(**data)
 
       Returns the ULID of the instance.
 
+   rating_scale: _RatingScale | tuple[StrictInt, StrictInt]
+
    name: NonEmptyStr
 
    description: NonEmptyStr
@@ -13658,7 +13674,7 @@ class contextgem.public.concepts.RatingConcept(**data)
 
 class contextgem.public.concepts.JsonObjectConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_JsonObjectConcept"
 
    A concept model for structured JSON object extraction from
    documents and aspects.
@@ -13803,7 +13819,7 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
         **min_length=1**, **max_length=None**, **pattern=None**)**]**,
         **Any**]*)
 
-      * **examples** (*list**[**JsonObjectExample**]*)
+      * **examples** (*list**[**_JsonObjectExample**]*)
 
    Example:
       JSON object concept definition
@@ -13838,10 +13854,6 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
 
    *self* is explicitly positional-only to allow *self* as a field
    name.
-
-   structure: type | dict[NonEmptyStr, Any]
-
-   examples: list[JsonObjectExample]
 
    clone()
 
@@ -13996,6 +14008,10 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
 
       Returns the ULID of the instance.
 
+   structure: type | dict[NonEmptyStr, Any]
+
+   examples: list[_JsonObjectExample]
+
    name: NonEmptyStr
 
    description: NonEmptyStr
@@ -14018,7 +14034,7 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
 
 class contextgem.public.concepts.DateConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_DateConcept"
 
    A concept model for date object extraction from documents and
    aspects.
@@ -14299,7 +14315,7 @@ class contextgem.public.concepts.DateConcept(**data)
 
 class contextgem.public.concepts.LabelConcept(**data)
 
-   Bases: "_Concept"
+   Bases: "_LabelConcept"
 
    A concept model for label-based classification of documents and
    aspects.
@@ -14309,11 +14325,17 @@ class contextgem.public.concepts.LabelConcept(**data)
    selection) and multi-label (multiple label selection)
    classification approaches.
 
-   **Note**: When none of the predefined labels apply to the content
-   being classified, no extracted items will be returned (empty
-   "extracted_items" list). This ensures that only valid, predefined
-   labels are selected and prevents forced classification when no
-   appropriate label exists.
+   **Note**: Behavior depends on "classification_type":
+
+   * "multi_class": exactly one label is always returned for each
+     extracted item. If none of the specific labels apply, include a
+     catch-all label (e.g., ""other"", ""N/A"") among "labels" so the
+     model can select it.
+
+   * "multi_label": when none of the predefined labels apply, no
+     extracted items may be returned (empty "extracted_items" list).
+     This prevents forced classification when no appropriate label
+     exists.
 
    Variables:
       * **name** (*str*) -- The name of the concept (non-empty string,
@@ -14323,7 +14345,8 @@ class contextgem.public.concepts.LabelConcept(**data)
         (non-empty string, stripped).
 
       * **labels** (*list**[**str**]*) -- List of predefined labels
-        for classification. Must contain at least 2 unique labels.
+        (non-empty strings, stripped) for classification. Must contain
+        at least 2 unique labels.
 
       * **classification_type** (*ClassificationType*) --
         Classification mode - "multi_class" for single label
@@ -14441,9 +14464,15 @@ class contextgem.public.concepts.LabelConcept(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   labels: list[NonEmptyStr]
+   clone()
 
-   classification_type: ClassificationType
+      Creates and returns a deep copy of the current instance.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         A deep copy of the current instance.
 
    property extracted_items: list[_LabelItem]
 
@@ -14454,16 +14483,6 @@ class contextgem.public.concepts.LabelConcept(**data)
 
       Return type:
          list[_LabelItem]
-
-   clone()
-
-      Creates and returns a deep copy of the current instance.
-
-      Return type:
-         "typing.Self"
-
-      Returns:
-         A deep copy of the current instance.
 
    classmethod from_dict(obj_dict)
 
@@ -14597,6 +14616,10 @@ class contextgem.public.concepts.LabelConcept(**data)
 
       Returns the ULID of the instance.
 
+   labels: list[NonEmptyStr]
+
+   classification_type: ClassificationType
+
    name: NonEmptyStr
 
    description: NonEmptyStr
@@ -14637,7 +14660,7 @@ consistency of LLM-based extraction processes.
 
 class contextgem.public.examples.StringExample(**data)
 
-   Bases: "_Example"
+   Bases: "_StringExample"
 
    Represents a string example that can be provided by users for
    certain extraction tasks.
@@ -14689,8 +14712,6 @@ class contextgem.public.examples.StringExample(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   content: NonEmptyStr
-
    clone()
 
       Creates and returns a deep copy of the current instance.
@@ -14833,11 +14854,13 @@ class contextgem.public.examples.StringExample(**data)
 
       Returns the ULID of the instance.
 
+   content: NonEmptyStr
+
    custom_data: dict
 
 class contextgem.public.examples.JsonObjectExample(**data)
 
-   Bases: "_Example"
+   Bases: "_JsonObjectExample"
 
    Represents a JSON object example that can be provided by users for
    certain extraction tasks.
@@ -14909,8 +14932,6 @@ class contextgem.public.examples.JsonObjectExample(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   content: dict[str, Any]
-
    clone()
 
       Creates and returns a deep copy of the current instance.
@@ -15053,6 +15074,8 @@ class contextgem.public.examples.JsonObjectExample(**data)
 
       Returns the ULID of the instance.
 
+   content: dict[str, Any]
+
    custom_data: dict
 
 
@@ -15076,7 +15099,7 @@ detailed usage statistics for monitoring and cost management.
 
 class contextgem.public.llms.DocumentLLMGroup(**data)
 
-   Bases: "_GenericLLMProcessor"
+   Bases: "_DocumentLLMGroup"
 
    Represents a group of DocumentLLMs with unique roles for processing
    document content.
@@ -15096,6 +15119,11 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
         "en" (always English) or "adapt" (matches document/image
         language). All LLMs in the group must share the same
         output_language setting. Defaults to "en".
+
+   Parameters:
+      * **llms** (*list**[**_DocumentLLM**]*)
+
+      * **output_language** (*Literal**[**'en'**, **'adapt'**]*)
 
    Note:
       Refer to the "DocumentLLM" class for more information on
@@ -15175,52 +15203,17 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   llms: list[DocumentLLM]
-
-   output_language: LanguageRequirement
-
-   property is_group: bool
-
-      Returns True indicating this is a group of LLMs.
-
-      Returns:
-         Always True for DocumentLLMGroup instances.
-
-      Return type:
-         bool
-
-   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
-
-      Returns a list of all roles assigned to the LLMs in this group.
-
-      Returns:
-         A list of LLM role identifiers
-
-      Return type:
-         list[LLMRoleAny]
-
-   group_update_output_language(output_language)
-
-      Updates the output language for all LLMs in the group.
-
-      Parameters:
-         **output_language** (*LanguageRequirement*) -- The new output
-         language to set for all LLMs
-
-      Return type:
-         "None"
-
    _eq_deserialized_llm_config(other)
 
-      Custom config equality method to compare this DocumentLLMGroup
+      Custom config equality method to compare this _DocumentLLMGroup
       with a deserialized instance.
 
-      Uses the *_eq_deserialized_llm_config* method of the DocumentLLM
-      class to compare each LLM in the group, including fallbacks, if
-      any.
+      Uses the *_eq_deserialized_llm_config* method of the
+      _DocumentLLM class to compare each LLM in the group, including
+      fallbacks, if any.
 
       Parameters:
-         **other** (*DocumentLLMGroup*) -- Another DocumentLLMGroup
+         **other** (*_DocumentLLMGroup*) -- Another _DocumentLLMGroup
          instance to compare with
 
       Returns:
@@ -15228,71 +15221,6 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
 
       Return type:
          bool
-
-   get_usage(llm_role=None)
-
-      Retrieves the usage information of the LLMs in the group,
-      filtered by the specified LLM role if provided.
-
-      Parameters:
-         **llm_role** (*str** | **None*) -- Optional; A string
-         representing the role of the LLM to filter the usage data. If
-         None, returns usage for all LLMs in the group.
-
-      Returns:
-         A list of usage statistics containers for the specified LLMs
-         and their fallbacks.
-
-      Return type:
-         list[_LLMUsageOutputContainer]
-
-      Raises:
-         **ValueError** -- If no LLM with the specified role exists in
-         the group.
-
-   get_cost(llm_role=None)
-
-      Retrieves the accumulated cost information of the LLMs in the
-      group, filtered by the specified LLM role if provided.
-
-      Parameters:
-         **llm_role** (*str** | **None*) -- Optional; A string
-         representing the role of the LLM to filter the cost data. If
-         None, returns cost for all LLMs in the group.
-
-      Returns:
-         A list of cost statistics containers for the specified LLMs
-         and their fallbacks.
-
-      Return type:
-         list[_LLMCostOutputContainer]
-
-      Raises:
-         **ValueError** -- If no LLM with the specified role exists in
-         the group.
-
-   reset_usage_and_cost(llm_role=None)
-
-      Resets the usage and cost statistics for LLMs in the group.
-
-      This method clears accumulated usage and cost data, which is
-      useful when processing multiple documents sequentially and
-      tracking metrics for each document separately.
-
-      Parameters:
-         **llm_role** (*str** | **None*) -- Optional; A string
-         representing the role of the LLM to reset statistics for. If
-         None, resets statistics for all LLMs in the group.
-
-      Raises:
-         **ValueError** -- If no LLM with the specified role exists in
-         the group.
-
-      Return type:
-         "None"
-
-      Returns:
-         None
 
    extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -15307,7 +15235,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       This is the synchronous version of *extract_all_async()*.
 
       Parameters:
-         * **document** (*Document*) -- The document to analyze.
+         * **document** (*_Document*) -- The document to analyze.
 
          * **overwrite_existing** (*bool**, **optional*) -- Whether to
            overwrite already processed aspects and concepts with newly
@@ -15347,7 +15275,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
          The document with extracted aspects and concepts.
 
       Return type:
-         Document
+         _Document
 
    async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -15360,7 +15288,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       processing and customized extraction parameters.
 
       Parameters:
-         * **document** (*Document*) -- The document to analyze.
+         * **document** (*_Document*) -- The document to analyze.
 
          * **overwrite_existing** (*bool**, **optional*) -- Whether to
            overwrite already processed aspects and concepts with newly
@@ -15400,7 +15328,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
          The document with extracted aspects and concepts.
 
       Return type:
-         Document
+         _Document
 
    extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -15415,10 +15343,10 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       *extract_aspects_from_document_async()*.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            aspects are to be extracted.
 
-         * **from_aspects** (*list**[**Aspect**] **| **None*) --
+         * **from_aspects** (*list**[**_Aspect**] **| **None*) --
            Existing aspects to use as a base for extraction. If None,
            uses all document's aspects.
 
@@ -15451,10 +15379,10 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            to True.
 
       Returns:
-         List of processed Aspect objects with extracted items.
+         List of processed _Aspect objects with extracted items.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -15466,10 +15394,10 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       from these items.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            aspects are to be extracted.
 
-         * **from_aspects** (*list**[**Aspect**] **| **None*) --
+         * **from_aspects** (*list**[**_Aspect**] **| **None*) --
            Existing aspects to use as a base for extraction. If None,
            uses all document's aspects.
 
@@ -15501,10 +15429,10 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
            to True.
 
       Returns:
-         List of processed Aspect objects with extracted items.
+         List of processed _Aspect objects with extracted items.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -15518,11 +15446,11 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       *extract_concepts_from_aspect_async()*.
 
       Parameters:
-         * **aspect** (*Aspect*) -- The aspect from which to extract
+         * **aspect** (*_Aspect*) -- The aspect from which to extract
            concepts.
 
-         * **document** (*Document*) -- The document that contains the
-           aspect.
+         * **document** (*_Document*) -- The document that contains
+           the aspect.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
            List of existing concepts to process. Defaults to None.
@@ -15570,11 +15498,11 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       ValueError is raised.
 
       Parameters:
-         * **aspect** (*Aspect*) -- The aspect from which to extract
+         * **aspect** (*_Aspect*) -- The aspect from which to extract
            concepts.
 
-         * **document** (*Document*) -- The document that contains the
-           aspect.
+         * **document** (*_Document*) -- The document that contains
+           the aspect.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
            List of existing concepts to process. Defaults to None.
@@ -15621,7 +15549,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       *extract_concepts_from_document_async()*.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            concepts are to be extracted.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
@@ -15675,7 +15603,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       configured LLMs.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            concepts are to be extracted.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
@@ -15789,6 +15717,102 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
          **TypeError** -- If the class name in the serialized data
          doesn't match.
 
+   get_cost(llm_role=None)
+
+      Retrieves the accumulated cost information of the LLMs in the
+      group, filtered by the specified LLM role if provided.
+
+      Parameters:
+         **llm_role** (*str** | **None*) -- Optional; A string
+         representing the role of the LLM to filter the cost data. If
+         None, returns cost for all LLMs in the group.
+
+      Returns:
+         A list of cost statistics containers for the specified LLMs
+         and their fallbacks.
+
+      Return type:
+         list[_LLMCostOutputContainer]
+
+      Raises:
+         **ValueError** -- If no LLM with the specified role exists in
+         the group.
+
+   get_usage(llm_role=None)
+
+      Retrieves the usage information of the LLMs in the group,
+      filtered by the specified LLM role if provided.
+
+      Parameters:
+         **llm_role** (*str** | **None*) -- Optional; A string
+         representing the role of the LLM to filter the usage data. If
+         None, returns usage for all LLMs in the group.
+
+      Returns:
+         A list of usage statistics containers for the specified LLMs
+         and their fallbacks.
+
+      Return type:
+         list[_LLMUsageOutputContainer]
+
+      Raises:
+         **ValueError** -- If no LLM with the specified role exists in
+         the group.
+
+   group_update_output_language(output_language)
+
+      Updates the output language for all LLMs in the group.
+
+      Parameters:
+         **output_language** (*LanguageRequirement*) -- The new output
+         language to set for all LLMs
+
+      Return type:
+         "None"
+
+   property is_group: bool
+
+      Returns True indicating this is a group of LLMs.
+
+      Returns:
+         Always True for DocumentLLMGroup instances.
+
+      Return type:
+         bool
+
+   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
+
+      Returns a list of all roles assigned to the LLMs in this group.
+
+      Returns:
+         A list of LLM role identifiers
+
+      Return type:
+         list[LLMRoleAny]
+
+   reset_usage_and_cost(llm_role=None)
+
+      Resets the usage and cost statistics for LLMs in the group.
+
+      This method clears accumulated usage and cost data, which is
+      useful when processing multiple documents sequentially and
+      tracking metrics for each document separately.
+
+      Parameters:
+         **llm_role** (*str** | **None*) -- Optional; A string
+         representing the role of the LLM to reset statistics for. If
+         None, resets statistics for all LLMs in the group.
+
+      Raises:
+         **ValueError** -- If no LLM with the specified role exists in
+         the group.
+
+      Return type:
+         "None"
+
+      Returns:
+         None
+
    to_dict()
 
       Transforms the current object into a dictionary representation.
@@ -15847,9 +15871,13 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          str
 
+   llms: list[_DocumentLLM]
+
+   output_language: LanguageRequirement
+
 class contextgem.public.llms.DocumentLLM(**data)
 
-   Bases: "_GenericLLMProcessor"
+   Bases: "_DocumentLLM"
 
    Handles processing documents with a specific LLM.
 
@@ -15922,6 +15950,14 @@ class contextgem.public.llms.DocumentLLM(**data)
         object with pricing details for cost calculation. Defaults to
         None.
 
+      * **auto_pricing** (*bool*) -- Enable automatic LLM cost
+        calculation using genai-prices. Ignored when "pricing_details"
+        is provided. Defaults to "False".
+
+      * **auto_pricing_refresh** (*bool*) -- Whether genai-prices
+        should auto-refresh its cached pricing data. Defaults to
+        "False".
+
       * **is_fallback** (*bool*) -- Indicates whether the LLM is a
         fallback model. Defaults to False.
 
@@ -15989,9 +16025,6 @@ class contextgem.public.llms.DocumentLLM(**data)
 
       * **system_message** (*str** | **None*)
 
-      * **temperature** (*Annotated**[**float**,
-        **Strict**(**strict=True**)**] **| **None*)
-
       * **max_tokens** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)
 
@@ -16000,9 +16033,6 @@ class contextgem.public.llms.DocumentLLM(**data)
 
       * **reasoning_effort** (*Literal**[**'low'**, **'medium'**,
         **'high'**] **| **None*)
-
-      * **top_p** (*Annotated**[**float**,
-        **Strict**(**strict=True**)**] **| **None*)
 
       * **num_retries_failed_request** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)
@@ -16016,17 +16046,29 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **timeout** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)
 
-      * **pricing_details** (*LLMPricing** | **None*)
+      * **pricing_details** (*_LLMPricing** | **None*)
 
       * **is_fallback** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
 
-      * **fallback_llm** (*DocumentLLM** | **None*)
+      * **fallback_llm** (*_DocumentLLM** | **None*)
 
       * **output_language** (*Literal**[**'en'**, **'adapt'**]*)
 
+      * **temperature** (*Annotated**[**float**,
+        **Strict**(**strict=True**)**] **| **None*)
+
+      * **top_p** (*Annotated**[**float**,
+        **Strict**(**strict=True**)**] **| **None*)
+
       * **seed** (*Annotated**[**int**, **Strict**(**strict=True**)**]
         **| **None*)
+
+      * **auto_pricing** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
+
+      * **auto_pricing_refresh** (*Annotated**[**bool**,
+        **Strict**(**strict=True**)**]*)
 
    Note:
 
@@ -16072,6 +16114,7 @@ class contextgem.public.llms.DocumentLLM(**data)
              pricing_details=LLMPricing(  # optional
                  input_per_1m_tokens=0.150, output_per_1m_tokens=0.600
              ),
+             # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
          )
 
          # Create a fallback LLM in case the primary model fails
@@ -16083,6 +16126,7 @@ class contextgem.public.llms.DocumentLLM(**data)
              pricing_details=LLMPricing(  # optional
                  input_per_1m_tokens=3.00, output_per_1m_tokens=15.00
              ),
+             # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
          )
          # Assign the fallback LLM to the primary LLM
          text_extractor.fallback_llm = fallback_text_extractor
@@ -16096,47 +16140,71 @@ class contextgem.public.llms.DocumentLLM(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   model: NonEmptyStr
+   _eq_deserialized_llm_config(other)
 
-   deployment_id: NonEmptyStr | None
+      Custom config equality method to compare this _DocumentLLM with
+      a deserialized instance.
 
-   api_key: NonEmptyStr | None
+      Compares the __dict__ of both instances and performs specific
+      checks for certain attributes that require special handling.
 
-   api_base: NonEmptyStr | None
+      Note that, by default, the reconstructed deserialized
+      _DocumentLLM will be only partially equal (==) to the original
+      one, as the api credentials are redacted, and the attached
+      prompt templates, async limiter, and async lock are not
+      serialized and point to different objects in memory post-
+      initialization. Also, usage and cost are reset by default pre-
+      serialization.
 
-   api_version: NonEmptyStr | None
+      Parameters:
+         **other** (*_DocumentLLM*) -- Another _DocumentLLM instance
+         to compare with
 
-   role: LLMRoleAny
+      Returns:
+         True if the instances are equal, False otherwise
 
-   system_message: str | None
+      Return type:
+         bool
 
-   temperature: StrictFloat | None
+   _update_default_prompt(prompt_path, prompt_type)
 
-   max_tokens: StrictInt
+      For advanced users only!
 
-   max_completion_tokens: StrictInt
+      Update the default Jinja2 prompt template for the LLM.
 
-   reasoning_effort: ReasoningEffort | None
+      This method allows you to replace the built-in prompt templates
+      with custom ones for specific extraction types. The framework
+      uses these templates to guide the LLM in extracting structured
+      information from documents.
 
-   top_p: StrictFloat | None
+      The custom prompt must be a valid Jinja2 template and include
+      all the necessary variables that are present in the default
+      prompt. Otherwise, the extraction may fail. Default prompts are
+      located under "contextgem/internal/prompts/"
 
-   num_retries_failed_request: StrictInt
+      IMPORTANT NOTES:
 
-   max_retries_failed_request: StrictInt
+      The default prompts are complex and specifically designed for
+      various steps of LLM extraction with the framework. Such prompts
+      include the necessary instructions, template variables, nested
+      structures and loops, etc.
 
-   max_retries_invalid_data: StrictInt
+      Only use custom prompts if you MUST have a deeper customization
+      and adaptation of the default prompts to your specific use case.
+      Otherwise, the default prompts should be sufficient for most use
+      cases.
 
-   timeout: StrictInt
+      Use at your own risk!
 
-   pricing_details: LLMPricing | None
+      Parameters:
+         * **prompt_path** (*str** | **Path*) -- Path to the Jinja2
+           template file (.j2 extension required)
 
-   is_fallback: StrictBool
+         * **prompt_type** (*DefaultPromptType*) -- Type of prompt to
+           update ("aspect" or "concept")
 
-   fallback_llm: DocumentLLM | None
-
-   output_language: LanguageRequirement
-
-   seed: StrictInt | None
+      Return type:
+         "None"
 
    property async_limiter: AsyncLimiter
 
@@ -16147,30 +16215,6 @@ class contextgem.public.llms.DocumentLLM(**data)
 
       Return type:
          AsyncLimiter
-
-   property is_group: bool
-
-      Returns False indicating this is a single LLM, not a group.
-
-      Returns:
-         Always False for DocumentLLM instances.
-
-      Return type:
-         bool
-
-   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
-
-      Returns a list containing the role of this LLM.
-
-      (For a single LLM, this returns a list with just one element -
-      the LLM's role. For LLM groups, the method implementation
-      returns roles of all LLMs in the group.)
-
-      Returns:
-         A list containing the role of this LLM.
-
-      Return type:
-         list[LLMRoleAny]
 
    chat(prompt, images=None)
 
@@ -16237,104 +16281,6 @@ class contextgem.public.llms.DocumentLLM(**data)
          * **RuntimeError** -- If the LLM call fails and no fallback
            is available
 
-   _update_default_prompt(prompt_path, prompt_type)
-
-      For advanced users only!
-
-      Update the default Jinja2 prompt template for the LLM.
-
-      This method allows you to replace the built-in prompt templates
-      with custom ones for specific extraction types. The framework
-      uses these templates to guide the LLM in extracting structured
-      information from documents.
-
-      The custom prompt must be a valid Jinja2 template and include
-      all the necessary variables that are present in the default
-      prompt. Otherwise, the extraction may fail. Default prompts are
-      located under "contextgem/internal/prompts/"
-
-      IMPORTANT NOTES:
-
-      The default prompts are complex and specifically designed for
-      various steps of LLM extraction with the framework. Such prompts
-      include the necessary instructions, template variables, nested
-      structures and loops, etc.
-
-      Only use custom prompts if you MUST have a deeper customization
-      and adaptation of the default prompts to your specific use case.
-      Otherwise, the default prompts should be sufficient for most use
-      cases.
-
-      Use at your own risk!
-
-      Parameters:
-         * **prompt_path** (*str** | **Path*) -- Path to the Jinja2
-           template file (.j2 extension required)
-
-         * **prompt_type** (*DefaultPromptType*) -- Type of prompt to
-           update ("aspect" or "concept")
-
-      Return type:
-         "None"
-
-   _eq_deserialized_llm_config(other)
-
-      Custom config equality method to compare this DocumentLLM with a
-      deserialized instance.
-
-      Compares the __dict__ of both instances and performs specific
-      checks for certain attributes that require special handling.
-
-      Note that, by default, the reconstructed deserialized
-      DocumentLLM will be only partially equal (==) to the original
-      one, as the api credentials are redacted, and the attached
-      prompt templates, async limiter, and async lock are not
-      serialized and point to different objects in memory post-
-      initialization. Also, usage and cost are reset by default pre-
-      serialization.
-
-      Parameters:
-         **other** (*DocumentLLM*) -- Another DocumentLLM instance to
-         compare with
-
-      Returns:
-         True if the instances are equal, False otherwise
-
-      Return type:
-         bool
-
-   get_usage()
-
-      Retrieves the usage information of the LLM and its fallback LLM
-      if configured.
-
-      This method collects token usage statistics for the current LLM
-      instance and its fallback LLM (if configured), providing
-      insights into API consumption.
-
-      Returns:
-         A list of usage statistics containers for the LLM and its
-         fallback.
-
-      Return type:
-         list[_LLMUsageOutputContainer]
-
-   get_cost()
-
-      Retrieves the accumulated cost information of the LLM and its
-      fallback LLM if configured.
-
-      This method collects cost statistics for the current LLM
-      instance and its fallback LLM (if configured), providing
-      insights into API usage expenses.
-
-      Returns:
-         A list of cost statistics containers for the LLM and its
-         fallback.
-
-      Return type:
-         list[_LLMCostOutputContainer]
-
    extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts all aspects and concepts from a document and its
@@ -16348,7 +16294,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       This is the synchronous version of *extract_all_async()*.
 
       Parameters:
-         * **document** (*Document*) -- The document to analyze.
+         * **document** (*_Document*) -- The document to analyze.
 
          * **overwrite_existing** (*bool**, **optional*) -- Whether to
            overwrite already processed aspects and concepts with newly
@@ -16388,7 +16334,7 @@ class contextgem.public.llms.DocumentLLM(**data)
          The document with extracted aspects and concepts.
 
       Return type:
-         Document
+         _Document
 
    async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -16401,7 +16347,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       processing and customized extraction parameters.
 
       Parameters:
-         * **document** (*Document*) -- The document to analyze.
+         * **document** (*_Document*) -- The document to analyze.
 
          * **overwrite_existing** (*bool**, **optional*) -- Whether to
            overwrite already processed aspects and concepts with newly
@@ -16441,7 +16387,7 @@ class contextgem.public.llms.DocumentLLM(**data)
          The document with extracted aspects and concepts.
 
       Return type:
-         Document
+         _Document
 
    extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -16456,10 +16402,10 @@ class contextgem.public.llms.DocumentLLM(**data)
       *extract_aspects_from_document_async()*.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            aspects are to be extracted.
 
-         * **from_aspects** (*list**[**Aspect**] **| **None*) --
+         * **from_aspects** (*list**[**_Aspect**] **| **None*) --
            Existing aspects to use as a base for extraction. If None,
            uses all document's aspects.
 
@@ -16492,10 +16438,10 @@ class contextgem.public.llms.DocumentLLM(**data)
            to True.
 
       Returns:
-         List of processed Aspect objects with extracted items.
+         List of processed _Aspect objects with extracted items.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -16507,10 +16453,10 @@ class contextgem.public.llms.DocumentLLM(**data)
       from these items.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            aspects are to be extracted.
 
-         * **from_aspects** (*list**[**Aspect**] **| **None*) --
+         * **from_aspects** (*list**[**_Aspect**] **| **None*) --
            Existing aspects to use as a base for extraction. If None,
            uses all document's aspects.
 
@@ -16542,10 +16488,10 @@ class contextgem.public.llms.DocumentLLM(**data)
            to True.
 
       Returns:
-         List of processed Aspect objects with extracted items.
+         List of processed _Aspect objects with extracted items.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
@@ -16559,11 +16505,11 @@ class contextgem.public.llms.DocumentLLM(**data)
       *extract_concepts_from_aspect_async()*.
 
       Parameters:
-         * **aspect** (*Aspect*) -- The aspect from which to extract
+         * **aspect** (*_Aspect*) -- The aspect from which to extract
            concepts.
 
-         * **document** (*Document*) -- The document that contains the
-           aspect.
+         * **document** (*_Document*) -- The document that contains
+           the aspect.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
            List of existing concepts to process. Defaults to None.
@@ -16611,11 +16557,11 @@ class contextgem.public.llms.DocumentLLM(**data)
       ValueError is raised.
 
       Parameters:
-         * **aspect** (*Aspect*) -- The aspect from which to extract
+         * **aspect** (*_Aspect*) -- The aspect from which to extract
            concepts.
 
-         * **document** (*Document*) -- The document that contains the
-           aspect.
+         * **document** (*_Document*) -- The document that contains
+           the aspect.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
            List of existing concepts to process. Defaults to None.
@@ -16662,7 +16608,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       *extract_concepts_from_document_async()*.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            concepts are to be extracted.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
@@ -16716,7 +16662,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       configured LLMs.
 
       Parameters:
-         * **document** (*Document*) -- The document from which
+         * **document** (*_Document*) -- The document from which
            concepts are to be extracted.
 
          * **from_concepts** (*list**[**_Concept**] **| **None*) --
@@ -16829,6 +16775,62 @@ class contextgem.public.llms.DocumentLLM(**data)
       Raises:
          **TypeError** -- If the class name in the serialized data
          doesn't match.
+
+   get_cost()
+
+      Retrieves the accumulated cost information of the LLM and its
+      fallback LLM if configured.
+
+      This method collects cost statistics for the current LLM
+      instance and its fallback LLM (if configured), providing
+      insights into API usage expenses.
+
+      Returns:
+         A list of cost statistics containers for the LLM and its
+         fallback.
+
+      Return type:
+         list[_LLMCostOutputContainer]
+
+   get_usage()
+
+      Retrieves the usage information of the LLM and its fallback LLM
+      if configured.
+
+      This method collects token usage statistics for the current LLM
+      instance and its fallback LLM (if configured), providing
+      insights into API consumption.
+
+      Returns:
+         A list of usage statistics containers for the LLM and its
+         fallback.
+
+      Return type:
+         list[_LLMUsageOutputContainer]
+
+   property is_group: bool
+
+      Returns False indicating this is a single LLM, not a group.
+
+      Returns:
+         Always False for DocumentLLM instances.
+
+      Return type:
+         bool
+
+   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
+
+      Returns a list containing the role of this LLM.
+
+      (For a single LLM, this returns a list with just one element -
+      the LLM's role. For LLM groups, the method implementation
+      returns roles of all LLMs in the group.)
+
+      Returns:
+         A list containing the role of this LLM.
+
+      Return type:
+         list[LLMRoleAny]
 
    reset_usage_and_cost()
 
@@ -16903,6 +16905,52 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          str
 
+   model: NonEmptyStr
+
+   deployment_id: NonEmptyStr | None
+
+   api_key: NonEmptyStr | None
+
+   api_base: NonEmptyStr | None
+
+   api_version: NonEmptyStr | None
+
+   role: LLMRoleAny
+
+   system_message: str | None
+
+   max_tokens: StrictInt
+
+   max_completion_tokens: StrictInt
+
+   reasoning_effort: ReasoningEffort | None
+
+   num_retries_failed_request: StrictInt
+
+   max_retries_failed_request: StrictInt
+
+   max_retries_invalid_data: StrictInt
+
+   timeout: StrictInt
+
+   pricing_details: _LLMPricing | None
+
+   is_fallback: StrictBool
+
+   fallback_llm: _DocumentLLM | None
+
+   output_language: LanguageRequirement
+
+   temperature: StrictFloat | None
+
+   top_p: StrictFloat | None
+
+   seed: StrictInt | None
+
+   auto_pricing: StrictBool
+
+   auto_pricing_refresh: StrictBool
+
 
 # ==== api/data_models ====
 
@@ -16913,7 +16961,7 @@ Module defining public data validation models.
 
 class contextgem.public.data_models.LLMPricing(**data)
 
-   Bases: "_InstanceSerializer"
+   Bases: "_LLMPricing"
 
    Represents the pricing details for an LLM.
 
@@ -16961,10 +17009,6 @@ class contextgem.public.data_models.LLMPricing(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   input_per_1m_tokens: "typing.Annotated"["float"]
-
-   output_per_1m_tokens: "typing.Annotated"["float"]
-
    classmethod from_dict(obj_dict)
 
       Reconstructs an instance of the class from a dictionary
@@ -17093,9 +17137,13 @@ class contextgem.public.data_models.LLMPricing(**data)
       Return type:
          str
 
+   input_per_1m_tokens: StrictFloat
+
+   output_per_1m_tokens: StrictFloat
+
 class contextgem.public.data_models.RatingScale(*, start=0, end=10)
 
-   Bases: "_InstanceSerializer"
+   Bases: "_RatingScale"
 
    Represents a rating scale with defined minimum and maximum values.
 
@@ -17123,10 +17171,6 @@ class contextgem.public.data_models.RatingScale(*, start=0, end=10)
 
    Initialize RatingScale with deprecation warning.
 
-   start: "typing.Annotated"["int"]
-
-   end: "typing.Annotated"["int"]
-
    classmethod from_dict(obj_dict)
 
       Reconstructs an instance of the class from a dictionary
@@ -17254,6 +17298,10 @@ class contextgem.public.data_models.RatingScale(*, start=0, end=10)
 
       Return type:
          str
+
+   start: StrictInt
+
+   end: StrictInt
 
 
 # ==== api/utils ====
@@ -17399,9 +17447,9 @@ contextgem.public.utils.reload_logger_settings()
          # os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "INFO"
          # reload_logger_settings()
 
-class contextgem.public.utils.JsonObjectClassStruct
+class contextgem.public.utils.JsonObjectClassStruct(*args, **kwargs)
 
-   Bases: "object"
+   Bases: "_JsonObjectClassStruct"
 
    A base class that automatically converts class hierarchies to
    dictionary representations.
@@ -17447,6 +17495,32 @@ class contextgem.public.utils.JsonObjectClassStruct
          # type information and nested relationships between classes.
          JsonObjectConcept(name="person", description="Person information", structure=Person)
 
+   Replacement for "__new__" that blocks direct instantiation of the
+   decorated class while allowing subclasses to instantiate normally.
+
+   If invoked for the exact decorated class, an error is logged and
+   "TypeError" is raised. For subclasses, the call is forwarded to the
+   next "__new__" in the MRO, preserving base-class behavior (e.g.,
+   Pydantic's "BaseModel.__new__").
+
+   Parameters:
+      * **inner_cls** -- The class being instantiated (decorated class
+        or its subclass).
+
+      * **args** -- Positional constructor arguments.
+
+      * **kwargs** -- Keyword constructor arguments.
+
+   Returns:
+      A new instance when called for a subclass.
+
+   Raises:
+      **TypeError** -- When attempting to instantiate the decorated
+      class directly.
+
+   Return type:
+      Any
+
 
 # ==== api/images ====
 
@@ -17460,13 +17534,9 @@ that can be attached to or fully represent a document. Images are
 stored in base64-encoded format with specified MIME types to ensure
 proper handling.
 
-The module supports common image formats (JPEG, PNG, WebP) and
-integrates with the broader ContextGem framework for document analysis
-that includes visual content alongside textual information.
-
 class contextgem.public.images.Image(**data)
 
-   Bases: "_InstanceBase"
+   Bases: "_Image"
 
    Represents an image with specified MIME type and base64-encoded
    data. An image is typically attached to a document, or fully
@@ -17560,10 +17630,6 @@ class contextgem.public.images.Image(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   mime_type: Literal['image/jpg', 'image/jpeg', 'image/png', 'image/webp']
-
-   base64_data: NonEmptyStr
-
    clone()
 
       Creates and returns a deep copy of the current instance.
@@ -17706,6 +17772,10 @@ class contextgem.public.images.Image(**data)
 
       Returns the ULID of the instance.
 
+   mime_type: Literal['image/jpg', 'image/jpeg', 'image/png', 'image/webp']
+
+   base64_data: NonEmptyStr
+
    custom_data: dict
 
 
@@ -17727,7 +17797,7 @@ restricting certain attribute modifications after initial assignment.
 
 class contextgem.public.paragraphs.Paragraph(**data)
 
-   Bases: "_ParasAndSentsBase", "_MarkdownTextAttributesProcessor"
+   Bases: "_Paragraph"
 
    Represents a paragraph of a document with its raw text content and
    constituent sentences.
@@ -17760,7 +17830,7 @@ class contextgem.public.paragraphs.Paragraph(**data)
         **to_upper=None**, **to_lower=None**, **strict=None**,
         **min_length=1**, **max_length=None**, **pattern=None**)**]*)
 
-      * **sentences** (*list**[**Sentence**]*)
+      * **sentences** (*list**[**_Sentence**]*)
 
    Note:
       Normally, you do not need to construct paragraphs manually, as
@@ -17791,10 +17861,6 @@ class contextgem.public.paragraphs.Paragraph(**data)
 
    *self* is explicitly positional-only to allow *self* as a field
    name.
-
-   raw_text: NonEmptyStr
-
-   sentences: list[Sentence]
 
    clone()
 
@@ -17938,6 +18004,10 @@ class contextgem.public.paragraphs.Paragraph(**data)
 
       Returns the ULID of the instance.
 
+   raw_text: NonEmptyStr
+
+   sentences: list[_Sentence]
+
    additional_context: NonEmptyStr | None
 
    custom_data: dict
@@ -17961,7 +18031,7 @@ of document content.
 
 class contextgem.public.sentences.Sentence(**data)
 
-   Bases: "_ParasAndSentsBase"
+   Bases: "_Sentence"
 
    Represents a sentence within a document paragraph.
 
@@ -18021,8 +18091,6 @@ class contextgem.public.sentences.Sentence(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   raw_text: NonEmptyStr
-
    clone()
 
       Creates and returns a deep copy of the current instance.
@@ -18165,6 +18233,8 @@ class contextgem.public.sentences.Sentence(**data)
 
       Returns the ULID of the instance.
 
+   raw_text: NonEmptyStr
+
    additional_context: NonEmptyStr | None
 
    custom_data: dict
@@ -18190,7 +18260,7 @@ assignable object.
 
 class contextgem.public.pipelines.ExtractionPipeline(**data)
 
-   Bases: "_AssignedInstancesProcessor"
+   Bases: "_ExtractionPipeline"
 
    Represents a reusable collection of predefined aspects and concepts
    for document analysis.
@@ -18201,7 +18271,7 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
    reusable units, allowing for standardized document processing.
 
    Variables:
-      * **aspects** (*list**[**Aspect**]*) -- A list of aspects to
+      * **aspects** (*list**[**_Aspect**]*) -- A list of aspects to
         extract from documents. Aspects represent structural
         categories of information. Defaults to an empty list.
 
@@ -18212,7 +18282,10 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
    Parameters:
       * **custom_data** (*dict*)
 
-      * **aspects** (*list**[**Aspect**]*)
+      * **aspects** (*Annotated**[**Sequence**[**_Aspect**]**, **Befo
+        reValidator**(**func=~contextgem.internal.typings.validators.
+        _validate_sequence_is_list**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **concepts** (*Annotated**[**Sequence**[**_Concept**]**, **Be
         foreValidator**(**func=~contextgem.internal.typings.validator
@@ -18313,10 +18386,6 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
    *self* is explicitly positional-only to allow *self* as a field
    name.
 
-   aspects: list[Aspect]
-
-   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
-
    add_aspects(aspects)
 
       Adds aspects to the existing aspects list of an instance and
@@ -18325,8 +18394,8 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
       modification of the original reusable aspects.
 
       Parameters:
-         **aspects** (*list**[**Aspect**]*) -- A list of aspects to be
-         added. Each aspect is deeply copied to ensure the original
+         **aspects** (*list**[**_Aspect**]*) -- A list of aspects to
+         be added. Each aspect is deeply copied to ensure the original
          list remains unaltered.
 
       Returns:
@@ -18446,7 +18515,7 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
          The aspect with the specified name.
 
       Return type:
-         Aspect
+         _Aspect
 
       Raises:
          **ValueError** -- If no aspect with the specified name is
@@ -18454,7 +18523,7 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
 
    get_aspects_by_names(names)
 
-      Retrieve a list of Aspect objects corresponding to the provided
+      Retrieve a list of _Aspect objects corresponding to the provided
       list of names.
 
       Parameters:
@@ -18462,10 +18531,10 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
          retrieve. The names must be provided as a list of strings.
 
       Returns:
-         A list of Aspect objects corresponding to provided names.
+         A list of _Aspect objects corresponding to provided names.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    get_concept_by_name(name)
 
@@ -18672,13 +18741,17 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
 
       Returns the ULID of the instance.
 
+   aspects: Annotated[Sequence[_Aspect], BeforeValidator(_validate_sequence_is_list)]
+
+   concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
+
    custom_data: dict
 
 class contextgem.public.pipelines.DocumentPipeline(**data)
 
-   Bases: "ExtractionPipeline"
+   Bases: "_DocumentPipeline"
 
-   Deprecated alias for ExtractionPipeline.
+   Deprecated wrapper for ExtractionPipeline.
 
    Deprecated since version 0.14.1: DocumentPipeline is deprecated and
    will be removed in v1.0.0. Use ExtractionPipeline instead.
@@ -18696,15 +18769,15 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
    "ExtractionPipeline" in your imports. All functionality remains
    identical.
 
-   **Future-proofing**: Update your code before v1.0.0 to avoid
-   breaking changes:
-
    Initialize DocumentPipeline with deprecation warning.
 
    Parameters:
       * **custom_data** (*dict*)
 
-      * **aspects** (*list**[**Aspect**]*)
+      * **aspects** (*Annotated**[**Sequence**[**_Aspect**]**, **Befo
+        reValidator**(**func=~contextgem.internal.typings.validators.
+        _validate_sequence_is_list**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **concepts** (*Annotated**[**Sequence**[**_Concept**]**, **Be
         foreValidator**(**func=~contextgem.internal.typings.validator
@@ -18719,8 +18792,8 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
       modification of the original reusable aspects.
 
       Parameters:
-         **aspects** (*list**[**Aspect**]*) -- A list of aspects to be
-         added. Each aspect is deeply copied to ensure the original
+         **aspects** (*list**[**_Aspect**]*) -- A list of aspects to
+         be added. Each aspect is deeply copied to ensure the original
          list remains unaltered.
 
       Returns:
@@ -18840,7 +18913,7 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
          The aspect with the specified name.
 
       Return type:
-         Aspect
+         _Aspect
 
       Raises:
          **ValueError** -- If no aspect with the specified name is
@@ -18848,7 +18921,7 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
 
    get_aspects_by_names(names)
 
-      Retrieve a list of Aspect objects corresponding to the provided
+      Retrieve a list of _Aspect objects corresponding to the provided
       list of names.
 
       Parameters:
@@ -18856,10 +18929,10 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
          retrieve. The names must be provided as a list of strings.
 
       Returns:
-         A list of Aspect objects corresponding to provided names.
+         A list of _Aspect objects corresponding to provided names.
 
       Return type:
-         list[Aspect]
+         list[_Aspect]
 
    get_concept_by_name(name)
 
@@ -19066,7 +19139,7 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
 
       Returns the ULID of the instance.
 
-   aspects: list[Aspect]
+   aspects: Annotated[Sequence[_Aspect], BeforeValidator(_validate_sequence_is_list)]
 
    concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
 

@@ -22,55 +22,16 @@ Module for handling document aspects.
 This module provides the Aspect class, which represents a defined area or topic within a document
 that requires focused attention. Aspects are used to identify and extract specific subjects or themes
 from documents according to predefined criteria.
-
-Aspects can be associated with concepts, reference paragraphs and sentences from the source document,
-and can be configured with different LLM roles for extraction and reasoning tasks.
-
-The module integrates with the broader ContextGem framework for document analysis and information extraction.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Annotated, Any, cast
-
-from pydantic import (
-    BeforeValidator,
-    Field,
-    PrivateAttr,
-    StrictBool,
-    StrictInt,
-    field_validator,
-    model_validator,
-)
-from typing_extensions import Self
-
-from contextgem.internal.base.attrs import (
-    _AssignedInstancesProcessor,
-    _ExtractedItemsAttributeProcessor,
-    _RefParasAndSentsAttrituteProcessor,
-)
-from contextgem.internal.base.concepts import _Concept
-from contextgem.internal.items import _StringItem
-from contextgem.internal.typings.aliases import (
-    LLMRoleAspect,
-    NonEmptyStr,
-    ReferenceDepth,
-)
-from contextgem.internal.typings.validators import _validate_sequence_is_list
-from contextgem.public.paragraphs import Paragraph
-from contextgem.public.sentences import Sentence
+from contextgem.internal.base.aspects import _Aspect
+from contextgem.internal.decorators import _expose_in_registry
 
 
-# Defines the maximum nesting level of sub-aspects.
-MAX_NESTING_LEVEL = 1
-
-
-class Aspect(
-    _AssignedInstancesProcessor,
-    _ExtractedItemsAttributeProcessor,
-    _RefParasAndSentsAttrituteProcessor,
-):
+@_expose_in_registry(additional_key=_Aspect)
+class Aspect(_Aspect):
     """
     Represents an aspect with associated metadata, sub-aspects, concepts, and logic for validation.
 
@@ -106,133 +67,4 @@ class Aspect(
             :caption: Aspect definition
     """
 
-    name: NonEmptyStr
-    description: NonEmptyStr
-    aspects: list[Aspect] = Field(default_factory=list)  # sub-aspects
-    concepts: Annotated[
-        Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)
-    ] = Field(
-        default_factory=list
-    )  # using Sequence field with list validator for type checking
-    llm_role: LLMRoleAspect = Field(default="extractor_text")
-    reference_depth: ReferenceDepth = Field(default="paragraphs")
-
-    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)
-    _reference_paragraphs: list[Paragraph] = PrivateAttr(default_factory=list)
-    _reference_sentences: list[Sentence] = PrivateAttr(default_factory=list)
-    _nesting_level: StrictInt = PrivateAttr(default=0)
-    _is_processed: StrictBool = PrivateAttr(default=False)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        """
-        Custom attribute setter that applies processing for the 'aspects' attribute
-        on each assignment, which requires comparing such sub-aspects to the parent aspect.
-
-        :param name: The name of the attribute to set
-        :type name: str
-        :param value: The value to assign to the attribute
-        :type value: Any
-        """
-
-        if name == "aspects":
-            field_validator = Aspect.__pydantic_validator__.validate_assignment
-            # Safe cast: Pydantic validator returns validated instance, we know it's an Aspect
-            # since we're validating the "aspects" field of an Aspect object
-            validated_instance = cast(Aspect, field_validator(self, "aspects", value))
-            aspects = validated_instance.aspects
-            self._validate_and_process_sub_aspects(aspects)
-            super().__setattr__(name, aspects)
-        else:
-            super().__setattr__(name, value)
-
-    @property
-    def _item_class(self) -> type[_StringItem]:
-        """
-        Returns the item class type for aspects.
-
-        :return: The string item class used for aspect extracted items.
-        :rtype: type[_StringItem]
-        """
-        return _StringItem
-
-    @field_validator("concepts")
-    @classmethod
-    def _validate_concepts_in_aspect(cls, concepts: list[_Concept]) -> list[_Concept]:
-        """
-        Validates the input list of '_Concept' instances.
-
-        :param concepts: List of '_Concept' instances to be validated.
-        :type concepts: list[_Concept]
-        :raises ValueError: If multiple concepts have the same name.
-        :raises ValueError: If multiple concepts have the same description.
-        :raises ValueError: If any concept has an LLM role ending with '_vision'.
-        :return: The validated list of '_Concept' instances.
-        :rtype: list[_Concept]
-        """
-
-        if concepts and any(i.llm_role.endswith("_vision") for i in concepts):
-            # Validate for Aspect-specific constraints.
-            raise ValueError(
-                "Aspect concepts extraction using vision LLMs is not supported. "
-                "Vision LLMs can be used only for document concept extraction."
-            )
-        return concepts
-
-    def _validate_and_process_sub_aspects(self, aspects: list[Aspect]) -> None:
-        """
-        Validates and processes sub-aspects by setting their nesting levels
-        and checking for duplicate names or descriptions with parent.
-
-        :param aspects: List of sub-aspects to validate
-        :type aspects: list["Aspect"]
-        :return: None
-        :rtype: None
-        :raises ValueError: If any sub-aspect has the same name or description as parent
-        """
-
-        if not aspects:
-            return
-
-        parent_level = self._nesting_level
-
-        if parent_level >= MAX_NESTING_LEVEL:
-            raise ValueError(
-                f"Aspect `{self.name}` is already a sub-aspect with the maximum nesting level "
-                f"{parent_level}. No further sub-aspects can be assigned to this aspect."
-            )
-
-        parent_name = self.name
-        parent_description = self.description
-
-        for aspect in aspects:
-            # Check for duplicate names or descriptions with parent
-            if aspect.name == parent_name:
-                raise ValueError(
-                    f"Sub-aspect `{aspect.name}` cannot have "
-                    f"the same name as parent aspect: "
-                    f"'{parent_name}'"
-                )
-            if aspect.description == parent_description:
-                raise ValueError(
-                    f"Sub-aspect `{aspect.name}` cannot have "
-                    f"the same description as parent aspect: "
-                    f"'{parent_name}'"
-                )
-            # Set nesting level
-            aspect._nesting_level = parent_level + 1
-
-            # Recursively process sub-aspects of this aspect
-            if aspect.aspects:
-                aspect._validate_and_process_sub_aspects(aspect.aspects)
-
-    @model_validator(mode="after")
-    def _validate_aspect_post(self) -> Self:
-        """
-        Validates and processes the assigned sub-aspects post-initialization.
-
-        :return: The validated Aspect instance
-        :rtype: Self
-        """
-        if self.aspects:
-            self._validate_and_process_sub_aspects(self.aspects)
-        return self
+    pass

@@ -28,6 +28,8 @@ returned in LLM responses
 All structures ensure proper validation of LLM outputs according to the expected response formats.
 """
 
+from __future__ import annotations
+
 from functools import cache
 from typing import Any, cast
 
@@ -145,6 +147,10 @@ class _LabelConceptItemValueModel(BaseModel):
     :vartype labels: list[str]
     """
 
-    labels: list[str] = Field(..., min_length=1)
+    labels: list[NonEmptyStr] = Field(
+        ...,
+        min_length=1,
+        description="List of selected label strings for the concept; must contain at least one label.",
+    )
 
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
