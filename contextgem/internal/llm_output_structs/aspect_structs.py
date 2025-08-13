@@ -22,6 +22,8 @@ aspect extraction from a document. Such structures must match the JSON schema sp
 LLM prompt.
 """
 
+from __future__ import annotations
+
 from functools import cache
 from typing import Any, cast
 

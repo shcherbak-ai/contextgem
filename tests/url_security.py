@@ -43,6 +43,7 @@ APPROVED_URL_DOMAINS_BEFORE_RECORDING = {
     "localhost:1234",  # LM Studio
     "huggingface.co",  # Hugging Face for loading SaT models
     "hf.co",  # Hugging Face for loading SaT models
+    "raw.githubusercontent.com",  # genai-prices auto-refresh
 }
 
 # Cache for domain validation results to avoid repeated parsing and validation

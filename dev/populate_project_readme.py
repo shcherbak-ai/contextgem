@@ -26,6 +26,9 @@ python dev/populate_project_readme.py
 ```
 """
 
+from __future__ import annotations
+
+
 README_TEMPLATE_PATH = "dev/readme.template.md"
 README_OUTPUT_PATH = "README.md"
 README_FOOTER = ""

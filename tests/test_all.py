@@ -44,6 +44,7 @@ from lxml import etree
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, field_validator
 
+from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.attrs import (
     _AssignedAspectsProcessor,
     _AssignedConceptsProcessor,
@@ -51,9 +52,28 @@ from contextgem.internal.base.attrs import (
     _ExtractedItemsAttributeProcessor,
     _RefParasAndSentsAttrituteProcessor,
 )
-from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.base.concepts import (
+    _BooleanConcept,
+    _Concept,
+    _DateConcept,
+    _JsonObjectConcept,
+    _LabelConcept,
+    _NumericalConcept,
+    _RatingConcept,
+    _StringConcept,
+)
+from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
+from contextgem.internal.base.documents import _Document
+from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
+from contextgem.internal.base.images import _Image
 from contextgem.internal.base.items import _ExtractedItem
-from contextgem.internal.base.llms import _GenericLLMProcessor
+from contextgem.internal.base.llms import (
+    _DocumentLLM,
+    _DocumentLLMGroup,
+)
+from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
+from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPipeline
+from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.converters.docx import _DocxPackage
 from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import _LLMCost, _LLMUsage
@@ -77,6 +97,10 @@ from contextgem.internal.loggers import (
     LOGGER_LEVEL_ENV_VAR_NAME,
     dedicated_stream,
     logger,
+)
+from contextgem.internal.registry import (
+    _publicize,
+    _resolve_public_type,
 )
 from contextgem.internal.utils import (
     _get_template,
@@ -286,7 +310,7 @@ class TestAll(TestUtils):
             "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
             "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
             "role": "extractor_text",
-            "pricing_details": LLMPricing(
+            "pricing_details": LLMPricing(  # Explicitly set pricing details
                 **{
                     "input_per_1m_tokens": 0.40,
                     "output_per_1m_tokens": 1.60,
@@ -301,12 +325,8 @@ class TestAll(TestUtils):
             "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
             "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
             "role": "reasoner_text",
-            "pricing_details": LLMPricing(
-                **{
-                    "input_per_1m_tokens": 1.10,
-                    "output_per_1m_tokens": 4.40,
-                }
-            ),
+            "auto_pricing": True,  # use auto-pricing
+            "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
         }
 
     elif TEST_LLM_PROVIDER == "openai":
@@ -434,6 +454,44 @@ class TestAll(TestUtils):
         assert j2_files_found, prompts_folder_path
 
     @memory_profile_and_capture
+    def test_registry(self):
+        """
+        Sanity checks for internal -> public mappings via the registry.
+        """
+
+        pub_aspect = _publicize(
+            _Aspect,
+            name="Test Aspect",
+            description="Test Description",
+            llm_role="reasoner_text",
+            reference_depth="sentences",
+        )
+        assert isinstance(pub_aspect, Aspect)
+        assert pub_aspect.llm_role == "reasoner_text"
+        assert pub_aspect.reference_depth == "sentences"
+        assert _resolve_public_type(_Aspect) is Aspect
+
+        pub_concept = _publicize(
+            _StringConcept,
+            name="Test Concept",
+            description="Test Description",
+            add_references=True,
+        )
+        assert isinstance(pub_concept, StringConcept)
+        assert pub_concept.add_references
+        assert _resolve_public_type(_StringConcept) is StringConcept
+
+        pub_doc = _publicize(_Document, raw_text="Hello")
+        assert isinstance(pub_doc, Document)
+        assert _resolve_public_type(_Document) is Document
+        pub_doc.add_aspects([pub_aspect])
+        assert all(isinstance(a, Aspect) for a in pub_doc.aspects)
+        pub_doc.add_concepts([pub_concept])
+        assert all(isinstance(c, StringConcept) for c in pub_doc.concepts)
+
+        check_locals_memory_usage(locals(), test_name="test_registry")
+
+    @memory_profile_and_capture
     def test_attr_models(self):
         """
         Tests for attribute validation models.
@@ -460,17 +518,48 @@ class TestAll(TestUtils):
     @memory_profile_and_capture
     def test_init_instance_bases(self):
         """
-        Tests for initialization of the base classes.
+        Tests for direct initialization of the base classes (internal classes).
         """
-        # Base class direct initialization
-        base_classes = [
+
+        # Base instance classes
+        base_instance_classes = [
+            _Aspect,
+            _StringConcept,
+            _BooleanConcept,
+            _DateConcept,
+            _NumericalConcept,
+            _RatingConcept,
+            _JsonObjectConcept,
+            _LabelConcept,
+            _LLMPricing,
+            _RatingScale,
+            _StringExample,
+            _JsonObjectExample,
+            _Image,
+            _Document,
+            _Paragraph,
+            _Sentence,
+            _ExtractionPipeline,
+            _DocumentPipeline,
+            _DocumentLLM,
+            _DocumentLLMGroup,
+            _JsonObjectClassStruct,
+        ]
+        for base_class in base_instance_classes:
+            with pytest.raises(
+                TypeError, match="internal and cannot be instantiated directly"
+            ):
+                base_class()
+
+        # Shared attribute classes
+        base_attr_classes = [
             _AssignedAspectsProcessor,
             _AssignedConceptsProcessor,
             _AssignedInstancesProcessor,
             _ExtractedItemsAttributeProcessor,
             _RefParasAndSentsAttrituteProcessor,
         ]
-        for base_class in base_classes:
+        for base_class in base_attr_classes:
 
             class TestNoRequiredAttrs(base_class):
                 value: str = "Test"  # no required attributes
@@ -1011,6 +1100,7 @@ class TestAll(TestUtils):
         extract_with_local_llm(llm_non_reasoning_lm_studio)
 
         # Check supports_reasoning override
+        # TODO: remove this warning once litellm supports reasoning for this model
         with pytest.warns(UserWarning, match="reasoning-capable"):
             llm = DocumentLLM(
                 model="lm_studio/mistralai/mistral-small-3.2",
@@ -1431,10 +1521,6 @@ class TestAll(TestUtils):
             temperature=None,
         )
 
-        # Base class direct initialization
-        with pytest.raises(TypeError):
-            _GenericLLMProcessor()  # type: ignore
-
         # Unsupported methods
         with pytest.raises(NotImplementedError):
             self.llm_group.model_dump()
@@ -1574,9 +1660,6 @@ class TestAll(TestUtils):
         """
         Tests the behavior of the `DocumentLLMGroup` class initialization.
         """
-        # Base class direct initialization
-        with pytest.raises(TypeError):
-            _GenericLLMProcessor()  # type: ignore
 
         # Invalid params
         with pytest.raises(ValueError):
@@ -3751,7 +3834,7 @@ class TestAll(TestUtils):
             LabelConcept(
                 name="Duplicate Labels",
                 description="Test with duplicate labels",
-                labels=["A", "B", "A", "C"],
+                labels=["A", "B", "a", "C"],  # duplicate labels (case-insensitive)
             )
 
         # Test with invalid classification type
@@ -4338,12 +4421,12 @@ class TestAll(TestUtils):
             context.add_aspects(
                 [
                     Aspect(
-                        name="Liability",
-                        description="Clauses describing liability of the parties",
+                        name="liability",
+                        description="clauses describing liability of the parties",
                         llm_role="extractor_text",
                         add_justifications=True,
                     )
-                ]  # duplicate aspect
+                ]  # duplicate aspect (case-insensitive)
             )
         with pytest.raises(ValueError):
             context.add_aspects(
@@ -4406,11 +4489,11 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             context.concepts = document_concepts + [
                 StringConcept(
-                    name="Business Information",
-                    description="Categories of Business Information",
+                    name="business information",
+                    description="categories of business information",
                     llm_role="extractor_text",
                 ),
-            ]  # duplicate concept
+            ]  # duplicate concept (case-insensitive)
         assert context.concepts == document_concepts
         assert context.concepts is not document_concepts
         context.get_concept_by_name("Business Information")
@@ -7580,6 +7663,24 @@ class TestAll(TestUtils):
         doc = Document(raw_text=text_content)
         doc.concepts = doc_concepts
 
+        # First, test hitting the max input tokens limit
+        # A suggestion to use the optimization guide is included in the error message
+        too_long_doc = Document(raw_text=text_content * 5)
+        too_long_doc.concepts = doc_concepts
+        llm_short_context = DocumentLLM(
+            model="azure/gpt-4o-mini",  # 128k context window
+            api_key="...",  # dummy key (pre-call validation will fail)
+            api_base="...",  # dummy base
+            api_version="...",  # dummy version
+        )
+        with pytest.raises(
+            ValueError,
+            match="https://contextgem.dev/optimizations/optimization_long_docs.html",
+        ):
+            llm_short_context.extract_concepts_from_document(
+                too_long_doc,
+            )
+
         # Use params optimized for very long documents (200+ pages)
         extracted_concepts = self.llm_extractor_text.extract_concepts_from_document(
             doc,
@@ -7617,6 +7718,124 @@ class TestAll(TestUtils):
         check_locals_memory_usage(
             locals(), test_name="test_very_long_doc_extraction", max_obj_memory=5.0
         )  # higher value for a very long document (200+ pages)
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_auto_pricing(self):
+        """
+        Tests for optional auto-pricing using genai-prices when no manual pricing is provided.
+        """
+
+        # Use an LLM with auto pricing enabled and no manual pricing details
+        with pytest.warns(UserWarning, match="prices will not be 100% accurate."):
+            llm = DocumentLLM(
+                model="azure/gpt-4.1-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                auto_pricing=True,
+                auto_pricing_refresh=True,  # test with auto-refresh
+            )
+        assert (
+            llm._auto_pricing_refresh_attempted
+        )  # since we use dummy call to check auto-pricing support for provider/model
+        document = Document(raw_text=get_test_document_text())
+        document.concepts = [
+            RatingConcept(
+                name="NDA compliance rating",
+                description="Rating of the NDA's compliance with best practices",
+                rating_scale=(1, 10),
+                add_justifications=True,
+                justification_max_sents=5,
+            ),
+        ]
+        llm.extract_concepts_from_document(document)
+        cost_info = llm.get_cost()
+        assert len(cost_info) == 1
+        cost = cost_info[0].cost
+        assert cost.input > Decimal("0")
+        assert cost.output > Decimal("0")
+        assert cost.total == cost.input + cost.output
+        logger.debug(
+            f"Costs for model {llm.model} (auto-pricing): "
+            f"input {cost.input}, output {cost.output}, total {cost.total}"
+        )
+
+        # Check serialization of LLM
+        self._check_deserialized_llm_config_eq(llm)
+
+        # Now, check that the same pricing is calculated when setting LLMPricing explicitly
+        llm_explicit_pricing = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            pricing_details=LLMPricing(
+                input_per_1m_tokens=0.40, output_per_1m_tokens=1.60
+            ),
+        )
+        llm_explicit_pricing.extract_concepts_from_document(
+            document, overwrite_existing=True
+        )
+        cost_info_explicit = llm_explicit_pricing.get_cost()
+        assert len(cost_info_explicit) == 1
+        cost_explicit = cost_info_explicit[0].cost
+        assert cost_explicit.input == cost.input
+        assert cost_explicit.output == cost.output
+        assert cost_explicit.total == cost.total
+        logger.debug(
+            f"Costs for model {llm_explicit_pricing.model} (explicit pricing): "
+            f"input {cost_explicit.input}, output {cost_explicit.output}, total {cost_explicit.total}"
+        )
+
+        # Test errors
+
+        # Local LLMs
+        with pytest.raises(ValueError, match="local models"):
+            llm = DocumentLLM(
+                model="lm_studio/mistralai/mistral-small-3.2",
+                api_base="http://localhost:1234/v1",
+                api_key="random-key",  # required for LM Studio API
+                auto_pricing=True,
+            )
+        with pytest.raises(ValueError, match="local models"):
+            DocumentLLM(
+                model="ollama_chat/mistral-small:24b",
+                api_base="http://localhost:11434",
+                auto_pricing=True,
+            )
+        with pytest.raises(ValueError, match="local models"):
+            DocumentLLM(
+                model="ollama/mistral-small:24b",
+                api_base="http://localhost:11434",
+                auto_pricing=True,
+            )
+
+        # Setting auto-pricing and LLMPricing together
+        with pytest.raises(ValueError, match="auto_pricing=True"):
+            DocumentLLM(
+                model="azure/gpt-4.1-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                pricing_details=LLMPricing(
+                    input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006
+                ),
+                auto_pricing=True,
+            )
+
+        # Test warnings
+
+        # Unknown model initialization
+        with pytest.warns(UserWarning, match="Unable to fetch pricing data for model"):
+            llm = DocumentLLM(
+                model="azure/gptXX",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                auto_pricing=True,
+            )
+
+        check_locals_memory_usage(locals(), test_name="test_auto_pricing")
 
     def test_cassette_url_security(self):
         """
@@ -7658,6 +7877,6 @@ class TestAll(TestUtils):
             assert usage_dict.usage.input == 0
             assert usage_dict.usage.output == 0
         for cost_dict in self.llm_group.get_cost() + self.llm_extractor_text.get_cost():
-            assert cost_dict.cost.input == Decimal("0.00000")
-            assert cost_dict.cost.output == Decimal("0.00000")
-            assert cost_dict.cost.total == Decimal("0.00000")
+            assert cost_dict.cost.input == Decimal("0")
+            assert cost_dict.cost.output == Decimal("0")
+            assert cost_dict.cost.total == Decimal("0")

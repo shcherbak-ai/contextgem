@@ -67,19 +67,24 @@ contextgem/
 │
 ├── contextgem/
 │   │
-│   ├── public/                   # 🎯 User-facing API (start here for new features)
-│   │   ├── concepts.py           #   - Concepts API
-│   │   ├── aspects.py            #   - Aspects API  
-│   │   ├── documents.py          #   - Document processing
-│   │   ├── pipelines.py          #   - Document data extraction pipelines
-│   │   ├── llms.py               #   - LLM extraction functionality
-│   │   └── ...                   #   - More public modules
+│   ├── internal/                 # 🔧 Core implementation (start here for new features)
+│   │   ├── base/                 #   - Core abstractions & business logic
+│   │   │   ├── concepts.py       #     - Internal concept implementations
+│   │   │   ├── aspects.py        #     - Internal aspect implementations  
+│   │   │   ├── documents.py      #     - Internal document processing
+│   │   │   ├── llms.py           #     - Internal LLM functionality
+│   │   │   └── ...               #     - More internal implementations
+│   │   ├── prompts/              #   - LLM prompt templates
+│   │   ├── typings/              #   - Type definitions
+│   │   └── ...                   #   - More internal modules
 │   │
-│   └── internal/                 # 🔧 Internal implementation
-│       ├── base/                 #   - Core abstractions
-│       ├── prompts/              #   - LLM prompt templates
-│       ├── typings/              #   - Type definitions
-│       └── ...                   #   - More internal modules
+│   └── public/                   # 🎯 User-facing API (thin facades exposing internals)
+│       ├── concepts.py           #   - Public concept facades
+│       ├── aspects.py            #   - Public aspect facades 
+│       ├── documents.py          #   - Public document facades
+│       ├── pipelines.py          #   - Public pipeline facades
+│       ├── llms.py               #   - Public LLM facades
+│       └── ...                   #   - More public modules
 │
 ├── tests/
 │   ├── cassettes/                # 📼 VCR recordings (auto-generated)
@@ -102,12 +107,12 @@ contextgem/
 ```
 
 **🎯 Quick Start for Your Contribution:**
-- **Adding new functionality?** → Start in `contextgem/public/`, often requires `internal/` changes too
+- **Adding new functionality?** → Implement in `contextgem/internal/` (core logic). Then expose via a thin public facade in `contextgem/public/` using the registry.
 - **Writing tests?** → Add to `tests/test_all.py::TestAll`  
 - **Updating docs?** → Edit files in `docs/source/` or `dev/`
 - **Fixing README?** → Edit `dev/readme.template.md`
 
-> **💡 Note:** New public features typically require supporting changes in internal modules (base classes, prompt templates, type definitions, etc.). Think of `public/` as the user interface and `internal/` as the engine that powers it.
+> **💡 Note:** Implement functionality in `internal/` (base classes, validation, serialization, typing). Use `public/` to expose thin, documented facades that inherit from internal classes and are registered with `@_expose_in_registry` decorator to ensure deserialization and instance creation utils return public types. Do not import public classes in internal modules; use the registry for type resolution and publicization.
 
 
 ---

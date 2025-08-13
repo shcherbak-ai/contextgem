@@ -41,8 +41,8 @@ from contextgem.internal.utils import _is_text_content_empty
 
 
 if TYPE_CHECKING:
+    from contextgem.internal.base.aspects import _Aspect
     from contextgem.internal.base.concepts import _Concept
-    from contextgem.public.aspects import Aspect
 
 
 class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
@@ -52,13 +52,13 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     This class implements core functionality such as unique ID generation, serialization,
     custom data storage, and instance cloning capabilities. It serves as the foundation
     for various instance types in the ContextGem framework.
-
-    :ivar custom_data: A serializable dictionary for storing additional custom data
-        related to the instance. Defaults to an empty dictionary.
-    :vartype custom_data: dict
     """
 
-    custom_data: dict = Field(default_factory=dict)
+    custom_data: dict = Field(
+        default_factory=dict,
+        description="A serializable dictionary for storing additional custom data "
+        "related to the instance.",
+    )
 
     _unique_id: str = PrivateAttr(default_factory=lambda: str(ULID()))
 
@@ -142,7 +142,7 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :raises ValueError: If duplicate elements based on unique IDs are found in the list.
         """
         ids: list[str] = [i.unique_id for i in instances]
-        if instances and len(ids) != len(set(ids)):
+        if instances and len(set(ids)) < len(ids):
             raise ValueError(
                 f"List elements of class {instances[0].__class__.__name__} contain duplicates."
             )
@@ -151,28 +151,29 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     @field_validator("aspects", "concepts", check_fields=False)
     @classmethod
     def _validate_text_and_description_uniqueness(
-        cls, instances: list[Aspect | _Concept]
-    ) -> list[Aspect | _Concept]:
+        cls, instances: list[_Aspect] | list[_Concept]
+    ) -> list[_Aspect] | list[_Concept]:
         """
         Validates the list field to ensure that the instances on the list have
-        unique names and descriptions.
+        unique names and descriptions (case-insensitive).
 
         Outputs a deepcopy of the input list to prevent any modifications to the state of
         the original instances that may be reusable across multiple documents.
 
-        :param instances: The list of `Aspect` or `_Concept` objects to validate.
-        :type instances: list[Aspect | _Concept]
-        :return: The validated list of `Aspect` or `_Concept` objects if all conditions pass.
-        :rtype: list[Aspect | _Concept]
-        :raises ValueError: If there are duplicate names or descriptions in the objects.
+        :param instances: The list of `_Aspect` or `_Concept` objects to validate.
+        :type instances: list[_Aspect] | list[_Concept]
+        :return: The validated list of `_Aspect` or `_Concept` objects if all conditions pass.
+        :rtype: list[_Aspect] | list[_Concept]
+        :raises ValueError: If there are duplicate names or descriptions in the objects
+            (case-insensitive).
         """
 
         if instances and (
-            len(set([i.name for i in instances])) < len(instances)
-            or len(set([i.description for i in instances])) < len(instances)
+            len(set([i.name.lower() for i in instances])) < len(instances)
+            or len(set([i.description.lower() for i in instances])) < len(instances)
         ):
             raise ValueError(
                 f"{instances[0].__class__.__name__}s of the document must have "
-                f"unique names and unique descriptions."
+                f"unique names and unique descriptions (case-insensitive)."
             )
         return deepcopy(instances)

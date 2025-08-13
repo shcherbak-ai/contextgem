@@ -148,6 +148,7 @@ llm_extractor = DocumentLLM(
         input_per_1m_tokens=0.150,
         output_per_1m_tokens=0.600,
     ),
+    # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
 )
 llm_reasoner = DocumentLLM(
     model="openai/o3-mini",  # or any other LLM from e.g. Anthropic, etc.
@@ -157,6 +158,7 @@ llm_reasoner = DocumentLLM(
         input_per_1m_tokens=1.10,
         output_per_1m_tokens=4.40,
     ),
+    # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
 )
 # The LLM group is used for all extraction tasks within the pipeline
 llm_group = DocumentLLMGroup(llms=[llm_extractor, llm_reasoner])

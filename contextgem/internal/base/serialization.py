@@ -37,20 +37,17 @@ from typing import TYPE_CHECKING, Any
 
 from aiolimiter import AsyncLimiter
 from pydantic import BaseModel, field_validator
+from typing_extensions import Self
 
 from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _resolve_public_type
 from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
 from contextgem.internal.typings.types_normalization import _normalize_type_annotation
 from contextgem.internal.typings.types_to_strings import _serialize_type_hint
 
 
 if TYPE_CHECKING:
-    from contextgem.internal.base.concepts import _Concept
-    from contextgem.internal.base.examples import _Example
-    from contextgem.internal.base.items import _ExtractedItem
     from contextgem.internal.data_models import _LLMCost
-
-from typing_extensions import Self
 
 
 # Public attrs
@@ -110,10 +107,10 @@ class _InstanceSerializer(BaseModel):
         :rtype: dict[str, Any]
         """
 
+        from contextgem.internal.base.llms import _DocumentLLM, _DocumentLLMGroup
         from contextgem.internal.data_models import _LLMCost, _LLMUsage
-        from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
 
-        if isinstance(self, DocumentLLM | DocumentLLMGroup):
+        if isinstance(self, _DocumentLLM | _DocumentLLMGroup):
             logger.info(
                 "API credentials and usage/cost stats are removed from the serialized LLM/LLM group."
             )
@@ -345,16 +342,9 @@ class _InstanceSerializer(BaseModel):
         :rtype: Self
         """
 
-        import contextgem.internal.items as cg_items
-        import contextgem.public.concepts as cg_concepts
-        import contextgem.public.examples as cg_examples
-        from contextgem import Image
+        from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
+        from contextgem.internal.base.llms import _DocumentLLM
         from contextgem.internal.data_models import _LLMUsage
-        from contextgem.public.aspects import Aspect
-        from contextgem.public.data_models import LLMPricing, RatingScale
-        from contextgem.public.llms import DocumentLLM
-        from contextgem.public.paragraphs import Paragraph
-        from contextgem.public.sentences import Sentence
 
         # Create a copy of the object dict due to further modification
         obj_dict = deepcopy(obj_dict)
@@ -365,19 +355,17 @@ class _InstanceSerializer(BaseModel):
             raise TypeError(f"Class {object_class_name} does not match {cls.__name__}")
 
         def reconstruct_entity_from_dict(
-            entity_d: dict[str, Any], module: Any
-        ) -> _Concept | _ExtractedItem | _Example:
+            entity_d: dict[str, Any],
+        ) -> Any:
             """
             Reconstructs an entity object from its dictionary representation.
 
             :param entity_d: Dictionary containing the serialized entity data.
             :type entity_d: dict[str, Any]
-            :param module: Module containing the entity class to reconstruct.
-            :type module: Any
             :return: Reconstructed entity object.
-            :rtype: _Concept | _ExtractedItem | _Example
+            :rtype: Any
             :raises ValueError: If class name is missing from the dictionary.
-            :raises TypeError: If class name is not a string or class not found in module.
+            :raises RuntimeError: If class name is not a string or class not found.
             """
             class_name = entity_d.get(KEY_CLASS_PRIVATE)
             if class_name is None:
@@ -386,32 +374,19 @@ class _InstanceSerializer(BaseModel):
                 raise TypeError(
                     f"Class name must be a string, got {type(class_name).__name__}"
                 )
-            entity_class = getattr(module, class_name, None)
+            entity_class = _resolve_public_type(class_name)
             if entity_class is None:
-                raise TypeError(f"{class_name} not found in module.")
+                raise TypeError(f"{class_name} not found.")
             return entity_class.from_dict(entity_d)
 
-        def lambda_list_val(
-            instance_cls: type | None = None, module: Any | None = None
-        ) -> Callable[[Any], Any]:
+        def lambda_list_val() -> Callable[[Any], Any]:
             """
             Creates a lambda function to reconstruct a list of objects from dictionaries.
 
-            :param instance_cls: Specific class to use for reconstruction, defaults to None.
-            :type instance_cls: type | None, optional
-            :param module: Module containing classes for reconstruction, defaults to None.
-            :type module: Any | None, optional
             :return: Lambda function that reconstructs objects from a list of dictionaries.
             :rtype: Callable[[Any], Any]
             """
-            return lambda val: [
-                (
-                    instance_cls.from_dict(d)
-                    if instance_cls
-                    else reconstruct_entity_from_dict(d, module)
-                )
-                for d in val
-            ]
+            return lambda val: [reconstruct_entity_from_dict(d) for d in val]
 
         def _deserialize_structure_dict(
             structure_dict: dict[str, Any],
@@ -457,31 +432,37 @@ class _InstanceSerializer(BaseModel):
         # Create a map for known keys → reconstruction logic
         rebuild_map: dict[str, Callable[[Any], Any]] = {
             # Public attrs
-            KEY_ASPECTS_PUBLIC: lambda_list_val(instance_cls=Aspect),
-            KEY_CONCEPTS_PUBLIC: lambda_list_val(module=cg_concepts),
-            KEY_EXAMPLES_PUBLIC: lambda_list_val(module=cg_examples),
-            KEY_PARAGRAPHS_PUBLIC: lambda_list_val(instance_cls=Paragraph),
-            KEY_SENTENCES_PUBLIC: lambda_list_val(instance_cls=Sentence),
-            KEY_IMAGES_PUBLIC: lambda_list_val(instance_cls=Image),
+            KEY_ASPECTS_PUBLIC: lambda_list_val(),
+            KEY_CONCEPTS_PUBLIC: lambda_list_val(),
+            KEY_EXAMPLES_PUBLIC: lambda_list_val(),
+            KEY_PARAGRAPHS_PUBLIC: lambda_list_val(),
+            KEY_SENTENCES_PUBLIC: lambda_list_val(),
+            KEY_IMAGES_PUBLIC: lambda_list_val(),
             KEY_STRUCTURE_PUBLIC: lambda val: (
                 # JsonObjectConcept structure is always converted to a dict
                 _deserialize_structure_dict(val)
             ),
             KEY_RATING_SCALE_PUBLIC: lambda val: (
-                RatingScale.from_dict(val) if isinstance(val, dict) else tuple(val)
+                _resolve_public_type(_RatingScale).from_dict(val)
+                if isinstance(val, dict)
+                else tuple(val)
             ),
             # LLM attrs
             KEY_LLM_PRICING_PUBLIC: lambda val: (
-                LLMPricing.from_dict(val) if val is not None else val
+                _resolve_public_type(_LLMPricing).from_dict(val)
+                if val is not None
+                else val
             ),
             KEY_LLM_FALLBACK_PUBLIC: lambda val: (
-                DocumentLLM.from_dict(val) if val is not None else val
+                _resolve_public_type(_DocumentLLM).from_dict(val)
+                if val is not None
+                else val
             ),
-            KEY_LLMS_PUBLIC: lambda_list_val(instance_cls=DocumentLLM),
+            KEY_LLMS_PUBLIC: lambda_list_val(),
             # Private attrs
-            KEY_EXTRACTED_ITEMS_PRIVATE: lambda_list_val(module=cg_items),
-            KEY_REFERENCE_PARAGRAPHS_PRIVATE: lambda_list_val(instance_cls=Paragraph),
-            KEY_REFERENCE_SENTENCES_PRIVATE: lambda_list_val(instance_cls=Sentence),
+            KEY_EXTRACTED_ITEMS_PRIVATE: lambda_list_val(),
+            KEY_REFERENCE_PARAGRAPHS_PRIVATE: lambda_list_val(),
+            KEY_REFERENCE_SENTENCES_PRIVATE: lambda_list_val(),
             # LLM attrs
             KEY_LLM_USAGE_PRIVATE: lambda val: _LLMUsage.from_dict(val),
             KEY_LLM_COST_PRIVATE: lambda val: cls._convert_llm_cost_dict(val),

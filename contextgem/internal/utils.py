@@ -39,12 +39,6 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast, get_args
 from jinja2 import Environment, Template, nodes
 from wtpsplit_lite import SaT
 
-
-if TYPE_CHECKING:
-    from contextgem.public.aspects import Aspect
-    from contextgem.public.concepts import _Concept
-    from contextgem.public.paragraphs import Paragraph
-
 from contextgem.internal.data_models import _LLMUsage
 from contextgem.internal.llm_output_structs.aspect_structs import (
     _get_aspect_extraction_output_struct,
@@ -61,6 +55,12 @@ from contextgem.internal.typings.aliases import (
     StandardSaTModelId,
     TextMode,
 )
+
+
+if TYPE_CHECKING:
+    from contextgem.internal.base.aspects import _Aspect
+    from contextgem.internal.base.concepts import _Concept
+    from contextgem.internal.base.paras_and_sents import _Paragraph
 
 
 T = TypeVar("T")
@@ -884,8 +884,8 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
 
 
 def _group_instances_by_fields(
-    fields: list[str], instances: list[Aspect] | list[_Concept]
-) -> list[list[Aspect] | list[_Concept]]:
+    fields: list[str], instances: list[_Aspect] | list[_Concept]
+) -> list[list[_Aspect] | list[_Concept]]:
     """
     Group instances by a list of fields.
 
@@ -927,8 +927,8 @@ def _is_json_serializable(data: Any) -> bool:
 
 
 def _check_paragraphs_match_in_text(
-    paragraphs: list[Paragraph], document_text: str, text_mode: TextMode
-) -> list[Paragraph]:
+    paragraphs: list[_Paragraph], document_text: str, text_mode: TextMode
+) -> list[_Paragraph]:
     """
     Check that all relevant paragraph texts exist in the given document text.
 
@@ -946,7 +946,7 @@ def _check_paragraphs_match_in_text(
 
 
 def _check_paragraphs_ordering_in_text(
-    paragraphs: list[Paragraph], document_text: str, text_mode: TextMode
+    paragraphs: list[_Paragraph], document_text: str, text_mode: TextMode
 ) -> None:
     """
     Check that paragraphs are ordered according to their appearance in document text.

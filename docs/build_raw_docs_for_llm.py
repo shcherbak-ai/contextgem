@@ -35,6 +35,8 @@ python docs/build_raw_docs_for_llm.py
 ```
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import subprocess

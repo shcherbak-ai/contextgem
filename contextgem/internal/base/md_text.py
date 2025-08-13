@@ -20,6 +20,8 @@
 Module for processing and managing markdown text attributes.
 """
 
+from __future__ import annotations
+
 from pydantic import BaseModel, PrivateAttr
 
 from contextgem.internal.typings.aliases import NonEmptyStr

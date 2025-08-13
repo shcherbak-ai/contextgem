@@ -24,6 +24,8 @@ through multiple inheritance. Currently includes the _PostInitCollectorMixin whi
 post-initialization processing for Pydantic models.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import Any
 

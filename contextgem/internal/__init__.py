@@ -17,17 +17,29 @@
 #
 
 from contextgem.internal.base import (
-    _AssignedAspectsProcessor,
-    _AssignedConceptsProcessor,
-    _AssignedInstancesProcessor,
-    _Concept,
-    _ExtractedItem,
-    _ExtractedItemsAttributeProcessor,
-    _InstanceBase,
-    _MarkdownTextAttributesProcessor,
-    _ParasAndSentsBase,
-    _PostInitCollectorMixin,
-    _RefParasAndSentsAttrituteProcessor,
+    _COST_QUANT,
+    _LOCAL_MODEL_PROVIDERS,
+    _Aspect,
+    _BooleanConcept,
+    _DateConcept,
+    _Document,
+    _DocumentLLM,
+    _DocumentLLMGroup,
+    _DocumentPipeline,
+    _ExtractionPipeline,
+    _Image,
+    _JsonObjectClassStruct,
+    _JsonObjectConcept,
+    _JsonObjectExample,
+    _LabelConcept,
+    _LLMPricing,
+    _NumericalConcept,
+    _Paragraph,
+    _RatingConcept,
+    _RatingScale,
+    _Sentence,
+    _StringConcept,
+    _StringExample,
 )
 from contextgem.internal.converters import _DocxConverterBase, _DocxPackage
 from contextgem.internal.data_models import (
@@ -37,7 +49,12 @@ from contextgem.internal.data_models import (
     _LLMUsage,
     _LLMUsageOutputContainer,
 )
-from contextgem.internal.decorators import _post_init_method, _timer_decorator
+from contextgem.internal.decorators import (
+    _disable_direct_initialization,
+    _expose_in_registry,
+    _post_init_method,
+    _timer_decorator,
+)
 from contextgem.internal.exceptions import (
     DocxConverterError,
     LLMAPIError,
@@ -111,19 +128,31 @@ from contextgem.internal.utils import (
 )
 
 
-__all__ = [
+__all__ = (
     # Base
-    "_InstanceBase",
-    "_AssignedAspectsProcessor",
-    "_AssignedConceptsProcessor",
-    "_AssignedInstancesProcessor",
-    "_ExtractedItemsAttributeProcessor",
-    "_RefParasAndSentsAttrituteProcessor",
-    "_PostInitCollectorMixin",
-    "_Concept",
-    "_ExtractedItem",
-    "_ParasAndSentsBase",
-    "_MarkdownTextAttributesProcessor",
+    "_COST_QUANT",
+    "_LOCAL_MODEL_PROVIDERS",
+    "_Aspect",
+    "_BooleanConcept",
+    "_DateConcept",
+    "_Document",
+    "_DocumentLLM",
+    "_DocumentLLMGroup",
+    "_DocumentPipeline",
+    "_ExtractionPipeline",
+    "_Image",
+    "_JsonObjectClassStruct",
+    "_JsonObjectConcept",
+    "_JsonObjectExample",
+    "_LabelConcept",
+    "_LLMPricing",
+    "_NumericalConcept",
+    "_Paragraph",
+    "_RatingConcept",
+    "_RatingScale",
+    "_Sentence",
+    "_StringConcept",
+    "_StringExample",
     # LLM output structs
     "_get_aspect_extraction_output_struct",
     "_get_concept_extraction_output_struct",
@@ -166,6 +195,8 @@ __all__ = [
     # Decorators
     "_post_init_method",
     "_timer_decorator",
+    "_disable_direct_initialization",
+    "_expose_in_registry",
     # Extracted items
     "_StringItem",
     "_IntegerItem",
@@ -204,4 +235,4 @@ __all__ = [
     "LLMExtractionError",
     "LLMAPIError",
     "DocxConverterError",
-]
+)

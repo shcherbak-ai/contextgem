@@ -24,6 +24,8 @@ preserving text, structure, tables, footnotes, headers, footers, and embedded im
 Implemented through the DocxConverter class.
 """
 
+from __future__ import annotations
+
 import warnings
 from pathlib import Path
 from typing import BinaryIO, cast

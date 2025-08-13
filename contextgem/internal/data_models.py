@@ -20,6 +20,8 @@
 Module defining internal data validation models.
 """
 
+from __future__ import annotations
+
 import time
 from decimal import Decimal
 from typing import Any

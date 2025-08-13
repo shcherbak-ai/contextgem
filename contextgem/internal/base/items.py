@@ -31,44 +31,25 @@ from typing import Any
 from pydantic import Field, PrivateAttr
 
 from contextgem.internal.base.attrs import _RefParasAndSentsAttrituteProcessor
-from contextgem.internal.decorators import _post_init_method
+from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
+from contextgem.internal.decorators import (
+    _disable_direct_initialization,
+)
 from contextgem.internal.typings.aliases import NonEmptyStr
-from contextgem.public.paragraphs import Paragraph
-from contextgem.public.sentences import Sentence
 
 
+@_disable_direct_initialization
 class _ExtractedItem(_RefParasAndSentsAttrituteProcessor):
     """
-    Base class for items extracted from aspects or documents in the ContextGem framework.
-
-    This class provides a structured way to store extracted information along with
-    optional justification and reference data.
-
-    :ivar value: The extracted information value.
-    :vartype value: Any
-    :ivar justification: Optional explanation providing context for the extraction.
-        Defaults to None.
-    :vartype justification: str | None
-    :ivar reference_paragraphs: List of paragraphs referenced by this item.
-    :vartype reference_paragraphs: list[Paragraph]
-    :ivar reference_sentences: List of sentences referenced by this item.
-    :vartype reference_sentences: list[Sentence]
+    Base class for extracted items.
     """
 
-    value: Any = Field(..., frozen=True)
-    justification: NonEmptyStr | None = Field(default=None, frozen=True)
+    value: Any = Field(..., frozen=True, description="Extracted value.")
+    justification: NonEmptyStr | None = Field(
+        default=None,
+        frozen=True,
+        description="Optional justification (explanation) for the extraction.",
+    )
 
-    _reference_paragraphs: list[Paragraph] = PrivateAttr(default_factory=list)
-    _reference_sentences: list[Sentence] = PrivateAttr(default_factory=list)
-
-    @_post_init_method
-    def _post_init(self, __context: Any):
-        """
-        Post-initialization method that prevents direct instantiation of the base class.
-
-        :param __context: Pydantic context (unused).
-        :type __context: Any
-        :raises TypeError: If attempting to instantiate the base class directly.
-        """
-        if self.__class__ == _ExtractedItem:
-            raise TypeError("Cannot instantiate base class directly")
+    _reference_paragraphs: list[_Paragraph] = PrivateAttr(default_factory=list)
+    _reference_sentences: list[_Sentence] = PrivateAttr(default_factory=list)

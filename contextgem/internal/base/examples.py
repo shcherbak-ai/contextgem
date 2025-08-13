@@ -18,29 +18,66 @@
 
 """
 Module defining the base classes for example subclasses.
-
-This module provides the foundational class structure for examples that can be used
-in the ContextGem framework. Examples serve as user-provided samples for extraction tasks,
-helping to guide and improve the extraction process by providing reference patterns
-or expected outputs.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+from pydantic import Field, field_validator
+
 from contextgem.internal.base.instances import _InstanceBase
+from contextgem.internal.decorators import _disable_direct_initialization
+from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.utils import _is_json_serializable
 
 
 class _Example(_InstanceBase):
     """
-    Base class that represents an example for extraction tasks in the ContextGem framework.
-
-    Examples serve as user-provided samples that guide the extraction process by
-    demonstrating expected patterns or outputs for specific extraction tasks.
-
-    :ivar content: Arbitrary content associated with the example.
-    :vartype content: Any
+    Internal implementation of the Example class.
     """
 
-    content: Any
+    content: Any = Field(
+        ..., description="Arbitrary content associated with the example."
+    )
+
+
+@_disable_direct_initialization
+class _StringExample(_Example):
+    """
+    Internal implementation of the StringExample class.
+    """
+
+    content: NonEmptyStr = Field(
+        ...,
+        description="A non-empty string that holds the text content of the extracted item example.",
+    )
+
+
+@_disable_direct_initialization
+class _JsonObjectExample(_Example):
+    """
+    Internal implementation of the JsonObjectExample class.
+    """
+
+    content: dict[str, Any] = Field(
+        ...,
+        min_length=1,
+        description="A JSON-serializable dict that holds the content of the extracted item example.",
+    )
+
+    @field_validator("content")
+    @classmethod
+    def _validate_content_serializable(cls, value: dict[str, Any]) -> dict[str, Any]:
+        """
+        Validates that the `content` field is serializable to JSON.
+
+        :param value: The value of the `content` field to validate.
+        :type value: dict[str, Any]
+        :return: The validated `content` value.
+        :rtype: dict[str, Any]
+        :raises ValueError: If the `content` value is not serializable.
+        """
+        if not _is_json_serializable(value):
+            raise ValueError("`content` must be JSON serializable.")
+        return value

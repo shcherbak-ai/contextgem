@@ -36,23 +36,23 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import Field, StrictBool, StrictInt
-
-
-if TYPE_CHECKING:
-    from contextgem.internal.base.concepts import _Concept
-    from contextgem.internal.items import _ExtractedItem
-    from contextgem.public.aspects import Aspect
-
 from typing_extensions import Self
 
 from contextgem.internal.base.instances import _InstanceBase
-from contextgem.internal.decorators import _post_init_method
+from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
+from contextgem.internal.decorators import (
+    _post_init_method,
+)
 from contextgem.internal.typings.aliases import (
     AssignedInstancesAttrName,
     JustificationDepth,
 )
-from contextgem.public.paragraphs import Paragraph
-from contextgem.public.sentences import Sentence
+
+
+if TYPE_CHECKING:
+    from contextgem.internal.base.aspects import _Aspect
+    from contextgem.internal.base.concepts import _Concept
+    from contextgem.internal.items import _ExtractedItem
 
 
 class _AssignedInstancesAttributeProcessor(_InstanceBase):
@@ -75,7 +75,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
     def _add_instances(
         self,
         attr_name: AssignedInstancesAttrName,
-        instances: list[Aspect] | list[_Concept],
+        instances: list[_Aspect] | list[_Concept],
     ) -> Self:
         """
         Adds a list of new instances to an existing attribute's collection. This
@@ -85,7 +85,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
         :param attr_name: Name of the attribute which holds the instances.
         :type attr_name: AssignedInstancesAttrName
         :param instances: List of instances to be added to the attribute.
-        :type instances: list[Aspect | _Concept]
+        :type instances: list[_Aspect] | list[_Concept]
         :return: Updated object for method chaining.
         :rtype: Self
         """
@@ -101,7 +101,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
 
     def _get_instance_by_name(
         self, attr_name: AssignedInstancesAttrName, instance_name: str
-    ) -> Aspect | _Concept:
+    ) -> _Aspect | _Concept:  # type: ignore
         """
         Retrieves and returns a specific instance from a collection
         of instances managed by an attribute of the class.
@@ -111,7 +111,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
         :param instance_name: Name of the instance to retrieve from the list.
         :type instance_name: str
         :return: The instance with the specified name if found.
-        :rtype: Aspect | _Concept
+        :rtype: _Aspect | _Concept
         :raises ValueError: If no instance with the specified name is found.
         """
         instances = getattr(self, attr_name)
@@ -169,7 +169,7 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
     """
 
     if TYPE_CHECKING:
-        aspects: list[Aspect]
+        aspects: list[_Aspect]
 
     @_post_init_method
     def _post_init(self, __context: Any):
@@ -200,7 +200,7 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
 
     def add_aspects(
         self,
-        aspects: list[Aspect],
+        aspects: list[_Aspect],
     ) -> Self:
         """
         Adds aspects to the existing aspects list of an instance and returns the
@@ -210,23 +210,24 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
 
         :param aspects: A list of aspects to be added. Each aspect is deeply copied
             to ensure the original list remains unaltered.
-        :type aspects: list[Aspect]
+        :type aspects: list[_Aspect]
 
         :return: Updated instance containing the newly added aspects.
         :rtype: Self
         """
-        from contextgem.public.aspects import Aspect
+
+        from contextgem.internal.base.aspects import _Aspect
 
         if (
             not isinstance(aspects, list)
-            or not all(isinstance(item, Aspect) for item in aspects)
+            or not all(isinstance(item, _Aspect) for item in aspects)
             or not aspects
         ):
             raise ValueError("Aspects must be a non-empty list of `Aspect` objects")
 
         return self._add_instances(attr_name="aspects", instances=aspects)
 
-    def get_aspect_by_name(self, name: str) -> Aspect:
+    def get_aspect_by_name(self, name: str) -> _Aspect:
         """
         Finds and returns an aspect with the specified name from the list of available aspects,
         if the instance has `aspects` attribute.
@@ -234,24 +235,24 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
         :param name: The name of the aspect to find.
         :type name: str
         :return: The aspect with the specified name.
-        :rtype: Aspect
+        :rtype: _Aspect
         :raises ValueError: If no aspect with the specified name is found.
         """
-        # Safe cast: _get_instance_by_name returns Aspect | _Concept, but we know it will
+        # Safe cast: _get_instance_by_name returns _Aspect | _Concept, but we know it will
         # return an Aspect since we're passing "aspects" as attr_name
         return cast(
-            "Aspect",
+            "_Aspect",
             self._get_instance_by_name(attr_name="aspects", instance_name=name),
         )
 
-    def get_aspects_by_names(self, names: list[str]) -> list[Aspect]:
+    def get_aspects_by_names(self, names: list[str]) -> list[_Aspect]:
         """
-        Retrieve a list of Aspect objects corresponding to the provided list of names.
+        Retrieve a list of _Aspect objects corresponding to the provided list of names.
 
         :param names: List of aspect names to retrieve. The names must be provided
                       as a list of strings.
-        :returns: A list of Aspect objects corresponding to provided names.
-        :rtype: list[Aspect]
+        :returns: A list of _Aspect objects corresponding to provided names.
+        :rtype: list[_Aspect]
         """
         return [self.get_aspect_by_name(name) for name in names]
 
@@ -361,7 +362,7 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
         :rtype: _Concept
         :raises ValueError: If no concept with the specified name is found.
         """
-        # Safe cast: _get_instance_by_name returns Aspect | _Concept, but we know it will
+        # Safe cast: _get_instance_by_name returns _Aspect | _Concept, but we know it will
         # return a _Concept since we're passing "concepts" as attr_name
         return cast(
             "_Concept",
@@ -478,22 +479,19 @@ class _PropertyProcessor(_InstanceBase):
 
 class _ExtractedItemsAttributeProcessor(_PropertyProcessor):
     """
-    Handles the processing of extracted items and validates their assignment
-    and retrieval.
-
-    :ivar add_justifications: A boolean flag indicating whether the LLM
-        will output justification for each extracted item for the aspect. Defaults to False.
-    :vartype add_justifications: bool
-    :ivar justification_depth: The level of detail of justifications. Details to "brief".
-    :vartype justification_depth: JustificationDepth
-    :ivar justification_max_sents: The maximum number of sentences in a justification.
-        Defaults to 2.
-    :vartype justification_max_sents: int
+    Base class for managing extracted items and related options.
     """
 
-    add_justifications: StrictBool = Field(default=False)
-    justification_depth: JustificationDepth = Field(default="brief")
-    justification_max_sents: StrictInt = Field(default=2)
+    add_justifications: StrictBool = Field(
+        default=False,
+        description="Whether to include justifications for each extracted item.",
+    )
+    justification_depth: JustificationDepth = Field(
+        default="brief", description="Level of detail for justifications."
+    )
+    justification_max_sents: StrictInt = Field(
+        default=2, description="Maximum number of sentences per justification."
+    )
 
     if TYPE_CHECKING:
         _extracted_items: list[_ExtractedItem]
@@ -560,8 +558,8 @@ class _RefParasAndSentsAttrituteProcessor(_PropertyProcessor):
     """
 
     if TYPE_CHECKING:
-        _reference_paragraphs: list[Paragraph]
-        _reference_sentences: list[Sentence]
+        _reference_paragraphs: list[_Paragraph]
+        _reference_sentences: list[_Sentence]
 
     @_post_init_method
     def _post_init(self, __context: Any):
@@ -578,57 +576,57 @@ class _RefParasAndSentsAttrituteProcessor(_PropertyProcessor):
                 raise AttributeError(f"Instance has no `{attr_name}` attribute.")
 
     @property
-    def reference_paragraphs(self) -> list[Paragraph]:
+    def reference_paragraphs(self) -> list[_Paragraph]:
         """
         Provides access to the instance's reference paragraphs, assigned during extraction.
 
-        :return: A list containing the paragraphs as `Paragraph` objects.
-        :rtype: list[Paragraph]
+        :return: A list containing the paragraphs as `_Paragraph` objects.
+        :rtype: list[_Paragraph]
         """
         return self._reference_paragraphs
 
     @reference_paragraphs.setter
-    def reference_paragraphs(self, value: list[Paragraph]) -> None:
+    def reference_paragraphs(self, value: list[_Paragraph]) -> None:
         """
         Sets the `reference_paragraphs` property of the instance.
 
         :param value: The new list of paragraphs to be set.
-        :type value: list[Paragraph]
+        :type value: list[_Paragraph]
         :raises ValueError: If the value is not a list or if any elements in the list
-            are not instances of the Paragraph class.
+            are not instances of the _Paragraph class.
         :return: None
         """
         self._validate_and_assign_list_property(
             value,
-            Paragraph,
+            _Paragraph,
             "_reference_paragraphs",
-            "Paragraphs must be a list of `Paragraph` objects",
+            "Paragraphs must be a list of `_Paragraph` objects",
         )
 
     @property
-    def reference_sentences(self) -> list[Sentence]:
+    def reference_sentences(self) -> list[_Sentence]:
         """
         Provides access to the instance's reference sentences, assigned during extraction.
 
-        :return: A list containing the sentences as `Sentence` objects.
-        :rtype: list[Sentence]
+        :return: A list containing the sentences as `_Sentence` objects.
+        :rtype: list[_Sentence]
         """
         return self._reference_sentences
 
     @reference_sentences.setter
-    def reference_sentences(self, value: list[Sentence]) -> None:
+    def reference_sentences(self, value: list[_Sentence]) -> None:
         """
         Sets the `reference_sentences` property of the instance.
 
         :param value: The new list of sentences to be set.
-        :type value: list[Sentence]
+        :type value: list[_Sentence]
         :raises ValueError: If the value is not a list or if any elements in the list
-            are not instances of the Sentence class.
+            are not instances of the _Sentence class.
         :return: None
         """
         self._validate_and_assign_list_property(
             value,
-            Sentence,
+            _Sentence,
             "_reference_sentences",
-            "Sentences must be a list of `Sentence` objects",
+            "Sentences must be a list of `_Sentence` objects",
         )

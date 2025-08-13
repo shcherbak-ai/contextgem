@@ -20,7 +20,7 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.14.4"
+__version__ = "0.15.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
@@ -52,7 +52,7 @@ from contextgem.public import (
 )
 
 
-__all__ = [
+__all__ = (
     # Aspects
     "Aspect",
     # Concepts
@@ -90,4 +90,4 @@ __all__ = [
     "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
-]
+)

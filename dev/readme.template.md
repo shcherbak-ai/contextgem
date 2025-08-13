@@ -277,6 +277,7 @@ This project is automatically scanned for security vulnerabilities using multipl
 ContextGem relies on these excellent open-source packages:
 
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
+- [genai-prices](https://github.com/pydantic/genai-prices): LLM pricing data and utilities (by Pydantic) to automatically estimate costs
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
 - [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability

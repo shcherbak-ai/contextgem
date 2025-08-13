@@ -21,6 +21,8 @@ Script to generate Python notebooks from Python example files.
 It simply pastes the entire content of each Python file into a notebook.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re

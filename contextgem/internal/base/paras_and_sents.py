@@ -18,18 +18,18 @@
 
 """
 Module providing base classes for document paragraphs and sentences.
-
-This module defines the foundational classes used for representing and managing
-paragraphs and sentences within documents. It includes the _ParasAndSentsBase class
-which serves as the common ancestor for paragraph and sentence implementations,
-providing shared validation and context handling functionality.
 """
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
+from typing import Any
+
+from pydantic import Field, field_validator, model_validator
+from typing_extensions import Self
 
 from contextgem.internal.base.instances import _InstanceBase
+from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
+from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.aliases import NonEmptyStr
 from contextgem.internal.utils import _contains_linebreaks
@@ -37,18 +37,15 @@ from contextgem.internal.utils import _contains_linebreaks
 
 class _ParasAndSentsBase(_InstanceBase):
     """
-    Base class for document paragraphs and sentences.
-
-    This class provides common functionality for representing textual elements within documents,
-    serving as the foundation for paragraph and sentence implementations. It inherits from
-    _InstanceBase and implements validation for contextual information.
-
-    :ivar additional_context: Optional supplementary information for the paragraph or sentence.
-        Should be a non-empty string without linebreaks. Defaults to None.
-    :vartype additional_context: str | None
+    Base class for paragraph and sentence models.
     """
 
-    additional_context: NonEmptyStr | None = Field(default=None)
+    additional_context: NonEmptyStr | None = Field(
+        default=None,
+        description=(
+            "Optional supplementary information without linebreaks; used to enrich prompts."
+        ),
+    )
 
     @field_validator("additional_context")
     @classmethod
@@ -70,3 +67,82 @@ class _ParasAndSentsBase(_InstanceBase):
                 f"This may cause unexpected behavior."
             )
         return additional_context
+
+
+@_disable_direct_initialization
+class _Sentence(_ParasAndSentsBase):
+    """
+    Internal implementation of the Sentence class.
+    """
+
+    raw_text: NonEmptyStr = Field(
+        ...,
+        frozen=True,
+        description="Raw text content of the sentence; immutable after initialization.",
+    )
+
+
+@_disable_direct_initialization
+class _Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
+    """
+    Internal implementation of the Paragraph class.
+    """
+
+    raw_text: NonEmptyStr = Field(
+        ...,
+        frozen=True,
+        description="Raw text content of the paragraph; immutable after initialization.",
+    )
+    sentences: list[_Sentence] = Field(
+        default_factory=list,
+        description=(
+            "Sentences contained in this paragraph; cannot be reassigned once populated."
+        ),
+    )
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Sets the attribute of an instance, with additional restrictions on specific attributes.
+
+        :param name: The name of the attribute to set.
+        :type name: str
+        :param value: The value to assign to the attribute.
+        :return: None
+        :raises ValueError: If attempting to reassign a restricted attribute
+            after it has already been assigned to a *truthy* value.
+        """
+        if name in ["sentences", "_md_text"] and getattr(self, name, None):
+            # Prevent sentences and _md_text reassignment once populated,
+            # to prevent inconsistencies in analysis.
+            raise ValueError(
+                f"The attribute `{name}` cannot be changed once populated."
+            )
+        if name == "_md_text":
+            self._validate_md_text(value)
+        super().__setattr__(name, value)
+
+    @model_validator(mode="after")
+    def _validate_paragraph_post(self) -> Self:
+        """
+        Verifies that:
+        - all sentences within the `sentences` attribute, if they exist, have their
+            raw text content found within the `raw_text` attribute of the paragraph.
+        - when `_md_text` is populated, `raw_text` is also populated.
+
+        :return: The validated Paragraph instance.
+        :rtype: Self
+        :raises ValueError: If any sentence's raw text is not matched within
+            the paragraph's raw text, or if `_md_text` is provided without `raw_text`
+            being set.
+        """
+        if self.sentences and not all(
+            i.raw_text in self.raw_text for i in self.sentences
+        ):
+            raise ValueError("Not all sentences were matched in paragraph text.")
+
+        if self._md_text and not self.raw_text:
+            raise ValueError(
+                "Paragraph's `_md_text` cannot be populated without `raw_text` being set."
+            )
+
+        return self
