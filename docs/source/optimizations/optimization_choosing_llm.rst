@@ -46,9 +46,37 @@ Since ContextGem specializes in deep single-document analysis, models with large
 🏷️ LLM Roles
 --------------
 
-Each LLM serves a specific role in your pipeline, defined by the ``role`` parameter. This allows different models to handle different tasks. For instance, when an aspect or concept has ``llm_role="extractor_text"``, it will be processed by an LLM with that matching role.
+The ``role`` of an LLM is an abstraction used to assign various LLMs tasks of different complexity. For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, this aspect/concept is extracted from the document using the LLM with ``role="extractor_text"``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate role for a specific aspect/concept.
 
-You can assign any pre-defined role to an LLM regardless of whether it's actually a "reasoning" model (like o3-mini) or not (like gpt-4o). This abstraction helps organize your pipeline based on your assessment of each model's capabilities and task complexity. For simpler use cases, you can omit role assignments, which will default to ``"extractor_text"``.
+In LLM groups, unique role assignments are especially important: each model in the group must have a distinct role so routing can unambiguously send each aspect/concept to the intended model.
+
+For simple use cases, when working with text-only documents and a single LLM, you can skip the role assignments completely, in which case the roles will default to ``"extractor_text"``.
+
+.. list-table:: Available LLM roles
+   :header-rows: 1
+   :widths: 22 48 30
+
+   * - Role
+     - Purpose
+     - Requirements
+   * - ``"extractor_text"``
+     - Extract aspects/concepts from text-only inputs.
+     - No reasoning required.
+   * - ``"extractor_vision"``
+     - Extract aspects/concepts that rely on visual inputs (images).
+     - Vision-capable model.
+   * - ``"reasoner_text"``
+     - Handle complex reasoning over text context (validation, deduction, evaluation, comparison).
+     - Reasoning-capable model.
+   * - ``"reasoner_vision"``
+     - Perform complex reasoning over visual inputs.
+     - Vision-capable and reasoning-capable model.
+
+.. note::
+  🧠 Only LLMs that support reasoning (chain of thought) should be assigned reasoning roles (``"reasoner_text"``, ``"reasoner_vision"``). For such models, internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses.
+
+.. note::
+  👁️ Only LLMs that support vision can be assigned vision roles (e.g., ``"extractor_vision"``, ``"reasoner_vision"``).
 
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_choosing_llm.py
     :language: python

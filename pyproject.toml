@@ -93,15 +93,16 @@ classifiers = [
 ]
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
-    "genai-prices==0.0.22",  # pin version since the package's API changes frequently
+    "genai-prices==0.0.23",  # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm (>=1.71.1,<2.0.0)",
+    "litellm==1.75.8",  # pin version due to occasional instability between patches and minor versions
     "loguru (>=0.7.3,<0.8.0)",
     "lxml (>=5.4.0,<6.0.0)",
-    "pillow>=11.3.0",
+    "openai==1.99.9",  # add as pinned version due to 1.100.0 import error in litellm==1.75.8
+    "pillow (>=11.3.0,<12.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
-    "typing-extensions>=4.14.1",
+    "typing-extensions (>=4.14.1,<5.0.0)",
     "wtpsplit-lite (>=0.2.0,<0.3.0)",
 ]
 
@@ -212,6 +213,9 @@ extend_exclude = [
     "dev/generate_notebooks.py",
     "code_sample.py",
 ]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["openai"]  # due to pinned version in dependencies
 
 [tool.interrogate]
 ignore-init-method = true

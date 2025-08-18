@@ -114,9 +114,7 @@ ContextGem uses the following models to extract information from documents:
 
 **A single configurable LLM with a specific role to extract specific information from the document.**
 
-The ``llm_role`` of an LLM is an abstraction to differentiate between tasks of different complexity. For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, it means that the aspect/concept is extracted from the document using the LLM with the role "extractor_text". This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate role for a specific aspect/concept. But for simple use cases, you can skip the role assignment completely, in which case the role will default to "extractor_text".
-
-An LLM can have any of the pre-defined roles assigned to it, irrespective of whether it is actually a "reasoning" model (e.g. o3-mini) or not (e.g. gpt-4o) - it is up to you to decide based on the capabilities of the LLM and the complexity of the task.
+The ``role`` of an LLM is an abstraction used to assign various LLMs tasks of different complexity. For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, this aspect/concept is extracted from the document using the LLM with ``role="extractor_text"``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate role for a specific aspect/concept. But for simple use cases, when working with text-only documents and a single LLM, you can skip the role assignment completely, in which case the role will default to ``"extractor_text"``.
 
 An LLM can have a configurable fallback LLM with the same role.
 
@@ -134,6 +132,12 @@ Each LLM can have its own backend and configuration, and one fallback LLM with t
 
 See :class:`~contextgem.public.llms.DocumentLLMGroup` for more details.
 
+.. note::
+  🧠 Only LLMs that support reasoning (chain of thought) should be assigned reasoning roles (``"reasoner_text"``, ``"reasoner_vision"``). For such models, internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses.
+
+.. note::
+  👁️ Only LLMs that support vision can be assigned vision roles (e.g., ``"extractor_vision"``, ``"reasoner_vision"``).
+
 .. list-table:: LLM Group Workflow Example
    :header-rows: 1
    :widths: 15 20 20 20
@@ -143,17 +147,17 @@ See :class:`~contextgem.public.llms.DocumentLLMGroup` for more details.
      - LLM 2 (``reasoner_text``)
      - LLM 3 (``extractor_vision``)
    * - *Model*
-     - gpt-4o-mini
-     - gpt-4o
-     - gpt-4o-mini
+     - gpt-4.1-mini
+     - o4-mini
+     - gpt-4.1-mini
    * - *Task*
      - Extract payment terms from a contract
      - Detect anomalies in the payment terms
      - Extract invoice amounts
    * - *Fallback LLM* (optional)
-     - gpt-3.5-turbo
-     - claude-3-5-sonnet
-     - gpt-4o
+     - gpt-4o-mini
+     - o3-mini
+     - gpt-4o-mini
 
 .. image:: _static/contextgem_how_it_works_infographics.png
    :width: 100%

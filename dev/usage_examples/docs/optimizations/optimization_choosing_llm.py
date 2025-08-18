@@ -22,7 +22,7 @@ base_llm_fallback = DocumentLLM(
 base_llm.fallback_llm = base_llm_fallback
 
 advanced_llm = DocumentLLM(
-    model="openai/gpt-4o",  # can be a larger model (reasoning or non-reasoning)
+    model="openai/o3-mini",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     role="reasoner_text",
 )
