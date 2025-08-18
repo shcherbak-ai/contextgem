@@ -3327,21 +3327,16 @@ documents:
 **A single configurable LLM with a specific role to extract specific
 information from the document.**
 
-The "llm_role" of an LLM is an abstraction to differentiate between
+The "role" of an LLM is an abstraction used to assign various LLMs
 tasks of different complexity. For example, if an aspect/concept is
-assigned "llm_role="extractor_text"", it means that the aspect/concept
-is extracted from the document using the LLM with the role
-"extractor_text". This helps to channel different tasks to different
-LLMs, ensuring that the task is handled by the most appropriate model.
-Usually, domain expertise is required to determine the most
-appropriate role for a specific aspect/concept. But for simple use
-cases, you can skip the role assignment completely, in which case the
-role will default to "extractor_text".
-
-An LLM can have any of the pre-defined roles assigned to it,
-irrespective of whether it is actually a "reasoning" model (e.g.
-o3-mini) or not (e.g. gpt-4o) - it is up to you to decide based on the
-capabilities of the LLM and the complexity of the task.
+assigned "llm_role="extractor_text"", this aspect/concept is extracted
+from the document using the LLM with "role="extractor_text"". This
+helps to channel different tasks to different LLMs, ensuring that the
+task is handled by the most appropriate model. Usually, domain
+expertise is required to determine the most appropriate role for a
+specific aspect/concept. But for simple use cases, when working with
+text-only documents and a single LLM, you can skip the role assignment
+completely, in which case the role will default to ""extractor_text"".
 
 An LLM can have a configurable fallback LLM with the same role.
 
@@ -3366,6 +3361,19 @@ LLM with the same role.
 
 See "DocumentLLMGroup" for more details.
 
+Note:
+
+  🧠 Only LLMs that support reasoning (chain of thought) should be
+  assigned reasoning roles (""reasoner_text"", ""reasoner_vision"").
+  For such models, internal prompts include reasoning-specific
+  instructions intended for these models to produce higher-quality
+  responses.
+
+Note:
+
+  👁️ Only LLMs that support vision can be assigned vision roles (e.g.,
+  ""extractor_vision"", ""reasoner_vision"").
+
 
 LLM Group Workflow Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3374,13 +3382,13 @@ LLM Group Workflow Example
 |                 | LLM 1                | LLM 2                | LLM 3                |
 |                 | ("extractor_text")   | ("reasoner_text")    | ("extractor_vision") |
 |=================|======================|======================|======================|
-| *Model*         | gpt-4o-mini          | gpt-4o               | gpt-4o-mini          |
+| *Model*         | gpt-4.1-mini         | o4-mini              | gpt-4.1-mini         |
 +-----------------+----------------------+----------------------+----------------------+
 | *Task*          | Extract payment      | Detect anomalies in  | Extract invoice      |
 |                 | terms from a         | the payment terms    | amounts              |
 |                 | contract             |                      |                      |
 +-----------------+----------------------+----------------------+----------------------+
-| *Fallback LLM*  | gpt-3.5-turbo        | claude-3-5-sonnet    | gpt-4o               |
+| *Fallback LLM*  | gpt-4o-mini          | o3-mini              | gpt-4o-mini          |
 | (optional)      |                      |                      |                      |
 +-----------------+----------------------+----------------------+----------------------+
 
@@ -7405,14 +7413,14 @@ Note:
 Important:
 
   **For multi-class classification**: Since multi-class classification
-  always returns exactly one label, you should consider including a
-  general "other" label (such as "N/A", "misc", "unspecified", etc.)
-  to handle cases where none of the specific labels apply, unless your
-  labels are broad enough to cover all cases, or you know that the
-  classified content always falls under one of the predefined labels
-  without edge cases. This ensures appropriate classification even
-  when the content doesn't clearly fit into any of the predefined
-  specific categories.
+  should always return exactly one label, you should consider
+  including a general "other" label (such as "N/A", "misc",
+  "unspecified", etc.) to handle cases where none of the specific
+  labels apply, unless your labels are broad enough to cover all
+  cases, or you know that the classified content always falls under
+  one of the predefined labels without edge cases. This ensures
+  appropriate classification even when the content doesn't clearly fit
+  into any of the predefined specific categories.
 
 
 💻 Usage Example
@@ -8731,11 +8739,8 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | you to structure your pipeline with different      |
 |                      |                 |                 | models for different tasks (e.g., using simpler    |
 |                      |                 |                 | models for basic extractions and more powerful     |
-|                      |                 |                 | models for complex reasoning). Note that roles     |
-|                      |                 |                 | don't imply specific model architectures - they're |
-|                      |                 |                 | simply a way for you to organize your workflow by  |
-|                      |                 |                 | mapping less advanced and more advanced LLMs as    |
-|                      |                 |                 | needed. For more details, see 🏷️ LLM Roles.        |
+|                      |                 |                 | models for complex reasoning). For more details,   |
+|                      |                 |                 | see 🏷️ LLM Roles.                                  |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "system_message"     | "str | None"    | "None"          | If not provided (or set to None), ContextGem       |
 |                      |                 |                 | automatically sets a default system message        |
@@ -10449,18 +10454,54 @@ See also:
 🏷️ LLM Roles
 ============
 
-Each LLM serves a specific role in your pipeline, defined by the
-"role" parameter. This allows different models to handle different
-tasks. For instance, when an aspect or concept has
-"llm_role="extractor_text"", it will be processed by an LLM with that
-matching role.
+The "role" of an LLM is an abstraction used to assign various LLMs
+tasks of different complexity. For example, if an aspect/concept is
+assigned "llm_role="extractor_text"", this aspect/concept is extracted
+from the document using the LLM with "role="extractor_text"". This
+helps to channel different tasks to different LLMs, ensuring that the
+task is handled by the most appropriate model. Usually, domain
+expertise is required to determine the most appropriate role for a
+specific aspect/concept.
 
-You can assign any pre-defined role to an LLM regardless of whether
-it's actually a "reasoning" model (like o3-mini) or not (like gpt-4o).
-This abstraction helps organize your pipeline based on your assessment
-of each model's capabilities and task complexity. For simpler use
-cases, you can omit role assignments, which will default to
-""extractor_text"".
+In LLM groups, unique role assignments are especially important: each
+model in the group must have a distinct role so routing can
+unambiguously send each aspect/concept to the intended model.
+
+For simple use cases, when working with text-only documents and a
+single LLM, you can skip the role assignments completely, in which
+case the roles will default to ""extractor_text"".
+
+
+Available LLM roles
+^^^^^^^^^^^^^^^^^^^
+
++------------------------+--------------------------------------------------+--------------------------------+
+| Role                   | Purpose                                          | Requirements                   |
+|========================|==================================================|================================|
+| ""extractor_text""     | Extract aspects/concepts from text-only inputs.  | No reasoning required.         |
++------------------------+--------------------------------------------------+--------------------------------+
+| ""extractor_vision""   | Extract aspects/concepts that rely on visual     | Vision-capable model.          |
+|                        | inputs (images).                                 |                                |
++------------------------+--------------------------------------------------+--------------------------------+
+| ""reasoner_text""      | Handle complex reasoning over text context       | Reasoning-capable model.       |
+|                        | (validation, deduction, evaluation, comparison). |                                |
++------------------------+--------------------------------------------------+--------------------------------+
+| ""reasoner_vision""    | Perform complex reasoning over visual inputs.    | Vision-capable and reasoning-  |
+|                        |                                                  | capable model.                 |
++------------------------+--------------------------------------------------+--------------------------------+
+
+Note:
+
+  🧠 Only LLMs that support reasoning (chain of thought) should be
+  assigned reasoning roles (""reasoner_text"", ""reasoner_vision"").
+  For such models, internal prompts include reasoning-specific
+  instructions intended for these models to produce higher-quality
+  responses.
+
+Note:
+
+  👁️ Only LLMs that support vision can be assigned vision roles (e.g.,
+  ""extractor_vision"", ""reasoner_vision"").
 
 Example of selecting different LLMs for different tasks
 
@@ -10488,7 +10529,7 @@ Example of selecting different LLMs for different tasks
    base_llm.fallback_llm = base_llm_fallback
 
    advanced_llm = DocumentLLM(
-       model="openai/gpt-4o",  # can be a larger model (reasoning or non-reasoning)
+       model="openai/o3-mini",
        api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
        role="reasoner_text",
    )
@@ -15169,7 +15210,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
 
          # Create a vision reasoner LLM
          vision_reasoner = DocumentLLM(
-             model="openai/gpt-4o",
+             model="openai/gpt-5-mini",
              api_key="your-openai-api-key",
              role="reasoner_vision",  # For more complex vision tasks that require reasoning
          )

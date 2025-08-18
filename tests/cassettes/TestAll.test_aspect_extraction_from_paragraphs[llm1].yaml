@@ -558,7 +558,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -568,7 +568,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -594,7 +594,7 @@ interactions:
         \"P35-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
         \"P45\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
         \"P45-S1\"\n          }\n        ]\n      }\n    ]\n  }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1753823011, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1755550135, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -603,7 +603,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 96,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        8598, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 8576},
+        8598, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3328},
         "total_tokens": 8694}}'
     headers:
       Content-Length:
@@ -1203,7 +1203,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1213,7 +1213,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1239,7 +1239,7 @@ interactions:
         \"P21-S4\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
         \"P50\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
         \"P50-S0\"\n          }\n        ]\n      }\n    ]\n  }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1753823011, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1755550135, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1248,7 +1248,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 96,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        8658, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
+        8658, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2304},
         "total_tokens": 8754}}'
     headers:
       Content-Length:
@@ -1664,7 +1664,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1674,7 +1674,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1697,316 +1697,44 @@ interactions:
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
         \"P1\",\n        \"justification\": \"This paragraph introduces the agreement
-        and states it is made between parties, indicating the start of party information.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P2\",\n        \"justification\": \"This paragraph explicitly identifies
-        ''Party A'', indicating information about one of the parties.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P9\",\n        \"justification\": \"This paragraph explicitly identifies
-        ''Party B'', indicating information about the other party.\"\n      },\n      {\n        \"paragraph_id\":
+        and states it is made between parties, indicating the start of party identification.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P2\",\n        \"justification\": \"This paragraph explicitly labels ''Party
+        A'', indicating identification of one party in the contract.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P9\",\n        \"justification\": \"This paragraph explicitly labels ''Party
+        B'', indicating identification of the other party in the contract.\"\n      },\n      {\n        \"paragraph_id\":
         \"P10\",\n        \"justification\": \"This paragraph provides the name of
-        Party B, specifying one of the parties involved.\"\n      },\n      {\n        \"paragraph_id\":
+        Party B, identifying one of the parties involved.\"\n      },\n      {\n        \"paragraph_id\":
         \"P11\",\n        \"justification\": \"This paragraph provides the address
-        of Party B, contributing to the party''s identification.\"\n      },\n      {\n        \"paragraph_id\":
+        of Party B, contributing to the identification of the party.\"\n      },\n      {\n        \"paragraph_id\":
         \"P12\",\n        \"justification\": \"This paragraph continues the address
         details of Party B, further identifying the party.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P13\",\n        \"justification\": \"This paragraph provides contact information
-        for Party B, specifying a contact person and role.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P13\",\n        \"justification\": \"This paragraph provides the contact
+        person and title for Party B, adding to the party''s identification.\"\n      },\n      {\n        \"paragraph_id\":
         \"P14\",\n        \"justification\": \"This paragraph provides the phone number
-        for Party B, adding to the party''s contact details.\"\n      },\n      {\n        \"paragraph_id\":
+        for Party B, contributing to party contact information.\"\n      },\n      {\n        \"paragraph_id\":
         \"P15\",\n        \"justification\": \"This paragraph provides the email address
-        for Party B, completing the contact information.\"\n      },\n      {\n        \"paragraph_id\":
+        for Party B, completing contact details for the party.\"\n      },\n      {\n        \"paragraph_id\":
         \"P57\",\n        \"justification\": \"This paragraph repeats the name of
-        Party B, confirming the party''s identity.\"\n      },\n      {\n        \"paragraph_id\":
+        Party B, reinforcing the party''s identification.\"\n      },\n      {\n        \"paragraph_id\":
         \"P59\",\n        \"justification\": \"This paragraph provides the name of
-        the signing representative for Party B.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P60\",\n        \"justification\": \"This paragraph provides the title of
-        the signing representative for Party B.\"\n      }\n    ]\n  }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1753823010, "id": "chatcmpl-DUMMY",
+        the signing representative for Party B, identifying the party''s authorized
+        signer.\"\n      },\n      {\n        \"paragraph_id\": \"P60\",\n        \"justification\":
+        \"This paragraph provides the title of the signing representative for Party
+        B, further identifying the party''s authorized signer.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1755550135, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 440,
+        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 463,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5736, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1920},
-        "total_tokens": 6176}}'
+        5736, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5632},
+        "total_tokens": 6199}}'
     headers:
       Content-Length:
-      - '3419'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
-      instructions you receive will be organized using semantic XML tags for clarity
-      and structure. Each section will be properly tagged to indicate its purpose
-      and content type, making it easier to understand the task requirements and expected
-      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
-      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
-      file containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\n    <document_types>\n    - Contracts: Legal
-      agreements defining terms and obligations.\n    - Invoices: Financial documents
-      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
-      an individual''s professional experience and qualifications.\n    - Visual Documents:
-      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
-      that contain relevant information.\n    - General Documents: Any other types
-      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
-      that occasionally you may be working with document fragments rather than complete
-      documents. These fragments represent portions of a larger document and should
-      be analyzed within their limited context. When working with fragments, focus
-      on extracting information from the available content without making assumptions
-      about missing parts.\n\n    <content_types>\n    Documents may contain textual
-      or visual content:\n    - Text-based content: Written information that can be
-      directly read and processed.\n    - Visual content: Images, charts, diagrams,
-      blueprints, tables, handwritten text, or other visual elements that require
-      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
-      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
-      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
-      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
-      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
-      Such as a penalty clause in a contract, a total amount due in an invoice, or
-      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
-      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
-      Such as determining whether a document meets specific criteria or answers particular
-      questions.\n    - Interpretative judgments: Such as ratings, classifications,
-      or qualitative assessments based on document content.\n    - Label classifications:
-      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
-      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
-      Extract only information that is explicitly stated or can be directly inferred
-      from the document content. Avoid speculation or assumptions beyond what the
-      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
-      Visual content analysis: When processing visual content (images):\n    -- Examine
-      all visual elements carefully, including text within images, charts, diagrams,
-      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
-      relationships, and structural information that may not be explicitly stated
-      in text.\n    -- Consider the visual context and layout as it may provide important
-      semantic information.\n    -- Analyze information in tables, forms, charts,
-      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
-      Contextual understanding: Consider the full context when performing extractions.
-      A single paragraph or sentence may have different meanings depending on surrounding
-      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
-      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
-      and type of the document\n    -- The specific aspects or concepts you need to
-      focus on\n    -- The expected output format and structure requirements\n    --
-      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
-      Quality control: After extraction, verify that:\n    -- All extracted information
-      directly relates to the specified aspects/concepts\n    -- The output format
-      matches the required schema exactly\n    -- No extraneous information has been
-      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
-      Conservative approach: When in doubt about whether information qualifies for
-      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
-      If multiple interpretations are possible, choose the most conservative one\n    --
-      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
-      Structured output compliance: Adhere strictly to the specified JSON format requirements.
-      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
-      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
-      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
-      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\n  - Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\n  - Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\n  - References (when required): When required
-      by the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
-      adhering to this framework, you will ensure consistent and high-quality performance
-      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
-      you will find a list of consecutively ordered paragraphs from a document and
-      a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
-      information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
-      tags, includes a name specified within <aspect_name></aspect_name> tags, and
-      has a description specified within <aspect_description></aspect_description>
-      tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph and its sentences\n    - Each
-      paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.)
-      specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes
-      sentences, each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\",
-      etc.) specified within <sentence_id></sentence_id> tags, followed by the full
-      text of the sentence specified within <sentence_text></sentence_text> tags.\n    -
-      Note that paragraphs are listed in the same order they appear in the original
-      document; therefore, context from surrounding paragraphs may influence whether
-      a particular paragraph is relevant to an aspect.\n    - You may be working with
-      document fragments rather than complete documents. Focus on extracting information
-      from the available content without making assumptions about missing parts.\n\n3.
-      Map paragraphs and their sentences to aspects\n    - A paragraph can address
-      one, multiple, or none of the aspects.\n    - A sentence within the paragraph
-      can address one, multiple, or none of the aspects.\n    - If a paragraph clearly
-      relates to an aspect (based on the aspect''s name and description), include
-      the paragraph''s ID and the IDs of all the sentences within the paragraph that
-      address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
-      ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
-      each relevant sentence within the paragraph. Each object should include:\n                ----
-      sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
-      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
-      array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
-      No additional text:\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs:
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
-      ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
-      and termination</aspect_name>\n        \n        <aspect_description>\n        Term
-      and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Non-Disclosure
-      Agreement (NDA)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                This
-      Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                Party
-      A:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P6-S0\">\n                <sentence_id>P6-S0</sentence_id>\n                \n                <sentence_text>\n                Contact:
-      _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P7-S0\">\n                <sentence_id>P7-S0</sentence_id>\n                \n                <sentence_text>\n                Phone:
-      _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P8-S0\">\n                <sentence_id>P8-S0</sentence_id>\n                \n                <sentence_text>\n                Email:
-      _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P9-S0\">\n                <sentence_id>P9-S0</sentence_id>\n                \n                <sentence_text>\n                Party
-      B:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P10-S0\">\n                <sentence_id>P10-S0</sentence_id>\n                \n                <sentence_text>\n                Example.Com
-      LLC\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P11-S0\">\n                <sentence_id>P11-S0</sentence_id>\n                \n                <sentence_text>\n                5678
-      Random Drive\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P12-S0\">\n                <sentence_id>P12-S0</sentence_id>\n                \n                <sentence_text>\n                New
-      York, NY 00000\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P13-S0\">\n                <sentence_id>P13-S0</sentence_id>\n                \n                <sentence_text>\n                Contact:
-      Jane Doe, Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Phone:
-      (012) 345-6789\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '17748'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.97.1
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.97.1
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
-        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1753823015, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 3444, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 3328}, "total_tokens": 3466}}'
-    headers:
-      Content-Length:
-      - '1173'
+      - '3563'
       Content-Type:
       - application/json
       Date:
@@ -2238,7 +1966,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2248,7 +1976,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2269,7 +1997,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1753823015, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1755550141, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -2279,6 +2007,279 @@ interactions:
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 3504, "prompt_tokens_details":
         {"audio_tokens": 0, "cached_tokens": 3456}, "total_tokens": 3526}}'
+    headers:
+      Content-Length:
+      - '1173'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
+      file containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n    <document_types>\n    - Contracts: Legal
+      agreements defining terms and obligations.\n    - Invoices: Financial documents
+      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
+      an individual''s professional experience and qualifications.\n    - Visual Documents:
+      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
+      that contain relevant information.\n    - General Documents: Any other types
+      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
+      that occasionally you may be working with document fragments rather than complete
+      documents. These fragments represent portions of a larger document and should
+      be analyzed within their limited context. When working with fragments, focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n    <content_types>\n    Documents may contain textual
+      or visual content:\n    - Text-based content: Written information that can be
+      directly read and processed.\n    - Visual content: Images, charts, diagrams,
+      blueprints, tables, handwritten text, or other visual elements that require
+      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
+      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
+      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
+      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\n    - Interpretative judgments: Such as ratings, classifications,
+      or qualitative assessments based on document content.\n    - Label classifications:
+      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
+      Extract only information that is explicitly stated or can be directly inferred
+      from the document content. Avoid speculation or assumptions beyond what the
+      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
+      Visual content analysis: When processing visual content (images):\n    -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
+      relationships, and structural information that may not be explicitly stated
+      in text.\n    -- Consider the visual context and layout as it may provide important
+      semantic information.\n    -- Analyze information in tables, forms, charts,
+      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
+      Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
+      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
+      and type of the document\n    -- The specific aspects or concepts you need to
+      focus on\n    -- The expected output format and structure requirements\n    --
+      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
+      Quality control: After extraction, verify that:\n    -- All extracted information
+      directly relates to the specified aspects/concepts\n    -- The output format
+      matches the required schema exactly\n    -- No extraneous information has been
+      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
+      If multiple interpretations are possible, choose the most conservative one\n    --
+      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
+      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
+      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
+      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
+      you will find a list of consecutively ordered paragraphs from a document and
+      a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
+      information in these instructions is provided using semantic XML tags. Field
+      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
+      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
+      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
+      tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
+      in the paragraphs.\n\n2. Examine each paragraph and its sentences\n    - Each
+      paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.)
+      specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes
+      sentences, each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.) specified within <sentence_id></sentence_id> tags, followed by the full
+      text of the sentence specified within <sentence_text></sentence_text> tags.\n    -
+      Note that paragraphs are listed in the same order they appear in the original
+      document; therefore, context from surrounding paragraphs may influence whether
+      a particular paragraph is relevant to an aspect.\n    - You may be working with
+      document fragments rather than complete documents. Focus on extracting information
+      from the available content without making assumptions about missing parts.\n\n3.
+      Map paragraphs and their sentences to aspects\n    - A paragraph can address
+      one, multiple, or none of the aspects.\n    - A sentence within the paragraph
+      can address one, multiple, or none of the aspects.\n    - If a paragraph clearly
+      relates to an aspect (based on the aspect''s name and description), include
+      the paragraph''s ID and the IDs of all the sentences within the paragraph that
+      address or relate to the aspect.\n    - If a paragraph does not relate to an
+      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
+      An array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\n            --- paragraph_id: The provided paragraph
+      ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
+      each relevant sentence within the paragraph. Each object should include:\n                ----
+      sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
+      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
+      array ([]).\n- Do not add extra commentary, code block markers, or any other
+      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      No additional text:\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs:
+      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
+      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
+      and termination</aspect_name>\n        \n        <aspect_description>\n        Term
+      and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Non-Disclosure
+      Agreement (NDA)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                This
+      Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
+      July 16, 2024, by and between:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                Party
+      A:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P6-S0\">\n                <sentence_id>P6-S0</sentence_id>\n                \n                <sentence_text>\n                Contact:
+      _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P7-S0\">\n                <sentence_id>P7-S0</sentence_id>\n                \n                <sentence_text>\n                Phone:
+      _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P8-S0\">\n                <sentence_id>P8-S0</sentence_id>\n                \n                <sentence_text>\n                Email:
+      _____\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P9-S0\">\n                <sentence_id>P9-S0</sentence_id>\n                \n                <sentence_text>\n                Party
+      B:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P10-S0\">\n                <sentence_id>P10-S0</sentence_id>\n                \n                <sentence_text>\n                Example.Com
+      LLC\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P11-S0\">\n                <sentence_id>P11-S0</sentence_id>\n                \n                <sentence_text>\n                5678
+      Random Drive\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P12-S0\">\n                <sentence_id>P12-S0</sentence_id>\n                \n                <sentence_text>\n                New
+      York, NY 00000\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P13-S0\">\n                <sentence_id>P13-S0</sentence_id>\n                \n                <sentence_text>\n                Contact:
+      Jane Doe, Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Phone:
+      (012) 345-6789\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '17748'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.99.9
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
+        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1755550141, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 3444, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 3328}, "total_tokens": 3466}}'
     headers:
       Content-Length:
       - '1173'
@@ -2556,7 +2557,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2566,7 +2567,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2582,26 +2583,24 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1753823015,
-        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
-        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
-        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_4f3d32ad4e", "usage":
-        {"completion_tokens": 22, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 4198, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        4096}, "total_tokens": 4220}}'
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
+        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1755550142, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 4198, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 2176}, "total_tokens": 4220}}'
     headers:
       Content-Length:
-      - '1297'
+      - '1173'
       Content-Type:
       - application/json
       Date:
@@ -2878,7 +2877,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2888,7 +2887,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2911,7 +2910,7 @@ interactions:
         \"A0\",\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
         \"P6\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
         \"P6-S4\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823015, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550142, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -2920,7 +2919,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 60,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4258, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4224},
+        4258, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2304},
         "total_tokens": 4318}}'
     headers:
       Content-Length:
@@ -3230,7 +3229,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3240,7 +3239,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3262,7 +3261,7 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n  {\n    \"aspect_id\":
         \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\": \"P7\",\n        \"sentences\":
         [\n          {\n            \"sentence_id\": \"P7-S0\"\n          }\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823016, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550143, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3578,7 +3577,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3588,7 +3587,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3614,7 +3613,7 @@ interactions:
         \"P4-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
         \"P5\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
         \"P5-S0\"\n          }\n        ]\n      }\n    ]\n  }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1753823015, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1755550143, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3623,7 +3622,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 96,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3938, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
+        3938, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3840},
         "total_tokens": 4034}}'
     headers:
       Content-Length:
@@ -3870,7 +3869,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3880,7 +3879,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3902,7 +3901,7 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n  {\n    \"aspect_id\":
         \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\": \"P5\",\n        \"sentences\":
         [\n          {\n            \"sentence_id\": \"P5-S0\"\n          }\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823017, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550144, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3911,7 +3910,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 60,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3675, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
+        3675, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3584},
         "total_tokens": 3735}}'
     headers:
       Content-Length:
@@ -4156,7 +4155,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4166,7 +4165,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4188,7 +4187,7 @@ interactions:
         null, "message": {"annotations": [], "content": "[\n  {\n    \"aspect_id\":
         \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\": \"P0\",\n        \"sentences\":
         [\n          {\n            \"sentence_id\": \"P0-S1\"\n          }\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823017, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550144, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -4396,7 +4395,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4406,7 +4405,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4427,7 +4426,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
         \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1753823017, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "created": 1755550145, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -4436,7 +4435,243 @@ interactions:
         "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 2467, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2176}, "total_tokens": 2489}}'
+        {"audio_tokens": 0, "cached_tokens": 2304}, "total_tokens": 2489}}'
+    headers:
+      Content-Length:
+      - '1173'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
+      file containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n    <document_types>\n    - Contracts: Legal
+      agreements defining terms and obligations.\n    - Invoices: Financial documents
+      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
+      an individual''s professional experience and qualifications.\n    - Visual Documents:
+      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
+      that contain relevant information.\n    - General Documents: Any other types
+      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
+      that occasionally you may be working with document fragments rather than complete
+      documents. These fragments represent portions of a larger document and should
+      be analyzed within their limited context. When working with fragments, focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n    <content_types>\n    Documents may contain textual
+      or visual content:\n    - Text-based content: Written information that can be
+      directly read and processed.\n    - Visual content: Images, charts, diagrams,
+      blueprints, tables, handwritten text, or other visual elements that require
+      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
+      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
+      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
+      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\n    - Interpretative judgments: Such as ratings, classifications,
+      or qualitative assessments based on document content.\n    - Label classifications:
+      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
+      Extract only information that is explicitly stated or can be directly inferred
+      from the document content. Avoid speculation or assumptions beyond what the
+      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
+      Visual content analysis: When processing visual content (images):\n    -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
+      relationships, and structural information that may not be explicitly stated
+      in text.\n    -- Consider the visual context and layout as it may provide important
+      semantic information.\n    -- Analyze information in tables, forms, charts,
+      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
+      Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
+      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
+      and type of the document\n    -- The specific aspects or concepts you need to
+      focus on\n    -- The expected output format and structure requirements\n    --
+      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
+      Quality control: After extraction, verify that:\n    -- All extracted information
+      directly relates to the specified aspects/concepts\n    -- The output format
+      matches the required schema exactly\n    -- No extraneous information has been
+      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
+      If multiple interpretations are possible, choose the most conservative one\n    --
+      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
+      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
+      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
+      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
+      you will find a list of consecutively ordered paragraphs from a document and
+      a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
+      information in these instructions is provided using semantic XML tags. Field
+      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
+      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
+      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
+      tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
+      in the paragraphs.\n\n2. Examine each paragraph and its sentences\n    - Each
+      paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.)
+      specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes
+      sentences, each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.) specified within <sentence_id></sentence_id> tags, followed by the full
+      text of the sentence specified within <sentence_text></sentence_text> tags.\n    -
+      Note that paragraphs are listed in the same order they appear in the original
+      document; therefore, context from surrounding paragraphs may influence whether
+      a particular paragraph is relevant to an aspect.\n    - You may be working with
+      document fragments rather than complete documents. Focus on extracting information
+      from the available content without making assumptions about missing parts.\n\n3.
+      Map paragraphs and their sentences to aspects\n    - A paragraph can address
+      one, multiple, or none of the aspects.\n    - A sentence within the paragraph
+      can address one, multiple, or none of the aspects.\n    - If a paragraph clearly
+      relates to an aspect (based on the aspect''s name and description), include
+      the paragraph''s ID and the IDs of all the sentences within the paragraph that
+      address or relate to the aspect.\n    - If a paragraph does not relate to an
+      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
+      An array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\n            --- paragraph_id: The provided paragraph
+      ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
+      each relevant sentence within the paragraph. Each object should include:\n                ----
+      sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
+      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
+      array ([]).\n- Do not add extra commentary, code block markers, or any other
+      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      No additional text:\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
+      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs:
+      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
+      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
+      and termination</aspect_name>\n        \n        <aspect_description>\n        Term
+      and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Title:
+      Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Date:
+      ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '12580'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.99.9
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
+        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1755550145, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2407, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 2304}, "total_tokens": 2429}}'
     headers:
       Content-Length:
       - '1173'
@@ -4647,7 +4882,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4657,7 +4892,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4687,265 +4922,29 @@ interactions:
         \"P9\",\n                \"justification\": \"This paragraph explicitly labels
         ''Party B'', indicating information about the other party.\"\n            },\n            {\n                \"paragraph_id\":
         \"P10\",\n                \"justification\": \"This paragraph provides the
-        name of Party B, identifying one of the parties involved.\"\n            },\n            {\n                \"paragraph_id\":
+        name of Party B, identifying one of the parties in the contract.\"\n            },\n            {\n                \"paragraph_id\":
         \"P11\",\n                \"justification\": \"This paragraph provides the
-        address of Party B, contributing to the party''s identification.\"\n            },\n            {\n                \"paragraph_id\":
+        address of Party B, contributing to the identification of the party.\"\n            },\n            {\n                \"paragraph_id\":
         \"P12\",\n                \"justification\": \"This paragraph continues the
-        address details for Party B, further identifying the party.\"\n            },\n            {\n                \"paragraph_id\":
+        address details for Party B, further specifying the party''s location.\"\n            },\n            {\n                \"paragraph_id\":
         \"P13\",\n                \"justification\": \"This paragraph provides contact
-        information for Party B, specifying a contact person and role.\"\n            },\n            {\n                \"paragraph_id\":
+        information for Party B, identifying a representative of the party.\"\n            },\n            {\n                \"paragraph_id\":
         \"P14\",\n                \"justification\": \"This paragraph provides a phone
         number for Party B, adding to the party''s contact details.\"\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823015, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550141, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 308,
+        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 313,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2833, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1536},
-        "total_tokens": 3141}}'
+        2833, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2816},
+        "total_tokens": 3146}}'
     headers:
       Content-Length:
-      - '2982'
-      Content-Type:
-      - application/json
-      Date:
-      - DUMMY
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
-      x-content-type-options:
-      - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
-      tasks involving the extraction, analysis, and interpretation of data within
-      various types of documents. Your role is to carefully process the information
-      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
-      instructions you receive will be organized using semantic XML tags for clarity
-      and structure. Each section will be properly tagged to indicate its purpose
-      and content type, making it easier to understand the task requirements and expected
-      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
-      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
-      file containing written or visual content. Documents can vary in type and purpose,
-      including but not limited to:\n    <document_types>\n    - Contracts: Legal
-      agreements defining terms and obligations.\n    - Invoices: Financial documents
-      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
-      an individual''s professional experience and qualifications.\n    - Visual Documents:
-      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
-      that contain relevant information.\n    - General Documents: Any other types
-      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
-      that occasionally you may be working with document fragments rather than complete
-      documents. These fragments represent portions of a larger document and should
-      be analyzed within their limited context. When working with fragments, focus
-      on extracting information from the available content without making assumptions
-      about missing parts.\n\n    <content_types>\n    Documents may contain textual
-      or visual content:\n    - Text-based content: Written information that can be
-      directly read and processed.\n    - Visual content: Images, charts, diagrams,
-      blueprints, tables, handwritten text, or other visual elements that require
-      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
-      Aspect: A defined area or topic within a document that requires focused attention.
-      Each aspect corresponds to a specific subject or theme described in the task.
-      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
-      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
-      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
-      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
-      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
-      Concept: A unit of information or an entity relevant to the task. Concepts may
-      be derived from an aspect or the broader document context. They represent a
-      wide range of data points and insights, from simple entities (names, dates,
-      monetary values) to complex evaluations, conclusions, and answers to specific
-      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
-      Such as a penalty clause in a contract, a total amount due in an invoice, or
-      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
-      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
-      Such as determining whether a document meets specific criteria or answers particular
-      questions.\n    - Interpretative judgments: Such as ratings, classifications,
-      or qualitative assessments based on document content.\n    - Label classifications:
-      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
-      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
-      Extract only information that is explicitly stated or can be directly inferred
-      from the document content. Avoid speculation or assumptions beyond what the
-      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
-      Visual content analysis: When processing visual content (images):\n    -- Examine
-      all visual elements carefully, including text within images, charts, diagrams,
-      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
-      relationships, and structural information that may not be explicitly stated
-      in text.\n    -- Consider the visual context and layout as it may provide important
-      semantic information.\n    -- Analyze information in tables, forms, charts,
-      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
-      Contextual understanding: Consider the full context when performing extractions.
-      A single paragraph or sentence may have different meanings depending on surrounding
-      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
-      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
-      and type of the document\n    -- The specific aspects or concepts you need to
-      focus on\n    -- The expected output format and structure requirements\n    --
-      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
-      Quality control: After extraction, verify that:\n    -- All extracted information
-      directly relates to the specified aspects/concepts\n    -- The output format
-      matches the required schema exactly\n    -- No extraneous information has been
-      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
-      Conservative approach: When in doubt about whether information qualifies for
-      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
-      If multiple interpretations are possible, choose the most conservative one\n    --
-      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
-      Structured output compliance: Adhere strictly to the specified JSON format requirements.
-      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
-      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
-      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
-      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
-      and well-organized results based on the task requirements.\n  - Explanations
-      (when required): When required by the instructions, include justifications or
-      reasoning for your interpretations.\n  - Insights (when required): When required
-      by the instructions, highlight trends, patterns, or noteworthy findings that
-      could add value to the task.\n  - References (when required): When required
-      by the instructions, output references based on which you extracted data, provided
-      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
-      adhering to this framework, you will ensure consistent and high-quality performance
-      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
-      you will find a list of consecutively ordered paragraphs from a document and
-      a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
-      information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
-      tags, includes a name specified within <aspect_name></aspect_name> tags, and
-      has a description specified within <aspect_description></aspect_description>
-      tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph and its sentences\n    - Each
-      paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.)
-      specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes
-      sentences, each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\",
-      etc.) specified within <sentence_id></sentence_id> tags, followed by the full
-      text of the sentence specified within <sentence_text></sentence_text> tags.\n    -
-      Note that paragraphs are listed in the same order they appear in the original
-      document; therefore, context from surrounding paragraphs may influence whether
-      a particular paragraph is relevant to an aspect.\n    - You may be working with
-      document fragments rather than complete documents. Focus on extracting information
-      from the available content without making assumptions about missing parts.\n\n3.
-      Map paragraphs and their sentences to aspects\n    - A paragraph can address
-      one, multiple, or none of the aspects.\n    - A sentence within the paragraph
-      can address one, multiple, or none of the aspects.\n    - If a paragraph clearly
-      relates to an aspect (based on the aspect''s name and description), include
-      the paragraph''s ID and the IDs of all the sentences within the paragraph that
-      address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
-      ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
-      each relevant sentence within the paragraph. Each object should include:\n                ----
-      sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
-      If an aspect has no related paragraphs, still include it with an empty paragraph_ids
-      array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
-      No additional text:\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs:
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
-      ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
-      and termination</aspect_name>\n        \n        <aspect_description>\n        Term
-      and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Title:
-      Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Date:
-      ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      api-key:
-      - DUMMY
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '12580'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.97.1
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - DUMMY
-      x-stainless-package-version:
-      - 1.97.1
-      x-stainless-raw-response:
-      - 'true'
-      x-stainless-read-timeout:
-      - '120.0'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - DUMMY
-    method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
-  response:
-    body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
-        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1753823017, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 2407, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2176}, "total_tokens": 2429}}'
-    headers:
-      Content-Length:
-      - '1173'
+      - '3009'
       Content-Type:
       - application/json
       Date:
@@ -5196,7 +5195,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5206,7 +5205,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5228,7 +5227,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": []\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823018, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550146, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -5237,7 +5236,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 22,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3359, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
+        3359, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3328},
         "total_tokens": 3381}}'
     headers:
       Content-Length:
@@ -5496,7 +5495,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5506,7 +5505,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5528,7 +5527,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": []\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823018, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1755550147, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -5537,7 +5536,7 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 22,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3175, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
+        3175, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3072},
         "total_tokens": 3197}}'
     headers:
       Content-Length:
@@ -5762,7 +5761,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5772,7 +5771,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5794,26 +5793,26 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
-        \"P6\",\n        \"justification\": \"This paragraph explicitly mentions the
-        parties executing the agreement, indicating their involvement in the contract.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P12\",\n        \"justification\": \"This paragraph names a party, ''Example.Com
-        LLC'', which is relevant information about the parties in the contract.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P14\",\n        \"justification\": \"This paragraph provides the name ''Jane
-        Doe'', identifying an individual party involved in the contract.\"\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823019, "id": "chatcmpl-DUMMY",
+        \"P6\",\n        \"justification\": \"This paragraph mentions the execution
+        of the agreement by the parties, indicating their involvement in the contract.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P12\",\n        \"justification\": \"This paragraph provides the name of
+        one party involved in the contract.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P14\",\n        \"justification\": \"This paragraph specifies the name of
+        an individual party, indicating a party to the contract.\"\n      }\n    ]\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1755550147, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 138,
+        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 130,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2966, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
-        "total_tokens": 3104}}'
+        2966, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2944},
+        "total_tokens": 3096}}'
     headers:
       Content-Length:
-      - '1886'
+      - '1834'
       Content-Type:
       - application/json
       Date:
@@ -6003,7 +6002,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.97.1
+      - AzureOpenAI/Python 1.99.9
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6013,7 +6012,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.97.1
+      - 1.99.9
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6029,26 +6028,24 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": []\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1753823020, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 22,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        2303, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2176},
-        "total_tokens": 2325}}'
+        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"aspect_id\":
+        \"A0\",\n        \"paragraphs\": []\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1755550149, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_4f3d32ad4e", "usage": {"completion_tokens": 22, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 2303, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 1664}, "total_tokens": 2325}}'
     headers:
       Content-Length:
-      - '1285'
+      - '1173'
       Content-Type:
       - application/json
       Date:

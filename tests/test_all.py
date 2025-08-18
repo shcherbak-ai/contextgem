@@ -133,7 +133,8 @@ from contextgem.public import (
 )
 from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.utils import create_image, image_to_base64
-from tests.conftest import VCR_REDACTION_MARKER, litellm
+from tests.benchmark.core import run_benchmark_for_module
+from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.url_security import validate_existing_cassettes_urls_security
 from tests.utils import (
@@ -155,10 +156,6 @@ from tests.utils import (
 
 if not load_dotenv():  # Returns False if no .env file is found
     set_dummy_env_variables_for_testing_from_cassettes()
-
-
-# Add other LLM providers for testing, when needed
-TEST_LLM_PROVIDER: Literal["azure_openai", "openai"] = "azure_openai"
 
 
 @pytest.fixture(scope="module")
@@ -302,110 +299,74 @@ class TestAll(TestUtils):
 
     # LLMs
 
-    if TEST_LLM_PROVIDER == "azure_openai":
-        # Extractor text
-        _llm_extractor_text_kwargs_openai = {
-            "model": "azure/gpt-4.1-mini",
-            "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-            "role": "extractor_text",
-            "pricing_details": LLMPricing(  # Explicitly set pricing details
-                **{
-                    "input_per_1m_tokens": 0.40,
-                    "output_per_1m_tokens": 1.60,
-                }
-            ),
-        }
+    # Extractor text
+    _llm_extractor_text_kwargs_openai = {
+        "model": "azure/gpt-4.1-mini",
+        "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+        "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+        "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        "role": "extractor_text",
+        "pricing_details": LLMPricing(  # Explicitly set pricing details
+            **{
+                "input_per_1m_tokens": 0.40,
+                "output_per_1m_tokens": 1.60,
+            }
+        ),
+    }
 
-        # Reasoner text
-        _llm_reasoner_text_kwargs_openai = {
-            "model": "azure/o4-mini",
-            "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-            "role": "reasoner_text",
-            "auto_pricing": True,  # use auto-pricing
-            "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
-        }
+    # Reasoner text
+    _llm_reasoner_text_kwargs_openai = {
+        "model": "azure/gpt-5-mini",
+        "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+        "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+        "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        "role": "reasoner_text",
+        "auto_pricing": True,  # use auto-pricing
+        "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
+    }
 
-    elif TEST_LLM_PROVIDER == "openai":
-        # Extractor text
-        _llm_extractor_text_kwargs_openai = {
-            "model": "openai/gpt-4o-mini",
-            "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            "role": "extractor_text",
-            "pricing_details": LLMPricing(
-                **{
-                    "input_per_1m_tokens": 0.150,
-                    "output_per_1m_tokens": 0.600,
-                }
-            ),
-        }
+    # Extractor text
+    llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
 
-        # Reasoner text
-        _llm_reasoner_text_kwargs_openai = {
-            "model": "openai/o3-mini",
-            "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            "role": "reasoner_text",
-            "pricing_details": LLMPricing(
-                **{
-                    "input_per_1m_tokens": 1.10,
-                    "output_per_1m_tokens": 4.40,
-                }
-            ),
-        }
+    # Reasoner text
+    llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)
 
-    else:
-        raise ValueError(f"Test LLM provider {TEST_LLM_PROVIDER} is not supported.")
+    # Extractor vision
+    _llm_extractor_vision_kwargs_openai = deepcopy(_llm_extractor_text_kwargs_openai)
+    _llm_extractor_vision_kwargs_openai["role"] = "extractor_vision"
+    llm_extractor_vision = DocumentLLM(**_llm_extractor_vision_kwargs_openai)
 
-    if TEST_LLM_PROVIDER in ["azure_openai", "openai"]:
-        # Extractor text
-        llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
+    # Reasoner vision
+    _llm_reasoner_vision_kwargs_openai = deepcopy(_llm_reasoner_text_kwargs_openai)
+    _llm_reasoner_vision_kwargs_openai["role"] = "reasoner_vision"
+    llm_reasoner_vision = DocumentLLM(**_llm_reasoner_vision_kwargs_openai)
 
-        # Reasoner text
-        llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)
+    # LLM group
+    _llm_group_llms = [
+        DocumentLLM(**_llm_extractor_text_kwargs_openai),
+        DocumentLLM(**_llm_reasoner_text_kwargs_openai),
+        DocumentLLM(**_llm_extractor_vision_kwargs_openai),
+        DocumentLLM(**_llm_reasoner_vision_kwargs_openai),
+    ]  # newly initialized LLMs in group for separate usage and cost tracking)
+    llm_group = DocumentLLMGroup(llms=_llm_group_llms)
 
-        # Extractor vision
-        _llm_extractor_vision_kwargs_openai = deepcopy(
-            _llm_extractor_text_kwargs_openai
-        )
-        _llm_extractor_vision_kwargs_openai["role"] = "extractor_vision"
-        llm_extractor_vision = DocumentLLM(**_llm_extractor_vision_kwargs_openai)
+    # LLM with fallback
+    _invalid_llm_kwargs = {
+        "model": "helloworld/helloworld-v1",
+        "api_key": "invalid_api_key",
+        "role": "extractor_text",
+    }
+    llm_invalid = DocumentLLM(**_invalid_llm_kwargs)
+    invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)
+    invalid_llm_with_valid_fallback.fallback_llm = DocumentLLM(
+        **_llm_extractor_text_kwargs_openai,
+        is_fallback=True,
+    )
 
-        # Reasoner vision
-        _llm_reasoner_vision_kwargs_openai = deepcopy(
-            _llm_extractor_vision_kwargs_openai
-        )
-        _llm_reasoner_vision_kwargs_openai["role"] = "reasoner_vision"
-        llm_reasoner_vision = DocumentLLM(**_llm_reasoner_vision_kwargs_openai)
-
-        # LLM group
-        _llm_group_llms = [
-            DocumentLLM(**_llm_extractor_text_kwargs_openai),
-            DocumentLLM(**_llm_reasoner_text_kwargs_openai),
-            DocumentLLM(**_llm_extractor_vision_kwargs_openai),
-            DocumentLLM(**_llm_reasoner_vision_kwargs_openai),
-        ]  # newly initialized LLMs in group for separate usage and cost tracking)
-        llm_group = DocumentLLMGroup(llms=_llm_group_llms)
-
-        # LLM with fallback
-        _invalid_llm_kwargs = {
-            "model": "helloworld/helloworld-v1",
-            "api_key": "invalid_api_key",
-            "role": "extractor_text",
-        }
-        llm_invalid = DocumentLLM(**_invalid_llm_kwargs)
-        invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)
-        invalid_llm_with_valid_fallback.fallback_llm = DocumentLLM(
-            **_llm_extractor_text_kwargs_openai,
-            is_fallback=True,
-        )
-
-        # LLM with a non-EN output language setting
-        llm_extractor_text_non_eng = DocumentLLM(
-            **_llm_extractor_text_kwargs_openai, output_language="adapt"
-        )
+    # LLM with a non-EN output language setting
+    llm_extractor_text_non_eng = DocumentLLM(
+        **_llm_extractor_text_kwargs_openai, output_language="adapt"
+    )
 
     # Images
     # Invoices
@@ -1046,13 +1007,6 @@ class TestAll(TestUtils):
         Note that using `ollama_chat/` (preferred in live mode) instead of
         `ollama/` prefix for Ollama models does not work with VCR.
         """
-        document = Document(
-            raw_text=get_test_document_text()[:1000],
-        )
-        concept = StringConcept(
-            name="Contract title", description="The title of the contract."
-        )
-        document.add_concepts([concept])
 
         def extract_with_local_llm(llm: DocumentLLM):
             """
@@ -1061,10 +1015,20 @@ class TestAll(TestUtils):
             :param llm: The DocumentLLM instance to test extraction with.
             :type llm: DocumentLLM
             """
-            self.config_llm_async_limiter_for_mock_responses(llm)
-            extracted_concepts = llm.extract_concepts_from_document(
-                document, overwrite_existing=True
+            # Configure document
+            document = Document(
+                raw_text=get_test_document_text()[:1000],
             )
+            concept = StringConcept(
+                name="Contract title",
+                description="The title of the contract.",
+                llm_role=llm.role,
+            )
+            document.add_concepts([concept])
+
+            # Run extraction
+            self.config_llm_async_limiter_for_mock_responses(llm)
+            extracted_concepts = llm.extract_concepts_from_document(document)
             assert llm.get_usage()[0].usage.calls[-1].prompt
             assert llm.get_usage()[0].usage.calls[-1].response
             extracted_items = extracted_concepts[0].extracted_items
@@ -1072,6 +1036,9 @@ class TestAll(TestUtils):
                 f"No extracted items returned with local LLM {llm.model}"
             )
             self.log_extracted_items_for_instance(extracted_concepts[0])
+
+            # Check serialization of LLM
+            self._check_deserialized_llm_config_eq(llm)
 
         # Ollama
         # Non-reasoning LLM
@@ -1086,7 +1053,9 @@ class TestAll(TestUtils):
             model="ollama/deepseek-r1:32b",
             api_base="http://localhost:11434",
             seed=123,
+            role="reasoner_text",
         )
+        llm_reasoning_ollama._supports_reasoning = True
         extract_with_local_llm(llm_reasoning_ollama)
 
         # LM Studio
@@ -1098,21 +1067,6 @@ class TestAll(TestUtils):
             seed=123,
         )
         extract_with_local_llm(llm_non_reasoning_lm_studio)
-
-        # Check supports_reasoning override
-        # TODO: remove this warning once litellm supports reasoning for this model
-        with pytest.warns(UserWarning, match="reasoning-capable"):
-            llm = DocumentLLM(
-                model="lm_studio/mistralai/mistral-small-3.2",
-                api_base="http://localhost:1234/v1",
-                api_key="random-key",  # required for LM Studio API
-                seed=123,
-                reasoning_effort="high",
-            )
-        llm._supports_reasoning = True
-
-        # Check serialization of LLM
-        self._check_deserialized_llm_config_eq(llm)
 
         check_locals_memory_usage(locals(), test_name="test_local_llms_text")
 
@@ -1130,20 +1084,29 @@ class TestAll(TestUtils):
             :param llm: The DocumentLLM instance to test.
             """
 
+            # Configure document
             document = Document(raw_text=get_test_document_text())
-            aspect = Aspect(name="Liability", description="Liability clauses")
+            aspect = Aspect(
+                name="Liability",
+                description="Liability clauses",
+                llm_role=llm.role,
+            )
             aspect_concept = StringConcept(
                 name="Liability cap",
                 description="Liability cap",
+                llm_role=llm.role,
             )
             aspect.add_concepts([aspect_concept])
             document_concept = NumericalConcept(
                 name="Contract term",
                 description="Contract term in years",
                 numeric_type="float",
+                llm_role=llm.role,
             )
             document.add_aspects([aspect])
             document.add_concepts([document_concept])
+
+            # Run extraction
             llm.extract_all(document)
             assert document.aspects[0].extracted_items
             self.log_extracted_items_for_instance(document.aspects[0])
@@ -1152,11 +1115,16 @@ class TestAll(TestUtils):
             assert document.aspects[0].concepts[0].extracted_items
             self.log_extracted_items_for_instance(document.aspects[0].concepts[0])
 
+            # Check serialization of LLM
+            self._check_deserialized_llm_config_eq(llm)
+
         # gpt-oss works with Ollama
         llm_gpt_oss_ollama = DocumentLLM(
             model="ollama_chat/gpt-oss:20b",
             api_base="http://localhost:11434",
+            role="reasoner_text",
         )
+        llm_gpt_oss_ollama._supports_reasoning = True
         extract_with_local_llm(llm_gpt_oss_ollama)
 
         # TODO: Remove this once LiteLLM's `lm_studio` gpt-oss support is fixed
@@ -1167,7 +1135,9 @@ class TestAll(TestUtils):
                     model="lm_studio/openai/gpt-oss-20b",
                     api_base="http://localhost:1234/v1",
                     api_key="random-key",  # required for LM Studio API
+                    role="reasoner_text",
                 )
+            llm_gpt_oss_lm_studio._supports_reasoning = True
             extract_with_local_llm(llm_gpt_oss_lm_studio)
 
         check_locals_memory_usage(locals(), test_name="test_local_llms_text_gpt_oss")
@@ -4067,7 +4037,7 @@ class TestAll(TestUtils):
         assert technical_specifications_concept.extracted_items
         assert (
             len(technical_specifications_concept.extracted_items[0].value) == 1
-        )  # always returns a single label
+        )  # should always return a single label
         assert (
             technical_specifications_concept.extracted_items[0].value[0]
             in irrelevant_concept.labels
@@ -4626,14 +4596,16 @@ class TestAll(TestUtils):
         Tests the system messages functionality of LLMs.
         """
         system_message = "When asked, introduce yourself as ContextGem."
-        if TEST_LLM_PROVIDER == "azure_openai":
-            non_reasoning_model = DocumentLLM(
-                model="azure/gpt-4.1-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                system_message=system_message,
-            )
+        non_reasoning_model = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message=system_message,
+        )
+        with pytest.warns(UserWarning, match="reasoning-capable"):
+            # Default role "extractor_text" is used; warn that the model is reasoning-capable
+            # and "reasoner_*" roles are recommended for higher quality responses
             o1_model = DocumentLLM(
                 model="azure/o1",
                 api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
@@ -4642,6 +4614,9 @@ class TestAll(TestUtils):
                 reasoning_effort="low",
                 system_message=system_message,
             )
+        with pytest.warns(UserWarning, match="reasoning-capable"):
+            # Default role "extractor_text" is used; warn that the model is reasoning-capable
+            # and "reasoner_*" roles are recommended for higher quality responses
             o3_mini_model = DocumentLLM(
                 model="azure/o3-mini",
                 api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
@@ -4649,6 +4624,9 @@ class TestAll(TestUtils):
                 api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
                 system_message=system_message,
             )
+        with pytest.warns(UserWarning, match="reasoning-capable"):
+            # Default role "extractor_text" is used; warn that the model is reasoning-capable
+            # and "reasoner_*" roles are recommended for higher quality responses
             o4_mini_model = DocumentLLM(
                 model="azure/o4-mini",
                 api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
@@ -4656,27 +4634,6 @@ class TestAll(TestUtils):
                 api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
                 system_message=system_message,
                 reasoning_effort="low",
-            )
-        elif TEST_LLM_PROVIDER == "openai":
-            non_reasoning_model = DocumentLLM(
-                model="openai/gpt-4o-mini",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                system_message=system_message,
-            )
-            o1_model = DocumentLLM(
-                model="openai/o1",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                system_message=system_message,
-            )
-            o3_mini_model = DocumentLLM(
-                model="openai/o3-mini",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                system_message=system_message,
-            )
-            o4_mini_model = DocumentLLM(
-                model="openai/o4-mini",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                system_message=system_message,
             )
         for model in [non_reasoning_model, o1_model, o3_mini_model, o4_mini_model]:
             model.chat("What's your name?")
@@ -4734,42 +4691,6 @@ class TestAll(TestUtils):
         )
 
         check_locals_memory_usage(locals(), test_name="test_system_messages")
-
-    @pytest.mark.vcr
-    @memory_profile_and_capture
-    def test_gpt_5_with_reasoning_effort_param(self):
-        """
-        Tests the reasoning effort parameter for gpt-5 models.
-
-        TODO: Remove this test once litellm has "reasoning_effort" param listed for gpt-5 models.
-        """
-        for model_name in ["openai/gpt-5", "azure/gpt-5-mini"]:
-            assert "reasoning_effort" not in litellm.get_supported_openai_params(  # type: ignore[attr-defined]
-                model_name
-            ), (
-                "If this test fails, it means litellm has already added "
-                "'reasoning_effort' param for gpt-5 models, and this test method "
-                "should be removed."
-            )
-
-        llm = DocumentLLM(
-            model="azure/gpt-5-nano",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-            reasoning_effort="low",
-            system_message="",  # disable default system message
-        )
-
-        llm.chat("What's the result of 3 x 3?")
-        response = llm.get_usage()[0].usage.calls[-1].response
-        assert response is not None
-        assert "9" in response
-        logger.debug(response)
-
-        check_locals_memory_usage(
-            locals(), test_name="test_gpt_5_reasoning_effort_param"
-        )
 
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
@@ -7718,6 +7639,31 @@ class TestAll(TestUtils):
         check_locals_memory_usage(
             locals(), test_name="test_very_long_doc_extraction", max_obj_memory=5.0
         )  # higher value for a very long document (200+ pages)
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_benchmarks(self):
+        """
+        Executes extraction benchmarks to evaluate the accuracy and reliability
+        of the extraction pipeline.
+
+        This test runs a suite of benchmark scenarios and asserts that the total benchmark
+        scores meet or exceed a set minimum score.
+
+        The benchmarks are particularly important for validating the impact of prompt changes
+        and ensuring that extraction quality remains high as the system evolves. If a benchmark
+        score falls below the threshold, the test fails, signaling a potential regression in
+        extraction performance.
+        """
+
+        run_benchmark_for_module(
+            llm=self.llm_extractor_text,
+            judge_llm=self.llm_reasoner_text,
+            module_name="tests.benchmark.configs.dev_contract",
+            benchmark_name="Dev Contract (Text Only)",
+        )
+
+        check_locals_memory_usage(locals(), test_name="test_benchmarks")
 
     @pytest.mark.vcr
     @memory_profile_and_capture

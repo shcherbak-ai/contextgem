@@ -17,6 +17,40 @@ Below you will find a list of concepts.
 <guidance_on_task_structure>
 All structured information in these instructions is provided using semantic XML tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text, sentence_text, additional_context, etc.).
 </guidance_on_task_structure>
+{% if supports_reasoning %}
+
+<private_reasoning>
+Use private deliberation to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate analysis, notes, or steps. Only output the JSON according to the format specified within <answer_format></answer_format> tags.
+
+Follow this internal three-stage process:
+
+1. Plan
+    - Internally restate each concept in one sentence.
+    - List 3-5 concrete lexical/semantic cues for relevance aligned with the concept description (include indicators of definition, obligation, permission, exception, conditionals, and negations).
+    - If a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion criteria with those constraints.
+    - For each concept, plan how to synthesize the output value from the available evidence even when no literal span is present.
+
+2. Evidence triage
+    {% if data_type == "text" %}
+    - Evaluate the provided content{% if add_references %}{% if reference_depth == "sentences" %} at paragraph and sentence levels{% else %} at paragraph level{% endif %}{% else %} holistically{% endif %}; derive candidate extractions/values for the concepts (explicit or inferred from context).
+    {% elif data_type == "image" %}
+    - Evaluate salient visual regions and any readable text; derive candidate extractions/values for the concepts (explicit or inferred from context).
+    {% endif %}
+    - Collect minimal sufficient evidence privately and note negated, hypothetical, or conditional forms.
+    - Prefer precision over recall; include only high-confidence items and omit weak or ambiguous ones.
+
+3. Consistency pass
+    - Ensure all extracted items strictly match required types and any specified structure, rating scales, or label constraints.
+    {% if data_type == "text" and add_references %}
+    - Deduplicate referenced{% if reference_depth == "sentences" %} paragraph and sentence{% else %} paragraph{% endif %} IDs and preserve their original order.
+    {% endif %}
+    {% if add_justifications %}
+    - Ensure justifications align with the item's evidence and stance, and comply with length and language constraints.
+    {% endif %}
+
+Never disclose any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format> tags.
+</private_reasoning>
+{% endif %}
 
 <task_description>
 Your task is to:
@@ -64,7 +98,46 @@ Your task is to:
     - Each concept is described by a concept name specified within <concept_name></concept_name> tags and a concept description specified within <concept_description></concept_description> tags.
 {% endif %}
 3. For each concept that appears, extract zero or more items relevant to that concept. The item format and structure are specified for each concept.
+{% if supports_reasoning %}
+    {% if data_type == "text" %}
+        {% if add_references %}
+    - Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references like "above", "this section"): use surrounding context to disambiguate; if unresolved, omit.
+        {% endif %}
+    {% endif %}
+    - Treat negations, exceptions, and conditionals carefully: relevance may involve permissions, prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance {% if add_justifications %} in the justification{% endif %}.
+    - Prefer minimal sufficient evidence and value derivation:
+        {% if data_type == "text" and add_references %}
+            {% if reference_depth == "sentences" %}
+        -- include only the sentences necessary to support the item or derived value; avoid unrelated sentences.
+            {% else %}
+        -- include only the paragraphs necessary to support the item or derived value; avoid tangential mentions.
+            {% endif %}
+        {% endif %}
+    - Favor precision over recall; when uncertain, avoid speculative extractions or derivations.
+{% endif %}
 4. Produce a JSON array containing your extracted data, in the provided format.
+{% if supports_reasoning %}
+    - Internally verify before finalizing:
+        -- Each provided concept appears once, in order, with the correct "concept_id".
+        -- The top-level structure matches the format specified within <answer_format></answer_format> tags.
+        {% if data_type == "text" and add_references %}
+            {% if reference_depth == "sentences" %}
+        -- When present, each object in "reference_paragraphs" contains only valid "reference_paragraph_id" and valid "reference_sentence_ids".
+            {% else %}
+        -- When present, "reference_paragraph_ids" contain only valid paragraph IDs.
+            {% endif %}
+        {% endif %}
+        {% if add_justifications %}
+            {% if reference_depth == "sentences" %}
+        -- No structural IDs (concept/paragraph/sentence IDs) appear inside justifications.
+            {% else %}
+        -- No structural IDs (concept/paragraph IDs) appear inside justifications.
+            {% endif %}
+        -- Justifications meet length and language constraints.
+        {% endif %}
+        -- Item values strictly satisfy type and any specified structure/scale/labels constraints.
+        -- The structure exactly matches the format specified within <answer_format></answer_format> tags (no extra keys or commentary).
+{% endif %}
 </task_description>
 
 <concept_extraction_rules>
@@ -232,6 +305,11 @@ Follow these additional rules:
 - No additional text:
     -- Do not include any headers, explanations, or text outside of the JSON array.
     -- Do not wrap your JSON response in backticks or any other formatting characters.
+{% if supports_reasoning %}
+- Private deliberation only:
+    -- Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.
+    -- Only output the JSON array according to the format specified within <answer_format></answer_format> tags.
+{% endif %}
 </output_constraints>
 
 <answer_format>

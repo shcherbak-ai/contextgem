@@ -977,8 +977,8 @@ class _LabelConcept(_Concept):
                 f"of the specific labels apply, unless you already have such a label, your labels are "
                 f"broad enough to cover all cases, or you know that the classified content always falls "
                 f"under one of the predefined labels without edge cases. Multi-class classification "
-                f"always returns a label, so having a catch-all option ensures appropriate classification "
-                f"when no specific label fits the content."
+                f"should always return a label, so having a catch-all option ensures appropriate "
+                f"classification when no specific label fits the content."
             )
 
     @field_validator("labels")

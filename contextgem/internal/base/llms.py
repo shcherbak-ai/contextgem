@@ -1136,6 +1136,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         # For aspects, references will be populated from extracted items automatically
                         "reference_depth": reference_depth,
                         "output_language": llm.output_language,
+                        "supports_reasoning": llm._supports_reasoning,
                     }
                     if any(p.additional_context for p in paragraphs_chunk) or any(
                         s.additional_context
@@ -1164,6 +1165,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         "add_references": add_references,
                         "reference_depth": reference_depth,
                         "output_language": llm.output_language,
+                        "supports_reasoning": llm._supports_reasoning,
                     }
                     if add_references:
                         # List of document/aspect paragraphs used for concept extraction with references
@@ -1268,6 +1270,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                         "justification_max_sents": justification_max_sents,
                         "data_type": "image",
                         "output_language": llm.output_language,
+                        "supports_reasoning": llm._supports_reasoning,
                     }
                     message_kwargs = {
                         "prompt_kwargs": prompt_kwargs,
@@ -3442,13 +3445,24 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
 
         # Reasoning support check - when applicable
-        if self.reasoning_effort and not self._supports_reasoning:
+        if self.role.startswith("reasoner") and not self._supports_reasoning:
             # Prompt the user to override _supports_reasoning if the model is known to support
             # reasoning while litellm does not detect it as reasoning-capable
             warnings.warn(
-                f"Model `{self.model}` has `reasoning_effort` set but "
-                f"litellm does not detect it as reasoning-capable. If you know this model "
-                f"supports reasoning, manually set `_supports_reasoning=True` on the LLM instance.",
+                f"Model `{self.model}` is assigned reasoning role `{self.role}` but "
+                f"litellm does not detect it as reasoning-capable. This will cause "
+                f"reasoning-related prompt instructions to be skipped, which could lead to "
+                f"lower quality responses. If you know this model supports reasoning, "
+                f"manually set `_supports_reasoning=True` on the LLM instance.",
+                stacklevel=2,
+            )
+
+        # Extractor role with reasoning-capable model - suggest using a reasoner role
+        if self.role.startswith("extractor") and self._supports_reasoning:
+            warnings.warn(
+                f"Model `{self.model}` is assigned extractor role `{self.role}`, "
+                f"while the model is reasoning-capable. Consider using a reasoner role "
+                f"to enable reasoning-related instructions for higher quality responses.",
                 stacklevel=2,
             )
 
@@ -3492,8 +3506,10 @@ class _DocumentLLM(_GenericLLMProcessor):
                     f"Input messages contain {token_count} tokens, which exceeds the model's "
                     f"maximum input tokens of {max_input_tokens} for model `{self.model}`. "
                     f"For long documents, consider setting `max_paragraphs_to_analyze_per_call` "
-                    f"to process the document in smaller chunks. See the optimization guide for "
-                    f"long documents: https://contextgem.dev/optimizations/optimization_long_docs.html"
+                    f"(for text) or `max_images_to_analyze_per_call` (for images) to process the "
+                    f"document in smaller chunks. "
+                    f"See the optimization guide for long documents: "
+                    f"https://contextgem.dev/optimizations/optimization_long_docs.html"
                 )
 
             logger.debug(
@@ -3555,8 +3571,10 @@ class _DocumentLLM(_GenericLLMProcessor):
                     f"Configured {token_type} ({configured_tokens}) exceeds the model's "
                     f"maximum output tokens of {max_output_tokens} for model `{self.model}`. "
                     f"For long documents, consider setting `max_paragraphs_to_analyze_per_call` "
-                    f"to process the document in smaller chunks. See the optimization guide for "
-                    f"long documents: https://contextgem.dev/optimizations/optimization_long_docs.html"
+                    f"(for text) or `max_images_to_analyze_per_call` (for images) to process the "
+                    f"document in smaller chunks. "
+                    f"See the optimization guide for long documents: "
+                    f"https://contextgem.dev/optimizations/optimization_long_docs.html"
                 )
 
             logger.debug(
@@ -3696,13 +3714,6 @@ class _DocumentLLM(_GenericLLMProcessor):
                 self.model
             )
             if model_params is not None:
-                if "/gpt-5" in self.model and "reasoning_effort" not in model_params:
-                    # As of 2025-08-07, LiteLLM does not yet list "reasoning effort" as
-                    # a param for gpt-5 models.
-                    # TODO: Remove this conditional logic once litellm has "reasoning_effort"
-                    # param listed for gpt-5 models.
-                    model_params.append("reasoning_effort")
-                    request_dict["allowed_openai_params"] = ["reasoning_effort"]
                 if "max_completion_tokens" in model_params:
                     if not (self.max_completion_tokens):
                         raise ValueError(

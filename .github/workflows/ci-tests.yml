@@ -7,6 +7,10 @@ on:
     branches: [ main, dev ]
   workflow_dispatch:
 
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
 jobs:
 
   tests-with-vcr:

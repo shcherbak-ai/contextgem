@@ -5,6 +5,33 @@ Below you will find a list of consecutively ordered paragraphs from a document a
 <guidance_on_task_structure>
 All structured information in these instructions is provided using semantic XML tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text, additional_context, etc.).
 </guidance_on_task_structure>
+{% if supports_reasoning %}
+
+<private_reasoning>
+Use private deliberation to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format> tags.
+
+Follow this internal three-stage process:
+
+1. Plan
+    - Internally restate each aspect in one sentence.
+    - List 3-5 concrete lexical/semantic cues for relevance, including indicators of prohibition, requirement, exception, conditionals, and negations.
+    - Define internal inclusion/exclusion criteria for borderline matches.
+
+2. Evidence triage
+    - For each paragraph{% if reference_depth == "sentences" %} and sentence{% endif %}, generate candidate matches to aspects.
+    - Collect minimal sufficient textual evidence privately and note negation, hypothetical, or conditional forms.
+    - Prefer precision over recall; include only high-confidence matches and omit weak or ambiguous ones.
+
+3. Consistency pass
+   - Deduplicate paragraph IDs{% if reference_depth == "sentences" %} and sentence IDs{% endif %} within each aspect and preserve the original order.
+   {% if add_justifications %}
+   - Align stance in justifications (permission, prohibition, requirement, exception) with the actual semantics.
+   - Ensure justifications comply with length and language constraints.
+   {% endif %}
+
+Never disclose any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format> tags.
+</private_reasoning>
+{% endif %}
 
 <task_description>
 Your task is to:
@@ -62,6 +89,21 @@ Your task is to:
     {% endif %}
 {% endif %}
     - If a paragraph does not relate to an aspect, do not include it under that aspect's list.
+{% if supports_reasoning %}
+    - Apply cross-paragraph reasoning when needed (e.g., headings, lists, references like "above", "this section"): use surrounding context to disambiguate; if unresolved, omit.
+    {% if add_justifications %}
+    - Treat negations, exceptions, and conditionals carefully: relevance can be present in prohibitions or restrictions; reflect the stance succinctly in the justification.
+    {% else %}
+    - Treat negations, exceptions, and conditionals carefully: relevance can be present in prohibitions or restrictions.
+    {% endif %}
+    - Prefer minimal sufficient evidence:
+        {% if reference_depth == "sentences" %}
+        -- include only the sentences necessary to support the mapping; avoid unrelated sentences.
+        {% else %}
+        -- base the mapping on the most relevant paragraphs; avoid tangential mentions.
+        {% endif %}
+    - Favor precision over recall; when uncertain, exclude rather than speculate.
+{% endif %}
 
 4. Produce the final answer in the JSON format specified within <answer_format></answer_format> tags
     - Your output must be a JSON array of objects, each object corresponding to a single aspect.
@@ -116,12 +158,35 @@ Your task is to:
         -- If an aspect has no related paragraphs, still include it with an empty paragraph_ids array ([]).
 {% endif %}
 - Do not add extra commentary, code block markers, or any other formatting beyond the JSON array.
+{% if supports_reasoning %}
+- Internally verify before finalizing:
+    -- Each provided aspect appears once, in order, with the correct "aspect_id".
+    {% if reference_depth == "sentences" %}
+    -- Each object in "paragraphs" contains only valid "paragraph_id" with valid "sentences".
+    {% else %}
+    -- "paragraph_ids" contains only valid paragraph IDs.
+    {% endif %}
+    {% if add_justifications %}
+        {% if reference_depth == "sentences" %}
+    -- No structural IDs (aspect/paragraph/sentence IDs) appear inside justifications.
+        {% else %}
+    -- No structural IDs (aspect/paragraph IDs) appear inside justifications.
+        {% endif %}
+    -- Justifications meet length and language constraints.
+    {% endif %}
+    -- The structure exactly matches the format specified within <answer_format></answer_format> tags (no extra keys or commentary).
+{% endif %}
 </task_description>
 
 <output_constraints>
 - No additional text:
     -- Do not include any headers, explanations, or text outside of the JSON array.
     -- Do not wrap your JSON response in backticks or any other formatting characters.
+{% if supports_reasoning %}
+- Private deliberation only:
+    -- Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.
+    -- Only output the JSON array according to the format specified within <answer_format></answer_format> tags.
+{% endif %}
 </output_constraints>
 
 <answer_format>

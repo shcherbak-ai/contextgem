@@ -35,7 +35,7 @@ vision_extractor = DocumentLLM(
 
 # Create a vision reasoner LLM
 vision_reasoner = DocumentLLM(
-    model="openai/gpt-4o",
+    model="openai/gpt-5-mini",
     api_key="your-openai-api-key",
     role="reasoner_vision",  # For more complex vision tasks that require reasoning
 )
