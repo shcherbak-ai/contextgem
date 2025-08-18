@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.16.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.16.0) - 2025-08-19
+### Added
+- Reasoning-aware extraction prompts: Automatically enables private chain-of-thought guidance on models that support reasoning, yielding higher-quality outputs (no change for other models).
+
 ## [0.15.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.15.0) - 2025-08-14
 ### Added
 - Auto-pricing for LLMs: enable via `auto_pricing=True` to automatically estimate costs using pydantic's `genai-prices`; optional `auto_pricing_refresh=True` refreshes cached price data at runtime.
