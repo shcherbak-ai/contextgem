@@ -2832,7 +2832,10 @@ class _DocumentLLM(_GenericLLMProcessor):
     )  # for reasoning (CoT-capable) models
     reasoning_effort: ReasoningEffort | None = Field(
         default=None,
-        description="Reasoning effort for CoT models: 'low' | 'medium' | 'high'.",
+        description=(
+            "Reasoning effort for CoT-capable models: 'minimal' (gpt-5 models only) | "
+            "'low' | 'medium' | 'high'."
+        ),
     )  # for reasoning (CoT-capable) models
     num_retries_failed_request: StrictInt = Field(
         default=3,
@@ -2998,6 +3001,15 @@ class _DocumentLLM(_GenericLLMProcessor):
                 "exact price information for their APIs in a format which can be reliably processed. "
                 "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
                 stacklevel=2,
+            )
+
+        # "minimal" reasoning effort is supported only for gpt-5 models
+        if self.reasoning_effort == "minimal" and not (
+            self.model.startswith("azure/gpt-5")
+            or self.model.startswith("openai/gpt-5")
+        ):
+            raise ValueError(
+                "`reasoning_effort='minimal'` is supported only for gpt-5 models."
             )
 
     def _set_private_attrs(self) -> None:
@@ -3457,12 +3469,14 @@ class _DocumentLLM(_GenericLLMProcessor):
                 stacklevel=2,
             )
 
-        # Extractor role with reasoning-capable model - suggest using a reasoner role
+        # Extractor role with reasoning-capable model - suggest aligning role for routing clarity
         if self.role.startswith("extractor") and self._supports_reasoning:
             warnings.warn(
                 f"Model `{self.model}` is assigned extractor role `{self.role}`, "
-                f"while the model is reasoning-capable. Consider using a reasoner role "
-                f"to enable reasoning-related instructions for higher quality responses.",
+                f"while the model is reasoning-capable. If you intend to route reasoning tasks "
+                f"to this model, consider using a `reasoner_*` role to match aspect/concept `llm_role` "
+                f"and keep pipeline roles consistent. See "
+                f"https://contextgem.dev/optimizations/optimization_choosing_llm.html",
                 stacklevel=2,
             )
 

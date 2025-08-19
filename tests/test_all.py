@@ -1144,6 +1144,44 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
+    def test_minimal_reasoning_effort_for_gpt_5(self):
+        """
+        Tests for setting the minimal reasoning effort in gpt-5 models.
+        """
+
+        # "minimal" reasoning effort is supported only for gpt-5 models
+        llm = DocumentLLM(
+            model="azure/gpt-5-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            reasoning_effort="minimal",
+            role="reasoner_text",
+        )
+        llm.system_message = ""  # disable default system message
+        response = llm.chat("List synonyms for the word 'confidentiality'.")
+        logger.debug(f"Response with minimal reasoning effort:\n{response}")
+
+        # "minimal" reasoning effort is not supported for other models
+        with pytest.raises(
+            ValueError,
+            match="supported only for gpt-5 models",
+        ):
+            DocumentLLM(
+                model="azure/o4-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                reasoning_effort="minimal",
+                role="reasoner_text",
+            )
+
+        check_locals_memory_usage(
+            locals(), test_name="test_minimal_reasoning_effort_for_gpt_5"
+        )
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
     def test_local_llms_vision(self):
         """
         Tests for initialization of and getting a response from local LLMs

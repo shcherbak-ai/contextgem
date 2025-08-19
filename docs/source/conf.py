@@ -25,7 +25,7 @@ import sys
 project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
-release = "0.16.0"
+release = "0.16.1"
 
 
 # Add path to the package
