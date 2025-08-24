@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.17.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.17.0) - 2025-08-24
+### Added
+- Multimodal LLM roles (`"extractor_multimodal"` and `"reasoner_multimodal"`) to support extraction of multimodal document-level concepts from both text and images. Previously, only text and vision roles were supported, requiring choosing either text or image context for extraction, not both.
+
 ## [0.16.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.16.1) - 2025-08-19
 ### Fixed
 - Added support for `"minimal"` reasoning effort for gpt-5 models.
