@@ -54,29 +54,45 @@ For simple use cases, when working with text-only documents and a single LLM, yo
 
 .. list-table:: Available LLM roles
    :header-rows: 1
-   :widths: 22 48 30
+   :widths: 20 20 20 20
 
    * - Role
-     - Purpose
-     - Requirements
+     - Extraction Context
+     - Extracted Item Types
+     - Required LLM Capabilities
    * - ``"extractor_text"``
-     - Extract aspects/concepts from text-only inputs.
-     - No reasoning required.
-   * - ``"extractor_vision"``
-     - Extract aspects/concepts that rely on visual inputs (images).
-     - Vision-capable model.
+     - Text
+     - Aspects and concepts (aspect- and document-level)
+     - No reasoning required
    * - ``"reasoner_text"``
-     - Handle complex reasoning over text context (validation, deduction, evaluation, comparison).
-     - Reasoning-capable model.
+     - Text
+     - Aspects and concepts (aspect- and document-level)
+     - Reasoning-capable model
+   * - ``"extractor_vision"``
+     - Images
+     - Document-level concepts
+     - Vision-capable model
    * - ``"reasoner_vision"``
-     - Perform complex reasoning over visual inputs.
-     - Vision-capable and reasoning-capable model.
+     - Images
+     - Document-level concepts
+     - Vision-capable and reasoning-capable model
+   * - ``"extractor_multimodal"``
+     - Text and/or images
+     - Document-level concepts
+     - Multimodal model supporting text and image inputs
+   * - ``"reasoner_multimodal"``
+     - Text and/or images
+     - Document-level concepts
+     - Reasoning-capable multimodal model supporting text and image inputs
 
 .. note::
   🧠 Only LLMs that support reasoning (chain of thought) should be assigned reasoning roles (``"reasoner_text"``, ``"reasoner_vision"``). For such models, internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses.
 
 .. note::
-  👁️ Only LLMs that support vision can be assigned vision roles (e.g., ``"extractor_vision"``, ``"reasoner_vision"``).
+  👁️ Only LLMs that support vision can be assigned vision roles (``"extractor_vision"``, ``"reasoner_vision"``).
+
+.. note::
+  🔀 Multimodal roles (``"extractor_multimodal"``, ``"reasoner_multimodal"``) reuse the existing text and vision extraction paths. If text exists, the text path runs first; if images exist, the vision path runs next. References are only supported for multimodal concepts when text is used.
 
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_choosing_llm.py
     :language: python

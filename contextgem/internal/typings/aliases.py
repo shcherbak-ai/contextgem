@@ -40,7 +40,12 @@ NonEmptyStr = Annotated[
 ]
 
 LLMRoleAny = Literal[
-    "extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision"
+    "extractor_text",
+    "reasoner_text",
+    "extractor_vision",
+    "reasoner_vision",
+    "extractor_multimodal",
+    "reasoner_multimodal",
 ]
 
 LLMRoleAspect = Literal["extractor_text", "reasoner_text"]

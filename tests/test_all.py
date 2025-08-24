@@ -32,10 +32,10 @@ import zipfile
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
+from typing import Any, Dict, List, Literal, Optional, cast  # noqa: UP035
 
 import pytest
 from _pytest.nodes import Item as PytestItem
@@ -76,7 +76,12 @@ from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPip
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.converters.docx import _DocxPackage
 from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
-from contextgem.internal.data_models import _LLMCost, _LLMUsage
+from contextgem.internal.data_models import (
+    _LLMCost,
+    _LLMCostOutputContainer,
+    _LLMUsage,
+    _LLMUsageOutputContainer,
+)
 from contextgem.internal.exceptions import (
     DocxConverterError,
     DocxFormatError,
@@ -217,6 +222,9 @@ class TestAll(TestUtils):
     test_docx_badly_formatted_path = os.path.join(
         get_project_root_path(), "tests", "docx_files", "badly_formatted.docx"
     )
+    test_multimodal_docx_path = os.path.join(
+        get_project_root_path(), "tests", "docx_files", "multimodal.docx"
+    )
     document_docx = DocxConverter().convert(test_docx_nda_path)
     document_docx_ua = DocxConverter().convert(test_docx_nda_ua_path)
     # Match badly formatted converted DOCX content (default mode - all content is included)
@@ -252,6 +260,7 @@ class TestAll(TestUtils):
             "badly_formatted_paras_raw.txt",
         )
     )
+    document_multimodal_docx = DocxConverter().convert(test_multimodal_docx_path)
 
     # Extraction pipeline
     extraction_pipeline = ExtractionPipeline(
@@ -325,11 +334,27 @@ class TestAll(TestUtils):
         "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
     }
 
+    # Extractor multimodal
+    _llm_extractor_multimodal_kwargs_openai = deepcopy(
+        _llm_extractor_text_kwargs_openai
+    )
+    _llm_extractor_multimodal_kwargs_openai["role"] = "extractor_multimodal"
+
+    # Reasoner multimodal
+    _llm_reasoner_multimodal_kwargs_openai = deepcopy(_llm_reasoner_text_kwargs_openai)
+    _llm_reasoner_multimodal_kwargs_openai["role"] = "reasoner_multimodal"
+
     # Extractor text
     llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
 
     # Reasoner text
     llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)
+
+    # Extractor multimodal
+    llm_extractor_multimodal = DocumentLLM(**_llm_extractor_multimodal_kwargs_openai)
+
+    # Reasoner multimodal
+    llm_reasoner_multimodal = DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai)
 
     # Extractor vision
     _llm_extractor_vision_kwargs_openai = deepcopy(_llm_extractor_text_kwargs_openai)
@@ -347,6 +372,8 @@ class TestAll(TestUtils):
         DocumentLLM(**_llm_reasoner_text_kwargs_openai),
         DocumentLLM(**_llm_extractor_vision_kwargs_openai),
         DocumentLLM(**_llm_reasoner_vision_kwargs_openai),
+        DocumentLLM(**_llm_extractor_multimodal_kwargs_openai),
+        DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai),
     ]  # newly initialized LLMs in group for separate usage and cost tracking)
     llm_group = DocumentLLMGroup(llms=_llm_group_llms)
 
@@ -2076,6 +2103,12 @@ class TestAll(TestUtils):
                 description="Clauses describing confidential information covered by the NDA",
                 llm_role="extractor_vision",  # invalid LLM role  # type: ignore
             )
+        with pytest.raises(ValueError):
+            Aspect(
+                name="Categories of confidential information",
+                description="Clauses describing confidential information covered by the NDA",
+                llm_role="extractor_multimodal",  # invalid LLM role  # type: ignore
+            )
         aspect = Aspect(
             name="Categories of confidential information",
             description="Clauses describing confidential information covered by the NDA",
@@ -2118,13 +2151,23 @@ class TestAll(TestUtils):
                     )
                 ]
             )
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="vision"):
             aspect.add_concepts(
                 [
                     StringConcept(
                         name="Random",
                         description="Random",
                         llm_role="extractor_vision",  # invalid llm role
+                    )
+                ]
+            )
+        with pytest.raises(ValueError, match="multimodal"):
+            aspect.add_concepts(
+                [
+                    StringConcept(
+                        name="Random",
+                        description="Random",
+                        llm_role="extractor_multimodal",  # invalid llm role
                     )
                 ]
             )
@@ -4641,38 +4684,29 @@ class TestAll(TestUtils):
             api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
             system_message=system_message,
         )
-        with pytest.warns(UserWarning, match="reasoning-capable"):
-            # Default role "extractor_text" is used; warn that the model is reasoning-capable
-            # and "reasoner_*" roles are recommended for higher quality responses
-            o1_model = DocumentLLM(
-                model="azure/o1",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                reasoning_effort="low",
-                system_message=system_message,
-            )
-        with pytest.warns(UserWarning, match="reasoning-capable"):
-            # Default role "extractor_text" is used; warn that the model is reasoning-capable
-            # and "reasoner_*" roles are recommended for higher quality responses
-            o3_mini_model = DocumentLLM(
-                model="azure/o3-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                system_message=system_message,
-            )
-        with pytest.warns(UserWarning, match="reasoning-capable"):
-            # Default role "extractor_text" is used; warn that the model is reasoning-capable
-            # and "reasoner_*" roles are recommended for higher quality responses
-            o4_mini_model = DocumentLLM(
-                model="azure/o4-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                system_message=system_message,
-                reasoning_effort="low",
-            )
+        o1_model = DocumentLLM(
+            model="azure/o1",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            reasoning_effort="low",
+            system_message=system_message,
+        )
+        o3_mini_model = DocumentLLM(
+            model="azure/o3-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message=system_message,
+        )
+        o4_mini_model = DocumentLLM(
+            model="azure/o4-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message=system_message,
+            reasoning_effort="low",
+        )
         for model in [non_reasoning_model, o1_model, o3_mini_model, o4_mini_model]:
             model.chat("What's your name?")
             response = model.get_usage()[0].usage.calls[-1].response
@@ -6343,6 +6377,144 @@ class TestAll(TestUtils):
         )  # higher value for images
 
     @pytest.mark.vcr
+    @pytest.mark.parametrize(
+        "llm", [llm_extractor_multimodal, llm_reasoner_multimodal, llm_group]
+    )
+    @memory_profile_and_capture
+    def test_multimodal_roles(self, llm: DocumentLLM | DocumentLLMGroup):
+        """
+        Tests for multimodal concept extraction from multimodal document (text + images).
+        """
+
+        # ===Text + images===
+        self.document_multimodal_docx.remove_all_instances()
+        self.document_multimodal_docx.add_concepts(
+            [
+                StringConcept(
+                    name="Invoice number",
+                    description="Number of the invoice",
+                    llm_role=llm.role
+                    if isinstance(llm, DocumentLLM)
+                    else "extractor_multimodal",
+                    add_references=True,
+                    add_justifications=True,
+                ),
+                DateConcept(
+                    name="Invoice date",
+                    description="Date of the invoice",
+                    llm_role=llm.role
+                    if isinstance(llm, DocumentLLM)
+                    else "extractor_multimodal",
+                    add_references=True,
+                    reference_depth="sentences",
+                ),
+            ]
+        )
+        with pytest.warns(
+            UserWarning,
+            match="When extracting from images, references will not be added",
+        ):
+            # Document has both text and images - warns that refs will be added only for text
+            llm.extract_concepts_from_document(self.document_multimodal_docx)
+        concept_invoice_number = self.document_multimodal_docx.get_concept_by_name(
+            "Invoice number"
+        )
+        concept_invoice_date = self.document_multimodal_docx.get_concept_by_name(
+            "Invoice date"
+        )
+        if isinstance(llm, DocumentLLMGroup) or llm.role == "extractor_multimodal":
+            self.log_extracted_items_for_instance(concept_invoice_number)
+            assert concept_invoice_number.extracted_items
+            assert concept_invoice_number.extracted_items[0].reference_paragraphs
+            assert concept_invoice_number.extracted_items[0].justification
+            assert not all(
+                i.reference_paragraphs for i in concept_invoice_number.extracted_items
+            )  # refs will be added only for text content, not for images
+            assert all(i.justification for i in concept_invoice_number.extracted_items)
+        elif isinstance(llm, DocumentLLM) and llm.role == "reasoner_multimodal":
+            self.log_extracted_items_for_instance(concept_invoice_date)
+            assert concept_invoice_date.extracted_items
+            assert concept_invoice_date.extracted_items[0].reference_paragraphs
+            assert concept_invoice_date.extracted_items[0].reference_sentences
+            assert not all(
+                i.reference_paragraphs for i in concept_invoice_date.extracted_items
+            )  # refs will be added only for text content, not for images
+
+        # Test together with aspects and other concepts with different roles
+        if isinstance(llm, DocumentLLMGroup):
+            self.document_multimodal_docx.add_aspects(
+                [
+                    Aspect(
+                        name="Invoices",
+                        description="Provisions on invoices in the contract",
+                        llm_role="extractor_text",
+                        concepts=[
+                            NumericalConcept(
+                                name="Invoice number",
+                                description="Number of the invoice",
+                                llm_role="extractor_text",
+                            )
+                        ],
+                    )
+                ]
+            )
+            llm.extract_aspects_from_document(self.document_multimodal_docx)
+            assert self.document_multimodal_docx.aspects[0].extracted_items
+            self.document_multimodal_docx.add_concepts(
+                [
+                    StringConcept(
+                        name="Document type",
+                        description="Guess the type of the document",
+                        llm_role="reasoner_text",
+                        add_justifications=True,
+                    )
+                ]
+            )
+            llm.extract_all(self.document_multimodal_docx, overwrite_existing=True)
+            document_type_concept = self.document_multimodal_docx.get_concept_by_name(
+                "Document type"
+            )
+            assert document_type_concept.extracted_items
+            self.log_extracted_items_for_instance(document_type_concept)
+            assert self.document_multimodal_docx.aspects[0].concepts[0].extracted_items
+
+        # ===Text only===
+        document = Document(raw_text=get_test_document_text())
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Document type",
+                    description="Type of the document",
+                    llm_role=llm.role
+                    if isinstance(llm, DocumentLLM)
+                    else "extractor_multimodal",
+                )
+            ]
+        )
+        llm.extract_concepts_from_document(document)
+        document_type_concept = document.get_concept_by_name("Document type")
+        assert document_type_concept.extracted_items
+
+        # ===Images only===
+        document = Document(images=[self.test_img_png_invoice])
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Invoice number",
+                    description="Number of the invoice",
+                    llm_role=llm.role
+                    if isinstance(llm, DocumentLLM)
+                    else "extractor_multimodal",
+                )
+            ]
+        )
+        llm.extract_concepts_from_document(document)
+        invoice_number_concept = document.get_concept_by_name("Invoice number")
+        assert invoice_number_concept.extracted_items
+
+        check_locals_memory_usage(locals(), test_name="test_multimodal")
+
+    @pytest.mark.vcr
     @memory_profile_and_capture
     def test_chat(self):
         """
@@ -7850,17 +8022,69 @@ class TestAll(TestUtils):
         os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = "DEBUG"
         reload_logger_settings()
 
-        # Output total cost of the test run
-        self.output_test_costs()
+        def get_all_llm_usages() -> list[_LLMUsageOutputContainer]:
+            """
+            Returns all usages for all LLMs.
+
+            :return: A list of _LLMUsageOutputContainer objects.
+            :rtype: list[_LLMUsageOutputContainer]
+            """
+            return (
+                self.llm_group.get_usage()
+                + self.llm_extractor_text.get_usage()
+                + self.llm_reasoner_text.get_usage()
+                + self.llm_extractor_vision.get_usage()
+                + self.llm_reasoner_vision.get_usage()
+                + self.llm_extractor_multimodal.get_usage()
+                + self.llm_reasoner_multimodal.get_usage()
+            )
+
+        def get_all_llm_costs() -> list[_LLMCostOutputContainer]:
+            """
+            Returns all costs for all LLMs.
+
+            :return: A list of _LLMCostOutputContainer objects.
+            :rtype: list[_LLMCostOutputContainer]
+            """
+            return (
+                self.llm_group.get_cost()
+                + self.llm_extractor_text.get_cost()
+                + self.llm_reasoner_text.get_cost()
+                + self.llm_extractor_vision.get_cost()
+                + self.llm_reasoner_vision.get_cost()
+                + self.llm_extractor_multimodal.get_cost()
+                + self.llm_reasoner_multimodal.get_cost()
+            )
+
+        # Output total API cost of all LLMs during the test suite run
+        logger.info(
+            "Total cost running tests: "
+            + str(
+                # Safe cast: the sum is a Decimal
+                cast(
+                    Decimal, sum([i.cost.total for i in get_all_llm_costs()])
+                ).quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
+            ),
+        )
+        logger.info(
+            "Note: Cost calculations may not include all tests (usage examples from "
+            "documentation, non-module-defined LLMs are excluded), and are lower than "
+            "displayed when LLM responses are mocked from cassettes."
+        )
+
         # Test resetting all usage and cost stats
         self.llm_group.reset_usage_and_cost()
         self.llm_extractor_text.reset_usage_and_cost()
-        for usage_dict in (
-            self.llm_group.get_usage() + self.llm_extractor_text.get_usage()
-        ):
+        self.llm_reasoner_text.reset_usage_and_cost()
+        self.llm_extractor_vision.reset_usage_and_cost()
+        self.llm_reasoner_vision.reset_usage_and_cost()
+        self.llm_extractor_multimodal.reset_usage_and_cost()
+        self.llm_reasoner_multimodal.reset_usage_and_cost()
+        for usage_dict in get_all_llm_usages():
             assert usage_dict.usage.input == 0
             assert usage_dict.usage.output == 0
-        for cost_dict in self.llm_group.get_cost() + self.llm_extractor_text.get_cost():
+            assert len(usage_dict.usage.calls) == 0
+        for cost_dict in get_all_llm_costs():
             assert cost_dict.cost.input == Decimal("0")
             assert cost_dict.cost.output == Decimal("0")
             assert cost_dict.cost.total == Decimal("0")

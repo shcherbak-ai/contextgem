@@ -77,7 +77,7 @@ When creating a :class:`~contextgem.public.concepts.NumericalConcept`, you can s
    * - ``llm_role``
      - ``str``
      - ``"extractor_text"``
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. For more details, see :ref:`llm-roles-label`.
+     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``, ``"reasoner_multimodal"``. For more details, see :ref:`llm-roles-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``

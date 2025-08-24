@@ -3340,7 +3340,7 @@ completely, in which case the role will default to ""extractor_text"".
 
 An LLM can have a configurable fallback LLM with the same role.
 
-See "DocumentLLM" for more details.
+See "DocumentLLM" and 🏷️ LLM Roles for more details.
 
 
 🤖🤖 **DocumentLLMGroup**
@@ -3359,20 +3359,7 @@ complex concepts that require reasoning over the aspects' context.
 Each LLM can have its own backend and configuration, and one fallback
 LLM with the same role.
 
-See "DocumentLLMGroup" for more details.
-
-Note:
-
-  🧠 Only LLMs that support reasoning (chain of thought) should be
-  assigned reasoning roles (""reasoner_text"", ""reasoner_vision"").
-  For such models, internal prompts include reasoning-specific
-  instructions intended for these models to produce higher-quality
-  responses.
-
-Note:
-
-  👁️ Only LLMs that support vision can be assigned vision roles (e.g.,
-  ""extractor_vision"", ""reasoner_vision"").
+See "DocumentLLMGroup" and 🏷️ LLM Roles for more details.
 
 
 LLM Group Workflow Example
@@ -5221,8 +5208,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -5540,8 +5528,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -5822,8 +5811,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -6142,8 +6132,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -6468,8 +6459,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -6873,8 +6865,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -7512,8 +7505,9 @@ parameters:
 | "llm_role"           | "str"           | ""extractor_te  | The role of the LLM responsible for extracting the |
 |                      |                 | xt""            | concept. Available values: ""extractor_text"",     |
 |                      |                 |                 | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". For more details, see 🏷️ LLM  |
-|                      |                 |                 | Roles.                                             |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". For more details, see 🏷️  |
+|                      |                 |                 | LLM Roles.                                         |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "add_justifications" | "bool"          | "False"         | Whether to include justifications for extracted    |
 |                      |                 |                 | items. Justifications provide explanations of why  |
@@ -8730,7 +8724,8 @@ The "DocumentLLM" class accepts the following parameters:
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "role"               | "str"           | ""extractor_te  | Role type for the LLM. Values: ""extractor_text"", |
 |                      |                 | xt""            | ""reasoner_text"", ""extractor_vision"",           |
-|                      |                 |                 | ""reasoner_vision"". The role parameter is an      |
+|                      |                 |                 | ""reasoner_vision"", ""extractor_multimodal"",     |
+|                      |                 |                 | ""reasoner_multimodal"". The role parameter is an  |
 |                      |                 |                 | abstraction that can be explicitly assigned to     |
 |                      |                 |                 | extraction components (aspects and concepts) in    |
 |                      |                 |                 | the pipeline. ContextGem then routes extraction    |
@@ -10476,20 +10471,34 @@ case the roles will default to ""extractor_text"".
 Available LLM roles
 ^^^^^^^^^^^^^^^^^^^
 
-+------------------------+--------------------------------------------------+--------------------------------+
-| Role                   | Purpose                                          | Requirements                   |
-|========================|==================================================|================================|
-| ""extractor_text""     | Extract aspects/concepts from text-only inputs.  | No reasoning required.         |
-+------------------------+--------------------------------------------------+--------------------------------+
-| ""extractor_vision""   | Extract aspects/concepts that rely on visual     | Vision-capable model.          |
-|                        | inputs (images).                                 |                                |
-+------------------------+--------------------------------------------------+--------------------------------+
-| ""reasoner_text""      | Handle complex reasoning over text context       | Reasoning-capable model.       |
-|                        | (validation, deduction, evaluation, comparison). |                                |
-+------------------------+--------------------------------------------------+--------------------------------+
-| ""reasoner_vision""    | Perform complex reasoning over visual inputs.    | Vision-capable and reasoning-  |
-|                        |                                                  | capable model.                 |
-+------------------------+--------------------------------------------------+--------------------------------+
++----------------------+----------------------+----------------------+----------------------+
+| Role                 | Extraction Context   | Extracted Item Types | Required LLM         |
+|                      |                      |                      | Capabilities         |
+|======================|======================|======================|======================|
+| ""extractor_text""   | Text                 | Aspects and concepts | No reasoning         |
+|                      |                      | (aspect- and         | required             |
+|                      |                      | document-level)      |                      |
++----------------------+----------------------+----------------------+----------------------+
+| ""reasoner_text""    | Text                 | Aspects and concepts | Reasoning-capable    |
+|                      |                      | (aspect- and         | model                |
+|                      |                      | document-level)      |                      |
++----------------------+----------------------+----------------------+----------------------+
+| ""extractor_vision"" | Images               | Document-level       | Vision-capable model |
+|                      |                      | concepts             |                      |
++----------------------+----------------------+----------------------+----------------------+
+| ""reasoner_vision""  | Images               | Document-level       | Vision-capable and   |
+|                      |                      | concepts             | reasoning-capable    |
+|                      |                      |                      | model                |
++----------------------+----------------------+----------------------+----------------------+
+| ""extractor_multimo  | Text and/or images   | Document-level       | Multimodal model     |
+| dal""                |                      | concepts             | supporting text and  |
+|                      |                      |                      | image inputs         |
++----------------------+----------------------+----------------------+----------------------+
+| ""reasoner_multimod  | Text and/or images   | Document-level       | Reasoning-capable    |
+| al""                 |                      | concepts             | multimodal model     |
+|                      |                      |                      | supporting text and  |
+|                      |                      |                      | image inputs         |
++----------------------+----------------------+----------------------+----------------------+
 
 Note:
 
@@ -10501,8 +10510,16 @@ Note:
 
 Note:
 
-  👁️ Only LLMs that support vision can be assigned vision roles (e.g.,
-  ""extractor_vision"", ""reasoner_vision"").
+  👁️ Only LLMs that support vision can be assigned vision roles
+  (""extractor_vision"", ""reasoner_vision"").
+
+Note:
+
+  🔀 Multimodal roles (""extractor_multimodal"",
+  ""reasoner_multimodal"") reuse the existing text and vision
+  extraction paths. If text exists, the text path runs first; if
+  images exist, the vision path runs next. References are only
+  supported for multimodal concepts when text is used.
 
 Example of selecting different LLMs for different tasks
 
@@ -12553,8 +12570,8 @@ class contextgem.public.concepts.StringConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -12607,7 +12624,8 @@ class contextgem.public.concepts.StringConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -12843,8 +12861,8 @@ class contextgem.public.concepts.BooleanConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -12898,7 +12916,8 @@ class contextgem.public.concepts.BooleanConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -13131,8 +13150,8 @@ class contextgem.public.concepts.NumericalConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -13185,7 +13204,8 @@ class contextgem.public.concepts.NumericalConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -13433,8 +13453,8 @@ class contextgem.public.concepts.RatingConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -13487,7 +13507,8 @@ class contextgem.public.concepts.RatingConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -13789,8 +13810,8 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -13843,7 +13864,8 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -14094,8 +14116,8 @@ class contextgem.public.concepts.DateConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -14148,7 +14170,8 @@ class contextgem.public.concepts.DateConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -14397,8 +14420,8 @@ class contextgem.public.concepts.LabelConcept(**data)
 
       * **llm_role** (*LLMRoleAny*) -- The role of the LLM responsible
         for extracting the concept ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to
-        "extractor_text".
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **add_justifications** (*bool*) -- Whether to include
         justifications for extracted items.
@@ -14451,7 +14474,8 @@ class contextgem.public.concepts.LabelConcept(**data)
 
       * **llm_role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **add_references** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -15809,8 +15833,11 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
          **output_language** (*LanguageRequirement*) -- The new output
          language to set for all LLMs
 
+      Returns:
+         None
+
       Return type:
-         "None"
+         None
 
    property is_group: bool
 
@@ -15822,7 +15849,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          bool
 
-   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
+   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision', 'extractor_multimodal', 'reasoner_multimodal']]
 
       Returns a list of all roles assigned to the LLMs in this group.
 
@@ -15845,15 +15872,15 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
          representing the role of the LLM to reset statistics for. If
          None, resets statistics for all LLMs in the group.
 
+      Returns:
+         None
+
+      Return type:
+         None
+
       Raises:
          **ValueError** -- If no LLM with the specified role exists in
          the group.
-
-      Return type:
-         "None"
-
-      Returns:
-         None
 
    to_dict()
 
@@ -15947,9 +15974,10 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **api_version** (*str** | **None*) -- API version. Primarily
         used with Azure OpenAI.
 
-      * **role** (*LLMRoleAny*) -- Role type for the LLM (e.g.,
-        "extractor_text", "reasoner_text", "extractor_vision",
-        "reasoner_vision"). Defaults to "extractor_text".
+      * **role** (*LLMRoleAny*) -- Role type for the LLM
+        ("extractor_text", "reasoner_text", "extractor_vision",
+        "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
 
       * **system_message** (*str** | **None*) -- Preparatory system-
         level message to set context for LLM responses.
@@ -16064,7 +16092,8 @@ class contextgem.public.llms.DocumentLLM(**data)
 
       * **role** (*Literal**[**'extractor_text'**,
         **'reasoner_text'**, **'extractor_vision'**,
-        **'reasoner_vision'**]*)
+        **'reasoner_vision'**, **'extractor_multimodal'**,
+        **'reasoner_multimodal'**]*)
 
       * **system_message** (*str** | **None*)
 
@@ -16246,8 +16275,11 @@ class contextgem.public.llms.DocumentLLM(**data)
          * **prompt_type** (*DefaultPromptType*) -- Type of prompt to
            update ("aspect" or "concept")
 
+      Returns:
+         None
+
       Return type:
-         "None"
+         None
 
    property async_limiter: AsyncLimiter
 
@@ -16861,7 +16893,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          bool
 
-   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision']]
+   property list_roles: list[Literal['extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision', 'extractor_multimodal', 'reasoner_multimodal']]
 
       Returns a list containing the role of this LLM.
 
@@ -16884,10 +16916,10 @@ class contextgem.public.llms.DocumentLLM(**data)
       useful when processing multiple documents sequentially and
       tracking metrics for each document separately.
 
-      Return type:
-         "None"
-
       Returns:
+         None
+
+      Return type:
          None
 
    to_dict()
@@ -17618,9 +17650,10 @@ class contextgem.public.images.Image(**data)
            have multiple images.
 
       * Extraction types:
-           Only concept extraction is supported for images. Use LLM
-           with role ""extractor_vision"" or ""reasoner_vision"" to
-           extract concepts from images.
+           Only document-level concept extraction is supported for
+           images. Use LLM with role ""extractor_vision"",
+           ""reasoner_vision"", ""extractor_multimodal"", or
+           ""reasoner_multimodal"" to extract concepts from images.
 
    Example:
       Image definition

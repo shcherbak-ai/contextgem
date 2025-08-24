@@ -88,7 +88,7 @@ class _Aspect(
         default_factory=list,
         description=(
             "Concepts associated with this aspect. Must be unique by name and description. "
-            "Concepts with vision LLM roles are not allowed."
+            "Concepts with vision or multimodal LLM roles are not allowed."
         ),
     )  # using Sequence field with list validator for type checking
     llm_role: LLMRoleAspect = Field(
@@ -154,16 +154,19 @@ class _Aspect(
         :type concepts: list[_Concept]
         :raises ValueError: If multiple concepts have the same name.
         :raises ValueError: If multiple concepts have the same description.
-        :raises ValueError: If any concept has an LLM role ending with '_vision'.
+        :raises ValueError: If any concept has an LLM role ending with '_vision'
+            or '_multimodal'.
         :return: The validated list of '_Concept' instances.
         :rtype: list[_Concept]
         """
 
-        if concepts and any(i.llm_role.endswith("_vision") for i in concepts):
+        if concepts and any(
+            i.llm_role.endswith(x) for x in ("_vision", "_multimodal") for i in concepts
+        ):
             # Validate for Aspect-specific constraints.
             raise ValueError(
-                "Aspect concepts extraction using vision LLMs is not supported. "
-                "Vision LLMs can be used only for document concept extraction."
+                "Aspect-level concepts extraction using vision/multimodal LLMs is not supported. "
+                "Vision/multimodal LLMs can be used only for document-level concept extraction."
             )
         return concepts
 

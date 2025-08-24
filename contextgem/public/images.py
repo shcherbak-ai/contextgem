@@ -53,8 +53,9 @@ class Image(_Image):
             An image must be attached to a document. A document can have multiple images.
 
         - Extraction types:
-            Only concept extraction is supported for images. Use LLM with role ``"extractor_vision"``
-            or ``"reasoner_vision"`` to extract concepts from images.
+            Only document-level concept extraction is supported for images. Use LLM with role
+            ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``,
+            or ``"reasoner_multimodal"`` to extract concepts from images.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/images/def_image.py

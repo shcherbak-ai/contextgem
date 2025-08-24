@@ -59,8 +59,8 @@ class StringConcept(_StringConcept):
     :ivar examples: Example strings illustrating the concept usage.
     :vartype examples: list[StringExample]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
@@ -103,8 +103,8 @@ class BooleanConcept(_BooleanConcept):
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
@@ -151,8 +151,8 @@ class NumericalConcept(_NumericalConcept):
         Defaults to "any" for auto-detection.
     :vartype numeric_type: Literal["int", "float", "any"]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
@@ -199,8 +199,8 @@ class RatingConcept(_RatingConcept):
         object (deprecated, will be removed in v1.0.0) or a tuple of (start, end) integers.
     :vartype rating_scale: RatingScale | tuple[int, int]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
@@ -277,8 +277,8 @@ class JsonObjectConcept(_JsonObjectConcept):
     :ivar examples: Example JSON objects illustrating the concept usage.
     :vartype examples: list[JsonObjectExample]
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
@@ -322,8 +322,8 @@ class DateConcept(_DateConcept):
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
@@ -383,8 +383,8 @@ class LabelConcept(_LabelConcept):
         "multi_label" for multiple label selection. Defaults to "multi_class".
     :vartype classification_type: ClassificationType
     :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision").
-        Defaults to "extractor_text".
+        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
+        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype llm_role: LLMRoleAny
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
