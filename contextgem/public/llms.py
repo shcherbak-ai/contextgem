@@ -87,8 +87,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype api_base: str | None
     :ivar api_version: API version. Primarily used with Azure OpenAI.
     :vartype api_version: str | None
-    :ivar role: Role type for the LLM (e.g., "extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision"). Defaults to "extractor_text".
+    :ivar role: Role type for the LLM ("extractor_text", "reasoner_text",
+        "extractor_vision", "reasoner_vision", "extractor_multimodal",
+        "reasoner_multimodal"). Defaults to "extractor_text".
     :vartype role: LLMRoleAny
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
     :vartype system_message: str | None

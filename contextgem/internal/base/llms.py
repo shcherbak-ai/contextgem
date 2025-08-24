@@ -885,7 +885,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     def _check_instances_and_llm_params(
         self,
         target: _Document | _Aspect,  # type: ignore
-        llm_or_group: _GenericLLMProcessor,
+        llm_or_group: _DocumentLLM | _DocumentLLMGroup,  # type: ignore
         instances_to_process: Sequence[_Aspect]
         | Sequence[_Concept]
         | None,  # using Sequence type with list validator for type checking
@@ -899,18 +899,23 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :param target: The target object, which should have an attribute corresponding
             to `instance_type` (e.g., 'aspects' for 'aspect', etc.). Expected to be an
             instance of either _Document or _Aspect.
+        :type target: _Document | _Aspect
         :param llm_or_group: The LLM or an LLM group to be validated. This may either
             be a standalone DocumentLLM or a DocumentLLMGroup to ensure compatibility.
+        :type llm_or_group: _DocumentLLM | _DocumentLLMGroup
         :param instances_to_process: A list of instances to process, which must match
             the specified instance-type (`aspect` or `concept`). If not provided,
             defaults to instances present in the target attribute.
+        :type instances_to_process: Sequence[_Aspect] | Sequence[_Concept] | None
         :param instance_type: Specifies the type of instances to validate ('aspect' or
             'concept'). This determines the expected type for validation.
+        :type instance_type: ExtractedInstanceType
         :param overwrite_existing: A flag indicating whether to overwrite the states of
             the existing processed instances. Defaults to False.
-
+        :type overwrite_existing: bool
         :return: None. The function performs validation and raises errors in case of
             mismatches or invalid configurations.
+        :rtype: None
         """
 
         if instances_to_process is not None:
@@ -983,8 +988,11 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         Checks whether the given instances of a specified type have already been processed.
 
         :param instance_type: The type of instances being checked.
+        :type instance_type: ExtractedInstanceType
         :param instances: A list of instances to be evaluated for processing status.
+        :type instances: list[_Aspect] | list[_Concept]
         :param overwrite_existing: Specifies whether to overwrite already processed instances.
+        :type overwrite_existing: bool
         :return: None
         :raises ValueError: If `overwrite_existing` is False and one or more instances
             have already been processed.
@@ -1026,35 +1034,53 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         :param extracted_instance_type: A string literal indicating the type of extracted instance.
             Accepted values are "aspect" and "concept".
+        :type extracted_instance_type: ExtractedInstanceType
         :param source: The input source, which can either be a `_Document` or an `_Aspect`
             instance, from which aspects or concepts are extracted.
+        :type source: _Document | _Aspect
         :param llm: The LLM instance used for extraction.
+        :type llm: _DocumentLLM
         :param instances_to_process: A list of instances (either `_Aspect` or `_Concept` instances)
             to process for extraction tasks.
+        :type instances_to_process: list[_Aspect] | list[_Concept]
         :param document: An instance of `_Document` containing paragraphs or text or images,
             which is used to provide additional context for the extraction process.
+        :type document: _Document
         :param add_justifications: A boolean flag. When set to `True`,
             justification for the extracted items is included in extraction result.
-        :param justification_depth: The level of detail of justifications. Details to "brief".
+        :type add_justifications: bool
+        :param justification_depth: The level of detail of justifications. Defaults to "brief".
+        :type justification_depth: JustificationDepth
         :param justification_max_sents: The maximum number of sentences in a justification.
             Defaults to 2.
+        :type justification_max_sents: int
         :param add_references: A boolean flag. When `True`, and if applicable,
             references aiding the extraction task are included in the extraction result.
+        :type add_references: bool
         :param reference_depth: The structural depth of the references, i.e. whether to provide
             paragraphs as references or sentences as references. Defaults to "paragraphs".
             ``extracted_items`` will have values based on this parameter.
+        :type reference_depth: ReferenceDepth
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
+        :type max_paragraphs_to_analyze_per_call: int
         :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
+        :type max_images_to_analyze_per_call: int
         :return: A list of dictionaries containing prompt kwargs and context chunks for LLM queries.
         :rtype: list[dict[str, dict | list[_Paragraph] | list[_Image]]]
         """
 
         # Validate source data for extraction and set the extraction level
-        def validate_source() -> str:
+        def validate_source_and_get_extraction_level() -> str:
             """
             Validates the source based on the extracted instance type.
+
+            :return: A string indicating the extraction level or type.
+            :rtype: str
+
+            :raises ValueError: If the source is invalid for the given extraction type or
+                required content (text, paragraphs, images) is missing.
             """
 
             # Aspect (document-level)
@@ -1073,23 +1099,41 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             if extracted_instance_type == "concept":
                 # Concept (document-level)
                 if isinstance(source, _Document):
-                    if llm.role.endswith("_text") and not (
-                        source.raw_text or source.paragraphs
-                    ):
-                        raise ValueError(
-                            "Document lacks text or paragraphs for concept extraction."
-                        )
-                    if llm.role.endswith("_vision") and not source.images:
-                        raise ValueError("No images attached to the document.")
-                    if llm.role.endswith("_vision") and add_references:
-                        raise ValueError(
-                            "Reference paragraphs are not supported for vision concepts."
-                        )
-                    return (
-                        "concept_document_text"
-                        if llm.role.endswith("_text")
-                        else "concept_document_vision"
-                    )
+                    has_text = bool(source.raw_text or source.paragraphs)
+                    has_images = bool(source.images)
+
+                    # Multi-modal roles can work with text or images or both
+                    if llm.role.endswith("_multimodal"):
+                        if not has_text and not has_images:
+                            raise ValueError(
+                                "Document lacks text/paragraphs or images for multimodal concept extraction."
+                            )
+                        # Multi-modal roles are flexible - they work with whatever content is available
+                        # For multi-modal roles, we leverage existing text/vision paths
+                        return "concept_document_multimodal"
+
+                    # Text-based roles
+                    elif llm.role.endswith("_text"):
+                        if not has_text:
+                            raise ValueError(
+                                "Document lacks text or paragraphs for concept extraction."
+                            )
+                        return "concept_document_text"
+
+                    # Vision-based roles
+                    elif llm.role.endswith("_vision"):
+                        if not has_images:
+                            raise ValueError(
+                                "Document lacks images to extract vision concepts from."
+                            )
+                        if add_references:
+                            raise ValueError(
+                                "References are not supported for vision concepts."
+                            )
+                        return "concept_document_vision"
+
+                    raise ValueError(f"Unsupported LLM role: `{llm.role}`")
+
                 # Concept (aspect-level)
                 if isinstance(source, _Aspect):
                     return "concept_aspect_text"
@@ -1098,15 +1142,24 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 f"Unsupported extracted item type: `{extracted_instance_type}`"
             )
 
-        extraction_level = validate_source()
+        extraction_level = validate_source_and_get_extraction_level()
         message_kwargs_list = []
 
-        # Text-based extraction
-        if extraction_level.endswith("_text"):
+        # Text-based or multimodal extraction
+        if extraction_level.endswith("_text") or (
+            extraction_level.endswith("_multimodal")
+            and isinstance(source, _Document)
+            and bool(source.raw_text or source.paragraphs)
+        ):
             # Safe cast: source for the other extraction level is Aspect
             paragraphs = (
                 document.paragraphs
-                if extraction_level in {"aspect_document_text", "concept_document_text"}
+                if extraction_level
+                in {
+                    "aspect_document_text",
+                    "concept_document_text",
+                    "concept_document_multimodal",
+                }
                 else cast(_Aspect, source).reference_paragraphs
             )
             if not paragraphs:
@@ -1155,6 +1208,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 elif extraction_level in {
                     "concept_document_text",
                     "concept_aspect_text",
+                    "concept_document_multimodal",
                 }:
                     prompt_kwargs = {
                         "concepts": instances_to_process,
@@ -1242,11 +1296,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 message_kwargs = {
                     "prompt_kwargs": prompt_kwargs,
                     "paragraphs_chunk": paragraphs_chunk,
+                    "references_apply": add_references,
                 }
                 message_kwargs_list.append(message_kwargs)
 
-        # Images-based extraction
-        elif extraction_level.endswith("_vision"):
+        # Images-based or multimodal extraction
+        if extraction_level.endswith("_vision") or (
+            extraction_level.endswith("_multimodal")
+            and isinstance(source, _Document)
+            and bool(source.images)
+        ):
             # Safe cast: source for extracting data from images is always a _Document
             source = cast(_Document, source)
             max_images_per_call = (
@@ -1262,7 +1321,9 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     raise RuntimeError("Images chunk cannot be empty.")
 
                 # Concept (from images)
-                if extraction_level == "concept_document_vision":
+                if extraction_level == "concept_document_vision" or (
+                    extraction_level == "concept_document_multimodal"
+                ):
                     prompt_kwargs = {
                         "concepts": instances_to_process,
                         "add_justifications": add_justifications,
@@ -1275,11 +1336,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     message_kwargs = {
                         "prompt_kwargs": prompt_kwargs,
                         "images": images_chunk,
+                        "references_apply": False,
+                        # references are not supported for vision concepts,
+                        # and will not be added for multimodal concepts when extracting
+                        # from images only
                     }
 
                 else:
                     raise ValueError(
-                        f"Unsupported extraction level for vision extraction: `{extraction_level}`"
+                        f"Unsupported extraction level for vision/multimodal extraction: "
+                        f"`{extraction_level}`"
                     )
 
                 message_kwargs_list.append(message_kwargs)
@@ -1368,34 +1434,88 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         ) -> None:
             """
             Raises ValueError if an Aspect is not assigned to the given Document.
+
+            :param source: The source to validate (_Document or _Aspect)
+            :type source: _Document | _Aspect
+            :param document: The document containing the source.
+            :type document: _Document
+            :return: None
+            :rtype: None
             """
             if isinstance(source, _Aspect) and source not in document.aspects:
                 raise ValueError(
                     f"Aspect `{source.name}` must be assigned to the document"
                 )
 
-        def validate_vision_llm_usage(
+        def validate_vision_or_multimodal_llm_usage(
             extracted_item_type: ExtractedInstanceType,
             llm: _DocumentLLM,
             source: _Document | _Aspect,  # type: ignore
             add_references: bool,
         ) -> None:
             """
-            Raises ValueError if the LLM role is vision-based but the extraction type/source is unsupported.
+            Validates usage constraints for vision or multimodal LLM roles.
+
+            - For roles ending with "_vision" or "_multimodal", only document-level concept
+              extraction is allowed.
+            - Raises ValueError when attempting aspect extraction, or concept extraction
+              from an Aspect, with a vision/multimodal role.
+            - For concept extraction with ``add_references=True``:
+              - "_multimodal": references are permitted only when the Document has text.
+                Emits warnings when both text and images are present (references will be
+                added only for text) or when text is absent (no references will be added).
+              - "_vision": references are not supported and a ValueError is raised.
+
+            :param extracted_item_type: Target extraction type ("aspect" or "concept").
+            :type extracted_item_type: ExtractedInstanceType
+            :param llm: The LLM used for extraction.
+            :type llm: _DocumentLLM
+            :param source: The extraction source (Document or Aspect).
+            :type source: _Document | _Aspect
+            :param add_references: Whether to add references for extracted concepts.
+            :type add_references: bool
+            :return: None
+            :rtype: None
             """
-            if llm.role.endswith("_vision"):
-                # Vision LLM: only document-level concept extraction is valid
+
+            if any(llm.role.endswith(x) for x in ("_vision", "_multimodal")):
+                # Vision/multimodal LLM: only document-level concept extraction is valid
                 if extracted_item_type == "aspect" or (
                     extracted_item_type == "concept" and isinstance(source, _Aspect)
                 ):
                     raise ValueError(
-                        f"{extracted_item_type.capitalize()} extraction using vision LLMs is not supported. "
-                        "Vision LLMs can be used only for document concept extraction."
+                        "Vision/multimodal LLMs can be used only for document-level "
+                        "concept extraction."
                     )
                 if extracted_item_type == "concept" and add_references:
-                    raise ValueError(
-                        "Reference paragraphs are not supported for vision concepts."
-                    )
+                    # Allow references for multimodal only when text is present
+                    if llm.role.endswith("_multimodal"):
+                        has_text = isinstance(source, _Document) and bool(
+                            source.raw_text or source.paragraphs
+                        )
+                        has_images = isinstance(source, _Document) and bool(
+                            source.images
+                        )
+                        if has_text and has_images:
+                            warnings.warn(
+                                "For multimodal concepts, references will only be added "
+                                "when extracting from text. When extracting from images, "
+                                "references will not be added, as there is no text content "
+                                "to reference.",
+                                stacklevel=2,
+                            )
+                        elif has_images and not has_text:
+                            warnings.warn(
+                                "References will not be added for multimodal concepts "
+                                "when extracting from images only, as there is no text "
+                                "content to reference.",
+                                stacklevel=2,
+                            )
+                    else:
+                        # Vision-only concepts never support references
+                        raise ValueError(
+                            "References are not supported for vision concepts."
+                        )
 
         def validate_aspect_for_concept_extraction(
             extracted_item_type: ExtractedInstanceType,
@@ -1404,7 +1524,16 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             """
             If extracting concepts from an Aspect, validates that the aspect's extracted items have
             references.
+
+            :param extracted_item_type: Target extraction type ("aspect" or "concept").
+            :type extracted_item_type: ExtractedInstanceType
+            :param source: The extraction source (Document or Aspect).
+            :type source: _Document | _Aspect
+            :return: None
+            :rtype: None
+            :raises ValueError: If the aspect has extracted items but no references.
             """
+
             if (
                 extracted_item_type == "concept"
                 and isinstance(source, _Aspect)
@@ -1428,7 +1557,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         # Perform validations
         validate_source_in_document(source=source, document=document)
-        validate_vision_llm_usage(
+        validate_vision_or_multimodal_llm_usage(
             extracted_item_type=extracted_item_type,
             llm=llm,
             source=source,
@@ -1475,9 +1604,15 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         def merge_usage_data(existing: _LLMUsage | None, new: _LLMUsage) -> _LLMUsage:
             """
             Aggregates usage data from all LLM calls.
-            Returns:
-                The latest aggregated usage data from all LLM calls.
+
+            :param existing: The existing usage data to merge with the new usage data.
+            :type existing: _LLMUsage | None
+            :param new: The new usage data to merge with the existing usage data.
+            :type new: _LLMUsage
+            :return: The latest aggregated usage data from all LLM calls.
+            :rtype: _LLMUsage
             """
+
             if existing is None:
                 return new
             existing.input += new.input
@@ -1496,6 +1631,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             logger.debug(
                 f"Processing messages chunk {idx + 1}/{len(message_kwargs_list)}"
             )
+
+            # Safe cast: message_kwargs is always a dict
+            message_kwargs = cast(dict, message_kwargs)
+
+            # Extract prompt_kwargs and remove it from message_kwargs
+            # Safe cast: prompt_kwargs key always contains a dict
+            prompt_kwargs = cast(dict, message_kwargs.pop("prompt_kwargs"))
+
             # Extract paragraphs and remove them from message_kwargs
             # Safe cast: "paragraphs_chunk" key, when present, always contains list[_Paragraph]
             paragraphs_chunk = cast(
@@ -1505,6 +1648,12 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 paragraphs_enumerated = dict(enumerate(paragraphs_chunk))
             else:
                 paragraphs_enumerated = {}
+
+            # Safe cast: references_apply key always contains a bool
+            # Use `references_apply` instead of `add_references` since we may have the
+            # `add_references` param set to True but for multimodal data extraction
+            # such references only apply when text is present.
+            references_apply = cast(bool, message_kwargs.pop("references_apply"))
 
             # Skip instances that have a single occurrence and already have extracted items
             discarded_instances = []
@@ -1532,10 +1681,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                     continue
                 # Do not include instances with a single occurrence that already have extracted items
                 # in the prompt kwargs
-                # Safe cast: "prompt_kwargs" key always contains a dict
-                cast(dict, message_kwargs["prompt_kwargs"])["concepts"] = (
-                    filtered_instances_to_process
-                )
+                prompt_kwargs["concepts"] = filtered_instances_to_process
                 if any(i in filtered_instances_to_process for i in discarded_instances):
                     raise RuntimeError(
                         "Discarded instances found in filtered instances list."
@@ -1549,32 +1695,25 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 # even if they are discarded during one of the loop iterations
 
             # Construct a prompt from the message kwargs
-            # Safe cast: "prompt_kwargs" key always contains a dict
             if extracted_item_type == "aspect":
-                message = llm._extract_aspect_items_prompt.render(
-                    **cast(dict, message_kwargs["prompt_kwargs"])
-                )
+                message = llm._extract_aspect_items_prompt.render(**prompt_kwargs)
             elif extracted_item_type == "concept":
-                message = llm._extract_concept_items_prompt.render(
-                    **cast(dict, message_kwargs["prompt_kwargs"])
-                )
+                message = llm._extract_concept_items_prompt.render(**prompt_kwargs)
             else:
                 raise ValueError(
                     f"Unsupported extracted item type: `{extracted_item_type}`"
                 )
 
-            # Safe cast: message_kwargs is always a dict
-            cast(dict, message_kwargs)["message"] = message
+            message_kwargs["message"] = message
             # Initialize the LLM call object to pass to the LLM query method
-            cast(dict, message_kwargs)["llm_call_obj"] = _LLMCall(
-                prompt_kwargs=cast(dict, message_kwargs["prompt_kwargs"]),
+            message_kwargs["llm_call_obj"] = _LLMCall(
+                prompt_kwargs=prompt_kwargs,
                 prompt=message,
             )
-            del message_kwargs["prompt_kwargs"]
 
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
-                **cast(dict, message_kwargs),
+                **message_kwargs,
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
                 async_limiter=async_limiter,
@@ -1582,12 +1721,12 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             )
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
             extracted_data = _validate_parsed_llm_output(
-                _parse_llm_output_as_json(
+                parsed_json=_parse_llm_output_as_json(
                     _remove_thinking_content_from_llm_output(extracted_data)
                 ),
                 extracted_item_type=extracted_item_type,
                 justification_provided=add_justifications,
-                references_provided=add_references,
+                references_provided=references_apply,
                 reference_depth=reference_depth,
             )
             if extracted_data is None:
@@ -1756,7 +1895,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                             "extracted_items": [],
                         }
 
-                    if add_justifications or add_references:
+                    if add_justifications or references_apply:
                         for i in concept_dict["extracted_items"]:
                             # Process the item value with a custom function on the concept
                             try:
@@ -1775,7 +1914,7 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                                 concept_extracted_item_kwargs["justification"] = i[
                                     "justification"
                                 ]
-                            if add_references:
+                            if references_apply:
                                 concept_extracted_item_kwargs[
                                     "reference_paragraphs"
                                 ] = []
@@ -2058,16 +2197,24 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
             Utility function for extracting instances using the provided LLM.
 
             :param instances_to_process: List of instances to extract
+            :type instances_to_process: list[_Aspect] | list[_Concept]
             :param add_justifications: Whether to provide justification for extracted items
+            :type add_justifications: bool
             :param add_references: Whether to provide references for extracted items
+            :type add_references: bool
             :param justification_depth: The level of detail of justifications. Details to "brief".
+            :type justification_depth: JustificationDepth
             :param justification_max_sents: The maximum number of sentences in a justification.
                 Defaults to 2.
+            :type justification_max_sents: int
             :param reference_depth: The structural depth of the references, i.e. whether to provide
                 paragraphs as references or sentences as references. Defaults to "paragraphs".
                 ``extracted_items`` will have values based on this parameter.
+            :type reference_depth: ReferenceDepth
             :return: None
+            :rtype: None
             """
+
             if not instances_to_process:
                 return None
 
@@ -2088,12 +2235,19 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 Checks the processed result for validity and retries it if invalid.
 
                 :param llm_instance: The LLM instance to process the data.
+                :type llm_instance: _DocumentLLM
                 :param res: Result to check and retry if invalid.
+                :type res: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
                 :param instances: List of processed instances associated with the result.
+                :type instances: list[_Aspect] | list[_Concept]
                 :param n_retries: Number of retries to perform.
+                :type n_retries: int
                 :param retry_is_final: Whether the retry is final and will not be repeated by a fallback LLM.
-                :return: bool: True if retry was successful, False otherwise.
+                :type retry_is_final: bool
+                :return: True if retry was successful, False otherwise.
+                :rtype: bool
                 """
+
                 if n_retries <= 0:
                     return False
                 if not _llm_call_result_is_valid(res):
@@ -2426,13 +2580,14 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         Validates that all sub-aspects have the correct nesting level relative
         to their parent aspect.
 
-        Args:
-            parent_aspect: The parent aspect
-
-        Raises:
-            ValueError: If any sub-aspect of the parent aspect has
+        :param parent_aspect: The parent aspect
+        :type parent_aspect: _Aspect
+        :return: None
+        :rtype: None
+        :raises ValueError: If any sub-aspect of the parent aspect has
             an incorrect nesting level.
         """
+
         expected_level = parent_aspect._nesting_level + 1
         if not all(
             sub_aspect._nesting_level == expected_level
@@ -2457,14 +2612,18 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
         :param retrieval_type: Determines the type of information to retrieve. Must be either
             "usage" to collect LLM usage statistics or "cost" to collect cost details.
+        :type retrieval_type: Literal["usage", "cost"]
         :param llm_role: The optional role of the LLM to filter the results. If provided,
             only results associated with LLMs matching this role are returned. If no LLM with
             the specified role exists, an exception is raised. If the matching LLM has
             a fallback LLM, its usage or cost details are also collected. Defaults to None.
+        :type llm_role: str | None
         :return: A list of containers, each representing usage or cost information for
             a primary and fallback LLM, if it exists. The specific container type depends on
             the retrieval type.
+        :rtype: list[_LLMUsageOutputContainer | _LLMCostOutputContainer]
         """
+
         info_containers = []
         # For individual LLM, use self and its fallback
         # For group, iterate through all LLMs in self.llms
@@ -2571,7 +2730,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         min_length=2,
         description=(
             "List of DocumentLLM instances assigned unique roles (e.g., "
-            "'extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision'); "
+            "'extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision', "
+            "'extractor_multimodal', 'reasoner_multimodal'); "
             "minimum 2."
         ),
     )
@@ -2588,6 +2748,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
     _llm_reasoner_text: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
     _llm_extractor_vision: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
     _llm_reasoner_vision: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
+    _llm_extractor_multimodal: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
+    _llm_reasoner_multimodal: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
 
     def _set_private_attrs(self) -> None:
         """
@@ -2626,6 +2788,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
 
         :param output_language: The new output language to set for all LLMs
         :type output_language: LanguageRequirement
+        :return: None
+        :rtype: None
         """
         for llm in self.llms:
             llm.output_language = output_language
@@ -2662,8 +2826,10 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         LLM has a unique role within the group.
 
         :param llms: A list of `_DocumentLLM` instances to be validated.
+        :type llms: list[_DocumentLLM]
         :return: A validated list of `_DocumentLLM` instances.
-        :raises ValueError: If validation fails.
+        :rtype: list[_DocumentLLM]
+        :raises ValueError: If not all LLM roles are unique.
         """
         seen_roles = set()
         for llm in llms:
@@ -2677,6 +2843,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         Assigns specific LLMs to dedicated roles based on the role attribute of each LLM.
 
         :return: None
+        :rtype: None
         """
 
         def get_llm_by_role(role: str) -> _DocumentLLM | None:  # type: ignore
@@ -2694,6 +2861,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         self._llm_reasoner_text = get_llm_by_role("reasoner_text")
         self._llm_extractor_vision = get_llm_by_role("extractor_vision")
         self._llm_reasoner_vision = get_llm_by_role("reasoner_vision")
+        self._llm_extractor_multimodal = get_llm_by_role("extractor_multimodal")
+        self._llm_reasoner_multimodal = get_llm_by_role("reasoner_multimodal")
 
     def get_usage(self, llm_role: str | None = None) -> list[_LLMUsageOutputContainer]:
         """
@@ -2743,9 +2912,11 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         :param llm_role: Optional; A string representing the role of the LLM to reset statistics for.
             If None, resets statistics for all LLMs in the group.
         :type llm_role: str | None
-        :raises ValueError: If no LLM with the specified role exists in the group.
         :return: None
+        :rtype: None
+        :raises ValueError: If no LLM with the specified role exists in the group.
         """
+
         if llm_role:
             try:
                 llm = next(i for i in self.llms if i.role == llm_role)
@@ -2764,13 +2935,12 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         Validates the LLM group to ensure consistency of the `output_language`
         attribute across all LLMs within the group.
 
-        Raises:
-            ValueError: Raised if any LLM's `output_language` differs from the
-            group's `output_language`.
-
         :return: The LLM group instance after successful validation.
         :rtype: Self
+        :raises ValueError: Raised if any LLM's `output_language` differs from the
+            group's `output_language`.
         """
+
         # Set private attributes before validation
         self._set_private_attrs()
 
@@ -2813,7 +2983,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         default="extractor_text",
         description=(
             "LLM role for pipeline routing (e.g., 'extractor_text', 'reasoner_text', "
-            "'extractor_vision', 'reasoner_vision')."
+            "'extractor_vision', 'reasoner_vision', 'extractor_multimodal', 'reasoner_multimodal')."
         ),
     )
     system_message: str | None = Field(
@@ -2965,18 +3135,22 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
 
         # Recommend `ollama_chat` prefix for better responses for Ollama models (text-only processing)
-        if self.model.startswith("ollama/") and not self.role.endswith("_vision"):
+        if self.model.startswith("ollama/") and not any(
+            self.role.endswith(x) for x in ("_vision", "_multimodal")
+        ):
             logger.info(
                 "For better responses with Ollama models, consider using "
                 "'ollama_chat/' prefix instead of 'ollama/', as recommended by LiteLLM: "
                 "https://docs.litellm.ai/docs/providers/ollama"
             )
 
-        # Warn to use `ollama/` prefix for image processing when using local vision models,
-        # as the ollama_chat/ does not yet support image inputs
-        if self.model.startswith("ollama_chat/") and self.role.endswith("_vision"):
+        # Warn to use `ollama/` prefix for image processing when using local vision/multimodal
+        # models, as the ollama_chat/ does not yet support image inputs
+        if self.model.startswith("ollama_chat/") and any(
+            self.role.endswith(x) for x in ("_vision", "_multimodal")
+        ):
             warnings.warn(
-                "Using `ollama_chat/` prefix for local vision models is not recommended, "
+                "Using `ollama_chat/` prefix for local vision/multimodal models is not recommended, "
                 "as it does not yet support image inputs. Please use `ollama/` prefix instead. "
                 "See https://github.com/ollama/ollama/issues/10255 and "
                 "https://github.com/ollama/ollama/issues/6451 for more details.",
@@ -3043,6 +3217,8 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         :param value: The AsyncLimiter instance to set.
         :type value: AsyncLimiter
+        :return: None
+        :rtype: None
         :raises TypeError: If value is not an AsyncLimiter instance.
         """
         if not isinstance(value, AsyncLimiter):
@@ -3206,6 +3382,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type prompt_path: str | Path
         :param prompt_type: Type of prompt to update ("aspect" or "concept")
         :type prompt_type: DefaultPromptType
+        :return: None
+        :rtype: None
         """
         # Convert to string if Path object
         prompt_path_str = str(prompt_path)
@@ -3445,11 +3623,14 @@ class _DocumentLLM(_GenericLLMProcessor):
         # Emit relevant warnings
 
         # Vision support check - when applicable
-        if self.role.endswith("_vision") and not self._supports_vision:
+        if (
+            any(self.role.endswith(x) for x in ("_vision", "_multimodal"))
+            and not self._supports_vision
+        ):
             # Prompt the user to override _supports_vision if the model is known to support
             # vision while litellm does not detect it as vision-capable
             warnings.warn(
-                f"Model `{self.model}` is assigned vision role `{self.role}` but "
+                f"Model `{self.model}` is assigned vision/multimodal role `{self.role}` but "
                 f"litellm does not detect it as vision-capable. This will cause "
                 f"vision-related operations to fail. If you know this model supports "
                 f"vision, manually set `_supports_vision=True` on the LLM instance.",
@@ -3463,15 +3644,15 @@ class _DocumentLLM(_GenericLLMProcessor):
             warnings.warn(
                 f"Model `{self.model}` is assigned reasoning role `{self.role}` but "
                 f"litellm does not detect it as reasoning-capable. This will cause "
-                f"reasoning-related prompt instructions to be skipped, which could lead to "
-                f"lower quality responses. If you know this model supports reasoning, "
+                f"reasoning-related prompt instructions to be skipped, which may limit "
+                f"the model's reasoning capabilities. If you know this model supports reasoning, "
                 f"manually set `_supports_reasoning=True` on the LLM instance.",
                 stacklevel=2,
             )
 
         # Extractor role with reasoning-capable model - suggest aligning role for routing clarity
         if self.role.startswith("extractor") and self._supports_reasoning:
-            warnings.warn(
+            logger.info(
                 f"Model `{self.model}` is assigned extractor role `{self.role}`, "
                 f"while the model is reasoning-capable. If you intend to route reasoning tasks "
                 f"to this model, consider using a `reasoner_*` role to match aspect/concept `llm_role` "
@@ -3490,7 +3671,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type messages: list[dict[str, str]]
         :raises ValueError: If the messages exceed the model's maximum input tokens
         :return: None
+        :rtype: None
         """
+
         context_exceeded = False
         try:
             # Get model information to check context window
@@ -3551,7 +3734,9 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         :raises ValueError: If the configured tokens exceed the model's maximum output tokens
         :return: None
+        :rtype: None
         """
+
         output_exceeded = False
         try:
             # Get model information to check output token limits
@@ -3875,6 +4060,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         Sets up prompt templates for various extraction tasks.
 
         :return: None
+        :rtype: None
         """
 
         # Templates with placeholders
@@ -3893,6 +4079,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         functions.
 
         :return: None
+        :rtype: None
         """
         self._supports_vision = litellm.supports_vision(self.model)  # type: ignore[attr-defined]
         self._supports_reasoning = litellm.supports_reasoning(self.model)  # type: ignore[attr-defined]
@@ -3900,7 +4087,9 @@ class _DocumentLLM(_GenericLLMProcessor):
     def _set_system_message(self) -> None:
         """
         Sets the default system message for the LLM.
+
         :return: None
+        :rtype: None
         """
         # _get_template returns a Template object when template_extension == "j2"
         self.system_message = _get_template(
@@ -3914,8 +4103,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         Retrieves the raw usage information of the LLM.
 
         :return: _LLMUsage object containing usage data for the LLM.
+        :rtype: _LLMUsage
         """
-
         return self._usage
 
     def _get_raw_cost(self) -> _LLMCost:
@@ -3927,7 +4116,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         rounding errors during accumulation.
 
         :return: _LLMCost object containing quantized cost data for the LLM.
+        :rtype: _LLMCost
         """
+
         if self.pricing_details is None and not self.auto_pricing:
             logger.info(
                 f"No pricing params provided for the LLM `{self.model}` "
@@ -3984,6 +4175,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         multiple documents sequentially and tracking metrics for each document separately.
 
         :return: None
+        :rtype: None
         """
 
         for llm in [self, self.fallback_llm]:
@@ -4000,8 +4192,11 @@ class _DocumentLLM(_GenericLLMProcessor):
         `_auto_pricing_model_ref` to be set.
 
         :param input_tokens: Number of input tokens
+        :type input_tokens: int
         :param output_tokens: Number of output tokens
+        :type output_tokens: int
         :return: Tuple of (input_cost, output_cost) as Decimals
+        :rtype: tuple[Decimal, Decimal]
         :raises LookupError: If auto-pricing provider/model are not set
         :raises Exception: Propagates exceptions from genai-prices lookup/calculation
         """
@@ -4052,6 +4247,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type usage: _LLMUsage
 
         :return: None
+        :rtype: None
         """
 
         if self.pricing_details or self.auto_pricing:
@@ -4115,7 +4311,9 @@ class _DocumentLLM(_GenericLLMProcessor):
             the total cost. If the result is None, the method does nothing.
         :type result: tuple[Any, _LLMUsage]
         :return: None
+        :rtype: None
         """
+
         async with self._async_lock:
             if result is None:
                 return

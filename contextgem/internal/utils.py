@@ -512,8 +512,8 @@ def _suppress_litellm_warnings_context() -> Generator[None, None, None]:
 
 def _suppress_litellm_warnings(func: F) -> F:
     """
-    Suppresses warnings related to Pydantic and httpx deprecation and serialization
-    in litellm>1.71.1 (latest available version as of 2025-07-10)
+    A decorator that suppresses warnings related to Pydantic and httpx deprecation
+    and serialization in litellm>1.71.1 (latest available version as of 2025-07-10).
 
     This decorator wraps both synchronous and asynchronous functions to suppress
     Pydantic and httpx warnings that originate from litellm's internal usage.

@@ -86,7 +86,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``role``
      - ``str``
      - ``"extractor_text"``
-     - Role type for the LLM. Values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``. The role parameter is an abstraction that can be explicitly assigned to extraction components (aspects and concepts) in the pipeline. ContextGem then routes extraction tasks based on these assigned roles, matching components with LLMs of the same role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). For more details, see :ref:`llm-roles-label`.
+     - Role type for the LLM. Values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``, ``"reasoner_multimodal"``. The role parameter is an abstraction that can be explicitly assigned to extraction components (aspects and concepts) in the pipeline. ContextGem then routes extraction tasks based on these assigned roles, matching components with LLMs of the same role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). For more details, see :ref:`llm-roles-label`.
    * - ``system_message``
      - ``str | None``
      - ``None``

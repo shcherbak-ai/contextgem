@@ -30,7 +30,7 @@ import time
 import warnings
 from collections.abc import Callable
 from copy import deepcopy
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, cast
@@ -464,61 +464,6 @@ class TestUtils:
             if cost_item.cost.output > Decimal("0"):
                 cost_output_updated = True
         assert cost_input_updated and cost_output_updated
-
-    def output_test_costs(self) -> None:
-        """
-        Outputs the accumulated costs incurred during the execution of tests.
-
-        :return: None
-        """
-        global vcr_new_recording_count
-
-        zero_dec = Decimal("0.00000")
-
-        def get_cost_as_decimal(llm):
-            """
-            Helper function to get the total cost as a quantized Decimal for an LLM.
-
-            :param llm: The LLM instance to get cost data from.
-            :type llm: DocumentLLMGroup | DocumentLLM
-            :return: Total cost quantized to 5 decimal places.
-            :rtype: Decimal
-            """
-            # Sum all the total costs from each cost item starting from a Decimal zero.
-            total = sum((i.cost.total for i in llm.get_cost()), zero_dec)
-            return total.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
-
-        total_cost_llm_group = get_cost_as_decimal(self.llm_group)  # type: ignore
-        total_cost_llm = get_cost_as_decimal(self.llm_extractor_text)  # type: ignore
-        total_cost_llm_with_fallback = get_cost_as_decimal(
-            self.invalid_llm_with_valid_fallback  # type: ignore
-        )
-        logger.info(
-            "Cost of running tests (LLM 0 - group): " + str(total_cost_llm_group),
-        )
-        logger.info(
-            "Cost of running tests (LLM 1 - individual): " + str(total_cost_llm),
-        )
-        logger.info(
-            "Cost of running tests (LLM with fallback): "
-            + str(total_cost_llm_with_fallback),
-        )
-        total_cost = (
-            total_cost_llm_group + total_cost_llm + total_cost_llm_with_fallback
-        )
-        logger.info(
-            "Total cost running tests: "
-            + str(total_cost.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)),
-        )
-        logger.info(
-            "Note: Cost calculations may not include all tests (usage examples from documentation, "
-            "non-module-defined LLMs are excluded)"
-        )
-        if vcr_new_recording_count:
-            logger.info(
-                "Note: Costs may be lower than displayed due to VCR recordings "
-                "(some LLM responses are mocked from cassettes)"
-            )
 
     @staticmethod
     def check_rendered_prompt(prompt: str) -> None:

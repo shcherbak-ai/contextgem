@@ -118,7 +118,7 @@ class _LLMUsageOutputContainer(BaseModel):
     :vartype model: str
     :ivar role: The role of the model, which must be one of
         "extractor_text", "reasoner_text", "extractor_vision",
-        or "reasoner_vision".
+        "reasoner_vision", "extractor_multimodal", "reasoner_multimodal".
     :vartype role: LLMRoleAny
     :ivar is_fallback: Indicates whether the LLM is a fallback model.
     :vartype is_fallback: StrictBool
@@ -166,7 +166,7 @@ class _LLMCostOutputContainer(BaseModel):
     :vartype model: str
     :ivar role: The role of the model in processing, which can be one of:
                 "extractor_text", "reasoner_text", "extractor_vision",
-                "reasoner_vision".
+                "reasoner_vision", "extractor_multimodal", "reasoner_multimodal".
     :vartype role: LLMRoleAny
     :ivar is_fallback: Indicates if the LLM is a fallback model.
     :vartype is_fallback: bool

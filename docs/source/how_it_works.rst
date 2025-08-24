@@ -118,7 +118,7 @@ The ``role`` of an LLM is an abstraction used to assign various LLMs tasks of di
 
 An LLM can have a configurable fallback LLM with the same role.
 
-See :class:`~contextgem.public.llms.DocumentLLM` for more details.
+See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`llm-roles-label` for more details.
 
 
 🤖🤖 **DocumentLLMGroup**
@@ -130,13 +130,7 @@ For more complex and granular extraction workflows, an LLM group can be used to 
 
 Each LLM can have its own backend and configuration, and one fallback LLM with the same role.
 
-See :class:`~contextgem.public.llms.DocumentLLMGroup` for more details.
-
-.. note::
-  🧠 Only LLMs that support reasoning (chain of thought) should be assigned reasoning roles (``"reasoner_text"``, ``"reasoner_vision"``). For such models, internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses.
-
-.. note::
-  👁️ Only LLMs that support vision can be assigned vision roles (e.g., ``"extractor_vision"``, ``"reasoner_vision"``).
+See :class:`~contextgem.public.llms.DocumentLLMGroup` and :ref:`llm-roles-label` for more details.
 
 .. list-table:: LLM Group Workflow Example
    :header-rows: 1

@@ -98,7 +98,7 @@ class _Concept(_ExtractedItemsAttributeProcessor):
         default="extractor_text",
         description=(
             "LLM role used for this concept. Valid values: 'extractor_text', 'reasoner_text', "
-            "'extractor_vision', 'reasoner_vision'."
+            "'extractor_vision', 'reasoner_vision', 'extractor_multimodal', 'reasoner_multimodal'."
         ),
     )
     add_references: StrictBool = Field(
