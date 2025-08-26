@@ -168,7 +168,7 @@ While ContextGem excels at structured data extraction from individual documents,
 **Not a RAG framework**
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-ContextGem focuses on in-depth single-document analysis, leveraging long context windows of LLMs for maximum accuracy and precision. It does not offer RAG capabilities for cross-document querying or corpus-wide information retrieval. For these use cases, traditional RAG systems such as LlamaIndex remain more appropriate.
+ContextGem focuses on in-depth single-document analysis, leveraging long context windows of LLMs for maximum accuracy and precision. It does not offer RAG capabilities for cross-document querying or corpus-wide information retrieval. For these use cases, modern RAG frameworks such as LlamaIndex remain more appropriate.
 
 **Not an agent framework**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

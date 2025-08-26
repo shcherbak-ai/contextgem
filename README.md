@@ -375,6 +375,8 @@ To create a ContextGem document for LLM analysis, you can either pass raw text d
 - **Document structure preservation** with rich metadata for improved LLM analysis
 - **Built-in converter** that directly processes Word XML
 
+> 🚀 **Performance improvement in v0.17.1**: DOCX converter now converts files **~2X faster**.
+
 ```python
 # Using ContextGem's DocxConverter
 
@@ -408,7 +410,7 @@ docx_text = converter.convert_to_text_format(
 
 ## 🎯 Focused document analysis
 
-ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG systems (e.g., LlamaIndex, Haystack) remain more appropriate.
+ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG frameworks (e.g., LlamaIndex, Haystack) remain more appropriate.
 
 📖 Read more on [how ContextGem works](https://contextgem.dev/how_it_works.html) in the documentation.
 

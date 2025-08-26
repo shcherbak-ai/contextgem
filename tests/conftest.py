@@ -32,7 +32,7 @@ from unittest.mock import patch
 
 import pytest
 
-from contextgem.internal.utils import _suppress_litellm_warnings_context
+from contextgem.internal.suppressions import _suppress_litellm_warnings_context
 
 
 with _suppress_litellm_warnings_context():

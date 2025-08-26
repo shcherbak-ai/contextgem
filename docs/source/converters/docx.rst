@@ -26,6 +26,10 @@ ContextGem provides built-in converter to easily transform DOCX files into LLM-r
 * 🧩 **Document structure preservation** with rich metadata for improved LLM analysis
 * 🛠️ **Built-in converter** that directly processes Word XML
 
+.. note::
+
+   ✨ **Performance improvement in v0.17.1**: DOCX converter now converts files **~2X faster**.
+
 
 🚀 Usage
 ----------
@@ -91,4 +95,4 @@ DocxConverter has the following limitations:
 * Drawings such as charts are skipped as it is challenging to represent them in text format.
 * Inline markdown formatting (bold, italic, etc.) and hyperlink formatting are not supported in specially marked sections (headers, footers, footnotes, comments).
 * Extraction of generated table of contents (ToC) is not supported. (A ToC is an automatically generated list of document headings with page numbers that Word creates based on heading styles.)
-* When converting very long DOCX files with complex formatting, performance may be very slow. (Our goal is to improve this in the future.)
+

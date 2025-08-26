@@ -44,7 +44,7 @@ This concept type supports two classification modes:
    **For multi-class classification**: A label is always returned, as this classification type requires selecting the best-fitting option from the predefined set, even if none perfectly match the content.
 
 .. important::
-   **For multi-class classification**: Since multi-class classification should always return exactly one label, you should consider including a general "other" label (such as "N/A", "misc", "unspecified", etc.) to handle cases where none of the specific labels apply, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases. This ensures appropriate classification even when the content doesn't clearly fit into any of the predefined specific categories.
+   **For multi-class classification**: Since multi-class classification will always return exactly one label, you should consider including a general "other" label (such as "N/A", "misc", "unspecified", etc.) to handle cases where none of the specific labels apply, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases. This ensures appropriate classification even when the content doesn't clearly fit into any of the predefined specific categories.
 
 
 💻 Usage Example

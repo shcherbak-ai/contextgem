@@ -1,6 +1,6 @@
 [project]
 name = "contextgem"
-version = "0.17.0"
+version = "0.17.1"
 description = "Effortless LLM extraction from documents"
 authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 requires-python = ">=3.10,<3.14"
@@ -93,9 +93,9 @@ classifiers = [
 ]
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
-    "genai-prices==0.0.23",  # pin version due to frequent API changes
+    "genai-prices==0.0.24",  # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm==1.75.9",  # pin version due to occasional instability between patches and minor versions
+    "litellm==1.76.0",  # pin version due to occasional instability between patches and minor versions
     "loguru (>=0.7.3,<0.8.0)",
     "lxml (>=5.4.0,<6.0.0)",
     "openai==1.101.0",  # pinned version for stable compatibility with litellm (after issue with 1.100.0)
