@@ -77,6 +77,7 @@ from contextgem.internal.exceptions import LLMAPIError, LLMExtractionError
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _publicize
+from contextgem.internal.suppressions import _suppress_litellm_warnings_context
 from contextgem.internal.typings.aliases import (
     AsyncCalsAndKwargs,
     DefaultPromptType,
@@ -101,7 +102,6 @@ from contextgem.internal.utils import (
     _run_async_calls,
     _run_sync,
     _setup_jinja2_template,
-    _suppress_litellm_warnings_context,
     _validate_parsed_llm_output,
 )
 

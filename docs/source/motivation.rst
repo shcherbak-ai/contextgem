@@ -185,4 +185,4 @@ With ContextGem, you benefit from a "batteries included" approach, coupled with 
 🎯 Focused Approach
 ---------------------
 
-ContextGem is intentionally optimized for **in-depth single-document analysis** to deliver maximum extraction accuracy and precision. While this focused approach enables superior results for individual documents, ContextGem currently does not support cross-document querying or corpus-wide information retrieval. For these use cases, traditional RAG (Retrieval-Augmented Generation) systems over document collections (e.g. LlamaIndex) remain more appropriate.
+ContextGem is intentionally optimized for **in-depth single-document analysis** to deliver maximum extraction accuracy and precision. While this focused approach enables superior results for individual documents, ContextGem currently does not support cross-document querying or corpus-wide information retrieval. For these use cases, modern RAG frameworks (e.g. LlamaIndex) remain more appropriate.

@@ -184,8 +184,7 @@ analysis** to deliver maximum extraction accuracy and precision. While
 this focused approach enables superior results for individual
 documents, ContextGem currently does not support cross-document
 querying or corpus-wide information retrieval. For these use cases,
-traditional RAG (Retrieval-Augmented Generation) systems over document
-collections (e.g. LlamaIndex) remain more appropriate.
+modern RAG frameworks (e.g. LlamaIndex) remain more appropriate.
 
 
 # ==== vs_other_frameworks ====
@@ -3396,8 +3395,8 @@ boundaries:
 ContextGem focuses on in-depth single-document analysis, leveraging
 long context windows of LLMs for maximum accuracy and precision. It
 does not offer RAG capabilities for cross-document querying or corpus-
-wide information retrieval. For these use cases, traditional RAG
-systems such as LlamaIndex remain more appropriate.
+wide information retrieval. For these use cases, modern RAG frameworks
+such as LlamaIndex remain more appropriate.
 
 
 **Not an agent framework**
@@ -7406,14 +7405,14 @@ Note:
 Important:
 
   **For multi-class classification**: Since multi-class classification
-  should always return exactly one label, you should consider
-  including a general "other" label (such as "N/A", "misc",
-  "unspecified", etc.) to handle cases where none of the specific
-  labels apply, unless your labels are broad enough to cover all
-  cases, or you know that the classified content always falls under
-  one of the predefined labels without edge cases. This ensures
-  appropriate classification even when the content doesn't clearly fit
-  into any of the predefined specific categories.
+  will always return exactly one label, you should consider including
+  a general "other" label (such as "N/A", "misc", "unspecified", etc.)
+  to handle cases where none of the specific labels apply, unless your
+  labels are broad enough to cover all cases, or you know that the
+  classified content always falls under one of the predefined labels
+  without edge cases. This ensures appropriate classification even
+  when the content doesn't clearly fit into any of the predefined
+  specific categories.
 
 
 💻 Usage Example
