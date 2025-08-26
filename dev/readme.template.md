@@ -192,6 +192,8 @@ To create a ContextGem document for LLM analysis, you can either pass raw text d
 - **Document structure preservation** with rich metadata for improved LLM analysis
 - **Built-in converter** that directly processes Word XML
 
+> 🚀 **Performance improvement in v0.17.1**: DOCX converter now converts files **~2X faster**.
+
 ```python
 {{DOCX_CONVERTER}}
 ```

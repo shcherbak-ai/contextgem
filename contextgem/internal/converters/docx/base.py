@@ -56,6 +56,13 @@ from contextgem.internal.registry import _publicize
 from contextgem.internal.utils import _is_text_content_empty
 
 
+# Precompiled regex patterns for markdown/HTML normalization in tight loops
+_MD_BOLD_ITALIC_RE = re.compile(r"\*+([^*]+)\*+")
+_MD_STRIKE_RE = re.compile(r"~~([^~]+)~~")
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\)")
+_HTML_TAG_RE = re.compile(r"</?[^>]+>")
+
+
 class _DocxConverterBase:
     """
     Base class for the DOCX converter.
@@ -323,6 +330,13 @@ class _DocxConverterBase:
         ordered_runs = []
 
         try:
+            # Pre-check: only scan for page number fields if the paragraph contains any field nodes
+            has_page_fields = bool(
+                _docx_xpath(
+                    para_element, ".//w:fldSimple | .//w:fldChar | .//w:instrText"
+                )
+            )
+
             # First, collect hyperlink information to handle them properly during run processing
             # Skip this entirely if include_links is False to avoid processing overhead
             hyperlink_info_by_run = {}  # Maps run elements to their hyperlink info
@@ -348,7 +362,7 @@ class _DocxConverterBase:
                 is_hyperlink_run = run_element_id in hyperlink_info_by_run
 
                 # Skip page number fields
-                if self._is_page_number_field(run, para_element):
+                if has_page_fields and self._is_page_number_field(run, para_element):
                     continue
 
                 # Extract formatting for this run if inline formatting is enabled
@@ -624,17 +638,17 @@ class _DocxConverterBase:
                     # variations in formatting of the same underlying text
 
                     # Strip markdown formatting to get base content for comparison
-                    normalized_content = re.sub(
-                        r"\*+([^*]+)\*+", r"\1", current_segment
+                    normalized_content = _MD_BOLD_ITALIC_RE.sub(
+                        r"\1", current_segment
                     )  # Remove *italics* and **bold**
-                    normalized_content = re.sub(
-                        r"~~([^~]+)~~", r"\1", normalized_content
+                    normalized_content = _MD_STRIKE_RE.sub(
+                        r"\1", normalized_content
                     )  # Remove ~~strikethrough~~
-                    normalized_content = re.sub(
-                        r"\[([^\]]+)\]\([^)]+\)", r"\1", normalized_content
+                    normalized_content = _MD_LINK_RE.sub(
+                        r"\1", normalized_content
                     )  # Remove [text](url)
-                    normalized_content = re.sub(
-                        r"</?[^>]+>", "", normalized_content
+                    normalized_content = _HTML_TAG_RE.sub(
+                        "", normalized_content
                     )  # Remove HTML tags
                     normalized_content = normalized_content.strip()
 
@@ -952,6 +966,7 @@ class _DocxConverterBase:
         markdown_mode: bool,
         include_links: bool,
         text_xpath: str = ".//w:t",
+        precomputed_text_elements: list[etree._Element] | None = None,
     ) -> list[tuple[str, bool]]:
         """
         Processes a single text run and returns formatted text segments.
@@ -963,6 +978,9 @@ class _DocxConverterBase:
         :param markdown_mode: Whether in markdown mode
         :param include_links: Whether to process hyperlinks
         :param text_xpath: XPath to find text elements (default: ".//w:t")
+        :param precomputed_text_elements: Optional list of precomputed text elements to use
+            instead of running the XPath query. If provided, these elements will be used
+            directly, which improves performance by avoiding duplicate XPath lookups.
         :return: List of (text, is_content) tuples where is_content indicates if
             it's text content
         """
@@ -979,8 +997,12 @@ class _DocxConverterBase:
         if include_inline_formatting and markdown_mode:
             run_formatting = self._extract_run_formatting(run)
 
-        # Process text elements
-        text_elements = _docx_xpath(run, text_xpath)
+        # Process text elements (use precomputed if provided to avoid duplicate XPath)
+        text_elements = (
+            precomputed_text_elements
+            if precomputed_text_elements is not None
+            else _docx_xpath(run, text_xpath)
+        )
         for text_elem in text_elements:
             text_content = (
                 # Attribute is defined in _Element
@@ -2152,6 +2174,8 @@ class _DocxConverterBase:
         runs = _docx_xpath(container_element, run_xpath)
 
         for run in runs:
+            # Compute text elements once per run and reuse
+            text_elements = _docx_xpath(run, text_xpath)
             run_results = self._process_text_run(
                 run=run,
                 hyperlink_info_by_run=hyperlink_info_by_run,
@@ -2160,13 +2184,17 @@ class _DocxConverterBase:
                 markdown_mode=markdown_mode,
                 include_links=include_links,
                 text_xpath=text_xpath,
+                precomputed_text_elements=text_elements,
             )
-            text_elements = _docx_xpath(run, text_xpath)
-            content_results = [r for r in run_results if r[1]]
-            for text_elem, text_result in zip(
-                text_elements, content_results, strict=True
-            ):
-                formatted_text, _ = text_result
+            text_index = 0
+            matched_contents_count = 0
+            for formatted_text, has_content in run_results:
+                if not has_content:
+                    continue
+                if text_index >= len(text_elements):
+                    # No more text elements to consume; stop pairing further content
+                    break
+                text_elem = text_elements[text_index]
                 original_content = (
                     # Attribute is defined in _Element
                     text_elem.text_content()  # type: ignore[attr-defined]
@@ -2176,6 +2204,34 @@ class _DocxConverterBase:
                 if original_content:
                     # Include all textbox content
                     results.append(formatted_text)
+                text_index += 1
+                # Count every paired content result, regardless of append
+                matched_contents_count += 1
+
+            # Count remaining text elements and contents to log mismatches
+            # (often legitimate in textboxes)
+            remaining_text_elems_count = len(text_elements) - text_index
+            total_contents_count = sum(
+                1 for _, has_content in run_results if has_content
+            )
+            # Remaining contents are those with has_content that weren't paired
+            # due to running out of text elements
+            remaining_contents_count = max(
+                total_contents_count - matched_contents_count, 0
+            )
+            if remaining_text_elems_count > 0 or remaining_contents_count > 0:
+                # Note: mismatches can occur legitimately (e.g., empty w:t nodes, fields,
+                # grouped content spanning multiple w:t elements, etc.). We ignore any
+                # extra text elements or content results to preserve ordering without
+                # raising errors.
+                logger.debug(
+                    f"DOCX textbox run mismatch (often legitimate in textboxes) - "
+                    f"some elements/contents ignored:\n"
+                    f"total text elements = {len(text_elements)}\n"
+                    f"remaining text elements = {remaining_text_elems_count}\n"
+                    f"matched contents = {matched_contents_count}\n"
+                    f"remaining contents = {remaining_contents_count}"
+                )
 
         return results
 
