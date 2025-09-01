@@ -27,16 +27,13 @@ custom data storage, and instance cloning capabilities.
 
 from __future__ import annotations
 
-from abc import ABC
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from pydantic import ConfigDict, Field, PrivateAttr, field_validator
+from pydantic import field_validator
 from typing_extensions import Self
-from ulid import ULID
 
-from contextgem.internal.base.mixins import _PostInitCollectorMixin
-from contextgem.internal.base.serialization import _InstanceSerializer
+from contextgem.internal.base.abstract import _AbstractInstanceBase
 from contextgem.internal.utils import _is_text_content_empty
 
 
@@ -45,7 +42,7 @@ if TYPE_CHECKING:
     from contextgem.internal.base.concepts import _Concept
 
 
-class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
+class _InstanceBase(_AbstractInstanceBase):
     """
     Base class that provides reusable methods for all instance-specific subclasses.
 
@@ -53,16 +50,6 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     custom data storage, and instance cloning capabilities. It serves as the foundation
     for various instance types in the ContextGem framework.
     """
-
-    custom_data: dict = Field(
-        default_factory=dict,
-        description="A serializable dictionary for storing additional custom data "
-        "related to the instance.",
-    )
-
-    _unique_id: str = PrivateAttr(default_factory=lambda: str(ULID()))
-
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     def clone(self) -> Self:
         """
@@ -84,13 +71,6 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         :raises NotImplementedError: Always raised to direct users to use clone().
         """
         raise NotImplementedError("Use `clone()` instead")
-
-    @property
-    def unique_id(self) -> str:
-        """
-        Returns the ULID of the instance.
-        """
-        return self._unique_id
 
     @field_validator("raw_text", check_fields=False)
     @classmethod
@@ -130,15 +110,15 @@ class _InstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     )
     @classmethod
     def _validate_list_uniqueness(
-        cls, instances: list[_InstanceBase]
-    ) -> list[_InstanceBase]:
+        cls, instances: list[_AbstractInstanceBase]
+    ) -> list[_AbstractInstanceBase]:
         """
         Validates that all elements in the provided list have unique IDs.
 
-        :param instances: List of `_InstanceBase` objects to validate.
-        :type instances: list[_InstanceBase]
+        :param instances: List of `_AbstractInstanceBase` objects to validate.
+        :type instances: list[_AbstractInstanceBase]
         :return: The original list if all elements have unique IDs.
-        :rtype: list[_InstanceBase]
+        :rtype: list[_AbstractInstanceBase]
         :raises ValueError: If duplicate elements based on unique IDs are found in the list.
         """
         ids: list[str] = [i.unique_id for i in instances]

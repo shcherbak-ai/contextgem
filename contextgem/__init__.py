@@ -20,12 +20,13 @@
 ContextGem - Effortless LLM extraction from documents
 """
 
-__version__ = "0.17.1"
+__version__ = "0.18.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
     Aspect,
     BooleanConcept,
+    ChatSession,
     DateConcept,
     Document,
     DocumentLLM,
@@ -78,6 +79,7 @@ __all__ = (
     "StringExample",
     "JsonObjectExample",
     # LLMs
+    "ChatSession",
     "DocumentLLM",
     "DocumentLLMGroup",
     # Data models

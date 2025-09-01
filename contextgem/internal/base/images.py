@@ -41,5 +41,7 @@ class _Image(_InstanceBase):
         ..., description="The MIME type of the image."
     )
     base64_data: NonEmptyStr = Field(
-        ..., description="The base64-encoded data of the image."
+        ...,
+        description="The base64-encoded data of the image.",
+        repr=False,  # do not show in repr due to the excessive base64 string length
     )

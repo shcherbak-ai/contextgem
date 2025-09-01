@@ -1113,7 +1113,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1123,7 +1123,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1144,26 +1144,26 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P110\",\n            \"P111\",\n            \"P112\",\n            \"P113\"\n        ]\n    },\n    {\n        \"aspect_id\":
-        \"A1\",\n        \"paragraph_ids\": [\n            \"P76\",\n            \"P77\",\n            \"P78\",\n            \"P79\",\n            \"P80\",\n            \"P81\",\n            \"P83\",\n            \"P84\"\n        ]\n    },\n    {\n        \"aspect_id\":
-        \"A2\",\n        \"paragraph_ids\": [\n            \"P8\",\n            \"P114\",\n            \"P115\",\n            \"P116\",\n            \"P117\",\n            \"P118\",\n            \"P119\"\n        ]\n    },\n    {\n        \"aspect_id\":
-        \"A3\",\n        \"paragraph_ids\": []\n    },\n    {\n        \"aspect_id\":
-        \"A4\",\n        \"paragraph_ids\": []\n    },\n    {\n        \"aspect_id\":
-        \"A5\",\n        \"paragraph_ids\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1755547003, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_4f3d32ad4e", "usage": {"completion_tokens": 218, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 18493, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 18432}, "total_tokens": 18711}}'
+        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraph_ids\":
+        [\n      \"P110\",\n      \"P111\",\n      \"P112\",\n      \"P113\"\n    ]\n  },\n  {\n    \"aspect_id\":
+        \"A1\",\n    \"paragraph_ids\": [\n      \"P76\",\n      \"P77\",\n      \"P78\",\n      \"P79\",\n      \"P80\",\n      \"P81\",\n      \"P82\",\n      \"P83\",\n      \"P84\"\n    ]\n  },\n  {\n    \"aspect_id\":
+        \"A2\",\n    \"paragraph_ids\": [\n      \"P8\",\n      \"P114\",\n      \"P115\",\n      \"P116\",\n      \"P117\",\n      \"P118\",\n      \"P119\"\n    ]\n  },\n  {\n    \"aspect_id\":
+        \"A3\",\n    \"paragraph_ids\": []\n  },\n  {\n    \"aspect_id\": \"A4\",\n    \"paragraph_ids\":
+        []\n  },\n  {\n    \"aspect_id\": \"A5\",\n    \"paragraph_ids\": []\n  }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1756594180, "id": "chatcmpl-DUMMY",
+        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 223,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        18493, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        18716}}'
     headers:
       Content-Length:
-      - '2148'
+      - '1962'
       Content-Type:
       - application/json
       Date:
@@ -2309,7 +2309,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2319,7 +2319,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2344,37 +2344,36 @@ interactions:
         \"P139\",\n        \"justification\": \"This paragraph specifies that the
         governing law and venue shall be as specified in the SOW, indicating a variable
         governing law provision.\"\n      },\n      {\n        \"paragraph_id\": \"P153\",\n        \"justification\":
-        \"This paragraph explicitly overrides the previous governing law provision
-        by stating the Agreement shall be governed by Delaware law, creating a potential
-        inconsistency.\"\n      }\n    ]\n  },\n  {\n    \"aspect_id\": \"A1\",\n    \"paragraphs\":
-        [\n      {\n        \"paragraph_id\": \"P68\",\n        \"justification\":
+        \"This paragraph explicitly overrides the governing law provision by stating
+        the Agreement shall be governed by Delaware law regardless of Section 29.3.\"\n      }\n    ]\n  },\n  {\n    \"aspect_id\":
+        \"A1\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\": \"P68\",\n        \"justification\":
         \"This paragraph addresses open source software use, prohibiting copyleft
         OSS that would require disclosure of Client proprietary code without consent,
-        but allowing GPLv3 build or test dependencies, highlighting unusual exceptions.\"\n      },\n      {\n        \"paragraph_id\":
+        but allowing GPLv3 build or test dependencies without prior approval.\"\n      },\n      {\n        \"paragraph_id\":
         \"P267\",\n        \"justification\": \"This paragraph lists approved open
         source licenses including permissive, weak copyleft, and copyleft licenses
-        with conditions, indicating OSS provisions and copyleft exposure.\"\n      },\n      {\n        \"paragraph_id\":
-        \"P271\",\n        \"justification\": \"This paragraph specifies an exception
+        with conditions, highlighting exceptions and copyleft exposure.\"\n      },\n      {\n        \"paragraph_id\":
+        \"P271\",\n        \"justification\": \"This paragraph provides an exception
         permitting GPLv3 for non-distributed build or test tooling without prior approval,
-        an unusual exception related to copyleft risk.\"\n      }\n    ]\n  },\n  {\n    \"aspect_id\":
+        indicating unusual exceptions to copyleft risk.\"\n      }\n    ]\n  },\n  {\n    \"aspect_id\":
         \"A2\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\": \"P42\",\n        \"justification\":
         \"This paragraph defines a short review period of 10 business days (3 days
-        for critical deliverables) after which deliverables are deemed accepted, illustrating
-        an aggressive deemed acceptance construct.\"\n      }\n    ]\n  }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1755547006, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        for critical deliverables) after which deliverables are deemed accepted if
+        the Client does not respond.\"\n      }\n    ]\n  }\n]", "refusal": null,
+        "role": "assistant"}}], "created": 1756594182, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 364,
+        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 360,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        18450, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 18432},
-        "total_tokens": 18814}}'
+        18450, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
+        "total_tokens": 18810}}'
     headers:
       Content-Length:
-      - '3040'
+      - '2984'
       Content-Type:
       - application/json
       Date:
@@ -3041,7 +3040,7 @@ interactions:
       Copyleft: GPL/LGPL/AGPL (requires prior written approval)\\n- Exception: GPLv3
       permitted for non-distributed build or test tooling without prior approval\\n\\nEXHIBIT
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
-      Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -3054,13 +3053,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '50974'
+      - '50972'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3070,7 +3069,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3104,7 +3103,7 @@ interactions:
         application development\"\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
         \"C3\",\n    \"extracted_items\": []\n  },\n  {\n    \"concept_id\": \"C4\",\n    \"extracted_items\":
         []\n  },\n  {\n    \"concept_id\": \"C5\",\n    \"extracted_items\": []\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1755547011, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1756594186, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -3113,11 +3112,11 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 272,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        10321, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 10240},
-        "total_tokens": 10593}}'
+        10321, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        10593}}'
     headers:
       Content-Length:
-      - '2311'
+      - '2307'
       Content-Type:
       - application/json
       Date:
@@ -4334,7 +4333,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -4347,13 +4346,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '96038'
+      - '96036'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4363,7 +4362,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4378,77 +4377,96 @@ interactions:
     uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
-        [\n      {\n        \"value\": \"For SOWs with a total value under $50,000,
-        either Party may terminate for convenience upon five (5) days\u2019 prior
-        written notice\",\n        \"justification\": \"This termination notice period
-        for low-value SOWs is shorter than the standard 30 days, which is an uncommon
-        provision compared to typical agreements.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P130\"\n        ]\n      },\n      {\n        \"value\": \"Developer
-        may include GPLv3-licensed build or test dependencies without prior written
-        consent\",\n        \"justification\": \"Allowing GPLv3-licensed build or
-        test dependencies without prior consent is a specific exception to the usual
-        restriction on copyleft OSS, which is an unusual provision.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P68\"\n        ]\n      },\n      {\n        \"value\": \"Invoices
-        for fixed-price milestones are due within ten (10) days of receipt, while
-        other payments are due within 30 days\",\n        \"justification\": \"The
-        shorter payment term for fixed-price milestones compared to the standard 30
-        days is a notable deviation from common payment terms.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P79\"\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
-        \"C1\",\n    \"extracted_items\": [\n      {\n        \"value\": {\n          \"provision_reference\":
-        \"27.2\",\n          \"risk_description\": \"Shorter termination notice period
-        of 5 days for SOWs under $50,000 may lead to abrupt project termination and
-        insufficient preparation time.\",\n          \"risk_severity\": 4\n        },\n        \"justification\":
-        \"The provision allows termination for convenience with only 5 days'' notice
-        for low-value SOWs, which poses a significant risk to project continuity.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P130\"\n        ]\n      },\n      {\n        \"value\": {\n          \"provision_reference\":
-        \"15.3\",\n          \"risk_description\": \"Short payment terms for fixed-price
-        milestones (10 days) may cause cash flow challenges for Developer.\",\n          \"risk_severity\":
-        3\n        },\n        \"justification\": \"The payment terms specify a shorter
-        due date for fixed-price milestone invoices, which could impact Developer''s
-        financial planning.\",\n        \"reference_paragraph_ids\": [\n          \"P79\"\n        ]\n      },\n      {\n        \"value\":
-        {\n          \"provision_reference\": \"21.1\",\n          \"risk_description\":
-        \"Developer indemnification obligation for IP infringement exposes Developer
-        to potentially unlimited liability.\",\n          \"risk_severity\": 5\n        },\n        \"justification\":
-        \"Developer''s indemnification for IP claims is uncapped, representing a high
-        financial risk.\",\n        \"reference_paragraph_ids\": [\n          \"P104\",\n          \"P109\"\n        ]\n      },\n      {\n        \"value\":
-        {\n          \"provision_reference\": \"6.2\",\n          \"risk_description\":
-        \"Developer is not obligated to start work on change requests until executed
-        or authorized, potentially delaying project progress.\",\n          \"risk_severity\":
-        3\n        },\n        \"justification\": \"The clause delays Developer''s
-        obligation to begin changes until formal approval, which may impact timelines.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P39\"\n        ]\n      },\n      {\n        \"value\": {\n          \"provision_reference\":
-        \"4.4\",\n          \"risk_description\": \"Client may partially accept deliverables,
-        requiring ongoing remediation and potentially extending project timelines.\",\n          \"risk_severity\":
-        3\n        },\n        \"justification\": \"Partial acceptance allows deliverables
-        to be accepted in parts, which may complicate completion and acceptance processes.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P44\"\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
-        \"C2\",\n    \"extracted_items\": [\n      {\n        \"value\": {\n          \"labels\":
-        [\n            \"medium\"\n          ]\n        },\n        \"justification\":
-        \"The agreement includes standard professional warranties, indemnification
-        with uncapped IP liability for Developer, and specific termination and payment
-        terms that present moderate risk to the Client.\",\n        \"reference_paragraph_ids\":
-        [\n          \"P104\",\n          \"P109\",\n          \"P130\",\n          \"P79\",\n          \"P98\",\n          \"P99\",\n          \"P100\"\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1755547015, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 922,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        19907, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 19840},
-        "total_tokens": 20829}}'
+      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
+        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
+        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
+        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
+        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
+        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
+        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
+        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
+        [\\n            {\\n                \\\"value\\\": \\\"For SOWs with a total
+        value under $50,000, either Party may terminate for convenience upon five
+        (5) days\u2019 prior written notice\\\",\\n                \\\"justification\\\":
+        \\\"This termination notice period for low-value SOWs is shorter than the
+        standard 30 days, which is an uncommon provision compared to typical agreements.\\\",\\n
+        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P130\\\"\\n
+        \               ]\\n            },\\n            {\\n                \\\"value\\\":
+        \\\"Developer may include GPLv3-licensed build or test dependencies without
+        prior written consent\\\",\\n                \\\"justification\\\": \\\"Allowing
+        GPLv3-licensed build or test dependencies without prior consent is a specific
+        exception to the usual requirement for prior approval of copyleft licenses.\\\",\\n
+        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P68\\\"\\n
+        \               ]\\n            },\\n            {\\n                \\\"value\\\":
+        \\\"If Client does not respond within the Review Period, the Deliverable is
+        deemed Accepted\\\",\\n                \\\"justification\\\": \\\"Automatic
+        acceptance of deliverables upon Client's non-response within the review period
+        is a notable provision that may be considered unusual.\\\",\\n                \\\"reference_paragraph_ids\\\":
+        [\\n                    \\\"P42\\\"\\n                ]\\n            }\\n
+        \       ]\\n    },\\n    {\\n        \\\"concept_id\\\": \\\"C1\\\",\\n        \\\"extracted_items\\\":
+        [\\n            {\\n                \\\"value\\\": {\\n                    \\\"provision_reference\\\":
+        \\\"27.4\\\",\\n                    \\\"risk_description\\\": \\\"Developer
+        may suspend work if undisputed invoices are more than 30 days overdue and
+        not cured within 10 days after notice, risking project delays.\\\",\\n                    \\\"risk_severity\\\":
+        4\\n                },\\n                \\\"justification\\\": \\\"The provision
+        allows Developer to suspend work due to overdue payments, which poses a significant
+        risk to project continuity.\\\",\\n                \\\"reference_paragraph_ids\\\":
+        [\\n                    \\\"P132\\\"\\n                ]\\n            },\\n
+        \           {\\n                \\\"value\\\": {\\n                    \\\"provision_reference\\\":
+        \\\"21.1\\\",\\n                    \\\"risk_description\\\": \\\"Developer
+        indemnifies Client against third-party IP infringement claims related to Work
+        Product, exposing Developer to potential legal and financial liabilities.\\\",\\n
+        \                   \\\"risk_severity\\\": 5\\n                },\\n                \\\"justification\\\":
+        \\\"The indemnification clause imposes high legal and financial risk on Developer
+        for IP infringement claims.\\\",\\n                \\\"reference_paragraph_ids\\\":
+        [\\n                    \\\"P104\\\"\\n                ]\\n            },\\n
+        \           {\\n                \\\"value\\\": {\\n                    \\\"provision_reference\\\":
+        \\\"22.2\\\",\\n                    \\\"risk_description\\\": \\\"Liability
+        cap limits each Party\u2019s total aggregate liability to fees paid in the
+        prior 12 months, potentially limiting Developer\u2019s exposure but also capping
+        Client\u2019s recovery.\\\",\\n                    \\\"risk_severity\\\":
+        3\\n                },\\n                \\\"justification\\\": \\\"The liability
+        cap provision limits financial exposure, which is a moderate risk factor for
+        the Developer.\\\",\\n                \\\"reference_paragraph_ids\\\": [\\n
+        \                   \\\"P112\\\"\\n                ]\\n            },\\n            {\\n
+        \               \\\"value\\\": {\\n                    \\\"provision_reference\\\":
+        \\\"20.1\\\",\\n                    \\\"risk_description\\\": \\\"Warranty
+        period of 90 days after Acceptance (60 days for time-and-materials) may limit
+        Developer\u2019s post-delivery obligations.\\\",\\n                    \\\"risk_severity\\\":
+        3\\n                },\\n                \\\"justification\\\": \\\"The limited
+        warranty period restricts Developer\u2019s responsibility duration, which
+        is a moderate risk.\\\",\\n                \\\"reference_paragraph_ids\\\":
+        [\\n                    \\\"P98\\\"\\n                ]\\n            },\\n
+        \           {\\n                \\\"value\\\": {\\n                    \\\"provision_reference\\\":
+        \\\"15.3\\\",\\n                    \\\"risk_description\\\": \\\"Late payment
+        interest capped at 1.5% per month or maximum allowed by law, which may affect
+        Developer\u2019s cash flow.\\\",\\n                    \\\"risk_severity\\\":
+        2\\n                },\\n                \\\"justification\\\": \\\"The payment
+        terms with capped late interest pose a low to moderate financial risk to Developer.\\\",\\n
+        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P79\\\"\\n
+        \               ]\\n            }\\n        ]\\n    },\\n    {\\n        \\\"concept_id\\\":
+        \\\"C2\\\",\\n        \\\"extracted_items\\\": [\\n            {\\n                \\\"value\\\":
+        {\\n                    \\\"labels\\\": [\\n                        \\\"medium\\\"\\n
+        \                   ]\\n                },\\n                \\\"justification\\\":
+        \\\"The agreement includes standard protections and responsibilities but also
+        contains provisions such as short termination notice for low-value SOWs and
+        work suspension for overdue payments, indicating a moderate risk level for
+        the Client.\\\",\\n                \\\"reference_paragraph_ids\\\": [\\n                    \\\"P130\\\",\\n
+        \                   \\\"P132\\\"\\n                ]\\n            }\\n        ]\\n
+        \   }\\n]\", \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1756594190,
+        \"id\": \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\", \"object\":
+        \"chat.completion\", \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
+        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
+        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
+        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
+        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
+        \"fp_4f3d32ad4e\", \"usage\": {\"completion_tokens\": 912, \"completion_tokens_details\":
+        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
+        0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 19907, \"prompt_tokens_details\":
+        {\"audio_tokens\": 0, \"cached_tokens\": 1280}, \"total_tokens\": 20819}}"
     headers:
       Content-Length:
-      - '5816'
+      - '6543'
       Content-Type:
       - application/json
       Date:
@@ -4919,7 +4937,7 @@ interactions:
       [\\\"22.3 Excluded Claims. \\\\\\\"Excluded Claims\\\\\\\" means (a) a Party\u2019s
       indemnification obligations, (b) a Party\u2019s breach of confidentiality obligations,
       (c) infringement or misappropriation of the other Party\u2019s IPR, and (d)
-      a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -4932,13 +4950,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34752'
+      - '34750'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4948,7 +4966,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4970,16 +4988,16 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1755547026, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1756594200, "id": "chatcmpl-DUMMY", "model":
         "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 406, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 384,
+        "system_fingerprint": null, "usage": {"completion_tokens": 150, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 7198, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7604}}'
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7348}}'
     headers:
       Content-Length:
       - '1246'
@@ -5459,6 +5477,8 @@ interactions:
       18.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"15.5
       Expenses. Pre-approved, reasonable out-of-pocket travel and related expenses
       will be reimbursed at cost per Section 18.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"16. TAXES\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"16. TAXES\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"16.1 Taxes. Fees are exclusive of taxes.
       Client is responsible for all applicable sales, use, VAT, GST, and similar taxes,
       excluding taxes based on Developer\u2019s income.\\\", \\\"justification\\\":
@@ -5470,7 +5490,7 @@ interactions:
       amount invoiced, unless a valid exemption applies.\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"16.2 Withholding. If withholding is
       required by law, Client shall gross up payments so Developer receives the full
-      amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -5483,13 +5503,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '36142'
+      - '36300'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5499,7 +5519,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5515,25 +5535,25 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1755547030, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 278, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 256,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7538, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7816}}'
+        [], "content": "{\"rating\":5,\"justification\":\"\"}", "refusal": null, "role":
+        "assistant"}}], "created": 1756594201, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        null, "usage": {"completion_tokens": 276, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 256, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 7582, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        0}, "total_tokens": 7858}}'
     headers:
       Content-Length:
-      - '1246'
+      - '1243'
       Content-Type:
       - application/json
       Date:
@@ -6024,7 +6044,7 @@ interactions:
       that one archival copy may be retained for legal compliance.\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"23.5 Return/Destruction. Upon request
       or termination, Recipient will return or destroy Confidential Information, except
-      that one archival copy may be retained for legal compliance.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      that one archival copy may be retained for legal compliance.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -6037,13 +6057,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '36473'
+      - '36471'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6053,7 +6073,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6069,25 +6089,25 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1755547034, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1756594204, "id": "chatcmpl-DUMMY", "model":
         "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
         "system_fingerprint": null, "usage": {"completion_tokens": 214, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 7518, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7732}}'
+        {"audio_tokens": 0, "cached_tokens": 6656}, "total_tokens": 7732}}'
     headers:
       Content-Length:
-      - '1246'
+      - '1249'
       Content-Type:
       - application/json
       Date:
@@ -6543,11 +6563,11 @@ interactions:
       \\\"_StringItem\\\", \\\"value\\\": \\\"32.6 Governing Law Override. Notwithstanding
       Section 29.3, this Agreement shall be governed by the laws of the State of Delaware,
       without regard to its conflicts of laws rules.\\\", \\\"justification\\\": \\\"This
-      paragraph explicitly overrides the previous governing law provision by stating
-      the Agreement shall be governed by Delaware law, creating a potential inconsistency.\\\",
-      \\\"reference_paragraphs\\\": [\\\"32.6 Governing Law Override. Notwithstanding
-      Section 29.3, this Agreement shall be governed by the laws of the State of Delaware,
-      without regard to its conflicts of laws rules.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      paragraph explicitly overrides the governing law provision by stating the Agreement
+      shall be governed by Delaware law regardless of Section 29.3.\\\", \\\"reference_paragraphs\\\":
+      [\\\"32.6 Governing Law Override. Notwithstanding Section 29.3, this Agreement
+      shall be governed by the laws of the State of Delaware, without regard to its
+      conflicts of laws rules.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -6560,13 +6580,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '33924'
+      - '33904'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6576,7 +6596,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6592,22 +6612,22 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\":5,\"justification\":\"\"}", "refusal": null, "role":
-        "assistant"}}], "created": 1755547036, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"detected": false, "filtered": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        null, "usage": {"completion_tokens": 212, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 192, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 6996, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        6656}, "total_tokens": 7208}}'
+        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
+        "role": "assistant"}}], "created": 1756594206, "id": "chatcmpl-DUMMY", "model":
+        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": null, "usage": {"completion_tokens": 150, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 6996, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7146}}'
     headers:
       Content-Length:
       - '1246'
@@ -7061,23 +7081,23 @@ interactions:
       build or test dependencies without prior written consent.\\\", \\\"justification\\\":
       \\\"This paragraph addresses open source software use, prohibiting copyleft
       OSS that would require disclosure of Client proprietary code without consent,
-      but allowing GPLv3 build or test dependencies, highlighting unusual exceptions.\\\",
-      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
-      consistent with Exhibit H. Developer shall not include copyleft OSS that would
-      require disclosure of Client proprietary code without Client\u2019s prior written
-      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
-      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      but allowing GPLv3 build or test dependencies without prior approval.\\\", \\\"reference_paragraphs\\\":
+      [\\\"13.1 OSS Management. Developer may use OSS consistent with Exhibit H. Developer
+      shall not include copyleft OSS that would require disclosure of Client proprietary
+      code without Client\u2019s prior written consent. Notwithstanding the foregoing,
+      Developer may include GPLv3-licensed build or test dependencies without prior
+      written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\",
       \\\"justification\\\": \\\"This paragraph lists approved open source licenses
       including permissive, weak copyleft, and copyleft licenses with conditions,
-      indicating OSS provisions and copyleft exposure.\\\", \\\"reference_paragraphs\\\":
+      highlighting exceptions and copyleft exposure.\\\", \\\"reference_paragraphs\\\":
       [\\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"- Exception: GPLv3 permitted for non-distributed
       build or test tooling without prior approval\\\", \\\"justification\\\": \\\"This
-      paragraph specifies an exception permitting GPLv3 for non-distributed build
-      or test tooling without prior approval, an unusual exception related to copyleft
+      paragraph provides an exception permitting GPLv3 for non-distributed build or
+      test tooling without prior approval, indicating unusual exceptions to copyleft
       risk.\\\", \\\"reference_paragraphs\\\": [\\\"- Exception: GPLv3 permitted for
-      non-distributed build or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      non-distributed build or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -7090,13 +7110,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34473'
+      - '34459'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7106,7 +7126,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7127,20 +7147,25 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\n  \"rating\": 5,\n  \"justification\": \"\"\n}", "refusal":
-        null, "role": "assistant"}}], "created": 1755547038, "id": "chatcmpl-DUMMY",
-        "model": "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 409, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 384,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7081, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6656}, "total_tokens": 7490}}'
+        [], "content": "{\"rating\": 4, \"justification\": \"Items 1 and 3 accurately
+        and precisely reflect the contract text about copyleft OSS and the GPLv3 exception.
+        However, item 2 only captures the Exhibit H title while its justification
+        claims the exhibit lists specific license categories; the actual extracted
+        value omits those license entries, making the extraction slightly incomplete/inconsistent
+        with the claimed content.\"}", "refusal": null, "role": "assistant"}}], "created":
+        1756594208, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07", "object":
+        "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
+        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
+        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": null, "usage": {"completion_tokens":
+        602, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 512, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        7078, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        7680}}'
     headers:
       Content-Length:
-      - '1258'
+      - '1619'
       Content-Type:
       - application/json
       Date:
@@ -7591,14 +7616,13 @@ interactions:
       Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\" in the SOW,
       the Review Period shall be three (3) business days.\\\", \\\"justification\\\":
       \\\"This paragraph defines a short review period of 10 business days (3 days
-      for critical deliverables) after which deliverables are deemed accepted, illustrating
-      an aggressive deemed acceptance construct.\\\", \\\"reference_paragraphs\\\":
-      [\\\"7.2 Review Period. Unless otherwise stated in the SOW, Client will have
-      [10] business days to test and either (a) provide written Acceptance or (b)
-      provide a written list of material non-conformities. If Client does not respond
-      within the Review Period, the Deliverable is deemed Accepted. For Deliverables
-      classified as \\\\\\\"Critical\\\\\\\" in the SOW, the Review Period shall be
-      three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      for critical deliverables) after which deliverables are deemed accepted if the
+      Client does not respond.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review
+      Period. Unless otherwise stated in the SOW, Client will have [10] business days
+      to test and either (a) provide written Acceptance or (b) provide a written list
+      of material non-conformities. If Client does not respond within the Review Period,
+      the Deliverable is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
+      in the SOW, the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -7611,13 +7635,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '33684'
+      - '33657'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7627,7 +7651,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7649,19 +7673,19 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\"rating\":5,\"justification\":\"\"}", "refusal": null, "role":
-        "assistant"}}], "created": 1755547043, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
+        "assistant"}}], "created": 1756594214, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        null, "usage": {"completion_tokens": 148, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 128, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 6951, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        6656}, "total_tokens": 7099}}'
+        null, "usage": {"completion_tokens": 84, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 64, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 6950, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        0}, "total_tokens": 7034}}'
     headers:
       Content-Length:
-      - '1246'
+      - '1241'
       Content-Type:
       - application/json
       Date:
@@ -8108,7 +8132,7 @@ interactions:
       \\\"_StringItem\\\", \\\"value\\\": \\\"Orion Commerce, Inc. (Client)\\\", \\\"justification\\\":
       null}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
       \\\"value\\\": \\\"Nova Digital Solutions LLC (Developer)\\\", \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -8121,13 +8145,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '32808'
+      - '32806'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8137,7 +8161,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8158,20 +8182,20 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\":5, \"justification\":\"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1755547045, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 149, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 6771, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6656}, "total_tokens": 6920}}'
+        [], "content": "{\"rating\":5,\"justification\":\"\"}", "refusal": null, "role":
+        "assistant"}}], "created": 1756594215, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        null, "usage": {"completion_tokens": 148, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 128, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 6771, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        6656}, "total_tokens": 6919}}'
     headers:
       Content-Length:
-      - '1247'
+      - '1246'
       Content-Type:
       - application/json
       Date:
@@ -8619,7 +8643,7 @@ interactions:
       \\\"severity_levels\\\": [{\\\"level\\\": 1, \\\"response_hours\\\": 0.5}, {\\\"level\\\":
       2, \\\"response_hours\\\": 2.0}, {\\\"level\\\": 3, \\\"response_hours\\\":
       24.0}, {\\\"level\\\": 4, \\\"response_hours\\\": 48.0}]}, \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -8632,13 +8656,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '32858'
+      - '32856'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8648,7 +8672,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8664,31 +8688,30 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 4, \"justification\": \"Availability (99.9%)
-        and Severity 1 and 2 response times (30 minutes = 0.5 hr; 2 hours) are directly
-        supported by Exhibit C. However, Severity 3 and 4 are specified in the document
-        as \\\"1 business day\\\" and \\\"2 business days\\\" respectively, and converting
-        those to 24 and 48 hours is an unsupported assumption. The extraction also
-        omits other key SLA metrics present in Exhibit C (e.g., workaround and resolution
-        targets for severities).\"}", "refusal": null, "role": "assistant"}}], "created":
-        1755547047, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07", "object":
+        [], "content": "{\"rating\": 4, \"justification\": \"Availability (99.9) and
+        Severity 1 and 2 response times match Exhibit C. However, converting \\\"1
+        business day\\\" and \\\"2 business days\\\" to 24 and 48 hours is an unstated
+        assumption (the document specifies business days, not explicit hour counts).
+        The extraction also omits other SLA commitments in Exhibit C (workaround and
+        resolution time targets).\" }", "refusal": null, "role": "assistant"}}], "created":
+        1756594217, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07", "object":
         "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
-        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"detected":
-        false, "filtered": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
+        false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}}], "system_fingerprint": null, "usage": {"completion_tokens":
-        637, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 512, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        674, "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 576, "rejected_prediction_tokens": 0}, "prompt_tokens":
         6803, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6656},
-        "total_tokens": 7440}}'
+        "total_tokens": 7477}}'
     headers:
       Content-Length:
-      - '1694'
+      - '1607'
       Content-Type:
       - application/json
       Date:
@@ -9133,7 +9156,7 @@ interactions:
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Primary
       Agreement Type</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_LabelItem\\\", \\\"value\\\": [\\\"web application development\\\"], \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -9146,13 +9169,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '32670'
+      - '32668'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -9162,7 +9185,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -9184,7 +9207,7 @@ interactions:
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\"rating\":5,\"justification\":\"\"}", "refusal": null, "role":
-        "assistant"}}], "created": 1755547052, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
+        "assistant"}}], "created": 1756594223, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
@@ -9653,21 +9676,22 @@ interactions:
       \\\"_StringItem\\\", \\\"value\\\": \\\"Developer may include GPLv3-licensed
       build or test dependencies without prior written consent\\\", \\\"justification\\\":
       \\\"Allowing GPLv3-licensed build or test dependencies without prior consent
-      is a specific exception to the usual restriction on copyleft OSS, which is an
-      unusual provision.\\\", \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management.
-      Developer may use OSS consistent with Exhibit H. Developer shall not include
-      copyleft OSS that would require disclosure of Client proprietary code without
-      Client\u2019s prior written consent. Notwithstanding the foregoing, Developer
-      may include GPLv3-licensed build or test dependencies without prior written
-      consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
-      \\\"value\\\": \\\"Invoices for fixed-price milestones are due within ten (10)
-      days of receipt, while other payments are due within 30 days\\\", \\\"justification\\\":
-      \\\"The shorter payment term for fixed-price milestones compared to the standard
-      30 days is a notable deviation from common payment terms.\\\", \\\"reference_paragraphs\\\":
-      [\\\"15.3 Payment Terms. Payments are due within [30] days of invoice date.
-      Late amounts accrue interest at the lesser of 1.5% per month or the maximum
-      allowed by law. Notwithstanding the foregoing, invoices for fixed-price milestones
-      are due within ten (10) days of receipt.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      is a specific exception to the usual requirement for prior approval of copyleft
+      licenses.\\\", \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer
+      may use OSS consistent with Exhibit H. Developer shall not include copyleft
+      OSS that would require disclosure of Client proprietary code without Client\u2019s
+      prior written consent. Notwithstanding the foregoing, Developer may include
+      GPLv3-licensed build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"If Client does not respond within the
+      Review Period, the Deliverable is deemed Accepted\\\", \\\"justification\\\":
+      \\\"Automatic acceptance of deliverables upon Client's non-response within the
+      review period is a notable provision that may be considered unusual.\\\", \\\"reference_paragraphs\\\":
+      [\\\"7.2 Review Period. Unless otherwise stated in the SOW, Client will have
+      [10] business days to test and either (a) provide written Acceptance or (b)
+      provide a written list of material non-conformities. If Client does not respond
+      within the Review Period, the Deliverable is deemed Accepted. For Deliverables
+      classified as \\\\\\\"Critical\\\\\\\" in the SOW, the Review Period shall be
+      three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -9680,13 +9704,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34763'
+      - '34861'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -9696,7 +9720,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -9712,25 +9736,25 @@ interactions:
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1755547054, "id": "chatcmpl-DUMMY", "model":
+        "role": "assistant"}}], "created": 1756594224, "id": "chatcmpl-DUMMY", "model":
         "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 342, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 320,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7168, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6656}, "total_tokens": 7510}}'
+        "system_fingerprint": null, "usage": {"completion_tokens": 214, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 7184, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7398}}'
     headers:
       Content-Length:
-      - '1249'
+      - '1246'
       Content-Type:
       - application/json
       Date:
@@ -10174,55 +10198,54 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Risk
       Assessment Summary (Developer)</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"27.2\\\",
-      \\\"risk_description\\\": \\\"Shorter termination notice period of 5 days for
-      SOWs under $50,000 may lead to abrupt project termination and insufficient preparation
-      time.\\\", \\\"risk_severity\\\": 4}, \\\"justification\\\": \\\"The provision
-      allows termination for convenience with only 5 days' notice for low-value SOWs,
-      which poses a significant risk to project continuity.\\\", \\\"reference_paragraphs\\\":
-      [\\\"27.2 Termination for Convenience. Either Party may terminate this Agreement
-      or any SOW for convenience upon [30] days\u2019 prior written notice. In such
-      case, Client will pay for Services performed and non-cancellable commitments
-      incurred through the effective termination date. For SOWs with a total value
-      under $50,000, either Party may terminate for convenience upon five (5) days\u2019
-      prior written notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"27.4\\\",
+      \\\"risk_description\\\": \\\"Developer may suspend work if undisputed invoices
+      are more than 30 days overdue and not cured within 10 days after notice, risking
+      project delays.\\\", \\\"risk_severity\\\": 4}, \\\"justification\\\": \\\"The
+      provision allows Developer to suspend work due to overdue payments, which poses
+      a significant risk to project continuity.\\\", \\\"reference_paragraphs\\\":
+      [\\\"27.4 Suspension. Developer may suspend work upon written notice if undisputed
+      invoices are more than [30] days overdue and not cured within ten (10) days
+      after notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"21.1\\\",
+      \\\"risk_description\\\": \\\"Developer indemnifies Client against third-party
+      IP infringement claims related to Work Product, exposing Developer to potential
+      legal and financial liabilities.\\\", \\\"risk_severity\\\": 5}, \\\"justification\\\":
+      \\\"The indemnification clause imposes high legal and financial risk on Developer
+      for IP infringement claims.\\\", \\\"reference_paragraphs\\\": [\\\"21.1 By
+      Developer. Developer will defend, indemnify, and hold harmless Client against
+      third-party claims alleging that the Work Product infringes or misappropriates
+      such third party\u2019s Intellectual Property Rights, and pay resulting damages,
+      costs, and reasonable attorneys\u2019 fees finally awarded by a court or agreed
+      in settlement.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"22.2\\\",
+      \\\"risk_description\\\": \\\"Liability cap limits each Party\u2019s total aggregate
+      liability to fees paid in the prior 12 months, potentially limiting Developer\u2019s
+      exposure but also capping Client\u2019s recovery.\\\", \\\"risk_severity\\\":
+      3}, \\\"justification\\\": \\\"The liability cap provision limits financial
+      exposure, which is a moderate risk factor for the Developer.\\\", \\\"reference_paragraphs\\\":
+      [\\\"22.2 Cap. Except for Excluded Claims, each Party\u2019s total aggregate
+      liability arising out of or related to this Agreement shall not exceed the total
+      fees paid or payable under the applicable SOW during the twelve (12) months
+      preceding the event giving rise to liability.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"20.1\\\",
+      \\\"risk_description\\\": \\\"Warranty period of 90 days after Acceptance (60
+      days for time-and-materials) may limit Developer\u2019s post-delivery obligations.\\\",
+      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"The limited warranty period
+      restricts Developer\u2019s responsibility duration, which is a moderate risk.\\\",
+      \\\"reference_paragraphs\\\": [\\\"20.1 Performance Warranty. For ninety (90)
+      days after Acceptance, Developer warrants that the Work Product will materially
+      conform to the SOW and Documentation. For time-and-materials engagements, the
+      warranty period shall be sixty (60) days after Acceptance.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"15.3\\\",
-      \\\"risk_description\\\": \\\"Short payment terms for fixed-price milestones
-      (10 days) may cause cash flow challenges for Developer.\\\", \\\"risk_severity\\\":
-      3}, \\\"justification\\\": \\\"The payment terms specify a shorter due date
-      for fixed-price milestone invoices, which could impact Developer's financial
-      planning.\\\", \\\"reference_paragraphs\\\": [\\\"15.3 Payment Terms. Payments
-      are due within [30] days of invoice date. Late amounts accrue interest at the
-      lesser of 1.5% per month or the maximum allowed by law. Notwithstanding the
-      foregoing, invoices for fixed-price milestones are due within ten (10) days
-      of receipt.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_JsonObjectItem\\\",
-      \\\"value\\\": {\\\"provision_reference\\\": \\\"21.1\\\", \\\"risk_description\\\":
-      \\\"Developer indemnification obligation for IP infringement exposes Developer
-      to potentially unlimited liability.\\\", \\\"risk_severity\\\": 5}, \\\"justification\\\":
-      \\\"Developer's indemnification for IP claims is uncapped, representing a high
-      financial risk.\\\", \\\"reference_paragraphs\\\": [\\\"21.1 By Developer. Developer
-      will defend, indemnify, and hold harmless Client against third-party claims
-      alleging that the Work Product infringes or misappropriates such third party\u2019s
-      Intellectual Property Rights, and pay resulting damages, costs, and reasonable
-      attorneys\u2019 fees finally awarded by a court or agreed in settlement.\\\",
-      \\\"21.6 Aggregate Cap for IP Claims. Notwithstanding Section 22.2, Developer\u2019s
-      liability for IP infringement claims shall be uncapped.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"6.2\\\",
-      \\\"risk_description\\\": \\\"Developer is not obligated to start work on change
-      requests until executed or authorized, potentially delaying project progress.\\\",
-      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"The clause delays Developer's
-      obligation to begin changes until formal approval, which may impact timelines.\\\",
-      \\\"reference_paragraphs\\\": [\\\"6.2 Approval. No change is binding unless
-      signed by both Parties. Developer is not obligated to start work on a change
-      until a Change Request is executed or written authorization is provided per
-      the SOW.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_JsonObjectItem\\\",
-      \\\"value\\\": {\\\"provision_reference\\\": \\\"4.4\\\", \\\"risk_description\\\":
-      \\\"Client may partially accept deliverables, requiring ongoing remediation
-      and potentially extending project timelines.\\\", \\\"risk_severity\\\": 3},
-      \\\"justification\\\": \\\"Partial acceptance allows deliverables to be accepted
-      in parts, which may complicate completion and acceptance processes.\\\", \\\"reference_paragraphs\\\":
-      [\\\"7.4 Partial Acceptance. Client may Accept portions of a Deliverable that
-      meet the Acceptance Criteria, with remaining items tracked for remediation.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      \\\"risk_description\\\": \\\"Late payment interest capped at 1.5% per month
+      or maximum allowed by law, which may affect Developer\u2019s cash flow.\\\",
+      \\\"risk_severity\\\": 2}, \\\"justification\\\": \\\"The payment terms with
+      capped late interest pose a low to moderate financial risk to Developer.\\\",
+      \\\"reference_paragraphs\\\": [\\\"15.3 Payment Terms. Payments are due within
+      [30] days of invoice date. Late amounts accrue interest at the lesser of 1.5%
+      per month or the maximum allowed by law. Notwithstanding the foregoing, invoices
+      for fixed-price milestones are due within ten (10) days of receipt.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -10235,13 +10258,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '36373'
+      - '36242'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -10251,7 +10274,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -10266,31 +10289,35 @@ interactions:
     uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 4, \"justification\": \"Most extracted risks
-        accurately reflect and are directly supported by the Agreement (termination
-        notice for <$50k SOWs, short fixed-price payment terms, uncapped IP indemnity,
-        and change-request start obligations). However one item mislabels the provision
-        reference (it lists 4.4 but the cited and relevant clause is 7.4 on Partial
-        Acceptance). Severity assessments are reasonable and grounded in the text.\"}",
-        "refusal": null, "role": "assistant"}}], "created": 1755547057, "id": "chatcmpl-DUMMY",
-        "model": "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 999, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 896,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7498, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6656}, "total_tokens": 8497}}'
+      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
+        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
+        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
+        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
+        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
+        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
+        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"{\\\"rating\\\":
+        4, \\\"justification\\\": \\\"The extracted items are mostly accurate and
+        well-supported by the cited provisions (suspension right 27.4, IP indemnity
+        21.1, liability cap 22.2, warranty 20.1, payment terms 15.3). However, the
+        warranty entry is mischaracterized as a risk to the Developer when it in fact
+        limits Developer\u2019s post-delivery obligations (benefit rather than risk).
+        The summary also omits interplay between the liability cap and Excluded Claims/uncapped
+        IP liability (see 21.6 and 22.3), which is a relevant nuance for Developer
+        risk exposure.\\\"}\", \"refusal\": null, \"role\": \"assistant\"}}], \"created\":
+        1756594227, \"id\": \"chatcmpl-DUMMY\", \"model\": \"gpt-5-mini-2025-08-07\",
+        \"object\": \"chat.completion\", \"prompt_filter_results\": [{\"prompt_index\":
+        0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\":
+        \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\": false}, \"self_harm\":
+        {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\":
+        false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\":
+        \"safe\"}}}], \"system_fingerprint\": null, \"usage\": {\"completion_tokens\":
+        1107, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\":
+        0, \"reasoning_tokens\": 960, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\":
+        7483, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\":
+        0}, \"total_tokens\": 8590}}"
     headers:
       Content-Length:
-      - '1660'
+      - '1772'
       Content-Type:
       - application/json
       Date:
@@ -10735,32 +10762,17 @@ interactions:
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Agreement
       Risk Category (Client)</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_LabelItem\\\", \\\"value\\\": [\\\"medium\\\"], \\\"justification\\\":
-      \\\"The agreement includes standard professional warranties, indemnification
-      with uncapped IP liability for Developer, and specific termination and payment
-      terms that present moderate risk to the Client.\\\", \\\"reference_paragraphs\\\":
-      [\\\"15.3 Payment Terms. Payments are due within [30] days of invoice date.
-      Late amounts accrue interest at the lesser of 1.5% per month or the maximum
-      allowed by law. Notwithstanding the foregoing, invoices for fixed-price milestones
-      are due within ten (10) days of receipt.\\\", \\\"20.1 Performance Warranty.
-      For ninety (90) days after Acceptance, Developer warrants that the Work Product
-      will materially conform to the SOW and Documentation. For time-and-materials
-      engagements, the warranty period shall be sixty (60) days after Acceptance.\\\",
-      \\\"20.2 Services Warranty. Developer warrants it will perform Services in a
-      professional and workmanlike manner.\\\", \\\"20.3 Virus-Free. Developer warrants
-      that, to its knowledge using commercially reasonable scanning tools, Deliverables
-      are free from known malicious code at the time of delivery.\\\", \\\"21.1 By
-      Developer. Developer will defend, indemnify, and hold harmless Client against
-      third-party claims alleging that the Work Product infringes or misappropriates
-      such third party\u2019s Intellectual Property Rights, and pay resulting damages,
-      costs, and reasonable attorneys\u2019 fees finally awarded by a court or agreed
-      in settlement.\\\", \\\"21.6 Aggregate Cap for IP Claims. Notwithstanding Section
-      22.2, Developer\u2019s liability for IP infringement claims shall be uncapped.\\\",
-      \\\"27.2 Termination for Convenience. Either Party may terminate this Agreement
-      or any SOW for convenience upon [30] days\u2019 prior written notice. In such
-      case, Client will pay for Services performed and non-cancellable commitments
-      incurred through the effective termination date. For SOWs with a total value
-      under $50,000, either Party may terminate for convenience upon five (5) days\u2019
-      prior written notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\\n\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      \\\"The agreement includes standard protections and responsibilities but also
+      contains provisions such as short termination notice for low-value SOWs and
+      work suspension for overdue payments, indicating a moderate risk level for the
+      Client.\\\", \\\"reference_paragraphs\\\": [\\\"27.2 Termination for Convenience.
+      Either Party may terminate this Agreement or any SOW for convenience upon [30]
+      days\u2019 prior written notice. In such case, Client will pay for Services
+      performed and non-cancellable commitments incurred through the effective termination
+      date. For SOWs with a total value under $50,000, either Party may terminate
+      for convenience upon five (5) days\u2019 prior written notice.\\\", \\\"27.4
+      Suspension. Developer may suspend work upon written notice if undisputed invoices
+      are more than [30] days overdue and not cured within ten (10) days after notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
     headers:
       accept:
       - application/json
@@ -10773,13 +10785,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34616'
+      - '33506'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - AzureOpenAI/Python 1.99.9
+      - AzureOpenAI/Python 1.101.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -10789,7 +10801,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 1.99.9
+      - 1.101.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -10804,33 +10816,34 @@ interactions:
     uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 4, \"justification\": \"The label \u2018medium\u2019
-        is reasonably supported: the Agreement includes strong client protections
-        (uncapped Developer liability for IP claims and Developer indemnity at Section
-        21), but also contains client-side risks (short warranty windows at Section
-        20 and standard payment/termination mechanics at Section 15 and 27). The extraction
-        omits mention of the automatic Acceptance provision (Section 7.2) and the
-        general liability cap for non\u2011Excluded Claims (Section 22.2), both of
-        which materially affect the overall client risk profile.\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1755547066, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 767, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 640,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7118, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7885}}'
+      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
+        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
+        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
+        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
+        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
+        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
+        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"{\\\"rating\\\":
+        4, \\\"justification\\\": \\\"The 'medium' rating is reasonable and grounded
+        in the cited provisions (short termination notice for SOWs under $50,000 and
+        Developer suspension for overdue invoices) which elevate client operational
+        risk. However, the justification omits other material client-facing risks
+        present in the document\u2014most notably IP assignment only upon full payment
+        (Section 14.1) and the liability cap to fees paid in the prior 12 months (Section
+        22.2)\u2014so the extracted rationale is not fully comprehensive.\\\"}\",
+        \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1756594234, \"id\":
+        \"chatcmpl-DUMMY\", \"model\": \"gpt-5-mini-2025-08-07\", \"object\": \"chat.completion\",
+        \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
+        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
+        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
+        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
+        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
+        null, \"usage\": {\"completion_tokens\": 633, \"completion_tokens_details\":
+        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
+        512, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 6898, \"prompt_tokens_details\":
+        {\"audio_tokens\": 0, \"cached_tokens\": 6656}, \"total_tokens\": 7531}}"
     headers:
       Content-Length:
-      - '1784'
+      - '1743'
       Content-Type:
       - application/json
       Date:

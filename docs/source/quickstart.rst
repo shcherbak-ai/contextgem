@@ -150,6 +150,9 @@ ContextGem follows a simple extraction process:
 .. note::
    While ContextGem is primarily designed for advanced structured data extraction, it also provides a lightweight, unified interface for interacting with LLMs via natural language - across both text and vision - with built-in fallback support.
 
+.. tip::
+   To preserve message history across turns, pass a :class:`~contextgem.public.llms.ChatSession` instance via ``chat_session=...`` to ``DocumentLLM.chat(...)`` (or ``.chat_async(...)``). Without a session, each ``chat(...)`` call is treated as a one-off message → response interaction.
+
 .. literalinclude:: ../../dev/usage_examples/readme/llm_chat.py
    :language: python
 

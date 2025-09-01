@@ -27,11 +27,13 @@ import platform
 import re
 import sys
 import tempfile
+import types
 import warnings
 import zipfile
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 from io import BytesIO
 from pathlib import Path
@@ -39,6 +41,7 @@ from typing import Any, Dict, List, Literal, Optional, cast  # noqa: UP035
 
 import pytest
 from _pytest.nodes import Item as PytestItem
+from aiolimiter import AsyncLimiter
 from dotenv import load_dotenv
 from lxml import etree
 from PIL import Image as PILImage
@@ -77,10 +80,12 @@ from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.converters.docx import _DocxPackage
 from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import (
+    _LLMCall,
     _LLMCost,
     _LLMCostOutputContainer,
     _LLMUsage,
     _LLMUsageOutputContainer,
+    _Message,
 )
 from contextgem.internal.exceptions import (
     DocxConverterError,
@@ -115,6 +120,7 @@ from contextgem.internal.utils import (
 from contextgem.public import (
     Aspect,
     BooleanConcept,
+    ChatSession,
     DateConcept,
     Document,
     DocumentLLM,
@@ -1145,27 +1151,24 @@ class TestAll(TestUtils):
             # Check serialization of LLM
             self._check_deserialized_llm_config_eq(llm)
 
-        # gpt-oss works with Ollama
         llm_gpt_oss_ollama = DocumentLLM(
             model="ollama_chat/gpt-oss:20b",
             api_base="http://localhost:11434",
             role="reasoner_text",
+            timeout=240,
         )
         llm_gpt_oss_ollama._supports_reasoning = True
         extract_with_local_llm(llm_gpt_oss_ollama)
 
-        # TODO: Remove this once LiteLLM's `lm_studio` gpt-oss support is fixed
-        # But does not work with `lm_studio/` prefix
-        with pytest.raises((LLMAPIError, LLMExtractionError)):
-            with pytest.warns(UserWarning, match="gpt-oss"):
-                llm_gpt_oss_lm_studio = DocumentLLM(
-                    model="lm_studio/openai/gpt-oss-20b",
-                    api_base="http://localhost:1234/v1",
-                    api_key="random-key",  # required for LM Studio API
-                    role="reasoner_text",
-                )
-            llm_gpt_oss_lm_studio._supports_reasoning = True
-            extract_with_local_llm(llm_gpt_oss_lm_studio)
+        llm_gpt_oss_lm_studio = DocumentLLM(
+            model="lm_studio/openai/gpt-oss-20b",
+            api_base="http://localhost:1234/v1",
+            api_key="random-key",  # required for LM Studio API
+            role="reasoner_text",
+            timeout=240,
+        )
+        llm_gpt_oss_lm_studio._supports_reasoning = True
+        extract_with_local_llm(llm_gpt_oss_lm_studio)
 
         check_locals_memory_usage(locals(), test_name="test_local_llms_text_gpt_oss")
 
@@ -1301,73 +1304,96 @@ class TestAll(TestUtils):
             api_base="http://localhost:11434",
             max_retries_invalid_data=1,  # default is 3
         )
-        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
-            llm.extract_aspects_from_document(
-                document,
-                overwrite_existing=True,
-            )
-        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
-            # Aspect has a concept, and since the aspect was not extracted,
-            # there's no aspect context to extract the concept from
-            llm.extract_concepts_from_aspect(
-                document.aspects[0],
-                document,
-                overwrite_existing=True,
-            )
-        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
-            llm.extract_concepts_from_document(
-                document,
-                overwrite_existing=True,
-            )
-        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
-            llm.extract_all(
-                document,
-                overwrite_existing=True,
-            )
 
-        # But should issue a warning if `raise_exception_on_extraction_error` is False
-        with capture_logger_warnings() as captured_logs:
-            llm.extract_aspects_from_document(
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
-            assert any(
-                re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
-            ), (
-                f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
-            )
+        async def _invalid_json_query_stub(
+            self,
+            messages: list[_Message],
+            llm_call_obj: _LLMCall,
+            num_retries_failed_request: int = 3,
+            max_retries_failed_request: int = 0,
+            async_limiter: AsyncLimiter | None = None,
+            drop_params: bool = False,
+            raise_exception_on_llm_api_error: bool = True,
+        ):
+            """
+            Simulates a successful call that returns invalid JSON.
 
-        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
-            # Aspect has a concept, and since the aspect was not extracted,
-            # there's no aspect context to extract the concept from
-            llm.extract_concepts_from_aspect(
-                document.aspects[0],
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
+            Same params as `llm._query_llm`.
+            """
+            return "<<<not-json>>>", _LLMUsage()
 
-        with capture_logger_warnings() as captured_logs:
-            llm.extract_concepts_from_document(
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
-            assert any(
-                re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
-            ), (
-                f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
-            )
+        _orig_query_llm = llm._query_llm
+        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)
+        try:
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+                llm.extract_aspects_from_document(
+                    document,
+                    overwrite_existing=True,
+                )
+            with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+                # Aspect has a concept, and since the aspect was not extracted,
+                # there's no aspect context to extract the concept from
+                llm.extract_concepts_from_aspect(
+                    document.aspects[0],
+                    document,
+                    overwrite_existing=True,
+                )
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+                llm.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                )
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+                llm.extract_all(
+                    document,
+                    overwrite_existing=True,
+                )
 
-        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
-            # Aspect has a concept, and since the aspect was not extracted,
-            # there's no aspect context to extract the concept from
-            llm.extract_all(
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
+            # But should issue a warning if `raise_exception_on_extraction_error` is False
+            with capture_logger_warnings() as captured_logs:
+                llm.extract_aspects_from_document(
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+                assert any(
+                    re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
+                ), (
+                    f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
+                )
+
+            with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+                # Aspect has a concept, and since the aspect was not extracted,
+                # there's no aspect context to extract the concept from
+                llm.extract_concepts_from_aspect(
+                    document.aspects[0],
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+
+            with capture_logger_warnings() as captured_logs:
+                llm.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+                assert any(
+                    re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
+                ), (
+                    f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
+                )
+
+            with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+                # Aspect has a concept, and since the aspect was not extracted,
+                # there's no aspect context to extract the concept from
+                llm.extract_all(
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+        finally:
+            llm._query_llm = _orig_query_llm
 
         # === Without retries ===
         # raise_exception_on_extraction_error is True by default
@@ -1376,73 +1402,79 @@ class TestAll(TestUtils):
             api_base="http://localhost:11434",
             max_retries_invalid_data=0,
         )
-        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
-            llm.extract_aspects_from_document(
-                document,
-                overwrite_existing=True,
-            )
-        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
-            # Aspect has a concept, and since the aspect was not extracted,
-            # there's no aspect context to extract the concept from
-            llm.extract_concepts_from_aspect(
-                document.aspects[0],
-                document,
-                overwrite_existing=True,
-            )
-        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
-            llm.extract_concepts_from_document(
-                document,
-                overwrite_existing=True,
-            )
-        with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
-            llm.extract_all(
-                document,
-                overwrite_existing=True,
-            )
 
-        # But should issue a warning if `raise_exception_on_extraction_error` is False
-        with capture_logger_warnings() as captured_logs:
-            llm.extract_aspects_from_document(
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
-            assert any(
-                re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
-            ), (
-                f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
-            )
+        _orig_query_llm_no_retry = llm._query_llm
+        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)
+        try:
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+                llm.extract_aspects_from_document(
+                    document,
+                    overwrite_existing=True,
+                )
+            with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+                # Aspect has a concept, and since the aspect was not extracted,
+                # there's no aspect context to extract the concept from
+                llm.extract_concepts_from_aspect(
+                    document.aspects[0],
+                    document,
+                    overwrite_existing=True,
+                )
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+                llm.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                )
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+                llm.extract_all(
+                    document,
+                    overwrite_existing=True,
+                )
 
-        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
-            # Aspect has a concept, and since the aspect was not extracted,
-            # there's no aspect context to extract the concept from
-            llm.extract_concepts_from_aspect(
-                document.aspects[0],
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
+            # But should issue a warning if `raise_exception_on_extraction_error` is False
+            with capture_logger_warnings() as captured_logs:
+                llm.extract_aspects_from_document(
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+                assert any(
+                    re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
+                ), (
+                    f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
+                )
 
-        with capture_logger_warnings() as captured_logs:
-            llm.extract_concepts_from_document(
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
-            assert any(
-                re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
-            ), (
-                f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
-            )
+            with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+                # Aspect has a concept, and since the aspect was not extracted,
+                # there's no aspect context to extract the concept from
+                llm.extract_concepts_from_aspect(
+                    document.aspects[0],
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
 
-        with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
-            # Aspect has a concept, and since the aspect was not extracted,
-            # there's no aspect context to extract the concept from
-            llm.extract_all(
-                document,
-                overwrite_existing=True,
-                raise_exception_on_extraction_error=False,
-            )
+            with capture_logger_warnings() as captured_logs:
+                llm.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+                assert any(
+                    re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
+                ), (
+                    f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
+                )
+
+            with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
+                # Aspect has a concept, and since the aspect was not extracted,
+                # there's no aspect context to extract the concept from
+                llm.extract_all(
+                    document,
+                    overwrite_existing=True,
+                    raise_exception_on_extraction_error=False,
+                )
+        finally:
+            llm._query_llm = _orig_query_llm_no_retry
 
         # === Test invalid LLM without fallback LLM ===
         # raise_exception_on_extraction_error is True by default
@@ -1575,12 +1607,6 @@ class TestAll(TestUtils):
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 extra=True,  # extra fields not permitted
             )
-        with pytest.warns(UserWarning, match="vision-capable"):
-            DocumentLLM(
-                model="openai/gpt-3.5-turbo",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_vision",  # model does not support vision
-            )
 
         # Fallback LLM validation
         with pytest.raises(ValueError):
@@ -1686,6 +1712,34 @@ class TestAll(TestUtils):
                 model="openai/gpt-4o-mini",
                 api_key="",  # empty api key
                 role="extractor_text",
+            )
+
+        # Warnings
+        with pytest.warns(UserWarning, match="vision-capable"):
+            DocumentLLM(
+                model="openai/gpt-3.5-turbo",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                role="extractor_vision",  # model does not support vision
+            )
+        with pytest.warns(
+            UserWarning, match="`output_language` parameter will take no effect"
+        ):
+            DocumentLLM(
+                model="openai/gpt-4o-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                role="extractor_text",
+                output_language="adapt",
+                system_message="",
+            )
+        with pytest.warns(
+            UserWarning, match="`output_language` parameter will take no effect"
+        ):
+            DocumentLLM(
+                model="openai/gpt-4o-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                role="extractor_text",
+                output_language="adapt",
+                system_message="You are a helpful assistant.",
             )
 
         check_locals_memory_usage(locals(), test_name="test_init_api_llm")
@@ -2082,6 +2136,174 @@ class TestAll(TestUtils):
         self.check_instance_serialization_and_cloning(sentence)
 
         check_locals_memory_usage(locals(), test_name="test_init_sentence")
+
+    @memory_profile_and_capture
+    def test_init_message(self):
+        """
+        Tests for constructing a _Message instance and validating its content schema.
+        """
+        # Simple text message
+        msg = _Message(role="user", content="Hello")
+        msg._response_succeeded = False
+        assert msg.role == "user"
+        assert msg.content == "Hello"
+        assert isinstance(msg.unique_id, str) and msg.unique_id
+        assert isinstance(msg.time_created, datetime) and msg.time_created
+        assert msg._to_message_dict() == {"role": "user", "content": "Hello"}
+        assert msg._response_succeeded is False
+
+        # Validation errors for frozen fields
+        with pytest.raises(ValueError):
+            msg.content = "New content"
+        with pytest.raises(ValueError):
+            msg.role = "assistant"
+        # Check for no overrides
+        assert msg.role == "user"
+        assert msg.content == "Hello"
+
+        # Multimodal content (text + image_url)
+        multimodal = [
+            {"type": "text", "text": "describe this"},
+            {"type": "image_url", "image_url": {"url": "http://example.com/img.png"}},
+        ]
+        msg_mm = _Message(role="user", content=multimodal)
+        assert isinstance(msg_mm.content, list) and len(msg_mm.content) == 2
+        assert msg_mm._response_succeeded is None
+
+        # Validation errors for malformed parts
+        with pytest.raises(ValueError):
+            _Message(
+                role="user",
+                content=[{"text": "missing type"}],
+            )
+        with pytest.raises(ValueError):
+            _Message(role="user", content=[{"type": "text"}])
+        with pytest.raises(ValueError):
+            _Message(
+                role="user",
+                content=[{"type": "text", "text": ""}],
+            )
+        with pytest.raises(ValueError):
+            _Message(role="user", content=[{"type": "image_url"}])
+        with pytest.raises(ValueError):
+            _Message(
+                role="user",
+                content=[{"type": "image_url", "image_url": {}}],
+            )
+        with pytest.raises(ValueError):
+            _Message(
+                role="user",
+                content=[{"type": "image_url", "image_url": {"url": ""}}],
+            )
+        with pytest.raises(ValueError):
+            _Message(
+                role="user",
+                content=[{"type": "audio", "url": "x"}],
+            )
+
+        # Assignment validation (validate_assignment=True)
+        msg2 = _Message(role="assistant", content="ok")
+        with pytest.raises(ValueError):
+            msg2.content = [{"type": "text", "text": ""}]  # invalid after init
+        # `_response_succeeded` defaults and assignment rules
+        assert msg2._response_succeeded is None
+        with pytest.raises(AttributeError):
+            msg2._response_succeeded = True
+
+        # System role should also forbid assignment
+        msg_sys = _Message(role="system", content="hi")
+        assert msg_sys._response_succeeded is None
+        with pytest.raises(AttributeError):
+            msg_sys._response_succeeded = False
+
+        # User role allows assignment
+        msg._response_succeeded = True
+        assert msg._response_succeeded is True
+
+        # Serialization roundtrip (dict/json) preserves fields and private unique_id
+        d = msg.to_dict()
+        msg_from_d = _Message.from_dict(d)
+        assert msg_from_d == msg
+        assert msg_from_d.role == msg.role
+        assert msg_from_d.content == msg.content
+        assert msg_from_d.unique_id == msg.unique_id
+        assert msg_from_d.time_created == msg.time_created
+        assert msg_from_d._response_succeeded == msg._response_succeeded
+
+        j = msg.to_json()
+        msg_from_j = _Message.from_json(j)
+        assert msg_from_j == msg
+        assert msg_from_j.role == msg.role
+        assert msg_from_j.content == msg.content
+        assert msg_from_j.unique_id == msg.unique_id
+        assert msg_from_j.time_created == msg.time_created
+        assert msg_from_j._response_succeeded == msg._response_succeeded
+
+        msg._response_succeeded = None  # allow for re-setting to None
+
+        # Disabled pydantic dump methods
+        with pytest.raises(NotImplementedError):
+            msg.model_dump()
+        with pytest.raises(NotImplementedError):
+            msg.model_dump_json()
+
+        check_locals_memory_usage(locals(), test_name="test_init_message")
+
+    @memory_profile_and_capture
+    def test_init_chat_session(self):
+        """
+        Tests for initializing `ChatSession` and enforcing message history rules.
+        """
+
+        # 1) System + user message order is preserved, and messages property returns a copy
+        cs = ChatSession()
+        system_msg = _Message(role="system", content="You are ContextGem.")
+        user_msg = _Message(role="user", content="Hello")
+        cs._set_messages([system_msg, user_msg])
+        msgs = cs.messages
+        assert len(msgs) == 2
+        assert msgs[0].role == "system" and msgs[0].content == "You are ContextGem."
+        assert msgs[1] == user_msg
+
+        # messages property should return a copy
+        msgs.append(_Message(role="assistant", content="Hi"))
+        assert len(cs.messages) == 2
+
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs)
+
+        # reset clears all messages
+        cs.reset()
+        assert cs.messages == []
+
+        # 2) Duplicate messages are not allowed
+        dup = _Message(role="user", content="dup")
+        # LLM instance is not required for chat session tests now
+        cs2 = ChatSession()
+        with pytest.raises(ValueError, match="contain duplicates"):
+            cs2._extend_messages([dup, dup])
+
+        # 3) A single system message must be the first message
+        cs3 = ChatSession()
+        with pytest.raises(ValueError, match="must be the first"):
+            cs3._extend_messages(
+                [
+                    _Message(role="user", content="first"),
+                    _Message(role="system", content="sys"),
+                ]
+            )
+
+        # 4) Multiple system messages are not allowed
+        cs4 = ChatSession()
+        with pytest.raises(ValueError, match="Multiple 'system' messages"):
+            cs4._extend_messages(
+                [
+                    _Message(role="system", content="one"),
+                    _Message(role="system", content="another"),
+                ]
+            )
+
+        check_locals_memory_usage(locals(), test_name="test_init_chat_session")
 
     @memory_profile_and_capture
     def test_init_aspect(self):
@@ -6512,11 +6734,11 @@ class TestAll(TestUtils):
         invoice_number_concept = document.get_concept_by_name("Invoice number")
         assert invoice_number_concept.extracted_items
 
-        check_locals_memory_usage(locals(), test_name="test_multimodal")
+        check_locals_memory_usage(locals(), test_name="test_multimodal_roles")
 
     @pytest.mark.vcr
     @memory_profile_and_capture
-    def test_chat(self):
+    def test_chat_no_session(self):
         """
         Tests for the chat method.
         """
@@ -6557,6 +6779,7 @@ class TestAll(TestUtils):
                 assert response is not None
                 assert "4" in response
             logger.debug(response)
+
         # Test for non-vision model
         text_only_model = DocumentLLM(model="openai/gpt-3.5-turbo")
         with pytest.raises(ValueError, match="vision"):
@@ -6629,7 +6852,236 @@ class TestAll(TestUtils):
         assert response is not None
         assert "John Doe" in response
 
-        check_locals_memory_usage(locals(), test_name="test_chat")
+        check_locals_memory_usage(locals(), test_name="test_chat_no_session")
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_chat_with_session(self):
+        """
+        Tests for the chat method with a chat session that preserves message history.
+        """
+        # ChatSession: text-only flow
+        cs = ChatSession()
+        # With default system message, a warning should be emitted on first call
+        with pytest.warns(UserWarning, match="default system message"):
+            reply1 = self.llm_extractor_text.chat(
+                "What's the result of 3+5?",
+                chat_session=cs,
+            )
+        assert reply1 and "8" in reply1
+        # System + user + assistant should be in history
+        msgs = cs.messages
+        assert msgs[0].role == "system"
+        assert (
+            msgs[1].role == "user"
+            and "3+5" in msgs[1].content
+            and msgs[1]._response_succeeded is True
+        )
+        assert msgs[2].role == "assistant" and "8" in msgs[2].content
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs)
+
+        # Second turn within same session
+        with pytest.warns(UserWarning, match="default system message"):
+            reply2 = self.llm_extractor_text.chat(
+                "And what's 10-3?",
+                chat_session=cs,
+            )
+        assert reply2 and "7" in reply2
+        msgs2 = cs.messages
+        # Expect two more messages appended (user, assistant)
+        assert len(msgs2) == len(msgs) + 2
+        assert (
+            msgs2[-2].role == "user"
+            and "10-3" in msgs2[-2].content
+            and msgs2[-2]._response_succeeded is True
+        )
+        assert msgs2[-1].role == "assistant" and "7" in msgs2[-1].content
+        # Follow-up: ask about previous answer to ensure history is preserved
+        with pytest.warns(UserWarning, match="default system message"):
+            reply3 = self.llm_extractor_text.chat(
+                "What was your answer to my last question? Reply with only the number.",
+                chat_session=cs,
+            )
+        assert reply3 and "7" in reply3
+        msgs3 = cs.messages
+        assert len(msgs3) == len(msgs2) + 2
+        assert msgs3[-2].role == "user" and msgs3[-2]._response_succeeded is True
+        assert msgs3[-1].role == "assistant"
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs)
+
+        # ChatSession: vision model with images
+        cs_v = ChatSession()
+        with pytest.warns(UserWarning, match="default system message"):
+            r_img = self.llm_extractor_vision.chat(
+                "What's the type of this document?",
+                images=[self.test_img_png_invoice],
+                chat_session=cs_v,
+            )
+        assert r_img and "invoice" in r_img.lower()
+        msgs_v = cs_v.messages
+        assert len(msgs_v) == 3
+        assert msgs_v[0].role == "system"
+        assert (
+            msgs_v[1].role == "user"
+            and "type of this document" in msgs_v[1].content[0]["text"]  # type: ignore
+            and msgs_v[1]._response_succeeded is True
+        )
+        # user message content is multimodal list when images are supplied
+        assert isinstance(msgs_v[1].content, list) and len(msgs_v[1].content) == 2
+        assert any(
+            isinstance(i, dict) and i.get("type") == "image_url"
+            for i in msgs_v[1].content
+        )
+        assert msgs_v[2].role == "assistant" and "invoice" in msgs_v[2].content.lower()  # type: ignore
+        # Follow-up in the same vision session without re-sending images: ensure history is preserved
+        with pytest.warns(UserWarning, match="default system message"):
+            r_img2 = self.llm_extractor_vision.chat(
+                "What type of document did you say it was earlier?",
+                chat_session=cs_v,
+            )
+        assert r_img2 and "invoice" in r_img2.lower()
+        msgs_v2 = cs_v.messages
+        assert len(msgs_v2) == len(msgs_v) + 2
+        assert msgs_v2[-2].role == "user" and msgs_v2[-2]._response_succeeded is True
+        assert (
+            msgs_v2[-1].role == "assistant" and "invoice" in msgs_v2[-1].content.lower()  # type: ignore
+        )
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs_v)
+
+        # Non-vision model must still fail with images even with a ChatSession
+        text_only_model = DocumentLLM(model="openai/gpt-3.5-turbo")
+        cs_empty = ChatSession()
+        with pytest.raises(ValueError, match="vision"):
+            text_only_model.chat(
+                "What's the type of this document?",
+                images=[self.test_img_png_invoice],
+                chat_session=ChatSession(),
+            )
+        assert not cs_empty.messages
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs_empty)
+
+        # ChatSession: empty system message should not warn
+        no_sys_model = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="",
+        )
+        cs_no_sys = ChatSession()
+        with warnings.catch_warnings(record=True) as w:  # expect no warning
+            warnings.simplefilter("always")
+            resp = no_sys_model.chat("What's 9+1?", chat_session=cs_no_sys)
+        assert len(w) == 0
+        assert resp and "10" in resp
+        # history: no system auto-injected when system_message is ""
+        assert (
+            len(cs_no_sys.messages) == 2
+            and cs_no_sys.messages[0].role == "user"
+            and "9+1" in cs_no_sys.messages[0].content
+            and cs_no_sys.messages[0]._response_succeeded is True
+            and cs_no_sys.messages[1].role == "assistant"
+            and "10" in cs_no_sys.messages[1].content
+        )
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs_no_sys)
+
+        # ChatSession: custom system message should not warn and be first
+        custom_sys = "Your name is John Doe. Introduce yourself as such."
+        m_custom = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message=custom_sys,
+        )
+        cs_custom = ChatSession()
+        with warnings.catch_warnings(record=True) as w:  # expect no warning
+            warnings.simplefilter("always")
+            m_custom.chat("What's your name?", chat_session=cs_custom)
+        assert len(w) == 0
+        assert cs_custom.messages and cs_custom.messages[0].role == "system"
+        assert cs_custom.messages[0].content == custom_sys
+        assert (
+            cs_custom.messages[1].role == "user"
+            and "what's your name?" in cs_custom.messages[1].content.lower()  # type: ignore
+            and cs_custom.messages[1]._response_succeeded is True
+        )
+        assert (
+            cs_custom.messages[2].role == "assistant"
+            and "John Doe" in cs_custom.messages[2].content
+        )
+        # test serialization and cloning
+        self.check_instance_serialization_and_cloning(cs_custom)
+
+        # ChatSession: fallback path
+        cs_fb = ChatSession()
+        with pytest.warns(UserWarning, match="default system message"):
+            self.invalid_llm_with_valid_fallback.chat("What's 2+2?", chat_session=cs_fb)
+        # Ensure no duplicate messages in chat despite retries
+        assert len(cs_fb.messages) == 3
+        assert cs_fb.messages[0].role == "system"
+        assert (
+            cs_fb.messages[1].role == "user"
+            and "what's 2+2?" in cs_fb.messages[1].content.lower()  # type: ignore
+        )  # type: ignore
+        assert cs_fb.messages[1]._response_succeeded is True
+        assert (
+            cs_fb.messages[2].role == "assistant" and "4" in cs_fb.messages[2].content
+        )
+
+        # If the LLM call fails with an API error, the pending user message in the
+        # provided ChatSession should remain with _response_succeeded == False and
+        # no assistant message should be appended.
+        cs_err = ChatSession()
+        with pytest.raises(LLMAPIError):
+            self.llm_invalid.chat("Will this fail?", chat_session=cs_err)
+
+        msgs = cs_err.messages
+        assert len(msgs) == 2
+        assert msgs[0].role == "system"
+        assert (
+            msgs[1].role == "user"
+            and "will this fail" in msgs[1].content.lower()  # type: ignore
+            and msgs[1]._response_succeeded is False
+        )
+
+        # Second attempt with the same prompt should not duplicate the user message
+        with pytest.raises(LLMAPIError):
+            self.llm_invalid.chat("Will this fail?", chat_session=cs_err)
+        msgs2 = cs_err.messages
+        assert len(msgs2) == 2
+        assert (
+            msgs2[1].role == "user"
+            and "will this fail" in msgs2[1].content.lower()  # type: ignore
+            and msgs2[1]._response_succeeded is False
+        )
+
+        # If both primary and fallback LLMs fail, the pending user message should
+        # remain with _response_succeeded == False and no assistant message should
+        # be appended.
+        cs_err_fb = ChatSession()
+        bad_primary = DocumentLLM(**self._invalid_llm_kwargs)
+        invalid_llm_kwargs_2 = deepcopy(self._invalid_llm_kwargs)
+        invalid_llm_kwargs_2["model"] = "newmodel/123"
+        bad_primary.fallback_llm = DocumentLLM(
+            **invalid_llm_kwargs_2,
+            is_fallback=True,
+        )
+
+        with pytest.raises(LLMAPIError):
+            bad_primary.chat("Another failing call", chat_session=cs_err_fb)
+
+        msgs = cs_err_fb.messages
+        assert len(msgs) == 2
+        assert msgs[0].role == "system"
+        assert msgs[1].role == "user" and msgs[1]._response_succeeded is False
+
+        check_locals_memory_usage(locals(), test_name="test_chat_with_session")
 
     # Do not memory-profile this test as we monkey patch sys.stdout
     def test_logger_disabled(self, monkeypatch, capsys):
