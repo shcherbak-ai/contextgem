@@ -3901,14 +3901,20 @@ Note:
   interacting with LLMs via natural language - across both text and
   vision - with built-in fallback support.
 
+Tip:
+
+  To preserve message history across turns, pass a "ChatSession"
+  instance via "chat_session=..." to "DocumentLLM.chat(...)" (or
+  ".chat_async(...)"). Without a session, each "chat(...)" call is
+  treated as a one-off message → response interaction.
+
    # Using LLMs for chat (text + vision), with fallback LLM support
 
    import os
 
    from contextgem import DocumentLLM
+   from contextgem.public import ChatSession
 
-
-   # from contextgem import Image
 
    # Initialize main LLM for chat
    main_model = DocumentLLM(
@@ -3926,14 +3932,22 @@ Note:
    )
    main_model.fallback_llm = fallback_model
 
-   # Send a chat message (supports text and images)
-   response = main_model.chat(
-       "Hello",
+
+   # Preserve conversation history across turns with a ChatSession
+   session = ChatSession()
+   first_response = main_model.chat(
+       "Hi there!",
        # images=[Image(...)]  # optional: add images for vision models
+       chat_session=session,
+   )
+   second_response = main_model.chat(
+       "And what is EBITDA?",
+       chat_session=session,
    )
    # or use async: `response = await main_model.chat_async(...)`
 
-   print(response)
+   # Or send a chat message without a session (one-off message → response)
+   one_off_response = main_model.chat("Test")
 
 
 # ==== documents/document_config ====
@@ -8805,7 +8819,8 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | "output_language="adapt"" ensures that anomaly     |
 |                      |                 |                 | justifications are also in Spanish, making them    |
 |                      |                 |                 | immediately understandable by local end users      |
-|                      |                 |                 | reviewing the document.                            |
+|                      |                 |                 | reviewing the document. This parameter applies     |
+|                      |                 |                 | only when the default system message is used.      |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "temperature"        | "float | None"  | "0.3"           | Sampling temperature (0.0 to 1.0) controlling      |
 |                      |                 |                 | response creativity. Lower values produce more     |
@@ -15184,7 +15199,8 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
         produced output text (justifications, explanations). Values:
         "en" (always English) or "adapt" (matches document/image
         language). All LLMs in the group must share the same
-        output_language setting. Defaults to "en".
+        output_language setting. Defaults to "en". Applies only when
+        DocumentLLMs' default system messages are used.
 
    Parameters:
       * **llms** (*list**[**_DocumentLLM**]*)
@@ -16039,7 +16055,8 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **output_language** (*LanguageRequirement*) -- Language for
         produced output text (justifications, explanations). Can be
         "en" (English) or "adapt" (adapts to document/image language).
-        Defaults to "en".
+        Defaults to "en". Applies only when DocumentLLM's default
+        system message is used.
 
       * **async_limiter** (*AsyncLimiter*) -- Controls frequency of
         async LLM API requests for concurrent tasks. Defaults to
@@ -16291,7 +16308,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          AsyncLimiter
 
-   chat(prompt, images=None)
+   chat(prompt, images=None, chat_session=None)
 
       Synchronously sends a prompt to the LLM and gets a response. For
       models supporting vision, attach images to the prompt if needed.
@@ -16304,6 +16321,9 @@ class contextgem.public.llms.DocumentLLM(**data)
 
          * **images** (*list**[**Image**] **| **None*) -- Optional
            list of Image instances for vision queries
+
+         * **chat_session** (*_ChatSession** | **None*) -- Optional
+           stateful chat session to preserve and use history.
 
       Returns:
          The LLM's response
@@ -16323,7 +16343,7 @@ class contextgem.public.llms.DocumentLLM(**data)
          * **RuntimeError** -- If the LLM call fails and no fallback
            is available
 
-   async chat_async(prompt, images=None)
+   async chat_async(prompt, images=None, chat_session=None)
 
       Asynchronously sends a prompt to the LLM and gets a response.
       For models supporting vision, attach images to the prompt if
@@ -16337,6 +16357,9 @@ class contextgem.public.llms.DocumentLLM(**data)
 
          * **images** (*list**[**Image**] **| **None*) -- Optional
            list of Image instances for vision queries
+
+         * **chat_session** (*_ChatSession** | **None*) -- Optional
+           stateful chat session to preserve and use history.
 
       Returns:
          The LLM's response
@@ -17025,6 +17048,191 @@ class contextgem.public.llms.DocumentLLM(**data)
    auto_pricing: StrictBool
 
    auto_pricing_refresh: StrictBool
+
+class contextgem.public.llms.ChatSession(**data)
+
+   Bases: "_ChatSession"
+
+   Stateful chat session that preserves message history across turns.
+
+   To be used as "chat_session=..." parameter for
+   "DocumentLLM.chat(...)" or "DocumentLLM.chat_async(...)".
+
+   Create a new model by parsing and validating input data from
+   keyword arguments.
+
+   Raises [*ValidationError*][pydantic_core.ValidationError] if the
+   input data cannot be validated to form a valid model.
+
+   *self* is explicitly positional-only to allow *self* as a field
+   name.
+
+   Parameters:
+      **custom_data** (*dict*)
+
+   clone()
+
+      Creates and returns a deep copy of the current instance.
+
+      Return type:
+         "typing.Self"
+
+      Returns:
+         A deep copy of the current instance.
+
+   classmethod from_dict(obj_dict)
+
+      Reconstructs an instance of the class from a dictionary
+      representation.
+
+      This method deserializes a dictionary containing the object's
+      attributes and values into a new instance of the class. It
+      handles complex nested structures like aspects, concepts, and
+      extracted items, properly reconstructing each component.
+
+      Parameters:
+         **obj_dict** (*dict**[**str**, **Any**]*) -- Dictionary
+         containing the serialized object data.
+
+      Returns:
+         A new instance of the class with restored attributes.
+
+      Return type:
+         Self
+
+   classmethod from_disk(file_path)
+
+      Loads an instance of the class from a JSON file stored on disk.
+
+      This method reads the JSON content from the specified file path
+      and deserializes it into an instance of the class using the
+      *from_json* method.
+
+      Parameters:
+         **file_path** (*str** | **Path*) -- Path to the JSON file to
+         load (must end with '.json'). Can be a string or a Path
+         object.
+
+      Returns:
+         An instance of the class populated with the data from the
+         file.
+
+      Return type:
+         Self
+
+      Raises:
+         * **ValueError** -- If the file path doesn't end with
+           '.json'.
+
+         * **RuntimeError** -- If deserialization fails.
+
+   classmethod from_json(json_string)
+
+      Creates an instance of the class from a JSON string
+      representation.
+
+      This method deserializes the provided JSON string into a
+      dictionary and uses the *from_dict* method to construct the
+      class instance. It validates that the class name in the
+      serialized data matches the current class.
+
+      Parameters:
+         **json_string** (*str*) -- JSON string containing the
+         serialized object data.
+
+      Returns:
+         A new instance of the class with restored state.
+
+      Return type:
+         Self
+
+      Raises:
+         **TypeError** -- If the class name in the serialized data
+         doesn't match.
+
+   property messages: list[_Message]
+
+      Returns the list of messages in the session.
+
+      Returns:
+         The list of messages in the session.
+
+      Return type:
+         list[_Message]
+
+   reset()
+
+      Clears conversation history by removing all messages.
+
+      Returns:
+         None
+
+      Return type:
+         None
+
+   to_dict()
+
+      Transforms the current object into a dictionary representation.
+
+      Converts the object to a dictionary that includes: - All public
+      attributes - Special handling for specific public and private
+      attributes
+
+      When an LLM or LLM group is serialized, its API credentials and
+      usage/cost stats are removed.
+
+      Returns:
+         A dictionary representation of the current object with all
+         necessary data for serialization
+
+      Return type:
+         dict[str, Any]
+
+   to_disk(file_path)
+
+      Saves the serialized instance to a JSON file at the specified
+      path.
+
+      This method converts the instance to a dictionary representation
+      using *to_dict()*, then writes it to disk as a formatted JSON
+      file with UTF-8 encoding.
+
+      Parameters:
+         **file_path** (*str** | **Path*) -- Path where the JSON file
+         should be saved (must end with '.json'). Can be a string or a
+         Path object.
+
+      Return type:
+         "None"
+
+      Returns:
+         None
+
+      Raises:
+         * **ValueError** -- If the file path doesn't end with
+           '.json'.
+
+         * **RuntimeError** -- If there's an error during the file
+           writing process.
+
+   to_json()
+
+      Converts the object to its JSON string representation.
+
+      Serializes the object into a JSON-formatted string using the
+      dictionary representation provided by the *to_dict()* method.
+
+      Returns:
+         A JSON string representation of the object.
+
+      Return type:
+         str
+
+   property unique_id: str
+
+      Returns the ULID of the instance.
+
+   custom_data: dict
 
 
 # ==== api/data_models ====

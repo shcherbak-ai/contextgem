@@ -219,7 +219,7 @@ interactions:
       (20 May 2025)\n        </paragraph_text>\n        \n        <additional_context>\n        Style:
       Normal\n        </additional_context>\n    </paragraph>\n\n    <paragraph id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        #0005
       (16 June 2025)\n        </paragraph_text>\n        \n        <additional_context>\n        Style:
-      Normal\n        </additional_context>\n    </paragraph>\n\n</document_paragraphs>\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+      Normal\n        </additional_context>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -232,7 +232,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19479'
+      - '19477'
       content-type:
       - application/json
       host:
@@ -279,7 +279,7 @@ interactions:
         \"#0005\",\n                \"justification\": \"The paragraph explicitly
         lists ''#0005'' as an invoice number dated 16 June 2025.\",\n                \"reference_paragraph_ids\":
         [\n                    \"P3\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756045293, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1756590015, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -288,11 +288,11 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 184,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3740, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        3924}}'
+        3740, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3712},
+        "total_tokens": 3924}}'
     headers:
       Content-Length:
-      - '2165'
+      - '2168'
       Content-Type:
       - application/json
       Date:
@@ -566,24 +566,25 @@ interactions:
         "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n  {\n    \"concept_id\":
-        \"C0\",\n    \"extracted_items\": [\n      {\n        \"value\": \"#1234\",\n        \"justification\":
-        \"The invoice number is explicitly stated as ''Invoice Number: #1234'' in
-        the top right section of the invoice.\"\n      }\n    ]\n  }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1756045296, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
-        "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
-        "hate": {"filtered": false, "severity": "safe"}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "custom_blocklists": {"filtered": false, "details":
-        []}}}, {"prompt_index": 0, "content_filter_result": {}}], "system_fingerprint":
-        "fp_4f3d32ad4e", "usage": {"completion_tokens": 67, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 3634, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1280}, "total_tokens": 3701}}'
+        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
+        \"C0\",\n        \"extracted_items\": [\n            {\n                \"value\":
+        \"#1234\",\n                \"justification\": \"The invoice number is explicitly
+        stated as ''#1234'' under the heading ''INVOICE'' on the right side of the
+        image.\"\n            }\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
+        "created": 1756590018, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 1,
+        "content_filter_result": {"sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}, "hate": {"filtered":
+        false, "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "custom_blocklists": {"filtered": false, "details": []}}}, {"prompt_index":
+        0, "content_filter_result": {}}], "system_fingerprint": "fp_4f3d32ad4e", "usage":
+        {"completion_tokens": 69, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 3634, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        1792}, "total_tokens": 3703}}'
     headers:
       Content-Length:
-      - '1410'
+      - '1457'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -597,13 +598,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - dbe305f9-25a5-477e-9033-d4814ab61d64
+      - 120409a0-b245-48d2-9ae2-18e840231ef9
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1512'
+      - '1340'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -858,7 +859,7 @@ interactions:
       Normal\n        </additional_context>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                #0005
       (16 June 2025)\n                </sentence_text>\n                \n                <additional_context>\n                Style:
-      Normal\n                </additional_context>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>\n"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+      Normal\n                </additional_context>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
     headers:
       accept:
       - application/json
@@ -871,7 +872,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '21211'
+      - '21209'
       content-type:
       - application/json
       host:
@@ -916,7 +917,7 @@ interactions:
         \"P2\",\n                        \"reference_sentence_ids\": [\n                            \"P2-S0\"\n                        ]\n                    }\n                ]\n            },\n            {\n                \"value\":
         \"16-06-2025\",\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
         \"P3\",\n                        \"reference_sentence_ids\": [\n                            \"P3-S0\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756045297, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1756590019, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1192,7 +1193,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"13-06-2021\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756045301, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1756590022, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
         "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
@@ -1202,10 +1203,10 @@ interactions:
         "fp_4f3d32ad4e", "usage": {"completion_tokens": 34, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 3478, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 3512}}'
+        {"audio_tokens": 0, "cached_tokens": 3456}, "total_tokens": 3512}}'
     headers:
       Content-Length:
-      - '1262'
+      - '1265'
       Content-Type:
       - application/json; charset=utf-8
       Date:
@@ -1219,13 +1220,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 01848988-ea6b-4bf4-9a04-d63ec60104ff
+      - a0bdfd4c-cd73-4971-a818-139ebdbd905d
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1085'
+      - '925'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:
@@ -1529,7 +1530,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\\n\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
       accept:
       - application/json
@@ -1542,7 +1543,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23096'
+      - '23094'
       content-type:
       - application/json
       host:
@@ -1579,7 +1580,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"Non-Disclosure Agreement\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756045302, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1756590022, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
@@ -1588,11 +1589,11 @@ interactions:
         "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 32,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4399, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
-        4431}}'
+        4399, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4352},
+        "total_tokens": 4431}}'
     headers:
       Content-Length:
-      - '1228'
+      - '1231'
       Content-Type:
       - application/json
       Date:
@@ -1855,7 +1856,7 @@ interactions:
         false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
         null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
         \"C0\",\n        \"extracted_items\": [\n            \"#1234\"\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756045303, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1756590024, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 1, "content_filter_result": {"sexual": {"filtered": false,
         "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"},
@@ -1865,7 +1866,7 @@ interactions:
         "fp_4f3d32ad4e", "usage": {"completion_tokens": 30, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 3819, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1792}, "total_tokens": 3849}}'
+        {"audio_tokens": 0, "cached_tokens": 3712}, "total_tokens": 3849}}'
     headers:
       Content-Length:
       - '1260'
@@ -1882,13 +1883,13 @@ interactions:
       azureml-model-session:
       - DUMMY
       request-id:
-      - 7a14678f-c848-441b-9abb-7c1f223a491f
+      - ef3e4f92-ec2c-472f-9439-c7bb8cc4d5fc
       x-accel-buffering:
       - 'no'
       x-content-type-options:
       - nosniff
       x-envoy-upstream-service-time:
-      - '1384'
+      - '1393'
       x-ms-deployment-name:
       - DUMMY
       x-ms-rai-invoked:

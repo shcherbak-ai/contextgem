@@ -163,7 +163,7 @@ def vcr_before_record_response(response):
             body = json.loads(response["body"]["string"])
             if "id" in body:
                 body["id"] = f"chatcmpl-{VCR_REDACTION_MARKER}"
-            response["body"]["string"] = json.dumps(body)
+            response["body"]["string"] = json.dumps(body, ensure_ascii=False)
         except (json.JSONDecodeError, TypeError, UnicodeDecodeError):
             # Skip redaction if response body is not valid JSON or lacks expected structure
             logger.debug(
@@ -289,6 +289,7 @@ class TestUtils:
             "_reference_sentences",
             "_is_processed",
             "_md_text",
+            "_messages",
         ]
 
         # To / from dict

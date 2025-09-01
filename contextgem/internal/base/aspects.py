@@ -121,6 +121,8 @@ class _Aspect(
         :type name: str
         :param value: The value to assign to the attribute
         :type value: Any
+        :return: None
+        :rtype: None
         """
 
         if name == "aspects":

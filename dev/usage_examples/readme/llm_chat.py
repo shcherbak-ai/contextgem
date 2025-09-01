@@ -3,9 +3,8 @@
 import os
 
 from contextgem import DocumentLLM
+from contextgem.public import ChatSession
 
-
-# from contextgem import Image
 
 # Initialize main LLM for chat
 main_model = DocumentLLM(
@@ -23,11 +22,19 @@ fallback_model = DocumentLLM(
 )
 main_model.fallback_llm = fallback_model
 
-# Send a chat message (supports text and images)
-response = main_model.chat(
-    "Hello",
+
+# Preserve conversation history across turns with a ChatSession
+session = ChatSession()
+first_response = main_model.chat(
+    "Hi there!",
     # images=[Image(...)]  # optional: add images for vision models
+    chat_session=session,
+)
+second_response = main_model.chat(
+    "And what is EBITDA?",
+    chat_session=session,
 )
 # or use async: `response = await main_model.chat_async(...)`
 
-print(response)
+# Or send a chat message without a session (one-off message → response)
+one_off_response = main_model.chat("Test")

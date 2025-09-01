@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from copy import deepcopy
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -81,6 +82,11 @@ KEY_CLASS_PRIVATE = "__class__"
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
 KEY_LLM_USAGE_PRIVATE = "_usage"
 KEY_LLM_COST_PRIVATE = "_cost"
+# Chat message attrs
+KEY_TIME_CREATED_PRIVATE = "_time_created"
+KEY_RESPONSE_SUCCEEDED_PRIVATE = "_response_succeeded"
+# Chat session attrs
+KEY_MESSAGES_PRIVATE = "_messages"
 
 
 class _InstanceSerializer(BaseModel):
@@ -163,6 +169,7 @@ class _InstanceSerializer(BaseModel):
                 KEY_EXTRACTED_ITEMS_PRIVATE,
                 KEY_REFERENCE_PARAGRAPHS_PRIVATE,
                 KEY_REFERENCE_SENTENCES_PRIVATE,
+                KEY_MESSAGES_PRIVATE,
             ]:
                 base_dict[key] = [i.to_dict() for i in val]
 
@@ -192,6 +199,21 @@ class _InstanceSerializer(BaseModel):
                 cost_dict = _LLMCost().to_dict()
                 # Convert Decimal objects to floats in the cost dictionary
                 base_dict[key] = self._convert_decimal_to_float(cost_dict)
+
+            elif key == KEY_TIME_CREATED_PRIVATE:
+                # Relevant for _Message instances.
+                # Convert time created to ISO format for serialization
+                base_dict[key] = val.isoformat()
+
+            elif key == KEY_RESPONSE_SUCCEEDED_PRIVATE:
+                # Relevant for _Message instances.
+                # Only serialize the value for user messages.
+                # For messages with other roles, value cannot be set
+                # (default value None will be set on instance creation).
+                if base_dict["role"] == "user":
+                    base_dict[key] = val
+                else:
+                    pass
 
         # Add class name for deserialization
         base_dict[KEY_CLASS_PRIVATE] = self.__class__.__name__
@@ -469,6 +491,10 @@ class _InstanceSerializer(BaseModel):
             KEY_ASYNC_LIMITER_PRIVATE: lambda val: AsyncLimiter(
                 max_rate=val["max_rate"], time_period=val["time_period"]
             ),
+            # Chat message attrs
+            KEY_TIME_CREATED_PRIVATE: lambda val: datetime.fromisoformat(val),
+            # Chat session attrs
+            KEY_MESSAGES_PRIVATE: lambda_list_val(),
         }
 
         constructor_kwargs: dict[str, Any] = {}

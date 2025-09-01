@@ -93,12 +93,12 @@ classifiers = [
 ]
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
-    "genai-prices==0.0.24",  # pin version due to frequent API changes
+    "genai-prices==0.0.24",                # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm==1.76.0",  # pin version due to occasional instability between patches and minor versions
+    "litellm==1.76.1",                     # pin version due to occasional instability between patches and minor versions
     "loguru (>=0.7.3,<0.8.0)",
     "lxml (>=5.4.0,<6.0.0)",
-    "openai==1.101.0",  # pinned version for stable compatibility with litellm (after issue with 1.100.0)
+    "openai==1.102.0",                     # pinned version for stable compatibility with litellm (after issue with 1.100.0)
     "pillow (>=11.3.0,<12.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
@@ -146,17 +146,15 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "/contextgem",
-  "/README.md",
-  "/LICENSE", 
-  "/NOTICE",
-  "/pyproject.toml"
+    "/contextgem",
+    "/README.md",
+    "/LICENSE",
+    "/NOTICE",
+    "/pyproject.toml",
 ]
 
 [tool.hatch.build.targets.wheel]
-include = [
-  "/contextgem"
-]
+include = ["/contextgem"]
 
 [tool.ruff]
 line-length = 88
@@ -215,17 +213,11 @@ extend_exclude = [
 ]
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["openai"]  # due to pinned version in dependencies
+DEP002 = ["openai"] # due to pinned version in dependencies
 
 [tool.interrogate]
 ignore-init-method = true
 ignore-init-module = true
 ignore-nested-classes = true
 fail-under = 95
-exclude = [
-    ".venv",
-    "docs",
-    "notebooks",
-    "dev/usage_examples",
-    "code_sample.py",
-]
+exclude = [".venv", "docs", "notebooks", "dev/usage_examples", "code_sample.py"]

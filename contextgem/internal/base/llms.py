@@ -20,7 +20,7 @@
 Module defining the base classes for LLM subclasses.
 
 This module provides foundational class structures for LLM implementations
-in the ContextGem framework. It includes abstract base classes and utility functions
+in the ContextGem framework. It includes base classes and utility functions
 that define the interface and common functionality for different types of LLMs,
 enabling document analysis, information extraction, and reasoning capabilities
 across the framework.
@@ -30,7 +30,6 @@ from __future__ import annotations
 
 import asyncio
 import warnings
-from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -42,7 +41,6 @@ from genai_prices import Usage as _GPUsage
 from genai_prices import calc_price as _calc_auto_price
 from jinja2 import Template
 from pydantic import (
-    ConfigDict,
     Field,
     PrivateAttr,
     StrictBool,
@@ -53,20 +51,21 @@ from pydantic import (
 )
 from typing_extensions import Self
 
+from contextgem.internal.base.abstract import _AbstractGenericLLMProcessor
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.data_models import _LLMPricing
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.images import _Image
-from contextgem.internal.base.mixins import _PostInitCollectorMixin
+from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.paras_and_sents import _Paragraph
-from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,
     _LLMCostOutputContainer,
     _LLMUsage,
     _LLMUsageOutputContainer,
+    _Message,
 )
 from contextgem.internal.decorators import (
     _disable_direct_initialization,
@@ -128,17 +127,15 @@ _LOCAL_MODEL_PROVIDERS = [
 _COST_QUANT = Decimal("0.00001")
 
 
-class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
+class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     """
     Base class that handles processing logic using LLMs.
 
-    This abstract class provides the foundation for implementing LLM-based processing
+    This class provides the foundation for implementing LLM-based processing
     operations within the ContextGem framework. It defines the core interface and shared
     functionality for document analysis, information extraction, and content processing
     using various LLM backends.
     """
-
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     def extract_all(
         self,
@@ -1696,24 +1693,38 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
 
             # Construct a prompt from the message kwargs
             if extracted_item_type == "aspect":
-                message = llm._extract_aspect_items_prompt.render(**prompt_kwargs)
+                rendered_prompt = llm._extract_aspect_items_prompt.render(
+                    **prompt_kwargs
+                )
             elif extracted_item_type == "concept":
-                message = llm._extract_concept_items_prompt.render(**prompt_kwargs)
+                rendered_prompt = llm._extract_concept_items_prompt.render(
+                    **prompt_kwargs
+                )
             else:
                 raise ValueError(
                     f"Unsupported extracted item type: `{extracted_item_type}`"
                 )
 
-            message_kwargs["message"] = message
+            # Build messages to send (system + user, with optional images)
+            images: list[_Image] | None = message_kwargs.pop("images", None)
+            messages: list[_Message] = []
+            system_msg = llm._check_and_build_system_message()
+            if system_msg is not None:
+                messages.append(system_msg)
+            messages.append(
+                llm._build_user_message(message_text=rendered_prompt, images=images)
+            )
+
             # Initialize the LLM call object to pass to the LLM query method
-            message_kwargs["llm_call_obj"] = _LLMCall(
+            llm_call_obj = _LLMCall(
                 prompt_kwargs=prompt_kwargs,
-                prompt=message,
+                prompt=rendered_prompt,
             )
 
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
-                **message_kwargs,
+                messages=messages,
+                llm_call_obj=llm_call_obj,
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
                 async_limiter=async_limiter,
@@ -2662,67 +2673,11 @@ class _GenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
                 )
         return info_containers
 
-    @property
-    @abstractmethod
-    def is_group(self) -> bool:
-        """
-        Abstract property, to be implemented by subclasses.
-
-        Whether the LLM is a single instance or a group.
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def list_roles(self) -> list[LLMRoleAny]:
-        """
-        Abstract property, to be implemented by subclasses.
-
-        Returns the list of all LLM roles in the LLM group or LLM.
-        """
-        pass
-
-    @abstractmethod
-    def _set_private_attrs(self) -> None:
-        """
-        Abstract method, to be implemented by subclasses.
-
-        Sets private attributes for the LLM group or LLM, e.g. prompts, capabilities, etc.
-        """
-        pass
-
-    @abstractmethod
-    def get_usage(self, *args, **kwargs) -> list[_LLMUsageOutputContainer]:
-        """
-        Abstract method, to be implemented by subclasses.
-
-        Returns the usage data for the LLM group or LLM.
-        """
-        pass
-
-    @abstractmethod
-    def get_cost(self, *args, **kwargs) -> list[dict[str, str | _LLMCost]] | _LLMCost:
-        """
-        Abstract method, to be implemented by subclasses.
-
-        Returns the cost data for the LLM group or LLM.
-        """
-        pass
-
-    @abstractmethod
-    def reset_usage_and_cost(self) -> None:
-        """
-        Abstract method, to be implemented by subclasses.
-
-        Resets the usage and cost data for the LLM group or LLM.
-        """
-        pass
-
 
 @_disable_direct_initialization
 class _DocumentLLMGroup(_GenericLLMProcessor):
     """
-    Internal implementation of the DocumentLLMGroup class.
+    Internal implementation of the ``DocumentLLMGroup`` class.
     """
 
     llms: list[_DocumentLLM] = Field(
@@ -2740,7 +2695,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         description=(
             "Language for generated textual output (justifications, explanations). "
             "'en' forces English; 'adapt' matches document/image language. "
-            "Must be consistent across all LLMs in the group."
+            "Must be consistent across all LLMs in the group. "
+            "Applies only when DocumentLLMs' default system messages are used."
         ),
     )
 
@@ -2955,7 +2911,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
 @_disable_direct_initialization
 class _DocumentLLM(_GenericLLMProcessor):
     """
-    Internal implementation of the DocumentLLM class.
+    Internal implementation of the ``DocumentLLM`` class.
     """
 
     # LLM config
@@ -3045,7 +3001,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         default="en",
         description=(
             "Language for generated textual output (justifications, explanations). "
-            "'en' forces English; 'adapt' matches document/image language."
+            "'en' forces English; 'adapt' matches document/image language. "
+            "Applies only when DocumentLLM's default system message is used."
         ),
     )
     temperature: StrictFloat | None = Field(
@@ -3157,16 +3114,6 @@ class _DocumentLLM(_GenericLLMProcessor):
                 stacklevel=2,
             )
 
-        # TODO: Remove this once LiteLLM's `lm_studio` gpt-oss support is fixed
-        # Warn when gpt-oss models are used with LM Studio due to instability
-        if self.model.startswith("lm_studio/") and "openai/gpt-oss" in self.model:
-            warnings.warn(
-                "Using OpenAI gpt-oss models with `lm_studio/` is currently unstable and may "
-                "cause errors. For a stable alternative, consider using the model via Ollama "
-                "instead (e.g., `ollama_chat/gpt-oss:20b`).",
-                stacklevel=2,
-            )
-
         # Warn about auto-pricing accuracy limitations
         if self.auto_pricing:
             warnings.warn(
@@ -3248,7 +3195,12 @@ class _DocumentLLM(_GenericLLMProcessor):
         """
         return [self.role]
 
-    def chat(self, prompt: str, images: list[_Image] | None = None) -> str:
+    def chat(
+        self,
+        prompt: str,
+        images: list[_Image] | None = None,
+        chat_session: _ChatSession | None = None,  # type: ignore
+    ) -> str:
         """
         Synchronously sends a prompt to the LLM and gets a response.
         For models supporting vision, attach images to the prompt if needed.
@@ -3259,6 +3211,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type prompt: str
         :param images: Optional list of Image instances for vision queries
         :type images: list[Image] | None
+        :param chat_session: Optional stateful chat session to preserve and use history.
+        :type chat_session: _ChatSession | None
         :return: The LLM's response
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
@@ -3266,9 +3220,16 @@ class _DocumentLLM(_GenericLLMProcessor):
         :raises ValueError: If images are provided but the model doesn't support vision
         :raises RuntimeError: If the LLM call fails and no fallback is available
         """
-        return _run_sync(self.chat_async(prompt, images))
+        return _run_sync(
+            self.chat_async(prompt=prompt, images=images, chat_session=chat_session)
+        )
 
-    async def chat_async(self, prompt: str, images: list[_Image] | None = None) -> str:
+    async def chat_async(
+        self,
+        prompt: str,
+        images: list[_Image] | None = None,
+        chat_session: _ChatSession | None = None,  # type: ignore
+    ) -> str:
         """
         Asynchronously sends a prompt to the LLM and gets a response.
         For models supporting vision, attach images to the prompt if needed.
@@ -3279,6 +3240,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type prompt: str
         :param images: Optional list of Image instances for vision queries
         :type images: list[Image] | None
+        :param chat_session: Optional stateful chat session to preserve and use history.
+        :type chat_session: _ChatSession | None
         :return: The LLM's response
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
@@ -3306,17 +3269,49 @@ class _DocumentLLM(_GenericLLMProcessor):
                 f"manually set `_supports_vision=True` on the LLM instance."
             )
 
+        # If a chat session is provided, reuse chat logic with preserved history
+        if chat_session is not None:
+            # Ensure system message from this LLM is the first message in the session if absent
+            if not any(m.role == "system" for m in chat_session._messages):
+                system_msg = self._check_and_build_system_message()
+                if system_msg is not None:
+                    chat_session._set_messages([system_msg, *chat_session._messages])
+
+            # Build candidate user message for comparison
+            candidate_user_message = self._build_user_message(prompt, images)
+
+            # Try to reuse existing pending user message (to avoid duplicates across retries)
+            user_message_obj = None
+            if chat_session._messages:
+                last_msg = chat_session._messages[-1]
+                if (
+                    last_msg.role == "user"
+                    and getattr(last_msg, "_response_succeeded", None) is False
+                    and last_msg.content == candidate_user_message.content
+                ):
+                    user_message_obj = last_msg
+
+            # If no pending matching user message is found, append a new one once
+            if user_message_obj is None:
+                user_message_obj = candidate_user_message
+                user_message_obj._response_succeeded = False  # set as not yet answered
+                chat_session._append_message(user_message_obj)
+
+            # Use the chat session's messages as the context for the LLM call
+            messages = [*chat_session._messages]
+        else:
+            # Build system + user messages explicitly
+            messages = []
+            system_msg = self._check_and_build_system_message()
+            if system_msg is not None:
+                messages.append(system_msg)
+            messages.append(self._build_user_message(prompt, images))
+
         # Create LLM call object to track the interaction
         llm_call = _LLMCall(prompt_kwargs={}, prompt=prompt)
 
         # Warn if using default system message
-        # _get_template returns a Template object when template_extension == "j2"
-        default_system_message = _get_template(
-            "default_system_message",
-            template_type="system",
-            template_extension="j2",
-        ).render({"output_language": self.output_language})  # type: ignore[attr-defined]
-        if self.system_message == default_system_message:
+        if self.system_message == self._get_default_system_message():
             warnings.warn(
                 "You are using the default system message optimized for extraction tasks. "
                 "For simple chat interactions, consider setting system_message='' to disable it, "
@@ -3326,9 +3321,8 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         # Send message to LLM
         result = await self._query_llm(
-            message=prompt,
+            messages=messages,
             llm_call_obj=llm_call,
-            images=images,
             num_retries_failed_request=self.num_retries_failed_request,
             max_retries_failed_request=self.max_retries_failed_request,
             raise_exception_on_llm_api_error=True,  # always True for chat
@@ -3340,15 +3334,79 @@ class _DocumentLLM(_GenericLLMProcessor):
         response, _ = result
 
         # If response is None and fallback LLM is available, try with fallback LLM
-        if response is None and self.fallback_llm:
-            logger.info(f"Using fallback LLM {self.fallback_llm.model} for chat")
-            return await self.fallback_llm.chat_async(prompt, images)
-        elif response is None:
-            raise RuntimeError(
-                f"Failed to get response from LLM {self.model} and no fallback is available"
-            )
+        if response is None:
+            if self.fallback_llm:
+                logger.info(f"Using fallback LLM {self.fallback_llm.model} for chat")
+                return await self.fallback_llm.chat_async(
+                    prompt=prompt, images=images, chat_session=chat_session
+                )
+            else:
+                # This should never happen, as we have `raise_exception_on_llm_api_error=True`
+                # for chat, and such errors are skipped if fallback LLM is available, but raised
+                # when no fallback LLM is available or when fallback LLM also fails.
+                raise RuntimeError(
+                    f"Failed to get response from LLM {self.model} and no fallback is available"
+                )
+        else:
+            if chat_session is not None:
+                user_message_obj._response_succeeded = True  # set as answered
+                chat_session._append_message(
+                    _Message(role="assistant", content=response)
+                )
 
         return response
+
+    def _build_user_message(
+        self, message_text: str, images: list[_Image] | None = None
+    ) -> _Message:
+        """
+        Builds a 'user' role message with optional images.
+
+        :param message_text: The text content of the message.
+        :type message_text: str
+        :param images: Optional list of _Image instances for vision queries.
+        :type images: list[_Image] | None
+        :return: A `_Message` instance representing the user message with role and content.
+        :rtype: _Message
+        """
+
+        if images:
+            user_message_content: list[dict[str, str | dict[str, str]]] = [
+                {"type": "text", "text": message_text}
+            ]
+            for image in images:
+                user_message_content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{image.mime_type};base64,{image.base64_data}",
+                        },
+                    }
+                )
+            content = user_message_content
+        else:
+            content = message_text
+        return _Message(role="user", content=content)
+
+    def _check_and_build_system_message(self) -> _Message | None:
+        """
+        Optionally builds a 'system' role message based on model support and
+        configured message. Returns None if no system message should be added.
+
+        :return: A `_Message` representing the system message with role and content,
+            or None if no system message should be added.
+        :rtype: _Message | None
+        """
+        sys_msg = self.system_message
+        if sys_msg and sys_msg.strip():
+            if not any(i in self.model for i in ["o1-preview", "o1-mini"]):
+                # o1/o1-mini models don't support system/developer messages
+                return _Message(role="system", content=sys_msg)
+            warnings.warn(
+                f"System message ignored for the model `{self.model}`.",
+                stacklevel=2,
+            )
+        return None
 
     def _update_default_prompt(
         self, prompt_path: str | Path, prompt_type: DefaultPromptType
@@ -3661,6 +3719,15 @@ class _DocumentLLM(_GenericLLMProcessor):
                 stacklevel=2,
             )
 
+        # Warn that output language param will take no effect if system message is not the default one
+        if self.system_message != self._get_default_system_message():
+            warnings.warn(
+                "`output_language` parameter will take no effect if system message is not the default one. "
+                "This setting primarily affects extraction workflows that rely on the default system message; "
+                "for simple chat interactions, you can ignore this warning.",
+                stacklevel=2,
+            )
+
         return self
 
     def _validate_input_tokens(self, messages: list[dict[str, str]]) -> None:
@@ -3797,9 +3864,8 @@ class _DocumentLLM(_GenericLLMProcessor):
 
     async def _query_llm(
         self,
-        message: str,
+        messages: list[_Message],
         llm_call_obj: _LLMCall,
-        images: list[_Image] | None = None,
         num_retries_failed_request: int = 3,
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
@@ -3807,18 +3873,14 @@ class _DocumentLLM(_GenericLLMProcessor):
         raise_exception_on_llm_api_error: bool = True,
     ) -> tuple[str | None, _LLMUsage]:
         """
-        Generates a response from an LLM based on the provided message, optional images,
-        and system configuration. It formats the input messages according to the
-        compatibility with different versions of the LLM, sends the request to the
-        LLM API, and processes the generated response.
+        Generates a response from an LLM based on the provided messages and system
+        configuration.
 
-        :param message: The input message from the user intended for the LLM.
-        :type message: str
+        :param messages: Full chat messages to send to the LLM. Must be a list
+            of `_Message` objects including any applicable system message and the user turn.
+        :type messages: list[_Message]
         :param llm_call_obj: The _LLMCall object holding data on the initiated LLM call.
         :type llm_call_obj: _LLMCall
-        :param images: Optional list of Image instances for vision queries.
-            If provided, the query will be processed as a vision request.
-        :type images: list[Image] | None
         :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
             Note that this parameter may override the value set on the LLM instance to prevent
             accumulation of retries from failed requests and invalid data generation.
@@ -3843,58 +3905,24 @@ class _DocumentLLM(_GenericLLMProcessor):
         :rtype: tuple[str | None, _LLMUsage]
         """
 
-        if images and not self._supports_vision:
+        # Validate vision content support by inspecting messages
+        contains_image_content = any(
+            isinstance(m.content, list)
+            and any(
+                isinstance(part, dict) and part.get("type") == "image_url"
+                for part in m.content
+            )
+            for m in messages
+        )
+        if contains_image_content and not self._supports_vision:
             raise ValueError(
                 f"Model `{self.model}` does not support vision according to "
                 f"litellm.supports_vision(). To override this detection, "
                 f"manually set `_supports_vision=True` on the LLM instance."
             )
 
-        request_messages = []
-
-        # Handle system message based on model type
-        if self.system_message and self.system_message.strip():
-            if not any(i in self.model for i in ["o1-preview", "o1-mini"]):
-                # o1/o1-mini models don't support system/developer messages
-                request_messages.append(
-                    {
-                        "role": "system",
-                        "content": self.system_message,
-                    }
-                )
-            else:
-                warnings.warn(
-                    f"System message ignored for the model `{self.model}`.",
-                    stacklevel=2,
-                )
-
-        # Prepare user message content based on whether images are provided
-        if images:
-            user_message_content: list[dict[str, str | dict[str, str]]] = [
-                {"type": "text", "text": message}
-            ]
-            for image in images:
-                user_message_content.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{image.mime_type};base64,{image.base64_data}",
-                        },
-                    },
-                )
-            request_messages.append(
-                {
-                    "role": "user",
-                    "content": user_message_content,
-                }
-            )
-        else:
-            request_messages.append(
-                {
-                    "role": "user",
-                    "content": message,
-                }
-            )
+        # Convert to dicts at the boundary for validation and transport
+        request_messages = [m._to_message_dict() for m in messages]
 
         # Validate max input / output tokens before making the API call
         self._validate_input_tokens(request_messages)
@@ -3986,9 +4014,8 @@ class _DocumentLLM(_GenericLLMProcessor):
 
                 # Recursively call with drop_params=True
                 return await self._query_llm(
-                    message=message,
+                    messages=messages,
                     llm_call_obj=llm_call_obj,
-                    images=images,
                     num_retries_failed_request=num_retries_failed_request,
                     max_retries_failed_request=max_retries_failed_request,
                     async_limiter=async_limiter,
@@ -4091,8 +4118,14 @@ class _DocumentLLM(_GenericLLMProcessor):
         :return: None
         :rtype: None
         """
+        self.system_message = self._get_default_system_message()
+
+    def _get_default_system_message(self) -> str:
+        """
+        Retrieves the default system message for the LLM.
+        """
         # _get_template returns a Template object when template_extension == "j2"
-        self.system_message = _get_template(
+        return _get_template(
             "default_system_message",
             template_type="system",
             template_extension="j2",
@@ -4373,3 +4406,97 @@ class _DocumentLLM(_GenericLLMProcessor):
                 warning_msg,
                 stacklevel=2,
             )
+
+
+@_disable_direct_initialization
+class _ChatSession(_InstanceBase):
+    """
+    Internal implementation of the ``ChatSession`` class.
+    """
+
+    _messages: list[_Message] = PrivateAttr(default_factory=list)
+
+    @property
+    def messages(self) -> list[_Message]:
+        """
+        Returns the list of messages in the session.
+
+        :return: The list of messages in the session.
+        :rtype: list[_Message]
+        """
+        return list(self._messages)
+
+    def _validate_system_message_constraints(self) -> None:
+        """
+        Validate that if a 'system' message exists, it is the first and unique.
+
+        :return: None
+        :rtype: None
+        :raises ValueError: If multiple 'system' messages exist or if the 'system'
+            message is not the first in the conversation.
+        """
+        if not self._messages:
+            return
+        system_indices = [
+            idx for idx, m in enumerate(self._messages) if m.role == "system"
+        ]
+        if len(system_indices) > 1:
+            raise ValueError(
+                f"Multiple 'system' messages are not allowed; found {len(system_indices)}."
+            )
+        if len(system_indices) == 1 and system_indices[0] != 0:
+            raise ValueError(
+                "The 'system' message must be the first message in the conversation."
+            )
+
+    def _set_messages(self, messages: list[_Message]) -> None:
+        """
+        Replace the current message history and validate uniqueness.
+
+        :param messages: New list of messages to set.
+        :type messages: list[_Message]
+        :return: None
+        :rtype: None
+        :raises ValueError: If duplicate messages by unique_id are present.
+        """
+        self._messages = list(messages)
+        self._validate_system_message_constraints()
+        self._validate_list_uniqueness(cast(list, self._messages))
+
+    def _append_message(self, message: _Message) -> None:
+        """
+        Append a message to the history and validate uniqueness.
+
+        :param message: The message to append.
+        :type message: _Message
+        :return: None
+        :rtype: None
+        :raises ValueError: If this introduces a duplicate by unique_id.
+        """
+        self._messages.append(message)
+        self._validate_system_message_constraints()
+        self._validate_list_uniqueness(cast(list, self._messages))
+
+    def _extend_messages(self, messages: list[_Message]) -> None:
+        """
+        Extend the message history with multiple messages and validate uniqueness.
+
+        :param messages: Messages to add to the history.
+        :type messages: list[_Message]
+        :return: None
+        :rtype: None
+        :raises ValueError: If duplicates by unique_id are introduced.
+        """
+        if messages:
+            self._messages.extend(messages)
+            self._validate_system_message_constraints()
+            self._validate_list_uniqueness(cast(list, self._messages))
+
+    def reset(self) -> None:
+        """
+        Clears conversation history by removing all messages.
+
+        :return: None
+        :rtype: None
+        """
+        self._set_messages([])

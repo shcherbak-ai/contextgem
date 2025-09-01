@@ -31,7 +31,7 @@ processing patterns and provides detailed usage statistics for monitoring and co
 
 from __future__ import annotations
 
-from contextgem.internal.base.llms import _DocumentLLM, _DocumentLLMGroup
+from contextgem.internal.base.llms import _ChatSession, _DocumentLLM, _DocumentLLMGroup
 from contextgem.internal.decorators import _expose_in_registry
 
 
@@ -50,7 +50,7 @@ class DocumentLLMGroup(_DocumentLLMGroup):
     :ivar output_language: Language for produced output text (justifications, explanations).
         Values: "en" (always English) or "adapt" (matches document/image language).
         All LLMs in the group must share the same output_language setting.
-        Defaults to "en".
+        Defaults to "en". Applies only when DocumentLLMs' default system messages are used.
     :vartype output_language: LanguageRequirement
 
     Note:
@@ -135,6 +135,7 @@ class DocumentLLM(_DocumentLLM):
     :vartype fallback_llm: DocumentLLM | None
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
+        Applies only when DocumentLLM's default system message is used.
     :vartype output_language: LanguageRequirement
     :ivar async_limiter: Controls frequency of async LLM API requests for concurrent tasks.
         Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues.
@@ -172,6 +173,18 @@ class DocumentLLM(_DocumentLLM):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_llm.py
             :language: python
             :caption: LLM definition
+    """
+
+    pass
+
+
+@_expose_in_registry(additional_key=_ChatSession)
+class ChatSession(_ChatSession):
+    """
+    Stateful chat session that preserves message history across turns.
+
+    To be used as ``chat_session=...`` parameter for ``DocumentLLM.chat(...)``
+    or ``DocumentLLM.chat_async(...)``.
     """
 
     pass

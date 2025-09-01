@@ -34,6 +34,7 @@ from contextgem.internal.base.images import _Image
 from contextgem.internal.base.llms import (
     _COST_QUANT,
     _LOCAL_MODEL_PROVIDERS,
+    _ChatSession,
     _DocumentLLM,
     _DocumentLLMGroup,
 )
@@ -66,6 +67,7 @@ __all__ = (
     # LLMs
     "_COST_QUANT",
     "_LOCAL_MODEL_PROVIDERS",
+    "_ChatSession",
     "_DocumentLLM",
     "_DocumentLLMGroup",
     # Paragraphs and sentences

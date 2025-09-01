@@ -31,7 +31,7 @@ from contextgem.public.data_models import LLMPricing, RatingScale
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.images import Image
-from contextgem.public.llms import DocumentLLM, DocumentLLMGroup
+from contextgem.public.llms import ChatSession, DocumentLLM, DocumentLLMGroup
 from contextgem.public.paragraphs import Paragraph
 from contextgem.public.pipelines import DocumentPipeline, ExtractionPipeline
 from contextgem.public.sentences import Sentence
@@ -71,6 +71,7 @@ __all__ = (
     # LLMs
     "DocumentLLM",
     "DocumentLLMGroup",
+    "ChatSession",
     # Data models
     "LLMPricing",
     "RatingScale",  # deprecated, will be removed in v1.0.0

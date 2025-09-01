@@ -26,6 +26,7 @@ __author__ = "Shcherbak AI AS"
 from contextgem.public import (
     Aspect,
     BooleanConcept,
+    ChatSession,
     DateConcept,
     Document,
     DocumentLLM,
@@ -78,6 +79,7 @@ __all__ = (
     "StringExample",
     "JsonObjectExample",
     # LLMs
+    "ChatSession",
     "DocumentLLM",
     "DocumentLLMGroup",
     # Data models
