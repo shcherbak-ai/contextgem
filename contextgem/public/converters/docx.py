@@ -34,7 +34,7 @@ from contextgem.internal.converters.docx.base import _DocxConverterBase
 from contextgem.internal.converters.docx.package import _DocxPackage
 from contextgem.internal.exceptions import DocxConverterError
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.aliases import TextMode
+from contextgem.internal.typings.types import TextMode
 from contextgem.public.documents import Document
 from contextgem.public.paragraphs import Paragraph
 

@@ -23,6 +23,11 @@ Module defining custom validators.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from contextgem.internal.typings.types import JSONDict
 
 
 def _validate_sequence_is_list(
@@ -43,3 +48,84 @@ def _validate_sequence_is_list(
     if not isinstance(v, list):
         raise ValueError("Sequence must be a list")
     return v
+
+
+def _is_json_value(v: Any) -> bool:
+    """
+    Returns True if the value conforms to JSONValue
+    (str|int|float|bool|None|list|dict[str,JSONValue]).
+
+    :param v: The value to check.
+    :type v: Any
+    :return: True if the value conforms to JSONValue, False otherwise.
+    :rtype: bool
+    """
+    if v is None or isinstance(v, str | int | float | bool):
+        return True
+    if isinstance(v, list):
+        return all(_is_json_value(item) for item in v)
+    if isinstance(v, dict):
+        return all(isinstance(k, str) and _is_json_value(val) for k, val in v.items())
+    return False
+
+
+def _validate_is_json_dict(v: Any) -> JSONDict:
+    """
+    Validates that v is a dict[str, JSONValue]. Raises ValueError otherwise.
+
+    :param v: The value to validate.
+    :type v: Any
+    :return: The validated value.
+    :rtype: JSONDict
+    :raises ValueError: If the value is not a dict or does not conform to JSONValue.
+    """
+    if not isinstance(v, dict):
+        raise ValueError("Expected a JSON object (dict)")
+    if not _is_json_value(v):
+        raise ValueError("Schema must be JSON-serializable with string keys")
+    # v matches JSONDict by construction
+    return v
+
+
+def _validate_tool_parameters_schema(v: Any) -> JSONDict:
+    """
+    Validates that a tool `function.parameters` schema is a proper JSON schema object
+    with at least the following structure:
+
+    - type == "object"
+    - properties: dict[str, JSONValue]
+    - required: list[str] whose items are keys in properties
+
+    Note: This is a lightweight structural validator to catch common mistakes early.
+    Detailed value-level validation is performed at runtime by fastjsonschema.
+
+    :param v: The parameters object to validate.
+    :type v: Any
+    :return: The validated JSONDict.
+    :rtype: JSONDict
+    :raises ValueError: If the structure is invalid.
+    """
+    obj = _validate_is_json_dict(v)
+
+    # `type` must be "object"
+    t = obj.get("type")
+    if t != "object":
+        raise ValueError("Tool parameters must have type == 'object'")
+
+    # `properties` must be a dict
+    props = obj.get("properties")
+    if not isinstance(props, dict):
+        raise ValueError("Tool parameters must include a 'properties' object")
+
+    # `required` must be a list of strings, and each must exist in properties
+    req: list[str] = obj.get("required", [])  # type: ignore[assignment]
+    if not isinstance(req, list) or not all(isinstance(i, str) for i in req):
+        raise ValueError("Tool parameters 'required' must be a list of strings")
+    missing: list[str] = [k for k in req if k not in props]
+    if missing:
+        missing_str = ", ".join(missing)
+        raise ValueError(
+            "Tool parameters 'required' keys missing in properties: " + missing_str
+        )
+
+    return obj

@@ -93,12 +93,13 @@ classifiers = [
 ]
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
+    "fastjsonschema (>=2.21.2,<3.0.0)",
     "genai-prices==0.0.24",                # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm==1.76.1",                     # pin version due to occasional instability between patches and minor versions
+    "litellm==1.76.3",                     # pin version due to occasional instability between patches and minor versions
     "loguru (>=0.7.3,<0.8.0)",
     "lxml (>=5.4.0,<6.0.0)",
-    "openai==1.102.0",                     # pinned version for stable compatibility with litellm (after issue with 1.100.0)
+    "openai==1.106.1",                     # pinned version for stable compatibility with litellm (after issue with 1.100.0)
     "pillow (>=11.3.0,<12.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
@@ -118,7 +119,6 @@ dev = [
     "pytest>=8.3.4,<9",
     "pytest-cov>=6.0.0,<7",
     "python-dotenv>=1.0.1,<2",
-    "pip-tools>=7.4.1,<8",
     "pre-commit>=4.1.0,<5",
     "sphinx>=7.0.0,<8.0.0",
     "sphinx-autodoc-typehints<3.0.0",
@@ -219,5 +219,6 @@ DEP002 = ["openai"] # due to pinned version in dependencies
 ignore-init-method = true
 ignore-init-module = true
 ignore-nested-classes = true
+ignore-overloaded-functions = true
 fail-under = 95
 exclude = [".venv", "docs", "notebooks", "dev/usage_examples", "code_sample.py"]

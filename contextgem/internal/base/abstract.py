@@ -12,6 +12,7 @@ from ulid import ULID
 
 from contextgem.internal.base.mixins import _PostInitCollectorMixin
 from contextgem.internal.base.serialization import _InstanceSerializer
+from contextgem.internal.typings.types import JSONDictField, LLMRoleAny
 
 
 if TYPE_CHECKING:
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
         _LLMCostOutputContainer,
         _LLMUsageOutputContainer,
     )
-    from contextgem.internal.typings.aliases import LLMRoleAny
 
 
 class _AbstractInstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
@@ -27,7 +27,7 @@ class _AbstractInstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     Abstract base for instance-like Pydantic models.
     """
 
-    custom_data: dict = Field(
+    custom_data: JSONDictField = Field(
         default_factory=dict,
         description="A serializable dictionary for storing additional custom data "
         "related to the instance.",
@@ -108,5 +108,15 @@ class _AbstractGenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer,
 
         Resets the usage and cost data for the LLM group or LLM. Implementations
         may support optional filters (e.g., by role) where applicable.
+        """
+        pass
+
+    @abstractmethod
+    def _warn_tools_ignored_if_enabled(self) -> None:
+        """
+        Abstract method, to be implemented by subclasses.
+
+        Should warn that tools are ignored during extraction
+        workflows if tools are configured. Tools are supported only in ``llm.chat(...)``.
         """
         pass

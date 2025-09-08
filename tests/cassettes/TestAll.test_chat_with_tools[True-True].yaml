@@ -1,0 +1,332 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Use the available tools to compute
+      a final amount. First call `compute_invoice_total` with exactly items=[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}].
+      Then call `get_discount_amount` with order_id=''ORD-123''. Then call `get_surcharge`
+      with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
+      outputs returned by the previous tools as invoice_total, discount, surcharge.
+      Reply only with the number returned by `compute_final_amount`, nothing else.
+      Do not guess any values; you must call the tools."}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":true,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
+      discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
+      surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
+      final amount as (invoice_total - discount) + surcharge","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]}}}],"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '1809'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.106.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.106.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {}, "finish_reason": "tool_calls",
+        "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
+        "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
+        "{\"items\": [{\"qty\": 2, \"price\": 3}, {\"qty\": 1, \"price\": 3}]}", "name":
+        "compute_invoice_total"}, "id": "call_U2CjBDJvX3LezcOZfrWrQssM", "type": "function"},
+        {"function": {"arguments": "{\"order_id\": \"ORD-123\"}", "name": "get_discount_amount"},
+        "id": "call_asuYOm0j5FJBB7rZkQdlMfRq", "type": "function"}, {"function": {"arguments":
+        "{\"order_id\": \"ORD-123\"}", "name": "get_surcharge"}, "id": "call_KhkJu4WXUOw1850dhqTbY0a9",
+        "type": "function"}]}}], "created": 1757321075, "id": "chatcmpl-DUMMY", "model":
+        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
+        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
+        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 84,
+        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
+        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
+        274, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        358}}'
+    headers:
+      Content-Length:
+      - '1388'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Use the available tools to compute
+      a final amount. First call `compute_invoice_total` with exactly items=[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}].
+      Then call `get_discount_amount` with order_id=''ORD-123''. Then call `get_surcharge`
+      with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
+      outputs returned by the previous tools as invoice_total, discount, surcharge.
+      Reply only with the number returned by `compute_final_amount`, nothing else.
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_U2CjBDJvX3LezcOZfrWrQssM","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":
+      [{\"qty\": 2, \"price\": 3}, {\"qty\": 1, \"price\": 3}]}"}},{"id":"call_asuYOm0j5FJBB7rZkQdlMfRq","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":
+      \"ORD-123\"}"}},{"id":"call_KhkJu4WXUOw1850dhqTbY0a9","type":"function","function":{"name":"get_surcharge","arguments":"{\"order_id\":
+      \"ORD-123\"}"}}]},{"role":"tool","content":"9","tool_call_id":"call_U2CjBDJvX3LezcOZfrWrQssM","name":"compute_invoice_total"},{"role":"tool","content":"4","tool_call_id":"call_asuYOm0j5FJBB7rZkQdlMfRq","name":"get_discount_amount"},{"role":"tool","content":"2","tool_call_id":"call_KhkJu4WXUOw1850dhqTbY0a9","name":"get_surcharge"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":true,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
+      discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
+      surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
+      final amount as (invoice_total - discount) + surcharge","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]}}}],"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '2653'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.106.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.106.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {}, "finish_reason": "tool_calls",
+        "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
+        "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
+        "{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}", "name":
+        "compute_final_amount"}, "id": "call_aNfC5PbfeK8cC6GFx2FKvB0i", "type": "function"}]}}],
+        "created": 1757321077, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_4f3d32ad4e", "usage": {"completion_tokens": 26, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 385, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 411}}'
+    headers:
+      Content-Length:
+      - '1106'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Use the available tools to compute
+      a final amount. First call `compute_invoice_total` with exactly items=[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}].
+      Then call `get_discount_amount` with order_id=''ORD-123''. Then call `get_surcharge`
+      with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
+      outputs returned by the previous tools as invoice_total, discount, surcharge.
+      Reply only with the number returned by `compute_final_amount`, nothing else.
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_U2CjBDJvX3LezcOZfrWrQssM","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":
+      [{\"qty\": 2, \"price\": 3}, {\"qty\": 1, \"price\": 3}]}"}},{"id":"call_asuYOm0j5FJBB7rZkQdlMfRq","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":
+      \"ORD-123\"}"}},{"id":"call_KhkJu4WXUOw1850dhqTbY0a9","type":"function","function":{"name":"get_surcharge","arguments":"{\"order_id\":
+      \"ORD-123\"}"}}]},{"role":"tool","content":"9","tool_call_id":"call_U2CjBDJvX3LezcOZfrWrQssM","name":"compute_invoice_total"},{"role":"tool","content":"4","tool_call_id":"call_asuYOm0j5FJBB7rZkQdlMfRq","name":"get_discount_amount"},{"role":"tool","content":"2","tool_call_id":"call_KhkJu4WXUOw1850dhqTbY0a9","name":"get_surcharge"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_aNfC5PbfeK8cC6GFx2FKvB0i","type":"function","function":{"name":"compute_final_amount","arguments":"{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}"}}]},{"role":"tool","content":"7","tool_call_id":"call_aNfC5PbfeK8cC6GFx2FKvB0i","name":"compute_final_amount"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":true,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
+      discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
+      surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
+      final amount as (invoice_total - discount) + surcharge","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]}}}],"top_p":0.3}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '3008'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - AzureOpenAI/Python 1.106.1
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 1.106.1
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "7", "refusal": null, "role": "assistant"}}], "created": 1757321077,
+        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
+        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
+        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_4f3d32ad4e", "usage":
+        {"completion_tokens": 3, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 429, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        0}, "total_tokens": 432}}'
+    headers:
+      Content-Length:
+      - '1214'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

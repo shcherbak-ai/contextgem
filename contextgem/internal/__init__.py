@@ -60,6 +60,7 @@ from contextgem.internal.exceptions import (
     DocxConverterError,
     LLMAPIError,
     LLMExtractionError,
+    LLMToolLoopLimitError,
 )
 from contextgem.internal.items import (
     _BooleanItem,
@@ -236,5 +237,6 @@ __all__ = (
     # Exceptions
     "LLMExtractionError",
     "LLMAPIError",
+    "LLMToolLoopLimitError",
     "DocxConverterError",
 )

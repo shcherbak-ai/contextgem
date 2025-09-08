@@ -17,12 +17,12 @@
 #
 
 """
-Module defining type aliases used throughout the ContextGem framework.
+Module defining core types and aliases used throughout the ContextGem framework.
 
-This module provides standardized type definitions and aliases that ensure
-consistent typing across the codebase. It includes specialized string types,
-literal types for configuration options, and compatibility solutions for
-different Python versions.
+This module centralizes standardized type definitions (e.g., TypedDicts,
+callable signatures) and lightweight aliases to ensure consistent typing across
+the codebase. It includes specialized string types, literals for configuration
+options, JSON-serializable type helpers, and tool-calling types.
 """
 
 from __future__ import annotations
@@ -30,9 +30,11 @@ from __future__ import annotations
 from collections.abc import Callable, Coroutine
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypedDict
 
-from pydantic import Field, StrictStr, StringConstraints
+from pydantic import BeforeValidator, Field, StrictStr, StringConstraints
+
+from contextgem.internal.typings.validators import _validate_is_json_dict
 
 
 NonEmptyStr = Annotated[
@@ -92,3 +94,36 @@ DefaultDecimalField = Field(
 ReasoningEffort = Literal["minimal", "low", "medium", "high"]
 
 TextMode = Literal["raw", "markdown"]
+
+MessageRole = Literal["system", "user", "assistant", "tool"]
+
+# JSON-serializable types
+# A JSON value can be a primitive, a list of JSON values, or a dict of str->JSON value
+JSONPrimitive = str | int | float | bool | None
+JSONValue = JSONPrimitive | list["JSONValue"] | dict[str, "JSONValue"]
+JSONDict = dict[str, JSONValue]
+# For use as a field type in Pydantic models, avoid recursive forward references
+# and use a validator instead.
+JSONDictField = Annotated[dict[str, Any], BeforeValidator(_validate_is_json_dict)]
+
+
+# Tool-calling related types
+# A tool handler can be sync or async, but must return a string.
+# The runtime will ensure the tool message content is a string.
+ToolHandlerSync = Callable[..., str]
+ToolHandlerAsync = Callable[..., Coroutine[Any, Any, str]]
+ToolHandler = ToolHandlerSync | ToolHandlerAsync
+
+
+class ToolRegistration(TypedDict):
+    """
+    Internal structure used to store tool data in registry.
+
+    :param handler: Sync or async callable that must return a string.
+    :type handler: ToolHandler
+    :param schema: JSON schema (object) from `function.parameters` describing tool arguments.
+    :type schema: JSONDict
+    """
+
+    handler: ToolHandler
+    schema: JSONDict

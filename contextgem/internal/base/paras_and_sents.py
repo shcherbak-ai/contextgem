@@ -31,7 +31,7 @@ from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.typings.types import NonEmptyStr
 from contextgem.internal.utils import _contains_linebreaks
 
 

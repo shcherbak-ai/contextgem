@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from aiolimiter import AsyncLimiter
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from typing_extensions import Self
 
 from contextgem.internal.loggers import logger
@@ -75,13 +75,16 @@ KEY_REFERENCE_SENTENCES_PRIVATE = "_reference_sentences"
 KEY_IS_PROCESSED_PRIVATE = "_is_processed"
 KEY_NESTING_LEVEL_PRIVATE = "_nesting_level"
 KEY_MD_TEXT_PRIVATE = "_md_text"
-KEY_LLM_SUPPORTS_VISION_PRIVATE = "_supports_vision"
-KEY_LLM_SUPPORTS_REASONING_PRIVATE = "_supports_reasoning"
 KEY_CLASS_PRIVATE = "__class__"
 # LLM attrs
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
 KEY_LLM_USAGE_PRIVATE = "_usage"
 KEY_LLM_COST_PRIVATE = "_cost"
+KEY_LLM_SUPPORTS_VISION_PRIVATE = "_supports_vision"
+KEY_LLM_SUPPORTS_REASONING_PRIVATE = "_supports_reasoning"
+KEY_LLM_SUPPORTS_TOOLS_PRIVATE = "_supports_tools"
+KEY_LLM_SUPPORTS_PARALLEL_TOOL_CALLS_PRIVATE = "_supports_parallel_tool_calls"
+KEY_PRIVATE_ATTRS_INITIALIZED_PRIVATE = "_private_attrs_initialized"
 # Chat message attrs
 KEY_TIME_CREATED_PRIVATE = "_time_created"
 KEY_RESPONSE_SUCCEEDED_PRIVATE = "_response_succeeded"
@@ -180,6 +183,9 @@ class _InstanceSerializer(BaseModel):
                 KEY_MD_TEXT_PRIVATE,
                 KEY_LLM_SUPPORTS_VISION_PRIVATE,
                 KEY_LLM_SUPPORTS_REASONING_PRIVATE,
+                KEY_LLM_SUPPORTS_TOOLS_PRIVATE,
+                KEY_LLM_SUPPORTS_PARALLEL_TOOL_CALLS_PRIVATE,
+                KEY_PRIVATE_ATTRS_INITIALIZED_PRIVATE,
             ]:
                 base_dict[key] = val
 
@@ -583,21 +589,3 @@ class _InstanceSerializer(BaseModel):
         :raises NotImplementedError: Always raised to direct users to use to_json().
         """
         raise NotImplementedError("Use `to_json()` instead")
-
-    @field_validator("custom_data", check_fields=False)
-    @classmethod
-    def _validate_custom_data_serializable(cls, value: dict) -> dict:
-        """
-        Validates that the `custom_data` field is serializable to JSON.
-
-        :param value: The value of the `custom_data` field to validate.
-        :type value: dict
-        :return: The validated `custom_data` value.
-        :rtype: dict
-        :raises ValueError: If the `custom_data` value is not serializable.
-        """
-        from contextgem.internal.utils import _is_json_serializable
-
-        if not _is_json_serializable(value):
-            raise ValueError("`custom_data` must be JSON serializable.")
-        return value

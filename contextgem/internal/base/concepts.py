@@ -61,16 +61,16 @@ from contextgem.internal.llm_output_structs.concept_structs import (
     _LabelConceptItemValueModel,
 )
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.aliases import (
-    ClassificationType,
-    LLMRoleAny,
-    NonEmptyStr,
-    ReferenceDepth,
-)
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
     _is_typed_class,
     _raise_dict_class_type_error,
+)
+from contextgem.internal.typings.types import (
+    ClassificationType,
+    LLMRoleAny,
+    NonEmptyStr,
+    ReferenceDepth,
 )
 from contextgem.internal.typings.types_normalization import _normalize_type_annotation
 from contextgem.internal.typings.types_to_strings import (

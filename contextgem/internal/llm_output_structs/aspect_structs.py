@@ -30,7 +30,7 @@ from typing import Any, cast
 from pydantic import ConfigDict, RootModel, create_model
 
 from contextgem.internal.llm_output_structs.utils import _create_root_model
-from contextgem.internal.typings.aliases import NonEmptyStr, ReferenceDepth
+from contextgem.internal.typings.types import NonEmptyStr, ReferenceDepth
 
 
 @cache

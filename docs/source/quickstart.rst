@@ -161,3 +161,18 @@ ContextGem follows a simple extraction process:
    <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/llm_chat.ipynb">
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>
+
+
+.. _llm-chat-with-tools-label:
+
+🛠️ Chat with Tools
+~~~~~~~~~~~~~~~~~~~~
+
+.. tip::
+   Provide OpenAI-compatible tool schemas via ``tools=[...]`` and register Python handlers with ``@register_tool``. Tool support is only used in ``chat(...)`` and ``chat_async(...)``.
+
+.. note::
+   Tool handlers must return a string. If you need to return structured data, serialize it (e.g., with ``json.dumps``) before returning.
+
+.. literalinclude:: ../../dev/usage_examples/docs/llm_config/chat_with_tools.py
+   :language: python

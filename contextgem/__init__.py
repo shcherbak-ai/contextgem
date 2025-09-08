@@ -49,6 +49,7 @@ from contextgem.public import (
     StringExample,
     create_image,
     image_to_base64,
+    register_tool,
     reload_logger_settings,
 )
 
@@ -92,4 +93,6 @@ __all__ = (
     "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
+    # Decorators
+    "register_tool",
 )

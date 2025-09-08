@@ -25,7 +25,7 @@ from __future__ import annotations
 import time
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import (
     BaseModel,
@@ -36,14 +36,16 @@ from pydantic import (
     StrictInt,
     StrictStr,
     field_validator,
+    model_validator,
 )
 
 from contextgem.internal.base.abstract import _AbstractInstanceBase
 from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.decorators import _expose_in_registry
-from contextgem.internal.typings.aliases import (
+from contextgem.internal.typings.types import (
     DefaultDecimalField,
     LLMRoleAny,
+    MessageRole,
     NonEmptyStr,
 )
 
@@ -210,15 +212,32 @@ class _Message(_AbstractInstanceBase):
             {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
         ]
 
-    :ivar role: The role of the message, which must be one of "system", "user", "assistant".
-    :vartype role: Literal["system", "user", "assistant"]
+    :ivar role: The role of the message, which must be one of "system", "user", "assistant", "tool".
+    :vartype role: Literal["system", "user", "assistant", "tool"]
     :ivar content: The content of the message, which can be either a plain string or
         a multimodal list containing text and image_url parts.
     :vartype content: str | list[dict[str, Any]]
+    :ivar tool_call_id: Identifier of the tool call this tool reply corresponds to. Must be set
+        when ``role == 'tool'``; otherwise must be ``None``. Tool messages must have string content.
+    :vartype tool_call_id: str | None
+    :ivar tool_calls: A list of serialized tool call descriptors as returned by the model
+        (OpenAI-compatible structure). Applicable only for ``assistant`` messages. When present,
+        each item is expected to be a dict containing at least the function call payload.
+    :vartype tool_calls: list[dict[str, Any]] | None
+    :ivar name: The function name for a tool message. Required by providers for
+        tool replies. Must be set when ``role == 'tool'``; otherwise must be ``None``.
+    :vartype name: str | None
     """
 
-    role: Literal["system", "user", "assistant"] = Field(..., frozen=True)
+    role: MessageRole = Field(..., frozen=True)
     content: NonEmptyStr | list[dict[NonEmptyStr, Any]] = Field(..., frozen=True)
+
+    # Optional for tool messages: must be set when role == "tool"
+    tool_call_id: NonEmptyStr | None = Field(default=None, frozen=True)
+    # Optional for assistant messages: present when the assistant requested tool calls
+    tool_calls: list[dict[NonEmptyStr, Any]] | None = Field(default=None, frozen=True)
+    # Optional for tool messages: function name for the tool response
+    name: NonEmptyStr | None = Field(default=None, frozen=True)
 
     _time_created: datetime = PrivateAttr(
         default_factory=lambda: datetime.now(timezone.utc)
@@ -302,6 +321,39 @@ class _Message(_AbstractInstanceBase):
                     raise ValueError(f"Unsupported content part type: {part_type}")
         return content
 
+    @model_validator(mode="after")
+    def _validate_message_post(self) -> _Message:
+        """
+        Ensures tool-specific constraints:
+        - When role == "tool", tool_call_id must be provided and content must be a string.
+        - When role == "tool", name should be provided.
+        - When role != "tool", tool_call_id must be None.
+        - When role == "assistant", tool_calls may be provided; otherwise, it must be None.
+        """
+        if self.role == "tool":
+            if self.tool_call_id is None:
+                raise ValueError(
+                    "`tool_call_id` must be set for messages with role 'tool'."
+                )
+            if isinstance(self.content, list):
+                raise ValueError("Tool message content must be a non-empty string.")
+            if self.name is None:
+                raise ValueError("`name` must be set for messages with role 'tool'.")
+        else:
+            if self.tool_call_id is not None:
+                raise ValueError(
+                    "`tool_call_id` is only allowed for messages with role 'tool'."
+                )
+            if self.name is not None:
+                raise ValueError(
+                    "`name` is only allowed for messages with role 'tool'."
+                )
+        if self.tool_calls is not None and self.role != "assistant":
+            raise ValueError(
+                "`tool_calls` is only allowed for messages with role 'assistant'."
+            )
+        return self
+
     def _to_message_dict(self) -> dict[str, Any]:
         """
         Render this message to an OpenAI-compatible dictionary.
@@ -309,4 +361,10 @@ class _Message(_AbstractInstanceBase):
         :return: A dict with keys 'role' and 'content' suitable for chat APIs.
         :rtype: dict[str, Any]
         """
-        return {"role": self.role, "content": self.content}
+        data = {"role": self.role, "content": self.content}
+        if self.role == "tool":
+            data["tool_call_id"] = self.tool_call_id
+            data["name"] = self.name
+        if self.role == "assistant" and self.tool_calls is not None:
+            data["tool_calls"] = self.tool_calls
+        return data

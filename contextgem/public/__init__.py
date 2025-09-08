@@ -28,6 +28,7 @@ from contextgem.public.concepts import (
 )
 from contextgem.public.converters import DocxConverter
 from contextgem.public.data_models import LLMPricing, RatingScale
+from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.images import Image
@@ -82,4 +83,6 @@ __all__ = (
     "JsonObjectClassStruct",
     # Converters
     "DocxConverter",
+    # Decorators
+    "register_tool",
 )
