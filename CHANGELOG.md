@@ -5,9 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.19.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.0) - 2025-09-08
+### Added
+- Tool calling support in `DocumentLLM.chat(...)`.
+
 ## [0.18.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.18.0) - 2025-09-01
 ### Added
-- Chat: Added optional `chat_session` parameter (accepts a `ChatSession`) to preserve message history across turns in `DocumentLLM.chat()`. When this parameter is omitted, chat is single-turn, without message history.
+- Chat: Added optional `chat_session` parameter (accepts a `ChatSession`) to preserve message history across turns in `DocumentLLM.chat(...)`. When this parameter is omitted, chat is single-turn, without message history.
 
 ## [0.17.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.17.1) - 2025-08-26
 ### Changed
