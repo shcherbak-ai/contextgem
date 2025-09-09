@@ -45,7 +45,7 @@ from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.items import _StringItem
-from contextgem.internal.typings.aliases import (
+from contextgem.internal.typings.types import (
     LLMRoleAspect,
     NonEmptyStr,
     ReferenceDepth,

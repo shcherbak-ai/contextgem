@@ -44,7 +44,7 @@ from contextgem.internal.llm_output_structs.concept_structs import (
 )
 from contextgem.internal.loggers import logger
 from contextgem.internal.suppressions import _suppress_litellm_warnings
-from contextgem.internal.typings.aliases import (
+from contextgem.internal.typings.types import (
     AsyncCalsAndKwargs,
     ExtractedInstanceType,
     ReferenceDepth,

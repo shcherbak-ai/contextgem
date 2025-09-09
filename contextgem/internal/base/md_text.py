@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, PrivateAttr
 
-from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.typings.types import NonEmptyStr
 
 
 class _MarkdownTextAttributesProcessor(BaseModel):

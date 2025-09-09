@@ -296,3 +296,22 @@ class _JsonObjectClassStruct:
 
         # Keep dictionary type as is - structure is defined by key/value types
         return field_type
+
+
+def _is_registered_tool(obj: Any) -> bool:
+    """
+    Returns True if the object is a callable marked as a ContextGem tool
+    and has a non-empty tool name.
+
+    :param obj: The object to check.
+    :type obj: Any
+    :return: True if callable, flagged with ``__contextgem_tool__`` and has a
+        non-empty ``__contextgem_tool_name__``; else False.
+    :rtype: bool
+    """
+    if not callable(obj):
+        return False
+    if not bool(getattr(obj, "__contextgem_tool__", False)):
+        return False
+    tool_name = getattr(obj, "__contextgem_tool_name__", None)
+    return isinstance(tool_name, str) and bool(tool_name.strip())

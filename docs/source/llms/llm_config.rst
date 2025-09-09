@@ -155,6 +155,22 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``int | None``
      - ``None``
      - Seed for random number generation to help produce more consistent outputs across multiple runs. When set to a specific integer value, the LLM will attempt to use this seed for sampling operations. However, deterministic output is still not guaranteed even with the same seed, as other factors may influence the model's response.
+   * - ``tools``
+     - ``list[dict] | None``
+     - ``None``
+     - OpenAI-compatible tool schema used only for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``. Each tool must have a registered Python handler decorated with ``@register_tool`` and available in scope when creating the LLM. Handlers must return a string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :ref:`llm-chat-with-tools-label`.
+   * - ``tool_choice``
+     - ``str | dict | None``
+     - ``None``
+     - Tool choice control passed through to the provider during chat. Ignored by extraction methods.
+   * - ``parallel_tool_calls``
+     - ``bool | None``
+     - ``None``
+     - Enable parallel tool calls during chat tool usage, if supported by the model/provider. Ignored by extraction methods.
+   * - ``tool_max_rounds``
+     - ``int``
+     - ``10``
+     - Safety limit on the number of tool-execution rounds per chat request to prevent infinite loops.
    * - ``async_limiter``
      - ``AsyncLimiter``
      - ``AsyncLimiter(3, 10)``

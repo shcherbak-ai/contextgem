@@ -119,6 +119,22 @@ class LLMAPIError(_BaseLLMError):
     pass
 
 
+# Tool calling / tooling exceptions
+
+
+class LLMToolLoopLimitError(_BaseLLMError):
+    """
+    Exception raised when the assistant's tool-calling loop reaches the
+    configured `tool_max_rounds` limit and the model continues requesting tools.
+
+    Typically indicates the model is stuck in a loop or needs more rounds to
+    complete the workflow. Consider increasing `tool_max_rounds` or adjusting
+    tool instructions/choice.
+    """
+
+    pass
+
+
 # DocxConverter exceptions
 
 

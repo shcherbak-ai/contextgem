@@ -92,6 +92,7 @@ from contextgem.internal.exceptions import (
     DocxFormatError,
     LLMAPIError,
     LLMExtractionError,
+    LLMToolLoopLimitError,
 )
 from contextgem.internal.items import (
     _BooleanItem,
@@ -140,6 +141,7 @@ from contextgem.public import (
     Sentence,
     StringConcept,
     StringExample,
+    register_tool,
     reload_logger_settings,
 )
 from contextgem.public.pipelines import DocumentPipeline
@@ -2246,6 +2248,133 @@ class TestAll(TestUtils):
             msg.model_dump()
         with pytest.raises(NotImplementedError):
             msg.model_dump_json()
+
+        # Tool-related messages
+        tool_msg = _Message(
+            role="tool",
+            content="result payload",
+            tool_call_id="call_123",
+            name="function_name",
+        )
+        tool_dict = tool_msg._to_message_dict()
+        assert tool_dict == {
+            "role": "tool",
+            "content": "result payload",
+            "tool_call_id": "call_123",
+            "name": "function_name",
+        }
+        assert "tool_calls" not in tool_dict
+
+        with pytest.raises(
+            ValueError, match="must be set for messages with role 'tool'"
+        ):
+            _Message(role="tool", content="ok")
+
+        with pytest.raises(
+            ValueError, match="`name` must be set for messages with role 'tool'"
+        ):
+            _Message(role="tool", content="ok", tool_call_id="id_missing_name")
+
+        with pytest.raises(
+            ValueError, match="Tool message content must be a non-empty string"
+        ):
+            _Message(
+                role="tool",
+                content=[{"type": "text", "text": "x"}],
+                tool_call_id="id1",
+            )
+
+        with pytest.raises(
+            ValueError,
+            match="`tool_calls` is only allowed for messages with role 'assistant'",
+        ):
+            _Message(
+                role="tool",
+                content="ok",
+                name="fn",
+                tool_call_id="id2",
+                tool_calls=[
+                    {"type": "function", "function": {"name": "fn", "arguments": "{}"}}
+                ],
+            )
+
+        with pytest.raises(
+            ValueError,
+            match="`tool_call_id` is only allowed for messages with role 'tool'",
+        ):
+            _Message(role="user", content="hello", tool_call_id="some_id")
+
+        tool_calls = [
+            {
+                "type": "function",
+                "function": {"name": "search", "arguments": '{"q": "weather"}'},
+            }
+        ]
+        asst_msg = _Message(
+            role="assistant", content="thinking...", tool_calls=tool_calls
+        )
+        asst_dict = asst_msg._to_message_dict()
+        assert asst_dict["role"] == "assistant"
+        assert asst_dict["content"] == "thinking..."
+        assert asst_dict["tool_calls"] == tool_calls
+        assert "tool_call_id" not in asst_dict
+
+        with pytest.raises(
+            ValueError,
+            match="`tool_calls` is only allowed for messages with role 'assistant'",
+        ):
+            _Message(role="user", content="hi", tool_calls=tool_calls)
+
+        with pytest.raises(
+            ValueError,
+            match="`tool_call_id` is only allowed for messages with role 'tool'",
+        ):
+            _Message(role="assistant", content="ok", tool_call_id="id3")
+
+        # Serialization roundtrip tests for tool and assistant-with-tools messages
+        # Tool message roundtrip (dict/json)
+        tool_d = tool_msg.to_dict()
+        tool_from_d = _Message.from_dict(tool_d)
+        assert tool_from_d == tool_msg
+        assert tool_from_d.role == "tool"
+        assert tool_from_d.content == "result payload"
+        assert tool_from_d.tool_call_id == "call_123"
+        assert tool_from_d.name == "function_name"
+        assert tool_from_d.unique_id == tool_msg.unique_id
+        assert tool_from_d.time_created == tool_msg.time_created
+        assert "_response_succeeded" not in tool_d
+
+        tool_j = tool_msg.to_json()
+        tool_from_j = _Message.from_json(tool_j)
+        assert tool_from_j == tool_msg
+        assert tool_from_j.role == "tool"
+        assert tool_from_j.content == "result payload"
+        assert tool_from_j.tool_call_id == "call_123"
+        assert tool_from_j.name == "function_name"
+        assert tool_from_j.unique_id == tool_msg.unique_id
+        assert tool_from_j.time_created == tool_msg.time_created
+
+        # Assistant message with tool_calls roundtrip (dict/json)
+        asst_d = asst_msg.to_dict()
+        asst_from_d = _Message.from_dict(asst_d)
+        assert asst_from_d == asst_msg
+        assert asst_from_d.role == "assistant"
+        assert asst_from_d.content == "thinking..."
+        assert asst_from_d.tool_calls == tool_calls
+        assert asst_from_d.tool_call_id is None
+        assert asst_from_d.unique_id == asst_msg.unique_id
+        assert asst_from_d.time_created == asst_msg.time_created
+        assert "_response_succeeded" not in asst_d
+
+        asst_j = asst_msg.to_json()
+        asst_from_j = _Message.from_json(asst_j)
+        assert asst_from_j == asst_msg
+        assert asst_from_j.role == "assistant"
+        assert asst_from_j.content == "thinking..."
+        assert asst_from_j.tool_calls == tool_calls
+        assert asst_from_j.tool_call_id is None
+        assert asst_from_j.unique_id == asst_msg.unique_id
+        assert asst_from_j.time_created == asst_msg.time_created
 
         check_locals_memory_usage(locals(), test_name="test_init_message")
 
@@ -7083,6 +7212,403 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_chat_with_session")
 
+    @pytest.mark.vcr
+    @pytest.mark.parametrize(
+        "parallel_tool_calls, use_session",
+        [(False, False), (False, True), (True, False), (True, True)],
+    )
+    @memory_profile_and_capture
+    def test_chat_with_tools(self, parallel_tool_calls: bool, use_session: bool):
+        """
+        Test chat with tools.
+        """
+
+        # Track invocations per tool
+        calls = {"invoice": 0, "discount": 0, "surcharge": 0, "final": 0}
+
+        # Tool 1: compute invoice total from structured list of items
+        @register_tool
+        def compute_invoice_total(items: list[dict]) -> str:
+            """
+            Computes invoice total as sum(qty*price) over items.
+            """
+            calls["invoice"] += 1
+            total = 0
+            for it in items:
+                qty = int(it.get("qty", 0))
+                price = int(it.get("price", 0))
+                total += qty * price
+            return str(total)
+
+        # Tool 2: discount amount lookup by opaque order id (LLM cannot infer value)
+        @register_tool
+        def get_discount_amount(order_id: str) -> str:
+            """
+            Returns discount amount for a given order id.
+            """
+            calls["discount"] += 1
+            mapping = {"ORD-123": "4"}
+            return mapping.get(str(order_id), "0")
+
+        # Tool 3: surcharge lookup by opaque order id
+        @register_tool
+        def get_surcharge(order_id: str) -> str:
+            """
+            Returns surcharge amount for a given order id.
+            """
+            calls["surcharge"] += 1
+            mapping = {"ORD-123": "2"}
+            return mapping.get(str(order_id), "0")
+
+        # Tool 4: compute final amount from previous tool outputs
+        @register_tool
+        def compute_final_amount(
+            invoice_total: str, discount: str, surcharge: str
+        ) -> str:
+            """
+            Computes final amount as (invoice_total - discount) + surcharge.
+            """
+            calls["final"] += 1
+            try:
+                res = (int(invoice_total) - int(discount)) + int(surcharge)
+            except Exception:
+                # Be robust if model passes non-ints
+                res = (int(float(invoice_total)) - int(float(discount))) + int(
+                    float(surcharge)
+                )
+            return str(res)
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "compute_invoice_total",
+                    "description": "Compute invoice total as sum(qty*price) over items",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "qty": {"type": "integer"},
+                                        "price": {"type": "integer"},
+                                    },
+                                    "required": ["qty", "price"],
+                                },
+                                "minItems": 1,
+                            }
+                        },
+                        "required": ["items"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_discount_amount",
+                    "description": "Return discount amount for a given order id",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "order_id": {"type": "string"},
+                        },
+                        "required": ["order_id"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_surcharge",
+                    "description": "Return surcharge amount for a given order id",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "order_id": {"type": "string"},
+                        },
+                        "required": ["order_id"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "compute_final_amount",
+                    "description": "Compute final amount as (invoice_total - discount) + surcharge",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "invoice_total": {"type": "string"},
+                            "discount": {"type": "string"},
+                            "surcharge": {"type": "string"},
+                        },
+                        "required": ["invoice_total", "discount", "surcharge"],
+                    },
+                },
+            },
+        ]
+
+        # Configure LLM for tools; leave tool_choice to auto so it can call both
+        llm_fallback = DocumentLLM(
+            model="azure/gpt-4.1",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="",
+            tools=tools,
+            parallel_tool_calls=parallel_tool_calls,
+            is_fallback=True,
+        )
+        llm = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="",
+            tools=tools,
+            parallel_tool_calls=parallel_tool_calls,
+        )
+
+        # Test for `supports_tools` mismatch between main and fallback LLMs
+        llm._supports_tools = False
+        with pytest.raises(ValueError, match="supports_tools"):
+            llm.fallback_llm = llm_fallback
+        llm._supports_tools = True
+        llm.fallback_llm = llm_fallback
+
+        # Mark support exolicitly due to litellm bug where litellm.supports_parallel_function_calling()
+        # returns False for all models: https://github.com/BerriAI/litellm/issues/13980
+        # TODO: remove this once litellm bug is fixed
+        llm._supports_parallel_tool_calls = True
+
+        # Optional chat session to preserve history
+        cs = ChatSession() if use_session else None
+        prompt = (
+            "Use the available tools to compute a final amount. "
+            'First call `compute_invoice_total` with exactly items=[{"qty":2,"price":3},{"qty":1,"price":3}]. '
+            "Then call `get_discount_amount` with order_id='ORD-123'. "
+            "Then call `get_surcharge` with order_id='ORD-123'. "
+            "Then call `compute_final_amount` using the exact outputs returned by the previous tools as "
+            "invoice_total, discount, surcharge. "
+            "Reply only with the number returned by `compute_final_amount`, nothing else. "
+            "Do not guess any values; you must call the tools."
+        )
+        if parallel_tool_calls:
+            llm._supports_parallel_tool_calls = False  # set to False to test error
+            with pytest.raises(ValueError, match="parallel tool calls"):
+                llm.chat(prompt, chat_session=cs)
+            llm._supports_parallel_tool_calls = True
+        else:
+            llm.tool_max_rounds = 1
+            with pytest.raises(LLMToolLoopLimitError):
+                # compute_invoice_total will be called first, then error
+                llm.chat(prompt, chat_session=cs)
+            llm.tool_max_rounds = (
+                4  # now this should pass, as we have 4 tools, 1 round per tool
+            )
+        answer = llm.chat(prompt, chat_session=cs)
+        logger.debug(
+            f"Answer with tools (parallel tool calls: {parallel_tool_calls}):\n"
+            + answer
+        )
+
+        # Expected: (2*3 + 1*3) - 4 + 2 = 7
+        assert answer and "7" in answer
+
+        # Only user + assistant in primary history (when session is used)
+        if use_session:
+            assert cs is not None
+            assert (
+                len(cs.messages) == 2
+                and cs.messages[0].role == "user"
+                and cs.messages[1].role == "assistant"
+            )
+
+        # Each tool must be invoked exactly once
+        assert (
+            calls["invoice"] == 1 if parallel_tool_calls else 2
+        )  # twice when parallel_tool_calls=False because of the caught LLMToolLoopLimitError above
+        assert calls["discount"] == 1
+        assert calls["surcharge"] == 1
+        assert calls["final"] == 1
+
+        # Usage must include at least two provider calls (tool round-trip + follow-up)
+        usage_calls = llm.get_usage()[0].usage.calls
+        logger.info(f"Usage calls: {len(usage_calls)}")
+        assert len(usage_calls) == 3 if parallel_tool_calls else 5
+
+        # Tool messages are stored separately when session is used
+        if use_session:
+            assert cs is not None
+            tool_msgs = cs._tool_messages
+            assert tool_msgs and any(
+                m.role == "assistant" and m.tool_calls for m in tool_msgs
+            )
+            assert any(m.role == "tool" for m in tool_msgs)
+
+        # Check serialization of LLM with registered tools
+        self._check_deserialized_llm_config_eq(llm)
+
+        # Warning should be emitted that tools are ignored during extraction workflows
+        with pytest.warns(UserWarning, match="ignored during extraction workflows"):
+            llm.extract_all(document=Document(raw_text="test"))
+
+        check_locals_memory_usage(locals(), test_name="test_chat_with_tools")
+
+    @memory_profile_and_capture
+    def test_invalid_tool_registrations(self):
+        """
+        Validate errors for invalid LLM tool registrations and tool configs.
+        """
+
+        llm = DocumentLLM(
+            model="azure/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            system_message="",
+        )
+
+        valid_schema = {
+            "type": "object",
+            "properties": {"x": {"type": "string"}},
+            "required": ["x"],
+        }
+
+        # 1) register_tool with non-callable
+        with pytest.raises(TypeError, match="Tool handler must be callable"):
+            register_tool(123)  # type: ignore[arg-type]
+
+        # 2) register_tool with positional-only parameter
+        def define_bad_handler():
+            """
+            Defines invalid handler with positional-only parameter.
+            """
+
+            @register_tool
+            def bad(a, /, b: int) -> str:  # positional-only arg is invalid
+                """
+                Invalid handler with positional-only parameter.
+                """
+                return str(b)
+
+        with pytest.raises(ValueError, match="keyword arguments"):
+            define_bad_handler()
+
+        # 3) LLM.tools missing `function` dict
+        with pytest.raises(
+            ValueError, match="Tool function must be a non-empty dictionary"
+        ):
+            llm.tools = [{"type": "function"}]
+        assert llm.tools is None
+
+        # 4) Empty tool name
+        with pytest.raises(ValueError, match="Tool name must be a non-empty string"):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {"name": " ", "parameters": valid_schema},
+                }
+            ]
+        assert llm.tools is None
+
+        # 5) Parameters not a dict
+        with pytest.raises(ValueError, match="Expected a JSON object"):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {"name": "foo", "parameters": "not a dict"},
+                }
+            ]
+        assert llm.tools is None
+
+        # 6) Parameters with wrong `type`
+        with pytest.raises(ValueError, match="type == 'object'"):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "foo",
+                        "parameters": {
+                            "type": "array",
+                            "properties": {},
+                            "required": [],
+                        },
+                    },
+                }
+            ]
+        assert llm.tools is None
+
+        # 7) Parameters with non-dict properties
+        with pytest.raises(ValueError, match="must include a 'properties' object"):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "foo",
+                        "parameters": {
+                            "type": "object",
+                            "properties": [],
+                            "required": [],
+                        },
+                    },
+                }
+            ]
+        assert llm.tools is None
+
+        # 8) Parameters with invalid `required`
+        with pytest.raises(ValueError, match="'required' must be a list of strings"):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "foo",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {},
+                            "required": "x",
+                        },
+                    },
+                }
+            ]
+        assert llm.tools is None
+
+        # 9) Parameters with missing required keys in properties
+        with pytest.raises(ValueError, match="missing in properties: x"):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "foo",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {},
+                            "required": ["x"],
+                        },
+                    },
+                }
+            ]
+        assert llm.tools is None
+
+        # 10) Name does not match any registered handler
+        with pytest.raises(
+            ValueError, match="No registered handler found for tool 'unknown_tool'"
+        ):
+            llm.tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "unknown_tool",
+                        "parameters": valid_schema,
+                    },
+                }
+            ]
+        assert llm.tools is None
+
+        check_locals_memory_usage(locals(), test_name="test_invalid_tool_registrations")
+
     # Do not memory-profile this test as we monkey patch sys.stdout
     def test_logger_disabled(self, monkeypatch, capsys):
         """
@@ -7275,6 +7801,7 @@ class TestAll(TestUtils):
             string_concept,  # noqa: F401
         )
         from dev.usage_examples.docs.llm_config import (
+            chat_with_tools,  # noqa: F401
             cost_tracking,  # noqa: F401
             detailed_usage,  # noqa: F401
             fallback_llm,  # noqa: F401

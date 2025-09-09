@@ -3402,14 +3402,16 @@ such as LlamaIndex remain more appropriate.
 **Not an agent framework**
 --------------------------
 
-ContextGem is not designed as an agent framework. Based on our
-research into practical extraction workflows, we believe that in-depth
-single-document data extraction can be handled more efficiently with
-non-agentic LLM workflows. For use cases that require agents, we
-recommend using frameworks like LangChain. ContextGem can still be
-easily integrated as a tool within agent frameworks due to its simple
-API and clear output structure, making it an excellent choice for
-document extraction tasks within larger agent-based systems.
+ContextGem is not designed as an agent framework. It now supports tool
+calling in chat (function-calling) with optional parallel tool calls
+and JSON schema validation of tool arguments, which enables building
+lightweight, task-oriented agents using your own control loop together
+with "ChatSession". For full agent orchestration (planning/critique,
+goal decomposition, long-term memory, schedulers, multi-agent
+coordination), we recommend frameworks specifically designed for this
+purpose. ContextGem integrates cleanly as a high-accuracy document
+extraction tool in larger agent systems thanks to its simple API and
+structured outputs.
 
 
 # ==== installation ====
@@ -3948,6 +3950,89 @@ Tip:
 
    # Or send a chat message without a session (one-off message → response)
    one_off_response = main_model.chat("Test")
+
+
+🛠️ Chat with Tools
+------------------
+
+Tip:
+
+  Provide OpenAI-compatible tool schemas via "tools=[...]" and
+  register Python handlers with "@register_tool". Tool support is only
+  used in "chat(...)" and "chat_async(...)".
+
+Note:
+
+  Tool handlers must return a string. If you need to return structured
+  data, serialize it (e.g., with "json.dumps") before returning.
+
+   import os
+
+   from contextgem import ChatSession, DocumentLLM, register_tool
+
+
+   # Define tool handlers and register them
+   @register_tool
+   def compute_invoice_total(items: list[dict]) -> str:
+       total = 0
+       for it in items:
+           qty = float(it.get("qty", 0))
+           price = float(it.get("price", 0))
+           total += qty * price
+       return str(total)
+
+
+   # OpenAI-compatible tool schema passed to the model
+   tools = [
+       {
+           "type": "function",
+           "function": {
+               "name": "compute_invoice_total",
+               "description": "Compute invoice total as sum(qty*price) over items",
+               "parameters": {
+                   "type": "object",
+                   "properties": {
+                       "items": {
+                           "type": "array",
+                           "items": {
+                               "type": "object",
+                               "properties": {
+                                   "qty": {"type": "number"},
+                                   "price": {"type": "number"},
+                               },
+                               "required": ["qty", "price"],
+                           },
+                           "minItems": 1,
+                       }
+                   },
+                   "required": ["items"],
+               },
+           },
+       },
+   ]
+
+
+   # Configure an LLM that supports tool use
+   llm = DocumentLLM(
+       model="azure/gpt-4.1-mini",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+       system_message="You are a helpful assistant.",  # override default system message for chat
+       tools=tools,
+   )
+
+   # Maintain history across turns
+   session = ChatSession()
+
+   prompt = (
+       "What's the invoice total for the items "
+       "[{'qty':2.0,'price':3.5},{'qty':1.0,'price':3.0}]? "
+       "Prices are in USD."
+   )
+
+   answer = llm.chat(prompt, chat_session=session)
+   print("Answer:", answer)
 
 
 # ==== documents/document_config ====
@@ -8840,6 +8925,26 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | guaranteed even with the same seed, as other       |
 |                      |                 |                 | factors may influence the model's response.        |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
+| "tools"              | "list[dict] |   | "None"          | OpenAI-compatible tool schema used only for chat   |
+|                      | None"           |                 | via "DocumentLLM.chat(...)"/".chat_async(...)".    |
+|                      |                 |                 | Each tool must have a registered Python handler    |
+|                      |                 |                 | decorated with "@register_tool" and available in   |
+|                      |                 |                 | scope when creating the LLM. Handlers must return  |
+|                      |                 |                 | a string; for structured data, serialize it (e.g., |
+|                      |                 |                 | with "json.dumps") before returning. Ignored by    |
+|                      |                 |                 | extraction methods. For more details, see 🛠️ Chat  |
+|                      |                 |                 | with Tools.                                        |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "tool_choice"        | "str | dict |   | "None"          | Tool choice control passed through to the provider |
+|                      | None"           |                 | during chat. Ignored by extraction methods.        |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "parallel_tool_call  | "bool | None"   | "None"          | Enable parallel tool calls during chat tool usage, |
+| s"                   |                 |                 | if supported by the model/provider. Ignored by     |
+|                      |                 |                 | extraction methods.                                |
++----------------------+-----------------+-----------------+----------------------------------------------------+
+| "tool_max_rounds"    | "int"           | "10"            | Safety limit on the number of tool-execution       |
+|                      |                 |                 | rounds per chat request to prevent infinite loops. |
++----------------------+-----------------+-----------------+----------------------------------------------------+
 | "async_limiter"      | "AsyncLimiter"  | "AsyncLimiter(  | Relevant when concurrency is enabled for           |
 |                      |                 | 3, 10)"         | extraction tasks. Controls frequency of async LLM  |
 |                      |                 |                 | API requests for concurrent tasks. Defaults to     |
@@ -11292,7 +11397,10 @@ class contextgem.public.documents.Document(**data)
         creation using the SaT model.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **raw_text** (*Annotated**[**str**,
         **Strict**(**strict=True**)**,
@@ -11822,7 +11930,7 @@ class contextgem.public.documents.Document(**data)
 
    pre_segment_sentences: bool
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/converters ====
@@ -12073,7 +12181,10 @@ class contextgem.public.aspects.Aspect(**data)
         Defaults to 2.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -12541,7 +12652,7 @@ class contextgem.public.aspects.Aspect(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/concepts ====
@@ -12615,7 +12726,10 @@ class contextgem.public.concepts.StringConcept(**data)
         "document title" vs "key findings").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -12855,7 +12969,7 @@ class contextgem.public.concepts.StringConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.concepts.BooleanConcept(**data)
 
@@ -12907,7 +13021,10 @@ class contextgem.public.concepts.BooleanConcept(**data)
         violations").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -13139,7 +13256,7 @@ class contextgem.public.concepts.BooleanConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.concepts.NumericalConcept(**data)
 
@@ -13195,7 +13312,10 @@ class contextgem.public.concepts.NumericalConcept(**data)
         "total revenue" vs "monthly sales figures").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -13441,7 +13561,7 @@ class contextgem.public.concepts.NumericalConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.concepts.RatingConcept(**data)
 
@@ -13498,7 +13618,10 @@ class contextgem.public.concepts.RatingConcept(**data)
         "product rating score" vs "customer satisfaction ratings").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -13748,7 +13871,7 @@ class contextgem.public.concepts.RatingConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.concepts.JsonObjectConcept(**data)
 
@@ -13855,7 +13978,10 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
         "product specifications" vs "customer order details").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -14109,7 +14235,7 @@ class contextgem.public.concepts.JsonObjectConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.concepts.DateConcept(**data)
 
@@ -14161,7 +14287,10 @@ class contextgem.public.concepts.DateConcept(**data)
         "contract signing date" vs "meeting dates").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -14391,7 +14520,7 @@ class contextgem.public.concepts.DateConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.concepts.LabelConcept(**data)
 
@@ -14465,7 +14594,10 @@ class contextgem.public.concepts.LabelConcept(**data)
         "document type" vs "content topics").
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **add_justifications** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
@@ -14719,7 +14851,7 @@ class contextgem.public.concepts.LabelConcept(**data)
 
    justification_max_sents: StrictInt
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/examples ====
@@ -14751,7 +14883,10 @@ class contextgem.public.examples.StringExample(**data)
       content of the example.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **content** (*Annotated**[**str**,
         **Strict**(**strict=True**)**,
@@ -14937,7 +15072,7 @@ class contextgem.public.examples.StringExample(**data)
 
    content: NonEmptyStr
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.examples.JsonObjectExample(**data)
 
@@ -14952,9 +15087,15 @@ class contextgem.public.examples.JsonObjectExample(**data)
       example.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
-      * **content** (*dict**[**str**, **Any**]*)
+      * **content** (*Annotated**[**dict**[**str**, **Any**]**, **Bef
+        oreValidator**(**func=~contextgem.internal.typings.validators
+        ._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
    Note:
       Examples are optional and can be used to guide LLM extraction
@@ -15155,9 +15296,9 @@ class contextgem.public.examples.JsonObjectExample(**data)
 
       Returns the ULID of the instance.
 
-   content: dict[str, Any]
+   content: JSONDictField
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/llms ====
@@ -15304,7 +15445,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          bool
 
-   extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_all(document, *, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts all aspects and concepts from a document and its
       aspects.
@@ -15359,7 +15500,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          _Document
 
-   async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_all_async(document, *, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts all aspects and concepts from a document
       and its aspects.
@@ -15412,7 +15553,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          _Document
 
-   extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_aspects_from_document(document, *, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs.
@@ -15466,7 +15607,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          list[_Aspect]
 
-   async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_aspects_from_document_async(document, *, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs asynchronously.
@@ -15516,7 +15657,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          list[_Aspect]
 
-   extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_concepts_from_aspect(aspect, document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts associated with a given aspect in a document.
 
@@ -15570,7 +15711,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_aspect_async(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_concepts_from_aspect_async(aspect, document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts concepts from a specified aspect using
       LLMs.
@@ -15622,7 +15763,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          list[_Concept]
 
-   extract_concepts_from_document(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_concepts_from_document(document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs.
@@ -15676,7 +15817,7 @@ class contextgem.public.llms.DocumentLLMGroup(**data)
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_document_async(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_concepts_from_document_async(document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs asynchronously.
@@ -16153,6 +16294,22 @@ class contextgem.public.llms.DocumentLLM(**data)
       * **seed** (*Annotated**[**int**, **Strict**(**strict=True**)**]
         **| **None*)
 
+      * **tools** (*list**[**Annotated**[**dict**[**str**, **Any**]**,
+        **BeforeValidator**(**func=~contextgem.internal.typings.valid
+        ators._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]**] **|
+        **None*)
+
+      * **tool_choice** (*str** | **Annotated**[**dict**[**str**,
+        **Any**]**, **BeforeValidator**(**func=~contextgem.internal.t
+        ypings.validators._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**] **| **None*)
+
+      * **parallel_tool_calls** (*bool** | **None*)
+
+      * **tool_max_rounds** (*Annotated**[**int**,
+        **Strict**(**strict=True**)**]*)
+
       * **auto_pricing** (*Annotated**[**bool**,
         **Strict**(**strict=True**)**]*)
 
@@ -16308,7 +16465,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          AsyncLimiter
 
-   chat(prompt, images=None, chat_session=None)
+   chat(prompt, *, images=None, chat_session=None)
 
       Synchronously sends a prompt to the LLM and gets a response. For
       models supporting vision, attach images to the prompt if needed.
@@ -16343,7 +16500,7 @@ class contextgem.public.llms.DocumentLLM(**data)
          * **RuntimeError** -- If the LLM call fails and no fallback
            is available
 
-   async chat_async(prompt, images=None, chat_session=None)
+   async chat_async(prompt, *, images=None, chat_session=None)
 
       Asynchronously sends a prompt to the LLM and gets a response.
       For models supporting vision, attach images to the prompt if
@@ -16379,7 +16536,7 @@ class contextgem.public.llms.DocumentLLM(**data)
          * **RuntimeError** -- If the LLM call fails and no fallback
            is available
 
-   extract_all(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_all(document, *, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts all aspects and concepts from a document and its
       aspects.
@@ -16434,7 +16591,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          _Document
 
-   async extract_all_async(document, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_all_async(document, *, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts all aspects and concepts from a document
       and its aspects.
@@ -16487,7 +16644,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          _Document
 
-   extract_aspects_from_document(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_aspects_from_document(document, *, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs.
@@ -16541,7 +16698,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          list[_Aspect]
 
-   async extract_aspects_from_document_async(document, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_aspects_from_document_async(document, *, from_aspects=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts aspects from the provided document using predefined
       LLMs asynchronously.
@@ -16591,7 +16748,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          list[_Aspect]
 
-   extract_concepts_from_aspect(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_concepts_from_aspect(aspect, document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts associated with a given aspect in a document.
 
@@ -16645,7 +16802,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_aspect_async(aspect, document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_concepts_from_aspect_async(aspect, document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Asynchronously extracts concepts from a specified aspect using
       LLMs.
@@ -16697,7 +16854,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          list[_Concept]
 
-   extract_concepts_from_document(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   extract_concepts_from_document(document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs.
@@ -16751,7 +16908,7 @@ class contextgem.public.llms.DocumentLLM(**data)
       Return type:
          list[_Concept]
 
-   async extract_concepts_from_document_async(document, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
+   async extract_concepts_from_document_async(document, *, from_concepts=None, overwrite_existing=False, max_items_per_call=0, use_concurrency=False, max_paragraphs_to_analyze_per_call=0, max_images_to_analyze_per_call=0, raise_exception_on_extraction_error=True)
 
       Extracts concepts from the provided document using predefined
       LLMs asynchronously.
@@ -17045,6 +17202,14 @@ class contextgem.public.llms.DocumentLLM(**data)
 
    seed: StrictInt | None
 
+   tools: list[JSONDictField] | None
+
+   tool_choice: str | JSONDictField | None
+
+   parallel_tool_calls: bool | None
+
+   tool_max_rounds: StrictInt
+
    auto_pricing: StrictBool
 
    auto_pricing_refresh: StrictBool
@@ -17068,7 +17233,10 @@ class contextgem.public.llms.ChatSession(**data)
    name.
 
    Parameters:
-      **custom_data** (*dict*)
+      **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, **B
+      eforeValidator**(**func=~contextgem.internal.typings.validators
+      ._validate_is_json_dict**,
+      **json_schema_input_type=PydanticUndefined**)**]*)
 
    clone()
 
@@ -17232,7 +17400,7 @@ class contextgem.public.llms.ChatSession(**data)
 
       Returns the ULID of the instance.
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/data_models ====
@@ -17841,7 +18009,10 @@ class contextgem.public.images.Image(**data)
         base64.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **mime_type** (*Literal**[**'image/jpg'**, **'image/jpeg'**,
         **'image/png'**, **'image/webp'**]*)
@@ -18060,7 +18231,7 @@ class contextgem.public.images.Image(**data)
 
    base64_data: NonEmptyStr
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/paragraphs ====
@@ -18099,7 +18270,10 @@ class contextgem.public.paragraphs.Paragraph(**data)
         list. Cannot be reassigned once populated.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **additional_context** (*Annotated**[**str**,
         **Strict**(**strict=True**)**,
@@ -18294,7 +18468,7 @@ class contextgem.public.paragraphs.Paragraph(**data)
 
    additional_context: NonEmptyStr | None
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/sentences ====
@@ -18329,7 +18503,10 @@ class contextgem.public.sentences.Sentence(**data)
       sentence. This value is frozen after initialization.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **additional_context** (*Annotated**[**str**,
         **Strict**(**strict=True**)**,
@@ -18521,7 +18698,7 @@ class contextgem.public.sentences.Sentence(**data)
 
    additional_context: NonEmptyStr | None
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 
 # ==== api/pipelines ====
@@ -18564,7 +18741,10 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
         information elements to extract. Defaults to an empty list.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **aspects** (*Annotated**[**Sequence**[**_Aspect**]**, **Befo
         reValidator**(**func=~contextgem.internal.typings.validators.
@@ -19029,7 +19209,7 @@ class contextgem.public.pipelines.ExtractionPipeline(**data)
 
    concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
 
-   custom_data: dict
+   custom_data: JSONDictField
 
 class contextgem.public.pipelines.DocumentPipeline(**data)
 
@@ -19056,7 +19236,10 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
    Initialize DocumentPipeline with deprecation warning.
 
    Parameters:
-      * **custom_data** (*dict*)
+      * **custom_data** (*Annotated**[**dict**[**str**, **Any**]**, *
+        *BeforeValidator**(**func=~contextgem.internal.typings.valida
+        tors._validate_is_json_dict**,
+        **json_schema_input_type=PydanticUndefined**)**]*)
 
       * **aspects** (*Annotated**[**Sequence**[**_Aspect**]**, **Befo
         reValidator**(**func=~contextgem.internal.typings.validators.
@@ -19427,4 +19610,39 @@ class contextgem.public.pipelines.DocumentPipeline(**data)
 
    concepts: Annotated[Sequence[_Concept], BeforeValidator(_validate_sequence_is_list)]
 
-   custom_data: dict
+   custom_data: JSONDictField
+
+
+# ==== api/decorators ====
+
+Decorators
+**********
+
+Public decorators for extending or integrating with the framework.
+
+This module contains decorators that are part of the public API and
+intended for end users to apply to their own functions or classes.
+
+contextgem.public.decorators.register_tool(func, /)
+
+   Registers a function as a tool handler for LLM chat with tools.
+
+   Validates that the function has an inspectable signature and
+   accepts keyword arguments (no positional-only parameters). Marks
+   the function so the runtime can recognize and call it by name.
+
+   Parameters:
+      **func** (*ToolHandler*) -- A callable to be used as a tool
+      handler.
+
+   Returns:
+      The same function, marked as a registered tool.
+
+   Return type:
+      ToolHandler
+
+   Raises:
+      * **TypeError** -- If the provided object is not callable.
+
+      * **ValueError** -- If the signature cannot be inspected or has
+        positional-only parameters, or if the function name is empty.

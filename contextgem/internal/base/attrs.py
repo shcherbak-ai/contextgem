@@ -43,7 +43,7 @@ from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.decorators import (
     _post_init_method,
 )
-from contextgem.internal.typings.aliases import (
+from contextgem.internal.typings.types import (
     AssignedInstancesAttrName,
     JustificationDepth,
 )

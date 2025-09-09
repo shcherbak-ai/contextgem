@@ -363,3 +363,4 @@ Indices and tables
    api/paragraphs
    api/sentences
    api/pipelines
+   api/decorators

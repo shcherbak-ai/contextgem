@@ -49,7 +49,7 @@ from contextgem.internal.data_models import (
     _LLMUsageOutputContainer,
 )
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.aliases import LLMRoleAny
+from contextgem.internal.typings.types import LLMRoleAny
 from contextgem.internal.utils import (
     _are_prompt_template_brackets_balanced,
     _are_prompt_template_xml_tags_balanced,
@@ -631,9 +631,9 @@ class TestUtils:
         if not hasattr(instance, "custom_data"):
             return
         with pytest.raises(ValueError):
-            instance.custom_data = {int: bool}
+            instance.custom_data = {int: bool}  # type: ignore
         with pytest.raises(ValueError):
-            instance.custom_data = {str: [object]}
+            instance.custom_data = {str: [object]}  # type: ignore
         with pytest.raises(TypeError):
             instance.custom_data = {self.document: self.extraction_pipeline}  # type: ignore
         with pytest.raises(TypeError):

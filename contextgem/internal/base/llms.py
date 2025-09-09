@@ -29,6 +29,8 @@ across the framework.
 from __future__ import annotations
 
 import asyncio
+import inspect
+import json
 import warnings
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
@@ -36,6 +38,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 from aiolimiter import AsyncLimiter
+from fastjsonschema import validate as _jsonschema_validate
+from fastjsonschema.exceptions import JsonSchemaException as _JSONSchemaValidationError
 from genai_prices import UpdatePrices as _GPUpdatePrices
 from genai_prices import Usage as _GPUsage
 from genai_prices import calc_price as _calc_auto_price
@@ -59,6 +63,7 @@ from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.base.utils import _is_registered_tool
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,
@@ -72,23 +77,34 @@ from contextgem.internal.decorators import (
     _post_init_method,
     _timer_decorator,
 )
-from contextgem.internal.exceptions import LLMAPIError, LLMExtractionError
+from contextgem.internal.exceptions import (
+    LLMAPIError,
+    LLMExtractionError,
+    LLMToolLoopLimitError,
+)
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _publicize
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
-from contextgem.internal.typings.aliases import (
+from contextgem.internal.typings.types import (
     AsyncCalsAndKwargs,
     DefaultPromptType,
     ExtractedInstanceType,
+    JSONDict,
+    JSONDictField,
     JustificationDepth,
     LanguageRequirement,
     LLMRoleAny,
     NonEmptyStr,
     ReasoningEffort,
     ReferenceDepth,
+    ToolHandler,
+    ToolRegistration,
 )
-from contextgem.internal.typings.validators import _validate_sequence_is_list
+from contextgem.internal.typings.validators import (
+    _validate_sequence_is_list,
+    _validate_tool_parameters_schema,
+)
 from contextgem.internal.utils import (
     _async_multi_executor,
     _chunk_list,
@@ -140,6 +156,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     def extract_all(
         self,
         document: _Document,
+        *,
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -199,6 +216,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     async def extract_all_async(
         self,
         document: _Document,
+        *,
         overwrite_existing: bool = False,
         max_items_per_call: int = 0,
         use_concurrency: bool = False,
@@ -248,6 +266,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         if document._requires_sentence_segmentation():
             document._segment_sents()
 
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
+
         # Extract all aspects in the document
         await self.extract_aspects_from_document_async(
             document=document,
@@ -296,6 +317,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     def extract_aspects_from_document(
         self,
         document: _Document,
+        *,
         from_aspects: Sequence[_Aspect]
         | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
@@ -355,6 +377,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     async def extract_aspects_from_document_async(
         self,
         document: _Document,
+        *,
         from_aspects: Sequence[_Aspect]
         | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
@@ -412,6 +435,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
             document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
 
         extract_instances_kwargs = {
             "context": document,
@@ -484,6 +510,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         self,
         aspect: _Aspect,
         document: _Document,
+        *,
         from_concepts: Sequence[_Concept]
         | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
@@ -547,6 +574,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         self,
         aspect: _Aspect,
         document: _Document,
+        *,
         from_concepts: Sequence[_Concept]
         | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
@@ -605,6 +633,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
             document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
 
         if not aspect._is_processed:
             if aspect.extracted_items:
@@ -689,6 +720,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     def extract_concepts_from_document(
         self,
         document: _Document,
+        *,
         from_concepts: Sequence[_Concept]
         | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
@@ -750,6 +782,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     async def extract_concepts_from_document_async(
         self,
         document: _Document,
+        *,
         from_concepts: Sequence[_Concept]
         | None = None,  # using Sequence type with list validator for type checking
         overwrite_existing: bool = False,
@@ -811,6 +844,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
             document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
 
         extract_instances_kwargs = {
             "context": document,
@@ -2774,6 +2810,24 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
                 return False
         return True
 
+    def _warn_tools_ignored_if_enabled(self) -> None:
+        """
+        Warns if any LLM in the group has tools configured, since tools are ignored
+        during extraction workflows. Tools are only supported in ``llm.chat(...)``.
+
+        :return: None
+        :rtype: None
+        """
+        models_with_tools = [llm.model for llm in self.llms if llm.tools]
+        if models_with_tools:
+            models_with_tools_list = ", ".join(models_with_tools)
+            warnings.warn(
+                "Tool calling is ignored during extraction workflows. "
+                f"Models with tools configured: {models_with_tools_list}. "
+                "Tools are only supported in `llm.chat(...)`.",
+                stacklevel=2,
+            )
+
     @field_validator("llms")
     @classmethod
     def _validate_llms(cls, llms: list[_DocumentLLM]) -> list[_DocumentLLM]:
@@ -3019,7 +3073,39 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=None,
         description="Random seed for sampling (provider support dependent).",
     )
-
+    # Tool calling params (to be used only in chat() calls)
+    tools: list[JSONDictField] | None = Field(
+        default=None,
+        description=(
+            "Tool definitions in OpenAI-compatible schema. "
+            "Passed to litellm during chat() calls only. "
+            "Ignored when using .extract_*() methods."
+        ),
+    )
+    tool_choice: str | JSONDictField | None = Field(
+        default=None,
+        description=(
+            "Tool choice for the model. "
+            "Passed to litellm during chat() calls only. "
+            "Ignored when using .extract_*() methods."
+        ),
+    )
+    parallel_tool_calls: bool | None = Field(
+        default=None,
+        description=(
+            "Whether to enable parallel tool calls during tool usage. "
+            "Passed to litellm during chat() calls only. "
+            "Ignored when using .extract_*() methods."
+        ),
+    )
+    tool_max_rounds: StrictInt = Field(
+        default=10,
+        ge=1,
+        description=(
+            "Maximum number of tool execution rounds per LLM request. "
+            "Prevents infinite or excessively long tool chains."
+        ),
+    )
     # Auto-pricing via genai-prices (optional)
     auto_pricing: StrictBool = Field(
         default=False,
@@ -3058,6 +3144,18 @@ class _DocumentLLM(_GenericLLMProcessor):
     # is not accurate for the model)
     _supports_vision: bool = PrivateAttr(default=False)
     _supports_reasoning: bool = PrivateAttr(default=False)
+    _supports_tools: bool = PrivateAttr(default=False)
+    _supports_parallel_tool_calls: bool = PrivateAttr(default=False)
+
+    # Tool registry: name -> ToolRegistration
+    _tool_registry: dict[str, ToolRegistration] = PrivateAttr(default_factory=dict)
+
+    # Private attributes must be set only once before model validation.
+    # We shouldn't set private attributes in post-init method because
+    # some model validators which run before post-init require access to
+    # such attributes. We also want to avoid re-setting private attributes
+    # in every call of a model validator that validates any new assignment.
+    _private_attrs_initialized: bool = PrivateAttr(default=False)
 
     def __init__(self, **data: Any):
         # Pop the async_limiter if provided; otherwise use a default.
@@ -3124,28 +3222,42 @@ class _DocumentLLM(_GenericLLMProcessor):
                 stacklevel=2,
             )
 
-        # "minimal" reasoning effort is supported only for gpt-5 models
-        if self.reasoning_effort == "minimal" and not (
+        # Warn about unreliable parallel tool calling behavior on some GPT-5 deployments
+        # TODO: remove this once this is fixed
+        if self.parallel_tool_calls and (
             self.model.startswith("azure/gpt-5")
             or self.model.startswith("openai/gpt-5")
         ):
-            raise ValueError(
-                "`reasoning_effort='minimal'` is supported only for gpt-5 models."
+            warnings.warn(
+                "parallel_tool_calls=True set for a GPT-5 model. Many GPT-5 deployments currently do not "
+                "execute true parallel tool calling, which may result in the same number of LLM API calls "
+                "as sequential execution. Consider models known to support this reliably "
+                "(e.g., 'openai/gpt-4.1-mini') or disable parallel_tool_calls until resolved. "
+                "See https://learn.microsoft.com/en-us/answers/questions/5523783/gpt-5-not-parallel-tool-calling "
+                "for more details.",
+                stacklevel=2,
             )
 
     def _set_private_attrs(self) -> None:
         """
-        Initialize and configure private attributes for the LLM instance.
+        Initializes and configures private attributes for the LLM instance.
+        Runs only once.
 
         :return: None
         :rtype: None
         """
+
+        if self._private_attrs_initialized:
+            return
+
         if self.system_message is None:
             self._set_system_message()
         self._set_prompts()
         self._set_capabilities()
         if self.auto_pricing:
             self._set_provider_and_model_for_auto_pricing()
+
+        self._private_attrs_initialized = True
 
     @property
     def async_limiter(self) -> AsyncLimiter:
@@ -3198,6 +3310,7 @@ class _DocumentLLM(_GenericLLMProcessor):
     def chat(
         self,
         prompt: str,
+        *,
         images: list[_Image] | None = None,
         chat_session: _ChatSession | None = None,  # type: ignore
     ) -> str:
@@ -3227,6 +3340,7 @@ class _DocumentLLM(_GenericLLMProcessor):
     async def chat_async(
         self,
         prompt: str,
+        *,
         images: list[_Image] | None = None,
         chat_session: _ChatSession | None = None,  # type: ignore
     ) -> str:
@@ -3326,6 +3440,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             num_retries_failed_request=self.num_retries_failed_request,
             max_retries_failed_request=self.max_retries_failed_request,
             raise_exception_on_llm_api_error=True,  # always True for chat
+            chat_session=chat_session,
         )
 
         # Update usage and cost statistics
@@ -3355,6 +3470,21 @@ class _DocumentLLM(_GenericLLMProcessor):
                 )
 
         return response
+
+    def _warn_tools_ignored_if_enabled(self) -> None:
+        """
+        Warns if tools are configured for this LLM, since tools are ignored
+        during extraction workflows. Tools are only supported in ``llm.chat(...)``.
+
+        :return: None
+        :rtype: None
+        """
+        if self.tools:
+            warnings.warn(
+                f"Tool calling for model `{self.model}` is ignored during extraction workflows. "
+                f"Tools are only supported in `llm.chat(...)`.",
+                stacklevel=2,
+            )
 
     def _build_user_message(
         self, message_text: str, images: list[_Image] | None = None
@@ -3387,6 +3517,91 @@ class _DocumentLLM(_GenericLLMProcessor):
         else:
             content = message_text
         return _Message(role="user", content=content)
+
+    @staticmethod
+    def _resolve_and_validate_tools(
+        tools: list[dict[str, Any]] | None,
+    ) -> list[tuple[str, JSONDict, ToolHandler]]:
+        """
+        Resolves and validates tools by ensuring proper schema and locating registered handlers.
+        Returns a list of tuples: (tool_name, parameters_schema, handler).
+
+        :param tools: A list of tool dictionaries to resolve and validate.
+        :type tools: list[dict[str, Any]] | None
+        :return: A list of tuples: (tool_name, parameters_schema, handler).
+        :rtype: list[tuple[str, JSONDict, ToolHandler]]
+        :raises ValueError: If the tool function is not a non-empty dictionary,
+            the tool name is not a non-empty string, or the tool parameters schema is invalid.
+        :raises ValueError: If no registered handler is found for the tool.
+        """
+
+        resolved: list[tuple[str, JSONDict, ToolHandler]] = []
+        if not tools:
+            return resolved
+
+        for tool in tools:
+            fn_obj = tool.get("function")
+            if not isinstance(fn_obj, dict):
+                raise ValueError("Tool function must be a non-empty dictionary")
+
+            name = fn_obj.get("name")
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError("Tool name must be a non-empty string")
+
+            parameters = fn_obj.get("parameters")
+            _validate_tool_parameters_schema(parameters)
+
+            # Verify a registered handler exists in non-contextgem frames
+            resolved_handler: ToolHandler | None = None
+            for frame_info in inspect.stack():
+                frame = frame_info.frame
+                mod = frame.f_globals.get("__name__", "")
+                if isinstance(mod, str) and mod.startswith("contextgem"):
+                    continue
+                candidate = frame.f_locals.get(name)
+                if (
+                    _is_registered_tool(candidate)
+                    and getattr(candidate, "__contextgem_tool_name__", None) == name
+                ):
+                    resolved_handler = candidate  # type: ignore[assignment]
+                    break
+                candidate = frame.f_globals.get(name)
+                if (
+                    _is_registered_tool(candidate)
+                    and getattr(candidate, "__contextgem_tool_name__", None) == name
+                ):
+                    resolved_handler = candidate  # type: ignore[assignment]
+                    break
+
+            if resolved_handler is None:
+                raise ValueError(
+                    f"No registered handler found for tool '{name}'. "
+                    "Ensure the function is decorated with @register_tool(...) and is in scope "
+                    "(imported/defined) before creating or configuring the LLM."
+                )
+
+            # Safe cast to the expected types
+            resolved.append(
+                (
+                    cast(str, name),
+                    cast(JSONDict, parameters),
+                    cast(ToolHandler, resolved_handler),
+                )
+            )
+
+        return resolved
+
+    def _sync_tool_registry_from_tools(self) -> None:
+        """
+        Rebuilds internal tool registry from validated `self.tools`.
+
+        :return: None
+        :rtype: None
+        """
+        new_registry: dict[str, ToolRegistration] = {}
+        for name, parameters, handler in self._resolve_and_validate_tools(self.tools):
+            new_registry[name] = {"handler": handler, "schema": parameters}
+        self._tool_registry = new_registry
 
     def _check_and_build_system_message(self) -> _Message | None:
         """
@@ -3561,12 +3776,27 @@ class _DocumentLLM(_GenericLLMProcessor):
             logger.debug("Async lock of deserialized LLM is different.")
             return False
 
+        # Check _private_attrs_initialized
+        if self._private_attrs_initialized != other._private_attrs_initialized:
+            logger.debug(
+                "`_private_attrs_initialized` of deserialized LLM is different."
+            )
+            return False
+
         # Check capabilities
         if self._supports_vision != other._supports_vision:
             logger.debug("`_supports_vision` of deserialized LLM is different.")
             return False
         if self._supports_reasoning != other._supports_reasoning:
             logger.debug("`_supports_reasoning` of deserialized LLM is different.")
+            return False
+        if self._supports_tools != other._supports_tools:
+            logger.debug("`_supports_tools` of deserialized LLM is different.")
+            return False
+        if self._supports_parallel_tool_calls != other._supports_parallel_tool_calls:
+            logger.debug(
+                "`_supports_parallel_tool_calls` of deserialized LLM is different."
+            )
             return False
 
         return True
@@ -3614,18 +3844,54 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
         return fallback_llm
 
+    @field_validator("tools")
+    @classmethod
+    def _validate_tools(
+        cls,
+        tools: list[dict[str, Any]] | None,
+    ) -> list[dict[str, Any]] | None:
+        """
+        Validates `tools` on assignment to prevent persisting invalid configs.
+
+        If tools are provided, ensures each entry is a dict with a non-empty function
+        definition, validates the `parameters` schema, and verifies that a registered
+        handler with a matching name is resolvable from user frames.
+
+        :param tools: A list of tool dictionaries to validate, or None if no tools
+            are provided.
+        :type tools: list[dict[str, Any]] | None
+        :return: The validated tools, or None if no tools are provided.
+        :rtype: list[dict[str, Any]] | None
+        """
+        if tools is None:
+            return None
+
+        # Reuse shared helper for validation and resolution
+        _ = cls._resolve_and_validate_tools(tools)
+        return tools
+
+    @model_validator(mode="after")
+    def _ensure_private_attrs(self) -> Self:
+        """
+        Ensures private attributes are available for any code in/after this validator.
+
+        :return: The instance of the current LLM model after setting private attributes.
+        :rtype: Self
+        """
+        self._set_private_attrs()
+        return self
+
     @model_validator(mode="after")
     def _validate_document_llm_post(self) -> Self:
         """
         Validate the integrity of the document LLM model after initialization.
 
-        :return: Returns the instance of the current LLM model after successful validation.
+        :return: The instance of the current LLM model after successful validation.
         :rtype: Self
         :raises ValueError: If the LLM model is not properly configured.
         """
 
-        # Set private attributes before validation
-        self._set_private_attrs()
+        self._sync_tool_registry_from_tools()
 
         # pricing_details and auto_pricing are mutually exclusive
         if self.pricing_details is not None and self.auto_pricing:
@@ -3661,6 +3927,24 @@ class _DocumentLLM(_GenericLLMProcessor):
                     f"The fallback LLM must have the same output language `{self.output_language}` as the main one."
                 )
 
+            # Validate tool-calling configuration parity
+            if self.tools != self.fallback_llm.tools:
+                raise ValueError(
+                    "Fallback LLM must have the same `tools` configuration as the main LLM"
+                )
+            if self.tools and self._supports_tools != self.fallback_llm._supports_tools:
+                raise ValueError(
+                    "Fallback LLM must have the same `_supports_tools` configuration as the main LLM"
+                )
+            if self.tool_choice != self.fallback_llm.tool_choice:
+                raise ValueError(
+                    "Fallback LLM must have the same `tool_choice` configuration as the main LLM"
+                )
+            if self.parallel_tool_calls != self.fallback_llm.parallel_tool_calls:
+                raise ValueError(
+                    "Fallback LLM must have the same `parallel_tool_calls` configuration as the main LLM"
+                )
+
             # Check that the fallback LLM is not the replica of the main LLM, just with different
             # `is_fallback` and `fallback_llm` params
             main_llm_dict = {
@@ -3677,6 +3961,15 @@ class _DocumentLLM(_GenericLLMProcessor):
                 raise ValueError(
                     "Fallback LLM must not have the exact same config params as the main LLM."
                 )
+
+        # "minimal" reasoning effort is supported only for gpt-5 models
+        if self.reasoning_effort == "minimal" and not (
+            self.model.startswith("azure/gpt-5")
+            or self.model.startswith("openai/gpt-5")
+        ):
+            raise ValueError(
+                "`reasoning_effort='minimal'` is supported only for gpt-5 models."
+            )
 
         # Emit relevant warnings
 
@@ -3716,6 +4009,26 @@ class _DocumentLLM(_GenericLLMProcessor):
                 f"to this model, consider using a `reasoner_*` role to match aspect/concept `llm_role` "
                 f"and keep pipeline roles consistent. See "
                 f"https://contextgem.dev/optimizations/optimization_choosing_llm.html",
+                stacklevel=2,
+            )
+
+        if self.tools is not None and not self._supports_tools:
+            warnings.warn(
+                f"Model `{self.model}` is assigned tools but litellm does not detect it as tools-capable. "
+                f"This will cause tool calling to fail. If you know this model supports tools, "
+                f"manually set `_supports_tools=True` on the LLM instance.",
+                stacklevel=2,
+            )
+        if (
+            self.parallel_tool_calls is not None
+            and not self._supports_parallel_tool_calls
+        ):
+            warnings.warn(
+                f"Model `{self.model}` has `parallel_tool_calls` parameter set but "
+                f"litellm does not detect it as parallel tool calls-capable. "
+                f"This will cause parallel tool calling to fail. "
+                f"If you know this model supports parallel tool calls, "
+                f"manually set `_supports_parallel_tool_calls=True` on the LLM instance.",
                 stacklevel=2,
             )
 
@@ -3862,8 +4175,418 @@ class _DocumentLLM(_GenericLLMProcessor):
                 f"Could not validate max output tokens for model `{self.model}`: {e}"
             )
 
+    def _ensure_vision_support_for_messages(self, messages: list[_Message]) -> None:
+        """
+        Validates that messages do not contain vision content when the model
+        does not support vision.
+
+        :param messages: List of message objects
+        :type messages: list[_Message]
+        :return: None
+        :rtype: None
+        :raises ValueError: If image content is found but the model lacks vision support
+        """
+
+        contains_image_content = any(
+            isinstance(m.content, list)
+            and any(
+                isinstance(part, dict) and part.get("type") == "image_url"
+                for part in m.content
+            )
+            for m in messages
+        )
+        if contains_image_content and not self._supports_vision:
+            raise ValueError(
+                f"Model `{self.model}` does not support vision according to "
+                f"litellm.supports_vision(). To override this detection, "
+                f"manually set `_supports_vision=True` on the LLM instance."
+            )
+
+    def _messages_to_request(self, messages: list[_Message]) -> list[dict[str, Any]]:
+        """
+        Converts internal message objects to provider-ready dictionaries.
+
+        :param messages: List of message objects
+        :type messages: list[_Message]
+        :return: List of request-compatible messages as dictionaries
+        :rtype: list[dict[str, Any]]
+        """
+        return [m._to_message_dict() for m in messages]
+
+    def _build_request_config(self) -> dict[str, Any]:
+        """
+        Builds the common request configuration for a non-streaming completion call,
+        including model-specific parameters. Messages are supplied separately per call.
+
+        :return: Base request configuration
+        :rtype: dict[str, Any]
+        :raises ValueError: If required params for reasoning models are missing
+        """
+
+        request_config: dict[str, Any] = {
+            "model": self.model,
+        }
+
+        if self._supports_reasoning:
+            model_params: list[str] | None = litellm.get_supported_openai_params(  # type: ignore[attr-defined]
+                self.model
+            )
+            if model_params is not None:
+                if "max_completion_tokens" in model_params:
+                    if not (self.max_completion_tokens):
+                        raise ValueError(
+                            "`max_completion_tokens` must be set for reasoning (CoT-capable) models"
+                        )
+                    request_config["max_completion_tokens"] = self.max_completion_tokens
+                if "reasoning_effort" in model_params and self.reasoning_effort:
+                    request_config["reasoning_effort"] = self.reasoning_effort
+            if self.temperature is not None or self.top_p is not None:
+                logger.info(
+                    "`temperature` and `top_p` parameters are ignored for reasoning (CoT-capable) models"
+                )
+        else:
+            request_config["max_tokens"] = self.max_tokens
+            if self.temperature is not None:
+                request_config["temperature"] = self.temperature
+            if self.top_p is not None:
+                request_config["top_p"] = self.top_p
+
+        if self.deployment_id:
+            request_config["deployment_id"] = self.deployment_id
+
+        if self.seed:
+            request_config["seed"] = self.seed
+
+        if self.tools is not None:
+            request_config["tools"] = self.tools
+        if self.tool_choice is not None:
+            request_config["tool_choice"] = self.tool_choice
+        if self.parallel_tool_calls is not None:
+            if not self._supports_parallel_tool_calls:
+                raise ValueError(
+                    f"Model `{self.model}` does not support parallel tool calls according to "
+                    f"litellm.supports_parallel_function_calling(). To override this detection, "
+                    f"manually set `_supports_parallel_tool_calls=True` on the LLM instance."
+                )
+            request_config["parallel_tool_calls"] = self.parallel_tool_calls
+
+        return request_config
+
+    async def _send_non_streaming_completion(
+        self,
+        *,
+        request_config: dict[str, Any],
+        messages_payload: list[dict[str, Any]],
+        num_retries_failed_request: int = 3,
+        max_retries_failed_request: int = 0,
+        drop_params: bool = False,
+        drop_tool_choice: bool = False,
+    ) -> Any:
+        """
+        Sends a single non-streaming chat completion request.
+
+        :param request_config: Base request configuration
+        :type request_config: dict[str, Any]
+        :param messages_payload: Provider-formatted messages to send
+        :type messages_payload: list[dict[str, Any]]
+        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
+            Note that this parameter may override the value set on the LLM instance to prevent
+            accumulation of retries from failed requests and invalid data generation.
+        :type num_retries_failed_request: int
+        :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
+            retries when LLM request fails. Defaults to 0. This parameter may override the value set on
+            the LLM instance to prevent accumulation of retries from failed requests and invalid data generation.
+        :type max_retries_failed_request: int
+        :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
+            Used internally for automatic retry when UnsupportedParamsError occurs.
+        :type drop_params: bool
+        :param drop_tool_choice: Whether to remove tool_choice in this call
+        :type drop_tool_choice: bool
+        :return: Raw completion object
+        :rtype: Any
+        """
+
+        payload = dict(request_config)
+        payload["messages"] = messages_payload
+        if drop_tool_choice and "tool_choice" in payload:
+            payload["tool_choice"] = None
+        return await litellm.acompletion(
+            **payload,
+            api_key=self.api_key,
+            api_base=self.api_base,
+            api_version=self.api_version,
+            num_retries=num_retries_failed_request,
+            max_retries=max_retries_failed_request,
+            timeout=self.timeout,
+            stream=False,  # always disabled in contextgem
+            drop_params=drop_params,
+        )
+
+    def _record_usage_call(
+        self,
+        *,
+        usage: _LLMUsage,
+        answer_text: str | None,
+        call_obj: _LLMCall,
+        completion_obj: Any,
+    ) -> None:
+        """
+        Accumulates token usage and records metadata for a call into the given usage object.
+
+        :param usage: The _LLMUsage object to accumulate token usage and metadata.
+        :type usage: _LLMUsage
+        :param answer_text: The text of the answer from the LLM.
+        :type answer_text: str | None
+        :param call_obj: The _LLMCall object to record the response timestamp and response.
+        :type call_obj: _LLMCall
+        :param completion_obj: The raw completion object from the LLM.
+        :type completion_obj: Any
+        """
+        usage.input += completion_obj.usage.prompt_tokens
+        usage.output += completion_obj.usage.completion_tokens
+        call_obj._record_response_timestamp()
+        call_obj.response = answer_text
+        usage.calls.append(call_obj)
+
+    async def _execute_tool_call(self, tc_obj: Any) -> _Message:
+        """
+        Executes a single tool call requested by the model and returns a tool message.
+
+        :param tc_obj: The tool call object to execute.
+        :type tc_obj: Any
+        :return: The tool message object.
+        :rtype: _Message
+        """
+
+        fn = tc_obj.get("function")
+        name = fn.get("name")
+        args_raw = fn.get("arguments", "{}")
+        call_id = tc_obj.get("id")
+
+        try:
+            args_dict = json.loads(args_raw)
+        except Exception as e:
+            content_text = json.dumps(
+                {
+                    "error": "InvalidToolArguments",
+                    "message": f"Invalid JSON arguments: {e}",
+                }
+            )
+            # Return a tool message with the error for the model to retry in another round
+            return _Message(
+                role="tool", content=content_text, tool_call_id=call_id, name=name
+            )
+
+        # Lookup tool registration
+        reg = self._tool_registry.get(name)
+        if not reg:
+            # This should never happen as we sync/validate the tool registry during the LLM init
+            raise RuntimeError(f"Tool '{name}' is not registered")
+
+        schema = reg.get("schema")
+        if not schema:
+            # This should never happen as we build/validate the tool registry during the LLM init
+            raise RuntimeError("Tool schema is required")
+        try:
+            _jsonschema_validate(schema, args_dict)
+        except _JSONSchemaValidationError as ve:
+            # Return a tool message with the error for the model to retry in another round
+            result_payload = {"error": "SchemaValidationError", "message": str(ve)}
+            content_text = json.dumps(result_payload)
+            return _Message(
+                role="tool", content=content_text, tool_call_id=call_id, name=name
+            )
+
+        handler = reg["handler"]
+        try:
+            if inspect.iscoroutinefunction(handler):
+                res = await handler(**args_dict)
+            else:
+                res = handler(**args_dict)
+        except Exception as ex:
+            content_text = json.dumps(
+                {"error": "ToolExecutionError", "message": str(ex)}
+            )
+            return _Message(
+                role="tool", content=content_text, tool_call_id=call_id, name=name
+            )
+
+        if not isinstance(res, str):
+            # Abort immediately for developer error to prevent extra LLM roundtrips
+            raise TypeError(
+                f"Tool handler {name} must return a string. Use `json.dumps` for objects."
+            )
+
+        content_text = res
+        logger.debug(f"Tool {name} returned: {content_text}")
+
+        # Return a tool message with the result
+        return _Message(
+            role="tool", content=content_text, tool_call_id=call_id, name=name
+        )
+
+    async def _execute_tool_calls(self, tool_calls: Any) -> list[_Message]:
+        """
+        Executes tool calls either in parallel or sequentially depending on configuration.
+
+        :param tool_calls: The tool calls to execute.
+        :type tool_calls: Any
+        :return: The tool messages.
+        :rtype: list[_Message]
+        """
+        if not tool_calls:
+            return []
+        # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+        cals_and_kwargs = cast(
+            AsyncCalsAndKwargs,
+            [(self._execute_tool_call, {"tc_obj": tc}) for tc in tool_calls],
+        )
+        messages = await _run_async_calls(
+            cals_and_kwargs=cals_and_kwargs,
+            use_concurrency=bool(self.parallel_tool_calls),
+        )
+        return cast(list[_Message], messages)
+
+    async def _send_messages_with_tools(
+        self,
+        *,
+        request_config: dict[str, Any],
+        request_messages: list[dict[str, Any]],
+        llm_call_obj: _LLMCall,
+        usage: _LLMUsage,
+        num_retries_failed_request: int = 3,
+        max_retries_failed_request: int = 0,
+        async_limiter: AsyncLimiter | None = None,
+        drop_params: bool = False,
+        chat_session: _ChatSession | None = None,  # type: ignore
+    ) -> tuple[str | None, bool]:
+        """
+        Sends the initial request, processes any tool-calling loops up to the
+        configured max rounds, and returns the final answer along with a flag
+        indicating whether tool calls were still requested after the loop ended.
+
+        :param request_config: The request configuration.
+        :type request_config: dict[str, Any]
+        :param request_messages: The request messages.
+        :type request_messages: list[dict[str, Any]]
+        :param llm_call_obj: The LLM call object.
+        :type llm_call_obj: _LLMCall
+        :param usage: The usage object.
+        :type usage: _LLMUsage
+        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
+            Note that this parameter may override the value set on the LLM instance to prevent
+            accumulation of retries from failed requests and invalid data generation.
+        :type num_retries_failed_request: int
+        :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
+            retries when LLM request fails. Defaults to 0. This parameter may override the value set on
+            the LLM instance to prevent accumulation of retries from failed requests and invalid data generation.
+        :type max_retries_failed_request: int
+        :param async_limiter: The async limiter.
+        :type async_limiter: AsyncLimiter | None
+        :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
+            Used internally for automatic retry when UnsupportedParamsError occurs.
+        :type drop_params: bool
+        :param chat_session: Optional chat session object used to persist tool messages during the
+            tool-calling loop. If provided, assistant and tool messages are recorded on the session.
+        :type chat_session: _ChatSession | None
+        :return: The tuple containing the answer and whether tool calls were still requested.
+        :rtype: tuple[str | None, bool]
+        """
+
+        # Initial send
+        initial_send_coro = self._send_non_streaming_completion(
+            request_config=request_config,
+            messages_payload=request_messages,
+            num_retries_failed_request=num_retries_failed_request,
+            max_retries_failed_request=max_retries_failed_request,
+            drop_params=drop_params,
+        )
+        if async_limiter:
+            async with async_limiter:
+                chat_completion = await initial_send_coro
+        else:
+            chat_completion = await initial_send_coro
+
+        answer = chat_completion.choices[0].message.content
+        tool_calls = (
+            getattr(chat_completion.choices[0].message, "tool_calls", None)
+            if self.tools
+            else None
+        )
+
+        self._record_usage_call(
+            usage=usage,
+            answer_text=answer,
+            call_obj=llm_call_obj,
+            completion_obj=chat_completion,
+        )
+
+        # Tools loop
+        rounds = 0
+        while tool_calls and rounds < self.tool_max_rounds:
+            rounds += 1
+
+            tool_calls_serialized: list[dict[str, Any]] = []
+            for tc in tool_calls:
+                fn = tc.get("function")
+                name = fn.get("name")
+                arguments = fn.get("arguments", "{}")
+                call_id = tc.get("id")
+                tool_calls_serialized.append(
+                    {
+                        "id": call_id,
+                        "type": "function",
+                        "function": {"name": name, "arguments": arguments},
+                    }
+                )
+
+            assistant_msg_obj = _Message(
+                role="assistant",
+                content=answer
+                if (isinstance(answer, str) and answer.strip())
+                else "<tool_call_response>",
+                tool_calls=tool_calls_serialized,
+            )
+            request_messages.append(assistant_msg_obj._to_message_dict())
+            if chat_session is not None:
+                chat_session._append_tool_message(assistant_msg_obj)
+
+            tool_messages = await self._execute_tool_calls(tool_calls)
+
+            # Append tool results
+            request_messages.extend([tm._to_message_dict() for tm in tool_messages])
+            if chat_session is not None:
+                chat_session._extend_tool_messages(tool_messages)
+
+            followup_call = _LLMCall(prompt_kwargs={}, prompt="<tools_round_trip>")
+            send_completion_coro = self._send_non_streaming_completion(
+                request_config=request_config,
+                messages_payload=request_messages,
+                num_retries_failed_request=num_retries_failed_request,
+                max_retries_failed_request=max_retries_failed_request,
+                drop_params=drop_params,
+                drop_tool_choice=True,
+            )
+            if async_limiter:
+                async with async_limiter:
+                    chat_completion = await send_completion_coro
+            else:
+                chat_completion = await send_completion_coro
+
+            answer = chat_completion.choices[0].message.content
+            self._record_usage_call(
+                usage=usage,
+                answer_text=answer,
+                call_obj=followup_call,
+                completion_obj=chat_completion,
+            )
+            tool_calls = chat_completion.choices[0].message.tool_calls
+
+        return answer, bool(tool_calls)
+
     async def _query_llm(
         self,
+        *,
         messages: list[_Message],
         llm_call_obj: _LLMCall,
         num_retries_failed_request: int = 3,
@@ -3871,6 +4594,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         async_limiter: AsyncLimiter | None = None,
         drop_params: bool = False,
         raise_exception_on_llm_api_error: bool = True,
+        chat_session: _ChatSession | None = None,  # type: ignore
     ) -> tuple[str | None, _LLMUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -3900,110 +4624,55 @@ class _DocumentLLM(_GenericLLMProcessor):
             due to an error in the LLM API. If False, a warning will be issued instead, and no data
             will be returned. Defaults to True.
         :type raise_exception_on_llm_api_error: bool, optional
+        :param chat_session: Optional chat session object used to persist tool messages during the
+            tool-calling loop. If provided, assistant and tool messages are recorded on the session.
+        :type chat_session: _ChatSession | None
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _LLMUsage]
         """
 
-        # Validate vision content support by inspecting messages
-        contains_image_content = any(
-            isinstance(m.content, list)
-            and any(
-                isinstance(part, dict) and part.get("type") == "image_url"
-                for part in m.content
-            )
-            for m in messages
-        )
-        if contains_image_content and not self._supports_vision:
-            raise ValueError(
-                f"Model `{self.model}` does not support vision according to "
-                f"litellm.supports_vision(). To override this detection, "
-                f"manually set `_supports_vision=True` on the LLM instance."
-            )
-
-        # Convert to dicts at the boundary for validation and transport
-        request_messages = [m._to_message_dict() for m in messages]
+        # Validate vision support and convert messages
+        self._ensure_vision_support_for_messages(messages)
+        request_messages = self._messages_to_request(messages)
 
         # Validate max input / output tokens before making the API call
         self._validate_input_tokens(request_messages)
         self._validate_output_tokens()
 
-        # Prepare request dictionary with common parameters
-        request_dict = {
-            "model": self.model,
-            "messages": request_messages,
-        }
-
-        # Add model-specific parameters
-        if self._supports_reasoning:
-            # Reasoning (CoT-capable) models
-            model_params: list[str] | None = litellm.get_supported_openai_params(  # type: ignore[attr-defined]
-                self.model
-            )
-            if model_params is not None:
-                if "max_completion_tokens" in model_params:
-                    if not (self.max_completion_tokens):
-                        raise ValueError(
-                            "`max_completion_tokens` must be set for reasoning (CoT-capable) models"
-                        )
-                    request_dict["max_completion_tokens"] = self.max_completion_tokens
-                if "reasoning_effort" in model_params and self.reasoning_effort:
-                    request_dict["reasoning_effort"] = self.reasoning_effort
-            if self.temperature or self.top_p:
-                logger.info(
-                    "`temperature` and `top_p` parameters are ignored for reasoning (CoT-capable) models"
-                )
-        else:
-            # Non-reasoning models
-            request_dict["max_tokens"] = self.max_tokens
-
-            # temperature and top_p might not be supported by some models
-            if self.temperature is not None:
-                request_dict["temperature"] = self.temperature
-            if self.top_p is not None:
-                request_dict["top_p"] = self.top_p
-
-        if self.deployment_id:
-            # Azure OpenAI-specific
-            request_dict["deployment_id"] = self.deployment_id
-
-        if self.seed:
-            request_dict["seed"] = self.seed
+        # Prepare request configuration with common parameters
+        request_config = self._build_request_config()
 
         # Create an empty usage dict in case the call fails without the possibility to retrieve usage tokens
         usage = _LLMUsage()
 
-        # Make API call and process response
+        # Make API call and process response (with tool loop if enabled)
         try:
-            task = asyncio.create_task(
-                litellm.acompletion(
-                    **request_dict,
-                    api_key=self.api_key,
-                    api_base=self.api_base,
-                    api_version=self.api_version,
-                    num_retries=num_retries_failed_request,
-                    max_retries=max_retries_failed_request,
-                    timeout=self.timeout,
-                    stream=False,
-                    drop_params=drop_params,
-                )
+            answer, tool_calls_remaining = await self._send_messages_with_tools(
+                request_config=request_config,
+                request_messages=request_messages,
+                llm_call_obj=llm_call_obj,
+                usage=usage,
+                num_retries_failed_request=num_retries_failed_request,
+                max_retries_failed_request=max_retries_failed_request,
+                async_limiter=async_limiter,
+                drop_params=drop_params,
+                chat_session=chat_session,
             )
-            if async_limiter:
-                async with async_limiter:
-                    chat_completion = await task
-            else:
-                chat_completion = await task
-            answer = (
-                chat_completion.choices[  # type: ignore[attr-defined]
-                    0
-                ].message.content  # type: ignore[attr-defined]
-            )  # str, or None if invalid response
-            usage.input = chat_completion.usage.prompt_tokens  # type: ignore[attr-defined]
-            usage.output = chat_completion.usage.completion_tokens  # type: ignore[attr-defined]
-            llm_call_obj._record_response_timestamp()
-            llm_call_obj.response = answer
-            usage.calls.append(llm_call_obj)  # record the call details (call finished)
+
+            if tool_calls_remaining:
+                # Stop immediately to avoid returning incomplete answers
+                raise LLMToolLoopLimitError(
+                    (
+                        f"Tool execution stopped after reaching tool_max_rounds={self.tool_max_rounds}. "
+                        "Model continued requesting tools. "
+                        "Consider increasing `tool_max_rounds` or refining tool instructions."
+                    ),
+                    retry_count=0,
+                )
+
             return answer, usage
+
         except litellm.UnsupportedParamsError as e:  # type: ignore[attr-defined]
             # Handle unsupported model parameters error
             if (
@@ -4021,6 +4690,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                     async_limiter=async_limiter,
                     drop_params=True,
                     raise_exception_on_llm_api_error=raise_exception_on_llm_api_error,
+                    chat_session=chat_session,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
@@ -4053,6 +4723,9 @@ class _DocumentLLM(_GenericLLMProcessor):
                             warning_msg,
                             stacklevel=2,
                         )
+        except LLMToolLoopLimitError:
+            # Propagate tool loop limit errors without wrapping
+            raise
         except Exception as e:
             # e.g. rate limit error
             logger.error(f"Exception occurred while calling LLM API: {e}")
@@ -4110,6 +4783,10 @@ class _DocumentLLM(_GenericLLMProcessor):
         """
         self._supports_vision = litellm.supports_vision(self.model)  # type: ignore[attr-defined]
         self._supports_reasoning = litellm.supports_reasoning(self.model)  # type: ignore[attr-defined]
+        self._supports_tools = litellm.supports_function_calling(self.model)  # type: ignore[attr-defined]
+        self._supports_parallel_tool_calls = litellm.supports_parallel_function_calling(  # type: ignore[attr-defined]
+            self.model
+        )
 
     def _set_system_message(self) -> None:
         """
@@ -4415,6 +5092,8 @@ class _ChatSession(_InstanceBase):
     """
 
     _messages: list[_Message] = PrivateAttr(default_factory=list)
+    # Tool-enabled assistant calls and tool messages as Message objects
+    _tool_messages: list[_Message] = PrivateAttr(default_factory=list)
 
     @property
     def messages(self) -> list[_Message]:
@@ -4476,6 +5155,30 @@ class _ChatSession(_InstanceBase):
         self._messages.append(message)
         self._validate_system_message_constraints()
         self._validate_list_uniqueness(cast(list, self._messages))
+
+    def _append_tool_message(self, message: _Message) -> None:
+        """
+        Append a tool-related message (assistant acknowledging tool calls or tool message)
+        to internal tool messages storage.
+
+        :param message: Message object representing the tool-related entry
+        :type message: _Message
+        :return: None
+        :rtype: None
+        """
+        self._tool_messages.append(message)
+
+    def _extend_tool_messages(self, messages: list[_Message]) -> None:
+        """
+        Extend the tool message history with multiple tool-related messages.
+
+        :param messages: Tool-related messages to add to the internal tool messages storage.
+        :type messages: list[_Message]
+        :return: None
+        :rtype: None
+        """
+        if messages:
+            self._tool_messages.extend(messages)
 
     def _extend_messages(self, messages: list[_Message]) -> None:
         """

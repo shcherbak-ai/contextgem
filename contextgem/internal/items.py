@@ -34,7 +34,7 @@ from typing_extensions import Self
 
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.decorators import _expose_in_registry
-from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.typings.types import NonEmptyStr
 
 
 @_expose_in_registry

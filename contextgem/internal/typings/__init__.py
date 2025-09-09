@@ -16,28 +16,33 @@
 # limitations under the License.
 #
 
-from contextgem.internal.typings.aliases import (
+from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
+from contextgem.internal.typings.typed_class_utils import (
+    _get_model_fields,
+    _is_typed_class,
+    _raise_dict_class_type_error,
+)
+from contextgem.internal.typings.types import (
     AssignedInstancesAttrName,
     AsyncCalsAndKwargs,
     DefaultDecimalField,
     DefaultPromptType,
     ExtractedInstanceType,
+    JSONDict,
+    JSONDictField,
     JustificationDepth,
     LanguageRequirement,
     LLMRoleAny,
     LLMRoleAspect,
+    MessageRole,
     NonEmptyStr,
     ReasoningEffort,
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
     TextMode,
-)
-from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
-from contextgem.internal.typings.typed_class_utils import (
-    _get_model_fields,
-    _is_typed_class,
-    _raise_dict_class_type_error,
+    ToolHandler,
+    ToolRegistration,
 )
 from contextgem.internal.typings.types_normalization import _normalize_type_annotation
 from contextgem.internal.typings.types_to_strings import (
@@ -51,11 +56,15 @@ from contextgem.internal.typings.types_to_strings import (
 from contextgem.internal.typings.user_type_hints_validation import (
     _dynamic_pydantic_model,
 )
-from contextgem.internal.typings.validators import _validate_sequence_is_list
+from contextgem.internal.typings.validators import (
+    _validate_is_json_dict,
+    _validate_sequence_is_list,
+    _validate_tool_parameters_schema,
+)
 
 
 __all__ = (
-    # Aliases
+    # Types
     "NonEmptyStr",
     "LLMRoleAny",
     "LLMRoleAspect",
@@ -71,6 +80,11 @@ __all__ = (
     "DefaultDecimalField",
     "ReasoningEffort",
     "TextMode",
+    "MessageRole",
+    "JSONDict",
+    "JSONDictField",
+    "ToolHandler",
+    "ToolRegistration",
     # Strings to types
     "_deserialize_type_hint",
     # Types to strings
@@ -90,4 +104,6 @@ __all__ = (
     "_normalize_type_annotation",
     # Validators
     "_validate_sequence_is_list",
+    "_validate_is_json_dict",
+    "_validate_tool_parameters_schema",
 )

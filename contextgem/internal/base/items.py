@@ -35,7 +35,7 @@ from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.decorators import (
     _disable_direct_initialization,
 )
-from contextgem.internal.typings.aliases import NonEmptyStr
+from contextgem.internal.typings.types import NonEmptyStr
 
 
 @_disable_direct_initialization

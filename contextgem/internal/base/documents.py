@@ -45,7 +45,7 @@ from contextgem.internal.decorators import (
 )
 from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _publicize
-from contextgem.internal.typings.aliases import NonEmptyStr, SaTModelId
+from contextgem.internal.typings.types import NonEmptyStr, SaTModelId
 from contextgem.internal.typings.validators import _validate_sequence_is_list
 from contextgem.internal.utils import (
     _check_paragraphs_match_in_text,
