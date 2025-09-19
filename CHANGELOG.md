@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.19.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.1) - 2025-09-19
+### Changed
+- Enhanced documentation with pretty URLs (removing `.html` extensions) for improved SEO and user experience
+- Added official documentation source notice to prevent confusion with unauthorized copies or mirrors
+
 ## [0.19.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.0) - 2025-09-08
 ### Added
 - Tool calling support in `DocumentLLM.chat(...)`.

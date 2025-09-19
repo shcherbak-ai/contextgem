@@ -25,7 +25,7 @@ import sys
 project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
-release = "0.19.0"
+release = "0.19.1"
 
 
 # Add path to the package
@@ -34,6 +34,10 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # Skip Pydantic internal methods and attributes from the API docs
 def skip_pydantic_internals(app, what, name, obj, skip, options):
+    """
+    Skips Pydantic internal methods and attributes from the API docs.
+    """
+
     if name.startswith("model_") or name in [
         "schema",
         "schema_json",
@@ -56,8 +60,27 @@ def skip_pydantic_internals(app, what, name, obj, skip, options):
     return skip
 
 
+def add_canonical_url(app, pagename, templatename, context, doctree):
+    """
+    Adds canonical URL to each page to prevent duplicate content issues from mirrors.
+    """
+
+    base_url = "https://contextgem.dev/"
+    canonical_url = base_url if pagename == "index" else f"{base_url}{pagename}/"
+
+    context["metatags"] = (
+        context.get("metatags", "")
+        + f'\n<link rel="canonical" href="{canonical_url}" />'
+    )
+
+
 def setup(app):
+    """
+    Setup function for Sphinx documentation.
+    """
+
     app.connect("autodoc-skip-member", skip_pydantic_internals)
+    app.connect("html-page-context", add_canonical_url)
 
 
 # Extensions
@@ -102,7 +125,7 @@ html_title = f"{project} {release} Documentation"
 html_baseurl = "https://contextgem.dev/"
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
-html_extra_path = ["robots.txt"]
+html_extra_path = ["robots.txt", "llms.txt"]
 html_favicon = "_static/favicon.ico"
 html_logo = "_static/favicon.ico"
 html_css_files = ["custom.css"]
@@ -117,7 +140,11 @@ html_theme_options = {
     "use_download_button": True,
     "show_navbar_depth": 2,
     "pygments_dark_style": "github-dark-high-contrast",
+    # Footer customization
+    "extra_footer": "<p><strong>⚠️ Official Documentation Notice:</strong> <a href='https://contextgem.dev/'>https://contextgem.dev/</a> is the only official source of ContextGem documentation. Be aware of unauthorized copies or mirrors.</p>",
 }
+html_link_suffix = "/"
+sitemap_url_scheme = "{link}"
 
 # Open Graph metadata
 ogp_site_url = "https://contextgem.dev/"
@@ -128,4 +155,8 @@ ogp_type = "website"
 ogp_use_first_image = False
 html_meta = {
     "description": ogp_description,
+    "robots": "index, follow",
+    "author": "Sergii Shcherbak, Shcherbak AI AS",
+    "dcterms.rightsHolder": "Shcherbak AI AS",
+    "dcterms.dateCopyrighted": "2025",
 }

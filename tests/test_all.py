@@ -8785,7 +8785,7 @@ class TestAll(TestUtils):
         )
         with pytest.raises(
             ValueError,
-            match="https://contextgem.dev/optimizations/optimization_long_docs.html",
+            match="https://contextgem.dev/optimizations/optimization_long_docs/",
         ):
             llm_short_context.extract_concepts_from_document(
                 too_long_doc,

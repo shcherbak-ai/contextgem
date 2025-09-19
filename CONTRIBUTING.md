@@ -484,19 +484,42 @@ The log output will show detailed information about test execution.
 
 ### 🏗️ Building the Documentation
 
-Navigate to the `docs/` directory and run:
+Navigate to the `docs/` directory and choose your preferred build method:
+
+#### For Live Development (Recommended)
+
+Use `sphinx-autobuild` for live reloading during development:
+
+```bash
+# Live rebuild with auto-refresh on file changes
+make livehtml
+# Or on Windows: ./make.bat livehtml
+```
+
+This starts a development server on `http://localhost:9000` with:
+- Automatic rebuilds when files change
+- Browser auto-refresh
+- Pretty URLs without `.html` extensions
+
+#### For Static Builds
+
+For one-time builds or CI-style building:
 
 ```bash
 # Build with verbose output, ignore cache, and treat warnings as errors 
 # (recommended for structural changes)
-uv run sphinx-build -b html source build/html -v -E -W
+uv run sphinx-build -b dirhtml source build/dirhtml -v -E -W
 ```
 
-The `-E` flag ensures Sphinx completely rebuilds the environment, which is especially important after structural changes like modifying toctree directives or removing files.
+The `-E` flag ensures Sphinx completely rebuilds the environment, which is especially important after structural changes like modifying toctree directives or removing files. The `dirhtml` format creates pretty URLs without `.html` extensions, consistent with the live development server.
 
 ### 👀 Viewing the Documentation
 
-After building, open `build/html/index.html` in your web browser to view the documentation.
+**With Live Development:**
+The documentation automatically opens at `http://localhost:9000` when using `make livehtml`.
+
+**With Static Builds:**
+After building, open `build/dirhtml/index.html` in your web browser to view the documentation.
 
 ### 🌐 Live Documentation
 

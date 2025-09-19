@@ -30,6 +30,9 @@ Welcome to ContextGem Documentation!
 
 ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
 
+.. note::
+   🏠 **Official Documentation**: This is the official ContextGem documentation hosted at https://contextgem.dev/. Please be aware of unauthorized copies or mirrors that may contain outdated or incorrect information.
+
 |
 
 .. grid:: 1 1 2 2
