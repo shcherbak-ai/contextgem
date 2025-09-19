@@ -25,8 +25,10 @@ for enabling user Q&A functionality. It performs the following steps:
 2. Extracts document paths from the index.rst toctree
 3. Concatenates all documentation files into a single text file
 
-The resulting file (docs/docs-raw-for-llm.txt) serves as the knowledge base for
-LLM-powered documentation queries and assistance.
+The resulting file (docs/source/llms.txt) serves as the knowledge base for
+LLM-powered documentation queries and assistance. Sphinx automatically copies
+this file to the site root during builds, making it available at both
+the GitHub repository and the deployed website root.
 
 To use it, run:
 
@@ -52,7 +54,7 @@ logger = logging.getLogger(__name__)
 SOURCE_DIR = "docs/source"
 TEXT_DIR = "docs/build/text"
 INDEX_PATH = os.path.join(SOURCE_DIR, "index.rst")
-OUTPUT_PATH = "docs/docs-raw-for-llm.txt"
+OUTPUT_PATH = "docs/source/llms.txt"
 
 
 def run_sphinx_text_build() -> None:
@@ -193,7 +195,13 @@ if __name__ == "__main__":
             logger.info(f"   - {p}")
 
         concatenate_docs(paths, TEXT_DIR, OUTPUT_PATH)
-        logger.info(f"\n✅ Concatenated documentation saved to {OUTPUT_PATH}")
+        logger.info(f"✅ Concatenated documentation saved to {OUTPUT_PATH}")
+
+        logger.info("\n🌐 After deployment, llms.txt will be available at:")
+        logger.info("   - Site root: https://contextgem.dev/llms.txt")
+        logger.info(
+            "   - GitHub: https://github.com/shcherbak-ai/contextgem/blob/main/docs/source/llms.txt"
+        )
     except Exception as e:
         logger.error(f"❌ Unexpected error: {e}")
         sys.exit(1)

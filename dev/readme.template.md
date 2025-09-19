@@ -25,22 +25,22 @@ Most popular LLM frameworks for extracting structured data from documents requir
 
 ContextGem addresses this challenge by providing a flexible, intuitive framework that extracts structured data and insights from documents with minimal effort. The complex, most time-consuming parts are handled with **powerful abstractions**, eliminating boilerplate code and reducing development overhead.
 
-📖 Read more on the project [motivation](https://contextgem.dev/motivation.html) in the documentation.
+📖 Read more on the project [motivation](https://contextgem.dev/motivation/) in the documentation.
 
 
 ## ⭐ Key features
 
 {{FEATURE_TABLE}}
 
-\* See [descriptions](https://contextgem.dev/motivation.html#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks.html) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
+\* See [descriptions](https://contextgem.dev/motivation/#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks/) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
 
 ## 💡 What you can build
 
 With **minimal code**, you can:
 
 - **Extract structured data** from documents (text, images)
-- **Identify and analyze key aspects** (topics, themes, categories) within documents ([learn more](https://contextgem.dev/aspects/aspects.html))
-- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents ([learn more](https://contextgem.dev/concepts/supported_concepts.html))
+- **Identify and analyze key aspects** (topics, themes, categories) within documents ([learn more](https://contextgem.dev/aspects/aspects/))
+- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents ([learn more](https://contextgem.dev/concepts/supported_concepts/))
 - **Build complex extraction workflows** through a simple, intuitive API
 - **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
 
@@ -80,7 +80,7 @@ The following example demonstrates how to use ContextGem to extract **anomalies*
 </thead>
 <tbody>
 <tr>
-<td>Create a Document that contains text and/or visual content representing your document (contract, invoice, report, CV, etc.), from which an LLM extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config.html">Learn more</a></td>
+<td>Create a Document that contains text and/or visual content representing your document (contract, invoice, report, CV, etc.), from which an LLM extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config/">Learn more</a></td>
 </tr>
 </tbody>
 </table>
@@ -100,8 +100,8 @@ document = Document(raw_text="Non-Disclosure Agreement...")
 </thead>
 <tbody>
 <tr>
-<td>Define Aspects to extract text segments from the document (sections, topics, themes). You can organize content hierarchically and combine with concepts for comprehensive analysis. <a href="https://contextgem.dev/aspects/aspects.html">Learn more</a></td>
-<td>Define Concepts to extract specific data points with intelligent inference: entities, insights, structured objects, classifications, numerical calculations, dates, ratings, and assessments. <a href="https://contextgem.dev/concepts/supported_concepts.html">Learn more</a></td>
+<td>Define Aspects to extract text segments from the document (sections, topics, themes). You can organize content hierarchically and combine with concepts for comprehensive analysis. <a href="https://contextgem.dev/aspects/aspects/">Learn more</a></td>
+<td>Define Concepts to extract specific data points with intelligent inference: entities, insights, structured objects, classifications, numerical calculations, dates, ratings, and assessments. <a href="https://contextgem.dev/concepts/supported_concepts/">Learn more</a></td>
 </tr>
 </tbody>
 </table>
@@ -130,7 +130,7 @@ document.add_concepts([concept])
 </thead>
 <tbody>
 <tr>
-<td>Create a reusable collection of predefined aspects and concepts that enables consistent extraction across multiple documents. <a href="https://contextgem.dev/pipelines/extraction_pipelines.html">Learn more</a></td>
+<td>Create a reusable collection of predefined aspects and concepts that enables consistent extraction across multiple documents. <a href="https://contextgem.dev/pipelines/extraction_pipelines/">Learn more</a></td>
 </tr>
 </tbody>
 </table>
@@ -146,8 +146,8 @@ document.add_concepts([concept])
 </thead>
 <tbody>
 <tr>
-<td>Configure a cloud or local LLM that will extract aspects and/or concepts from the document. DocumentLLM supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/llm_extraction_methods.html">Learn more</a></td>
-<td>Configure a group of LLMs with unique roles for complex extraction workflows. You can route different aspects and/or concepts to specialized LLMs (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config.html#llm-groups">Learn more</a></td>
+<td>Configure a cloud or local LLM that will extract aspects and/or concepts from the document. DocumentLLM supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/llm_extraction_methods/">Learn more</a></td>
+<td>Configure a group of LLMs with unique roles for complex extraction workflows. You can route different aspects and/or concepts to specialized LLMs (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config/#llm-groups">Learn more</a></td>
 </tr>
 </tbody>
 </table>
@@ -162,22 +162,22 @@ document = llm.extract_all(document)
 # print(document.concepts[0].extracted_items)
 ```
 
-📖 Learn more about ContextGem's [core components](https://contextgem.dev/how_it_works.html) and their practical examples in the documentation.
+📖 Learn more about ContextGem's [core components](https://contextgem.dev/how_it_works/) and their practical examples in the documentation.
 
 ## 📚 Usage Examples
 
 🌟 **Basic usage:**
-- [Aspect Extraction from Document](https://contextgem.dev/quickstart.html#aspect-extraction-from-document)
-- [Extracting Aspect with Sub-Aspects](https://contextgem.dev/quickstart.html#extracting-aspect-with-sub-aspects)
-- [Concept Extraction from Aspect](https://contextgem.dev/quickstart.html#concept-extraction-from-aspect)
-- [Concept Extraction from Document (text)](https://contextgem.dev/quickstart.html#concept-extraction-from-document-text)
-- [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart.html#concept-extraction-from-document-vision)
-- [LLM chat interface](https://contextgem.dev/quickstart.html#lightweight-llm-chat-interface)
+- [Aspect Extraction from Document](https://contextgem.dev/quickstart/#aspect-extraction-from-document)
+- [Extracting Aspect with Sub-Aspects](https://contextgem.dev/quickstart/#extracting-aspect-with-sub-aspects)
+- [Concept Extraction from Aspect](https://contextgem.dev/quickstart/#concept-extraction-from-aspect)
+- [Concept Extraction from Document (text)](https://contextgem.dev/quickstart/#concept-extraction-from-document-text)
+- [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart/#concept-extraction-from-document-vision)
+- [LLM chat interface](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface)
 
 🚀 **Advanced usage:**
-- [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage.html#extracting-aspects-with-concepts)
-- [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage.html#extracting-aspects-and-concepts-from-a-document)
-- [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage.html#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
+- [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-with-concepts)
+- [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage/#extracting-aspects-and-concepts-from-a-document)
+- [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
 
 
 ## 🔄 Document converters
@@ -198,14 +198,14 @@ To create a ContextGem document for LLM analysis, you can either pass raw text d
 {{DOCX_CONVERTER}}
 ```
 
-📖 Learn more about [DOCX converter features](https://contextgem.dev/converters/docx.html) in the documentation.
+📖 Learn more about [DOCX converter features](https://contextgem.dev/converters/docx/) in the documentation.
 
 
 ## 🎯 Focused document analysis
 
 ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG frameworks (e.g., LlamaIndex, Haystack) remain more appropriate.
 
-📖 Read more on [how ContextGem works](https://contextgem.dev/how_it_works.html) in the documentation.
+📖 Read more on [how ContextGem works](https://contextgem.dev/how_it_works/) in the documentation.
 
 ## 🤖 Supported LLMs
 
@@ -215,20 +215,20 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. gpt-5) and non-reasoning models (e.g. gpt-4.1)
 - **Simple API**: Unified interface for all LLMs with easy provider switching
 
-> **💡 Model Selection Note:** For reliable structured extraction, we recommend using models with performance equivalent to or exceeding `gpt-4o-mini`. Smaller models (such as 8B parameter models) may struggle with ContextGem's detailed extraction instructions. If you encounter issues with smaller models, see our [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html) for potential solutions.
+> **💡 Model Selection Note:** For reliable structured extraction, we recommend using models with performance equivalent to or exceeding `gpt-4o-mini`. Smaller models (such as 8B parameter models) may struggle with ContextGem's detailed extraction instructions. If you encounter issues with smaller models, see our [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/) for potential solutions.
 
-📖 Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms.html), how to [configure LLMs](https://contextgem.dev/llms/llm_config.html), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods.html) in the documentation.
+📖 Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms/), how to [configure LLMs](https://contextgem.dev/llms/llm_config/), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods/) in the documentation.
 
 ## ⚡ Optimizations
 
 ContextGem documentation offers guidance on optimization strategies to maximize performance, minimize costs, and enhance extraction accuracy:
 
-- [Optimizing for Accuracy](https://contextgem.dev/optimizations/optimization_accuracy.html)
-- [Optimizing for Speed](https://contextgem.dev/optimizations/optimization_speed.html)
-- [Optimizing for Cost](https://contextgem.dev/optimizations/optimization_cost.html)
-- [Dealing with Long Documents](https://contextgem.dev/optimizations/optimization_long_docs.html)
-- [Choosing the Right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm.html)
-- [Troubleshooting Issues with Small Models](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html)
+- [Optimizing for Accuracy](https://contextgem.dev/optimizations/optimization_accuracy/)
+- [Optimizing for Speed](https://contextgem.dev/optimizations/optimization_speed/)
+- [Optimizing for Cost](https://contextgem.dev/optimizations/optimization_cost/)
+- [Dealing with Long Documents](https://contextgem.dev/optimizations/optimization_long_docs/)
+- [Choosing the Right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm/)
+- [Troubleshooting Issues with Small Models](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/)
 
 
 ## 💾 Serializing results
@@ -239,14 +239,16 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 - Transfer extraction results between systems
 - Persist pipeline and LLM configurations for later reuse
 
-📖 Learn more about [serialization options](https://contextgem.dev/serialization.html) in the documentation.
+📖 Learn more about [serialization options](https://contextgem.dev/serialization/) in the documentation.
 
 
 ## 📚 Documentation
 
 📖 **Full documentation:** [contextgem.dev](https://contextgem.dev)
 
-📄 **Raw documentation for LLMs:** Available at [`docs/docs-raw-for-llm.txt`](https://github.com/shcherbak-ai/contextgem/blob/main/docs/docs-raw-for-llm.txt) - automatically generated, optimized for LLM ingestion.
+> **⚠️ Official Documentation Notice:** [https://contextgem.dev/](https://contextgem.dev/) is the only official source of ContextGem documentation. Please be aware of unauthorized copies or mirrors that may contain outdated or incorrect information.
+
+📄 **Raw documentation for LLMs:** Available at [`docs/source/llms.txt`](https://github.com/shcherbak-ai/contextgem/blob/main/docs/source/llms.txt) - automatically generated, optimized for LLM ingestion.
 
 🤖 **AI-powered code exploration:** [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem) provides visual architecture maps and natural language Q&A for the codebase.
 

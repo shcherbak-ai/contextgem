@@ -40,15 +40,15 @@ jobs:
       - name: Build documentation
         run: |
           cd docs
-          uv run sphinx-build -b html source _build/html -v -E -W
+          uv run sphinx-build -b dirhtml source _build/dirhtml -v -E -W
       
       - name: Create .nojekyll file
-        run: touch docs/_build/html/.nojekyll
+        run: touch docs/_build/dirhtml/.nojekyll
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs/_build/html
+          path: ./docs/_build/dirhtml
   
   deploy:
     environment:

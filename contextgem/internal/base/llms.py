@@ -3186,7 +3186,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             logger.info(
                 "Using local model provider. If you experience issues like JSON validation errors "
                 "with smaller models, see our troubleshooting guide: "
-                "https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting.html"
+                "https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/"
             )
 
         # Recommend `ollama_chat` prefix for better responses for Ollama models (text-only processing)
@@ -4008,7 +4008,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                 f"while the model is reasoning-capable. If you intend to route reasoning tasks "
                 f"to this model, consider using a `reasoner_*` role to match aspect/concept `llm_role` "
                 f"and keep pipeline roles consistent. See "
-                f"https://contextgem.dev/optimizations/optimization_choosing_llm.html",
+                f"https://contextgem.dev/optimizations/optimization_choosing_llm/",
                 stacklevel=2,
             )
 
@@ -4086,7 +4086,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                     f"(for text) or `max_images_to_analyze_per_call` (for images) to process the "
                     f"document in smaller chunks. "
                     f"See the optimization guide for long documents: "
-                    f"https://contextgem.dev/optimizations/optimization_long_docs.html"
+                    f"https://contextgem.dev/optimizations/optimization_long_docs/"
                 )
 
             logger.debug(
@@ -4153,7 +4153,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                     f"(for text) or `max_images_to_analyze_per_call` (for images) to process the "
                     f"document in smaller chunks. "
                     f"See the optimization guide for long documents: "
-                    f"https://contextgem.dev/optimizations/optimization_long_docs.html"
+                    f"https://contextgem.dev/optimizations/optimization_long_docs/"
                 )
 
             logger.debug(
