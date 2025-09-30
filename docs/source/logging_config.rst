@@ -21,7 +21,7 @@
 Logging Configuration
 ========================
 
-ContextGem provides comprehensive logging to help you monitor and debug the extraction process. You can control logging behavior using environment variables.
+ContextGem provides comprehensive logging to help you monitor and debug the extraction process. You can control logging behavior using environment variables. ContextGem uses a **namespaced logger** under the name ``contextgem``.
 
 
 ⚙️ Environment Variables
@@ -94,6 +94,6 @@ ContextGem logs use the following format:
 
 Each log entry includes:
 
-* Timestamp
+* Timestamp (with milliseconds)
 * Log level
 * Log message

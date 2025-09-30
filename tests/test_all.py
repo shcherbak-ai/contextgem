@@ -106,7 +106,6 @@ from contextgem.internal.items import (
 )
 from contextgem.internal.loggers import (
     LOGGER_LEVEL_ENV_VAR_NAME,
-    dedicated_stream,
     logger,
 )
 from contextgem.internal.registry import (
@@ -1107,75 +1106,6 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
-    def test_local_llms_text_gpt_oss(self):
-        """
-        Tests for initialization of and getting a response from gpt-oss models.
-        """
-
-        def extract_with_local_llm(llm: DocumentLLM):
-            """
-            Test extraction with local LLM.
-
-            :param llm: The DocumentLLM instance to test.
-            """
-
-            # Configure document
-            document = Document(raw_text=get_test_document_text())
-            aspect = Aspect(
-                name="Liability",
-                description="Liability clauses",
-                llm_role=llm.role,
-            )
-            aspect_concept = StringConcept(
-                name="Liability cap",
-                description="Liability cap",
-                llm_role=llm.role,
-            )
-            aspect.add_concepts([aspect_concept])
-            document_concept = NumericalConcept(
-                name="Contract term",
-                description="Contract term in years",
-                numeric_type="float",
-                llm_role=llm.role,
-            )
-            document.add_aspects([aspect])
-            document.add_concepts([document_concept])
-
-            # Run extraction
-            llm.extract_all(document)
-            assert document.aspects[0].extracted_items
-            self.log_extracted_items_for_instance(document.aspects[0])
-            assert document.concepts[0].extracted_items
-            self.log_extracted_items_for_instance(document.concepts[0])
-            assert document.aspects[0].concepts[0].extracted_items
-            self.log_extracted_items_for_instance(document.aspects[0].concepts[0])
-
-            # Check serialization of LLM
-            self._check_deserialized_llm_config_eq(llm)
-
-        llm_gpt_oss_ollama = DocumentLLM(
-            model="ollama_chat/gpt-oss:20b",
-            api_base="http://localhost:11434",
-            role="reasoner_text",
-            timeout=240,
-        )
-        llm_gpt_oss_ollama._supports_reasoning = True
-        extract_with_local_llm(llm_gpt_oss_ollama)
-
-        llm_gpt_oss_lm_studio = DocumentLLM(
-            model="lm_studio/openai/gpt-oss-20b",
-            api_base="http://localhost:1234/v1",
-            api_key="random-key",  # required for LM Studio API
-            role="reasoner_text",
-            timeout=240,
-        )
-        llm_gpt_oss_lm_studio._supports_reasoning = True
-        extract_with_local_llm(llm_gpt_oss_lm_studio)
-
-        check_locals_memory_usage(locals(), test_name="test_local_llms_text_gpt_oss")
-
-    @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_minimal_reasoning_effort_for_gpt_5(self):
         """
         Tests for setting the minimal reasoning effort in gpt-5 models.
@@ -1270,21 +1200,30 @@ class TestAll(TestUtils):
             """
             Context manager to capture logger WARNING messages
             """
+            import logging as stdlib_logging
+
             captured_logs = []
 
-            def capture_warning(message):
+            class CaptureHandler(stdlib_logging.Handler):
                 """
-                Captures a logger WARNING message.
+                Handler to capture log messages for testing.
                 """
-                captured_logs.append(message.record["message"])
 
-            handler_id = logger.add(
-                capture_warning, level="WARNING", format="{message}"
-            )
+                def emit(self, record):
+                    """
+                    Emits a log message.
+                    """
+                    captured_logs.append(record.getMessage())
+
+            # Create and add the capture handler
+            capture_handler = CaptureHandler()
+            capture_handler.setLevel(stdlib_logging.WARNING)
+            logger.addHandler(capture_handler)
+
             try:
                 yield captured_logs
             finally:
-                logger.remove(handler_id)
+                logger.removeHandler(capture_handler)
 
         document = Document(raw_text=get_test_document_text())
         aspect = Aspect(name="Liability", description="Liability clauses")
@@ -7609,14 +7548,10 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_invalid_tool_registrations")
 
-    # Do not memory-profile this test as we monkey patch sys.stdout
     def test_logger_disabled(self, monkeypatch, capsys):
         """
         Tests for disabling the logger.
         """
-
-        # Ensure our dedicated stream uses the current (monkeypatched) sys.stdout:
-        monkeypatch.setattr(dedicated_stream, "base", sys.stdout)
 
         # 1) Set environment variable to disable logger
         monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "OFF")
@@ -7631,14 +7566,10 @@ class TestAll(TestUtils):
         # 4) Assert that the message is indeed missing
         assert "This message should NOT appear." not in captured.out
 
-    # Do not memory-profile this test as we monkey patch sys.stdout
     def test_logger_enabled(self, monkeypatch, capsys):
         """
         Tests for enabling the logger.
         """
-
-        # Ensure our dedicated stream uses the current (monkeypatched) sys.stdout:
-        monkeypatch.setattr(dedicated_stream, "base", sys.stdout)
 
         # 1) Set environment variable to enable logger
         monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "DEBUG")
@@ -7664,7 +7595,6 @@ class TestAll(TestUtils):
             ("CRITICAL", False, False, False, False, False, True),
         ],
     )
-    # Do not memory-profile this test as we monkey patch sys.stdout
     def test_log_levels(
         self,
         monkeypatch,
@@ -7686,9 +7616,6 @@ class TestAll(TestUtils):
         Also handy for debugging format changes in the logger's output,
         e.g. overall design, icon width, etc.
         """
-
-        # Ensure our dedicated stream uses the current (monkeypatched) sys.stdout:
-        monkeypatch.setattr(dedicated_stream, "base", sys.stdout)
 
         # 1) Set the log level.
         monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, env_level)

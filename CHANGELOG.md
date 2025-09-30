@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.19.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.2) - 2025-09-30
+### Fixed
+- Logging system refactored to use Python's standard library logging with namespaced logger (`contextgem`) for production-ready integration. Eliminates global state pollution, prevents conflicts with host application logging, and enables independent configuration. Replaced Loguru with colorlog for colored output.
+
 ## [0.19.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.1) - 2025-09-19
 ### Changed
 - Enhanced documentation with pretty URLs (removing `.html` extensions) for improved SEO and user experience

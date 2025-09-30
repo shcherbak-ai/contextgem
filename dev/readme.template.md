@@ -281,11 +281,11 @@ This project is automatically scanned for security vulnerabilities using multipl
 ContextGem relies on these excellent open-source packages:
 
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
+- [colorlog](https://github.com/borntyping/python-colorlog): Colored formatter for Python's logging module
 - [fastjsonschema](https://github.com/horejsek/python-fastjsonschema): Ultra-fast JSON schema validation
 - [genai-prices](https://github.com/pydantic/genai-prices): LLM pricing data and utilities (by Pydantic) to automatically estimate costs
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
-- [loguru](https://github.com/Delgan/loguru): Simple yet powerful logging that enhances debugging and observability
 - [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [pillow](https://github.com/python-pillow/Pillow): Image processing library for local model image handling
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
