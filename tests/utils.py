@@ -62,6 +62,7 @@ from contextgem.public import (
     DocumentLLM,
     DocumentLLMGroup,
     Image,
+    StringConcept,
     create_image,
 )
 from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
@@ -875,6 +876,38 @@ class TestUtils:
                 item_repr = f"{item.value} (justification: {item.justification})"
             logger.debug(f"Extracted item {idx}: {item_repr}")
         logger.debug("===============================")
+
+    def extract_with_local_llm(self, llm: DocumentLLM):
+        """
+        Helper method to test extraction with a local LLM model.
+
+        :param llm: The DocumentLLM instance to test extraction with.
+        :type llm: DocumentLLM
+        """
+        # Configure document
+        document = Document(
+            raw_text=get_test_document_text()[:1000],
+        )
+        concept = StringConcept(
+            name="Contract title",
+            description="The title of the contract.",
+            llm_role=llm.role,
+        )
+        document.add_concepts([concept])
+
+        # Run extraction
+        self.config_llm_async_limiter_for_mock_responses(llm)
+        extracted_concepts = llm.extract_concepts_from_document(document)
+        assert llm.get_usage()[0].usage.calls[-1].prompt
+        assert llm.get_usage()[0].usage.calls[-1].response
+        extracted_items = extracted_concepts[0].extracted_items
+        assert len(extracted_items), (
+            f"No extracted items returned with local LLM {llm.model}"
+        )
+        self.log_extracted_items_for_instance(extracted_concepts[0])
+
+        # Check serialization of LLM
+        self._check_deserialized_llm_config_eq(llm)
 
 
 def set_dummy_env_variables_for_testing_from_cassettes() -> None:
