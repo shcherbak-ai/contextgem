@@ -1,0 +1,74 @@
+name: Close Stale Issues
+
+# Run daily at 00:00 UTC to check for stale issues
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+# Minimal permissions for security
+permissions:
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Close stale issues
+        uses: actions/stale@v9
+        with:
+          # Repository token for authentication
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # === Issue Configuration ===
+          
+          # Days of inactivity before an issue becomes stale
+          days-before-stale: 30
+          
+          # Days of inactivity before a stale issue is closed
+          days-before-close: 7
+          
+          # Message to post when marking an issue as stale
+          stale-issue-message: >
+            This issue has been automatically marked as stale because it has not had
+            any activity for 30 days. It will be closed in 7 days if no further
+            activity occurs. If you believe this issue is still relevant, please leave
+            a comment to keep it open. Thank you for your contributions!
+          
+          # Message to post when closing a stale issue
+          close-issue-message: >
+            This issue has been automatically closed due to inactivity. If you believe
+            this issue should be reopened, please feel free to do so with a comment
+            explaining why it should be reopened. Thank you!
+          
+          # Label to apply when an issue becomes stale
+          stale-issue-label: 'stale'
+          
+          # Don't close issues that have assignees
+          exempt-all-assignees: true
+          
+          # Don't close issues that are part of a milestone
+          exempt-all-milestones: true
+          
+          # === Pull Request Configuration ===
+          
+          # Disable automatic closure of stale PRs
+          # PRs often need more time and manual review
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          
+          # === Additional Options ===
+          
+          # Maximum number of operations per run (helps avoid rate limits)
+          operations-per-run: 100
+          
+          # Remove stale label when an issue is updated
+          remove-stale-when-updated: true
+          
+          # Process issues in ascending order (oldest first)
+          ascending: true
+          
+          # Enable debug output for troubleshooting
+          debug-only: false
