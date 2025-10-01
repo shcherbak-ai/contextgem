@@ -1042,38 +1042,6 @@ class TestAll(TestUtils):
         `ollama/` prefix for Ollama models does not work with VCR.
         """
 
-        def extract_with_local_llm(llm: DocumentLLM):
-            """
-            Helper function to test extraction with a local LLM model.
-
-            :param llm: The DocumentLLM instance to test extraction with.
-            :type llm: DocumentLLM
-            """
-            # Configure document
-            document = Document(
-                raw_text=get_test_document_text()[:1000],
-            )
-            concept = StringConcept(
-                name="Contract title",
-                description="The title of the contract.",
-                llm_role=llm.role,
-            )
-            document.add_concepts([concept])
-
-            # Run extraction
-            self.config_llm_async_limiter_for_mock_responses(llm)
-            extracted_concepts = llm.extract_concepts_from_document(document)
-            assert llm.get_usage()[0].usage.calls[-1].prompt
-            assert llm.get_usage()[0].usage.calls[-1].response
-            extracted_items = extracted_concepts[0].extracted_items
-            assert len(extracted_items), (
-                f"No extracted items returned with local LLM {llm.model}"
-            )
-            self.log_extracted_items_for_instance(extracted_concepts[0])
-
-            # Check serialization of LLM
-            self._check_deserialized_llm_config_eq(llm)
-
         # Ollama
         # Non-reasoning LLM
         llm_non_reasoning_ollama = DocumentLLM(
@@ -1081,7 +1049,7 @@ class TestAll(TestUtils):
             api_base="http://localhost:11434",
             seed=123,
         )
-        extract_with_local_llm(llm_non_reasoning_ollama)
+        self.extract_with_local_llm(llm_non_reasoning_ollama)
         # Reasoning (CoT-capable) LLM
         llm_reasoning_ollama = DocumentLLM(
             model="ollama/deepseek-r1:32b",
@@ -1090,7 +1058,7 @@ class TestAll(TestUtils):
             role="reasoner_text",
         )
         llm_reasoning_ollama._supports_reasoning = True
-        extract_with_local_llm(llm_reasoning_ollama)
+        self.extract_with_local_llm(llm_reasoning_ollama)
 
         # LM Studio
         # Non-reasoning LLM
@@ -1100,7 +1068,7 @@ class TestAll(TestUtils):
             api_key="random-key",  # required for LM Studio API
             seed=123,
         )
-        extract_with_local_llm(llm_non_reasoning_lm_studio)
+        self.extract_with_local_llm(llm_non_reasoning_lm_studio)
 
         check_locals_memory_usage(locals(), test_name="test_local_llms_text")
 
@@ -1141,6 +1109,74 @@ class TestAll(TestUtils):
         check_locals_memory_usage(
             locals(), test_name="test_minimal_reasoning_effort_for_gpt_5"
         )
+
+    @pytest.mark.vcr
+    @memory_profile_and_capture
+    def test_local_llms_qwen3(self):
+        """
+        Tests for initialization of and getting a response from local Qwen3 models.
+        Tests both ollama/ and ollama_chat/ prefixes, as well as chat sessions.
+        """
+        # Test 1: Basic ollama/ prefix
+        llm = DocumentLLM(
+            model="ollama/qwen3:14b",
+            api_base="http://localhost:11434",
+            system_message="You are a helpful assistant.",
+            seed=123,
+        )
+        response = llm.chat("What is 2+2?")
+        assert response
+        assert "4" in response
+        logger.debug(f"Response with ollama/ prefix:\n{response}")
+
+        # Test 2: Basic ollama_chat/ prefix
+        llm_chat = DocumentLLM(
+            model="ollama_chat/qwen3:14b",
+            api_base="http://localhost:11434",
+            system_message="You are a helpful assistant.",
+            seed=123,
+        )
+        response_chat = llm_chat.chat("What is 3+3?")
+        assert response_chat
+        assert "6" in response_chat
+        logger.debug(f"Response with ollama_chat/ prefix:\n{response_chat}")
+
+        # Test 3: Chat session with ollama/
+        cs = ChatSession()
+        response1 = llm.chat("What is 5+5?", chat_session=cs)
+        assert response1
+        assert "10" in response1
+        logger.debug(f"Chat session response 1:\n{response1}")
+
+        # Second turn in the same session
+        response2 = llm.chat("Add 3 to that.", chat_session=cs)
+        assert response2
+        assert "13" in response2
+        logger.debug(f"Chat session response 2:\n{response2}")
+
+        # Test 4: Chat session with ollama_chat/
+        cs_chat = ChatSession()
+        response3 = llm_chat.chat("What is 7+7?", chat_session=cs_chat)
+        assert response3
+        assert "14" in response3
+        logger.debug(f"Chat session (ollama_chat/) response 1:\n{response3}")
+
+        # Second turn
+        response4 = llm_chat.chat("Subtract 5 from that.", chat_session=cs_chat)
+        assert response4
+        assert "9" in response4
+        logger.debug(f"Chat session (ollama_chat/) response 2:\n{response4}")
+
+        # Test 5: StringConcept extraction from NDA document
+        llm_chat.system_message = self.default_system_message_en
+        # Without reasoning enabled
+        llm_chat._supports_reasoning = False
+        self.extract_with_local_llm(llm_chat)
+        # With reasoning enabled
+        llm_chat._supports_reasoning = True
+        self.extract_with_local_llm(llm_chat)
+
+        check_locals_memory_usage(locals(), test_name="test_local_llms_qwen3")
 
     @pytest.mark.vcr
     @memory_profile_and_capture

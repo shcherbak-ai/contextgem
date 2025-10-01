@@ -355,7 +355,7 @@ document = llm.extract_all(document)
 - [Concept Extraction from Aspect](https://contextgem.dev/quickstart/#concept-extraction-from-aspect)
 - [Concept Extraction from Document (text)](https://contextgem.dev/quickstart/#concept-extraction-from-document-text)
 - [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart/#concept-extraction-from-document-vision)
-- [LLM chat interface](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface)
+- [LLM chat interface with tool calling](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface)
 
 🚀 **Advanced usage:**
 - [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-with-concepts)
