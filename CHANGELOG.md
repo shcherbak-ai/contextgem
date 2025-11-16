@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.19.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.3) - 2025-11-16
+### Changed
+- Upgraded pinned dependency versions: `litellm==1.80.0`, `openai==2.8.0`, `genai-prices==0.0.39`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
+### Note
+- The litellm 1.80.0 upgrade introduces Pydantic serialization warnings during async cleanup phases. These warnings are non-actionable and do not affect functionality. This is a known upstream issue tracked at [litellm PR #16299](https://github.com/BerriAI/litellm/pull/16299). ContextGem suppresses these warnings within its execution contexts; warnings may appear only during cleanup phases after operations complete.
+
 ## [0.19.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.2) - 2025-09-30
 ### Fixed
 - Logging system refactored to use Python's standard library logging with namespaced logger (`contextgem`) for production-ready integration. Eliminates global state pollution, prevents conflicts with host application logging, and enables independent configuration. Replaced Loguru with colorlog for colored output.
