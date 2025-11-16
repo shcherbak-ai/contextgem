@@ -221,19 +221,23 @@ def _suppress_litellm_warnings_context() -> Generator[None, None, None]:
     The context manager uses Python's warnings.catch_warnings() to create a temporary
     warning filter that ignores the specified warnings only within its scope.
 
+    Note: Some warnings may still appear during async cleanup phases that occur after
+    the context exits. These are typically from litellm's internal async client cleanup
+    and can be safely ignored.
+
     :return: A generator that yields None and expects no values to be sent back.
     :rtype: Generator[None, None, None]
     """
     with warnings.catch_warnings():
-        # Pydantic
+        # Pydantic - use regex pattern to match pydantic and pydantic.* submodules
         warnings.filterwarnings(
-            "ignore", category=DeprecationWarning, module="pydantic"
+            "ignore", category=DeprecationWarning, module=r"pydantic(\..*)?"
         )
         warnings.filterwarnings(
             "ignore",
             category=UserWarning,
-            module="pydantic",
-            message=r"^Pydantic serializer warnings",
+            module=r"pydantic\.main",
+            message=r"^Pydantic serializer warnings:",
         )
         # httpx (typically when using local LLMs)
         warnings.filterwarnings(
