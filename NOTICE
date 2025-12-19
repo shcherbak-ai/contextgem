@@ -34,6 +34,7 @@ Core Dependencies:
 - pillow: Image processing library for local model image handling
 - pydantic: Data validation
 - python-ulid: ULID generation
+- tenacity: Retry library for Python
 - typing-extensions: Type annotation extensions
 - wtpsplit-lite: Lightweight version of wtpsplit that only retains accelerated ONNX inference of SaT models with minimal dependencies
 
@@ -45,6 +46,7 @@ Development Dependencies:
 - interrogate: Python docstring coverage checker
 - memory-profiler: Python memory usage monitoring tool
 - nbformat: Notebook format utilities
+- nest-asyncio: Patch for asyncio to allow nested event loops (used for VCR test compatibility)
 - pre-commit: Pre-commit hooks
 - pympler: Python memory analysis for object-level memory measurement
 - pyright: Static type checker for Python

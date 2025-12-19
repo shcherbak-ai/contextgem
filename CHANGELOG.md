@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.19.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.4) - 2025-12-19
+### Fixed
+- Applied fix for missing quote in JSON example format within prompt template. (PR [#86](https://github.com/shcherbak-ai/contextgem/pull/86))
+
+### Added
+- Added support for `reasoning_effort="xhigh"` for gpt-5.2 models.
+
+### Changed
+- Upgraded pinned dependency versions: `litellm==1.80.10`, `openai==2.13.0`, `genai-prices==0.0.49`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
 ## [0.19.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.3) - 2025-11-16
 ### Changed
 - Upgraded pinned dependency versions: `litellm==1.80.0`, `openai==2.8.0`, `genai-prices==0.0.39`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.

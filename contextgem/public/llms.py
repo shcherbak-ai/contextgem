@@ -103,8 +103,8 @@ class DocumentLLM(_DocumentLLM):
         (CoT-capable) models. Defaults to 16000.
     :vartype max_completion_tokens: int
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
-        ``"minimal"`` (gpt-5 models only), ``"low"``, ``"medium"``, or ``"high"``.
-        Relevant for reasoning (CoT-capable) models. Defaults to None.
+        ``"minimal"`` (gpt-5 models only), ``"low"``, ``"medium"``, ``"high"``, or ``"xhigh"``
+        (gpt-5.2 models only). Relevant for reasoning (CoT-capable) models. Defaults to None.
     :vartype reasoning_effort: ReasoningEffort | None
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.

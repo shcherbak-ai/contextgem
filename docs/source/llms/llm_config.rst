@@ -102,7 +102,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``reasoning_effort``
      - ``str | None``
      - ``None``
-     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"minimal"`` (gpt-5 models only), ``"low"``, ``"medium"``, ``"high"``.
+     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"minimal"`` (gpt-5 models only), ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"`` (gpt-5.2 models only).
    * - ``timeout``
      - ``int``
      - ``120``
