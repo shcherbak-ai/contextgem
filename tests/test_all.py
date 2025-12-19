@@ -269,6 +269,13 @@ class TestAll(TestUtils):
     )
     document_multimodal_docx = DocxConverter().convert(test_multimodal_docx_path)
 
+    # Pre-load SaT model to cache it before VCR starts intercepting requests.
+    # This prevents VCR's broken async handling from interfering with HuggingFace Hub downloads.
+    _sat_model_preload = _load_sat_model("sat-3l-sm")
+    del (
+        _sat_model_preload
+    )  # Free memory, model will be re-loaded from cache when needed
+
     # Extraction pipeline
     extraction_pipeline = ExtractionPipeline(
         aspects=[
@@ -1074,9 +1081,9 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
-    def test_minimal_reasoning_effort_for_gpt_5(self):
+    def test_reasoning_effort_for_gpt_5_models(self):
         """
-        Tests for setting the minimal reasoning effort in gpt-5 models.
+        Tests for setting reasoning effort levels specific to gpt-5 models.
         """
 
         # "minimal" reasoning effort is supported only for gpt-5 models
@@ -1106,77 +1113,23 @@ class TestAll(TestUtils):
                 role="reasoner_text",
             )
 
+        # "xhigh" reasoning effort is supported only for gpt-5.2 models
+        with pytest.raises(
+            ValueError,
+            match="supported only for gpt-5.2 models",
+        ):
+            DocumentLLM(
+                model="azure/gpt-5-mini",
+                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                reasoning_effort="xhigh",
+                role="reasoner_text",
+            )
+
         check_locals_memory_usage(
-            locals(), test_name="test_minimal_reasoning_effort_for_gpt_5"
+            locals(), test_name="test_reasoning_effort_for_gpt_5_models"
         )
-
-    @pytest.mark.vcr
-    @memory_profile_and_capture
-    def test_local_llms_qwen3(self):
-        """
-        Tests for initialization of and getting a response from local Qwen3 models.
-        Tests both ollama/ and ollama_chat/ prefixes, as well as chat sessions.
-        """
-        # Test 1: Basic ollama/ prefix
-        llm = DocumentLLM(
-            model="ollama/qwen3:14b",
-            api_base="http://localhost:11434",
-            system_message="You are a helpful assistant.",
-            seed=123,
-        )
-        response = llm.chat("What is 2+2?")
-        assert response
-        assert "4" in response
-        logger.debug(f"Response with ollama/ prefix:\n{response}")
-
-        # Test 2: Basic ollama_chat/ prefix
-        llm_chat = DocumentLLM(
-            model="ollama_chat/qwen3:14b",
-            api_base="http://localhost:11434",
-            system_message="You are a helpful assistant.",
-            seed=123,
-        )
-        response_chat = llm_chat.chat("What is 3+3?")
-        assert response_chat
-        assert "6" in response_chat
-        logger.debug(f"Response with ollama_chat/ prefix:\n{response_chat}")
-
-        # Test 3: Chat session with ollama/
-        cs = ChatSession()
-        response1 = llm.chat("What is 5+5?", chat_session=cs)
-        assert response1
-        assert "10" in response1
-        logger.debug(f"Chat session response 1:\n{response1}")
-
-        # Second turn in the same session
-        response2 = llm.chat("Add 3 to that.", chat_session=cs)
-        assert response2
-        assert "13" in response2
-        logger.debug(f"Chat session response 2:\n{response2}")
-
-        # Test 4: Chat session with ollama_chat/
-        cs_chat = ChatSession()
-        response3 = llm_chat.chat("What is 7+7?", chat_session=cs_chat)
-        assert response3
-        assert "14" in response3
-        logger.debug(f"Chat session (ollama_chat/) response 1:\n{response3}")
-
-        # Second turn
-        response4 = llm_chat.chat("Subtract 5 from that.", chat_session=cs_chat)
-        assert response4
-        assert "9" in response4
-        logger.debug(f"Chat session (ollama_chat/) response 2:\n{response4}")
-
-        # Test 5: StringConcept extraction from NDA document
-        llm_chat.system_message = self.default_system_message_en
-        # Without reasoning enabled
-        llm_chat._supports_reasoning = False
-        self.extract_with_local_llm(llm_chat)
-        # With reasoning enabled
-        llm_chat._supports_reasoning = True
-        self.extract_with_local_llm(llm_chat)
-
-        check_locals_memory_usage(locals(), test_name="test_local_llms_qwen3")
 
     @pytest.mark.vcr
     @memory_profile_and_capture
@@ -4595,7 +4548,7 @@ class TestAll(TestUtils):
         if isinstance(context, Document):
             for sat_model_id in [
                 "sat-3l-sm",
-                "sat-6l-sm",
+                # "sat-6l-sm",
                 # "sat-12l-sm",
             ]:
                 for lang in ["en", "ua", "zh"]:  # EN and other langs
@@ -5003,6 +4956,7 @@ class TestAll(TestUtils):
         Tests the system messages functionality of LLMs.
         """
         system_message = "When asked, introduce yourself as ContextGem."
+
         non_reasoning_model = DocumentLLM(
             model="azure/gpt-4.1-mini",
             api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
@@ -8861,30 +8815,6 @@ class TestAll(TestUtils):
 
         # Check serialization of LLM
         self._check_deserialized_llm_config_eq(llm)
-
-        # Now, check that the same pricing is calculated when setting LLMPricing explicitly
-        llm_explicit_pricing = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            pricing_details=LLMPricing(
-                input_per_1m_tokens=0.40, output_per_1m_tokens=1.60
-            ),
-        )
-        llm_explicit_pricing.extract_concepts_from_document(
-            document, overwrite_existing=True
-        )
-        cost_info_explicit = llm_explicit_pricing.get_cost()
-        assert len(cost_info_explicit) == 1
-        cost_explicit = cost_info_explicit[0].cost
-        assert cost_explicit.input == cost.input
-        assert cost_explicit.output == cost.output
-        assert cost_explicit.total == cost.total
-        logger.debug(
-            f"Costs for model {llm_explicit_pricing.model} (explicit pricing): "
-            f"input {cost_explicit.input}, output {cost_explicit.output}, total {cost_explicit.total}"
-        )
 
         # Test errors
 

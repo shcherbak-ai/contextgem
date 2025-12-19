@@ -1,0 +1,107 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"List synonyms for the word ''confidentiality''."}],"model":"gpt-5-mini","max_completion_tokens":16000,"reasoning_effort":"minimal","stream":false}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '183'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      host:
+      - DUMMY
+      x-stainless-os:
+      - DUMMY
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
+        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
+        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
+        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
+        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
+        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
+        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"Here
+        are synonyms for \\\"confidentiality\\\":\\n\\n- Privacy\\n- Secrecy\\n- Seclusion\\n-
+        Non-disclosure\\n- Discretion\\n- Silence\\n- Reticence\\n- Confidence\\n-
+        Restriction of access\\n- Secretness\\n- Confidential nature\\n- Protection
+        of information\\n- Privateness\\n- Anonymity (in some contexts)\\n- Trustworthiness
+        (in related sense)\\n\\nIf you need synonyms tailored to a legal, medical,
+        corporate, or casual context, tell me which and I\u2019ll refine the list.\",
+        \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1766102427, \"id\":
+        \"chatcmpl-DUMMY\", \"model\": \"gpt-5-mini-2025-08-07\", \"object\": \"chat.completion\",
+        \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
+        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
+        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
+        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
+        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
+        null, \"usage\": {\"completion_tokens\": 120, \"completion_tokens_details\":
+        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
+        0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 16, \"prompt_tokens_details\":
+        {\"audio_tokens\": 0, \"cached_tokens\": 0}, \"total_tokens\": 136}}"
+    headers:
+      Content-Length:
+      - '1652'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

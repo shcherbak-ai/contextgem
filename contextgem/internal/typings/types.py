@@ -91,7 +91,7 @@ DefaultDecimalField = Field(
     default_factory=lambda: Decimal("0.00000"), ge=Decimal("0.00000")
 )
 
-ReasoningEffort = Literal["minimal", "low", "medium", "high"]
+ReasoningEffort = Literal["minimal", "low", "medium", "high", "xhigh"]
 
 TextMode = Literal["raw", "markdown"]
 

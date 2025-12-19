@@ -3971,6 +3971,15 @@ class _DocumentLLM(_GenericLLMProcessor):
                 "`reasoning_effort='minimal'` is supported only for gpt-5 models."
             )
 
+        # "xhigh" reasoning effort is supported only for gpt-5.2 models
+        if self.reasoning_effort == "xhigh" and not (
+            self.model.startswith("azure/gpt-5.2")
+            or self.model.startswith("openai/gpt-5.2")
+        ):
+            raise ValueError(
+                "`reasoning_effort='xhigh'` is supported only for gpt-5.2 models."
+            )
+
         # Emit relevant warnings
 
         # Vision support check - when applicable

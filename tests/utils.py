@@ -936,7 +936,7 @@ def set_dummy_env_variables_for_testing_from_cassettes() -> None:
     default_env_vars = {
         "CONTEXTGEM_AZURE_OPENAI_API_KEY": "DUMMY",
         "CONTEXTGEM_AZURE_OPENAI_API_VERSION": "2025-03-01-preview",
-        "CONTEXTGEM_AZURE_OPENAI_API_BASE": "https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT",
+        "CONTEXTGEM_AZURE_OPENAI_API_BASE": "https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT",
         "CONTEXTGEM_OPENAI_API_KEY": "DUMMY",
         "CONTEXTGEM_LOGGER_LEVEL": "DEBUG",
     }

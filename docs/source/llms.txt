@@ -8858,7 +8858,8 @@ The "DocumentLLM" class accepts the following parameters:
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "reasoning_effort"   | "str | None"    | "None"          | Reasoning effort for reasoning (CoT-capable)       |
 |                      |                 |                 | models. Values: ""minimal"" (gpt-5 models only),   |
-|                      |                 |                 | ""low"", ""medium"", ""high"".                     |
+|                      |                 |                 | ""low"", ""medium"", ""high"", ""xhigh"" (gpt-5.2  |
+|                      |                 |                 | models only).                                      |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
 | "timeout"            | "int"           | "120"           | Timeout in seconds for LLM API calls.              |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
@@ -16154,9 +16155,9 @@ class contextgem.public.llms.DocumentLLM(**data)
 
       * **reasoning_effort** (*ReasoningEffort** | **None*) -- The
         effort level for the LLM to reason about the input. Can be set
-        to ""minimal"" (gpt-5 models only), ""low"", ""medium"", or
-        ""high"". Relevant for reasoning (CoT-capable) models.
-        Defaults to None.
+        to ""minimal"" (gpt-5 models only), ""low"", ""medium"",
+        ""high"", or ""xhigh"" (gpt-5.2 models only). Relevant for
+        reasoning (CoT-capable) models. Defaults to None.
 
       * **top_p** (*float** | **None*) -- Nucleus sampling value (0.0
         to 1.0) controlling output focus/randomness. Lower values make
@@ -16263,7 +16264,7 @@ class contextgem.public.llms.DocumentLLM(**data)
         **Strict**(**strict=True**)**]*)
 
       * **reasoning_effort** (*Literal**[**'minimal'**, **'low'**,
-        **'medium'**, **'high'**] **| **None*)
+        **'medium'**, **'high'**, **'xhigh'**] **| **None*)
 
       * **num_retries_failed_request** (*Annotated**[**int**,
         **Strict**(**strict=True**)**]*)

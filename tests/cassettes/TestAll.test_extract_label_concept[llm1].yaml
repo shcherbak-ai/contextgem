@@ -205,7 +205,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str,\\n                \\\"reference_paragraph_ids\\\": [\\n                    str,\\n
       \                   ...\\n                ]\\n            },\\n            ...\\n
@@ -441,46 +441,46 @@ interactions:
       \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
       \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
-      accept:
+      Accept:
       - application/json
-      accept-encoding:
+      Accept-Encoding:
       - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '35696'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
       api-key:
       - DUMMY
       authorization:
       - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '35694'
-      content-type:
-      - application/json
       host:
       - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.101.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
       x-stainless-os:
       - DUMMY
-      x-stainless-package-version:
-      - 1.101.0
-      x-stainless-raw-response:
-      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -495,16 +495,16 @@ interactions:
         \"The document is explicitly titled ''Non-Disclosure Agreement (NDA)'' and
         repeatedly refers to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
         [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756649871, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1766102601, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 104,
+        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 104,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        7024, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6912},
+        7024, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6144},
         "total_tokens": 7128}}'
     headers:
       Content-Length:
@@ -761,7 +761,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
       \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
@@ -1178,46 +1178,46 @@ interactions:
       \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
       \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
-      accept:
+      Accept:
       - application/json
-      accept-encoding:
+      Accept-Encoding:
       - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '52645'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
       api-key:
       - DUMMY
       authorization:
       - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '52643'
-      content-type:
-      - application/json
       host:
       - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.101.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
       x-stainless-os:
       - DUMMY
-      x-stainless-package-version:
-      - 1.101.0
-      x-stainless-raw-response:
-      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1229,10 +1229,12 @@ interactions:
         [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
         [\n            {\n                \"value\": {\n                    \"labels\":
         [\n                        \"Confidentiality\",\n                        \"Legal
-        Compliance\",\n                        \"Contract Terms\",\n                        \"Technology\"\n                    ]\n                },\n                \"justification\":
-        \"The document is a Non-Disclosure Agreement focusing on protecting confidential
-        information, legal obligations, contract terms, and includes software code
-        as confidential information indicating technology relevance.\",\n                \"reference_paragraphs\":
+        Compliance\",\n                        \"Contract Terms\",\n                        \"Technology\",\n                        \"Third
+        Party Relations\"\n                    ]\n                },\n                \"justification\":
+        \"The document is a Non-Disclosure Agreement focused on protecting confidential
+        information, defining obligations, liability, and governing law, which covers
+        confidentiality, legal compliance, contract terms, technology (software code
+        included), and third party relations (disclosure restrictions).\",\n                \"reference_paragraphs\":
         [\n                    {\n                        \"reference_paragraph_id\":
         \"P0\",\n                        \"reference_sentence_ids\": [\"P0-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P17\",\n                        \"reference_sentence_ids\": [\"P17-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
@@ -1247,24 +1249,21 @@ interactions:
         \"P42\",\n                        \"reference_sentence_ids\": [\"P42-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P44\",\n                        \"reference_sentence_ids\": [\"P44-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P45\",\n                        \"reference_sentence_ids\": [\"P45-S0\",
-        \"P45-S1\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P47\",\n                        \"reference_sentence_ids\": [\"P47-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P48\",\n                        \"reference_sentence_ids\": [\"P48-S0\"]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P49\",\n                        \"reference_sentence_ids\": [\"P49-S0\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756649873, "id": "chatcmpl-DUMMY",
+        \"P45-S1\"]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1766102603, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 491,
+        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 434,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        10077, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 9984},
-        "total_tokens": 10568}}'
+        10077, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 9216},
+        "total_tokens": 10511}}'
     headers:
       Content-Length:
-      - '4284'
+      - '3893'
       Content-Type:
       - application/json
       Date:
@@ -1504,7 +1503,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str,\\n                \\\"reference_paragraph_ids\\\": [\\n                    str,\\n
       \                   ...\\n                ]\\n            },\\n            ...\\n
@@ -1740,46 +1739,46 @@ interactions:
       \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
       \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
-      accept:
+      Accept:
       - application/json
-      accept-encoding:
+      Accept-Encoding:
       - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '35696'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
       api-key:
       - DUMMY
       authorization:
       - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '35694'
-      content-type:
-      - application/json
       host:
       - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.101.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
       x-stainless-os:
       - DUMMY
-      x-stainless-package-version:
-      - 1.101.0
-      x-stainless-raw-response:
-      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -1792,22 +1791,22 @@ interactions:
         [\n            {\n                \"value\": {\n                    \"labels\":
         [\n                        \"NDA\"\n                    ]\n                },\n                \"justification\":
         \"The document is explicitly titled ''Non-Disclosure Agreement (NDA)'' and
-        repeatedly refers to itself as such throughout the text.\",\n                \"reference_paragraph_ids\":
+        repeatedly refers to itself as a Non-Disclosure Agreement.\",\n                \"reference_paragraph_ids\":
         [\n                    \"P0\",\n                    \"P1\",\n                    \"P51\"\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756649881, "id": "chatcmpl-DUMMY",
+        "refusal": null, "role": "assistant"}}], "created": 1766102609, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 104,
+        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 105,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        7024, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6912},
-        "total_tokens": 7128}}'
+        7024, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 6144},
+        "total_tokens": 7129}}'
     headers:
       Content-Length:
-      - '1808'
+      - '1810'
       Content-Type:
       - application/json
       Date:
@@ -2060,7 +2059,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str,\\n                \\\"reference_paragraphs\\\": [\\n                    {\\n
       \                       \\\"reference_paragraph_id\\\": str,\\n                        \\\"reference_sentence_ids\\\":
@@ -2477,46 +2476,46 @@ interactions:
       \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
       \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
-      accept:
+      Accept:
       - application/json
-      accept-encoding:
+      Accept-Encoding:
       - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '52645'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
       api-key:
       - DUMMY
       authorization:
       - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '52643'
-      content-type:
-      - application/json
       host:
       - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.101.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
       x-stainless-os:
       - DUMMY
-      x-stainless-package-version:
-      - 1.101.0
-      x-stainless-raw-response:
-      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
@@ -2541,28 +2540,26 @@ interactions:
         \"P20\",\n                        \"reference_sentence_ids\": [\n                            \"P20-S0\",\n                            \"P20-S1\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P25\",\n                        \"reference_sentence_ids\": [\n                            \"P25-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P26\",\n                        \"reference_sentence_ids\": [\n                            \"P26-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
+        \"P27\",\n                        \"reference_sentence_ids\": [\n                            \"P27-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P38\",\n                        \"reference_sentence_ids\": [\n                            \"P38-S0\",\n                            \"P38-S1\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P40\",\n                        \"reference_sentence_ids\": [\n                            \"P40-S0\",\n                            \"P40-S1\",\n                            \"P40-S2\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P42\",\n                        \"reference_sentence_ids\": [\n                            \"P42-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
         \"P44\",\n                        \"reference_sentence_ids\": [\n                            \"P44-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P45\",\n                        \"reference_sentence_ids\": [\n                            \"P45-S0\",\n                            \"P45-S1\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P47\",\n                        \"reference_sentence_ids\": [\n                            \"P47-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P48\",\n                        \"reference_sentence_ids\": [\n                            \"P48-S0\"\n                        ]\n                    },\n                    {\n                        \"reference_paragraph_id\":
-        \"P49\",\n                        \"reference_sentence_ids\": [\n                            \"P49-S0\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1756649882, "id": "chatcmpl-DUMMY",
+        \"P45\",\n                        \"reference_sentence_ids\": [\n                            \"P45-S0\",\n                            \"P45-S1\"\n                        ]\n                    }\n                ]\n            }\n        ]\n    }\n]",
+        "refusal": null, "role": "assistant"}}], "created": 1766102609, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 603,
+        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 541,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        10077, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 9984},
-        "total_tokens": 10680}}'
+        10077, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
+        10618}}'
     headers:
       Content-Length:
-      - '5524'
+      - '5059'
       Content-Type:
       - application/json
       Date:
@@ -2779,7 +2776,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Technical
       Specifications</concept_name>\\n\\n    <concept_description>\\n    Identify
@@ -2891,67 +2888,69 @@ interactions:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
       ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
-      accept:
+      Accept:
       - application/json
-      accept-encoding:
+      Accept-Encoding:
       - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '23734'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
       api-key:
       - DUMMY
       authorization:
       - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '23732'
-      content-type:
-      - application/json
       host:
       - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.101.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
       x-stainless-os:
       - DUMMY
-      x-stainless-package-version:
-      - 1.101.0
-      x-stainless-raw-response:
-      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1766102615,
+        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
+        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
+        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1756649890, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_4f3d32ad4e", "usage": {"completion_tokens": 23, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 4524, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 4547}}'
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
+        {"completion_tokens": 23, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 4524, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        4480}, "total_tokens": 4547}}'
     headers:
       Content-Length:
-      - '1176'
+      - '1303'
       Content-Type:
       - application/json
       Date:
@@ -3168,7 +3167,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Technical
       Specifications</concept_name>\\n\\n    <concept_description>\\n    Identify
@@ -3280,69 +3279,71 @@ interactions:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
       ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
     headers:
-      accept:
+      Accept:
       - application/json
-      accept-encoding:
+      Accept-Encoding:
       - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '23786'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.13.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.13.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
       api-key:
       - DUMMY
       authorization:
       - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '23784'
-      content-type:
-      - application/json
       host:
       - DUMMY
-      user-agent:
-      - AzureOpenAI/Python 1.101.0
-      x-stainless-arch:
-      - other:amd64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
       x-stainless-os:
       - DUMMY
-      x-stainless-package-version:
-      - 1.101.0
-      x-stainless-raw-response:
-      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://<DUMMY-ENDPOINT>/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
   response:
     body:
       string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}, "finish_reason": "stop", "index": 0, "logprobs":
-        null, "message": {"annotations": [], "content": "[\n    {\n        \"concept_id\":
-        \"C0\",\n        \"extracted_items\": [\n            {\n                \"labels\":
-        [\"Nutrition Information\"]\n            }\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1756649891, "id": "chatcmpl-DUMMY",
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "[\n    {\n        \"concept_id\": \"C0\",\n        \"extracted_items\":
+        [\n            {\n                \"labels\": [\n                    \"Nutrition
+        Information\"\n                ]\n            }\n        ]\n    }\n]", "refusal":
+        null, "role": "assistant"}}], "created": 1766102616, "id": "chatcmpl-DUMMY",
         "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_4f3d32ad4e", "usage": {"completion_tokens": 37,
+        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 41,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         4527, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4480},
-        "total_tokens": 4564}}'
+        "total_tokens": 4568}}'
     headers:
       Content-Length:
-      - '1276'
+      - '1440'
       Content-Type:
       - application/json
       Date:

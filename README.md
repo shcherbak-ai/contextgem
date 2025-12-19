@@ -337,7 +337,7 @@ document.add_concepts([concept])
 
 ```python
 llm = DocumentLLM(
-    model="openai/gpt-4.1-mini",  # or another provider/LLM
+    model="openai/gpt-5-mini",  # or another provider/LLM
     api_key="...",
 )
 document = llm.extract_all(document)
@@ -497,6 +497,7 @@ ContextGem relies on these excellent open-source packages:
 - [pillow](https://github.com/python-pillow/Pillow): Image processing library for local model image handling
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
 - [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation for unique object identification
+- [tenacity](https://github.com/jd/tenacity): General-purpose retry library for Python
 - [typing-extensions](https://github.com/python/typing_extensions): Backports of the latest typing features for enhanced type annotations
 - [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art paragraph/sentence segmentation using wtpsplit's SaT models
 
