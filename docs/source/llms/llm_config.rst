@@ -156,9 +156,9 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``None``
      - Seed for random number generation to help produce more consistent outputs across multiple runs. When set to a specific integer value, the LLM will attempt to use this seed for sampling operations. However, deterministic output is still not guaranteed even with the same seed, as other factors may influence the model's response.
    * - ``tools``
-     - ``list[dict] | None``
+     - ``list[dict | Callable] | None``
      - ``None``
-     - OpenAI-compatible tool schema used only for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``. Each tool must have a registered Python handler decorated with ``@register_tool`` and available in scope when creating the LLM. Handlers must return a string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :ref:`llm-chat-with-tools-label`.
+     - Tools for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``. You can pass functions decorated with ``@register_tool`` directly—schemas are auto-generated from the function signature, type hints, and docstring. Alternatively, pass OpenAI-compatible tool schema dicts with handlers registered via ``@register_tool``. Handlers must return a string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :ref:`llm-chat-with-tools-label`.
    * - ``tool_choice``
      - ``str | dict | None``
      - ``None``

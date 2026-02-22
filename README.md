@@ -4,11 +4,12 @@
 
 |          |        |
 |----------|--------|
-| **Package** | [![PyPI](https://img.shields.io/pypi/v/contextgem?logo=pypi&label=PyPi&logoColor=gold)](https://pypi.org/project/contextgem/) [![PyPI Downloads](https://static.pepy.tech/badge/contextgem/month)](https://pepy.tech/projects/contextgem) [![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=gold)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-Apache_2.0-bright.svg)](https://opensource.org/licenses/Apache-2.0) |
-| **Quality** | [![tests](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml) [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json)](https://github.com/shcherbak-ai/contextgem/actions) [![CodeQL](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml) [![bandit security](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10489/badge?1)](https://www.bestpractices.dev/projects/10489) |
-| **Tools** | [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://pydantic.dev) [![pyright](https://img.shields.io/badge/pyright-checked-blue)](https://github.com/microsoft/pyright) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit) [![deptry](https://img.shields.io/badge/deptry-checked-blue)](https://github.com/fpgmaas/deptry) [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch) |
-| **Docs** | [![docs](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml) [![documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://shcherbak-ai.github.io/contextgem/) ![Docstring Coverage](https://contextgem.dev/_static/interrogate-badge.svg) [![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem) |
-| **Community** | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) [![GitHub issues closed](https://img.shields.io/github/issues-closed/shcherbak-ai/contextgem)](https://github.com/shcherbak-ai/contextgem/issues?q=is%3Aissue+is%3Aclosed) [![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit)](https://github.com/shcherbak-ai/contextgem/commits/main) |
+| **Package** | [![PyPI](https://img.shields.io/pypi/v/contextgem?logo=pypi&label=PyPi&logoColor=gold&style=flat-square)](https://pypi.org/project/contextgem/) [![PyPI Downloads](https://static.pepy.tech/badge/contextgem/month)](https://pepy.tech/projects/contextgem) [![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=gold&style=flat-square)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](https://opensource.org/licenses/Apache-2.0) |
+| **Quality** | [![tests](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml) [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square)](https://github.com/shcherbak-ai/contextgem/actions) [![CodeQL](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml) [![bandit security](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/bandit-security.yml?branch=main&style=flat-square&label=bandit)](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10489/badge?1)](https://www.bestpractices.dev/projects/10489) |
+| **Tools** | [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff) [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json&style=flat-square)](https://pydantic.dev) [![pyright](https://img.shields.io/badge/pyright-checked-blue?style=flat-square)](https://github.com/microsoft/pyright) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white&style=flat-square)](https://github.com/pre-commit/pre-commit) [![deptry](https://img.shields.io/badge/deptry-checked-blue?style=flat-square)](https://github.com/fpgmaas/deptry) [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg?style=flat-square)](https://github.com/pypa/hatch) |
+| **Docs** | [![docs](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/docs.yml?branch=main&style=flat-square&label=docs)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml) [![documentation](https://img.shields.io/badge/docs-latest-blue?style=flat-square)](https://shcherbak-ai.github.io/contextgem/) ![Docstring Coverage](https://contextgem.dev/_static/interrogate-badge.svg) [![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem) |
+| **AI Agents** | [![AGENTS.md](https://img.shields.io/badge/AGENTS.md-✓-blue?style=flat-square)](https://agents.md) [![CLAUDE.md](https://img.shields.io/badge/CLAUDE.md-✓-blue?style=flat-square)](https://docs.anthropic.com/en/docs/claude-code/memory#claudemd) |
+| **Community** | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa?style=flat-square)](CODE_OF_CONDUCT.md) [![GitHub issues closed](https://img.shields.io/github/issues-closed/shcherbak-ai/contextgem?style=flat-square)](https://github.com/shcherbak-ai/contextgem/issues?q=is%3Aissue+is%3Aclosed) [![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit&style=flat-square)](https://github.com/shcherbak-ai/contextgem/commits/main) |
 
 <div align="center">
 <img src="https://contextgem.dev/_static/tab_solid.png" alt="ContextGem: 2nd Product of the week" width="250">
@@ -169,6 +170,14 @@ With **minimal code**, you can:
 
 
 ## 📦 Installation
+
+Using [uv](https://github.com/astral-sh/uv) (recommended):
+
+```bash
+uv add contextgem
+```
+
+Or using pip:
 
 ```bash
 pip install -U contextgem
@@ -469,9 +478,18 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 
 ## 🤝 Contributing
 
-We welcome contributions from the community - whether it's fixing a typo or developing a completely new feature! 
+We welcome contributions from the community - whether it's fixing a typo or developing a completely new feature!
 
 📋 **Get started:** Check out our [Contributor Guidelines](https://github.com/shcherbak-ai/contextgem/blob/main/CONTRIBUTING.md).
+
+## 🤖 AI Agent-Friendly
+
+This repository follows modern development practices with first-class support for AI coding assistants:
+
+- **[AGENTS.md](https://github.com/shcherbak-ai/contextgem/blob/main/AGENTS.md)** - Guidelines for AI assistants working with this codebase ([agents.md standard](https://agents.md))
+- **[CLAUDE.md](https://github.com/shcherbak-ai/contextgem/blob/main/CLAUDE.md)** - Configuration for [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+These files provide AI assistants with project-specific context, coding conventions, architecture patterns, and contribution workflows - enabling more accurate and consistent AI-assisted development.
 
 ## 🔐 Security
 
@@ -489,6 +507,7 @@ ContextGem relies on these excellent open-source packages:
 
 - [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
 - [colorlog](https://github.com/borntyping/python-colorlog): Colored formatter for Python's logging module
+- [docstring-parser](https://github.com/rr-/docstring_parser): Docstring parsing for auto-generating tool schemas
 - [fastjsonschema](https://github.com/horejsek/python-fastjsonschema): Ultra-fast JSON schema validation
 - [genai-prices](https://github.com/pydantic/genai-prices): LLM pricing data and utilities (by Pydantic) to automatically estimate costs
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering

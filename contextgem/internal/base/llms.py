@@ -1693,7 +1693,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             if extracted_item_type == "concept":
                 filtered_instances_to_process = []
                 for i in instances_to_process:
-                    i_in_source_mapper = sources_mapper.get(i.unique_id, None)
+                    i_in_source_mapper = sources_mapper.get(i.unique_id)
                     if (
                         i_in_source_mapper
                         # Safe cast: i is always a Concept because extracted_item_type is "concept"
@@ -3160,6 +3160,26 @@ class _DocumentLLM(_GenericLLMProcessor):
     def __init__(self, **data: Any):
         # Pop the async_limiter if provided; otherwise use a default.
         limiter = data.pop("async_limiter", None)
+
+        # Convert @register_tool-decorated functions to OpenAI tool schemas
+        raw_tools = data.get("tools")
+        if raw_tools is not None:
+            from contextgem.internal.tools import (
+                _generate_tool_schema,
+                _parse_docstring,
+            )
+
+            converted: list[dict[str, Any]] = []
+            for item in raw_tools:
+                if _is_registered_tool(item):
+                    schema = _generate_tool_schema(
+                        item, _parse_docstring(item.__doc__ or "")
+                    )
+                    converted.append(schema)
+                else:
+                    converted.append(item)
+            data["tools"] = converted
+
         super().__init__(**data)
         if limiter is not None:
             self.async_limiter = limiter

@@ -23,7 +23,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -31,7 +31,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -58,13 +58,13 @@ interactions:
         "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
         "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
         "{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}", "name": "compute_invoice_total"},
-        "id": "call_3D6ubYLjMSP7bL71WJ7EvPNp", "type": "function"}]}}], "created":
-        1766107867, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        "id": "call_cX1mZjmkAWK7Ma03l1Pbh0SX", "type": "function"}]}}], "created":
+        1771768244, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
         "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
         {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
         false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_b6f445fc1c", "usage":
         {"completion_tokens": 32, "completion_tokens_details": {"accepted_prediction_tokens":
         0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
         0}, "prompt_tokens": 274, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
@@ -112,7 +112,7 @@ interactions:
       with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
       outputs returned by the previous tools as invoice_total, discount, surcharge.
       Reply only with the number returned by `compute_final_amount`, nothing else.
-      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_3D6ubYLjMSP7bL71WJ7EvPNp","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_3D6ubYLjMSP7bL71WJ7EvPNp","name":"compute_invoice_total"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_cX1mZjmkAWK7Ma03l1Pbh0SX","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_cX1mZjmkAWK7Ma03l1Pbh0SX","name":"compute_invoice_total"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
       invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
       discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
       surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
@@ -129,7 +129,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -137,7 +137,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -163,14 +163,14 @@ interactions:
       string: '{"choices": [{"content_filter_results": {}, "finish_reason": "tool_calls",
         "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
         "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
-        "{\"order_id\":\"ORD-123\"}", "name": "get_discount_amount"}, "id": "call_erA4XFKjQS2365YxaG3Gjw5F",
-        "type": "function"}]}}], "created": 1766107868, "id": "chatcmpl-DUMMY", "model":
+        "{\"order_id\":\"ORD-123\"}", "name": "get_discount_amount"}, "id": "call_ixr8IjMhH9aQwr1ccDD5kYfS",
+        "type": "function"}]}}], "created": 1771768244, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 19,
+        "system_fingerprint": "fp_b6f445fc1c", "usage": {"completion_tokens": 19,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         324, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
@@ -235,7 +235,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -243,7 +243,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -270,13 +270,13 @@ interactions:
         "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
         "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
         "{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}", "name": "compute_invoice_total"},
-        "id": "call_wWOrgX3p615CHrXYQBCEHgCq", "type": "function"}]}}], "created":
-        1766107868, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
+        "id": "call_3CwBt01POGj5mzOgARV69sGO", "type": "function"}]}}], "created":
+        1771768245, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object":
         "chat.completion", "prompt_filter_results": [{"prompt_index": 0, "content_filter_results":
         {"hate": {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered":
         false, "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_b6f445fc1c", "usage":
         {"completion_tokens": 32, "completion_tokens_details": {"accepted_prediction_tokens":
         0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
         0}, "prompt_tokens": 274, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
@@ -324,7 +324,7 @@ interactions:
       with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
       outputs returned by the previous tools as invoice_total, discount, surcharge.
       Reply only with the number returned by `compute_final_amount`, nothing else.
-      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_wWOrgX3p615CHrXYQBCEHgCq","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_wWOrgX3p615CHrXYQBCEHgCq","name":"compute_invoice_total"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_3CwBt01POGj5mzOgARV69sGO","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_3CwBt01POGj5mzOgARV69sGO","name":"compute_invoice_total"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
       invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
       discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
       surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
@@ -341,7 +341,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -349,7 +349,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -375,14 +375,14 @@ interactions:
       string: '{"choices": [{"content_filter_results": {}, "finish_reason": "tool_calls",
         "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
         "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
-        "{\"order_id\":\"ORD-123\"}", "name": "get_discount_amount"}, "id": "call_DR5GNOI5CibBJN1Jwp48Q9pC",
-        "type": "function"}]}}], "created": 1766107869, "id": "chatcmpl-DUMMY", "model":
+        "{\"order_id\":\"ORD-123\"}", "name": "get_discount_amount"}, "id": "call_ke8qIal3Nf6vrrP6SIUwI9jN",
+        "type": "function"}]}}], "created": 1771768246, "id": "chatcmpl-DUMMY", "model":
         "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
         [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
         "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 19,
+        "system_fingerprint": "fp_b6f445fc1c", "usage": {"completion_tokens": 19,
         "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
         0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
         324, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens":
@@ -430,7 +430,7 @@ interactions:
       with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
       outputs returned by the previous tools as invoice_total, discount, surcharge.
       Reply only with the number returned by `compute_final_amount`, nothing else.
-      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_wWOrgX3p615CHrXYQBCEHgCq","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_wWOrgX3p615CHrXYQBCEHgCq","name":"compute_invoice_total"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_DR5GNOI5CibBJN1Jwp48Q9pC","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"4","tool_call_id":"call_DR5GNOI5CibBJN1Jwp48Q9pC","name":"get_discount_amount"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_3CwBt01POGj5mzOgARV69sGO","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_3CwBt01POGj5mzOgARV69sGO","name":"compute_invoice_total"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_ke8qIal3Nf6vrrP6SIUwI9jN","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"4","tool_call_id":"call_ke8qIal3Nf6vrrP6SIUwI9jN","name":"get_discount_amount"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
       invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
       discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
       surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
@@ -447,7 +447,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -455,7 +455,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -486,14 +486,14 @@ interactions:
         "finish_reason": "tool_calls", "index": 0, "logprobs": null, "message": {"annotations":
         [], "content": "<tool_call_response>", "refusal": null, "role": "assistant",
         "tool_calls": [{"function": {"arguments": "{\"order_id\":\"ORD-123\"}", "name":
-        "get_surcharge"}, "id": "call_jESmTUtr136HabAzuYdvpYRZ", "type": "function"}]}}],
-        "created": 1766107869, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "get_surcharge"}, "id": "call_0fBfKAtRlQs86OBVGWzAPUkN", "type": "function"}]}}],
+        "created": 1771768246, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_3dcd5944f5", "usage": {"completion_tokens": 26, "completion_tokens_details":
+        "fp_b6f445fc1c", "usage": {"completion_tokens": 26, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 361, "prompt_tokens_details":
         {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 387}}'
@@ -540,7 +540,7 @@ interactions:
       with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
       outputs returned by the previous tools as invoice_total, discount, surcharge.
       Reply only with the number returned by `compute_final_amount`, nothing else.
-      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_wWOrgX3p615CHrXYQBCEHgCq","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_wWOrgX3p615CHrXYQBCEHgCq","name":"compute_invoice_total"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_DR5GNOI5CibBJN1Jwp48Q9pC","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"4","tool_call_id":"call_DR5GNOI5CibBJN1Jwp48Q9pC","name":"get_discount_amount"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_jESmTUtr136HabAzuYdvpYRZ","type":"function","function":{"name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"2","tool_call_id":"call_jESmTUtr136HabAzuYdvpYRZ","name":"get_surcharge"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_3CwBt01POGj5mzOgARV69sGO","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_3CwBt01POGj5mzOgARV69sGO","name":"compute_invoice_total"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_ke8qIal3Nf6vrrP6SIUwI9jN","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"4","tool_call_id":"call_ke8qIal3Nf6vrrP6SIUwI9jN","name":"get_discount_amount"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_0fBfKAtRlQs86OBVGWzAPUkN","type":"function","function":{"name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"2","tool_call_id":"call_0fBfKAtRlQs86OBVGWzAPUkN","name":"get_surcharge"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
       invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
       discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
       surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
@@ -557,7 +557,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -565,7 +565,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -592,14 +592,14 @@ interactions:
         "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
         "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
         "{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}", "name":
-        "compute_final_amount"}, "id": "call_dIAiFp1ywNO8IMm8W2IzPnK7", "type": "function"}]}}],
-        "created": 1766107870, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "compute_final_amount"}, "id": "call_rZKyhJP3Rjn9U9wh4JVwLoYh", "type": "function"}]}}],
+        "created": 1771768247, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
         "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
         "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
         "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
         false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
         "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_3dcd5944f5", "usage": {"completion_tokens": 26, "completion_tokens_details":
+        "fp_b6f445fc1c", "usage": {"completion_tokens": 26, "completion_tokens_details":
         {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
         "rejected_prediction_tokens": 0}, "prompt_tokens": 398, "prompt_tokens_details":
         {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 424}}'
@@ -646,7 +646,7 @@ interactions:
       with order_id=''ORD-123''. Then call `compute_final_amount` using the exact
       outputs returned by the previous tools as invoice_total, discount, surcharge.
       Reply only with the number returned by `compute_final_amount`, nothing else.
-      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_wWOrgX3p615CHrXYQBCEHgCq","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_wWOrgX3p615CHrXYQBCEHgCq","name":"compute_invoice_total"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_DR5GNOI5CibBJN1Jwp48Q9pC","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"4","tool_call_id":"call_DR5GNOI5CibBJN1Jwp48Q9pC","name":"get_discount_amount"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_jESmTUtr136HabAzuYdvpYRZ","type":"function","function":{"name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"2","tool_call_id":"call_jESmTUtr136HabAzuYdvpYRZ","name":"get_surcharge"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_dIAiFp1ywNO8IMm8W2IzPnK7","type":"function","function":{"name":"compute_final_amount","arguments":"{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}"}}]},{"role":"tool","content":"7","tool_call_id":"call_dIAiFp1ywNO8IMm8W2IzPnK7","name":"compute_final_amount"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
+      Do not guess any values; you must call the tools."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_3CwBt01POGj5mzOgARV69sGO","type":"function","function":{"name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"}}]},{"role":"tool","content":"9","tool_call_id":"call_3CwBt01POGj5mzOgARV69sGO","name":"compute_invoice_total"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_ke8qIal3Nf6vrrP6SIUwI9jN","type":"function","function":{"name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"4","tool_call_id":"call_ke8qIal3Nf6vrrP6SIUwI9jN","name":"get_discount_amount"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_0fBfKAtRlQs86OBVGWzAPUkN","type":"function","function":{"name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"}}]},{"role":"tool","content":"2","tool_call_id":"call_0fBfKAtRlQs86OBVGWzAPUkN","name":"get_surcharge"},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_rZKyhJP3Rjn9U9wh4JVwLoYh","type":"function","function":{"name":"compute_final_amount","arguments":"{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}"}}]},{"role":"tool","content":"7","tool_call_id":"call_rZKyhJP3Rjn9U9wh4JVwLoYh","name":"compute_final_amount"}],"model":"gpt-4.1-mini","max_tokens":4096,"parallel_tool_calls":false,"stream":false,"temperature":0.3,"tools":[{"type":"function","function":{"name":"compute_invoice_total","description":"Compute
       invoice total as sum(qty*price) over items","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]}}},{"type":"function","function":{"name":"get_discount_amount","description":"Return
       discount amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"get_surcharge","description":"Return
       surcharge amount for a given order id","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]}}},{"type":"function","function":{"name":"compute_final_amount","description":"Compute
@@ -663,7 +663,7 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - AzureOpenAI/Python 2.13.0
+      - AzureOpenAI/Python 2.21.0
       X-Stainless-Arch:
       - other:amd64
       X-Stainless-Async:
@@ -671,7 +671,7 @@ interactions:
       X-Stainless-Lang:
       - python
       X-Stainless-Package-Version:
-      - 2.13.0
+      - 2.21.0
       X-Stainless-Raw-Response:
       - 'true'
       X-Stainless-Runtime:
@@ -700,13 +700,13 @@ interactions:
         "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
         false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
         "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "7", "refusal": null, "role": "assistant"}}], "created": 1766107871,
+        [], "content": "7", "refusal": null, "role": "assistant"}}], "created": 1771768248,
         "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
         "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
         {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
         "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
         "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_b6f445fc1c", "usage":
         {"completion_tokens": 3, "completion_tokens_details": {"accepted_prediction_tokens":
         0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
         0}, "prompt_tokens": 442, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":

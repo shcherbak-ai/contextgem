@@ -127,3 +127,10 @@ class ToolRegistration(TypedDict):
 
     handler: ToolHandler
     schema: JSONDict
+
+
+# Tool definition can be either an OpenAI-compatible schema dict or a decorated function
+# This allows users to pass either explicit schemas or functions decorated with @register_tool
+# Use dict[str, Any] instead of JSONDict to avoid Pydantic forward reference issues
+# (JSONValue contains recursive forward refs that Pydantic can't resolve in model fields)
+ToolDefinition = dict[str, Any] | ToolHandler

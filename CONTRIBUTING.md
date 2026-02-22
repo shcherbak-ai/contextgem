@@ -18,6 +18,22 @@ To sign the agreement:
 3. Fill in all the requested information and include it in your first pull request
 
 
+## 🤖 Using AI Coding Assistants
+
+This repository is **AI agent-friendly** and includes configuration files to help AI coding assistants understand the codebase:
+
+- **[AGENTS.md](AGENTS.md)** - Project overview, architecture patterns, coding conventions, and workflow guidelines for AI assistants ([agents.md standard](https://agents.md))
+- **[CLAUDE.md](CLAUDE.md)** - Configuration for [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)
+
+When using AI assistants (Claude Code, Cursor, etc.) to contribute:
+
+1. **Review AI-generated code** - Always verify changes follow project patterns and pass tests
+2. **Handle VCR cassettes yourself** - AI assistants should not run tests that call LLM APIs without existing cassettes
+3. **Manage git operations yourself** - Review and commit changes manually rather than letting AI handle git
+
+> **💡 Tip:** AI assistants work best when given specific, focused tasks. Break large contributions into smaller pieces for better results.
+
+
 ## 🚀 Getting Started
 
 ### 🛠️ Development Environment
@@ -44,18 +60,29 @@ To sign the agreement:
     # Install uv if you don't have it
     pip install uv
 
-    # Install dependencies and development extras
-    uv sync --all-groups
+    # Install dependencies and pre-commit hooks
+    uv run fab setup
+
+    # Or manually:
+    # uv sync --all-groups --upgrade
+    # uv run pre-commit install
+    # uv run pre-commit install --hook-type commit-msg
     ```
 
-3. **🔧 Install pre-commit hooks**:
-    ```bash
-    # Install pre-commit hooks
-    uv run pre-commit install
+### 🛠️ Available Fabric Commands
 
-    # Install commit-msg hooks (for commitizen)
-    uv run pre-commit install --hook-type commit-msg
-    ```
+The project includes a `fabfile.py` with common development tasks:
+
+```bash
+uv run fab --list          # List all available commands
+uv run fab setup           # Set up dev environment (deps + hooks)
+uv run fab sync            # Sync dependencies with upgrades
+uv run fab lint            # Run pre-commit checks on all files
+uv run fab docs            # Build documentation
+uv run fab docs-live       # Start live documentation server
+uv run fab readme          # Regenerate README.md from template
+uv run fab install-hooks   # Install pre-commit hooks
+```
 
 
 ### 📁 Project Structure
@@ -484,16 +511,13 @@ The log output will show detailed information about test execution.
 
 ### 🏗️ Building the Documentation
 
-Navigate to the `docs/` directory and choose your preferred build method:
+Use the fabric commands from the project root:
 
 #### For Live Development (Recommended)
 
-Use `sphinx-autobuild` for live reloading during development:
-
 ```bash
 # Live rebuild with auto-refresh on file changes
-make livehtml
-# Or on Windows: ./make.bat livehtml
+uv run fab docs-live
 ```
 
 This starts a development server on `http://localhost:9000` with:
@@ -503,23 +527,18 @@ This starts a development server on `http://localhost:9000` with:
 
 #### For Static Builds
 
-For one-time builds or CI-style building:
-
 ```bash
-# Build with verbose output, ignore cache, and treat warnings as errors 
-# (recommended for structural changes)
-uv run sphinx-build -b dirhtml source build/dirhtml -v -E -W
+# Build with verbose output, ignore cache, and treat warnings as errors
+uv run fab docs
 ```
-
-The `-E` flag ensures Sphinx completely rebuilds the environment, which is especially important after structural changes like modifying toctree directives or removing files. The `dirhtml` format creates pretty URLs without `.html` extensions, consistent with the live development server.
 
 ### 👀 Viewing the Documentation
 
 **With Live Development:**
-The documentation automatically opens at `http://localhost:9000` when using `make livehtml`.
+Open `http://localhost:9000` in your browser.
 
 **With Static Builds:**
-After building, open `build/dirhtml/index.html` in your web browser to view the documentation.
+After building, open `docs/build/dirhtml/index.html` in your web browser.
 
 ### 🌐 Live Documentation
 
@@ -545,8 +564,7 @@ Instead:
 If you need to test the README generation manually:
 
 ```bash
-# Populate README.md from template
-python dev/populate_project_readme.py
+uv run fab readme
 ```
 
 

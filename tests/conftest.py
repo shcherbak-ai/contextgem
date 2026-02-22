@@ -84,7 +84,7 @@ def _patched_run_async_function(async_func, *args, **kwargs):
     return asyncio.run(async_func(*args, **kwargs))
 
 
-httpcore_stubs._run_async_function = _patched_run_async_function
+httpcore_stubs._run_async_function = _patched_run_async_function  # type: ignore[attr-defined]
 
 
 # Memory profiling behavior

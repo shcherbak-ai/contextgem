@@ -1,6 +1,6 @@
 [project]
 name = "contextgem"
-version = "0.19.4"
+version = "0.20.0"
 description = "Effortless LLM extraction from documents"
 authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 requires-python = ">=3.10,<3.14"
@@ -94,16 +94,17 @@ classifiers = [
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
     "colorlog (>=6.9.0,<7.0.0)",
+    "docstring-parser (>=0.17.0,<1.0.0)",
     "fastjsonschema (>=2.21.2,<3.0.0)",
-    "genai-prices==0.0.49",                 # pin version due to frequent API changes
+    "genai-prices==0.0.54", # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm==1.80.10",                     # pin version due to occasional instability between patches and minor versions
+    "litellm==1.81.14", # pin version due to occasional instability between patches and minor versions
     "lxml (>=5.4.0,<6.0.0)",
-    "openai==2.13.0",                       # pinned version for stable compatibility with litellm (after issue with 1.100.0)
+    "openai==2.21.0", # pinned version for stable compatibility with litellm (after issue with 1.100.0)
     "pillow (>=11.3.0,<12.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
-    "tenacity (>=9.1.2,<10.0.0)",           # required by litellm for retry logic
+    "tenacity (>=9.1.2,<10.0.0)", # required by litellm for retry logic
     "typing-extensions (>=4.14.1,<5.0.0)",
     "wtpsplit-lite (>=0.2.0,<0.3.0)",
 ]
@@ -116,31 +117,32 @@ Repository = "https://github.com/shcherbak-ai/contextgem.git"
 
 [dependency-groups]
 dev = [
-    "coverage>=7.6.12,<8",
-    "pytest>=8.3.4,<9",
-    "pytest-cov>=6.0.0,<7",
-    "python-dotenv>=1.0.1,<2",
-    "pre-commit>=4.1.0,<5",
-    "sphinx>=7.0.0,<8.0.0",
+    "bandit (>=1.8.3,<2.0.0)",
+    "commitizen (>=4.5.1,<5.0.0)",
+    "coverage (>=7.6.12,<8.0.0)",
+    "deptry (>=0.23.0,<1.0.0)",
+    "fabric (>=3.2.0,<4.0.0)",
+    "interrogate (>=1.7.0,<2.0.0)",
+    "memory-profiler (>=0.61.0,<1.0.0)",
+    "nbformat (>=5.10.4,<6.0.0)",
+    "nest-asyncio (>=1.6.0,<2.0.0)",
+    "pre-commit (>=4.1.0,<5.0.0)",
+    "pympler (>=1.1.0,<2.0.0)",
+    "pyright (>=1.1.403,<2.0.0)",
+    "pytest (>=8.3.4,<9.0.0)",
+    "pytest-cov (>=6.0.0,<7.0.0)",
+    "pytest-recording (>=0.13.4,<1.0.0)",
+    "python-dotenv (>=1.0.1,<2.0.0)",
+    "ruff (>=0.12.3,<1.0.0)",
+    "sphinx (>=7.0.0,<8.0.0)",
     "sphinx-autodoc-typehints<3.0.0",
-    "sphinx-book-theme>=1.1.4,<2",
-    "sphinx-copybutton>=0.5.2,<0.6",
-    "sphinx-design>=0.6.1,<0.7",
-    "sphinxext-opengraph>=0.9.1,<0.10",
-    "nbformat>=5.10.4,<6",
-    "commitizen>=4.5.1,<5",
-    "sphinx-sitemap>=2.6.0,<3",
-    "pytest-recording>=0.13.4,<0.14",
-    "bandit>=1.8.3,<2",
-    "pympler~=1.1",
-    "memory-profiler>=0.61.0,<0.62",
-    "ruff>=0.12.3",
-    "pyright>=1.1.403",
-    "types-lxml>=2025.3.30",
-    "deptry>=0.23.0",
-    "interrogate>=1.7.0",
-    "sphinx-autobuild>=2024.10.3",
-    "nest-asyncio>=1.6.0",
+    "sphinx-autobuild (>=2024.10.3,<2027.0.0)",
+    "sphinx-book-theme (>=1.1.4,<2.0.0)",
+    "sphinx-copybutton (>=0.5.2,<1.0.0)",
+    "sphinx-design (>=0.6.1,<1.0.0)",
+    "sphinx-sitemap (>=2.6.0,<3.0.0)",
+    "sphinxext-opengraph (>=0.9.1,<1.0.0)",
+    "types-lxml (>=2025.3.30,<2027.0.0)",
 ]
 
 [build-system]
@@ -220,11 +222,17 @@ DEP002 = [
     "openai",       # due to pinned version in dependencies
     "tenacity",     # required by litellm for retry logic
 ]
+DEP003 = [
+    "invoke",       # required for development tasks
+]
+DEP004 = [
+    "fabric",       # required for development tasks
+]
 
 [tool.interrogate]
 ignore-init-method = true
 ignore-init-module = true
 ignore-nested-classes = true
 ignore-overloaded-functions = true
-fail-under = 95
+fail-under = 100
 exclude = [".venv", "docs", "notebooks", "dev/usage_examples", "code_sample.py"]

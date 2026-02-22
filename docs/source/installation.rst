@@ -34,17 +34,17 @@ Before installing ContextGem, ensure you have:
 From PyPI
 ~~~~~~~~~~
 
-The simplest way to install ContextGem is via pip:
-
-.. code-block:: bash
-
-    pip install -U contextgem
-
-Or using uv (faster alternative):
+Using `uv <https://github.com/astral-sh/uv>`_ (recommended):
 
 .. code-block:: bash
 
     uv add contextgem
+
+Or using pip:
+
+.. code-block:: bash
+
+    pip install -U contextgem
 
 Development Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~

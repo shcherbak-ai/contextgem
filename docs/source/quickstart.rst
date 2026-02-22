@@ -168,11 +168,10 @@ ContextGem follows a simple extraction process:
 🛠️ Chat with Tools
 ~~~~~~~~~~~~~~~~~~~~
 
-.. tip::
-   Provide OpenAI-compatible tool schemas via ``tools=[...]`` and register Python handlers with ``@register_tool``. Tool support is only used in ``chat(...)`` and ``chat_async(...)``.
+Use the ``@register_tool`` decorator to enable LLM tool calling. Schemas are auto-generated from type hints and docstrings.
 
-.. note::
-   Tool handlers must return a string. If you need to return structured data, serialize it (e.g., with ``json.dumps``) before returning.
-
-.. literalinclude:: ../../dev/usage_examples/docs/llm_config/chat_with_tools.py
+.. literalinclude:: ../../dev/usage_examples/docs/llm_config/chat_with_tools_simple.py
    :language: python
+
+.. seealso::
+   For advanced usage including ``TypedDict`` for complex parameters, custom schema overrides, and supported type hints, see :doc:`llms/chat_with_tools`.
