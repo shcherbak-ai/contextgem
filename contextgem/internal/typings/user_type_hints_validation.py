@@ -27,6 +27,7 @@ serialization requirements, and ensuring type consistency across the application
 
 from __future__ import annotations
 
+from types import UnionType
 from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, create_model
@@ -75,7 +76,7 @@ def _is_optional(type_hint: Any) -> bool:
     :rtype: bool
     """
     origin = get_origin(type_hint)
-    if origin is Union:
+    if origin is Union or isinstance(type_hint, UnionType):
         return type(None) in get_args(type_hint)
     return False
 

@@ -26,6 +26,8 @@ with JSON serialization requirements.
 
 from __future__ import annotations
 
+from functools import reduce
+from types import UnionType
 from typing import Any, Dict, List, Optional, Union, get_args, get_origin  # noqa: UP035
 
 
@@ -96,7 +98,7 @@ def _normalize_type_annotation(tp: Any) -> Any:
             _normalize_type_annotation(args[0]), _normalize_type_annotation(args[1])
         ]
 
-    elif origin is Union or origin is Optional:
+    elif origin is Union or origin is Optional or isinstance(tp, UnionType):
         if not args:
             return Union if origin is Union else Optional
 
@@ -114,16 +116,12 @@ def _normalize_type_annotation(tp: Any) -> Any:
             if len(normalized_args) == 1:
                 return normalized_args[0]
             else:
-                return Union[normalized_args]  # noqa: UP007
+                return reduce(lambda a, b: a | b, normalized_args)
 
         # Handle Union
         if len(normalized_args) == 1:
             return normalized_args[0]
-        if len(normalized_args) == 2:
-            return Union[normalized_args[0], normalized_args[1]]  # noqa: UP007
-        # For more than two types, we need to use __getitem__ with tuple
-        # Type checker doesn't recognize Union.__getitem__ method, which works at runtime
-        return Union.__getitem__(normalized_args)  # type: ignore
+        return reduce(lambda a, b: a | b, normalized_args)
 
     # For other types with origin/args, keep the general structure
     # but normalize the arguments

@@ -3425,7 +3425,7 @@ Installation
 
 Before installing ContextGem, ensure you have:
 
-* Python 3.10-3.13
+* Python 3.10-3.14
 
 * pip (Python package installer)
 
@@ -11733,7 +11733,7 @@ class contextgem.public.documents.Document(**data)
       * **sat_model_id** (*Literal**[**'sat-1l'**, **'sat-1l-sm'**,
         **'sat-3l'**, **'sat-3l-sm'**, **'sat-6l'**, **'sat-6l-sm'**,
         **'sat-9l'**, **'sat-12l'**, **'sat-12l-sm'**] **| **str** |
-        **~pathlib._local.Path*)
+        **~pathlib.Path*)
 
       * **pre_segment_sentences** (*bool*)
 
@@ -12306,9 +12306,9 @@ class contextgem.public.converters.DocxConverter
       ContextGem Document.
 
       Parameters:
-         * **docx_path_or_file** ("str" | "pathlib._local.Path" |
-           "typing.BinaryIO") -- Path to the DOCX file (as string or
-           Path object) or a file-like object
+         * **docx_path_or_file** ("typing.Union"["str",
+           "pathlib.Path", "typing.BinaryIO"]) -- Path to the DOCX
+           file (as string or Path object) or a file-like object
 
          * **output_format** ("typing.Literal"["'raw'", "'markdown'"])
            -- Output format ("markdown" or "raw") (default:
@@ -12373,21 +12373,21 @@ class contextgem.public.converters.DocxConverter
       Converts a DOCX file into a ContextGem Document object.
 
       Parameters:
-         * **docx_path_or_file** ("str" | "pathlib._local.Path" |
-           "typing.BinaryIO") -- Path to the DOCX file (as string or
-           Path object) or a file-like object
+         * **docx_path_or_file** ("typing.Union"["str",
+           "pathlib.Path", "typing.BinaryIO"]) -- Path to the DOCX
+           file (as string or Path object) or a file-like object
 
          * **apply_markdown** ("bool") -- If True, applies markdown
            processing and formatting to the document content while
            preserving raw text separately (default: True)
 
-         * **raw_text_to_md** ("bool" | "None") -- [DEPRECATED] Use
-           apply_markdown instead. Will be removed in v1.0.0. Note:
-           This parameter previously controlled whether raw_text would
-           contain raw or markdown text. The new apply_markdown
-           parameter instead controls whether to apply markdown
-           processing while keeping raw text and processed text
-           separate.
+         * **raw_text_to_md** ("typing.Optional"["bool"]) --
+           [DEPRECATED] Use apply_markdown instead. Will be removed in
+           v1.0.0. Note: This parameter previously controlled whether
+           raw_text would contain raw or markdown text. The new
+           apply_markdown parameter instead controls whether to apply
+           markdown processing while keeping raw text and processed
+           text separate.
 
          * **include_tables** ("bool") -- If True, include tables in
            the output (default: True)

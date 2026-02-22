@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.21.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.21.0) - 2026-02-22
+### Added
+- Python 3.14 support.
+
+### Fixed
+- Fixed `Union.__getitem__()` incompatibility on Python 3.14, which caused `JsonObjectConcept` structure validation to fail when using complex union/optional type annotations (e.g., `Optional[Literal[...] | Literal[...]]`).
+- Fixed incomplete `types.UnionType` detection in type normalization and validation, ensuring union types created with the `|` operator (Python 3.10+) are handled consistently across Python 3.10–3.14.
+
 ## [0.20.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.20.0) - 2026-02-22
 ### Added
 - Auto-generate tool schemas from `@register_tool` decorated functions. Pass functions directly to `tools=[...]` — schemas are built automatically from type hints and docstrings. Explicit OpenAI-compatible schema dicts remain supported for full backward compatibility.

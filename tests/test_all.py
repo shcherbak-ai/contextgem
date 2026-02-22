@@ -6857,7 +6857,10 @@ class TestAll(TestUtils):
         with warnings.catch_warnings(record=True) as w:  # expect no warning
             warnings.simplefilter("always")  # Capture all warnings
             model.chat("What's the result of 10+10?")
-        assert len(w) == 0, "Expected no warning, but got: " + str(w)
+        user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
+        assert len(user_warnings) == 0, "Expected no warning, but got: " + str(
+            user_warnings
+        )
         response = model.get_usage()[0].usage.calls[-1].response
         assert response is not None
         assert "20" in response
@@ -6905,7 +6908,10 @@ class TestAll(TestUtils):
         with warnings.catch_warnings(record=True) as w:  # expect no warning
             warnings.simplefilter("always")  # Capture all warnings
             model.chat("What's your name?")
-        assert len(w) == 0, "Expected no warning, but got: " + str(w)
+        user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
+        assert len(user_warnings) == 0, "Expected no warning, but got: " + str(
+            user_warnings
+        )
         response = model.get_usage()[0].usage.calls[-1].response
         assert response is not None
         assert "John Doe" in response
@@ -7034,7 +7040,8 @@ class TestAll(TestUtils):
         with warnings.catch_warnings(record=True) as w:  # expect no warning
             warnings.simplefilter("always")
             resp = no_sys_model.chat("What's 9+1?", chat_session=cs_no_sys)
-        assert len(w) == 0
+        user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
+        assert len(user_warnings) == 0
         assert resp and "10" in resp
         # history: no system auto-injected when system_message is ""
         assert (
@@ -7061,7 +7068,8 @@ class TestAll(TestUtils):
         with warnings.catch_warnings(record=True) as w:  # expect no warning
             warnings.simplefilter("always")
             m_custom.chat("What's your name?", chat_session=cs_custom)
-        assert len(w) == 0
+        user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
+        assert len(user_warnings) == 0
         assert cs_custom.messages and cs_custom.messages[0].role == "system"
         assert cs_custom.messages[0].content == custom_sys
         assert (

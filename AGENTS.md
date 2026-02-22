@@ -12,7 +12,7 @@ For detailed contribution procedures, see `CONTRIBUTING.md`, which covers:
 
 **ContextGem** is a Python LLM framework for extracting structured data from documents using long context windows (not RAG-based).
 
-- **Python**: 3.10-3.13
+- **Python**: 3.10-3.14
 - **License**: Apache 2.0
 - **Package Manager**: `uv`
 
