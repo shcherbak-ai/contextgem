@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - Deterministic tool schema generation: `required` field ordering in auto-generated schemas is now sorted, preventing non-deterministic output from `frozenset` iteration across Python process invocations.
+- Pinned `onnxruntime<1.24.0` for Python 3.10, as `onnxruntime` 1.24+ dropped Python 3.10 wheels. Python 3.11+ is unaffected and uses the latest version.
 
 ### Changed
 - Upgraded pinned dependency versions: `litellm==1.81.14`, `openai==2.21.0`, `genai-prices==0.0.54`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.

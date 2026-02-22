@@ -107,6 +107,7 @@ dependencies = [
     "tenacity (>=9.1.2,<10.0.0)", # required by litellm for retry logic
     "typing-extensions (>=4.14.1,<5.0.0)",
     "wtpsplit-lite (>=0.2.0,<0.3.0)",
+    "onnxruntime (<1.24.0) ; python_version < '3.11'", # 1.24+ dropped Python 3.10 wheels
 ]
 
 [project.urls]
@@ -219,6 +220,7 @@ extend_exclude = [
 
 [tool.deptry.per_rule_ignores]
 DEP002 = [
+    "onnxruntime",  # constrained for Python 3.10 compat (transitive via wtpsplit-lite)
     "openai",       # due to pinned version in dependencies
     "tenacity",     # required by litellm for retry logic
 ]
