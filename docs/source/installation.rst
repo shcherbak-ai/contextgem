@@ -25,7 +25,7 @@ Installation
 
 Before installing ContextGem, ensure you have:
 
-* Python 3.10-3.13
+* Python 3.10-3.14
 * pip (Python package installer)
 
 📦 Installation Methods

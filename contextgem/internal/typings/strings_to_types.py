@@ -27,6 +27,7 @@ conversion between type annotations and their string representations.
 
 from __future__ import annotations
 
+from functools import reduce
 from typing import Any, Literal, Union
 
 from contextgem.internal.typings.types_to_strings import PRIMITIVE_TYPES_STRING_MAP
@@ -172,10 +173,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
         if len(types_list) == 2:
             return Union[types_list[0], types_list[1]], i  # noqa: UP007
         else:
-            # For more than two types, unpack them as arguments.
-            args = (types_list[0], types_list[1]) + tuple(types_list[2:])
-            # Type checker doesn't recognize Union.__getitem__ method, which works at runtime
-            union_type = Union.__getitem__(args)  # type: ignore
+            # For more than two types, build a union using the | operator.
+            union_type = reduce(lambda a, b: a | b, types_list)
             return union_type, i
 
     elif ident.lower() == "optional":
@@ -197,9 +196,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
                 i = _skip_whitespace(s, i)
 
             # Create union from the collected types
-            args = tuple(union_types)
-            # Type checker doesn't recognize Union.__getitem__ method, which works at runtime
-            inner_type = Union.__getitem__(args)  # type: ignore
+            inner_type = reduce(lambda a, b: a | b, union_types)
 
         i = _skip_whitespace(s, i)
         if i >= len(s) or s[i] != "]":

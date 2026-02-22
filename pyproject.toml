@@ -1,9 +1,9 @@
 [project]
 name = "contextgem"
-version = "0.20.0"
+version = "0.21.0"
 description = "Effortless LLM extraction from documents"
 authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<3.15"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 maintainers = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
@@ -81,6 +81,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: Office/Business",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -99,7 +100,7 @@ dependencies = [
     "genai-prices==0.0.54", # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
     "litellm==1.81.14", # pin version due to occasional instability between patches and minor versions
-    "lxml (>=5.4.0,<6.0.0)",
+    "lxml (>=5.4.0,<7.0.0)",
     "openai==2.21.0", # pinned version for stable compatibility with litellm (after issue with 1.100.0)
     "pillow (>=11.3.0,<12.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
@@ -108,6 +109,7 @@ dependencies = [
     "typing-extensions (>=4.14.1,<5.0.0)",
     "wtpsplit-lite (>=0.2.0,<0.3.0)",
     "onnxruntime (<1.24.0) ; python_version < '3.11'", # 1.24+ dropped Python 3.10 wheels
+    "onnxruntime (>=1.24.0) ; python_version >= '3.14'", # 3.14 wheels only available from 1.24+
 ]
 
 [project.urls]

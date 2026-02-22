@@ -757,7 +757,7 @@ class _JsonObjectConcept(_Concept):
         # Handle Optional type hints and ensure they only contain primitive types
         elif (
             hasattr(value, "__origin__") and getattr(value, "__origin__", None) is Union
-        ):
+        ) or isinstance(value, UnionType):
             # Check if it's an Optional (Union with None)
             args = get_args(value)
             is_optional = type(None) in args
