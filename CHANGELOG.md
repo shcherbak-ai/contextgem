@@ -5,6 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.20.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.20.0) - 2026-02-22
+### Added
+- Auto-generate tool schemas from `@register_tool` decorated functions. Pass functions directly to `tools=[...]` — schemas are built automatically from type hints and docstrings. Explicit OpenAI-compatible schema dicts remain supported for full backward compatibility.
+- Added `docstring-parser` dependency for extracting tool parameter descriptions from Sphinx/reST, Google, and NumPy style docstrings.
+
+### Fixed
+- Deterministic tool schema generation: `required` field ordering in auto-generated schemas is now sorted, preventing non-deterministic output from `frozenset` iteration across Python process invocations.
+- Pinned `onnxruntime<1.24.0` for Python 3.10, as `onnxruntime` 1.24+ dropped Python 3.10 wheels. Python 3.11+ is unaffected and uses the latest version.
+
+### Changed
+- Upgraded pinned dependency versions: `litellm==1.81.14`, `openai==2.21.0`, `genai-prices==0.0.54`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
+### Docs
+- Added dedicated "Chat with Tools" documentation page with examples for auto-schema generation, supported type hints, `TypedDict` usage, custom schema overrides, and tool configuration options.
+- Simplified quickstart tools example using the new `@register_tool` function-passing syntax.
+- Updated `CONTRIBUTING.md` with AI assistant guidance and Fabric commands.
+
 ## [0.19.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.4) - 2025-12-19
 ### Fixed
 - Applied fix for missing quote in JSON example format within prompt template. (PR [#86](https://github.com/shcherbak-ai/contextgem/pull/86))

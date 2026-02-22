@@ -317,10 +317,11 @@ Indices and tables
    :maxdepth: 2
    :caption: Large Language Models
    :hidden:
-   
+
    llms/supported_llms
    llms/llm_config
    llms/llm_extraction_methods
+   llms/chat_with_tools
 
 .. toctree::
    :maxdepth: 2

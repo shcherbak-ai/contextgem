@@ -82,6 +82,8 @@ VCR_FILTER_HEADERS = {
     "Date",
     "host",
     "openai-organization",
+    "openai-project",
+    "set-cookie",
     "Set-Cookie",
     "uri",
     "x-aml-cluster",
@@ -153,11 +155,12 @@ def vcr_before_record_response(response):
     :param response: The VCR response object to process.
     :return: The modified response object with redacted sensitive data.
     """
-    # Redact headers
+    # Redact headers (use actual header key from response to handle case differences)
     headers = response.get("headers", {})
-    for header in VCR_FILTER_HEADERS:
-        if header.lower() in [h.lower() for h in headers]:
-            headers[header] = [VCR_REDACTION_MARKER]
+    filter_lower = {h.lower() for h in VCR_FILTER_HEADERS}
+    for key in list(headers):
+        if key.lower() in filter_lower:
+            headers[key] = [VCR_REDACTION_MARKER]
     # Redact body
     if response["body"]["string"]:
         try:

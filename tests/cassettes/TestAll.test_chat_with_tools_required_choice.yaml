@@ -1,0 +1,367 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
+      file containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n    <document_types>\n    - Contracts: Legal
+      agreements defining terms and obligations.\n    - Invoices: Financial documents
+      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
+      an individual''s professional experience and qualifications.\n    - Visual Documents:
+      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
+      that contain relevant information.\n    - General Documents: Any other types
+      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
+      that occasionally you may be working with document fragments rather than complete
+      documents. These fragments represent portions of a larger document and should
+      be analyzed within their limited context. When working with fragments, focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n    <content_types>\n    Documents may contain textual
+      or visual content:\n    - Text-based content: Written information that can be
+      directly read and processed.\n    - Visual content: Images, charts, diagrams,
+      blueprints, tables, handwritten text, or other visual elements that require
+      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
+      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
+      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
+      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\n    - Interpretative judgments: Such as ratings, classifications,
+      or qualitative assessments based on document content.\n    - Label classifications:
+      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
+      Extract only information that is explicitly stated or can be directly inferred
+      from the document content. Avoid speculation or assumptions beyond what the
+      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
+      Visual content analysis: When processing visual content (images):\n    -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
+      relationships, and structural information that may not be explicitly stated
+      in text.\n    -- Consider the visual context and layout as it may provide important
+      semantic information.\n    -- Analyze information in tables, forms, charts,
+      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
+      Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
+      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
+      and type of the document\n    -- The specific aspects or concepts you need to
+      focus on\n    -- The expected output format and structure requirements\n    --
+      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
+      Quality control: After extraction, verify that:\n    -- All extracted information
+      directly relates to the specified aspects/concepts\n    -- The output format
+      matches the required schema exactly\n    -- No extraneous information has been
+      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
+      If multiple interpretations are possible, choose the most conservative one\n    --
+      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
+      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
+      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
+      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"Call
+      the get_answer tool and tell me what it returns. Reply with just the number."}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"tool_choice":"required","tools":[{"type":"function","function":{"name":"get_answer","parameters":{"type":"object","properties":{}},"description":"Return
+      the answer to life, the universe, and everything."}}],"top_p":0.3}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '7765'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.15.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.15.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      host:
+      - DUMMY
+      x-stainless-os:
+      - DUMMY
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {}, "finish_reason": "tool_calls",
+        "index": 0, "logprobs": null, "message": {"annotations": [], "content": null,
+        "refusal": null, "role": "assistant", "tool_calls": [{"function": {"arguments":
+        "{}", "name": "get_answer"}, "id": "call_UTzwQtijxIhZXRLe2Sz4j65B", "type":
+        "function"}]}}], "created": 1768774981, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
+        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
+        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
+        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
+        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
+        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
+        "fp_3dcd5944f5", "usage": {"completion_tokens": 11, "completion_tokens_details":
+        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
+        "rejected_prediction_tokens": 0}, "prompt_tokens": 1425, "prompt_tokens_details":
+        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 1436}}'
+    headers:
+      Content-Length:
+      - '1036'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
+      file containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n    <document_types>\n    - Contracts: Legal
+      agreements defining terms and obligations.\n    - Invoices: Financial documents
+      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
+      an individual''s professional experience and qualifications.\n    - Visual Documents:
+      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
+      that contain relevant information.\n    - General Documents: Any other types
+      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
+      that occasionally you may be working with document fragments rather than complete
+      documents. These fragments represent portions of a larger document and should
+      be analyzed within their limited context. When working with fragments, focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n    <content_types>\n    Documents may contain textual
+      or visual content:\n    - Text-based content: Written information that can be
+      directly read and processed.\n    - Visual content: Images, charts, diagrams,
+      blueprints, tables, handwritten text, or other visual elements that require
+      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
+      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
+      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
+      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\n    - Interpretative judgments: Such as ratings, classifications,
+      or qualitative assessments based on document content.\n    - Label classifications:
+      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
+      Extract only information that is explicitly stated or can be directly inferred
+      from the document content. Avoid speculation or assumptions beyond what the
+      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
+      Visual content analysis: When processing visual content (images):\n    -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
+      relationships, and structural information that may not be explicitly stated
+      in text.\n    -- Consider the visual context and layout as it may provide important
+      semantic information.\n    -- Analyze information in tables, forms, charts,
+      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
+      Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
+      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
+      and type of the document\n    -- The specific aspects or concepts you need to
+      focus on\n    -- The expected output format and structure requirements\n    --
+      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
+      Quality control: After extraction, verify that:\n    -- All extracted information
+      directly relates to the specified aspects/concepts\n    -- The output format
+      matches the required schema exactly\n    -- No extraneous information has been
+      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
+      If multiple interpretations are possible, choose the most conservative one\n    --
+      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
+      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
+      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
+      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"Call
+      the get_answer tool and tell me what it returns. Reply with just the number."},{"role":"assistant","content":"<tool_call_response>","tool_calls":[{"id":"call_UTzwQtijxIhZXRLe2Sz4j65B","type":"function","function":{"name":"get_answer","arguments":"{}"}}]},{"role":"tool","content":"42","tool_call_id":"call_UTzwQtijxIhZXRLe2Sz4j65B","name":"get_answer"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"tool_choice":"auto","tools":[{"type":"function","function":{"name":"get_answer","parameters":{"type":"object","properties":{}},"description":"Return
+      the answer to life, the universe, and everything."}}],"top_p":0.3}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '8035'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - AzureOpenAI/Python 2.15.0
+      X-Stainless-Arch:
+      - other:amd64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-Package-Version:
+      - 2.15.0
+      X-Stainless-Raw-Response:
+      - 'true'
+      X-Stainless-Runtime:
+      - CPython
+      api-key:
+      - DUMMY
+      authorization:
+      - DUMMY
+      host:
+      - DUMMY
+      x-stainless-os:
+      - DUMMY
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+  response:
+    body:
+      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
+        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
+        false}, "protected_material_text": {"filtered": false, "detected": false},
+        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
+        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
+        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
+        [], "content": "42", "refusal": null, "role": "assistant"}}], "created": 1768774981,
+        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
+        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
+        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
+        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
+        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
+        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
+        {"completion_tokens": 3, "completion_tokens_details": {"accepted_prediction_tokens":
+        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
+        0}, "prompt_tokens": 1453, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
+        1408}, "total_tokens": 1456}}'
+    headers:
+      Content-Length:
+      - '1220'
+      Content-Type:
+      - application/json
+      Date:
+      - DUMMY
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - DUMMY
+      x-ms-rai-invoked:
+      - DUMMY
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

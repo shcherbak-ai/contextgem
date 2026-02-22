@@ -3437,13 +3437,13 @@ Before installing ContextGem, ensure you have:
 From PyPI
 ---------
 
-The simplest way to install ContextGem is via pip:
-
-   pip install -U contextgem
-
-Or using uv (faster alternative):
+Using uv (recommended):
 
    uv add contextgem
+
+Or using pip:
+
+   pip install -U contextgem
 
 
 Development Installation
@@ -3955,84 +3955,43 @@ Tip:
 🛠️ Chat with Tools
 ------------------
 
-Tip:
-
-  Provide OpenAI-compatible tool schemas via "tools=[...]" and
-  register Python handlers with "@register_tool". Tool support is only
-  used in "chat(...)" and "chat_async(...)".
-
-Note:
-
-  Tool handlers must return a string. If you need to return structured
-  data, serialize it (e.g., with "json.dumps") before returning.
+Use the "@register_tool" decorator to enable LLM tool calling. Schemas
+are auto-generated from type hints and docstrings.
 
    import os
 
    from contextgem import ChatSession, DocumentLLM, register_tool
 
 
-   # Define tool handlers and register them
    @register_tool
-   def compute_invoice_total(items: list[dict]) -> str:
-       total = 0
-       for it in items:
-           qty = float(it.get("qty", 0))
-           price = float(it.get("price", 0))
-           total += qty * price
-       return str(total)
+   def get_weather(city: str) -> str:
+       """
+       Get current weather for a city.
+
+       :param city: Name of the city
+       """
+       # In a real app, this would call a weather API
+       return f"Weather in {city}: Sunny, 22°C"
 
 
-   # OpenAI-compatible tool schema passed to the model
-   tools = [
-       {
-           "type": "function",
-           "function": {
-               "name": "compute_invoice_total",
-               "description": "Compute invoice total as sum(qty*price) over items",
-               "parameters": {
-                   "type": "object",
-                   "properties": {
-                       "items": {
-                           "type": "array",
-                           "items": {
-                               "type": "object",
-                               "properties": {
-                                   "qty": {"type": "number"},
-                                   "price": {"type": "number"},
-                               },
-                               "required": ["qty", "price"],
-                           },
-                           "minItems": 1,
-                       }
-                   },
-                   "required": ["items"],
-               },
-           },
-       },
-   ]
-
-
-   # Configure an LLM that supports tool use
    llm = DocumentLLM(
        model="azure/gpt-4.1-mini",
        api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
        api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
        api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-       system_message="You are a helpful assistant.",  # override default system message for chat
-       tools=tools,
+       system_message="You are a helpful assistant.",
+       tools=[get_weather],
    )
 
-   # Maintain history across turns
    session = ChatSession()
-
-   prompt = (
-       "What's the invoice total for the items "
-       "[{'qty':2.0,'price':3.5},{'qty':1.0,'price':3.0}]? "
-       "Prices are in USD."
-   )
-
-   answer = llm.chat(prompt, chat_session=session)
+   answer = llm.chat("What's the weather in Tokyo?", chat_session=session)
    print("Answer:", answer)
+
+See also:
+
+  For advanced usage including "TypedDict" for complex parameters,
+  custom schema overrides, and supported type hints, see Chat with
+  Tools.
 
 
 # ==== documents/document_config ====
@@ -8926,13 +8885,16 @@ The "DocumentLLM" class accepts the following parameters:
 |                      |                 |                 | guaranteed even with the same seed, as other       |
 |                      |                 |                 | factors may influence the model's response.        |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
-| "tools"              | "list[dict] |   | "None"          | OpenAI-compatible tool schema used only for chat   |
-|                      | None"           |                 | via "DocumentLLM.chat(...)"/".chat_async(...)".    |
-|                      |                 |                 | Each tool must have a registered Python handler    |
-|                      |                 |                 | decorated with "@register_tool" and available in   |
-|                      |                 |                 | scope when creating the LLM. Handlers must return  |
-|                      |                 |                 | a string; for structured data, serialize it (e.g., |
-|                      |                 |                 | with "json.dumps") before returning. Ignored by    |
+| "tools"              | "list[dict |    | "None"          | Tools for chat via                                 |
+|                      | Callable] |     |                 | "DocumentLLM.chat(...)"/".chat_async(...)". You    |
+|                      | None"           |                 | can pass functions decorated with "@register_tool" |
+|                      |                 |                 | directly—schemas are auto-generated from the       |
+|                      |                 |                 | function signature, type hints, and docstring.     |
+|                      |                 |                 | Alternatively, pass OpenAI-compatible tool schema  |
+|                      |                 |                 | dicts with handlers registered via                 |
+|                      |                 |                 | "@register_tool". Handlers must return a string;   |
+|                      |                 |                 | for structured data, serialize it (e.g., with      |
+|                      |                 |                 | "json.dumps") before returning. Ignored by         |
 |                      |                 |                 | extraction methods. For more details, see 🛠️ Chat  |
 |                      |                 |                 | with Tools.                                        |
 +----------------------+-----------------+-----------------+----------------------------------------------------+
@@ -9883,6 +9845,346 @@ Extracting concepts from an aspect
    print("\nConcepts extracted from this aspect:")
    for concept in extracted_concepts:
        print(f"  {concept.name}: {[item.value for item in concept.extracted_items]}")
+
+
+# ==== llms/chat_with_tools ====
+
+Chat with Tools
+***************
+
+This guide explains how to use LLM tool calling (function calling)
+with ContextGem's chat interface. Tools allow the LLM to invoke Python
+functions during a conversation to perform actions or retrieve
+information.
+
+Note:
+
+  Tool support is only available in "chat(...)" and "chat_async(...)"
+  methods. It is not used by extraction methods.
+
+
+Basic Usage
+===========
+
+Use the "@register_tool" decorator to register a function as a tool.
+The tool schema is auto-generated from the function signature, type
+hints, and docstring.
+
+   import os
+   from typing import TypedDict
+
+   from contextgem import ChatSession, DocumentLLM, register_tool
+
+
+   # Define a TypedDict for structured tool parameters.
+   # This ensures the auto-generated schema includes proper types for each field.
+   class InvoiceItem(TypedDict):
+       qty: float
+       price: float
+
+
+   # Define tool handlers with @register_tool decorator.
+   # The schema is auto-generated from the function signature and docstring.
+   @register_tool
+   def compute_invoice_total(items: list[InvoiceItem]) -> str:
+       """
+       Compute invoice total as sum(qty*price) over items.
+
+       :param items: List of invoice items with quantity and price
+       """
+       total = 0
+       for it in items:
+           qty = float(it.get("qty", 0))
+           price = float(it.get("price", 0))
+           total += qty * price
+       return str(total)
+
+
+   # Configure an LLM that supports tool use.
+   # Simply pass the decorated function(s) directly.
+   llm = DocumentLLM(
+       model="azure/gpt-4.1-mini",
+       api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
+       api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+       api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+       system_message="You are a helpful assistant.",  # override default system message for chat
+       tools=[compute_invoice_total],  # Pass the function directly
+   )
+
+   # Maintain history across turns
+   session = ChatSession()
+
+   prompt = (
+       "What's the invoice total for the items "
+       "[{'qty':2.0,'price':3.5},{'qty':1.0,'price':3.0}]?"
+   )
+
+   answer = llm.chat(prompt, chat_session=session)
+   print("Answer:", answer)
+
+**Key points:**
+
+* Decorate functions with "@register_tool" to make them available as
+  tools
+
+* Pass decorated functions directly to "tools=[...]" when creating the
+  LLM
+
+* Tool handlers must return a string (serialize structured data with
+  "json.dumps" if needed)
+
+* Use "ChatSession" to maintain conversation history across turns
+
+
+Docstring Formats
+=================
+
+The schema generator extracts parameter descriptions from docstrings.
+Multiple formats are supported:
+
+**Sphinx/reST**
+
+   @register_tool
+   def my_tool(query: str) -> str:
+       """
+       Search for information.
+
+       :param query: The search query
+       """
+       return "results"
+
+**Google style:**
+
+   @register_tool
+   def my_tool(query: str) -> str:
+       """Search for information.
+
+       Args:
+           query: The search query
+       """
+       return "results"
+
+**NumPy style:**
+
+   @register_tool
+   def my_tool(query: str) -> str:
+       """
+       Search for information.
+
+       Parameters
+       ----------
+       query : str
+           The search query
+       """
+       return "results"
+
+
+Schema Generation Best Practices
+================================
+
+
+Use TypedDict for Object Parameters
+-----------------------------------
+
+Plain "dict" generates a generic "{"type": "object"}" schema without
+property definitions. Use "TypedDict" to specify field names and types
+explicitly:
+
+   from typing import TypedDict
+
+   class InvoiceItem(TypedDict):
+       qty: float
+       price: float
+
+   @register_tool
+   def compute_total(items: list[InvoiceItem]) -> str:
+       """
+       Compute invoice total.
+
+       :param items: List of invoice items
+       """
+       total = sum(it["qty"] * it["price"] for it in items)
+       return str(total)
+
+This generates a proper schema with typed properties:
+
+   {
+     "items": {
+       "type": "array",
+       "items": {
+         "type": "object",
+         "properties": {
+           "qty": {"type": "number"},
+           "price": {"type": "number"}
+         },
+         "required": ["qty", "price"]
+       }
+     }
+   }
+
+
+Supported Type Hints
+--------------------
+
+The schema generator supports the following Python type hints:
+
+* **Primitives:** "str", "int", "float", "bool", "None"
+
+* **Collections:** "list[T]", "dict[K, V]", "tuple[T, ...]", "set[T]"
+
+* **Optionals:** "Optional[T]", "T | None"
+
+* **Unions:** "Union[X, Y, ...]", "X | Y"
+
+* **Literals:** "Literal["a", "b", "c"]"
+
+* **Structured:** "TypedDict"
+
+Note:
+
+  **JSON serialization of collections:** Since tool arguments are
+  transmitted as JSON, "tuple" and "set" types are received as Python
+  "list" at runtime (JSON only has arrays). If you need specific
+  collection behavior, convert inside your function: "items =
+  set(items)" or "items = tuple(items)".
+
+**Examples:**
+
+   from typing import Literal, TypedDict
+
+   class SearchFilters(TypedDict):
+       category: str
+       max_price: float
+
+   @register_tool
+   def search(
+       query: str,
+       limit: int = 10,
+       sort: Literal["relevance", "date", "price"] = "relevance",
+       filters: SearchFilters | None = None,
+   ) -> str:
+       """
+       Search products.
+
+       :param query: Search query
+       :param limit: Maximum results to return
+       :param sort: Sort order
+       :param filters: Optional filters
+       """
+       return "results"
+
+
+Custom Schema Override
+======================
+
+For full control over the tool schema, pass an explicit OpenAI-
+compatible schema to "@register_tool":
+
+   @register_tool(schema={
+       "type": "function",
+       "function": {
+           "name": "search_database",
+           "description": "Search the product database",
+           "parameters": {
+               "type": "object",
+               "properties": {
+                   "query": {
+                       "type": "string",
+                       "description": "Search query"
+                   },
+                   "category": {
+                       "type": "string",
+                       "enum": ["electronics", "clothing", "books"],
+                       "description": "Product category filter"
+                   }
+               },
+               "required": ["query"]
+           }
+       }
+   })
+   def search_database(query: str, category: str = None) -> str:
+       return f"Results for '{query}' in {category or 'all categories'}"
+
+This is useful when you need:
+
+* Custom parameter descriptions beyond what docstrings provide
+
+* Specific enum values or constraints
+
+* Complex nested schemas
+
+
+Tool Configuration Options
+==========================
+
+The "DocumentLLM" class accepts several tool-related parameters:
+
++----------------------+-----------------+-------------------------------------------------------------------+
+| Parameter            | Default         | Description                                                       |
+|======================|=================|===================================================================|
+| "tools"              | "None"          | List of tool functions decorated with "@register_tool".           |
++----------------------+-----------------+-------------------------------------------------------------------+
+| "tool_choice"        | "None"          | Controls how the model uses tools. Options: ""none"" (model will  |
+|                      |                 | not call tools), ""auto"" (model decides whether to call tools or |
+|                      |                 | respond with text), ""required"" (model must call at least one    |
+|                      |                 | tool), or "{"type": "function", "function": {"name": "..."}}" to  |
+|                      |                 | force a specific tool. When "None", defers to the API default     |
+|                      |                 | (equivalent to ""auto"" when tools are defined). Note:            |
+|                      |                 | ""required"" or forced function is automatically relaxed to       |
+|                      |                 | ""auto"" in follow-up rounds, allowing the model to either call   |
+|                      |                 | more tools or produce a final text response.                      |
++----------------------+-----------------+-------------------------------------------------------------------+
+| "parallel_tool_call  | "None"          | Whether to enable parallel tool execution. When "None", defers to |
+| s"                   |                 | the API/model default. Set to "True" to explicitly enable or      |
+|                      |                 | "False" to disable (if supported by the model).                   |
++----------------------+-----------------+-------------------------------------------------------------------+
+| "tool_max_rounds"    | "10"            | Maximum number of tool execution rounds per request. Prevents     |
+|                      |                 | infinite or excessively long tool chains.                         |
++----------------------+-----------------+-------------------------------------------------------------------+
+
+Note:
+
+  **Why ``tool_choice="required"`` is relaxed to ``"auto"`` in follow-
+  up rounds:**When you set "tool_choice="required"", the model MUST
+  call at least one tool on the initial request. However, if this
+  setting were kept for follow-up rounds (after tool results are
+  returned to the model), the model would be forced to call tools
+  again, potentially causing:
+
+  * Infinite loops or hitting "tool_max_rounds" unnecessarily
+
+  * Inability to produce a final text response to the user
+
+  To solve this, "tool_choice="required"" (and forced function dicts
+  like "{"type": "function", "function": {"name": "..."}}") are
+  automatically relaxed to ""auto"" in follow-up rounds. This allows
+  the model to either:
+
+  * Call additional tools if needed (multi-round tool chaining)
+
+  * Produce a final text response when done processing tool results
+
+
+Return Value Requirements
+=========================
+
+Tool handlers must return a string. For structured data, serialize it
+before returning:
+
+   import json
+
+   @register_tool
+   def get_user_data(user_id: str) -> str:
+       """
+       Retrieve user data.
+
+       :param user_id: The user ID
+       """
+       data = {"name": "John", "email": "john@example.com"}
+       return json.dumps(data)
+
+The LLM will interpret the returned string and incorporate it into its
+response.
 
 
 # ==== advanced_usage ====
