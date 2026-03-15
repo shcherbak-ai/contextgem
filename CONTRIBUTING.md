@@ -456,13 +456,14 @@ For local LLM testing, install the following tools and download the relevant mod
 
 > **🧪 Testing:** After recording, delete your `.env` file and run tests again to ensure LLM API tests pass by replaying from cassettes with dummy variables.
 
-#### URL Security Validation
+#### Network Egress Control
 
-The test suite includes automated security validation for VCR cassettes to ensure that only approved domains are accessed during testing. This helps maintain security by ensuring tests connect only to explicitly authorized endpoints.
+The test suite uses [tethered](https://github.com/shcherbak-ai/tethered) to enforce network egress control at the socket level during VCR-marked tests:
 
-The URL security check validates that all URLs in cassette files are from approved domains (such as `api.openai.com`, `localhost` for local LLMs, etc.). If you add tests that connect to new endpoints, you may need to update the approved domains list in `tests/url_security.py`.
+- **Replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
+- **Recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data) and localhost for local LLMs
 
-> **Note:** URL security validation is automatically skipped on Windows *when running with coverage* to avoid access violations that occur when processing large YAML cassette files under coverage instrumentation.
+If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
 
 
 ---

@@ -25,7 +25,7 @@ import sys
 project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
-release = "0.21.0"
+release = "0.22.0"
 
 
 # Add path to the package
@@ -125,7 +125,7 @@ html_title = f"{project} {release} Documentation"
 html_baseurl = "https://contextgem.dev/"
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
-html_extra_path = ["robots.txt", "llms.txt"]
+html_extra_path = ["robots.txt"]
 html_favicon = "_static/favicon.ico"
 html_logo = "_static/favicon.ico"
 html_css_files = ["custom.css"]

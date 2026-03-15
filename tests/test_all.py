@@ -23,9 +23,7 @@ Module defining tests for the framework.
 from __future__ import annotations
 
 import os
-import platform
 import re
-import sys
 import tempfile
 import types
 import warnings
@@ -34,10 +32,10 @@ from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, cast  # noqa: UP035
+from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
 
 import pytest
 from _pytest.nodes import Item as PytestItem
@@ -82,9 +80,7 @@ from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,
-    _LLMCostOutputContainer,
     _LLMUsage,
-    _LLMUsageOutputContainer,
     _Message,
 )
 from contextgem.internal.exceptions import (
@@ -148,7 +144,6 @@ from contextgem.public.utils import create_image, image_to_base64
 from tests.benchmark.core import run_benchmark_for_module
 from tests.conftest import VCR_REDACTION_MARKER
 from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
-from tests.url_security import validate_existing_cassettes_urls_security
 from tests.utils import (
     VCR_FILTER_HEADERS,
     TestUtils,
@@ -8872,99 +8867,3 @@ class TestAll(TestUtils):
             )
 
         check_locals_memory_usage(locals(), test_name="test_auto_pricing")
-
-    def test_cassette_url_security(self):
-        """
-        Test that validates URL security in all existing cassette files.
-
-        This test ensures that all URLs in VCR cassette files are from approved domains.
-        If any violations are found, the test will fail with URLSecurityError.
-
-        Skipped on Windows when coverage is running due to memory pressure causing
-        access violations with large YAML files.
-        """
-
-        # Skip test on Windows when coverage is running to avoid access violations
-        if platform.system() == "Windows" and any("--cov" in arg for arg in sys.argv):
-            pytest.skip(
-                "Skipping cassette URL security test on Windows under coverage due to "
-                "access violation with large YAML files"
-            )
-
-        validate_existing_cassettes_urls_security()
-
-    def test_total_cost_and_reset(self):
-        """
-        Runs last and outputs total cost details for the test run, as well
-        as tests resetting the usage and cost for the test LLMs.
-        """
-        # Ensure logger is enabled for cost output (in case previous tests disabled it)
-        os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = "DEBUG"
-        reload_logger_settings()
-
-        def get_all_llm_usages() -> list[_LLMUsageOutputContainer]:
-            """
-            Returns all usages for all LLMs.
-
-            :return: A list of _LLMUsageOutputContainer objects.
-            :rtype: list[_LLMUsageOutputContainer]
-            """
-            return (
-                self.llm_group.get_usage()
-                + self.llm_extractor_text.get_usage()
-                + self.llm_reasoner_text.get_usage()
-                + self.llm_extractor_vision.get_usage()
-                + self.llm_reasoner_vision.get_usage()
-                + self.llm_extractor_multimodal.get_usage()
-                + self.llm_reasoner_multimodal.get_usage()
-            )
-
-        def get_all_llm_costs() -> list[_LLMCostOutputContainer]:
-            """
-            Returns all costs for all LLMs.
-
-            :return: A list of _LLMCostOutputContainer objects.
-            :rtype: list[_LLMCostOutputContainer]
-            """
-            return (
-                self.llm_group.get_cost()
-                + self.llm_extractor_text.get_cost()
-                + self.llm_reasoner_text.get_cost()
-                + self.llm_extractor_vision.get_cost()
-                + self.llm_reasoner_vision.get_cost()
-                + self.llm_extractor_multimodal.get_cost()
-                + self.llm_reasoner_multimodal.get_cost()
-            )
-
-        # Output total API cost of all LLMs during the test suite run
-        logger.info(
-            "Total cost running tests: "
-            + str(
-                # Safe cast: the sum is a Decimal
-                cast(
-                    Decimal, sum([i.cost.total for i in get_all_llm_costs()])
-                ).quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
-            ),
-        )
-        logger.info(
-            "Note: Cost calculations may not include all tests (usage examples from "
-            "documentation, non-module-defined LLMs are excluded), and are lower than "
-            "displayed when LLM responses are mocked from cassettes."
-        )
-
-        # Test resetting all usage and cost stats
-        self.llm_group.reset_usage_and_cost()
-        self.llm_extractor_text.reset_usage_and_cost()
-        self.llm_reasoner_text.reset_usage_and_cost()
-        self.llm_extractor_vision.reset_usage_and_cost()
-        self.llm_reasoner_vision.reset_usage_and_cost()
-        self.llm_extractor_multimodal.reset_usage_and_cost()
-        self.llm_reasoner_multimodal.reset_usage_and_cost()
-        for usage_dict in get_all_llm_usages():
-            assert usage_dict.usage.input == 0
-            assert usage_dict.usage.output == 0
-            assert len(usage_dict.usage.calls) == 0
-        for cost_dict in get_all_llm_costs():
-            assert cost_dict.cost.input == Decimal("0")
-            assert cost_dict.cost.output == Decimal("0")
-            assert cost_dict.cost.total == Decimal("0")

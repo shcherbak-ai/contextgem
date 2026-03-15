@@ -47,15 +47,6 @@ repos:
         always_run: true
         stages: [pre-commit]
 
-      # Build raw docs for LLM
-      - id: build-raw-docs
-        name: Build raw docs for LLM
-        entry: python docs/build_raw_docs_for_llm.py
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-
       # Generate example notebooks
       - id: generate-notebooks
         name: Generate example notebooks
