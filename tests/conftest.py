@@ -32,6 +32,7 @@ from unittest.mock import patch
 
 import nest_asyncio
 import pytest
+import tethered
 from vcr.stubs import httpcore_stubs
 
 from contextgem.internal.loggers import logger
@@ -163,6 +164,48 @@ def _cassette_exists(cassette_path: str) -> bool:
     :rtype: bool
     """
     return os.path.exists(cassette_path)
+
+
+# Approved network destinations for tethered egress control.
+# During replay: only HuggingFace (SaT model downloads not captured by VCR).
+# During recording: LLM API endpoints + HuggingFace + genai-prices refresh.
+_TETHERED_REPLAY_ALLOW = [
+    "huggingface.co",  # SaT model downloads (not captured by VCR)
+    "*.huggingface.co",
+    "hf.co",
+    "*.hf.co",
+]
+
+_TETHERED_RECORDING_ALLOW = [
+    "*.openai.azure.com",  # Azure OpenAI
+    "api.openai.com",  # OpenAI
+    "raw.githubusercontent.com",  # genai-prices auto-refresh
+] + _TETHERED_REPLAY_ALLOW
+
+
+@pytest.fixture(autouse=True)
+def _tethered_network_guard(request):
+    """
+    Enforces network egress control for all tests using tethered.
+
+    - **VCR replay** (cassette exists): allows only HuggingFace
+      (SaT model downloads not captured by VCR).
+    - **VCR recording** (no cassette): allows approved endpoints
+      (LLM APIs, HuggingFace for model downloads, genai-prices for cost data)
+      and localhost for local LLMs.
+    - **Non-VCR tests**: blocks all network calls entirely.
+    """
+    is_vcr = request.node.get_closest_marker("vcr")
+    if is_vcr:
+        is_replay = _cassette_exists(_get_cassette_path(request))
+        tethered.activate(
+            allow=_TETHERED_REPLAY_ALLOW if is_replay else _TETHERED_RECORDING_ALLOW,
+            allow_localhost=not is_replay,  # localhost for local LLMs during recording
+        )
+    else:
+        tethered.activate(allow=[], allow_localhost=False)
+    yield
+    tethered.deactivate()
 
 
 @pytest.fixture(autouse=True)

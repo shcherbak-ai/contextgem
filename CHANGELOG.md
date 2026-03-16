@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.22.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.22.0) - 2026-03-16
+### Added
+- Network egress control in tests using [tethered](https://github.com/shcherbak-ai/tethered): enforces socket-level blocking of unauthorized outbound connections during VCR cassette replay, recording, and non-VCR tests.
+
+### Changed
+- Upgraded pinned dependency versions: `litellm==1.82.2`, `genai-prices==0.0.55`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
+### Deprecated
+- `DocxConverter` is deprecated and will be removed in v1.0.0. Use dedicated document conversion libraries (e.g., [Docling](https://github.com/docling-project/docling), [MarkItDown](https://github.com/microsoft/markitdown)) to convert files to text, then pass the result to `Document(raw_text=...)`.
+
+### Removed
+- Removed `llms.txt` generation (build script, pre-commit hook, and Sphinx integration). Use `AGENTS.md` and `CLAUDE.md` for AI assistant context instead.
+- Removed `tests/url_security.py` cassette URL validation — replaced by tethered egress control.
+
 ## [0.21.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.21.0) - 2026-02-22
 ### Added
 - Python 3.14 support.

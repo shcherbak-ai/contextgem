@@ -65,7 +65,6 @@ class StringConcept(_StringConcept):
 | File | Source | Regeneration |
 |------|--------|--------------|
 | `README.md` | `dev/readme.template.md` | Pre-commit hook runs `dev/populate_project_readme.py` |
-| `docs/source/llms.txt` | Documentation sources | Pre-commit hook |
 | `dev/notebooks/` | `dev/usage_examples/` | Pre-commit hook |
 | `uv.lock` | `pyproject.toml` | `uv sync` |
 

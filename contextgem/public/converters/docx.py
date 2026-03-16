@@ -43,6 +43,12 @@ class DocxConverter(_DocxConverterBase):
     """
     Converter for DOCX files into ContextGem documents.
 
+    .. deprecated:: 0.22.0
+        DocxConverter is deprecated and will be removed in v1.0.0.
+        Use dedicated document conversion libraries (e.g., `Docling <https://github.com/docling-project/docling>`_,
+        `MarkItDown <https://github.com/microsoft/markitdown>`_) to convert files to text,
+        then pass the result to ``Document(raw_text=...)``.
+
     This class handles extraction of text, formatting, tables, images, footnotes,
     comments, and other elements from DOCX files by directly parsing Word XML.
 
@@ -68,6 +74,16 @@ class DocxConverter(_DocxConverterBase):
             :language: python
             :caption: DocxConverter usage example
     """
+
+    def __init__(self):
+        warnings.warn(
+            "DocxConverter is deprecated and will be removed in v1.0.0. "
+            "Use dedicated document conversion libraries (e.g., Docling, MarkItDown) "
+            "to convert files to text, then pass the result to Document(raw_text=...).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__()
 
     def convert_to_text_format(
         self,
