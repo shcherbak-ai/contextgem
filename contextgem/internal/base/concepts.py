@@ -330,7 +330,7 @@ class _RatingConcept(_Concept):
     Internal implementation of the RatingConcept class.
     """
 
-    rating_scale: _RatingScale | tuple[StrictInt, StrictInt] = Field(  # type: ignore
+    rating_scale: _RatingScale | tuple[StrictInt, StrictInt] = Field(
         ...,
         description=(
             "Rating scale boundaries. Prefer a tuple of (start, end) integers; "
@@ -344,8 +344,8 @@ class _RatingConcept(_Concept):
     @classmethod
     def _validate_rating_scale(
         cls,
-        value: _RatingScale | tuple[int, int],  # type: ignore
-    ) -> _RatingScale | tuple[int, int]:  # type: ignore
+        value: _RatingScale | tuple[int, int],
+    ) -> _RatingScale | tuple[int, int]:
         """
         Validates the rating scale and issues deprecation warning for _RatingScale.
 
@@ -454,7 +454,7 @@ class _RatingConcept(_Concept):
         # Then, call the parent class setter for final validation and assignment
         # Need to call parent setter explicitly after custom validation -
         # .fset() pattern required when overriding property setter
-        super(_RatingConcept, type(self)).extracted_items.fset(self, value)  # type: ignore[attr-defined]
+        super(_RatingConcept, type(self)).extracted_items.fset(self, value)  # type: ignore[attr-defined]  # ty: ignore[invalid-argument-type]
 
     def _validate_rating_value(self, rating_value: int) -> None:
         """
@@ -552,7 +552,7 @@ class _JsonObjectConcept(_Concept):
         :rtype: type[BaseModel]
         """
         # Structure is validated and normalized in field validator, safe to pass to dynamic model creation
-        return _dynamic_pydantic_model(self.structure)  # type: ignore[arg-type]
+        return _dynamic_pydantic_model(self.structure)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def _process_item_value(self, value: dict[str, Any]) -> dict[str, Any]:
         """
@@ -1058,7 +1058,7 @@ class _LabelConcept(_Concept):
         # Then, call the parent class setter for final validation and assignment
         # Need to call parent setter explicitly after custom validation -
         # .fset() pattern required when overriding property setter
-        super(_LabelConcept, type(self)).extracted_items.fset(self, value)  # type: ignore[attr-defined]
+        super(_LabelConcept, type(self)).extracted_items.fset(self, value)  # type: ignore[attr-defined]  # ty: ignore[invalid-argument-type]
 
     def _validate_label_values(self, labels_list: list[str]) -> None:
         """

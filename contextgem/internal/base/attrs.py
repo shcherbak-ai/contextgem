@@ -101,7 +101,7 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
 
     def _get_instance_by_name(
         self, attr_name: AssignedInstancesAttrName, instance_name: str
-    ) -> _Aspect | _Concept:  # type: ignore
+    ) -> _Aspect | _Concept:
         """
         Retrieves and returns a specific instance from a collection
         of instances managed by an attribute of the class.

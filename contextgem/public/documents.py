@@ -30,7 +30,7 @@ from contextgem.internal.base.documents import _Document
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_Document)
+@_expose_in_registry(additional_key=_Document)  # ty: ignore[too-many-positional-arguments]
 class Document(_Document):
     """
     Represents a document containing textual and visual content for analysis.

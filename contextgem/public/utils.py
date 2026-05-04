@@ -223,7 +223,7 @@ def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Imag
         finally:
             buffer.close()
 
-    return Image(mime_type=mime_type, base64_data=base64_data)  # type: ignore[arg-type]
+    return Image(mime_type=mime_type, base64_data=base64_data)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
 
 def reload_logger_settings():

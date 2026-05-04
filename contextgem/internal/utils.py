@@ -520,7 +520,7 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         # Start a new loop in a fresh thread to avoid conflicts.
         with concurrent.futures.ThreadPoolExecutor() as pool:
             future = pool.submit(asyncio.run, coro)
-            return future.result()
+            return future.result()  # ty: ignore[invalid-return-type]
     else:
         # No running loop, so just run it directly.
         return asyncio.run(coro)

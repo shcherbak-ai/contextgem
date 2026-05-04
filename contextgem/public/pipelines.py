@@ -35,7 +35,7 @@ from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPip
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_ExtractionPipeline)
+@_expose_in_registry(additional_key=_ExtractionPipeline)  # ty: ignore[too-many-positional-arguments]
 class ExtractionPipeline(_ExtractionPipeline):
     """
     Represents a reusable collection of predefined aspects and concepts for document analysis.
@@ -65,7 +65,7 @@ class ExtractionPipeline(_ExtractionPipeline):
 
 
 # TODO: Remove this class in v1.0.0.
-@_expose_in_registry(additional_key=_DocumentPipeline)
+@_expose_in_registry(additional_key=_DocumentPipeline)  # ty: ignore[too-many-positional-arguments]
 class DocumentPipeline(_DocumentPipeline):
     """
     Deprecated wrapper for ExtractionPipeline.

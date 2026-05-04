@@ -5,10 +5,9 @@
 |          |        |
 |----------|--------|
 | **Package** | [![PyPI](https://img.shields.io/pypi/v/contextgem?logo=pypi&label=PyPi&logoColor=gold&style=flat-square)](https://pypi.org/project/contextgem/) [![PyPI Downloads](https://static.pepy.tech/badge/contextgem/month)](https://pepy.tech/projects/contextgem) [![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?logo=python&logoColor=gold&style=flat-square)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](https://opensource.org/licenses/Apache-2.0) |
-| **Quality** | [![tests](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml) [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square)](https://github.com/shcherbak-ai/contextgem/actions) [![CodeQL](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml) [![bandit security](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/bandit-security.yml?branch=main&style=flat-square&label=bandit)](https://github.com/shcherbak-ai/contextgem/actions/workflows/bandit-security.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10489/badge?1)](https://www.bestpractices.dev/projects/10489) |
-| **Tools** | [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff) [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json&style=flat-square)](https://pydantic.dev) [![pyright](https://img.shields.io/badge/pyright-checked-blue?style=flat-square)](https://github.com/microsoft/pyright) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white&style=flat-square)](https://github.com/pre-commit/pre-commit) [![deptry](https://img.shields.io/badge/deptry-checked-blue?style=flat-square)](https://github.com/fpgmaas/deptry) [![egress: tethered](https://img.shields.io/badge/egress-tethered-orange?labelColor=4B8BBE)](https://github.com/shcherbak-ai/tethered) [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg?style=flat-square)](https://github.com/pypa/hatch) |
+| **Quality** | [![tests](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml) [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square)](https://github.com/shcherbak-ai/contextgem/actions) [![CodeQL](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat-square)](https://github.com/PyCQA/bandit) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10489/badge?1)](https://www.bestpractices.dev/projects/10489) |
+| **Tools** | [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff) [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json&style=flat-square)](https://pydantic.dev) [![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/ty) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white&style=flat-square)](https://github.com/pre-commit/pre-commit) [![deptry](https://img.shields.io/badge/deptry-checked-blue?style=flat-square)](https://github.com/fpgmaas/deptry) [![egress: tethered](https://img.shields.io/badge/egress-tethered-orange?labelColor=4B8BBE)](https://github.com/shcherbak-ai/tethered) [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg?style=flat-square)](https://github.com/pypa/hatch) |
 | **Docs** | [![docs](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/docs.yml?branch=main&style=flat-square&label=docs)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml) [![documentation](https://img.shields.io/badge/docs-latest-blue?style=flat-square)](https://shcherbak-ai.github.io/contextgem/) ![Docstring Coverage](https://contextgem.dev/_static/interrogate-badge.svg) [![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem) |
-| **AI Agents** | [![AGENTS.md](https://img.shields.io/badge/AGENTS.md-✓-blue?style=flat-square)](https://agents.md) [![CLAUDE.md](https://img.shields.io/badge/CLAUDE.md-✓-blue?style=flat-square)](https://docs.anthropic.com/en/docs/claude-code/memory#claudemd) |
 | **Community** | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa?style=flat-square)](CODE_OF_CONDUCT.md) [![GitHub issues closed](https://img.shields.io/github/issues-closed/shcherbak-ai/contextgem?style=flat-square)](https://github.com/shcherbak-ai/contextgem/issues?q=is%3Aissue+is%3Aclosed) [![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit&style=flat-square)](https://github.com/shcherbak-ai/contextgem/commits/main) |
 
 <div align="center">
@@ -22,18 +21,26 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
 
 ## 💎 Why ContextGem?
 
-Most popular LLM frameworks for extracting structured data from documents require extensive boilerplate code to extract even basic information. This significantly increases development time and complexity.
+Reliable structured extraction from documents typically involves writing extraction prompts, designing validation models, mapping outputs back to source references, orchestrating multi-step pipelines, and tracking usage across LLMs. ContextGem handles all of this through powerful abstractions — you describe *what* to extract in natural language, and the framework handles *how*.
 
-ContextGem addresses this challenge by providing a flexible, intuitive framework that extracts structured data and insights from documents with minimal effort. The complex, most time-consuming parts are handled with **powerful abstractions**, eliminating boilerplate code and reducing development overhead.
+The result: structured data with precise paragraph- and sentence-level references, automatic justifications, hierarchical multi-aspect extraction, and a unified, serializable document storage model — all from minimal code.
 
 📖 Read more on the project [motivation](https://contextgem.dev/motivation/) in the documentation.
 
-
 ## ⭐ Key features
 
-{{FEATURE_TABLE}}
-
-\* See [descriptions](https://contextgem.dev/motivation/#the-contextgem-solution) of ContextGem abstractions and [comparisons](https://contextgem.dev/vs_other_frameworks/) of specific implementation examples using ContextGem and other popular open-source LLM frameworks.
+<table>
+<tr>
+<td width="33%" align="left">✨ <strong>Automated dynamic prompts</strong></td>
+<td width="33%" align="left">📐 <strong>Automated data modelling</strong></td>
+<td width="34%" align="left">📍 <strong>Granular reference mapping</strong></td>
+</tr>
+<tr>
+<td align="left">💭 <strong>Built-in justifications</strong></td>
+<td align="left">🪆 <strong>Nested context extraction</strong></td>
+<td align="left">🔗 <strong>Unified declarative pipeline</strong></td>
+</tr>
+</table>
 
 ## 💡 What you can build
 
@@ -49,7 +56,6 @@ With **minimal code**, you can:
 
 ![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
 
-
 ## 📦 Installation
 
 Using [uv](https://github.com/astral-sh/uv) (recommended):
@@ -64,7 +70,6 @@ Or using pip:
 pip install -U contextgem
 ```
 
-
 ## 🚀 Quick start
 
 The following example demonstrates how to use ContextGem to extract **anomalies** from a legal document - a complex concept that requires contextual understanding. Unlike traditional RAG approaches that might miss subtle inconsistencies, ContextGem analyzes the entire document context to identify content that doesn't belong, complete with source references and justifications.
@@ -72,10 +77,10 @@ The following example demonstrates how to use ContextGem to extract **anomalies*
 ```python
 {{QUICKSTART_CONCEPT}}
 ```
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
 
 ---
-
 
 ## 🧠 How it works
 
@@ -176,6 +181,7 @@ document = llm.extract_all(document)
 ## 📚 Usage Examples
 
 🌟 **Basic usage:**
+
 - [Aspect Extraction from Document](https://contextgem.dev/quickstart/#aspect-extraction-from-document)
 - [Extracting Aspect with Sub-Aspects](https://contextgem.dev/quickstart/#extracting-aspect-with-sub-aspects)
 - [Concept Extraction from Aspect](https://contextgem.dev/quickstart/#concept-extraction-from-aspect)
@@ -184,31 +190,10 @@ document = llm.extract_all(document)
 - [LLM chat interface with tool calling](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface)
 
 🚀 **Advanced usage:**
+
 - [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-with-concepts)
 - [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage/#extracting-aspects-and-concepts-from-a-document)
 - [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
-
-
-## 🔄 Document converters
-
-To create a ContextGem document for LLM analysis, you can either pass raw text directly, or use built-in converters that handle various file formats.
-
-### 📄 DOCX converter
-
- ContextGem provides a built-in converter to easily transform DOCX files into LLM-ready data.
-
-- **Comprehensive extraction of document elements**: paragraphs, headings, lists, tables, comments, footnotes, textboxes, headers/footers, links, embedded images, and inline formatting
-- **Document structure preservation** with rich metadata for improved LLM analysis
-- **Built-in converter** that directly processes Word XML
-
-> 🚀 **Performance improvement in v0.17.1**: DOCX converter now converts files **~2X faster**.
-
-```python
-{{DOCX_CONVERTER}}
-```
-
-📖 Learn more about [DOCX converter features](https://contextgem.dev/converters/docx/) in the documentation.
-
 
 ## 🎯 Focused document analysis
 
@@ -219,6 +204,7 @@ ContextGem leverages LLMs' long context windows to deliver superior extraction a
 ## 🤖 Supported LLMs
 
 ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://github.com/BerriAI/litellm) integration:
+
 - **Cloud LLMs**: OpenAI, Anthropic, Google, Azure OpenAI, xAI, and more
 - **Local LLMs**: Run models locally using providers like Ollama, LM Studio, etc.
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. gpt-5) and non-reasoning models (e.g. gpt-4.1)
@@ -239,7 +225,6 @@ ContextGem documentation offers guidance on optimization strategies to maximize 
 - [Choosing the Right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm/)
 - [Troubleshooting Issues with Small Models](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/)
 
-
 ## 💾 Serializing results
 
 ContextGem allows you to save and load Document objects, pipelines, and LLM configurations with built-in serialization methods:
@@ -250,12 +235,9 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 
 📖 Learn more about [serialization options](https://contextgem.dev/serialization/) in the documentation.
 
-
 ## 📚 Documentation
 
 📖 **Full documentation:** [contextgem.dev](https://contextgem.dev)
-
-> **⚠️ Official Documentation Notice:** [https://contextgem.dev/](https://contextgem.dev/) is the only official source of ContextGem documentation. Please be aware of unauthorized copies or mirrors that may contain outdated or incorrect information.
 
 🤖 **AI-powered code exploration:** [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem) provides visual architecture maps and natural language Q&A for the codebase.
 
@@ -272,15 +254,6 @@ ContextGem allows you to save and load Document objects, pipelines, and LLM conf
 We welcome contributions from the community - whether it's fixing a typo or developing a completely new feature!
 
 📋 **Get started:** Check out our [Contributor Guidelines](https://github.com/shcherbak-ai/contextgem/blob/main/CONTRIBUTING.md).
-
-## 🤖 AI Agent-Friendly
-
-This repository follows modern development practices with first-class support for AI coding assistants:
-
-- **[AGENTS.md](https://github.com/shcherbak-ai/contextgem/blob/main/AGENTS.md)** - Guidelines for AI assistants working with this codebase ([agents.md standard](https://agents.md))
-- **[CLAUDE.md](https://github.com/shcherbak-ai/contextgem/blob/main/CLAUDE.md)** - Configuration for [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)
-
-These files provide AI assistants with project-specific context, coding conventions, architecture patterns, and contribution workflows - enabling more accurate and consistent AI-assisted development.
 
 ## 🔐 Security
 
@@ -310,18 +283,6 @@ ContextGem relies on these excellent open-source packages:
 - [tenacity](https://github.com/jd/tenacity): General-purpose retry library for Python
 - [typing-extensions](https://github.com/python/typing_extensions): Backports of the latest typing features for enhanced type annotations
 - [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art paragraph/sentence segmentation using wtpsplit's SaT models
-
-
-## 🌱 Support the project
-
-ContextGem is just getting started, and your support means the world to us! 
-
-⭐ **Star the project** if you find ContextGem useful  
-📢 **Share it** with others who might benefit  
-🔧 **Contribute** with feedback, issues, or code improvements
-
-Your engagement is what makes this project grow!
-
 
 ## 📄 License & Contact
 

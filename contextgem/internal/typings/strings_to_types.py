@@ -171,7 +171,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
             return types_list[0], i
         # Otherwise, build a Union.
         if len(types_list) == 2:
-            return Union[types_list[0], types_list[1]], i  # noqa: UP007
+            return Union[types_list[0], types_list[1]], i  # noqa: UP007  # ty: ignore[invalid-type-form]
         else:
             # For more than two types, build a union using the | operator.
             union_type = reduce(lambda a, b: a | b, types_list)
@@ -204,7 +204,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
                 f"Expected ']' after optional type at position {i} in {s!r}"
             )
         i += 1  # skip ']'
-        return Union[inner_type, type(None)], i  # noqa: UP007
+        return Union[inner_type, type(None)], i  # noqa: UP007  # ty: ignore[invalid-type-form]
 
     elif ident.lower() == "literal":
         # literal[<value1>, <value2>, ...]
@@ -288,7 +288,7 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
         # Create Literal type with the values
         if values:
             # Type checker doesn't recognize Literal.__getitem__ method, which works at runtime
-            return Literal.__getitem__(tuple(values)), i  # type: ignore
+            return Literal.__getitem__(tuple(values)), i
         else:
             raise ValueError(f"Empty literal type at position {i} in {s!r}")
 

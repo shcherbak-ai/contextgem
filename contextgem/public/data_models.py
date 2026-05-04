@@ -26,7 +26,7 @@ from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_LLMPricing)
+@_expose_in_registry(additional_key=_LLMPricing)  # ty: ignore[too-many-positional-arguments]
 class LLMPricing(_LLMPricing):
     """
     Represents the pricing details for an LLM.
@@ -49,7 +49,7 @@ class LLMPricing(_LLMPricing):
 
 
 # TODO: remove this class in v1.0.0.
-@_expose_in_registry(additional_key=_RatingScale)
+@_expose_in_registry(additional_key=_RatingScale)  # ty: ignore[too-many-positional-arguments]
 class RatingScale(_RatingScale):
     """
     Represents a rating scale with defined minimum and maximum values.

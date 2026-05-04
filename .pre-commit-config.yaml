@@ -1,101 +1,88 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
+    hooks:
+      # trailing-whitespace and end-of-file-fixer are intentionally NOT enabled:
+      # they would silently rewrite Jinja2 prompt templates and test fixtures,
+      # which invalidates VCR cassettes (request-body match is byte-exact).
+      - id: check-yaml
+      - id: check-toml
 
-  # Commitizen hook for conventional commits
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 0839f92796ae388643a08a21640a029b322be5c2  # v0.15.2
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: 5387279b3b4c24822c0f86d4df4f28b37e3e8992  # v0.21.0
+    hooks:
+      - id: markdownlint-cli2
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: ea0d187d78b2e6365e35f676d2eb9b1be264c091  # 1.9.2
+    hooks:
+      - id: bandit
+        name: bandit (contextgem)
+        args: ["-r", "contextgem"]
+        pass_filenames: false
+      - id: bandit
+        name: bandit (tests/dev)
+        args: ["-r", "tests", "dev", "--skip", "B101"]
+        pass_filenames: false
+
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.5.1
+    rev: 7179a42b3544e953e3683a670056ad385892365d  # v4.13.8
     hooks:
       - id: commitizen
         stages: [commit-msg]
-  
-  # Custom local hooks
+
   - repo: local
     hooks:
-
-      # Use locally installed Ruff for linting and auto-fixing
-      - id: ruff-check
-        name: Ruff linting
-        entry: uv run ruff check
-        pass_filenames: false
+      - id: ty
+        name: ty
+        entry: uv run ty check
         language: system
-        files: '\.py$'
-        stages: [pre-commit]
-
-      # Use locally installed Ruff for formatting
-      - id: ruff-format
-        name: Ruff formatting
-        entry: uv run ruff format
+        types: [python]
         pass_filenames: false
-        language: system
-        files: '\.py$'
-        stages: [pre-commit]
 
-      # uv lock check
+      - id: interrogate
+        name: interrogate
+        entry: uv run interrogate --generate-badge docs/source/_static/interrogate-badge.svg --badge-format svg
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: deptry
+        name: deptry
+        entry: uv run deptry .
+        language: system
+        pass_filenames: false
+
       - id: uv-lock
         name: uv lock check
         entry: uv lock --check
-        pass_filenames: false
         language: system
-        stages: [pre-commit]
-      
-      # Update README.md from template
+        pass_filenames: false
+
       - id: update-readme
         name: Update README.md
-        entry: python
-        args: ["-c", "import subprocess; subprocess.run(['python', 'dev/populate_project_readme.py'])"]
-        language: python
+        entry: python dev/populate_project_readme.py
+        language: system
         pass_filenames: false
         always_run: true
-        stages: [pre-commit]
 
-      # Generate example notebooks
       - id: generate-notebooks
         name: Generate example notebooks
         entry: python dev/generate_notebooks.py
         language: system
         pass_filenames: false
         always_run: true
-        stages: [pre-commit]
 
-      # Pyright type checking
-      - id: pyright
-        name: Pyright type checking
-        entry: uv run pyright
-        pass_filenames: false
+      - id: package-check
+        name: package check (uv build + twine check)
+        entry: python dev/check_package.py
         language: system
-        files: '\.py$'
-        stages: [pre-commit]
-
-      # Bandit security check for contextgem
-      - id: bandit-contextgem
-        name: Bandit security check (contextgem)
-        entry: uv run bandit -r contextgem
         pass_filenames: false
-        language: system
-        files: '\.py$'
-        stages: [pre-commit]
-      
-      # Bandit security check for tests and dev (skip B101 - assert usage)
-      - id: bandit-tests-dev
-        name: Bandit security check (tests/dev)
-        entry: uv run bandit -r tests dev --skip B101
-        pass_filenames: false
-        language: system
-        files: '\.py$'
-        stages: [pre-commit]
-
-      # Deptry dependency health check
-      - id: deptry
-        name: Deptry dependency health check
-        entry: uv run deptry .
-        pass_filenames: false
-        language: system
-        stages: [pre-commit]
-
-      # Interrogate docstring coverage check and badge generation
-      - id: interrogate-with-badge
-        name: Interrogate docstring coverage and badge generation
-        entry: uv run interrogate --generate-badge docs/source/_static/interrogate-badge.svg --badge-format svg
-        pass_filenames: false
-        language: system
-        files: '\.py$'
-        stages: [pre-commit]
+        always_run: true

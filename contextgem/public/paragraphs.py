@@ -34,7 +34,7 @@ from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_Paragraph)
+@_expose_in_registry(additional_key=_Paragraph)  # ty: ignore[too-many-positional-arguments]
 class Paragraph(_Paragraph):
     """
     Represents a paragraph of a document with its raw text content and constituent sentences.

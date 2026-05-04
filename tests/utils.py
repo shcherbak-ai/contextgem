@@ -588,7 +588,7 @@ class TestUtils:
                 ]
                 instance_groups = _group_instances_by_fields(
                     fields=fields_to_group_by,
-                    instances=cast(list[Aspect] | list[_Concept], filtered_instances),
+                    instances=cast(list[Aspect] | list[_Concept], filtered_instances),  # ty: ignore[invalid-argument-type]
                 )
                 for idx, group in enumerate(instance_groups, start=1):
                     logger.debug(
@@ -600,7 +600,7 @@ class TestUtils:
                     try:
                         assert any(i.extracted_items for i in group)
                         for i in group:
-                            self.check_extra_data_in_extracted_items(i)
+                            self.check_extra_data_in_extracted_items(i)  # ty: ignore[invalid-argument-type]
                             # Check for singular occurrence enforcement
                             if getattr(i, "singular_occurrence", False):
                                 assert len(i.extracted_items) <= 1
@@ -617,7 +617,7 @@ class TestUtils:
             for i in assigned_container:
                 if isinstance(i, Aspect):
                     # Check sub-aspects
-                    check_instances(i.aspects)
+                    check_instances(i.aspects)  # ty: ignore[invalid-argument-type]
 
     def check_custom_data_json_serializable(
         self,

@@ -13,6 +13,30 @@ env:
 
 jobs:
 
+  package-check:
+    # Pure-Python build: one runner is sufficient — sdist + wheel are
+    # platform- and Python-version-independent.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Build and validate distribution
+        run: uv run python dev/check_package.py
+
   tests-with-vcr:
 
     strategy:
@@ -52,7 +76,12 @@ jobs:
 
       - name: Type checking
         run: |
-          uv run pyright
+          uv run ty check
+
+      - name: Security check (bandit)
+        run: |
+          uv run bandit -r contextgem
+          uv run bandit -r tests dev --skip B101
 
       - name: Dependency health check
         run: |

@@ -118,7 +118,7 @@ def _validate_tool_parameters_schema(v: Any) -> JSONDict:
         raise ValueError("Tool parameters must include a 'properties' object")
 
     # `required` must be a list of strings, and each must exist in properties
-    req: list[str] = obj.get("required", [])  # type: ignore[assignment]
+    req: list[str] = obj.get("required", [])  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
     if not isinstance(req, list) or not all(isinstance(i, str) for i in req):
         raise ValueError("Tool parameters 'required' must be a list of strings")
     missing: list[str] = [k for k in req if k not in props]

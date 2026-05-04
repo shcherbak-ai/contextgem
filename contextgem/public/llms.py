@@ -35,7 +35,7 @@ from contextgem.internal.base.llms import _ChatSession, _DocumentLLM, _DocumentL
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_DocumentLLMGroup)
+@_expose_in_registry(additional_key=_DocumentLLMGroup)  # ty: ignore[too-many-positional-arguments]
 class DocumentLLMGroup(_DocumentLLMGroup):
     """
     Represents a group of DocumentLLMs with unique roles for processing document content.
@@ -66,7 +66,7 @@ class DocumentLLMGroup(_DocumentLLMGroup):
     pass
 
 
-@_expose_in_registry(additional_key=_DocumentLLM)
+@_expose_in_registry(additional_key=_DocumentLLM)  # ty: ignore[too-many-positional-arguments]
 class DocumentLLM(_DocumentLLM):
     """
     Handles processing documents with a specific LLM.
@@ -178,7 +178,7 @@ class DocumentLLM(_DocumentLLM):
     pass
 
 
-@_expose_in_registry(additional_key=_ChatSession)
+@_expose_in_registry(additional_key=_ChatSession)  # ty: ignore[too-many-positional-arguments]
 class ChatSession(_ChatSession):
     """
     Stateful chat session that preserves message history across turns.

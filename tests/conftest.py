@@ -71,7 +71,7 @@ def _patched_deserialize_response(vcr_response):
 
 
 # Apply the patch
-httpcore_stubs._deserialize_response = _patched_deserialize_response
+httpcore_stubs._deserialize_response = _patched_deserialize_response  # ty: ignore[invalid-assignment]
 
 
 # Patch VCR's _run_async_function to fix a bug in httpcore stubs.
@@ -85,7 +85,7 @@ def _patched_run_async_function(async_func, *args, **kwargs):
     return asyncio.run(async_func(*args, **kwargs))
 
 
-httpcore_stubs._run_async_function = _patched_run_async_function  # type: ignore[attr-defined]
+httpcore_stubs._run_async_function = _patched_run_async_function  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
 
 
 # Memory profiling behavior
@@ -182,6 +182,10 @@ _TETHERED_RECORDING_ALLOW = [
     "raw.githubusercontent.com",  # genai-prices auto-refresh
 ] + _TETHERED_REPLAY_ALLOW
 
+# Sentinel for tethered's locked mode — required to deactivate a locked policy.
+# Held privately in this module so test code cannot trip the policy off.
+_TETHERED_LOCK = object()
+
 
 @pytest.fixture(autouse=True)
 def _tethered_network_guard(request):
@@ -194,6 +198,10 @@ def _tethered_network_guard(request):
       (LLM APIs, HuggingFace for model downloads, genai-prices for cost data)
       and localhost for local LLMs.
     - **Non-VCR tests**: blocks all network calls entirely.
+
+    Uses tethered's hardened config: ``locked=True`` makes the policy
+    tamper-resistant within the test, and ``external_subprocess_policy="block"``
+    refuses non-Python subprocess launches (closing shell-based egress bypass).
     """
     is_vcr = request.node.get_closest_marker("vcr")
     if is_vcr:
@@ -201,11 +209,20 @@ def _tethered_network_guard(request):
         tethered.activate(
             allow=_TETHERED_REPLAY_ALLOW if is_replay else _TETHERED_RECORDING_ALLOW,
             allow_localhost=not is_replay,  # localhost for local LLMs during recording
+            locked=True,
+            lock_token=_TETHERED_LOCK,
+            external_subprocess_policy="block",
         )
     else:
-        tethered.activate(allow=[], allow_localhost=False)
+        tethered.activate(
+            allow=[],
+            allow_localhost=False,
+            locked=True,
+            lock_token=_TETHERED_LOCK,
+            external_subprocess_policy="block",
+        )
     yield
-    tethered.deactivate()
+    tethered.deactivate(lock_token=_TETHERED_LOCK)
 
 
 @pytest.fixture(autouse=True)

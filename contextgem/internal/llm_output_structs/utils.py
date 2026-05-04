@@ -37,4 +37,4 @@ def _create_root_model(name: str, root_type: type):
         parameterized with the given type.
     :rtype: type
     """
-    return type(name, (RootModel[root_type],), {})
+    return type(name, (RootModel[root_type],), {})  # ty: ignore[invalid-type-form]

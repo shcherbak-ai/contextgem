@@ -275,7 +275,7 @@ def run_benchmark_for_module(
 
     # Align target roles with the main LLM role
     for a in document.aspects:
-        a.llm_role = llm.role
+        a.llm_role = llm.role  # ty: ignore[invalid-assignment]
     for c in document.concepts:
         c.llm_role = llm.role
 
@@ -370,7 +370,11 @@ def run_benchmark_for_module(
     logger.info("== Judge flow started ==")
     for a in simple_aspects + reasoning_aspects:
         rating, justification = _judge_target(
-            judge_llm, "aspect", a.name, _items_block(a), document.raw_text
+            judge_llm,
+            "aspect",
+            a.name,
+            _items_block(a),  # ty: ignore[invalid-argument-type]
+            document.raw_text,  # ty: ignore[invalid-argument-type]
         )
         ratings_by_target[("aspect", a.name)] = rating
         if justification:
@@ -378,7 +382,11 @@ def run_benchmark_for_module(
 
     for c in simple_concepts + reasoning_concepts:
         rating, justification = _judge_target(
-            judge_llm, "concept", c.name, _items_block(c), document.raw_text
+            judge_llm,
+            "concept",
+            c.name,
+            _items_block(c),
+            document.raw_text,  # ty: ignore[invalid-argument-type]
         )
         ratings_by_target[("concept", c.name)] = rating
         if justification:

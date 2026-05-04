@@ -97,11 +97,11 @@ dependencies = [
     "colorlog (>=6.9.0,<7.0.0)",
     "docstring-parser (>=0.17.0,<1.0.0)",
     "fastjsonschema (>=2.21.2,<3.0.0)",
-    "genai-prices==0.0.55", # pin version due to frequent API changes
+    "genai-prices==0.0.57", # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
-    "litellm==1.82.2", # pin version due to occasional instability between patches and minor versions
+    "litellm==1.83.14", # pin version due to occasional instability between patches and minor versions
     "lxml (>=5.4.0,<7.0.0)",
-    "openai==2.21.0", # pinned version for stable compatibility with litellm (after issue with 1.100.0)
+    "openai==2.24.0", # pinned version for stable compatibility with litellm (after issue with 1.100.0)
     "pillow (>=11.3.0,<12.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
@@ -131,7 +131,7 @@ dev = [
     "nest-asyncio (>=1.6.0,<2.0.0)",
     "pre-commit (>=4.1.0,<5.0.0)",
     "pympler (>=1.1.0,<2.0.0)",
-    "pyright (>=1.1.403,<2.0.0)",
+    "ty (>=0.0.34,<1.0.0)",
     "pytest (>=8.3.4,<9.0.0)",
     "pytest-cov (>=6.0.0,<7.0.0)",
     "pytest-recording (>=0.13.4,<1.0.0)",
@@ -145,8 +145,9 @@ dev = [
     "sphinx-design (>=0.6.1,<1.0.0)",
     "sphinx-sitemap (>=2.6.0,<3.0.0)",
     "sphinxext-opengraph (>=0.9.1,<1.0.0)",
-    "tethered (>=0.2.0,<1.0.0)",
+    "tethered (>=0.5.1,<1.0.0)",
     "types-lxml (>=2025.3.30,<2027.0.0)",
+    "twine>=6.2.0",
 ]
 
 [build-system]
@@ -172,7 +173,6 @@ indent-width = 4
 exclude = [
     ".venv",
     "notebooks",
-    "dev/usage_examples/vs_other_frameworks",
     "code_sample.py",
 ]
 
@@ -195,13 +195,12 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-[tool.pyright]
-pythonVersion = "3.10"
-typeCheckingMode = "basic"
+[tool.ty.src]
+# Skip auto-generated notebooks (regenerated from dev/usage_examples) and
+# demonstration code (usage examples, optional-dep comparisons, code samples).
 exclude = [
-    ".venv",
-    "notebooks",
-    "dev/usage_examples/vs_other_frameworks",
+    "**/*.ipynb",
+    "dev/usage_examples",
     "code_sample.py",
 ]
 
@@ -212,11 +211,22 @@ log_cli_level = "WARNING"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
+version = "0.22.0"
+version_files = [
+    "contextgem/__init__.py:__version__",
+    "pyproject.toml:version",
+    "CITATION.cff:version",
+]
+tag_format = "v$version"
+annotated_tag = true
+pre_bump_hooks = [
+    "uv lock --no-upgrade",
+    "git add uv.lock",
+]
 
 [tool.deptry]
 extend_exclude = [
     ".venv",
-    "dev/usage_examples/vs_other_frameworks",
     "dev/generate_notebooks.py",
     "code_sample.py",
 ]

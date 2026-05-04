@@ -131,7 +131,7 @@ class _Aspect(
             # since we're validating the "aspects" field of an Aspect object
             validated_instance = cast(_Aspect, field_validator(self, "aspects", value))
             aspects = validated_instance.aspects
-            self._validate_and_process_sub_aspects(aspects)
+            self._validate_and_process_sub_aspects(aspects)  # ty: ignore[invalid-argument-type]
             super().__setattr__(name, aspects)
         else:
             super().__setattr__(name, value)
@@ -217,7 +217,7 @@ class _Aspect(
 
             # Recursively process sub-aspects of this aspect
             if aspect.aspects:
-                aspect._validate_and_process_sub_aspects(aspect.aspects)
+                aspect._validate_and_process_sub_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
 
     @model_validator(mode="after")
     def _validate_aspect_post(self) -> Self:

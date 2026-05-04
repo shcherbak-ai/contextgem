@@ -15,27 +15,49 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-:og:description: ContextGem: DOCX Converter
+:orphan:
+
+:og:description: ContextGem: DOCX Converter (deprecated)
 
 DOCX Converter
 ===============
 
-ContextGem provides built-in converter to easily transform DOCX files into LLM-ready ContextGem document objects.
+.. warning::
+
+   **Deprecated since v0.22.0.** ``DocxConverter`` will be removed in v1.0.0.
+
+   Use a dedicated document conversion library — for example
+   `Docling <https://github.com/docling-project/docling>`_ or
+   `MarkItDown <https://github.com/microsoft/markitdown>`_ — to convert files
+   to text, then pass the result to :class:`~contextgem.public.documents.Document`
+   via ``raw_text=...``.
+
+   .. code-block:: python
+
+      # Recommended pattern
+      from contextgem import Document
+
+      # text = <result from Docling / MarkItDown / your converter of choice>
+      document = Document(raw_text=text)
+
+   This page is retained as a reference for users on v0.22.x.
+
+ContextGem's built-in DOCX converter transforms DOCX files into LLM-ready ContextGem document objects.
 
 * 📑 **Comprehensive extraction of document elements**: paragraphs, headings, lists, tables, comments, footnotes, textboxes, headers/footers, links, embedded images, and inline formatting
 * 🧩 **Document structure preservation** with rich metadata for improved LLM analysis
 * 🛠️ **Built-in converter** that directly processes Word XML
 
-.. note::
-
-   ✨ **Performance improvement in v0.17.1**: DOCX converter now converts files **~2X faster**.
-
 
 🚀 Usage
 ----------
 
-.. literalinclude:: ../../../dev/usage_examples/readme/docx_converter.py
-   :language: python
+.. code-block:: python
+
+   from contextgem import DocxConverter
+
+   converter = DocxConverter()
+   document = converter.convert("path/to/file.docx")
 
 
 🔄 Conversion Process

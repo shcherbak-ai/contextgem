@@ -30,9 +30,6 @@ Welcome to ContextGem Documentation!
 
 ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
 
-.. note::
-   🏠 **Official Documentation**: This is the official ContextGem documentation hosted at https://contextgem.dev/. Please be aware of unauthorized copies or mirrors that may contain outdated or incorrect information.
-
 |
 
 .. grid:: 1 1 2 2
@@ -44,7 +41,7 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
         :link-type: doc
         :class-card: sd-border-0 sd-shadow-sm sd-card-hover
         
-        Learn about the motivation, comparisons with other frameworks, and how ContextGem works.
+        Learn about the motivation behind ContextGem and how it works.
         
         +++
         .. button-ref:: motivation
@@ -90,23 +87,6 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             
             Create Documents
 
-    .. grid-item-card:: 🔄 Document Converters
-        :link: converters/docx
-        :link-type: doc
-        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
-
-        Learn how to use ContextGem's built-in document converters for files such as DOCX.
-
-        +++
-        .. button-ref:: converters/docx
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
-
-            Convert Files
-    
     .. grid-item-card:: 📋 Extracting Aspects
         :link: aspects/aspects
         :link-type: doc
@@ -260,7 +240,6 @@ Indices and tables
    :hidden:
    
    motivation
-   vs_other_frameworks
    how_it_works
 
 .. toctree::
@@ -277,13 +256,6 @@ Indices and tables
    :hidden:
    
    documents/document_config
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Document Converters
-   :hidden:
-   
-   converters/docx
 
 .. toctree::
    :maxdepth: 2

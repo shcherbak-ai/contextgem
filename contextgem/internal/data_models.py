@@ -363,8 +363,8 @@ class _Message(_AbstractInstanceBase):
         """
         data = {"role": self.role, "content": self.content}
         if self.role == "tool":
-            data["tool_call_id"] = self.tool_call_id
-            data["name"] = self.name
+            data["tool_call_id"] = self.tool_call_id  # ty: ignore[invalid-assignment]
+            data["name"] = self.name  # ty: ignore[invalid-assignment]
         if self.role == "assistant" and self.tool_calls is not None:
             data["tool_calls"] = self.tool_calls
         return data

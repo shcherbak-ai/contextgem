@@ -29,4 +29,4 @@ tick off all the boxes. [] -> [x] -->
 - [ ] I confirm that I have the right to submit this contribution and grant all the rights specified in the Contributor Agreement.
 - [ ] I have read, agreed to, filled in, and included my Contributor Agreement in `.github/contributors/[my-username].md`.
 - [ ] I ran the tests, and all new and existing tests passed.
-- [ ] My changes don't require a change to the documentation, or if they do, I've added all required information. 
+- [ ] My changes don't require a change to the documentation, or if they do, I've added all required information.

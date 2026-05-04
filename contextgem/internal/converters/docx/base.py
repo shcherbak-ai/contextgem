@@ -107,7 +107,7 @@ class _DocxConverterBase:
         populate_md_text: bool = False,
         list_counters: dict | None = None,
         strict_mode: bool = False,
-    ) -> str | _Paragraph | None:  # type: ignore
+    ) -> str | _Paragraph | None:
         """
         Processes a paragraph element and returns appropriate content based on mode.
 
@@ -376,7 +376,7 @@ class _DocxConverterBase:
                     # Get all text including from child elements
                     text_content = (
                         # Attribute is defined in _Element
-                        text_elem.text_content()  # type: ignore[attr-defined]
+                        text_elem.text_content()  # type: ignore[attr-defined]  # ty: ignore[call-non-callable]
                         if hasattr(text_elem, "text_content")
                         else (text_elem.text or "")
                     )
@@ -758,7 +758,7 @@ class _DocxConverterBase:
             # Process each element in order
             for element in body:
                 # Attribute is defined in _Element
-                tag = element.tag.split("}")[  # type: ignore[attr-defined]
+                tag = element.tag.split("}")[  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute, invalid-argument-type]
                     -1
                 ]  # Remove namespace prefix
 
@@ -1006,7 +1006,7 @@ class _DocxConverterBase:
         for text_elem in text_elements:
             text_content = (
                 # Attribute is defined in _Element
-                text_elem.text_content()  # type: ignore[attr-defined]
+                text_elem.text_content()  # type: ignore[attr-defined]  # ty: ignore[call-non-callable]
                 if hasattr(text_elem, "text_content")
                 else (text_elem.text or "")
             )
@@ -1655,8 +1655,6 @@ class _DocxConverterBase:
                             for nested_para in nested_content:
                                 if isinstance(nested_para, _Paragraph):
                                     # Extract style and other info from nested table metadata
-                                    # Safe cast: nested_para is a _Paragraph object
-                                    nested_para = cast(_Paragraph, nested_para)
                                     nested_context = nested_para.additional_context
                                     if not nested_context:
                                         raise RuntimeError(
@@ -2110,7 +2108,7 @@ class _DocxConverterBase:
             for text_elem in text_elements:
                 text_content = (
                     # Attribute is defined in _Element
-                    text_elem.text_content()  # type: ignore[attr-defined]
+                    text_elem.text_content()  # type: ignore[attr-defined]  # ty: ignore[call-non-callable]
                     if hasattr(text_elem, "text_content")
                     else (text_elem.text or "")
                 )
@@ -2197,7 +2195,7 @@ class _DocxConverterBase:
                 text_elem = text_elements[text_index]
                 original_content = (
                     # Attribute is defined in _Element
-                    text_elem.text_content()  # type: ignore[attr-defined]
+                    text_elem.text_content()  # type: ignore[attr-defined]  # ty: ignore[call-non-callable]
                     if hasattr(text_elem, "text_content")
                     else (text_elem.text or "")
                 )

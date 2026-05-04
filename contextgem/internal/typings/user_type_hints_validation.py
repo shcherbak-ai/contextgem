@@ -123,7 +123,7 @@ def _dynamic_pydantic_model(
             # Create a nested model for the list item
             nested_model = _dynamic_pydantic_model(field_type[0])
             # Create a list of that model type
-            fields[field_name] = (list[nested_model], ...)
+            fields[field_name] = (list[nested_model], ...)  # ty: ignore[invalid-type-form]
             continue
 
         # Handle list instances with non-dictionary content
@@ -139,7 +139,7 @@ def _dynamic_pydantic_model(
             # Handle nested class types recursively
             if isinstance(item_type, dict):
                 nested_model = _dynamic_pydantic_model(item_type)
-                fields[field_name] = (list[nested_model], ...)
+                fields[field_name] = (list[nested_model], ...)  # ty: ignore[invalid-type-form]
             else:
                 fields[field_name] = (list[item_type], ...)
             continue

@@ -44,7 +44,7 @@ from contextgem.internal.base.concepts import (
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_StringConcept)
+@_expose_in_registry(additional_key=_StringConcept)  # ty: ignore[too-many-positional-arguments]
 class StringConcept(_StringConcept):
     """
     A concept model for string-based information extraction from documents and aspects.
@@ -90,7 +90,7 @@ class StringConcept(_StringConcept):
     pass
 
 
-@_expose_in_registry(additional_key=_BooleanConcept)
+@_expose_in_registry(additional_key=_BooleanConcept)  # ty: ignore[too-many-positional-arguments]
 class BooleanConcept(_BooleanConcept):
     """
     A concept model for boolean (True/False) information extraction from documents and aspects.
@@ -135,7 +135,7 @@ class BooleanConcept(_BooleanConcept):
     pass
 
 
-@_expose_in_registry(additional_key=_NumericalConcept)
+@_expose_in_registry(additional_key=_NumericalConcept)  # ty: ignore[too-many-positional-arguments]
 class NumericalConcept(_NumericalConcept):
     """
     A concept model for numerical information extraction from documents and aspects.
@@ -183,7 +183,7 @@ class NumericalConcept(_NumericalConcept):
     pass
 
 
-@_expose_in_registry(additional_key=_RatingConcept)
+@_expose_in_registry(additional_key=_RatingConcept)  # ty: ignore[too-many-positional-arguments]
 class RatingConcept(_RatingConcept):
     """
     A concept model for rating-based information extraction with defined scale boundaries.
@@ -231,7 +231,7 @@ class RatingConcept(_RatingConcept):
     pass
 
 
-@_expose_in_registry(additional_key=_JsonObjectConcept)
+@_expose_in_registry(additional_key=_JsonObjectConcept)  # ty: ignore[too-many-positional-arguments]
 class JsonObjectConcept(_JsonObjectConcept):
     """
     A concept model for structured JSON object extraction from documents and aspects.
@@ -309,7 +309,7 @@ class JsonObjectConcept(_JsonObjectConcept):
     pass
 
 
-@_expose_in_registry(additional_key=_DateConcept)
+@_expose_in_registry(additional_key=_DateConcept)  # ty: ignore[too-many-positional-arguments]
 class DateConcept(_DateConcept):
     """
     A concept model for date object extraction from documents and aspects.
@@ -354,7 +354,7 @@ class DateConcept(_DateConcept):
     pass
 
 
-@_expose_in_registry(additional_key=_LabelConcept)
+@_expose_in_registry(additional_key=_LabelConcept)  # ty: ignore[too-many-positional-arguments]
 class LabelConcept(_LabelConcept):
     """
     A concept model for label-based classification of documents and aspects.

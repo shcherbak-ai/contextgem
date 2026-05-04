@@ -80,14 +80,6 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
      - Whether to pre-segment sentences during Document initialization. When ``False``, sentence segmentation is deferred until sentences are actually needed, improving initialization performance.
 
 
-🔄 DOCX Document Conversion
-----------------------------
-
-ContextGem provides a built-in :class:`~contextgem.public.converters.docx.DocxConverter` to easily transform DOCX files into LLM-ready :class:`~contextgem.public.documents.Document` instances.
-
-For detailed usage examples and configuration options, see :doc:`../converters/docx`.
-
-
 🎯 Adding Aspects and Concepts for Extraction
 -----------------------------------------------
 

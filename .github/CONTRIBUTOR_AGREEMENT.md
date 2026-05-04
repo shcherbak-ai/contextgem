@@ -37,8 +37,8 @@ Read this agreement carefully before signing. These terms and conditions constit
     * to the best of your knowledge, each contribution will not violate any third party's copyrights, trademarks, patents, or other intellectual property rights; and
 
     * each contribution shall be in compliance with applicable export control laws and other applicable export and import laws.
-    
-You agree to notify us if you become aware of any circumstance which would make any of the foregoing representations inaccurate in any respect. We may publicly disclose your participation in the project, including the fact that you have signed the CCA.
+
+    You agree to notify us if you become aware of any circumstance which would make any of the foregoing representations inaccurate in any respect. We may publicly disclose your participation in the project, including the fact that you have signed the CCA.
 
 6. This CCA is governed by the laws of Norway and applicable international law. Any choice of law rules will not apply.
 

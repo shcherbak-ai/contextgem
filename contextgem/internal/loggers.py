@@ -41,7 +41,7 @@ class _LoggerProtocol(Protocol):
     Protocol defining the logger interface with custom methods.
 
     This Protocol is used purely for type checking to inform type checkers
-    (e.g. Pyright) about the custom .trace() and .success() methods that
+    (e.g. ty) about the custom .trace() and .success() methods that
     are dynamically added to logging.Logger at runtime.
     """
 
@@ -142,11 +142,11 @@ def _success(self, message, *args, **kwargs):
 
 
 # Add custom methods to Logger class
-logging.Logger.trace = _trace  # type: ignore[attr-defined]
-logging.Logger.success = _success  # type: ignore[attr-defined]
+logging.Logger.trace = _trace  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+logging.Logger.success = _success  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
 
 # Create a namespaced logger for ContextGem
-logger: _LoggerProtocol = logging.getLogger("contextgem")  # type: ignore[assignment]
+logger: _LoggerProtocol = logging.getLogger("contextgem")  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
 # Add NullHandler by default
 logger.addHandler(logging.NullHandler())

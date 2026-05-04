@@ -446,6 +446,6 @@ def _generate_tool_schema(
         schema["function"]["description"] = tool_description
 
     if required:
-        schema["function"]["parameters"]["required"] = required
+        schema["function"]["parameters"]["required"] = required  # ty: ignore[invalid-assignment]
 
     return schema

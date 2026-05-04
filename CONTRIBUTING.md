@@ -2,21 +2,19 @@
 
 Thank you for your interest in contributing to ContextGem! This document provides guidelines and instructions for contributing to the project.
 
-
 ## 📋 Code of Conduct
 
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the expectations for all interactions within the project.
-
 
 ## ✍️ Contributor Agreement
 
 Before your contribution can be accepted, you must sign our [Contributor Agreement](/.github/CONTRIBUTOR_AGREEMENT.md). This is a legal document that grants us the necessary rights to use your contribution. The agreement is based on the [Oracle Contributor Agreement](http://www.oracle.com/technetwork/oca-405177.pdf) and this requirement follows [OpenSSF Best Practices](https://www.bestpractices.dev/en) for silver-level criteria (section "Project oversight").
 
 To sign the agreement:
+
 1. Read the [Contributor Agreement](/.github/CONTRIBUTOR_AGREEMENT.md) carefully
 2. Create a copy of the agreement under `.github/contributors/[your-github-username].md`
 3. Fill in all the requested information and include it in your first pull request
-
 
 ## 🤖 Using AI Coding Assistants
 
@@ -33,7 +31,6 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
 
 > **💡 Tip:** AI assistants work best when given specific, focused tasks. Break large contributions into smaller pieces for better results.
 
-
 ## 🚀 Getting Started
 
 ### 🛠️ Development Environment
@@ -48,7 +45,7 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
     git clone https://github.com/YOUR-GITHUB-USERNAME/contextgem.git
     cd contextgem
     ```
-    
+
     - Add the original repository as an upstream remote:
 
     ```bash
@@ -56,6 +53,7 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
     ```
 
 2. **⚙️ Set up the development environment**:
+
     ```bash
     # Install uv if you don't have it
     pip install uv
@@ -84,12 +82,11 @@ uv run fab readme          # Regenerate README.md from template
 uv run fab install-hooks   # Install pre-commit hooks
 ```
 
-
 ### 📁 Project Structure
 
 Below is a high-level overview of the codebase layout and where to make different types of contributions:
 
-```
+```text
 contextgem/
 │
 ├── contextgem/
@@ -134,13 +131,13 @@ contextgem/
 ```
 
 **🎯 Quick Start for Your Contribution:**
+
 - **Adding new functionality?** → Implement in `contextgem/internal/` (core logic). Then expose via a thin public facade in `contextgem/public/` using the registry.
 - **Writing tests?** → Add to `tests/test_all.py::TestAll`  
 - **Updating docs?** → Edit files in `docs/source/` or `dev/`
 - **Fixing README?** → Edit `dev/readme.template.md`
 
 > **💡 Note:** Implement functionality in `internal/` (base classes, validation, serialization, typing). Use `public/` to expose thin, documented facades that inherit from internal classes and are registered with `@_expose_in_registry` decorator to ensure deserialization and instance creation utils return public types. Do not import public classes in internal modules; use the registry for type resolution and publicization.
-
 
 ---
 
@@ -149,6 +146,7 @@ contextgem/
 1. **🌿 Create a new branch**:
 
     For example:
+
     ```bash
     git checkout -b feature/your-feature-name
     ```
@@ -173,10 +171,12 @@ contextgem/
     We use several tools to maintain code quality:
 
     - **Ruff**: For code formatting and linting
-    - **Pyright**: For static type checking
+    - **ty**: For static type checking
     - **Bandit**: For Python security vulnerability scanning
     - **Deptry**: For dependency health checks (unused, missing, transitive dependencies)
     - **Interrogate**: For docstring coverage checking
+    - **markdownlint-cli2**: For Markdown style and consistency
+    - **Twine**: For sdist/wheel metadata validation (via the `package-check` pre-commit hook, which runs `uv build` + `twine check`)
     - **Pre-commit hooks**: To automatically check and format code before commits
 
     The pre-commit hooks will automatically check and format your code when you commit. There are two scenarios to be aware of:
@@ -193,14 +193,15 @@ contextgem/
     4. Commit again
 
 3. **🧪 Run tests** to ensure your changes do not break existing functionality:
+
    ```bash
    uv run pytest
    ```
 
-   > **Note:** We use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#vcr-cassette-management) section below for details.
+   > **Note:** We use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#-vcr-cassette-management) section below for details.
 
 4. **💾 Commit your changes** using Conventional Commits format:
-   
+
    We use [Conventional Commits](https://www.conventionalcommits.org/) format for our commit messages. Instead of using regular git commit, please use commitizen:
 
    ```bash
@@ -214,19 +215,21 @@ contextgem/
    - Optional longer description and breaking change notes
 
    Example of resulting commit message:
-   ```
+
+   ```text
    docs(readme): update installation instructions
    ```
 
    > **Note:** If pre-commit hooks fail or modify files during `cz commit`, you can retry with the same message:
+>
    > ```bash
    > uv run cz commit --retry
    > ```
 
-
 ## 🔄 Pull Request Process
 
 1. **🔄 Update your fork** with the latest changes from the `dev` branch:
+
    ```bash
    git fetch upstream
    git checkout dev
@@ -235,6 +238,7 @@ contextgem/
    ```
 
 2. **📤 Push your changes** to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -248,7 +252,6 @@ contextgem/
 6. **⏳ Wait for review**. Maintainers will review your PR and may request changes.
 
 7. **🔧 Address review comments** if requested.
-
 
 ## 🐛 Issues and Feature Requests
 
@@ -265,7 +268,6 @@ Each template will guide you through providing all the necessary information for
 
 By submitting issues or feature requests to this project, you acknowledge that these suggestions may be implemented by the project maintainers without attribution or compensation.
 
-
 ## 🧪 Testing
 
 ### 🏗️ Current Test Structure
@@ -280,6 +282,7 @@ Currently, all tests are located in a single file: `tests/test_all.py` within th
 - Make sure all tests pass before submitting a PR
 - Maintain code coverage above **80%**
 - Check code coverage by running:
+
   ```bash
   uv run pytest --cov=contextgem
   ```
@@ -320,11 +323,13 @@ Based on the test results and your changes, you'll fall into one of these four s
 #### ✅ Scenario 1: No Cassette Recording Required
 
 **When this applies:**
+
 - New tests that **do not** call LLM APIs
 - Code changes that don't modify internal prompts or LLM parameters
 - Changes are compatible with existing pre-recorded API calls (confirmed by passing tests)
 
 **What to do:**
+
 - Nothing! Tests that call LLM APIs should pass by replaying from existing cassettes with automatically-set dummy environment variables
 - No need to create a `.env` file or set up API keys
 
@@ -333,13 +338,15 @@ Based on the test results and your changes, you'll fall into one of these four s
 #### 🆕 Scenario 2: New Cassettes Need Recording
 
 **When this applies:**
+
 - New test methods that call LLM APIs (cloud-based or local)
 - Adding tests for new functionality that requires LLM interaction
 
 **What to do:**
 
 1. **Create a `.env` file** locally (ignored by git) with the API keys for the LLM services your new tests will use:
-   ```
+
+   ```bash
    # Only include the variables for LLM APIs your tests actually call
    
    # For OpenAI API tests
@@ -355,18 +362,21 @@ Based on the test results and your changes, you'll fall into one of these four s
    ```
 
 2. **For new LLM providers**, create environment variables prefixed with `CONTEXTGEM_`:
-   ```
+
+   ```bash
    CONTEXTGEM_GOOGLE_AI_STUDIO_API_KEY=your_google_api_key
    ```
 
 3. **Update dummy variables** in `tests/utils.py` by adding your new environment variables to the `default_env_vars` dictionary in `set_dummy_env_variables_for_testing_from_cassettes()`, mapped to a dummy value (e.g. "DUMMY")
 
 4. **Add the VCR decorator** to your new test methods that call LLM APIs (cloud or local):
+
    ```python
    @pytest.mark.vcr
    def test_your_new_llm_feature(self):
        # Your test code that calls LLM APIs (cloud or local)
    ```
+
    > ⚠️ **Important:** Without the `@pytest.mark.vcr` decorator, no cassette will be recorded!
 
 5. **Run your new tests** - new cassettes will be created automatically
@@ -380,6 +390,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 #### 🔄 Scenario 3: Some Existing Cassettes Need Re-recording
 
 **When this applies:**
+
 - Tests fail because your changes are incompatible with specific existing cassettes
 - Only certain test cases are affected
 
@@ -392,6 +403,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 3. **Create a `.env` file** if needed (same as Scenario 2)
 
 4. **Run the affected tests** to re-record only the necessary cassettes:
+
    ```bash
    uv run pytest tests/test_all.py::TestAll::test_specific_method
    ```
@@ -401,6 +413,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 #### 🔄🔄 Scenario 4: All Cassettes Need Re-recording
 
 **When this applies:**
+
 - You modified internal prompts (direct changes or code that renders prompts differently)
 - You changed default LLM API parameters
 - Multiple LLM-related tests fail due to your changes
@@ -408,6 +421,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 **What to do:**
 
 1. **Delete all cassette files**:
+
    ```bash
    # On Unix/Linux/Mac
    rm tests/cassettes/*.yaml
@@ -419,6 +433,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 2. **Create a `.env` file** with your API keys (same as Scenario 2)
 
 3. **Run all tests** to re-record everything:
+
    ```bash
    uv run pytest
    ```
@@ -430,12 +445,14 @@ Based on the test results and your changes, you'll fall into one of these four s
 #### Environment Variable Security
 
 **Automatically Redacted Variables:**
+
 - `CONTEXTGEM_OPENAI_API_KEY`
 - `CONTEXTGEM_AZURE_OPENAI_API_KEY`
 - `CONTEXTGEM_AZURE_OPENAI_API_BASE`
 - `CONTEXTGEM_AZURE_OPENAI_API_VERSION`
 
 **Adding New Variables:**
+
 - Use the `CONTEXTGEM_` prefix for new API keys
 - Verify redaction in your cassette files
 - Update redaction logic in `tests/utils.py` if needed
@@ -444,16 +461,18 @@ Based on the test results and your changes, you'll fall into one of these four s
 #### Local LLM Testing
 
 For local LLM testing, install the following tools and download the relevant models identified under `ollama` and `lm_studio` prefixes in `tests/test_all.py`:
-- [Ollama](https://ollama.ai/) 
+
+- [Ollama](https://ollama.ai/)
 - [LM Studio](https://lmstudio.ai/)
+
 > ⚠️ **Important:** Your system needs to have an appropriate GPU capacity to run such local LLMs.
 
 #### Important Notes
 
 > **💰 Cost Warning:** Recording cassettes for test methods that use live LLM API (non-local LLMs) uses your API keys and **will incur charges**. Scenario 4 (re-recording all cassettes) can be particularly expensive.
-
+>
 > **🔒 Security:** Environment variables such as API keys are automatically stripped from cassettes, but always verify new cassette content.
-
+>
 > **🧪 Testing:** After recording, delete your `.env` file and run tests again to ensure LLM API tests pass by replaying from cassettes with dummy variables.
 
 #### Network Egress Control
@@ -463,25 +482,29 @@ The test suite uses [tethered](https://github.com/shcherbak-ai/tethered) to enfo
 - **Replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
 - **Recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data) and localhost for local LLMs
 
-If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
+The fixture activates tethered in **hardened mode** (`locked=True` with a private lock token, `external_subprocess_policy="block"`), so test code can't disable the policy mid-test and non-Python subprocesses are refused — closing the shell-egress bypass.
 
+If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
 
 ---
 
 ### 🏃 Running Tests
 
 Run all tests:
+
 ```bash
 uv run pytest
 ```
 
 Run specific tests:
+
 ```bash
 # Run a specific test method
 uv run pytest tests/test_all.py::TestAll::test_extract_all
 ```
 
 **🔍 Optional Memory Profiling**: For performance testing, you can enable memory profiling to analyze memory usage during test execution:
+
 ```bash
 uv run pytest --mem-profile
 ```
@@ -503,7 +526,6 @@ Warnings generated during tests are often expected and by design. Many warnings 
 
 The log output will show detailed information about test execution.
 
-
 ## 📚 Documentation
 
 - Update documentation for any changed functionality
@@ -522,6 +544,7 @@ uv run fab docs-live
 ```
 
 This starts a development server on `http://localhost:9000` with:
+
 - Automatic rebuilds when files change
 - Browser auto-refresh
 - Pretty URLs without `.html` extensions
@@ -543,7 +566,7 @@ After building, open `docs/build/dirhtml/index.html` in your web browser.
 
 ### 🌐 Live Documentation
 
-You can access the live documentation at: https://contextgem.dev
+You can access the live documentation at: <https://contextgem.dev>
 
 > **Note:** Documentation is automatically deployed when maintainers merge changes from `dev` to `main`. As a contributor, your documentation changes will be visible on the live site after your PR is merged and subsequently deployed by maintainers.
 
@@ -559,6 +582,7 @@ You can access the live documentation at: https://contextgem.dev
 The project's README.md is generated from a template `dev/readme.template.md`, as it embeds code fragments that are located in separate modules and are subject to tests. Do not modify README.md directly as your changes will be overwritten by a pre-commit hook.
 
 Instead:
+
 1. Edit the template file at `dev/readme.template.md`
 2. The pre-commit hook will automatically update README.md using the template
 
@@ -568,30 +592,33 @@ If you need to test the README generation manually:
 uv run fab readme
 ```
 
-
 ## ❓ Questions & Support
 
 We're here to help! Whether you're stuck on something technical, have questions about the contribution process, or want to suggest improvements to this guide, don't hesitate to reach out.
 
-### 🆘 Get Help With:
+### 🆘 Get Help With
+
 - **Technical Issues**: Setup problems, test failures, or development environment issues
 - **Contribution Process**: Questions about pull requests, branching, or code review
 - **Feature Ideas**: Discussion about new features or improvements
 - **Documentation**: Clarifications about this contributing guide or suggesting improvements
 
-### 📞 Contact Options:
+### 📞 Contact Options
 
 **🐛 GitHub Issues** (preferred for technical questions):
+
 - [Open a new issue](https://github.com/shcherbak-ai/contextgem/issues/new) using our issue templates
 
 **📧 Direct Contact**:
-- **📧 Email**: sergii@shcherbak.ai
+
+- **📧 Email**: <sergii@shcherbak.ai>
 - **💼 LinkedIn**: [Sergii Shcherbak](https://www.linkedin.com/in/sergii-shcherbak-10068866/)
 - **🐦 X**: [@seshch](https://x.com/seshch)
 
 ### 📖 Improving This Guide
 
 Found something unclear in this contributing guide? Missing information that would have helped you? Please:
+
 - Open an issue with the `documentation` label
 - Suggest specific improvements or additions
 - Share your contributor experience to help us improve the process

@@ -35,10 +35,8 @@ README_FOOTER = ""
 
 # Map example files to markers in the template
 USAGE_EXAMPLES_MAPPING = {
-    "dev/content_snippets/feature_table.html": "{{FEATURE_TABLE}}",
     "dev/usage_examples/readme/quickstart_aspect.py": "{{QUICKSTART_ASPECT}}",
     "dev/usage_examples/readme/quickstart_concept.py": "{{QUICKSTART_CONCEPT}}",
-    "dev/usage_examples/readme/docx_converter.py": "{{DOCX_CONVERTER}}",
 }
 
 

@@ -32,6 +32,8 @@ Core Dependencies:
 - Jinja2: Templating engine
 - litellm: LLM interface library (this software uses only MIT-licensed portions of LiteLLM and does not utilize any components from the enterprise/ directory)
 - lxml: High-performance XML processing library
+- onnxruntime: ONNX model inference runtime (pinned for Python 3.10/3.14 wheel compatibility; used transitively via wtpsplit-lite)
+- openai: OpenAI Python client (pinned for stable compatibility with litellm)
 - pillow: Image processing library for local model image handling
 - pydantic: Data validation
 - python-ulid: ULID generation
@@ -44,13 +46,14 @@ Development Dependencies:
 - commitizen: Conventional commit tool and release management
 - coverage: Test coverage measurement
 - deptry: Python dependency checker for unused, missing and transitive dependencies
+- fabric: SSH and command execution library used for development task automation
 - interrogate: Python docstring coverage checker
 - memory-profiler: Python memory usage monitoring tool
 - nbformat: Notebook format utilities
 - nest-asyncio: Patch for asyncio to allow nested event loops (used for VCR test compatibility)
 - pre-commit: Pre-commit hooks
 - pympler: Python memory analysis for object-level memory measurement
-- pyright: Static type checker for Python
+- ty: Static type checker for Python
 - pytest: Testing framework
 - pytest-cov: Coverage plugin for pytest
 - pytest-recording: Recording HTTP interactions for tests
@@ -65,6 +68,7 @@ Development Dependencies:
 - sphinx-sitemap: Generates XML sitemaps for Sphinx documentation
 - sphinxext-opengraph: OpenGraph metadata support for Sphinx documentation
 - tethered: Runtime network egress control for blocking unauthorized outbound connections in tests
+- twine: PyPI package metadata validator (used by the package-check pre-commit hook)
 - types-lxml: Type stubs for lxml
 
 Each of these components may have their own licenses. Users should refer to the 

@@ -47,7 +47,7 @@ def _post_init_method(func: Callable[[Any, Any], None]) -> Callable[[Any, Any], 
     :rtype: Callable[[Any, Any], None]
     """
     # Dynamically mark function as a post-init method for MRO collection
-    func.__post_init__ = True  # type: ignore[attr-defined]
+    func.__post_init__ = True  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
     return func
 
 
@@ -179,7 +179,7 @@ def _disable_direct_initialization(cls: type) -> type:
         # Allow normal instantiation for subclasses using the next __new__ in MRO
         # relative to the decorated class. This preserves behaviors of bases such
         # as Pydantic's BaseModel.__new__.
-        base_new = super(cls, inner_cls).__new__
+        base_new = super(cls, inner_cls).__new__  # ty: ignore[invalid-super-argument]
         try:
             return base_new(inner_cls, *args, **kwargs)
         except TypeError:
@@ -187,5 +187,5 @@ def _disable_direct_initialization(cls: type) -> type:
             return base_new(inner_cls)
 
     # Bind as __new__ on the class so the guard triggers only for the exact class
-    cls.__new__ = staticmethod(_guarded_new)
+    cls.__new__ = staticmethod(_guarded_new)  # ty: ignore[invalid-assignment]
     return cls

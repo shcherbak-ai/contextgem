@@ -460,7 +460,7 @@ def memory_profile_and_capture(
                 sys.stdout = baseline_buf
                 try:
                     baseline_profiled_func = profile(baseline_method)
-                    baseline_profiled_func()  # type: ignore
+                    baseline_profiled_func()
                 finally:
                     sys.stdout = baseline_original_stdout
                     # Store the captured profiling output in the class's memory_profiles dictionary
@@ -602,7 +602,7 @@ def memory_profile_and_capture(
 
             return result
 
-        return wrapper  # type: ignore[return-value]  # functools.wraps changes the wrapper type
+        return wrapper  # type: ignore[return-value]  # functools.wraps changes the wrapper type  # ty: ignore[invalid-return-type]
 
     if func is None:
         # Called with parameters: e.g. `@memory_profile_and_capture(max_memory=1.0)`

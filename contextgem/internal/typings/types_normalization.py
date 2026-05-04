@@ -89,13 +89,13 @@ def _normalize_type_annotation(tp: Any) -> Any:
             raise ValueError(
                 f"List type annotation must have exactly one type argument, got {len(args)}: {tp}"
             )
-        return list[_normalize_type_annotation(args[0])]
+        return list[_normalize_type_annotation(args[0])]  # ty: ignore[invalid-type-form]
 
     elif normalized_origin is dict:
         if not args or len(args) != 2:
             return dict
         return dict[
-            _normalize_type_annotation(args[0]), _normalize_type_annotation(args[1])
+            _normalize_type_annotation(args[0]), _normalize_type_annotation(args[1])  # ty: ignore[invalid-type-form]
         ]
 
     elif origin is Union or origin is Optional or isinstance(tp, UnionType):

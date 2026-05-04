@@ -163,7 +163,7 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
 
     def assign_pipeline(
         self,
-        pipeline: _ExtractionPipeline | _DocumentPipeline,  # type: ignore
+        pipeline: _ExtractionPipeline | _DocumentPipeline,
         overwrite_existing: bool = False,
     ) -> Self:
         """

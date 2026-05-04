@@ -70,9 +70,13 @@ class DocxConverter(_DocxConverterBase):
     - Images: Image objects constructed from embedded images in the DOCX file.
 
     Example:
-        .. literalinclude:: ../../../dev/usage_examples/readme/docx_converter.py
-            :language: python
-            :caption: DocxConverter usage example
+
+        .. code-block:: python
+
+            from contextgem import DocxConverter
+
+            converter = DocxConverter()
+            document = converter.convert("path/to/file.docx")
     """
 
     def __init__(self):
@@ -287,7 +291,7 @@ class DocxConverter(_DocxConverterBase):
             }
 
             # Create the document object
-            context_doc = Document(**doc_kwargs)
+            context_doc = Document(**doc_kwargs)  # ty: ignore[invalid-argument-type]
 
             if apply_markdown:
                 # Generate markdown text from the same paragraphs we extracted

@@ -126,10 +126,16 @@ with _suppress_litellm_warnings_context():
 
 
 if TYPE_CHECKING:
-    from contextgem.internal.base.llms import _DocumentLLM, _DocumentLLMGroup
+    # Self-import resolves the string forward references used by `cast(...)` calls
+    # later in this module (cast("_DocumentLLM", self), etc.). ty doesn't
+    # recognise the self-import idiom, but pyright/mypy do — keep it for them.
+    from contextgem.internal.base.llms import (
+        _DocumentLLM,  # ty: ignore[unresolved-import]
+        _DocumentLLMGroup,  # ty: ignore[unresolved-import]
+    )
 
 
-litellm.suppress_debug_info = True
+litellm.suppress_debug_info = True  # ty: ignore[invalid-assignment]
 
 
 # Local model providers supported via liteLLM
@@ -466,7 +472,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         else:
             # Safe cast: self is a _DocumentLLM because `is_group` is False
             await self._extract_instances(
-                **extract_instances_kwargs, llm=cast("_DocumentLLM", self)
+                **extract_instances_kwargs,  # ty: ignore[invalid-argument-type]
+                llm=cast("_DocumentLLM", self),
             )
 
         document_aspects = from_aspects if from_aspects else document.aspects
@@ -495,7 +502,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     _Document,
                     paragraphs=aspect.reference_paragraphs,
                 )
-                aspect_document.add_aspects(aspect.aspects)
+                aspect_document.add_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
                 await self.extract_aspects_from_document_async(
                     **extract_sub_aspects_kwargs, document=aspect_document
                 )
@@ -504,7 +511,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 # the aspect document.
                 aspect.aspects = aspect_document.aspects
 
-        return document_aspects
+        return document_aspects  # ty: ignore[invalid-return-type]
 
     def extract_concepts_from_aspect(
         self,
@@ -674,7 +681,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         else:
             # Safe cast: self is a _DocumentLLM because `is_group` is False
             await self._extract_instances(
-                **extract_instances_kwargs, llm=cast("_DocumentLLM", self)
+                **extract_instances_kwargs,  # ty: ignore[invalid-argument-type]
+                llm=cast("_DocumentLLM", self),
             )
 
         # Extract concepts from sub-aspects
@@ -917,8 +925,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
     def _check_instances_and_llm_params(
         self,
-        target: _Document | _Aspect,  # type: ignore
-        llm_or_group: _DocumentLLM | _DocumentLLMGroup,  # type: ignore
+        target: _Document | _Aspect,
+        llm_or_group: _DocumentLLM | _DocumentLLMGroup,
         instances_to_process: Sequence[_Aspect]
         | Sequence[_Concept]
         | None,  # using Sequence type with list validator for type checking
@@ -1044,7 +1052,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     @staticmethod
     def _prepare_message_kwargs_list(
         extracted_instance_type: ExtractedInstanceType,
-        source: _Document | _Aspect,  # type: ignore
+        source: _Document | _Aspect,
         llm: _DocumentLLM,
         instances_to_process: list[_Aspect] | list[_Concept],
         document: _Document,
@@ -1388,7 +1396,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     async def _extract_items_from_instances(
         self,
         extracted_item_type: ExtractedInstanceType,
-        source: _Document | _Aspect,  # type: ignore
+        source: _Document | _Aspect,
         llm: _DocumentLLM,
         instances_to_process: list[_Aspect] | list[_Concept],
         document: _Document,
@@ -1462,7 +1470,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         """
 
         def validate_source_in_document(
-            source: _Document | _Aspect,  # type: ignore
+            source: _Document | _Aspect,
             document: _Document,
         ) -> None:
             """
@@ -1483,7 +1491,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         def validate_vision_or_multimodal_llm_usage(
             extracted_item_type: ExtractedInstanceType,
             llm: _DocumentLLM,
-            source: _Document | _Aspect,  # type: ignore
+            source: _Document | _Aspect,
             add_references: bool,
         ) -> None:
             """
@@ -1552,7 +1560,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
         def validate_aspect_for_concept_extraction(
             extracted_item_type: ExtractedInstanceType,
-            source: _Document | _Aspect,  # type: ignore
+            source: _Document | _Aspect,
         ) -> None:
             """
             If extracting concepts from an Aspect, validates that the aspect's extracted items have
@@ -1655,7 +1663,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
         all_usage_data: _LLMUsage | None = None
         sources_mapper: dict[
-            str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]  # type: ignore
+            str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
         ] = {}
         instances_enumerated = dict(enumerate(instances_to_process))
 
@@ -1860,7 +1868,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                                             sent_dict["justification"]
                                         )
                                     extracted_item = _StringItem(
-                                        **extracted_item_kwargs
+                                        **extracted_item_kwargs  # ty: ignore[invalid-argument-type]
                                     )
                                     extracted_item.reference_paragraphs = [ref_para]
                                     extracted_item.reference_sentences = [ref_sent]
@@ -2132,7 +2140,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         ):  # ensure atomicity of the instances' state check and modification
             for _source_id, source_data in sources_mapper.items():
                 # Safe cast: "source" key always contains _Aspect or _Concept
-                source_instance = cast(_Aspect | _Concept, source_data["source"])  # type: ignore
+                source_instance = cast(_Aspect | _Concept, source_data["source"])
                 self._check_instances_already_processed(
                     instance_type=extracted_item_type,
                     instances=[source_instance],  # type: ignore
@@ -2170,7 +2178,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
     async def _extract_instances(
         self,
-        context: _Document | _Aspect,  # type: ignore
+        context: _Document | _Aspect,
         llm: _DocumentLLM,
         instance_type: ExtractedInstanceType,
         document: _Document,
@@ -2466,7 +2474,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             else:
                 # Process sequentially
                 for i, data in enumerate(data_list):
-                    result = await self._extract_items_from_instances(**data)
+                    result = await self._extract_items_from_instances(**data)  # ty: ignore[invalid-argument-type]
                     logger.debug(
                         f"Result for chunk ({i + 1}/{len(data_list)}) processed."
                     )
@@ -2481,7 +2489,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             retry_successful = await retry_processing_for_result(
                                 llm_instance=llm,
                                 res=result,
-                                instances=data["instances_to_process"],
+                                instances=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
                                 n_retries=llm.max_retries_invalid_data,
                                 retry_is_final=not llm.fallback_llm,
                             )
@@ -2491,7 +2499,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             retry_successful = await retry_processing_for_result(
                                 llm_instance=llm.fallback_llm,
                                 res=result,
-                                instances=data["instances_to_process"],
+                                instances=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
                                 n_retries=max(
                                     llm.fallback_llm.max_retries_invalid_data, 1
                                 ),  # retry with fallback LLM at least once
@@ -2509,8 +2517,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                                     )
                             else:
                                 instance_names = [
-                                    instance.name
-                                    for instance in data["instances_to_process"]
+                                    instance.name  # ty: ignore[unresolved-attribute]
+                                    for instance in data["instances_to_process"]  # ty: ignore[not-iterable]
                                 ]
                                 error_msg = (
                                     f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
@@ -2674,7 +2682,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         info_containers = []
         # For individual LLM, use self and its fallback
         # For group, iterate through all LLMs in self.llms
-        llms_to_process = self.llms if self.is_group else [self]  # type: ignore[attr-defined]
+        llms_to_process = self.llms if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         # Safe cast: llms_to_process contains only _DocumentLLM instances
         llms_to_process = cast(list["_DocumentLLM"], llms_to_process)
 
@@ -2736,12 +2744,12 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         ),
     )
 
-    _llm_extractor_text: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
-    _llm_reasoner_text: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
-    _llm_extractor_vision: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
-    _llm_reasoner_vision: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
-    _llm_extractor_multimodal: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
-    _llm_reasoner_multimodal: _DocumentLLM | None = PrivateAttr(default=None)  # type: ignore
+    _llm_extractor_text: _DocumentLLM | None = PrivateAttr(default=None)
+    _llm_reasoner_text: _DocumentLLM | None = PrivateAttr(default=None)
+    _llm_extractor_vision: _DocumentLLM | None = PrivateAttr(default=None)
+    _llm_reasoner_vision: _DocumentLLM | None = PrivateAttr(default=None)
+    _llm_extractor_multimodal: _DocumentLLM | None = PrivateAttr(default=None)
+    _llm_reasoner_multimodal: _DocumentLLM | None = PrivateAttr(default=None)
 
     def _set_private_attrs(self) -> None:
         """
@@ -2856,7 +2864,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         :rtype: None
         """
 
-        def get_llm_by_role(role: str) -> _DocumentLLM | None:  # type: ignore
+        def get_llm_by_role(role: str) -> _DocumentLLM | None:
             """
             Finds and returns the first LLM with the specified role.
 
@@ -3037,7 +3045,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         ge=0,
         description="Request timeout in seconds.",
     )
-    pricing_details: _LLMPricing | None = Field(  # type: ignore
+    pricing_details: _LLMPricing | None = Field(
         default=None,
         description="Explicit pricing configuration for cost calculation.",
     )
@@ -3045,7 +3053,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=False,
         description="Marks this LLM as a fallback model.",
     )
-    fallback_llm: _DocumentLLM | None = Field(  # type: ignore
+    fallback_llm: _DocumentLLM | None = Field(
         default=None,
         description=(
             "Fallback LLM to use if this one fails; must have the same role and output_language."
@@ -3332,7 +3340,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         prompt: str,
         *,
         images: list[_Image] | None = None,
-        chat_session: _ChatSession | None = None,  # type: ignore
+        chat_session: _ChatSession | None = None,
     ) -> str:
         """
         Synchronously sends a prompt to the LLM and gets a response.
@@ -3362,7 +3370,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         prompt: str,
         *,
         images: list[_Image] | None = None,
-        chat_session: _ChatSession | None = None,  # type: ignore
+        chat_session: _ChatSession | None = None,
     ) -> str:
         """
         Asynchronously sends a prompt to the LLM and gets a response.
@@ -3845,8 +3853,8 @@ class _DocumentLLM(_GenericLLMProcessor):
     @classmethod
     def _validate_fallback_llm(
         cls,
-        fallback_llm: _DocumentLLM | None,  # type: ignore
-    ) -> _DocumentLLM | None:  # type: ignore
+        fallback_llm: _DocumentLLM | None,
+    ) -> _DocumentLLM | None:
         """
         Validates the ``fallback_llm`` input to ensure it meets the expected condition
         of being a fallback LLM model.
@@ -4487,7 +4495,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
         drop_params: bool = False,
-        chat_session: _ChatSession | None = None,  # type: ignore
+        chat_session: _ChatSession | None = None,
     ) -> tuple[str | None, bool]:
         """
         Sends the initial request, processes any tool-calling loops up to the
@@ -4623,7 +4631,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         async_limiter: AsyncLimiter | None = None,
         drop_params: bool = False,
         raise_exception_on_llm_api_error: bool = True,
-        chat_session: _ChatSession | None = None,  # type: ignore
+        chat_session: _ChatSession | None = None,
     ) -> tuple[str | None, _LLMUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -4831,7 +4839,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         Retrieves the default system message for the LLM.
         """
         # _get_template returns a Template object when template_extension == "j2"
-        return _get_template(
+        return _get_template(  # ty: ignore[unresolved-attribute]
             "default_system_message",
             template_type="system",
             template_extension="j2",

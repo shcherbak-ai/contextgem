@@ -198,12 +198,12 @@ class TestAll(TestUtils):
     """
 
     # Default system messages
-    default_system_message_en = _get_template(
+    default_system_message_en = _get_template(  # ty: ignore[unresolved-attribute]
         "default_system_message",
         template_type="system",
         template_extension="j2",
     ).render({"output_language": "en"})  # type: ignore[attr-defined]
-    default_system_message_non_en = _get_template(
+    default_system_message_non_en = _get_template(  # ty: ignore[unresolved-attribute]
         "default_system_message",
         template_type="system",
         template_extension="j2",
@@ -354,37 +354,37 @@ class TestAll(TestUtils):
     _llm_reasoner_multimodal_kwargs_openai["role"] = "reasoner_multimodal"
 
     # Extractor text
-    llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)
+    llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # Reasoner text
-    llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)
+    llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # Extractor multimodal
-    llm_extractor_multimodal = DocumentLLM(**_llm_extractor_multimodal_kwargs_openai)
+    llm_extractor_multimodal = DocumentLLM(**_llm_extractor_multimodal_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # Reasoner multimodal
-    llm_reasoner_multimodal = DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai)
+    llm_reasoner_multimodal = DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # Extractor vision
     _llm_extractor_vision_kwargs_openai = deepcopy(_llm_extractor_text_kwargs_openai)
     _llm_extractor_vision_kwargs_openai["role"] = "extractor_vision"
-    llm_extractor_vision = DocumentLLM(**_llm_extractor_vision_kwargs_openai)
+    llm_extractor_vision = DocumentLLM(**_llm_extractor_vision_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # Reasoner vision
     _llm_reasoner_vision_kwargs_openai = deepcopy(_llm_reasoner_text_kwargs_openai)
     _llm_reasoner_vision_kwargs_openai["role"] = "reasoner_vision"
-    llm_reasoner_vision = DocumentLLM(**_llm_reasoner_vision_kwargs_openai)
+    llm_reasoner_vision = DocumentLLM(**_llm_reasoner_vision_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # LLM group
     _llm_group_llms = [
-        DocumentLLM(**_llm_extractor_text_kwargs_openai),
-        DocumentLLM(**_llm_reasoner_text_kwargs_openai),
-        DocumentLLM(**_llm_extractor_vision_kwargs_openai),
-        DocumentLLM(**_llm_reasoner_vision_kwargs_openai),
-        DocumentLLM(**_llm_extractor_multimodal_kwargs_openai),
-        DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai),
+        DocumentLLM(**_llm_extractor_text_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_reasoner_text_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_extractor_vision_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_reasoner_vision_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_extractor_multimodal_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai),  # ty: ignore[invalid-argument-type]
     ]  # newly initialized LLMs in group for separate usage and cost tracking)
-    llm_group = DocumentLLMGroup(llms=_llm_group_llms)
+    llm_group = DocumentLLMGroup(llms=_llm_group_llms)  # ty: ignore[invalid-argument-type]
 
     # LLM with fallback
     _invalid_llm_kwargs = {
@@ -392,16 +392,17 @@ class TestAll(TestUtils):
         "api_key": "invalid_api_key",
         "role": "extractor_text",
     }
-    llm_invalid = DocumentLLM(**_invalid_llm_kwargs)
-    invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)
+    llm_invalid = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
+    invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
     invalid_llm_with_valid_fallback.fallback_llm = DocumentLLM(
-        **_llm_extractor_text_kwargs_openai,
+        **_llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
         is_fallback=True,
     )
 
     # LLM with a non-EN output language setting
     llm_extractor_text_non_eng = DocumentLLM(
-        **_llm_extractor_text_kwargs_openai, output_language="adapt"
+        **_llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
+        output_language="adapt",
     )
 
     # Images
@@ -502,7 +503,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             LLMPricing(input_per_1m_tokens=-1, output_per_1m_tokens=0)
         with pytest.raises(ValueError):
-            LLMPricing(input_per_1m_tokens=0.1)  # type: ignore
+            LLMPricing(input_per_1m_tokens=0.1)
         # LLM cost model
         _LLMCost(input=Decimal("0.01"), output=Decimal("0.02"), total=Decimal("0.03"))
         with pytest.raises(ValueError):
@@ -558,7 +559,7 @@ class TestAll(TestUtils):
         ]
         for base_class in base_attr_classes:
 
-            class TestNoRequiredAttrs(base_class):
+            class TestNoRequiredAttrs(base_class):  # ty: ignore[unsupported-base]
                 value: str = "Test"  # no required attributes
 
                 @property
@@ -1248,7 +1249,7 @@ class TestAll(TestUtils):
             return "<<<not-json>>>", _LLMUsage()
 
         _orig_query_llm = llm._query_llm
-        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)
+        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
         try:
             with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
                 llm.extract_aspects_from_document(
@@ -1318,7 +1319,7 @@ class TestAll(TestUtils):
                     raise_exception_on_extraction_error=False,
                 )
         finally:
-            llm._query_llm = _orig_query_llm
+            llm._query_llm = _orig_query_llm  # ty: ignore[invalid-assignment]
 
         # === Without retries ===
         # raise_exception_on_extraction_error is True by default
@@ -1329,7 +1330,7 @@ class TestAll(TestUtils):
         )
 
         _orig_query_llm_no_retry = llm._query_llm
-        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)
+        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
         try:
             with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
                 llm.extract_aspects_from_document(
@@ -1399,7 +1400,7 @@ class TestAll(TestUtils):
                     raise_exception_on_extraction_error=False,
                 )
         finally:
-            llm._query_llm = _orig_query_llm_no_retry
+            llm._query_llm = _orig_query_llm_no_retry  # ty: ignore[invalid-assignment]
 
         # === Test invalid LLM without fallback LLM ===
         # raise_exception_on_extraction_error is True by default
@@ -1530,7 +1531,7 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                extra=True,  # extra fields not permitted
+                extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
 
         # Fallback LLM validation
@@ -1677,13 +1678,13 @@ class TestAll(TestUtils):
 
         # Invalid params
         with pytest.raises(ValueError):
-            DocumentLLMGroup()  # type: ignore
+            DocumentLLMGroup()
         with pytest.raises(ValueError):
             DocumentLLMGroup(llms=[])
         with pytest.raises(ValueError):
             DocumentLLMGroup(llms=[self.llm_reasoner_text])
         with pytest.raises(ValueError):
-            DocumentLLMGroup(llms=[1, True])  # type: ignore
+            DocumentLLMGroup(llms=[1, True])
         # Duplicate roles
         with pytest.raises(ValueError):
             DocumentLLMGroup(
@@ -1696,7 +1697,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             DocumentLLMGroup(
                 llms=[self.llm_extractor_text, self.llm_reasoner_text],
-                extra=True,  # extra fields not permitted # type: ignore
+                extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         with pytest.raises(ValueError):
             # Non-consistent output languages of the LLMs in the group
@@ -1734,7 +1735,7 @@ class TestAll(TestUtils):
         """
         # Test custom prompts assignment
         llm_with_updated_prompts = DocumentLLM(
-            **self._llm_extractor_text_kwargs_openai,
+            **self._llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
         )
         project_root = get_project_root_path()
         prompt_aspects_without_tags_path = (
@@ -1800,7 +1801,7 @@ class TestAll(TestUtils):
         """
 
         with pytest.raises(ValueError):
-            Image()  # type: ignore
+            Image()
         with pytest.raises(ValueError):
             Image(
                 mime_type="image/weoighwe",  # invalid MIME type  # type: ignore
@@ -1810,7 +1811,7 @@ class TestAll(TestUtils):
             Image(
                 mime_type="image/png",
                 base64_data="base 64 encoded string",
-                extra=True,  # extra fields not permitted  # type: ignore
+                extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         document = Document(images=[image])
         with pytest.raises(ValueError):
@@ -1998,7 +1999,7 @@ class TestAll(TestUtils):
         assert document.raw_text  # to be populated from paragraphs
         assert not document._md_text  # markdown text is not populated from paragraphs
         with pytest.raises(ValueError):
-            Paragraph()  # type: ignore
+            Paragraph()
         with pytest.raises(ValueError):
             Paragraph(
                 raw_text="Test paragraph",
@@ -2045,7 +2046,7 @@ class TestAll(TestUtils):
         Paragraph(raw_text=sentence.raw_text, sentences=[sentence])
         # Warning is logged if linebreaks occur in additional context
         with pytest.raises(ValueError):
-            Sentence()  # type: ignore
+            Sentence()
         Sentence(
             raw_text="Test sentence",
             additional_context="""
@@ -2364,12 +2365,12 @@ class TestAll(TestUtils):
         """
 
         with pytest.raises(ValueError):
-            Aspect()  # type: ignore
+            Aspect()
         with pytest.raises(ValueError):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                extra=True,  # extra fields not permitted  # type: ignore
+                extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         with pytest.raises(ValueError):
             Aspect(
@@ -2408,8 +2409,8 @@ class TestAll(TestUtils):
             aspect.add_aspects([])  # empty list
         with pytest.raises(ValueError):
             aspect.add_concepts(
-                [
-                    1,  # invalid type  # type: ignore
+                [  # ty: ignore[invalid-argument-type]
+                    1,  # invalid type
                 ]
             )
         with pytest.raises(ValueError, match="non-empty list"):
@@ -2462,7 +2463,7 @@ class TestAll(TestUtils):
                     name="Random",
                     description="Random",
                 ),
-            )  # tuple instead of list  # type: ignore
+            )  # tuple instead of list
         with pytest.raises(ValueError, match="list"):
             aspect.concepts = set([1, 2, 3])  # set instead of list  # type: ignore
         with pytest.raises(ValueError, match="list"):
@@ -2517,7 +2518,7 @@ class TestAll(TestUtils):
             )  # would be nesting level 2, max is 1
 
         # Verify no changes occurred due to invalid assignment
-        logger.debug(sub_aspect.aspects)
+        logger.debug(sub_aspect.aspects)  # ty: ignore[invalid-argument-type]
         assert not sub_aspect.aspects
 
         # Verify no changes occurred due to invalid assignments
@@ -2590,11 +2591,11 @@ class TestAll(TestUtils):
             )
 
         # Test attaching extracted items
-        string_concept.extracted_items = [_StringItem(value="Confidential data")]
+        string_concept.extracted_items = [_StringItem(value="Confidential data")]  # ty: ignore[invalid-assignment]
 
         # Test with invalid items
         with pytest.raises(ValueError):
-            string_concept.extracted_items = [
+            string_concept.extracted_items = [  # ty: ignore[invalid-assignment]
                 _BooleanItem(value=True)
             ]  # must be _StringItem
 
@@ -2627,11 +2628,11 @@ class TestAll(TestUtils):
             )
 
         # Test attaching extracted items
-        boolean_concept.extracted_items = [_BooleanItem(value=True)]
+        boolean_concept.extracted_items = [_BooleanItem(value=True)]  # ty: ignore[invalid-assignment]
 
         # Test with invalid items
         with pytest.raises(ValueError):
-            boolean_concept.extracted_items = [
+            boolean_concept.extracted_items = [  # ty: ignore[invalid-assignment]
                 _StringItem(value="True")
             ]  # must be _BooleanItem
         with pytest.raises(ValueError):
@@ -2847,29 +2848,29 @@ class TestAll(TestUtils):
         # Test attaching extracted items
         # Integer concept should accept only integer items
         int_item = _IntegerItem(value=42)
-        int_concept.extracted_items = [int_item]
+        int_concept.extracted_items = [int_item]  # ty: ignore[invalid-assignment]
 
         # Should reject float items for int concept
         with pytest.raises(ValueError):
-            int_concept.extracted_items = [_FloatItem(value=42.5)]
+            int_concept.extracted_items = [_FloatItem(value=42.5)]  # ty: ignore[invalid-assignment]
 
         # Float concept should accept only float items
         float_item = _FloatItem(value=3.14)
-        float_concept.extracted_items = [float_item]
+        float_concept.extracted_items = [float_item]  # ty: ignore[invalid-assignment]
 
         # Should reject integer items for float concept
         with pytest.raises(ValueError):
-            float_concept.extracted_items = [_IntegerItem(value=3)]
+            float_concept.extracted_items = [_IntegerItem(value=3)]  # ty: ignore[invalid-assignment]
 
         # Any numeric concept should accept both integer and float items
-        any_concept.extracted_items = [_IntegerOrFloatItem(value=20)]
-        any_concept.extracted_items = [_IntegerOrFloatItem(value=20.5)]
+        any_concept.extracted_items = [_IntegerOrFloatItem(value=20)]  # ty: ignore[invalid-assignment]
+        any_concept.extracted_items = [_IntegerOrFloatItem(value=20.5)]  # ty: ignore[invalid-assignment]
         # Should reject integer items for any numeric concept
         with pytest.raises(ValueError):
-            any_concept.extracted_items = [_IntegerItem(value=10)]
+            any_concept.extracted_items = [_IntegerItem(value=10)]  # ty: ignore[invalid-assignment]
         # Should reject float items for any numeric concept
         with pytest.raises(ValueError):
-            any_concept.extracted_items = [_FloatItem(value=10.5)]
+            any_concept.extracted_items = [_FloatItem(value=10.5)]  # ty: ignore[invalid-assignment]
 
         # Test with justifications and references
         concept_with_refs = NumericalConcept(
@@ -3033,9 +3034,9 @@ class TestAll(TestUtils):
         """
         # Base class direct initialization
         with pytest.raises(TypeError):
-            _Concept(name="Test", description="Test")  # type: ignore
+            _Concept(name="Test", description="Test")
         with pytest.raises(ValueError):
-            JsonObjectConcept()  # type: ignore
+            JsonObjectConcept()
         with pytest.raises(ValueError):
             JsonObjectConcept(
                 name="Business Information",
@@ -3043,7 +3044,7 @@ class TestAll(TestUtils):
                 structure={
                     "test": str,
                 },
-                extra=True,  # extra fields not permitted # type: ignore
+                extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         with pytest.raises(ValueError):
             JsonObjectConcept(
@@ -4078,7 +4079,7 @@ class TestAll(TestUtils):
         # Create a date string that matches the default format
         date_str = "02-03-2025"
         date_obj = default_date_concept._string_to_date(date_str)
-        default_date_concept.extracted_items = [_DateItem(value=date_obj)]
+        default_date_concept.extracted_items = [_DateItem(value=date_obj)]  # ty: ignore[invalid-assignment]
 
         # Test with invalid date string
         with pytest.raises(ValueError):
@@ -4087,7 +4088,7 @@ class TestAll(TestUtils):
 
         # Test with invalid items
         with pytest.raises(ValueError):
-            default_date_concept.extracted_items = [
+            default_date_concept.extracted_items = [  # ty: ignore[invalid-assignment]
                 _StringItem(value="15/01/2023")
             ]  # must be _DateItem
 
@@ -4189,8 +4190,8 @@ class TestAll(TestUtils):
 
         # Test with invalid items (wrong type)
         with pytest.raises(ValueError):
-            multi_class_concept.extracted_items = [
-                _StringItem(value="NDA")  # type: ignore
+            multi_class_concept.extracted_items = [  # ty: ignore[invalid-assignment]
+                _StringItem(value="NDA")
             ]  # must be _LabelItem
 
         # Test with invalid labels in extracted item
@@ -4245,7 +4246,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_extract_label_concept(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -4481,19 +4482,19 @@ class TestAll(TestUtils):
         with pytest.raises(TypeError):
             _ExtractedItem(value=1)
         with pytest.raises(ValueError):
-            _StringItem()  # type: ignore
+            _StringItem()
         with pytest.raises(ValueError):
             _BooleanItem(value=1)  # type: ignore
         with pytest.raises(ValueError):
-            _BooleanItem()  # type: ignore
+            _BooleanItem()
         with pytest.raises(ValueError):
             _BooleanItem(value="True")  # type: ignore
         with pytest.raises(ValueError):
-            _IntegerOrFloatItem()  # type: ignore
+            _IntegerOrFloatItem()
         with pytest.raises(ValueError):
             _IntegerOrFloatItem(value=int)  # type: ignore
         with pytest.raises(ValueError):
-            _JsonObjectItem()  # type: ignore
+            _JsonObjectItem()
         with pytest.raises(ValueError):
             _JsonObjectItem(value={})
         with pytest.raises(ValueError):
@@ -4501,7 +4502,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             _StringItem(
                 value="Random string",
-                extra=True,  # extra fields not permitted  # type: ignore
+                extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         with pytest.raises(ValueError):
             _LabelItem(value=[])
@@ -4639,7 +4640,7 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError):
                 Document(
                     raw_text="Random text",
-                    extra=True,  # extra fields not permitted  # type: ignore
+                    extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
                 )
             Document(
                 raw_text="Random text 1\n\nRandom text 2",
@@ -4690,7 +4691,7 @@ class TestAll(TestUtils):
                             description="Clauses describing liability of the parties",
                         )
                     ],
-                    extra=True,  # extra fields not permitted  # type: ignore
+                    extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
                 )
             ExtractionPipeline(
                 aspects=[
@@ -4738,8 +4739,8 @@ class TestAll(TestUtils):
             context.add_concepts([])  # empty list
         with pytest.raises(ValueError):
             context.add_aspects(
-                [
-                    "Random string",  # type: ignore
+                [  # ty: ignore[invalid-argument-type]
+                    "Random string",
                 ]  # invalid aspect type
             )
         with pytest.raises(ValueError):
@@ -4780,7 +4781,7 @@ class TestAll(TestUtils):
                     name="Random",
                     description="Random",
                 ),
-            )  # tuple instead of list  # type: ignore
+            )  # tuple instead of list
         with pytest.raises(ValueError, match="list"):
             context.concepts = set([1, 2, 3])  # set instead of list  # type: ignore
         with pytest.raises(ValueError, match="list"):
@@ -4810,7 +4811,9 @@ class TestAll(TestUtils):
         assert context.concepts is not document_concepts
         # Validate assignment
         with pytest.raises(ValueError):
-            context.concepts = document_concepts + [123]  # invalid concept type
+            context.concepts = document_concepts + [  # ty: ignore[invalid-assignment]
+                123
+            ]  # invalid concept type
         with pytest.raises(ValueError):
             context.concepts = document_concepts + [
                 StringConcept(
@@ -5040,7 +5043,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_system_messages")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5081,17 +5084,18 @@ class TestAll(TestUtils):
         # Invalid aspect types
         invalid_aspects = [1, True]
         with pytest.raises(ValueError):
-            self.document.aspects = invalid_aspects
+            self.document.aspects = invalid_aspects  # ty: ignore[invalid-assignment]
         with pytest.raises(ValueError):
             llm.extract_aspects_from_document(
-                self.document, from_aspects=invalid_aspects
+                self.document,
+                from_aspects=invalid_aspects,  # ty: ignore[invalid-argument-type]
             )
 
         # Invalid sequence types for "from_aspects"
         with pytest.raises(ValueError, match="list"):
             llm.extract_aspects_from_document(
                 self.document,
-                from_aspects=tuple(document_aspects),  # type: ignore
+                from_aspects=tuple(document_aspects),
             )
         with pytest.raises(ValueError, match="list"):
             llm.extract_aspects_from_document(
@@ -5224,7 +5228,7 @@ class TestAll(TestUtils):
             ]
         )
         for aspect in check_aspects:
-            self.check_extra_data_in_extracted_items(aspect)
+            self.check_extra_data_in_extracted_items(aspect)  # ty: ignore[invalid-argument-type]
 
         # Overwrite check
         with pytest.raises(ValueError):
@@ -5242,26 +5246,26 @@ class TestAll(TestUtils):
         assert overwrite_aspects == extracted_aspects
         self.check_instance_container_states(
             original_container=[document_aspects[0]],
-            assigned_container=extracted_aspects,
+            assigned_container=extracted_aspects,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
             llm_roles=llm.list_roles,
         )
 
         # Log sub-aspects for testing
         self.log_extracted_items_for_instance(
-            self.document.get_aspect_by_name(
+            self.document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
                 "Exclusions from confidential information"
             ).get_aspect_by_name("Information in possession of the receiving party"),
             full_repr=False,
         )
         self.log_extracted_items_for_instance(
-            self.document.get_aspect_by_name(
+            self.document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
                 "Exclusions from confidential information"
             ).get_aspect_by_name("Information received from a third party"),
             full_repr=False,
         )
         self.log_extracted_items_for_instance(
-            self.document.get_aspect_by_name(
+            self.document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
                 "Exclusions from confidential information"
             ).get_aspect_by_name("Independently developed information"),
             full_repr=False,
@@ -5277,7 +5281,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_extract_concepts_from_aspect(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5425,7 +5429,7 @@ class TestAll(TestUtils):
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
                 document=self.document,
-                from_concepts=invalid_concepts,
+                from_concepts=invalid_concepts,  # ty: ignore[invalid-argument-type]
             )
         with pytest.raises(ValueError):
             detached_concepts = [
@@ -5442,7 +5446,7 @@ class TestAll(TestUtils):
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
                 document=self.document,
-                from_concepts=tuple(attached_aspect.concepts),  # type: ignore
+                from_concepts=tuple(attached_aspect.concepts),
             )
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_aspect(
@@ -5498,7 +5502,7 @@ class TestAll(TestUtils):
         )
         assert attached_aspect.concepts == extracted_concepts
         self.check_instance_container_states(
-            original_container=aspect_concepts,
+            original_container=aspect_concepts,  # ty: ignore[invalid-argument-type]
             assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
@@ -5513,7 +5517,7 @@ class TestAll(TestUtils):
         )
         assert attached_aspect.concepts == extracted_concepts
         self.check_instance_container_states(
-            original_container=aspect_concepts,
+            original_container=aspect_concepts,  # ty: ignore[invalid-argument-type]
             assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
             llm_roles=llm.list_roles,
@@ -5590,7 +5594,7 @@ class TestAll(TestUtils):
                 ],
             ),
         ]
-        main_aspect.add_aspects(sub_aspects)
+        main_aspect.add_aspects(sub_aspects)  # ty: ignore[invalid-argument-type]
         document = self.document.clone()
         document.aspects = [main_aspect]
         llm.extract_all(document)
@@ -5598,12 +5602,12 @@ class TestAll(TestUtils):
             "Liability"
         ).get_aspect_by_name("Total liability")
         assert all(i.extracted_items for i in total_liability_sub_aspect.concepts)
-        self.log_extracted_items_for_instance(total_liability_sub_aspect)
+        self.log_extracted_items_for_instance(total_liability_sub_aspect)  # ty: ignore[invalid-argument-type]
         penalties_for_breach_sub_aspect = document.get_aspect_by_name(
             "Liability"
         ).get_aspect_by_name("Penalties for breach")
         assert all(i.extracted_items for i in penalties_for_breach_sub_aspect.concepts)
-        self.log_extracted_items_for_instance(penalties_for_breach_sub_aspect)
+        self.log_extracted_items_for_instance(penalties_for_breach_sub_aspect)  # ty: ignore[invalid-argument-type]
         assert (
             not document.get_aspect_by_name("Liability")
             .get_aspect_by_name("Cookie recipe")
@@ -5620,7 +5624,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_extract_concepts_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5659,13 +5663,13 @@ class TestAll(TestUtils):
         # Invalid types
         with pytest.raises(ValueError):
             invalid_concepts = [1, True]
-            self.document.concepts = invalid_concepts
+            self.document.concepts = invalid_concepts  # ty: ignore[invalid-assignment]
 
         # Invalid sequence types for "from_concepts"
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_document(
                 self.document,
-                from_concepts=tuple(self.document.concepts),  # type: ignore
+                from_concepts=tuple(self.document.concepts),
             )
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_document(
@@ -5852,7 +5856,7 @@ class TestAll(TestUtils):
             document_docx_ua,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_extract_all(self, document: Document, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5957,10 +5961,10 @@ class TestAll(TestUtils):
         # Overwrite check
         with pytest.raises(ValueError):
             llm.extract_all(document)
-        document = llm.extract_all(document, overwrite_existing=True)
+        document = llm.extract_all(document, overwrite_existing=True)  # ty: ignore[invalid-assignment]
         self.check_instance_container_states(
             original_container=list(document_aspects),
-            assigned_container=list(document.aspects),
+            assigned_container=list(document.aspects),  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
             llm_roles=llm.list_roles,
         )
@@ -5991,10 +5995,10 @@ class TestAll(TestUtils):
         assert document.concepts is not document_concepts
 
         # LLM extraction
-        document = llm.extract_all(document)
+        document = llm.extract_all(document)  # ty: ignore[invalid-assignment]
         self.check_instance_container_states(
             original_container=document_aspects,
-            assigned_container=document.aspects,
+            assigned_container=document.aspects,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
             llm_roles=llm.list_roles,
         )
@@ -6020,7 +6024,7 @@ class TestAll(TestUtils):
         ]
         document.concepts = document_concepts
         assert document.concepts is not document_concepts
-        document = llm.extract_all(document)
+        document = llm.extract_all(document)  # ty: ignore[invalid-assignment]
         self.check_instance_container_states(
             original_container=list(document_concepts),
             assigned_container=list(document.concepts),
@@ -6066,8 +6070,8 @@ class TestAll(TestUtils):
 
         self.invalid_llm_with_valid_fallback.extract_all(document)
         self.check_instance_container_states(
-            original_container=document_concepts,
-            assigned_container=document.concepts,
+            original_container=document_concepts,  # ty: ignore[invalid-argument-type]
+            assigned_container=document.concepts,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=_Concept,
             llm_roles=self.invalid_llm_with_valid_fallback.list_roles,
         )
@@ -6093,7 +6097,7 @@ class TestAll(TestUtils):
             document_docx_ua,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_serialization_and_cloning(
         self, document: Document, llm: DocumentLLMGroup | DocumentLLM
@@ -6298,9 +6302,9 @@ class TestAll(TestUtils):
             ),
         ]
         document.aspects = document_aspects
-        document.images = document_images
+        document.images = document_images  # ty: ignore[invalid-assignment]
         document.concepts = document_concepts
-        document = llm.extract_all(
+        document = llm.extract_all(  # ty: ignore[invalid-assignment]
             document,
             max_paragraphs_to_analyze_per_call=30,  # process contract in chunks to test for singular-occurrence concepts
             max_images_to_analyze_per_call=1,  # process invoices 1 by 1, to test for vision concepts in each
@@ -6348,7 +6352,7 @@ class TestAll(TestUtils):
 
         # Aspect serialization and deserialization
         for i, aspect in enumerate(document.aspects):
-            self.check_extra_data_in_extracted_items(aspect)
+            self.check_extra_data_in_extracted_items(aspect)  # ty: ignore[invalid-argument-type]
             self.check_instance_serialization_and_cloning(aspect)
 
             for extracted_item in aspect.extracted_items:
@@ -6402,8 +6406,8 @@ class TestAll(TestUtils):
             document.get_concept_by_name("Invoice number check")
         )
         self.check_instance_container_states(
-            original_container=self.extraction_pipeline.aspects,
-            assigned_container=document.aspects,
+            original_container=self.extraction_pipeline.aspects,  # ty: ignore[invalid-argument-type]
+            assigned_container=document.aspects,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
             llm_roles=llm.list_roles,
         )
@@ -6430,7 +6434,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])  # type: ignore
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
     @memory_profile_and_capture
     def test_aspect_extraction_from_paragraphs(
         self, llm: DocumentLLMGroup | DocumentLLM
@@ -6443,7 +6447,7 @@ class TestAll(TestUtils):
 
         paragraphs = _split_text_into_paragraphs(get_test_document_text())
         paragraphs = [Paragraph(raw_text=i) for i in paragraphs]
-        document = Document(paragraphs=paragraphs)
+        document = Document(paragraphs=paragraphs)  # ty: ignore[invalid-argument-type]
         assert document.raw_text  # to be populated from paragraphs
         aspects_to_extract = [
             Aspect(
@@ -6480,7 +6484,7 @@ class TestAll(TestUtils):
             llm_roles=llm.list_roles,
         )
         for aspect in extracted_aspects:
-            self.check_extra_data_in_extracted_items(aspect)
+            self.check_extra_data_in_extracted_items(aspect)  # ty: ignore[invalid-argument-type]
 
         # Extract with different paragraph chunks for context
         extracted_aspects = llm.extract_aspects_from_document(
@@ -7089,7 +7093,7 @@ class TestAll(TestUtils):
         assert (
             cs_fb.messages[1].role == "user"
             and "what's 2+2?" in cs_fb.messages[1].content.lower()  # type: ignore
-        )  # type: ignore
+        )
         assert cs_fb.messages[1]._response_succeeded is True
         assert (
             cs_fb.messages[2].role == "assistant" and "4" in cs_fb.messages[2].content
@@ -7126,11 +7130,11 @@ class TestAll(TestUtils):
         # remain with _response_succeeded == False and no assistant message should
         # be appended.
         cs_err_fb = ChatSession()
-        bad_primary = DocumentLLM(**self._invalid_llm_kwargs)
+        bad_primary = DocumentLLM(**self._invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
         invalid_llm_kwargs_2 = deepcopy(self._invalid_llm_kwargs)
         invalid_llm_kwargs_2["model"] = "newmodel/123"
         bad_primary.fallback_llm = DocumentLLM(
-            **invalid_llm_kwargs_2,
+            **invalid_llm_kwargs_2,  # ty: ignore[invalid-argument-type]
             is_fallback=True,
         )
 
@@ -7411,7 +7415,7 @@ class TestAll(TestUtils):
 
         # 1) register_tool with non-callable
         with pytest.raises(TypeError, match="Tool handler must be callable"):
-            register_tool(123)  # type: ignore[arg-type]
+            register_tool(123)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         # 2) register_tool with positional-only parameter
         def define_bad_handler():
@@ -8203,13 +8207,11 @@ class TestAll(TestUtils):
                     assert test_doc._md_text != baseline_doc._md_text, (
                         f"md_text should differ when {param_name}=False"
                     )
-                    test_doc_md_paras_merged = "".join(
-                        p._md_text
-                        for p in test_doc.paragraphs  # type: ignore
+                    test_doc_md_paras_merged = "".join(  # ty: ignore[no-matching-overload]
+                        p._md_text for p in test_doc.paragraphs
                     )
-                    baseline_doc_md_paras_merged = "".join(
-                        p._md_text
-                        for p in baseline_doc.paragraphs  # type: ignore
+                    baseline_doc_md_paras_merged = "".join(  # ty: ignore[no-matching-overload]
+                        p._md_text for p in baseline_doc.paragraphs
                     )
                     assert test_doc_md_paras_merged != baseline_doc_md_paras_merged, (
                         f"Paragraphs' md_text should differ when {param_name}=False"
@@ -8254,8 +8256,8 @@ class TestAll(TestUtils):
         # and we need to isolate such prompts for inspection.
         llm_group = DocumentLLMGroup(
             llms=[
-                DocumentLLM(**self._llm_extractor_text_kwargs_openai),
-                DocumentLLM(**self._llm_extractor_vision_kwargs_openai),
+                DocumentLLM(**self._llm_extractor_text_kwargs_openai),  # ty: ignore[invalid-argument-type]
+                DocumentLLM(**self._llm_extractor_vision_kwargs_openai),  # ty: ignore[invalid-argument-type]
             ]
         )
 

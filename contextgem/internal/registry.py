@@ -69,7 +69,7 @@ def _resolve_public_type(source_type: type[_TModel] | str) -> type[_TModel]:
                 internal_cls.__name__ == source_type
                 or f"{internal_cls.__module__}.{internal_cls.__name__}" == source_type
             ):
-                return public_cls
+                return public_cls  # ty: ignore[invalid-return-type]
         raise RuntimeError(
             f"No public class mapping registered for type name: {source_type!r}"
         )
@@ -79,7 +79,7 @@ def _resolve_public_type(source_type: type[_TModel] | str) -> type[_TModel]:
         raise RuntimeError(
             f"No public class mapping registered for type: {source_type!r}"
         )
-    return mapped
+    return mapped  # ty: ignore[invalid-return-type]
 
 
 def _publicize(source_type: type[_TModel], /, **data: Any) -> _TModel:

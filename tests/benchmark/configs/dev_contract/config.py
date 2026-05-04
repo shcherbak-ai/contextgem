@@ -201,6 +201,6 @@ def build_benchmark_document() -> Document:
         ),
     ]
 
-    doc.add_aspects(simple_aspects + reasoning_aspects + hallucination_aspects)
-    doc.add_concepts(simple_concepts + reasoning_concepts + hallucination_concepts)
+    doc.add_aspects(simple_aspects + reasoning_aspects + hallucination_aspects)  # ty: ignore[invalid-argument-type]
+    doc.add_concepts(simple_concepts + reasoning_concepts + hallucination_concepts)  # ty: ignore[invalid-argument-type]
     return doc

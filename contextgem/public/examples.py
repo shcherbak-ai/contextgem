@@ -37,7 +37,7 @@ from contextgem.internal.base.examples import (
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_StringExample)
+@_expose_in_registry(additional_key=_StringExample)  # ty: ignore[too-many-positional-arguments]
 class StringExample(_StringExample):
     """
     Represents a string example that can be provided by users for certain extraction tasks.
@@ -59,7 +59,7 @@ class StringExample(_StringExample):
     pass
 
 
-@_expose_in_registry(additional_key=_JsonObjectExample)
+@_expose_in_registry(additional_key=_JsonObjectExample)  # ty: ignore[too-many-positional-arguments]
 class JsonObjectExample(_JsonObjectExample):
     """
     Represents a JSON object example that can be provided by users for certain extraction tasks.

@@ -3,6 +3,7 @@
 Guidelines for AI coding assistants working with the ContextGem codebase.
 
 For detailed contribution procedures, see `CONTRIBUTING.md`, which covers:
+
 - Development environment setup
 - Project structure overview
 - VCR cassette recording scenarios
@@ -20,7 +21,7 @@ For detailed contribution procedures, see `CONTRIBUTING.md`, which covers:
 
 The codebase uses a two-layer architecture. **Always implement in internal first, then expose via public.**
 
-```
+```text
 contextgem/
 ├── internal/          # Core implementation (_underscore-prefixed classes)
 │   ├── base/          # Business logic (concepts, aspects, documents, llms)
@@ -56,7 +57,7 @@ class StringConcept(_StringConcept):
 | Constants | `_MAX_NESTING_LEVEL` (ALL_CAPS) |
 | Required import | `from __future__ import annotations` (except `__init__.py`) |
 | Formatter | Ruff (line length: 88) |
-| Type checker | Pyright (basic mode) |
+| Type checker | ty |
 | Docstrings | reStructuredText format for Sphinx (`:param:`, `:type:`, `:ivar:`, `:vartype:`, `:returns:`, `:rtype:`) |
 | Data models | Pydantic v2 (`BaseModel`, `field_validator`, `model_validator`) |
 

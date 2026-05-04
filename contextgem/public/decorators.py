@@ -65,7 +65,7 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
     if not isinstance(tool_name, str) or not tool_name.strip():
         raise ValueError("Tool name must be a non-empty string")
 
-    func.__contextgem_tool__ = True
-    func.__contextgem_tool_name__ = tool_name
+    func.__contextgem_tool__ = True  # ty: ignore[invalid-assignment]
+    func.__contextgem_tool_name__ = tool_name  # ty: ignore[invalid-assignment]
 
     return func

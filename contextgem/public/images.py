@@ -30,7 +30,7 @@ from contextgem.internal.base.images import _Image
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_Image)
+@_expose_in_registry(additional_key=_Image)  # ty: ignore[too-many-positional-arguments]
 class Image(_Image):
     """
     Represents an image with specified MIME type and base64-encoded data.

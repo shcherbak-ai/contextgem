@@ -1,0 +1,90 @@
+name: Publish
+
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+
+concurrency:
+  group: publish-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-gate:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify v* tag on main
+        id: check
+        run: |
+          SHA="${{ github.event.workflow_run.head_sha }}"
+
+          # Check for an actual v* tag pointing at this commit
+          TAG=$(git tag --points-at "$SHA" | grep '^v' | head -n1)
+          if [ -z "$TAG" ]; then
+            echo "::notice::No v* tag at $SHA — skipping."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Verify the tagged commit is on main
+          if ! git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::notice::Tag $TAG is not on main — skipping."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Publishing $TAG ($SHA)"
+          echo "should_publish=true" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: [publish-gate]
+    if: needs.publish-gate.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: dist
+          path: dist/*
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e  # v1.13.0
