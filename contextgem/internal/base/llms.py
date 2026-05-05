@@ -37,6 +37,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+import tethered
 from aiolimiter import AsyncLimiter
 from fastjsonschema import validate as _jsonschema_validate
 from fastjsonschema.exceptions import JsonSchemaException as _JSONSchemaValidationError
@@ -147,6 +148,11 @@ _LOCAL_MODEL_PROVIDERS = [
 
 # Rounding precision for reporting LLM costs (quantize on access only)
 _COST_QUANT = Decimal("0.00001")
+
+# Network destinations required by genai-prices to refresh cached pricing data.
+# Used by `tethered.scope` to constrain egress in `_calculate_auto_pricing_costs`,
+# and imported by tests/conftest.py to keep the test allowlist in sync.
+_GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
 
 class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
@@ -4930,6 +4936,18 @@ class _DocumentLLM(_GenericLLMProcessor):
                 llm._usage = _LLMUsage()
                 llm._cost = _LLMCost()
 
+    @tethered.scope(
+        allow=list(_GENAI_PRICES_REFRESH_HOSTS),
+        label="contextgem._calculate_auto_pricing_costs",
+        hint=(
+            "ContextGem refreshes LLM pricing data from raw.githubusercontent.com "
+            "via genai-prices when DocumentLLM(auto_pricing_refresh=True). "
+            "If your app uses tethered.activate(), allow raw.githubusercontent.com "
+            "— or set auto_pricing_refresh=False to use bundled pricing data, "
+            "or set pricing_details=LLMPricing(...) to bypass genai-prices entirely. "
+            "See https://contextgem.dev/llms/llm_config/"
+        ),
+    )
     def _calculate_auto_pricing_costs(
         self, input_tokens: int, output_tokens: int
     ) -> tuple[Decimal, Decimal]:

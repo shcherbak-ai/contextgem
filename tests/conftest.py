@@ -35,8 +35,10 @@ import pytest
 import tethered
 from vcr.stubs import httpcore_stubs
 
+from contextgem.internal.base.llms import _GENAI_PRICES_REFRESH_HOSTS
 from contextgem.internal.loggers import logger
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
+from contextgem.internal.utils import _SAT_MODEL_DOWNLOAD_HOSTS
 from contextgem.public.utils import reload_logger_settings
 
 
@@ -169,18 +171,16 @@ def _cassette_exists(cassette_path: str) -> bool:
 # Approved network destinations for tethered egress control.
 # During replay: only HuggingFace (SaT model downloads not captured by VCR).
 # During recording: LLM API endpoints + HuggingFace + genai-prices refresh.
-_TETHERED_REPLAY_ALLOW = [
-    "huggingface.co",  # SaT model downloads (not captured by VCR)
-    "*.huggingface.co",
-    "hf.co",
-    "*.hf.co",
-]
+# Host constants are sourced from production code so the test allowlist
+# cannot drift from the per-call `tethered.scope` allowlists.
+_TETHERED_REPLAY_ALLOW = list(_SAT_MODEL_DOWNLOAD_HOSTS)
 
 _TETHERED_RECORDING_ALLOW = [
     "*.openai.azure.com",  # Azure OpenAI
     "api.openai.com",  # OpenAI
-    "raw.githubusercontent.com",  # genai-prices auto-refresh
-] + _TETHERED_REPLAY_ALLOW
+    *_GENAI_PRICES_REFRESH_HOSTS,  # genai-prices auto-refresh
+    *_TETHERED_REPLAY_ALLOW,
+]
 
 # Sentinel for tethered's locked mode — required to deactivate a locked policy.
 # Held privately in this module so test code cannot trip the policy off.

@@ -477,14 +477,23 @@ For local LLM testing, install the following tools and download the relevant mod
 
 #### Network Egress Control
 
-The test suite uses [tethered](https://github.com/shcherbak-ai/tethered) to enforce network egress control at the socket level during VCR-marked tests:
+ContextGem uses [tethered](https://github.com/shcherbak-ai/tethered) for network egress control in **two complementary places**:
+
+**1. Production code (`tethered.scope`)** — the two non-LLM paths the framework controls are wrapped with `tethered.scope`, which can only narrow (intersection-only) egress and never widens a host application's policy:
+
+- `contextgem/internal/utils.py::_load_sat_model` — restricted to HuggingFace hosts (`_SAT_MODEL_DOWNLOAD_HOSTS`)
+- `contextgem/internal/base/llms.py::_calculate_auto_pricing_costs` — restricted to `raw.githubusercontent.com` (`_GENAI_PRICES_REFRESH_HOSTS`)
+
+LLM API calls are deliberately **not** scoped — endpoints are user-configured (Azure custom domains, OpenAI-compatible proxies, self-hosted, etc.) and are left to the host application's own egress policy.
+
+**2. Test suite (`tethered.activate`)** — enforces egress control at the socket level during VCR-marked tests:
 
 - **Replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
 - **Recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data) and localhost for local LLMs
 
 The fixture activates tethered in **hardened mode** (`locked=True` with a private lock token, `external_subprocess_policy="block"`), so test code can't disable the policy mid-test and non-Python subprocesses are refused — closing the shell-egress bypass.
 
-If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
+The host allowlists in `tests/conftest.py` are sourced from the production constants (`_SAT_MODEL_DOWNLOAD_HOSTS`, `_GENAI_PRICES_REFRESH_HOSTS`) so the test allowlist cannot drift from the per-call production scopes. If you add tests that connect to new endpoints (other than these two), update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
 
 ---
 

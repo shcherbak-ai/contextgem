@@ -32,6 +32,7 @@ from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
 
+import tethered
 from jinja2 import Environment, Template, nodes
 from wtpsplit_lite import SaT
 
@@ -61,6 +62,17 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+
+
+# Network destinations required to download SaT models from HuggingFace.
+# Used by `tethered.scope` to constrain egress in `_load_sat_model`, and
+# imported by tests/conftest.py to keep the test allowlist in sync.
+_SAT_MODEL_DOWNLOAD_HOSTS: tuple[str, ...] = (
+    "huggingface.co",
+    "*.huggingface.co",
+    "hf.co",
+    "*.hf.co",
+)
 
 
 def _get_template(
@@ -707,6 +719,18 @@ def _validate_parsed_llm_output(
     return parsed_json
 
 
+@tethered.scope(
+    allow=list(_SAT_MODEL_DOWNLOAD_HOSTS),
+    label="contextgem._load_sat_model",
+    hint=(
+        "ContextGem downloads SaT models from HuggingFace for paragraph and "
+        "sentence segmentation. If your app uses tethered.activate(), allow "
+        "huggingface.co, *.huggingface.co, hf.co, *.hf.co — or set "
+        "Document(paragraph_segmentation_mode='newlines') and "
+        "Document(sat_model_id=<local_path>) to avoid downloads. "
+        "See https://contextgem.dev/documents/document_config/"
+    ),
+)
 def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     """
     Loads a SaT model to be used for paragraphs and sentence segmentation.

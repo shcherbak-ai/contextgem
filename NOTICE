@@ -38,6 +38,7 @@ Core Dependencies:
 - pydantic: Data validation
 - python-ulid: ULID generation
 - tenacity: Retry library for Python
+- tethered: Runtime network egress control; used to constrain SaT model downloads (HuggingFace) and genai-prices refresh (raw.githubusercontent.com) to known hosts, and to enforce egress policy in tests
 - typing-extensions: Type annotation extensions
 - wtpsplit-lite: Lightweight version of wtpsplit that only retains accelerated ONNX inference of SaT models with minimal dependencies
 
@@ -67,7 +68,6 @@ Development Dependencies:
 - sphinx-design: Component library for Sphinx documentation
 - sphinx-sitemap: Generates XML sitemaps for Sphinx documentation
 - sphinxext-opengraph: OpenGraph metadata support for Sphinx documentation
-- tethered: Runtime network egress control for blocking unauthorized outbound connections in tests
 - twine: PyPI package metadata validator (used by the package-check pre-commit hook)
 - types-lxml: Type stubs for lxml
 

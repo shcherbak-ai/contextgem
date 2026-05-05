@@ -166,3 +166,5 @@ uv run pytest tests/test_all.py::TestAll::test_specific  # Run specific test
 3. **README.md is auto-generated** - edit `dev/readme.template.md` instead
 4. **Never stage or commit** - let the developer handle all git operations
 5. **Always run pre-commit** after code changes before considering work complete
+6. **Never edit version fields by hand** - `cz bump` owns `pyproject.toml:version`, `contextgem/__init__.py:__version__`, `CITATION.cff:version`, and `[tool.commitizen].version`. `CHANGELOG.md` is hand-maintained, so writing the next version's section there is fine.
+7. **GitHub Actions SHA pinning: use the commit SHA, not the tag-object SHA** - some action repos (e.g. `github/codeql-action`) use annotated tags. `git/refs/tags/<tag>` returns the tag-object SHA for those, which is *not* what `uses:` should pin to. Resolve via `repos/{owner}/{repo}/commits/<tag>` (auto-dereferences) or `git/tags/<sha>` to get the underlying commit SHA.

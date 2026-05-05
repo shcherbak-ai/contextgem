@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.24.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.24.0) - 2026-05-05
+
+### Added
+
+- Runtime network egress scopes via [tethered](https://github.com/shcherbak-ai/tethered) on the two non-LLM paths ContextGem controls: SaT model downloads (HuggingFace) in `_load_sat_model`, and genai-prices pricing-data refresh (raw.githubusercontent.com) in `_calculate_auto_pricing_costs`. Each scope carries a `hint=` so that, if a host application's `tethered.activate()` blocks the call, the resulting `EgressBlocked` traceback names the host and the escape hatch (e.g. `paragraph_segmentation_mode='newlines'`, `auto_pricing_refresh=False`). LLM API calls are deliberately **not** scoped — endpoints are user-configured and remain governed by the host application's own policy.
+
+### Changed
+
+- Promoted `tethered` from a development-only dependency to a runtime dependency to support the production scopes above.
+
 ## [0.23.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.23.0) - 2026-05-04
 
 ### Changed
