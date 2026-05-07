@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.25.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.25.0) - 2026-05-07
+
+### Changed
+
+- Concurrent fan-out for sub-aspect/sub-concept extraction and failed-chunk retries: when `use_concurrency=True`, these now run via `asyncio.gather` instead of awaiting per item, reducing wall-clock latency for documents whose aspects contain sub-aspect groups, and for retry batches when several chunks return invalid data at once.
+- Upgraded pinned dependency version: `genai-prices==0.0.59`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
 ## [0.24.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.24.0) - 2026-05-05
 
 ### Added
