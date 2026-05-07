@@ -492,30 +492,46 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
             "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
+        # Build per-aspect sub-aspect documents up front; validation and
+        # skip-logging stay deterministic before any concurrent work starts.
+        sub_aspect_jobs: list[tuple[_Aspect, _Document]] = []
         for aspect in document_aspects:
-            if aspect.aspects:
-                # Validate proper nesting level of sub-aspects
-                self._validate_sub_aspects_nesting_level(aspect)
-                logger.info(f"Extracting sub-aspects for aspect `{aspect.name}`")
-                if not aspect.reference_paragraphs:
-                    logger.info(
-                        f"Aspect `{aspect.name}` has no extracted paragraphs. "
-                        f"Sub-aspects will not be extracted."
-                    )
-                    continue
-                # Treat an aspect as a document containing sub-aspects
-                aspect_document = _publicize(
-                    _Document,
-                    paragraphs=aspect.reference_paragraphs,
+            if not aspect.aspects:
+                continue
+            # Validate proper nesting level of sub-aspects
+            self._validate_sub_aspects_nesting_level(aspect)
+            logger.info(f"Extracting sub-aspects for aspect `{aspect.name}`")
+            if not aspect.reference_paragraphs:
+                logger.info(
+                    f"Aspect `{aspect.name}` has no extracted paragraphs. "
+                    f"Sub-aspects will not be extracted."
                 )
-                aspect_document.add_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
-                await self.extract_aspects_from_document_async(
-                    **extract_sub_aspects_kwargs, document=aspect_document
+                continue
+            # Treat an aspect as a document containing sub-aspects
+            aspect_document = _publicize(
+                _Document,
+                paragraphs=aspect.reference_paragraphs,
+            )
+            aspect_document.add_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
+            sub_aspect_jobs.append((aspect, aspect_document))
+
+        if sub_aspect_jobs:
+            cals_and_kwargs = [
+                (
+                    self.extract_aspects_from_document_async,
+                    {**extract_sub_aspects_kwargs, "document": doc},
                 )
+                for _, doc in sub_aspect_jobs
+            ]
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+            await _run_async_calls(
+                cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+            )
+            for aspect, doc in sub_aspect_jobs:
                 # Overwrite the sub-aspects with the newly extracted ones,
                 # as the sub-aspects were deep-copied when attached to
                 # the aspect document.
-                aspect.aspects = aspect_document.aspects
+                aspect.aspects = doc.aspects
 
         return document_aspects  # ty: ignore[invalid-return-type]
 
@@ -705,6 +721,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             logger.info(
                 f"Extracting concepts from sub-aspects for aspect `{aspect.name}`"
             )
+            sub_aspect_jobs: list[tuple[_Aspect, _Document]] = []
             for sub_aspect in aspect.aspects:
                 if not sub_aspect.reference_paragraphs:
                     logger.info(
@@ -718,15 +735,31 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     paragraphs=sub_aspect.reference_paragraphs,
                 )
                 sub_aspect_document.add_aspects([sub_aspect])
-                sub_aspect_concepts = await self.extract_concepts_from_aspect_async(
-                    **extract_concepts_from_sub_aspects_kwargs,
-                    aspect=sub_aspect,
-                    document=sub_aspect_document,
+                sub_aspect_jobs.append((sub_aspect, sub_aspect_document))
+
+            if sub_aspect_jobs:
+                cals_and_kwargs = [
+                    (
+                        self.extract_concepts_from_aspect_async,
+                        {
+                            **extract_concepts_from_sub_aspects_kwargs,
+                            "aspect": sub_aspect,
+                            "document": sub_aspect_document,
+                        },
+                    )
+                    for sub_aspect, sub_aspect_document in sub_aspect_jobs
+                ]
+                cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+                results = await _run_async_calls(
+                    cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
                 )
-                # Overwrite the sub-aspects with the newly extracted ones,
-                # as the sub-aspects were deep-copied when attached to
-                # the sub-aspect document.
-                sub_aspect.concepts = sub_aspect_concepts
+                for (sub_aspect, _), sub_aspect_concepts in zip(
+                    sub_aspect_jobs, results, strict=True
+                ):
+                    # Overwrite the sub-aspects with the newly extracted ones,
+                    # as the sub-aspects were deep-copied when attached to
+                    # the sub-aspect document.
+                    sub_aspect.concepts = sub_aspect_concepts
 
         # Explicitly return list of concepts for type checking
         return list(from_concepts) if from_concepts else list(aspect.concepts)
@@ -2423,31 +2456,66 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 for result in results:
                     await llm._update_usage_and_cost(result)
 
-                # Retry failed chunks if needed
-                for chunk, result in zip(data_chunks, results, strict=True):
-                    if not _llm_call_result_is_valid(result):
-                        retry_successful = False
-                        if llm.max_retries_invalid_data > 0:
-                            retry_successful = await retry_processing_for_result(
-                                llm_instance=llm,
-                                res=result,
-                                instances=chunk,
-                                n_retries=llm.max_retries_invalid_data,
-                                retry_is_final=not llm.fallback_llm,
-                            )
-                        # Retry with fallback LLM if it is provided
-                        if not retry_successful and llm.fallback_llm:
-                            logger.info("Trying with fallback LLM")
-                            retry_successful = await retry_processing_for_result(
-                                llm_instance=llm.fallback_llm,
-                                res=result,
-                                instances=chunk,
-                                n_retries=max(
-                                    llm.fallback_llm.max_retries_invalid_data, 1
-                                ),  # retry with fallback LLM at least once
-                                retry_is_final=True,
-                            )
-                        if not retry_successful:
+                # Retry failed chunks concurrently. Original chunk order is preserved
+                # in `failed_pairs` so post-gather handling raises the first failure
+                # by chunk index, matching prior sequential semantics.
+                async def retry_chunk_with_fallback(
+                    chunk: list[_Aspect] | list[_Concept],
+                    result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage],
+                ) -> bool:
+                    """
+                    Retries a single failed chunk on the primary LLM and then on
+                    the fallback LLM (if configured), returning whether either
+                    retry path produced a valid result.
+
+                    :param chunk: The chunk of instances to retry.
+                    :type chunk: list[_Aspect] | list[_Concept]
+                    :param result: The original failed extraction result.
+                    :type result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
+                    :return: True if any retry succeeded, False otherwise.
+                    :rtype: bool
+                    """
+                    retry_successful = False
+                    if llm.max_retries_invalid_data > 0:
+                        retry_successful = await retry_processing_for_result(
+                            llm_instance=llm,
+                            res=result,
+                            instances=chunk,
+                            n_retries=llm.max_retries_invalid_data,
+                            retry_is_final=not llm.fallback_llm,
+                        )
+                    if not retry_successful and llm.fallback_llm:
+                        logger.info("Trying with fallback LLM")
+                        retry_successful = await retry_processing_for_result(
+                            llm_instance=llm.fallback_llm,
+                            res=result,
+                            instances=chunk,
+                            n_retries=max(
+                                llm.fallback_llm.max_retries_invalid_data, 1
+                            ),  # retry with fallback LLM at least once
+                            retry_is_final=True,
+                        )
+                    return retry_successful
+
+                failed_pairs = [
+                    (chunk, result)
+                    for chunk, result in zip(data_chunks, results, strict=True)
+                    if not _llm_call_result_is_valid(result)
+                ]
+                if failed_pairs:
+                    retry_outcomes = await asyncio.gather(
+                        *(
+                            retry_chunk_with_fallback(chunk, result)
+                            for chunk, result in failed_pairs
+                        ),
+                        return_exceptions=True,
+                    )
+                    for (chunk, _), outcome in zip(
+                        failed_pairs, retry_outcomes, strict=True
+                    ):
+                        if isinstance(outcome, BaseException):
+                            raise outcome
+                        if not outcome:
                             if llm.max_retries_invalid_data > 0 or llm.fallback_llm:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have

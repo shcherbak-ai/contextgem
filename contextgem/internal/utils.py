@@ -75,6 +75,20 @@ _SAT_MODEL_DOWNLOAD_HOSTS: tuple[str, ...] = (
 )
 
 
+# Pre-compiled patterns for hot-path text cleaning and LLM-output parsing.
+_RE_CONTROL_CHARS_PRESERVE_NEWLINES = re.compile(
+    r"[\x00-\x09\x0B-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]"
+)
+_RE_CONTROL_CHARS_ALL = re.compile(
+    r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]"
+)
+_RE_NORMALIZE_NEWLINES = re.compile(r"\r\n|\r")
+_RE_HORIZONTAL_WHITESPACE = re.compile(r"[ \t]+")
+_RE_EXTRA_BLANK_LINES = re.compile(r"\n{3,}")
+_RE_ANY_WHITESPACE = re.compile(r"\s+")
+_RE_JSON_CODE_BLOCK = re.compile(r"^```json\s*([\s\S]*?)\s*```$")
+
+
 def _get_template(
     template_name: str,
     template_type: Literal["prompt", "system"] = "prompt",
@@ -223,16 +237,10 @@ def _clean_control_characters(
         # - Zero-width characters
         # - Bidirectional text markers
         # - Other invisible unicode characters
-        cleaned = re.sub(
-            r"[\x00-\x09\x0B-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]",
-            "",
-            text,
-        )
+        cleaned = _RE_CONTROL_CHARS_PRESERVE_NEWLINES.sub("", text)
     else:
         # Remove all control characters including newlines
-        cleaned = re.sub(
-            r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]", "", text
-        )
+        cleaned = _RE_CONTROL_CHARS_ALL.sub("", text)
 
     return cleaned.strip() if strip_text else cleaned
 
@@ -258,7 +266,7 @@ def _clean_text_for_llm_prompt(
 
     if preserve_linebreaks:
         # Normalize newlines to \n
-        cleaned = re.sub(r"\r\n|\r", "\n", text)
+        cleaned = _RE_NORMALIZE_NEWLINES.sub("\n", text)
 
         # Remove control characters except newlines
         cleaned = _clean_control_characters(
@@ -267,10 +275,10 @@ def _clean_text_for_llm_prompt(
 
         # Replace horizontal whitespace sequences (spaces and tabs) with a single space
         # while preserving linebreaks
-        cleaned = re.sub(r"[ \t]+", " ", cleaned)
+        cleaned = _RE_HORIZONTAL_WHITESPACE.sub(" ", cleaned)
 
         # Remove extra blank lines (more than one consecutive newline)
-        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+        cleaned = _RE_EXTRA_BLANK_LINES.sub("\n\n", cleaned)
 
     else:
         # Remove all control characters including newlines
@@ -279,7 +287,7 @@ def _clean_text_for_llm_prompt(
         )
 
         # Remove all whitespace sequences with a single space
-        cleaned = re.sub(r"\s+", " ", cleaned)
+        cleaned = _RE_ANY_WHITESPACE.sub(" ", cleaned)
 
     # We may want to preserve leading/trailing whitespace for markdown representation
     # of paragraphs, e.g. for indentation in lists.
@@ -635,26 +643,26 @@ def _parse_llm_output_as_json(
         return None
 
     try:
-        return json.loads(output_str)
+        parsed = json.loads(output_str)
 
     except json.JSONDecodeError:
         try:
             # Handle markdown code blocks using regex
-
             answer = output_str.strip()
-
-            # Pattern to match content between ```json
-            # (at string start) and ``` (at string end) markers
-            json_block_pattern = r"^```json\s*([\s\S]*?)\s*```$"
-            match = re.match(json_block_pattern, answer)
+            match = _RE_JSON_CODE_BLOCK.match(answer)
 
             if match:
                 # Get the content between the markers
                 answer = match.group(1).strip()
 
-            return json.loads(answer)
+            parsed = json.loads(answer)
         except json.JSONDecodeError:
             return None
+
+    # JSON primitives (numbers, booleans, strings, null) are not extraction
+    # outputs — only dict/list root values are valid. Reject anything else
+    # to honor the declared return type.
+    return parsed if isinstance(parsed, dict | list) else None
 
 
 def _validate_parsed_llm_output(

@@ -112,7 +112,9 @@ contextgem/
 │
 ├── tests/
 │   ├── cassettes/                # 📼 VCR recordings (auto-generated)
-│   ├── test_all.py               # ✅ Add your tests here
+│   ├── test_all.py               # ✅ Feature/integration tests
+│   ├── test_properties.py        # 🎲 Hypothesis property tests for pure helpers
+│   ├── test_units.py             # 🔬 Example-based unit tests for pure helpers
 │   ├── utils.py                  # 🛠️ Test utilities & dummy env vars
 │   └── ...                       # 📁 Test data files
 │
@@ -133,7 +135,7 @@ contextgem/
 **🎯 Quick Start for Your Contribution:**
 
 - **Adding new functionality?** → Implement in `contextgem/internal/` (core logic). Then expose via a thin public facade in `contextgem/public/` using the registry.
-- **Writing tests?** → Add to `tests/test_all.py::TestAll`  
+- **Writing tests?** → Feature/integration tests go to `tests/test_all.py::TestAll`. Property tests for pure helpers go to `tests/test_properties.py`. Example-based unit tests for pure helpers go to `tests/test_units.py`.
 - **Updating docs?** → Edit files in `docs/source/` or `dev/`
 - **Fixing README?** → Edit `dev/readme.template.md`
 
@@ -272,9 +274,13 @@ By submitting issues or feature requests to this project, you acknowledge that t
 
 ### 🏗️ Current Test Structure
 
-Currently, all tests are located in a single file: `tests/test_all.py` within the `TestAll` class. When adding new tests, place them in this file following the existing patterns.
+Tests are split across three files:
 
-> **Note:** We plan to refactor tests into multiple files for better maintainability in the future, but for now all tests should be added to `tests/test_all.py`.
+- **`tests/test_all.py`** (the `TestAll` class) — feature and integration tests, including all LLM-backed extraction tests that replay through VCR cassettes. Most contributions belong here.
+- **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no fixtures, no cassettes.
+- **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no fixtures, no cassettes.
+
+> **Note:** We plan to refactor `test_all.py` into multiple files for better maintainability in the future, but for now feature/integration tests should be added there.
 
 ### 📏 Testing Guidelines
 
@@ -286,6 +292,27 @@ Currently, all tests are located in a single file: `tests/test_all.py` within th
   ```bash
   uv run pytest --cov=contextgem
   ```
+
+---
+
+### 🎲 Tests for Pure Helpers (Property-Based and Example-Based)
+
+Pure utility helpers in `contextgem/internal/` (text cleaning, JSON parsing, type-hint serialization, tool-schema generation, etc.) are covered by two complementary test files. Both run without LLMs, fixtures, or cassettes.
+
+**`tests/test_properties.py`** — property-based tests using [Hypothesis](https://hypothesis.readthedocs.io/). Property tests assert **invariants that must hold for any input** ("running the function twice yields the same result", "concatenating chunks recovers the original list", "serialize then deserialize round-trips") rather than checking hand-picked input/output pairs. Hypothesis generates many varied inputs and shrinks any failure to a minimal reproducer.
+
+Reach for a property test when:
+
+- You're working with a pure deterministic function with an abstract contract.
+- You can describe correctness as one or more invariants (idempotence, round-trip, bounds, length-preservation, etc.).
+
+**`tests/test_units.py`** — example-based unit tests that pin specific input/output contracts. Reach for a unit test when:
+
+- The function's correctness is "this specific output for this specific input" (e.g., "this Python type maps to this JSON schema").
+- You need to assert a specific error message or exception type.
+- The behavior is contract-shaped rather than invariant-shaped.
+
+Stick with `test_all.py` for feature/integration scenarios where correctness depends on full document/aspect/concept extraction flows — most LLM-backed tests fall into this category.
 
 ---
 
