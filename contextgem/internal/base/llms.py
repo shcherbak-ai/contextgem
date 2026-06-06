@@ -512,6 +512,11 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 _Document,
                 paragraphs=aspect.reference_paragraphs,
             )
+            # Keep the sub-aspects' nesting levels intact: the extraction engine
+            # checks "aspect is assigned to document" via instance equality (which
+            # includes `_nesting_level`), so the added aspects must stay equal to
+            # the instances being processed rather than being normalized to 0.
+            aspect_document._suppress_aspect_nesting_normalization = True
             aspect_document.add_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
             sub_aspect_jobs.append((aspect, aspect_document))
 
@@ -734,6 +739,11 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     _Document,
                     paragraphs=sub_aspect.reference_paragraphs,
                 )
+                # Keep the sub-aspect's nesting level intact: the extraction engine
+                # checks "aspect is assigned to document" via instance equality
+                # (which includes `_nesting_level`), so the added aspect must stay
+                # equal to the instance being processed rather than normalized to 0.
+                sub_aspect_document._suppress_aspect_nesting_normalization = True
                 sub_aspect_document.add_aspects([sub_aspect])
                 sub_aspect_jobs.append((sub_aspect, sub_aspect_document))
 

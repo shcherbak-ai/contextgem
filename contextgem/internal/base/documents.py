@@ -28,7 +28,13 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BeforeValidator, Field, field_validator, model_validator
+from pydantic import (
+    BeforeValidator,
+    Field,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 from typing_extensions import Self
 
 from contextgem.internal.base.aspects import _Aspect
@@ -111,6 +117,12 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         ),
     )
 
+    # When True, top-level aspect nesting normalization is suppressed. Set only by
+    # the extraction engine on the throwaway single-aspect documents it builds from
+    # existing (already-nested) aspects, where the added aspect must keep its
+    # nesting level so it still compares equal to the instance being processed.
+    _suppress_aspect_nesting_normalization: bool = PrivateAttr(default=False)
+
     def __setattr__(self, name: str, value: Any) -> None:
         """
         Sets the attribute of an instance, with additional restrictions on specific attributes.
@@ -160,6 +172,34 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         """
         self._set_text_from_paras()
         self._segment_document_text()
+
+    def _normalize_top_level_aspect_nesting(self) -> None:
+        """
+        Normalizes the nesting levels of the document's top-level aspects to 0
+        (propagating to sub-aspects).
+
+        Aspects attached to a document are top-level. An aspect previously used
+        as a sub-aspect carries a non-zero ``_nesting_level``; left unchanged,
+        that stale level prevents assigning sub-aspects to it and breaks
+        nesting-level validation during extraction. Runs on construction and on
+        every aspect (re)assignment via the post-validation hook, so all
+        user-facing paths (constructor, ``aspects`` setter, ``add_aspects``,
+        ``assign_pipeline``) are covered.
+
+        Skipped when ``_suppress_aspect_nesting_normalization`` is set, i.e. on
+        the throwaway single-aspect documents the extraction engine builds from
+        already-nested aspects — those add an existing sub-aspect and rely on it
+        comparing equal (including ``_nesting_level``) to the instance being
+        processed.
+
+        :return: None
+        :rtype: None
+        """
+        if self._suppress_aspect_nesting_normalization:
+            return
+        for aspect in self.aspects:
+            if aspect._nesting_level != 0:
+                aspect._reset_nesting_levels(0)
 
     def assign_pipeline(
         self,
@@ -479,6 +519,28 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         :raises ValueError: If paragraphs are not matched or ordered correctly in
             the document text, or if `_md_text` is provided without `raw_text`.
         """
+        self._run_post_validation()
+        return self
+
+    def _run_post_validation(self) -> None:
+        """
+        Performs document post-validation: normalizes top-level aspect nesting
+        levels and checks paragraph/markdown consistency.
+
+        Implemented as a plain method (separate from the ``model_validator``
+        wrapper) so it can also be invoked during deserialization, once private
+        attributes such as ``_md_text`` have been restored.
+
+        :return: None
+        :rtype: None
+        :raises ValueError: If paragraphs are not matched or ordered correctly in
+            the document text, or if `_md_text` is provided without `raw_text`.
+        """
+
+        # Aspects attached to a document are top-level: normalize their nesting
+        # levels (no-op when already correct, or when suppressed for the
+        # extraction engine's internal single-aspect documents).
+        self._normalize_top_level_aspect_nesting()
 
         # Validate that _md_text cannot be populated without raw_text
         if self._md_text and not self.raw_text:
@@ -516,4 +578,19 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                     self.paragraphs, self._md_text, "markdown"
                 )
 
-        return self
+    def _revalidate_after_deserialization(self) -> None:
+        """
+        Re-runs document consistency validation after private attributes have
+        been restored during deserialization.
+
+        ``from_dict`` constructs the instance from public fields (running model
+        validators) and only then restores private attributes such as
+        ``_md_text``. Because the document's markdown-consistency checks are
+        gated on ``_md_text`` being populated, they are skipped at construction
+        time during deserialization; this hook re-runs them (and re-normalizes
+        aspect nesting levels) once the full state is in place.
+
+        :return: None
+        :rtype: None
+        """
+        self._run_post_validation()

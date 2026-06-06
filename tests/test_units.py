@@ -45,6 +45,7 @@ from typing import (  # noqa: UP035
 
 import pytest
 
+from contextgem import Aspect, Document, StringConcept
 from contextgem.internal.tools.docstring_parser import _ParsedDocstring
 from contextgem.internal.tools.schema_generator import (
     _class_to_json_schema,
@@ -669,3 +670,219 @@ def test_deserialize_type_hint_literal_with_booleans_and_null() -> None:
     # but typing.Literal does not statically accept floats. Compare via get_args.
     restored_with_float = _deserialize_type_hint("literal[1.5]")
     assert get_args(restored_with_float) == (1.5,)
+
+
+# ---------------------------------------------------------------------------
+# Literal round-trip: bool / None / backslash values (serialize <-> deserialize)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "hint",
+    [
+        Literal[True, False],
+        Literal["a", None],
+        Literal[1, None],
+        Literal["yes", "no", None],
+        Literal[1, 2, 3],
+        Literal["x", "y"],
+        Literal[1, "a"],  # mixed types round-trip too (type-preserving)
+        Literal["a\\"],  # trailing backslash
+        Literal['a"b'],  # embedded double quote
+        Literal["c:\\path\\to\\x"],  # multiple backslashes
+        Literal['x\\"y'],  # backslash followed by quote
+        Literal["a,b"],  # comma inside a double-quoted value
+    ],
+)
+def test_literal_value_serialization_round_trips(hint: Any) -> None:
+    """``Literal`` values (incl. bool, None, and backslash/quote strings) survive
+    a serialize -> deserialize round-trip losslessly.
+
+    Regression for bool/None values being coerced to strings (``True`` ->
+    ``"True"``) and for backslashes in string literals breaking the round-trip.
+    """
+    serialized = _serialize_type_hint(hint)
+    restored = _deserialize_type_hint(serialized)
+    assert restored == hint
+
+
+def test_literal_bool_serializes_to_lowercase_json_tokens() -> None:
+    """Booleans serialize to lowercase ``true``/``false`` tokens (JSON-aligned),
+    not Python's capitalized ``True``/``False``."""
+    assert _serialize_type_hint(Literal[True, False]) == "literal[true, false]"
+
+
+def test_literal_none_serializes_to_null_token() -> None:
+    """``None`` in a Literal serializes to ``null`` (and round-trips to ``None``),
+    not the bare string ``None``."""
+    serialized = _serialize_type_hint(Literal["a", None])
+    assert serialized == 'literal["a", null]'
+    assert _deserialize_type_hint(serialized) == Literal["a", None]
+
+
+# ---------------------------------------------------------------------------
+# schema_generator: mixed-type Literal enums
+# ---------------------------------------------------------------------------
+
+
+def test_json_schema_mixed_literal_omits_type() -> None:
+    """A heterogeneous ``Literal`` produces a bare ``enum`` with no ``type`` key,
+    since no single JSON Schema scalar type covers all values."""
+    assert _python_type_to_json_schema(Literal[1, "a"]) == {"enum": [1, "a"]}
+    assert _python_type_to_json_schema(Literal["a", 1]) == {"enum": ["a", 1]}
+
+
+def test_json_schema_literal_with_none_omits_type() -> None:
+    """A ``Literal`` mixing a string and ``None`` produces a bare ``enum``."""
+    assert _python_type_to_json_schema(Literal["a", None]) == {"enum": ["a", None]}
+
+
+def test_json_schema_homogeneous_literal_keeps_type() -> None:
+    """Homogeneous literals still carry the matching ``type`` alongside ``enum``."""
+    assert _python_type_to_json_schema(Literal[1, 2]) == {
+        "type": "integer",
+        "enum": [1, 2],
+    }
+    assert _python_type_to_json_schema(Literal["a", "b"]) == {
+        "type": "string",
+        "enum": ["a", "b"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# schema_generator: cycle detection for self-/mutually-referential types
+# ---------------------------------------------------------------------------
+
+
+def test_json_schema_self_referential_class_breaks_cycle() -> None:
+    """A self-referential class produces a bounded schema (no ``RecursionError``);
+    the recursive field collapses to a generic object."""
+
+    class _Node:
+        pass
+
+    # Assign resolved (non-forward-ref) annotations to mimic get_type_hints success.
+    _Node.__annotations__ = {"value": int, "next": Optional[_Node]}  # noqa: UP045
+
+    schema = _python_type_to_json_schema(_Node)
+    assert schema["type"] == "object"
+    assert schema["properties"]["value"] == {"type": "integer"}
+    # The cyclic self-reference is broken with a generic object placeholder.
+    assert schema["properties"]["next"] == {"type": "object"}
+
+
+def test_json_schema_mutually_referential_classes_break_cycle() -> None:
+    """Mutually-referential classes terminate, collapsing the back-reference."""
+
+    class _A:
+        pass
+
+    class _B:
+        pass
+
+    _A.__annotations__ = {"b": Optional[_B]}  # noqa: UP045
+    _B.__annotations__ = {"a": Optional[_A]}  # noqa: UP045
+
+    schema = _python_type_to_json_schema(_A)
+    # _A -> _B -> (_A already seen) -> generic object
+    assert schema["properties"]["b"]["properties"]["a"] == {"type": "object"}
+
+
+def test_json_schema_self_referential_inside_container_breaks_cycle() -> None:
+    """The cycle guard propagates through containers (e.g. ``list[Node]``)."""
+
+    class _Tree:
+        pass
+
+    _Tree.__annotations__ = {"children": list[_Tree]}
+
+    schema = _python_type_to_json_schema(_Tree)
+    # children -> array of _Tree; the nested _Tree is already on the stack.
+    assert schema["properties"]["children"] == {
+        "type": "array",
+        "items": {"type": "object"},
+    }
+
+
+# ---------------------------------------------------------------------------
+# Aspect nesting-level normalization when reused as a top-level aspect
+# ---------------------------------------------------------------------------
+
+
+def test_sub_aspect_reused_as_top_level_is_normalized_to_level_zero() -> None:
+    """An aspect previously used as a sub-aspect has its nesting level reset to 0
+    when attached as a top-level aspect on a document, without corrupting the
+    original parent's sub-aspect."""
+    parent = Aspect(name="parent", description="parent topic")
+    child = Aspect(name="child", description="child topic")
+    parent.aspects = [child]
+    pulled = parent.aspects[0]
+    assert pulled._nesting_level == 1
+
+    doc = Document(raw_text="some document text", aspects=[pulled])
+    assert doc.aspects[0]._nesting_level == 0
+    # The original parent's sub-aspect must remain at level 1 (deep-copied; not mutated).
+    assert parent.aspects[0]._nesting_level == 1
+
+
+def test_normalized_top_level_aspect_accepts_sub_aspects_again() -> None:
+    """After normalization, a reused former sub-aspect can take sub-aspects again."""
+    parent = Aspect(name="parent", description="parent topic")
+    child = Aspect(name="child", description="child topic")
+    parent.aspects = [child]
+    doc = Document(raw_text="some document text", aspects=[parent.aspects[0]])
+
+    top = doc.aspects[0]
+    top.aspects = [Aspect(name="grandchild", description="grandchild topic")]
+    assert top._nesting_level == 0
+    assert top.aspects[0]._nesting_level == 1
+
+
+def _make_former_sub_aspect() -> Aspect:
+    """Builds an aspect that currently carries sub-aspect nesting level 1."""
+    parent = Aspect(name="parent", description="parent topic")
+    parent.aspects = [Aspect(name="child", description="child topic")]
+    pulled = parent.aspects[0]
+    assert pulled._nesting_level == 1
+    return pulled
+
+
+def test_sub_aspect_reused_via_add_aspects_is_normalized() -> None:
+    """Reusing a former sub-aspect as a top-level aspect via ``add_aspects`` (after
+    construction) also normalizes its nesting level to 0."""
+    doc = Document(raw_text="some document text")
+    doc.add_aspects([_make_former_sub_aspect()])
+    assert doc.aspects[0]._nesting_level == 0
+
+
+def test_sub_aspect_reused_via_aspects_setter_is_normalized() -> None:
+    """Reusing a former sub-aspect via direct ``aspects`` assignment normalizes it."""
+    doc = Document(raw_text="some document text")
+    doc.aspects = [_make_former_sub_aspect()]
+    assert doc.aspects[0]._nesting_level == 0
+
+
+# ---------------------------------------------------------------------------
+# Deserialization re-validates invariants restored after construction
+# ---------------------------------------------------------------------------
+
+
+def test_from_dict_rejects_duplicate_extracted_item_ids() -> None:
+    """Deserializing a concept whose ``_extracted_items`` contain duplicate IDs is
+    rejected, because the values are restored through the validating property
+    setter rather than written to the backing attribute directly."""
+    concept = StringConcept(name="c", description="d")
+    concept.extracted_items = [concept._item_class(value="hello")]  # ty: ignore[invalid-assignment]
+    payload = concept.to_dict()
+
+    # A valid payload still round-trips.
+    restored = StringConcept.from_dict(payload)
+    assert [i.value for i in restored.extracted_items] == ["hello"]
+
+    # Tamper: duplicate the single item so two entries share the same _unique_id.
+    tampered = StringConcept.to_dict(concept)
+    tampered["_extracted_items"] = (
+        tampered["_extracted_items"] + tampered["_extracted_items"]
+    )
+    with pytest.raises(ValueError, match="duplicates"):
+        StringConcept.from_dict(tampered)

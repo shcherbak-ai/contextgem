@@ -214,23 +214,34 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
 
             # Parse the literal value (string or other)
             if i < len(s) and s[i] == '"':
-                # Parse string literal
-                i += 1  # skip opening quote
+                # Parse a double-quoted string literal, honoring backslash escapes.
+                # A backslash escapes the next character (so `\\` -> `\` and
+                # `\"` -> `"`); only an unescaped `"` terminates the literal. This
+                # is the inverse of `_serialize_literal_value`, which escapes `\`
+                # and `"` when emitting a string literal value.
                 start = i
-                # Find the closing quote, accounting for escaped quotes
+                i += 1  # skip opening quote
+                chars: list[str] = []
+                terminated = False
                 while i < len(s):
-                    if s[i] == '"' and (i == 0 or s[i - 1] != "\\"):
+                    ch = s[i]
+                    if ch == "\\" and i + 1 < len(s):
+                        # Consume the backslash and take the next character literally
+                        chars.append(s[i + 1])
+                        i += 2
+                        continue
+                    if ch == '"':
+                        terminated = True
                         break
+                    chars.append(ch)
                     i += 1
 
-                if i >= len(s):
+                if not terminated:
                     raise ValueError(
                         f"Unterminated string literal in literal type at position {start} in {s!r}"
                     )
 
-                # Get the string value and unescape quotes
-                string_value = s[start:i].replace('\\"', '"')
-                values.append(string_value)
+                values.append("".join(chars))
                 i += 1  # skip closing quote
 
             else:

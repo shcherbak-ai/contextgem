@@ -77,9 +77,37 @@ _JSON_SCHEMA_TYPE_MAP: dict[type, dict[str, Any]] = {
 }
 
 
+def _json_schema_type_of_value(value: Any) -> str | None:
+    """
+    Returns the JSON Schema ``type`` name for a concrete ``Literal`` value, or
+    ``None`` if the value has no single corresponding JSON Schema scalar type.
+
+    Booleans are checked before integers because ``bool`` is a subclass of
+    ``int``.
+
+    :param value: The literal value to classify.
+    :type value: Any
+    :returns: The JSON Schema type name (e.g. ``"integer"``), or ``None``.
+    :rtype: str | None
+    """
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    if value is None:
+        return "null"
+    return None
+
+
 def _python_type_to_json_schema(
     type_hint: Any,
     description: str | None = None,
+    *,
+    _seen: frozenset[int] = frozenset(),
 ) -> dict[str, Any]:
     """
     Convert a Python type hint to a JSON Schema object.
@@ -98,6 +126,11 @@ def _python_type_to_json_schema(
     :type type_hint: Any
     :param description: Optional description to include in the schema.
     :type description: str | None
+    :param _seen: Identities (``id()``) of class/TypedDict types currently being
+        expanded on the recursion stack. Used to break cycles in self- or
+        mutually-referential types; on revisit a generic ``{"type": "object"}``
+        is emitted instead of recursing without bound. Internal use only.
+    :type _seen: frozenset[int]
     :returns: JSON Schema object.
     :rtype: dict[str, Any]
     :raises TypeError: If the type hint is not supported.
@@ -126,7 +159,7 @@ def _python_type_to_json_schema(
         item_type = args[0] if args else Any
         schema = {
             "type": "array",
-            "items": _python_type_to_json_schema(item_type),
+            "items": _python_type_to_json_schema(item_type, _seen=_seen),
         }
         if description:
             schema["description"] = description
@@ -140,12 +173,14 @@ def _python_type_to_json_schema(
             if len(args) == 2 and args[1] is ...:
                 schema = {
                     "type": "array",
-                    "items": _python_type_to_json_schema(args[0]),
+                    "items": _python_type_to_json_schema(args[0], _seen=_seen),
                 }
             else:
                 schema = {
                     "type": "array",
-                    "prefixItems": [_python_type_to_json_schema(a) for a in args],
+                    "prefixItems": [
+                        _python_type_to_json_schema(a, _seen=_seen) for a in args
+                    ],
                     "minItems": len(args),
                     "maxItems": len(args),
                 }
@@ -160,7 +195,7 @@ def _python_type_to_json_schema(
         item_type = args[0] if args else Any
         schema = {
             "type": "array",
-            "items": _python_type_to_json_schema(item_type),
+            "items": _python_type_to_json_schema(item_type, _seen=_seen),
             "uniqueItems": True,
         }
         if description:
@@ -173,7 +208,9 @@ def _python_type_to_json_schema(
             value_type = args[1]
             schema = {
                 "type": "object",
-                "additionalProperties": _python_type_to_json_schema(value_type),
+                "additionalProperties": _python_type_to_json_schema(
+                    value_type, _seen=_seen
+                ),
             }
         else:
             schema = {"type": "object"}
@@ -193,10 +230,12 @@ def _python_type_to_json_schema(
         if len(non_none_types) == 1 and has_none:
             # This is Optional[X] - return schema for X
             # The "required" handling happens at the parameter level
-            return _python_type_to_json_schema(non_none_types[0], description)
+            return _python_type_to_json_schema(
+                non_none_types[0], description, _seen=_seen
+            )
 
         # Multiple types: use anyOf
-        schema = {"anyOf": [_python_type_to_json_schema(a) for a in args]}
+        schema = {"anyOf": [_python_type_to_json_schema(a, _seen=_seen) for a in args]}
         if description:
             schema["description"] = description
         return schema
@@ -207,14 +246,13 @@ def _python_type_to_json_schema(
         if not literal_values:
             raise TypeError("Literal type must have at least one value")
 
-        # Determine type from first value
-        first_val = literal_values[0]
-        if isinstance(first_val, bool):
-            schema = {"type": "boolean", "enum": literal_values}
-        elif isinstance(first_val, int):
-            schema = {"type": "integer", "enum": literal_values}
-        elif isinstance(first_val, str):
-            schema = {"type": "string", "enum": literal_values}
+        # Only assign a JSON Schema "type" when every literal value maps to the
+        # same scalar type; a mixed-type Literal (e.g. Literal[1, "a"]) would
+        # otherwise produce an invalid/mislabeled schema (a string under
+        # "type": "integer"), so emit a bare enum in that case.
+        value_types = {_json_schema_type_of_value(v) for v in literal_values}
+        if len(value_types) == 1 and None not in value_types:
+            schema = {"type": value_types.pop(), "enum": literal_values}
         else:
             schema = {"enum": literal_values}
 
@@ -224,15 +262,33 @@ def _python_type_to_json_schema(
 
     # Handle TypedDict
     if is_typeddict(type_hint):
+        # Break cycles in self-/mutually-referential TypedDicts
+        if id(type_hint) in _seen:
+            schema = {"type": "object"}
+            if description:
+                schema["description"] = description
+            return schema
         # type_hint is guaranteed to be a TypedDict type here
-        return _typeddict_to_json_schema(type_hint, description)  # type: ignore[arg-type]
+        return _typeddict_to_json_schema(
+            type_hint,  # type: ignore[arg-type]
+            description,
+            _seen | {id(type_hint)},
+        )
 
     # Handle plain classes that might be dict-like or have annotations
     if isinstance(type_hint, type):
         # If it's a basic class without special handling, treat as object
         if hasattr(type_hint, "__annotations__") and type_hint.__annotations__:
+            # Break cycles in self-/mutually-referential classes
+            if id(type_hint) in _seen:
+                schema = {"type": "object"}
+                if description:
+                    schema["description"] = description
+                return schema
             # Class with annotations - try to convert
-            return _class_to_json_schema(type_hint, description)
+            return _class_to_json_schema(
+                type_hint, description, _seen | {id(type_hint)}
+            )
 
         # Fallback: treat as generic object
         schema = {"type": "object"}
@@ -251,6 +307,7 @@ def _python_type_to_json_schema(
 def _typeddict_to_json_schema(
     td_type: type,
     description: str | None = None,
+    _seen: frozenset[int] = frozenset(),
 ) -> dict[str, Any]:
     """
     Convert a TypedDict to a JSON Schema object.
@@ -259,6 +316,9 @@ def _typeddict_to_json_schema(
     :type td_type: type
     :param description: Optional description to include in the schema.
     :type description: str | None
+    :param _seen: Identities of class/TypedDict types currently being expanded,
+        used for cycle detection. Internal use only.
+    :type _seen: frozenset[int]
     :returns: JSON Schema object.
     :rtype: dict[str, Any]
     """
@@ -269,7 +329,7 @@ def _typeddict_to_json_schema(
 
     properties: dict[str, Any] = {}
     for name, hint in hints.items():
-        properties[name] = _python_type_to_json_schema(hint)
+        properties[name] = _python_type_to_json_schema(hint, _seen=_seen)
 
     # Get required keys (TypedDict has __required_keys__ and __optional_keys__)
     required_keys = getattr(td_type, "__required_keys__", frozenset())
@@ -296,6 +356,7 @@ def _typeddict_to_json_schema(
 def _class_to_json_schema(
     cls_type: type,
     description: str | None = None,
+    _seen: frozenset[int] = frozenset(),
 ) -> dict[str, Any]:
     """
     Convert a class with annotations to a JSON Schema object.
@@ -304,6 +365,9 @@ def _class_to_json_schema(
     :type cls_type: type
     :param description: Optional description to include in the schema.
     :type description: str | None
+    :param _seen: Identities of class/TypedDict types currently being expanded,
+        used for cycle detection. Internal use only.
+    :type _seen: frozenset[int]
     :returns: JSON Schema object.
     :rtype: dict[str, Any]
     """
@@ -314,7 +378,7 @@ def _class_to_json_schema(
 
     properties: dict[str, Any] = {}
     for name, hint in hints.items():
-        properties[name] = _python_type_to_json_schema(hint)
+        properties[name] = _python_type_to_json_schema(hint, _seen=_seen)
 
     schema: dict[str, Any] = {
         "type": "object",

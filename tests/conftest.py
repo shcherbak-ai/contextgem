@@ -30,6 +30,7 @@ import asyncio
 import os
 from unittest.mock import patch
 
+import aiohttp.streams
 import nest_asyncio
 import pytest
 import tethered
@@ -49,6 +50,23 @@ nest_asyncio.apply()
 
 with _suppress_litellm_warnings_context():
     import litellm
+
+
+# Shim for vcrpy + aiohttp >= 3.14 compatibility.
+# aiohttp 3.14 removed ``aiohttp.streams.AsyncStreamReaderMixin`` (its async-iteration
+# helpers were folded into ``StreamReader``), but vcrpy (<=8.1.1) still subclasses it at
+# import time in ``vcr.stubs.aiohttp_stubs``, raising AttributeError at the setup of every
+# ``@pytest.mark.vcr`` test before any code runs. Our cassettes only record httpx/httpcore
+# traffic (litellm uses httpx, not aiohttp), so vcrpy's aiohttp ``MockStream`` is never
+# instantiated here — a no-op stand-in for the removed mixin lets the module import while
+# keeping the dev/test aiohttp version identical to what production resolves.
+# Remove once vcrpy ships aiohttp 3.14 support.
+if not hasattr(aiohttp.streams, "AsyncStreamReaderMixin"):
+
+    class _AsyncStreamReaderMixinShim:
+        """No-op stand-in for aiohttp's removed ``AsyncStreamReaderMixin``."""
+
+    aiohttp.streams.AsyncStreamReaderMixin = _AsyncStreamReaderMixinShim  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
 
 
 # Patch VCR's _deserialize_response to handle string bodies correctly

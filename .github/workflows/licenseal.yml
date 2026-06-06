@@ -1,0 +1,29 @@
+name: License compatibility
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  licenseal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+        with:
+          enable-cache: true
+
+      # Strict by default: warnings/unknowns fail CI unless an explicit,
+      # documented override exists in licenseal.review.toml (picked up
+      # automatically from the repository root).
+      - name: Check dependency license compatibility
+        run: uvx licenseal check

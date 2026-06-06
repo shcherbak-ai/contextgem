@@ -92,6 +92,18 @@ KEY_RESPONSE_SUCCEEDED_PRIVATE = "_response_succeeded"
 KEY_MESSAGES_PRIVATE = "_messages"
 
 
+# Private attrs whose validation lives on a public property of the same name
+# (without the leading underscore). During deserialization these are assigned
+# through the public property setter so that its validation (e.g. element-type
+# and uniqueness checks) runs, instead of writing the backing attribute directly
+# and silently bypassing those invariants.
+_PRIVATE_ATTR_PUBLIC_PROPERTY: dict[str, str] = {
+    KEY_EXTRACTED_ITEMS_PRIVATE: "extracted_items",
+    KEY_REFERENCE_PARAGRAPHS_PRIVATE: "reference_paragraphs",
+    KEY_REFERENCE_SENTENCES_PRIVATE: "reference_sentences",
+}
+
+
 class _InstanceSerializer(BaseModel):
     """
     Base class that provides reusable methods for serialization and deserialization of instances.
@@ -516,11 +528,40 @@ class _InstanceSerializer(BaseModel):
 
         new_instance = cls(**constructor_kwargs)
 
-        # Set private attrs separately
+        # Set private attrs separately. Where a private attr is exposed through a
+        # public property carrying validation, assign via that property so the
+        # validation runs (instead of writing the backing attr directly and
+        # bypassing it); otherwise set the private attr directly.
         for priv_k, priv_v in private_attrs.items():
-            setattr(new_instance, priv_k, priv_v)
+            public_name = _PRIVATE_ATTR_PUBLIC_PROPERTY.get(priv_k)
+            if public_name is not None and isinstance(
+                getattr(type(new_instance), public_name, None), property
+            ):
+                setattr(new_instance, public_name, priv_v)
+            else:
+                setattr(new_instance, priv_k, priv_v)
+
+        # Re-run any validation that depends on private state restored above
+        # (and therefore could not run during construction from public fields).
+        new_instance._revalidate_after_deserialization()
 
         return new_instance
+
+    def _revalidate_after_deserialization(self) -> None:
+        """
+        Hook to re-run validation that depends on private attributes restored
+        after construction during :meth:`from_dict`.
+
+        Model validators run when the instance is constructed from its public
+        fields, before private attributes are restored, so any invariant gated
+        on private state is skipped at that point. Subclasses override this to
+        re-validate once the full state is in place. The base implementation is
+        a no-op.
+
+        :return: None
+        :rtype: None
+        """
+        return None
 
     @classmethod
     def _convert_llm_cost_dict(cls, cost_dict: dict[str, Any]) -> _LLMCost:

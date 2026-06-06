@@ -219,6 +219,28 @@ class _Aspect(
             if aspect.aspects:
                 aspect._validate_and_process_sub_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
 
+    def _reset_nesting_levels(self, level: int = 0) -> None:
+        """
+        Recursively (re)assigns nesting levels, treating this aspect as residing
+        at ``level`` and its sub-aspects at the subsequent levels.
+
+        ``_nesting_level`` is assigned relative to the parent when an aspect is
+        attached as a sub-aspect, and is never otherwise reset. When an aspect
+        that was previously used as a sub-aspect (nesting level > 0) is reused as
+        a top-level aspect (e.g. attached to a ``Document``), its stale level
+        must be normalized so that nesting-level validation and sub-aspect
+        extraction behave correctly. Top-level containers call this with
+        ``level=0``.
+
+        :param level: The nesting level to assign to this aspect.
+        :type level: int
+        :return: None
+        :rtype: None
+        """
+        self._nesting_level = level
+        for sub_aspect in self.aspects:
+            sub_aspect._reset_nesting_levels(level + 1)
+
     @model_validator(mode="after")
     def _validate_aspect_post(self) -> Self:
         """

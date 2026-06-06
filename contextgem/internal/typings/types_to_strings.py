@@ -49,6 +49,42 @@ PRIMITIVE_TYPES_STRING_MAP = {
 }
 
 
+def _serialize_literal_value(value: Any) -> str:
+    """
+    Serializes a single ``Literal`` value to its canonical string token.
+
+    The output is the inverse of the literal-value parsing performed during
+    deserialization (``strings_to_types._parse_type_hint``), so that
+    ``Literal`` round-trips losslessly:
+
+    - ``str`` -> a double-quoted string with ``\\`` and ``"`` escaped
+    - ``True`` / ``False`` -> ``"true"`` / ``"false"`` (lowercase JSON tokens)
+    - ``None`` -> ``"null"``
+    - ``int`` / ``float`` -> their plain string representation
+
+    Booleans are checked before the ``str`` branch is reached and before any
+    numeric handling, since ``bool`` is a subclass of ``int``.
+
+    :param value: The literal value to serialize.
+    :type value: Any
+    :return: The canonical string token for the literal value.
+    :rtype: str
+    """
+    if isinstance(value, str):
+        # Escape backslashes first, then double quotes, and wrap in double quotes.
+        # Order matters: escaping quotes first would double-escape the backslashes
+        # introduced by the quote escaping.
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if value is None:
+        return "null"
+    return str(value)
+
+
 def _raise_json_serializable_type_error(
     invalid_type: Any,
     field_name: str | None = None,
@@ -243,14 +279,7 @@ def _format_type(typ: Any, indent_level: int = 0) -> str:
             if getattr(arg, "__origin__", None) is Literal:
                 # Extract individual literal values
                 for literal_arg in get_args(arg):
-                    if isinstance(literal_arg, str):
-                        flattened_values.append(
-                            '"' + literal_arg.replace('"', '\\"') + '"'
-                        )
-                    elif literal_arg is None:
-                        flattened_values.append("null")
-                    else:
-                        flattened_values.append(str(literal_arg))
+                    flattened_values.append(_serialize_literal_value(literal_arg))
             elif arg is type(None):
                 flattened_values.append("null")
             else:
@@ -268,17 +297,7 @@ def _format_type(typ: Any, indent_level: int = 0) -> str:
     # Handle Literal types
     if getattr(typ, "__origin__", None) is Literal:
         # Create a list of serialized literal values
-        literal_values = []
-        for arg in get_args(typ):
-            if isinstance(arg, str):
-                # Escape quotes in strings and wrap in quotes
-                literal_values.append('"' + arg.replace('"', '\\"') + '"')
-            elif arg is None:
-                # Handle None consistently with standalone None type
-                literal_values.append("null")
-            else:
-                # For non-string literals, just convert to string
-                literal_values.append(str(arg))
+        literal_values = [_serialize_literal_value(arg) for arg in get_args(typ)]
 
         # Join all literal values with "or" instead of commas
         values_str = " or ".join(literal_values)
@@ -468,14 +487,7 @@ def _serialize_type_hint(tp: Any) -> str:
     # Handle Literal types
     elif origin is Literal:
         # Create a list of serialized literal values
-        literal_values = []
-        for arg in args:
-            if isinstance(arg, str):
-                # Escape quotes in strings and wrap in quotes
-                literal_values.append('"' + arg.replace('"', '\\"') + '"')
-            else:
-                # For non-string literals, just convert to string
-                literal_values.append(str(arg))
+        literal_values = [_serialize_literal_value(arg) for arg in args]
 
         # Join all literal values with commas
         values_str = ", ".join(literal_values)
