@@ -10,6 +10,9 @@ on:
 env:
   PYTHONUTF8: "1"
   PYTHONIOENCODING: "utf-8"
+  # Give HuggingFace Hub downloads more headroom before timing out, so a slow
+  # CDN response is retried rather than failing the cold-cache model fetch.
+  HF_HUB_DOWNLOAD_TIMEOUT: "30"
 
 jobs:
 
@@ -37,7 +40,61 @@ jobs:
       - name: Build and validate distribution
         run: uv run python dev/check_package.py
 
+  prefetch-models:
+    # Download the SaT model ONCE on a single runner and publish the warmed
+    # HuggingFace cache for the test matrix to restore. Without this, the five
+    # matrix jobs start with a cold cache simultaneously and download from
+    # HuggingFace in parallel — `actions/cache` only writes in its post-job
+    # step, so there is no shared cache to hit on the first run. Five concurrent
+    # cold downloads from one runner IP pool is exactly what trips HF's 429 and
+    # aborts pytest collection. Serializing the download here removes that race.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        # wtpsplit-lite + onnxruntime are core deps, so the default sync is
+        # enough to import contextgem and load the SaT model.
+        run: uv sync
+
+      - name: Cache HuggingFace models
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ runner.os }}-v1
+          restore-keys: |
+            hf-models-${{ runner.os }}-
+
+      - name: Pre-download SaT model (warm HF cache with retry)
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if uv run python -c "from contextgem.internal.utils import _load_sat_model; _load_sat_model('sat-3l-sm')"; then
+              echo "SaT model cached successfully (attempt $attempt)."
+              exit 0
+            fi
+            echo "::warning::SaT model download attempt $attempt failed (likely HF 429). Backing off..."
+            sleep $((attempt * 15))
+          done
+          echo "::error::Failed to pre-download SaT model after 5 attempts."
+          exit 1
+
   tests-with-vcr:
+
+    # Wait for the single prefetch job to warm the shared HF cache before the
+    # matrix fans out, so the five jobs restore the cache instead of racing to
+    # download the model concurrently.
+    needs: prefetch-models
 
     strategy:
       matrix:
@@ -68,6 +125,37 @@ jobs:
       
       - name: Install dependencies
         run: uv sync --all-groups
+
+      - name: Restore HuggingFace models cache
+        # Restore the cache warmed by the `prefetch-models` job (same key). With
+        # a warm cache, the model is read from disk and HuggingFace
+        # HEAD-revalidation 429s are non-fatal, so the matrix never re-downloads
+        # concurrently. SaT model files are Python-version-independent, so the
+        # whole matrix shares one cache.
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ runner.os }}-v1
+          restore-keys: |
+            hf-models-${{ runner.os }}-
+
+      - name: Pre-download SaT model (cache-hit safety net)
+        # Normally a no-op cache hit: the `prefetch-models` job already populated
+        # the cache, and tests/test_all.py loads the SaT model at class-body
+        # evaluation time (during pytest collection). This step only does real
+        # work in the rare case the cache restore missed, where the retry/backoff
+        # rides out HuggingFace rate limiting before collection runs.
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if uv run python -c "from contextgem.internal.utils import _load_sat_model; _load_sat_model('sat-3l-sm')"; then
+              echo "SaT model cached successfully (attempt $attempt)."
+              exit 0
+            fi
+            echo "::warning::SaT model download attempt $attempt failed (likely HF 429). Backing off..."
+            sleep $((attempt * 15))
+          done
+          echo "::error::Failed to pre-download SaT model after 5 attempts."
+          exit 1
 
       - name: Code formatting and linting checks
         run: |
