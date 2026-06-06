@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.25.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.25.1) - 2026-06-06
+
+### Added
+
+- Added licenseal-based dependency license audit artifacts (`LICENSES.md`, `licenseal.review.toml`) and CI workflow.
+
+### Fixed
+
+- Fixed `Literal` type-hint serialization/deserialization so booleans, `None`, quoted strings, commas, and backslashes round-trip without being coerced or truncated.
+- Fixed JSON Schema generation for mixed-type `Literal` enums and self-/mutually-referential class annotations, avoiding invalid `type` declarations and recursion failures.
+- Fixed stale aspect nesting levels when reusing a sub-aspect as a document-level aspect via construction, assignment, `add_aspects()`, or pipeline assignment.
+- Fixed deserialization paths that restored private attributes directly and could bypass property validation or validation that depends on restored private state.
+
 ## [0.25.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.25.0) - 2026-05-07
 
 ### Changed
