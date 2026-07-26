@@ -149,8 +149,8 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses.
    * - ``top_p``
      - ``float | None``
-     - ``0.3``
-     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs.
+     - ``None``
+     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs. Defaults to ``None`` so only ``temperature`` is sent by default. Some providers (e.g. Claude 4.x) reject requests that set both ``temperature`` and ``top_p``; set one of them to ``None`` when using those models.
    * - ``seed``
      - ``int | None``
      - ``None``

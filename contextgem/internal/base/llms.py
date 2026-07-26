@@ -3157,9 +3157,13 @@ class _DocumentLLM(_GenericLLMProcessor):
         description="Sampling temperature [0..1]; higher values increase randomness.",
     )
     top_p: StrictFloat | None = Field(
-        default=0.3,
+        default=None,
         ge=0,
-        description="Nucleus sampling [0..1]; alternative to temperature.",
+        description=(
+            "Nucleus sampling [0..1]; alternative to temperature. "
+            "Defaults to None so only temperature is sent — some providers "
+            "(e.g. Claude 4.x) reject requests that set both."
+        ),
     )
     seed: StrictInt | None = Field(
         default=None,
