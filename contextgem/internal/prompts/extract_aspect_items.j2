@@ -195,7 +195,7 @@ ANSWER FORMAT (MANDATORY):
 [
     {
         "aspect_id": str,
-        "paragraphs: [
+        "paragraphs": [
             {
                 "paragraph_id": str,
     {% if reference_depth == "sentences" %}
@@ -220,7 +220,7 @@ ANSWER FORMAT (MANDATORY):
     {
         "aspect_id": str,
     {% if reference_depth == "sentences" %}
-        "paragraphs: [
+        "paragraphs": [
             {
                 "paragraph_id": str,
                 "sentences": [
@@ -233,7 +233,7 @@ ANSWER FORMAT (MANDATORY):
             ...
         ]
     {% else %}
-        "paragraph_ids: [
+        "paragraph_ids": [
             str,
             ...
         ]
