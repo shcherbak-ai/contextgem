@@ -136,7 +136,7 @@ if TYPE_CHECKING:
     )
 
 
-litellm.suppress_debug_info = True  # ty: ignore[invalid-assignment]
+litellm.suppress_debug_info = True
 
 
 # Local model providers supported via liteLLM

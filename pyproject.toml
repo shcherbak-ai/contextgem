@@ -137,7 +137,7 @@ dev = [
     "pytest-cov (>=6.0.0,<7.0.0)",
     "pytest-recording (>=0.13.4,<1.0.0)",
     "python-dotenv (>=1.0.1,<2.0.0)",
-    "ruff (>=0.12.3,<1.0.0)",
+    "ruff (>=0.12.3,<0.16.0)", # ruff 0.16 expands the default lint rule set, flagging many new issues; capped until a dedicated lint migration
     "sphinx (>=7.0.0,<8.0.0)",
     "sphinx-autodoc-typehints<3.0.0",
     "sphinx-autobuild (>=2024.10.3,<2027.0.0)",
