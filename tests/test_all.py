@@ -1073,52 +1073,6 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
-    def test_reasoning_effort_for_gpt_5_models(self):
-        """
-        Tests for setting reasoning effort levels specific to gpt-5 models.
-        """
-
-        # "minimal" reasoning effort is supported only for gpt-5 models
-        llm = DocumentLLM(
-            model="openai/gpt-5-mini",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            reasoning_effort="minimal",
-            role="reasoner_text",
-        )
-        llm.system_message = ""  # disable default system message
-        response = llm.chat("List synonyms for the word 'confidentiality'.")
-        logger.debug(f"Response with minimal reasoning effort:\n{response}")
-
-        # "minimal" reasoning effort is not supported for other models
-        with pytest.raises(
-            ValueError,
-            match="supported only for gpt-5 models",
-        ):
-            DocumentLLM(
-                model="openai/o4-mini",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                reasoning_effort="minimal",
-                role="reasoner_text",
-            )
-
-        # "xhigh" reasoning effort is supported only for gpt-5.2 models
-        with pytest.raises(
-            ValueError,
-            match="supported only for gpt-5.2 models",
-        ):
-            DocumentLLM(
-                model="openai/gpt-5-mini",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                reasoning_effort="xhigh",
-                role="reasoner_text",
-            )
-
-        check_locals_memory_usage(
-            locals(), test_name="test_reasoning_effort_for_gpt_5_models"
-        )
-
-    @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_local_llms_vision(self):
         """
         Tests for initialization of and getting a response from local LLMs

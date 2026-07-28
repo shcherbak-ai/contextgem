@@ -102,7 +102,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``reasoning_effort``
      - ``str | None``
      - ``None``
-     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"minimal"`` (gpt-5 models only), ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"`` (gpt-5.2 models only).
+     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, ``"max"``. Support for specific values varies by model and provider; unsupported combinations are rejected by litellm or the provider API at request time. ``"none"`` explicitly disables reasoning on models that support this value, which differs from the default ``None`` (parameter not sent, provider default applies).
    * - ``timeout``
      - ``int``
      - ``120``

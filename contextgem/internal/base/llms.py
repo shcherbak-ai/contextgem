@@ -4078,23 +4078,9 @@ class _DocumentLLM(_GenericLLMProcessor):
                     "Fallback LLM must not have the exact same config params as the main LLM."
                 )
 
-        # "minimal" reasoning effort is supported only for gpt-5 models
-        if self.reasoning_effort == "minimal" and not (
-            self.model.startswith("azure/gpt-5")
-            or self.model.startswith("openai/gpt-5")
-        ):
-            raise ValueError(
-                "`reasoning_effort='minimal'` is supported only for gpt-5 models."
-            )
-
-        # "xhigh" reasoning effort is supported only for gpt-5.2 models
-        if self.reasoning_effort == "xhigh" and not (
-            self.model.startswith("azure/gpt-5.2")
-            or self.model.startswith("openai/gpt-5.2")
-        ):
-            raise ValueError(
-                "`reasoning_effort='xhigh'` is supported only for gpt-5.2 models."
-            )
+        # Note: model-specific support for `reasoning_effort` values is not
+        # validated here; validation is delegated to litellm / the provider API,
+        # which raises an error at request time for unsupported combinations.
 
         # Emit relevant warnings
 
