@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.26.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.26.0) - 2026-07-28
+
+### Added
+
+- Added `"none"` and `"max"` reasoning effort values, extending the accepted set to the full vocabulary supported by litellm. `"none"` explicitly disables reasoning on models that support this value (e.g. newer gpt-5.x models, where omitting the parameter no longer disables reasoning), which differs from the default `None` (parameter not sent, provider default applies). `"max"` maps to the top effort level on Anthropic Claude models.
+
+### Changed
+
+- Model-specific support for `reasoning_effort` values is no longer validated by ContextGem: the hardcoded per-model checks (`"minimal"` only for gpt-5 models, `"xhigh"` only for gpt-5.2 models) were removed, as such hardcoded checks go stale with new model releases (e.g. gpt-5.3 and later gpt-5.x models, as well as newer Anthropic Claude models, also support `"xhigh"`). Validation is delegated to litellm / the provider API, which rejects unsupported model/effort combinations at request time. Configurations that previously raised `ValueError` at initialization now construct successfully and fail at request time if unsupported.
+- Upgraded pinned dependency versions: `litellm==1.93.0`, `openai==2.49.0`, `genai-prices==0.0.72`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
+### Fixed
+
+- Fixed missing quotes in the aspect extraction prompt's JSON answer format. (PR [#96](https://github.com/shcherbak-ai/contextgem/pull/96))
+- `top_p` now defaults to `None` (only `temperature` is sent) for compatibility with providers that reject requests setting both `temperature` and `top_p` (e.g. Claude 4.x models). (PR [#97](https://github.com/shcherbak-ai/contextgem/pull/97))
+
 ## [0.25.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.25.1) - 2026-06-06
 
 ### Added
