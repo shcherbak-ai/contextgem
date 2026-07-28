@@ -108,7 +108,8 @@ class DocumentLLM(_DocumentLLM):
     :vartype reasoning_effort: ReasoningEffort | None
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
-        Defaults to 0.3.
+        Defaults to ``None`` (only ``temperature`` is sent). Some providers (e.g. Claude 4.x)
+        reject requests that set both ``temperature`` and ``top_p``.
     :vartype top_p: float | None
     :ivar num_retries_failed_request: Number of retries when LLM request fails. Defaults to 3.
     :vartype num_retries_failed_request: int

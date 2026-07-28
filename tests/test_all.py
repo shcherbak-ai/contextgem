@@ -1514,6 +1514,24 @@ class TestAll(TestUtils):
             temperature=None,
         )
 
+        # Default: temperature is sent, top_p is omitted (Claude 4.x rejects both)
+        llm_defaults = DocumentLLM(
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+        )
+        assert llm_defaults.temperature == 0.3
+        assert llm_defaults.top_p is None
+        default_request_config = llm_defaults._build_request_config()
+        assert default_request_config["temperature"] == 0.3
+        assert "top_p" not in default_request_config
+
+        llm_with_top_p = DocumentLLM(
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            top_p=0.3,
+        )
+        assert llm_with_top_p._build_request_config()["top_p"] == 0.3
+
         # Unsupported methods
         with pytest.raises(NotImplementedError):
             self.llm_group.model_dump()
