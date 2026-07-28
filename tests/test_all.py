@@ -319,10 +319,8 @@ class TestAll(TestUtils):
 
     # Extractor text
     _llm_extractor_text_kwargs_openai = {
-        "model": "azure/gpt-4.1-mini",
-        "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-        "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-        "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        "model": "openai/gpt-4.1-mini",
+        "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         "role": "extractor_text",
         "pricing_details": LLMPricing(  # Explicitly set pricing details
             **{
@@ -334,10 +332,8 @@ class TestAll(TestUtils):
 
     # Reasoner text
     _llm_reasoner_text_kwargs_openai = {
-        "model": "azure/gpt-5-mini",
-        "api_key": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-        "api_version": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-        "api_base": os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+        "model": "openai/gpt-5-mini",
+        "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         "role": "reasoner_text",
         "auto_pricing": True,  # use auto-pricing
         "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
@@ -1084,10 +1080,8 @@ class TestAll(TestUtils):
 
         # "minimal" reasoning effort is supported only for gpt-5 models
         llm = DocumentLLM(
-            model="azure/gpt-5-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+            model="openai/gpt-5-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             reasoning_effort="minimal",
             role="reasoner_text",
         )
@@ -1101,10 +1095,8 @@ class TestAll(TestUtils):
             match="supported only for gpt-5 models",
         ):
             DocumentLLM(
-                model="azure/o4-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                model="openai/o4-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 reasoning_effort="minimal",
                 role="reasoner_text",
             )
@@ -1115,10 +1107,8 @@ class TestAll(TestUtils):
             match="supported only for gpt-5.2 models",
         ):
             DocumentLLM(
-                model="azure/gpt-5-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                model="openai/gpt-5-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 reasoning_effort="xhigh",
                 role="reasoner_text",
             )
@@ -4930,10 +4920,8 @@ class TestAll(TestUtils):
 
         # Test 1: Max input tokens validation
         llm = DocumentLLM(
-            model="azure/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
 
         # Create a very long message that should exceed input limits
@@ -4949,10 +4937,8 @@ class TestAll(TestUtils):
 
         # Test 2: Max output tokens validation
         llm_excessive_output = DocumentLLM(
-            model="azure/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             max_tokens=999999,  # excessive output tokens
         )
 
@@ -4974,32 +4960,24 @@ class TestAll(TestUtils):
         system_message = "When asked, introduce yourself as ContextGem."
 
         non_reasoning_model = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message=system_message,
         )
         o1_model = DocumentLLM(
-            model="azure/o1",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/o1",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             reasoning_effort="low",
             system_message=system_message,
         )
         o3_mini_model = DocumentLLM(
-            model="azure/o3-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/o3-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message=system_message,
         )
         o4_mini_model = DocumentLLM(
-            model="azure/o4-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/o4-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message=system_message,
             reasoning_effort="low",
         )
@@ -5012,20 +4990,16 @@ class TestAll(TestUtils):
 
         # Test empty system message
         model = DocumentLLM(
-            model="azure/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
         assert model.system_message == ""
 
         # Test None system message (set to default system message) with default output language (en)
         model = DocumentLLM(
-            model="azure/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert (
             model.system_message is not None
@@ -5034,10 +5008,8 @@ class TestAll(TestUtils):
 
         # Test None system message (set to default system message) with non-en output language (adapt)
         model = DocumentLLM(
-            model="azure/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             output_language="adapt",
         )
         assert (
@@ -5047,10 +5019,8 @@ class TestAll(TestUtils):
 
         # Test with custom system message
         model = DocumentLLM(
-            model="azure/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4o-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="You are a helpful assistant that can answer questions and help with tasks.",
         )
         assert (
@@ -6864,10 +6834,8 @@ class TestAll(TestUtils):
 
         # Test for empty system message
         model = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
         assert model.system_message == ""
@@ -6884,10 +6852,8 @@ class TestAll(TestUtils):
 
         # Test for None system message (output language "en", which is the default)
         model = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert model.system_message == self.default_system_message_en
         with pytest.warns(UserWarning, match="default system message"):
@@ -6898,10 +6864,8 @@ class TestAll(TestUtils):
 
         # Test for None system message (output language "adapt")
         model = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             output_language="adapt",
         )
         assert model.system_message == self.default_system_message_non_en
@@ -6913,10 +6877,8 @@ class TestAll(TestUtils):
 
         # Test with custom system message
         model = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="Your name is John Doe. Introduce yourself as such.",
         )
         assert (
@@ -7047,10 +7009,8 @@ class TestAll(TestUtils):
 
         # ChatSession: empty system message should not warn
         no_sys_model = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
         cs_no_sys = ChatSession()
@@ -7075,10 +7035,8 @@ class TestAll(TestUtils):
         # ChatSession: custom system message should not warn and be first
         custom_sys = "Your name is John Doe. Introduce yourself as such."
         m_custom = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message=custom_sys,
         )
         cs_custom = ChatSession()
@@ -7306,20 +7264,16 @@ class TestAll(TestUtils):
 
         # Configure LLM for tools; leave tool_choice to auto so it can call both
         llm_fallback = DocumentLLM(
-            model="azure/gpt-4.1",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
             tools=tools,
             parallel_tool_calls=parallel_tool_calls,
             is_fallback=True,
         )
         llm = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
             tools=tools,
             parallel_tool_calls=parallel_tool_calls,
@@ -7418,10 +7372,8 @@ class TestAll(TestUtils):
         """
 
         llm = DocumentLLM(
-            model="azure/gpt-4.1-mini",
-            api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+            model="openai/gpt-4.1-mini",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
 
@@ -8718,10 +8670,8 @@ class TestAll(TestUtils):
         too_long_doc = Document(raw_text=text_content * 5)
         too_long_doc.concepts = doc_concepts
         llm_short_context = DocumentLLM(
-            model="azure/gpt-4o-mini",  # 128k context window
+            model="openai/gpt-4o-mini",  # 128k context window
             api_key="...",  # dummy key (pre-call validation will fail)
-            api_base="...",  # dummy base
-            api_version="...",  # dummy version
         )
         with pytest.raises(
             ValueError,
@@ -8804,10 +8754,8 @@ class TestAll(TestUtils):
         # Use an LLM with auto pricing enabled and no manual pricing details
         with pytest.warns(UserWarning, match="prices will not be 100% accurate."):
             llm = DocumentLLM(
-                model="azure/gpt-4.1-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                model="openai/gpt-4.1-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 auto_pricing=True,
                 auto_pricing_refresh=True,  # test with auto-refresh
             )
@@ -8865,9 +8813,8 @@ class TestAll(TestUtils):
         # Setting auto-pricing and LLMPricing together
         with pytest.raises(ValueError, match="auto_pricing=True"):
             DocumentLLM(
-                model="azure/gpt-4.1-mini",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+                model="openai/gpt-4.1-mini",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 pricing_details=LLMPricing(
                     input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006
                 ),
@@ -8879,10 +8826,8 @@ class TestAll(TestUtils):
         # Unknown model initialization
         with pytest.warns(UserWarning, match="Unable to fetch pricing data for model"):
             llm = DocumentLLM(
-                model="azure/gptXX",
-                api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
-                api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
+                model="openai/gptXX",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 auto_pricing=True,
             )
 

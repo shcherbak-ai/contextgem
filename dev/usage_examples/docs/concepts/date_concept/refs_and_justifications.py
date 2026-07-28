@@ -40,10 +40,8 @@ doc.add_concepts([completion_date_concept])
 
 # Configure DocumentLLM
 llm = DocumentLLM(
-    model="azure/gpt-4.1",
-    api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-    api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-    api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+    model="openai/gpt-4.1",
+    api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 
 # Extract the concept

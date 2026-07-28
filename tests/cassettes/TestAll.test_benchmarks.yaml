@@ -128,7 +128,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids\\\":
       [\\n            str,\\n            ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Limitation of Liability</aspect_name>\\n        \\n
@@ -1094,96 +1094,98 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '88789'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '88764'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P110\",\n            \"P111\",\n            \"P112\",\n            \"P113\"\n        ]\n    },\n    {\n        \"aspect_id\":
-        \"A1\",\n        \"paragraph_ids\": [\n            \"P76\",\n            \"P77\",\n            \"P78\",\n            \"P79\",\n            \"P80\",\n            \"P81\",\n            \"P82\",\n            \"P83\",\n            \"P84\"\n        ]\n    },\n    {\n        \"aspect_id\":
-        \"A2\",\n        \"paragraph_ids\": [\n            \"P8\",\n            \"P114\",\n            \"P115\",\n            \"P116\",\n            \"P117\",\n            \"P118\",\n            \"P119\",\n            \"P70\"\n        ]\n    },\n    {\n        \"aspect_id\":
-        \"A3\",\n        \"paragraph_ids\": []\n    },\n    {\n        \"aspect_id\":
-        \"A4\",\n        \"paragraph_ids\": []\n    },\n    {\n        \"aspect_id\":
-        \"A5\",\n        \"paragraph_ids\": []\n    }\n]", "refusal": null, "role":
-        "assistant"}}], "created": 1766109055, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_3dcd5944f5", "usage": {"completion_tokens": 228, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 18493, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 1024}, "total_tokens": 18721}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLCDb2igQAAAD//6xVTY+bMBS851esfIYV
+        5iOQY5WeetlW1fYSIuSYF+Iu2K5tqlZV/nttSAJpvWqyag4kmXkzvPcshm8f1s9PO/K8bt9/+rJM
+        iV6/qKfPKHAKsfsK1JxVj1RYHRgm+EhTBcSAc8V5kcXLLI+SgehEDa2TNdKE6SMOO8ZZGEdxFkZp
+        iNOT/CAYBW3rNvbvw8Ov4eoa5TX8sHAUnJEOtCYNWOxcZEElWocgojXThnCDgomkghvgQ++bkg/2
+        45f7lFYj7WQVq0tbUaJ3UYmCOS+JIo0i8mBLtKvZTOxY8RHja9EFxn449sNJiSZ0O/48Bje0jO9v
+        OV/6eshzL1p40ZUPLbybKLyLKLx7KBIvmr51OfH9yyn855P64cwPL/1w7odfueXqrVMn/5z6Hrf0
+        v7plN7uVfDt/khXse01cnPC+bWcE4VwY4uJoyJDtiTleUqMVjVRip/+Qor1NI32obHppG2U2IbQR
+        Eg3s0V63Qzr1V4GDrFEnTWXECwy3w0W6SkZHNOXixMdxfGKNbbKdC3OcBR7TqgZDWKtnIYcooQeo
+        J/GUiKSvmZgRi9nofzfk8x7HZ7y5xX4iKAVpQ7+SCmpGr4eeyhS4N8drZZdVDw0jDeq7fRNUhoFy
+        x1HDnvTtGOdI/9QGusqeWQNKKjZm+l5WJIqyBGOy2qHFcfEbAAD//wMAuvz/FOIGAAA=
     headers:
-      Content-Length:
-      - '2191'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2916'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1192,6 +1194,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 641ms
       x-request-id:
       - DUMMY
     status:
@@ -1334,7 +1340,7 @@ interactions:
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
       [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
@@ -2290,111 +2296,107 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '88677'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '88652'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
-        \"P139\",\n        \"justification\": \"This paragraph specifies that the
-        governing law and venue shall be as specified in the SOW, indicating a variable
-        governing law provision.\"\n      },\n      {\n        \"paragraph_id\": \"P153\",\n        \"justification\":
-        \"This paragraph states an explicit governing law override that the Agreement
-        shall be governed by Delaware law, which may contradict the variable governing
-        law provision in the SOW.\"\n      }\n    ]\n  },\n  {\n    \"aspect_id\":
-        \"A1\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\": \"P68\",\n        \"justification\":
-        \"This paragraph addresses open source software use, including restrictions
-        on copyleft OSS and an exception allowing GPLv3-licensed build or test dependencies
-        without prior consent.\"\n      },\n      {\n        \"paragraph_id\": \"P267\",\n        \"justification\":
-        \"This paragraph lists approved open source licenses, including permissive,
-        weak copyleft, and copyleft licenses with conditions, highlighting OSS provisions
-        and exceptions.\"\n      },\n      {\n        \"paragraph_id\": \"P271\",\n        \"justification\":
-        \"This paragraph explicitly permits GPLv3 for non-distributed build or test
-        tooling without prior approval, indicating an unusual exception to copyleft
-        restrictions.\"\n      }\n    ]\n  },\n  {\n    \"aspect_id\": \"A2\",\n    \"paragraphs\":
-        [\n      {\n        \"paragraph_id\": \"P42\",\n        \"justification\":
-        \"This paragraph defines short client review periods for acceptance, including
-        a deemed acceptance if no response is received within 10 business days or
-        3 business days for critical deliverables.\"\n      }\n    ]\n  }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1766109058, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 358,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        18450, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 1024},
-        "total_tokens": 18808}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLCDarSgUAAAD//6RWyW7jOBC95ysIneXA
+        8pI4x54FfZgZdIA0MpiJA4MWyxLTNKkmKTvGIP8+r6h4ywLE3YcoMmth1XuvKOqvt788/P69/3ly
+        +++t+eN6Pp60//yV5Rzh5g9Uxm3UeekQR1E725lLTzISZy0uJ+PBxfiyf5EMS6fIcFjVxN7ovOgt
+        tdW9QX8w7vVHvWL0HF47XVKA3x1+CvFfenKhVtEjlvv5dmVJIciKsLZ1wqJ3hlcyGYIOUdqY5Xtj
+        6Wwkm2q/m1ok54cQU3g36Gmm1RS2afapP83yra2RXlZeNnVg4123vIt94bNLcV0Mr3ZJOqeHNkS9
+        0KVksDqvr7UOYhcsuAp4UBAR0OJBonIr8lbbShi5FtIqsSLbkgi1NEbMSciwC1NC2xR08+XvHO8q
+        7YVQ+SJN491KB1QhQpvYFNGJlfQ6lSbmG85wPs221T/lH+56PDy96wjBBPQmuEivFe3b/1R5oiU4
+        2zfctYJmUeZvhHakp9SVp0p6ZaAK4RbiBm1xM4Or82Eukio7KBrHGtDSCMhhYTS6X+tYp+0ar51/
+        D6xDQLqXe/7XgfOulIqfl9LF5GRMpVIeQABW1xBodq0vIRq3iAmulgcn59ZqPdcJmNI1G0OLKL7c
+        3HT4r11rFFD93mqEKB1K40KLV6D7q9FMChIAMorSb5AAxDGSro0MbYBDLub4AeLcmvf4fP3naogl
+        jbzAGaxHoQgFKrIlZH8k2ta2oQVL9FhSw42GH1Lk4OLyZPQMjg4IsmHqIbRDCKEXsoyrtqVpFRfa
+        kF9qHDcrILom+W0HZZ7mdQfsLjTJDQgpndrKRa2r2uAv9c347zQXjlPQY5Mo+DEkLouTkcCGKFtH
+        s+naBCwdiQvwZ53tQRbRa7DMA3lEbHTOcD9bSXSz1YEqDWPzmmI+h+KmQUVm3zSEjC3KVxL4+AwO
+        fn4GR4OTsVO00BZ0h9p5TEQ3MZ5WmtYMpnYqJBhlyd1LC3UxcMAsP1CXRB6cgOrQTS+APePS8JgJ
+        7OqpJM1aZbTxFSj6YCPw9kEouQnMyvDFEu9demiQ0ca3GfFezg2PoaeF4fOT968qPklgfKMQHvPo
+        2zK+S8zU3h9+gZEYZw9fA2xrzIFBWutiwjJ9++/Pturefu2Nq6CceXgRmgFjHeoZzveAKwi+7CG6
+        JkvWJzzv062iPbooZEi0bOIsum+Utismo/HzvSLb32f29uHl1bM1okhzGDgZbE1HSWcKh6I24eBy
+        kpWyrEntg/c3GQmq3YHh7KD11wW9lbtrH3x9JP3ekJhETY0n1U3YW26e+I7wntsO6lRwFsivcNDN
+        oibPdGAKZGu6a1gWNiHScgbOKvI4ELq72KKZyX5/PCwKeTXPzp7O/gcAAP//AwB1zYGLmgoAAA==
     headers:
-      Content-Length:
-      - '2986'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '4841'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2403,6 +2405,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 640ms
       x-request-id:
       - DUMMY
     status:
@@ -3041,103 +3047,100 @@ interactions:
       Copyleft: GPL/LGPL/AGPL (requires prior written approval)\\n- Exception: GPLv3
       permitted for non-distributed build or test tooling without prior approval\\n\\nEXHIBIT
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
-      Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '50974'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '50947'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
-        [\n      \"Orion Commerce, Inc. (Client)\",\n      \"Nova Digital Solutions
-        LLC (Developer)\"\n    ]\n  },\n  {\n    \"concept_id\": \"C1\",\n    \"extracted_items\":
-        [\n      {\n        \"availability_target\": 99.9,\n        \"severity_levels\":
-        [\n          {\n            \"level\": 1,\n            \"response_hours\":
-        0.5\n          },\n          {\n            \"level\": 2,\n            \"response_hours\":
-        2.0\n          },\n          {\n            \"level\": 3,\n            \"response_hours\":
-        24.0\n          },\n          {\n            \"level\": 4,\n            \"response_hours\":
-        48.0\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
-        \"C2\",\n    \"extracted_items\": [\n      {\n        \"labels\": [\n          \"web
-        application development\"\n        ]\n      }\n    ]\n  },\n  {\n    \"concept_id\":
-        \"C3\",\n    \"extracted_items\": []\n  },\n  {\n    \"concept_id\": \"C4\",\n    \"extracted_items\":
-        []\n  },\n  {\n    \"concept_id\": \"C5\",\n    \"extracted_items\": []\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1766109063, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 272,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        10321, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 2048},
-        "total_tokens": 10593}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLCHayyAEAAAD//6xVXW+bMBR9z6+weOok
+        EgGBtnlO97CpyqRtbyVCjrkhXo3NbJP1Q/nvu4ZRaJZuLNqLAZ9zD8f21XGyLD/eP7z//HX1uHyK
+        nuz31RNcBp7vKtTmGzDbVc2YwjqwXMkWZhqoBacaXl0n0WVyFYYNUKochCsrKjuNZ+G05JJPoyBK
+        pkE8DeNf5TvFGRjk3eEnIc/N6IzKHB5wOvC7mRKMoQXgXEfCSa2Em/GoMdxYKq3n9yBT0oJsvN+l
+        EsXdQEjqAAaVzXieIph6yyD1/A6EB6spwzVl3EJpHOOuxRz6SePSyVKVJWgGPvkg2YxcLAXHH717
+        UXHMldpTcsMLbqkgX5So3aYZcnu7JBc3sAehKtBY0las3ePg/9lmONLmc/fiiHRPuaAbLrh9zCzV
+        BVhHXixmC3/IM+hJO45w5l4LHom2BQ3P0UL/GNJgKlwsZDtV60YqmCVD0sEfJx2NkI5mwTnS8zHS
+        8Xna8Qjt+PpIu/9Yd6+Hf2iO6JzmwMY4ddap9wM2hFaV4Iy6viV527EltnnXsmc7nf/F6SiR+H+I
+        JKNEUrkexoqGbW2oyzZZCzEAqJTKNtvVBNp60jVNF2FCFZVWG3NU6m0xGs0uwyg1mKsYV8aqymvQ
+        A47rJirrV+nnoVCJS7HqHprfhcE8CltFrw/pHo+uOtSiSTEsTBaRf0I0y8FidJhB4nqMsh3uUF+8
+        iPqEpnXOVY8Fk8Hqf/d0Sr7dAS6Lgcqb8j3A3KmirUpDztnrdfc0De4me4v2stuNYUxDvcebKbMc
+        tDuRHLa0Fu314plHgy2S4bEVoCvN2ztmW2U0CJJ5GNLFxpscJj8BAAD//wMAJ947pHIHAAA=
     headers:
-      Content-Length:
-      - '2310'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '4189'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3146,6 +3149,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 374ms
       x-request-id:
       - DUMMY
     status:
@@ -4334,162 +4341,116 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '96038'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '96011'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
-        [\\n            {\\n                \\\"value\\\": \\\"For SOWs with a total
-        value under $50,000, either Party may terminate for convenience upon five
-        (5) days\u2019 prior written notice\\\",\\n                \\\"justification\\\":
-        \\\"This termination notice period for low-value SOWs is shorter than the
-        standard 30 days, which is an uncommon provision compared to typical agreements.\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P130\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"Developer may include GPLv3-licensed build or test dependencies without
-        prior written consent\\\",\\n                \\\"justification\\\": \\\"Allowing
-        GPLv3-licensed build or test dependencies without prior consent is a specific
-        exception to the usual requirement for prior approval of copyleft licenses.\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P68\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"If Client does not respond within the Review Period, the Deliverable is
-        deemed Accepted\\\",\\n                \\\"justification\\\": \\\"Automatic
-        acceptance of deliverables upon Client's non-response within the review period
-        is a notable provision that may be considered unusual or risky for the Client.\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P42\\\"\\n
-        \               ]\\n            }\\n        ]\\n    },\\n    {\\n        \\\"concept_id\\\":
-        \\\"C1\\\",\\n        \\\"extracted_items\\\": [\\n            {\\n                \\\"value\\\":
-        {\\n                    \\\"provision_reference\\\": \\\"7.2\\\",\\n                    \\\"risk_description\\\":
-        \\\"Automatic acceptance of deliverables if Client does not respond within
-        the review period may lead to acceptance of non-conforming work.\\\",\\n                    \\\"risk_severity\\\":
-        4\\n                },\\n                \\\"justification\\\": \\\"The provision
-        states that deliverables are deemed accepted if the Client does not respond
-        within the review period, posing a risk of unintended acceptance.\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P42\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        {\\n                    \\\"provision_reference\\\": \\\"27.2\\\",\\n                    \\\"risk_description\\\":
-        \\\"Shorter termination notice period of 5 days for SOWs under $50,000 may
-        lead to abrupt project termination and financial risk.\\\",\\n                    \\\"risk_severity\\\":
-        3\\n                },\\n                \\\"justification\\\": \\\"The clause
-        allows termination for convenience with only 5 days' notice for low-value
-        SOWs, which may disrupt project continuity.\\\",\\n                \\\"reference_paragraph_ids\\\":
-        [\\n                    \\\"P130\\\"\\n                ]\\n            },\\n
-        \           {\\n                \\\"value\\\": {\\n                    \\\"provision_reference\\\":
-        \\\"13.1\\\",\\n                    \\\"risk_description\\\": \\\"Use of GPLv3-licensed
-        build or test dependencies without prior consent may risk disclosure of proprietary
-        code if not properly managed.\\\",\\n                    \\\"risk_severity\\\":
-        3\\n                },\\n                \\\"justification\\\": \\\"Allowing
-        GPLv3 dependencies without prior approval could inadvertently impose copyleft
-        obligations.\\\",\\n                \\\"reference_paragraph_ids\\\": [\\n
-        \                   \\\"P68\\\"\\n                ]\\n            },\\n            {\\n
-        \               \\\"value\\\": {\\n                    \\\"provision_reference\\\":
-        \\\"21.1\\\",\\n                    \\\"risk_description\\\": \\\"Developer
-        indemnifies Client against IP infringement claims related to Work Product,
-        but exclusions may limit coverage.\\\",\\n                    \\\"risk_severity\\\":
-        4\\n                },\\n                \\\"justification\\\": \\\"The indemnification
-        clause protects Client but has exclusions that may expose Client to some risks.\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P104\\\",\\n
-        \                   \\\"P105\\\"\\n                ]\\n            },\\n            {\\n
-        \               \\\"value\\\": {\\n                    \\\"provision_reference\\\":
-        \\\"22.2\\\",\\n                    \\\"risk_description\\\": \\\"Liability
-        cap limits each Party\u2019s total aggregate liability to fees paid in prior
-        12 months, except for excluded claims.\\\",\\n                    \\\"risk_severity\\\":
-        4\\n                },\\n                \\\"justification\\\": \\\"The liability
-        cap restricts financial exposure but excludes certain claims, which is a significant
-        risk consideration.\\\",\\n                \\\"reference_paragraph_ids\\\":
-        [\\n                    \\\"P112\\\",\\n                    \\\"P113\\\"\\n
-        \               ]\\n            }\\n        ]\\n    },\\n    {\\n        \\\"concept_id\\\":
-        \\\"C2\\\",\\n        \\\"extracted_items\\\": [\\n            {\\n                \\\"value\\\":
-        {\\n                    \\\"labels\\\": [\\n                        \\\"medium\\\"\\n
-        \                   ]\\n                },\\n                \\\"justification\\\":
-        \\\"The agreement includes standard protections and professional standards
-        but also contains some provisions that may pose moderate risks to the Client,
-        such as automatic acceptance and limited termination notice for low-value
-        SOWs.\\\",\\n                \\\"reference_paragraph_ids\\\": [\\n                    \\\"P42\\\",\\n
-        \                   \\\"P130\\\",\\n                    \\\"P104\\\",\\n                    \\\"P105\\\",\\n
-        \                   \\\"P112\\\",\\n                    \\\"P113\\\"\\n                ]\\n
-        \           }\\n        ]\\n    }\\n]\", \"refusal\": null, \"role\": \"assistant\"}}],
-        \"created\": 1766109066, \"id\": \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\",
-        \"object\": \"chat.completion\", \"prompt_filter_results\": [{\"prompt_index\":
-        0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\": false}, \"self_harm\":
-        {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\":
-        \"safe\"}}}], \"system_fingerprint\": \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\":
-        942, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\":
-        0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\":
-        19907, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\":
-        1024}, \"total_tokens\": 20849}}"
+      string: !!binary |
+        H4sIAAAAAAAA/8RX7W4bRRT9z1NcWUiAZEe2EycV/6qkoaVIjQgIlQRFk9278bS7M6uZWTtWVInX
+        4PV4Es6d8W68xVVcEuCPk53Pc+7HuXfuviAa6HzwLQ2yuQpZVZejF4fz89PjUL5oXr61p6f++8nL
+        819fn1Qv39b69WAoO+z1O85Cu2svs9jHQVuTpjPHKrCcOjl6Npsezo4mszhR2ZxL2XZTh9HB3mRU
+        aaNH0/F0NhofjCYH6+1zqzP2WHeBT6K7+CtATc63GB4P25GKvVc3jLF2EQadLWVkoLzXPigTBsP7
+        ycyawCZiv7g0OFx+iC5lIuM6XOn8EpOXg+Px5WDYTvJtcCoDpysduPKy4iLNdSekhQtVNpwOOLWO
+        zt/84mmpw5wUBRtUSXEBNWDi6MvZeDgej4fEWIHvM+XCiiq1osAOpoERqcApgLZgoxkAqamtoUIv
+        mL6efUO5Wvk/f/+Daqexbul0ADkyNsCAHfyE7F3jgy50psRPCeFPc+27qzC63kg147g8Xl3aJbtR
+        Ah3JYIefW4ddFObK4IdJjJwrl9P+OCIa0nKus7msxYrGID4qnF47u9Ae9+x9BM1xwU7YXdXKqRun
+        6jnc0LdyWnk22Ydb7sd+a//9MHzIHSe84NKCWjSwNlnZ5Ezfnf2w2B+VYG0853Td6DIn8A7sA+Vc
+        MxxlMs3Ji7YJH5karvEIp4dt/byEKbW5STfuftH6gmhL8jVnci7xrcSquAxOkP0LjWDxVDhbUVjV
+        uLokkDXkbePg0jVDcrjO6Uy2+ke44fDZP/TCq4KOSy2Ecgu8CDiBhJjOI2+dAupH8OElncU4HMah
+        Ey4R9E5dlyy2yJkr+Ot5JnbgfAf7N8FW+M5IxT1KkskWOKg716fkyhI+Y80oQYPZNrC5hG2dI9Et
+        YBFxbZz8FLF+MN1u5PRP/E4G/7SGTR6lYXd9QB2nq45EumZ6tDft0YxEtX9/lbPPnK7v3XDeascn
+        VQc+mUUVifoTNaenljF95XBS166pJU+sVKPekdAjpLhvCgRB9CaoG69TxuiKt6P1kAjk9Uqg7t/P
+        f3hYRzccTkoyva+rsQJYU67W1L5qOQtFX2EHJ6qtcgrHXPseP6lc2jTAF+nVpTIGgvI/iOmucbF7
+        WOyUnXon7ejnZwwW9k0JBZVSpKX651CO/j2S7LAv3FGJRi+te/9wiBx8RoicQK/k5B4htVYvuoa3
+        uVARZUeyULpEGNmOZGYb1Ay+ra0XPWzLmawANC88GqPyHOulluFEhI3/FwToicJjsr832TE+fvbR
+        TU9UrWNUbLNjWyVjQ6tjcETTPq1cdK1Axi4ohGVqCbbibxEn36fGml6dUewM+iCjmHR0/vvi/hnV
+        4mBHt/d7Nt94sVDMTskTlAXt60YSSJtFfDOQcggUuKVtReNHjuZVJFMUI2scd3oxaftVuV480mot
+        0hTjT+v28wg/lginb+YBTQxwIepqtaqiqsVL164WoXI9/cffG0ntSEUVRax5qGWlNuwfVQUe32dM
+        n7LPKNU1l3+HKlPo+XRTbcLdALxjpYY1pHk0qaIi//z9AwY2LmBirEf/vFQOXUNAOg7RFLJynaek
+        tq/fdWV8pLGsEb8gQT02Sze42QAkhw+hWKF9euBWW230DT618hLoUZjkrezk8JTcvkFboOD8bZVS
+        bo6vsm19VddjxA6jDZS/AAAA//+cWEsOgyAQ3XsM1l3gp1HuUkPQ+kutGpEmXXj3DqCCFtOkGxe8
+        mZFhYHi8P6+Di4tCHAdj4jJ0eJPEMeZyxvj3Fr11qf3Qh8QEZ1Jt6ETbWgDQJuDr6gUkk0y9de+s
+        okLbV1CVjB9cUdl0Da+pLrEUEPjUD0ihM3xTJV6InR4hu+ATDsrUPwr1O58QHOuIyMgmBk+CcEGV
+        XGCAAMfhonvsg0LXnCRTsDQQlLO8hvNnnEkUbWkwcW96g2HPyv57Tq7wegWgX1pRTsMbYGE7dIAO
+        rJ+gLrOxkN3uzGxbbTVhxIvxBXucwiEdZUUWFqV1JP7m0IAolK0qRiACWvUpB8owvoa+z0iGvNn7
+        AAAA//8DAA95QbUEEwAA
     headers:
-      Content-Length:
-      - '6717'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '9510'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4498,6 +4459,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 694ms
       x-request-id:
       - DUMMY
     status:
@@ -4940,90 +4905,96 @@ interactions:
       [\\\"22.3 Excluded Claims. \\\\\\\"Excluded Claims\\\\\\\" means (a) a Party\u2019s
       indemnification obligations, (b) a Party\u2019s breach of confidentiality obligations,
       (c) infringement or misappropriation of the other Party\u2019s IPR, and (d)
-      a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '34750'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '34735'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109076, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 214, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7198, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7412}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSy07DMBC89ysinxOUBEIKV8StPAQXHkGRcbaJS2IHe4NAVf+dtduSIOjFknd2
+        1jPjXc+CgMmKnQdMNBxF17fR5Wlzf/v2mcer98fFAu31xe3Tg6qfkrurmxMWOoZ+XYHAPetIaOIB
+        Sq22sDDAEdzUJJ9n6WmWp5kHOl1B62h1j1EWdVLJKI3TLIrnUZzvyI2WAix1PdM1CNb+dDJVBZ9U
+        jsN9pQNreQ1U2zdR0ejWVRi3VlrkClk4gkIrBOWVrwtmOEpVF3TLwqBgq8GiXErBnRNXLVjBNlO6
+        geVguXOghradAFwpjZ7nhb/skM2P1CVZtU1JwVhKiZ63qHvm0Q2dL9768MsN6w3liiXqN/Bj8+Rs
+        vh3IxsRHOE2OdyiSlnbCO0mS8J+RZQXIZWsn+THBRQPVyB3D5kMl9QSYTQz+1fPf7K15Snyckpyl
+        Bx8YASGgp30qewOVFL9dj20G3FIeavuJ2ktmFswHrVmJEoz7jgqWfGi3u8Lsl0XoSvqzGkxvpF8Y
+        9+OzzewbSYO4ODIDAAA=
     headers:
-      Content-Length:
-      - '1246'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '3223'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5032,6 +5003,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 256ms
       x-request-id:
       - DUMMY
     status:
@@ -5493,90 +5468,96 @@ interactions:
       amount invoiced, unless a valid exemption applies.\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"16.2 Withholding. If withholding is
       required by law, Client shall gross up payments so Developer receives the full
-      amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '36300'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '36285'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109080, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 214, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 192,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7582, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6016}, "total_tokens": 7796}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSTU/jMBC991dEPicoDUoTuO2hWg6sVgJxQBsUGWfSuDh2sCfsoqr/fcfuR4KA
+        iyXPmzd+73l2iyhismHXERMdR9EPKlmvuvv7u/bhkf8Yf9/+1Y/Pq9XNr9cHdVf8XLPYM8zzFgSe
+        WBfCEA9QGn2AhQWO4KcuizLPVnmRlQHoTQPK0zYDJnnSSy2TLM3yJC2TtDiSOyMFOOr6Q9co2oXT
+        y9QN/KNyGp8qPTjHN0C1UxMVrVG+wrhz0iHXyOIJFEYj6KB8VzHLUepNRbc8jiq2HR3KVgrunfhq
+        xSq2n9MttKPj3oEelZoBXGuDgReEPx2R/VlqS1ZdV1MwjlKi5x2agQV0T+dTsD5+cMMGS7lijeYF
+        wtgiL7PDQDYlPsHZ8vKIImlRM15xlcdfjKwbQC6Vm+XHBBcdNBM3L8vybIKPjTQTli5mHj9L+mr8
+        wT+FPk1ZXmXfPjABQsBAK1UPFhopPhqf2iz4vfyu7Zx2kMwc2DfatBolWP8jDbR8VId1Ye7dIfQ1
+        fdsG7GBl2Bn/6Yv94j/oNB9LNQMAAA==
     headers:
-      Content-Length:
-      - '1249'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '3308'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5585,6 +5566,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 267ms
       x-request-id:
       - DUMMY
     status:
@@ -6004,14 +5989,6 @@ interactions:
       has the meaning set forth in Section 23.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
       [\\\"1.6 \\\\\\\"Confidential Information\\\\\\\" has the meaning set forth
       in Section 23.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"13.3 AI/ML and Generative AI. If AI-assisted
-      tools are used, Developer will ensure outputs are reviewed for quality, originality,
-      and license compliance. Developer shall not submit Client Confidential Information
-      to public AI services without written approval.\\\", \\\"justification\\\":
-      null, \\\"reference_paragraphs\\\": [\\\"13.3 AI/ML and Generative AI. If AI-assisted
-      tools are used, Developer will ensure outputs are reviewed for quality, originality,
-      and license compliance. Developer shall not submit Client Confidential Information
-      to public AI services without written approval.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"23. CONFIDENTIALITY\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"23. CONFIDENTIALITY\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"23.1 Definition. \\\\\\\"Confidential
@@ -6055,90 +6032,96 @@ interactions:
       that one archival copy may be retained for legal compliance.\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"23.5 Return/Destruction. Upon request
       or termination, Recipient will return or destroy Confidential Information, except
-      that one archival copy may be retained for legal compliance.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      that one archival copy may be retained for legal compliance.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '37133'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '36456'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109083, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 278, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 256,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7649, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7927}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSTU+EMBC9768gPYNhWVnQm4l61ahREzGklmGpQkvaYaPZ7H932v0Ao16adN68
+        6Xuvs5kFAZMVOw+YaDiKrm+jq2Vz/5SiuP1Yr29qc7d4vFhcKni+rvHxgYWOod/eQeCBdSI08QCl
+        VjtYGOAIbuo8y9NkmWaLxAOdrqB1tFWPURp1UskoiZM0ivMozvbkRksBlrpe6BoEG386maqCTyrH
+        4aHSgbV8BVQ7NFHR6NZVGLdWWuQKWTiCQisE5ZVvCmY4SrUq6JaGQcHeB4uyloI7J65asIJtp3QD
+        9WC5c6CGtp0AXCmNnueFv+6R7VFqTVZtU1IwllKi5y3qnnl0S+ertz78cMN6Q7liifoD/Ngsnee7
+        gWxMfITnp2d7FElLO+Etl1n4x8iyAuSytZP8mOCigWrkpnmeH03woZJ6xOLZxONvSX+N3/mn0Cey
+        k/8fGAEhoKeVKnsDlRQ/jY9tBtxe/td2TNtLZhbMmjatRAnG/UgFNR/a3bow+2URupK+bQWmN9Lv
+        jPv02Xb2DVjyAHA1AwAA
     headers:
-      Content-Length:
-      - '1246'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2651'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -6147,6 +6130,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 268ms
       x-request-id:
       - DUMMY
     status:
@@ -6566,103 +6553,109 @@ interactions:
       law and venue shall be as specified in the SOW, without regard to conflict of
       laws principles and excluding the U.N. Convention on Contracts for the International
       Sale of Goods.\\\", \\\"justification\\\": \\\"This paragraph specifies that
-      the governing law and venue shall be as specified in the SOW, indicating a variable
-      governing law provision.\\\", \\\"reference_paragraphs\\\": [\\\"29.3 Governing
-      Law and Venue. The governing law and venue shall be as specified in the SOW,
-      without regard to conflict of laws principles and excluding the U.N. Convention
-      on Contracts for the International Sale of Goods.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      the governing law and venue shall be as specified in the SOW, indicating a governing
+      law provision subject to variation by SOW.\\\", \\\"reference_paragraphs\\\":
+      [\\\"29.3 Governing Law and Venue. The governing law and venue shall be as specified
+      in the SOW, without regard to conflict of laws principles and excluding the
+      U.N. Convention on Contracts for the International Sale of Goods.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"32.6 Governing Law Override. Notwithstanding
       Section 29.3, this Agreement shall be governed by the laws of the State of Delaware,
       without regard to its conflicts of laws rules.\\\", \\\"justification\\\": \\\"This
-      paragraph states an explicit governing law override that the Agreement shall
-      be governed by Delaware law, which may contradict the variable governing law
-      provision in the SOW.\\\", \\\"reference_paragraphs\\\": [\\\"32.6 Governing
+      paragraph states an override that the Agreement shall be governed by Delaware
+      law regardless of Section 29.3, creating a potential conflict with the prior
+      governing law provision.\\\", \\\"reference_paragraphs\\\": [\\\"32.6 Governing
       Law Override. Notwithstanding Section 29.3, this Agreement shall be governed
       by the laws of the State of Delaware, without regard to its conflicts of laws
-      rules.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      rules.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '33934'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '33942'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109087, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 86, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 64,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7001, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7087}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSTY+bMBC951cgn6EiaR3Y3qLV3vZSVVXTlBVyzAScBRvZQz8U5b937HxA1ORi
+        yfPmjd97nsMsipiq2OeIyUag7Po2eVk2Xzdf6uffQ77Z/lhv5Xb1Xa34Zv2qvq1Y7BlmuweJF9YH
+        aYgHqIw+wdKCQPBT51nOF0uefeQB6EwFrafVPSY86ZRWySJd8CTNkzQ7kxujJDjq+knXKDqE08vU
+        FfyhchpfKh04J2qg2qWJita0vsKEc8qh0MjiEZRGI+ig/FAwK1DpuqAbj6OC7QeHaqek8E58tWAF
+        O07pFnaDE96BHtp2AgitDQZeEP52Ro5XqTuy6pqSgnGUEj3v0PQsoEc634L14cYN6y3liiWadwhj
+        szTNTwPZmPgIzz89nVEkLe2EN+dZfGdkWQEK1bpJfkwK2UA1cnme51cTYqiUGbF0NvH4v6R740/+
+        KfSJ7MXjB0ZASuhppcreQqXkrfGxzYLfy0dt17SDZObA/qJNK1GB9T9SwU4M7WldmPvrELqSvq0G
+        21sVdsZ/+uw4+we/b8nqNQMAAA==
     headers:
-      Content-Length:
-      - '1244'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2760'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -6671,6 +6664,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 250ms
       x-request-id:
       - DUMMY
     status:
@@ -7091,108 +7088,119 @@ interactions:
       would require disclosure of Client proprietary code without Client\u2019s prior
       written consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
       build or test dependencies without prior written consent.\\\", \\\"justification\\\":
-      \\\"This paragraph addresses open source software use, including restrictions
-      on copyleft OSS and an exception allowing GPLv3-licensed build or test dependencies
-      without prior consent.\\\", \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management.
-      Developer may use OSS consistent with Exhibit H. Developer shall not include
-      copyleft OSS that would require disclosure of Client proprietary code without
-      Client\u2019s prior written consent. Notwithstanding the foregoing, Developer
-      may include GPLv3-licensed build or test dependencies without prior written
-      consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
-      \\\"value\\\": \\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\", \\\"justification\\\":
-      \\\"This paragraph lists approved open source licenses, including permissive,
-      weak copyleft, and copyleft licenses with conditions, highlighting OSS provisions
-      and exceptions.\\\", \\\"reference_paragraphs\\\": [\\\"EXHIBIT H: APPROVED
-      OPEN SOURCE LICENSES\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"This paragraph addresses open source software usage, prohibiting copyleft
+      OSS that would require disclosure of Client proprietary code without consent,
+      but allowing GPLv3 build or test dependencies, indicating unusual exceptions.\\\",
+      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
+      consistent with Exhibit H. Developer shall not include copyleft OSS that would
+      require disclosure of Client proprietary code without Client\u2019s prior written
+      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
+      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\",
+      \\\"justification\\\": \\\"This paragraph lists approved open source licenses
+      including permissive, weak copyleft, and copyleft licenses with conditions,
+      highlighting OSS provisions and copyleft exposure.\\\", \\\"reference_paragraphs\\\":
+      [\\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"- Exception: GPLv3 permitted for non-distributed
       build or test tooling without prior approval\\\", \\\"justification\\\": \\\"This
       paragraph explicitly permits GPLv3 for non-distributed build or test tooling
-      without prior approval, indicating an unusual exception to copyleft restrictions.\\\",
+      without prior approval, an unusual exception to typical copyleft restrictions.\\\",
       \\\"reference_paragraphs\\\": [\\\"- Exception: GPLv3 permitted for non-distributed
-      build or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      build or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '34414'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '34451'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109088, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 470, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 448,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7071, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6016}, "total_tokens": 7541}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VU204bMRB9z1eM/NRKm7AkJFn61gdUhKBCLUK0DYoc7yRr8Npb25sLKFJ/o7/X
+        L+nYuWxo4cVaz83nzJzZ5xYAkzn7AEwU3IuyUu2zQfFV3D3Jyc333um3L927i8/Lh4mYXN/eXl2w
+        JGSYyQMKv8vqCEN56KXRG7ewyD2GqsfDrN8d9Ie9LDpKk6MKabPKt/vtUmrZ7qbdfjvN2ulwm1wY
+        KdBR1A+6AjzHM8DUOS7JnCY7S4nO8RmSbRdERmtUsDDunHSea8+SximM9qgj8ucRs9xLPRvR7SSB
+        EXuonZdTKXhgEqwjdlMg4NJbLogPSI+lA24RpmSouVIrEMZa6gVwnUMuwycZXV1VxoaUyQo81RAy
+        XCpr5tJRcQfvjnud45h0tizkRHo4f5/EO4WvgAtREzoMD/DK1/RkKPOI4cFqpXDqQ7WYSfV2ifDp
+        +nLeg0ktVX7k0XkCL7AKIR04Nwuco01ioENqRf4PNzCaHiQOxuYuhu3BQYE8R7uhadCBNv4FNNxE
+        /vn124GrUIRGgqJJaoeQo+dSEWvszDoJVGhLSeOZ4y7C0YcjGAlcXV9Ct5MCd7BA/tjQdXUUHXhD
+        COcSF7t2cR9oH12G4yMd5P5Z0ySoQdJYWFjpaebAq9B+rqjNzmwhR/Khf5JAKzkrwvCk3uqZxkz5
+        01opCq2MC1S55mpFwuqM2PpQWBanteNB25riDxxcU6eioqKk77ee9V7EU1oCV4xpZRztDwnTeVOx
+        6F3TeR+Xon6hc0ZMysqPvXnEWHaYDk83BVmziwfuwc7rCYs6cGQnWfJKyfF2YAebxQQXBeZNbj/L
+        sj0JXufSNL60dcDxf0ivld/wp3VsqgxO0jcfaBwiCJyAVRZzKV4Sb8IsBvG8FbbvdoTMHNo56XLs
+        JdowkRynvFabHwlzKxJqOaaxzdCSxOLfJAy9tW79BbTSXJRPBQAA
     headers:
-      Content-Length:
-      - '1249'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '9143'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -7201,6 +7209,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 254ms
       x-request-id:
       - DUMMY
     status:
@@ -7622,98 +7634,104 @@ interactions:
       If Client does not respond within the Review Period, the Deliverable is deemed
       Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\" in the SOW,
       the Review Period shall be three (3) business days.\\\", \\\"justification\\\":
-      \\\"This paragraph defines short client review periods for acceptance, including
-      a deemed acceptance if no response is received within 10 business days or 3
-      business days for critical deliverables.\\\", \\\"reference_paragraphs\\\":
-      [\\\"7.2 Review Period. Unless otherwise stated in the SOW, Client will have
-      [10] business days to test and either (a) provide written Acceptance or (b)
-      provide a written list of material non-conformities. If Client does not respond
-      within the Review Period, the Deliverable is deemed Accepted. For Deliverables
-      classified as \\\\\\\"Critical\\\\\\\" in the SOW, the Review Period shall be
-      three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      \\\"This paragraph defines short client review periods for acceptance testing,
+      including a deemed acceptance if no response is received within 10 business
+      days or 3 business days for critical deliverables, reflecting aggressive deemed
+      acceptance constructs.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period.
+      Unless otherwise stated in the SOW, Client will have [10] business days to test
+      and either (a) provide written Acceptance or (b) provide a written list of material
+      non-conformities. If Client does not respond within the Review Period, the Deliverable
+      is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
+      in the SOW, the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '33674'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '33719'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109093, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 150, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 128,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 6950, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7100}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSy07kMBC8z1dEPierTCCP2dtK7AGJE6y4EBQZp5MYHDuyO4jVaP59255HghYu
+        ltzV1a4q934TRUy27GfExMBRjJNKfhfDg+JFdnfz8Xj1R+/S7vZm+/brSuJtf89izzAvryDwzPoh
+        DPEApdFHWFjgCH7qtqzyrMjL6zIAo2lBeVo/YZIno9QyydIsT9IqScsTeTBSgKOuJ7pG0T6cXqZu
+        4YPKaXyujOAc74Fq5yYqWqN8hXHnpEOukcULKIxG0EH5vmaWo9R9Tbc8jmr2OjuUnRTcO/HVmtXs
+        sKZb6GbHvQM9K7UCuNYGAy8Ifz4hh4vUjqy6oaFgHKVEzzs0Ewvogc7nYH3+5IZNlnLFBs0bhLHF
+        Li+PA9mS+AJvr3cnFEmLWoBymxbxFyObFpBL5Vb5McHFAO3CzauqupjgcyvNgqWblcf/JX01/uif
+        Ql/Jzr5/YAGEgIlWqpkstFJ8Nr60WfB7+V3bJe0gmTmw77RpDUqw/kda6PisjuvC3F+HMDb0bT3Y
+        ycqwM/7TN4fNP8T5nOk1AwAA
     headers:
-      Content-Length:
-      - '1246'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2142'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -7722,6 +7740,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 248ms
       x-request-id:
       - DUMMY
     status:
@@ -8140,90 +8162,96 @@ interactions:
       \\\"_StringItem\\\", \\\"value\\\": \\\"Orion Commerce, Inc. (Client)\\\", \\\"justification\\\":
       null}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
       \\\"value\\\": \\\"Nova Digital Solutions LLC (Developer)\\\", \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '32806'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '32791'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\":5,\"justification\":\"\"}", "refusal": null, "role":
-        "assistant"}}], "created": 1766109095, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        null, "usage": {"completion_tokens": 212, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 192, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 6771, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        6016}, "total_tokens": 6983}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSy07DMBC89ysinxuUVuQhzuWKKnokKDLOtjEkduTdIKqq/87afSQV9GLJOzvr
+        mfEeZlEkdC2eIqEaSarr2/g5azZ21awlDj39bPamWL++7BcrHLKvTMw9w358gqIL60FZ5gFpa06w
+        ciAJ/NRFXqTLLM3TJACdraH1tF1PcRp32uh4mSzTOCniJD+TG6sVIHe98TWKDuH0Mk0NP1wOo0Kl
+        A0S5A65dmrjobOsrQiJqJGlIzEdQWUNggvJDKZwkbXYl39J5VIrPAUlvtZLeia+WohTHKd3BdkDp
+        HZihbSeANMZS4AXh72fkeJW6ZavYVBwMckr8PJLtRUCPfL4H68ONG9E7zpUqsl8QxmZ5vjgNFGPi
+        I7zM8zNKrKUdgTx5LOb/jKxqIKlbnOQnlFQN1CM3LYriakIOtbYjlswmHv9K+m/8yT+HPpGdZncf
+        GAGloOeVqnoHtVa3xsc2B34v77Vd0w6SBYL75k2rSIPzP1LDVg7taV0E7pGgq/jbduB6p8PO+E+f
+        HWe/C10kYTUDAAA=
     headers:
-      Content-Length:
-      - '1246'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '4197'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -8232,6 +8260,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 241ms
       x-request-id:
       - DUMMY
     status:
@@ -8651,96 +8683,100 @@ interactions:
       \\\"severity_levels\\\": [{\\\"level\\\": 1, \\\"response_hours\\\": 0.5}, {\\\"level\\\":
       2, \\\"response_hours\\\": 2.0}, {\\\"level\\\": 3, \\\"response_hours\\\":
       24.0}, {\\\"level\\\": 4, \\\"response_hours\\\": 48.0}]}, \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '32856'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '32841'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 4, \"justification\": \"Availability target of
-        99.9% and the severity response times for Severity 1 (30 minutes) and Severity
-        2 (2 hours) are correctly extracted and grounded in Exhibit C. However, the
-        document specifies response times in business days for Severity 3 and Severity
-        4; converting those to 24 and 48 calendar hours is an interpretation not explicitly
-        stated. The extraction also omits other SLA metrics present in the Exhibit
-        (e.g., workaround and resolution timeframes).\" }", "refusal": null, "role":
-        "assistant"}}], "created": 1766109098, "id": "chatcmpl-DUMMY", "model": "gpt-5-mini-2025-08-07",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        null, "usage": {"completion_tokens": 630, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 512, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 6803, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        6016}, "total_tokens": 7433}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VUwW7bMAy95ysInVogCdwkTpzttq3Ddtqhu81FoMhMzM6RPElOGhT591FyErto
+        ezEgPvLpkXzyywBAUCE+gVCl9GpXV6P7efngrPo+L5b3NPv5r5wvj6mlb1/Mk5mIYagw6ydU/lI1
+        Vobr0JPRLawsSo+B9W6RpZN5ukhnEdiZAqtQtq39KB3tSNNokkzSUZKNksW5uDSk0HHWHz4CvMRv
+        kKkLfOZwMrxEduic3CLHLkkctKYKESGdI+el9mLYgcpojzoqf8mFlZ70NufTbAi5eGqcpw0pGToJ
+        0Vz8LhHw2VupuB+Qe0mVXFNF/ghe2i16uFkux8tbkLoAz8kO92gDfBdDE7DoaqMdgieWCzfJOG2R
+        cQKlaay7hYIsT7M6wo43UEaaNpnlh2tJw/1zSWvy8HUMP8wh3DGMeYVRzY4bAlejYu1cdL3wwAMz
+        BwcbY+HhImsaL58FznXjSPMEoZBH9xl4NJwTBsLMJgg2MJm16VkrFXimTRAmGRmFEOR5LvpE4Qw8
+        1xIt00jNqf5Y80wryNqKfvYQDiVxy8SUGhp9bjheU4ctjOFXoDpQ0MP9kscd51ruDqsKttY07Io4
+        ogDX1uwpnD0vbZyLU3/3FjeNk8F+uqmqHiC1Nj4uPbru8Yycrj7bsE9duWJXO7Y4e8d5U4uInvj7
+        GH3bvLKiYCncwsqbvxhp51kybQlF91x68HR+Rj1rqTpgMZsuh+9Qrgr07EbXM79QUpVYdLVplmXX
+        JmRTkOmwZNDr8a2k9+jb/tkgvRvuJh9e0AFKYc17XdUWC1KvG+/SLIafykdp12lHycKh3fNvYuUJ
+        bdhIgRvZVO1bF+7o2CcrXtsWbW0pPviw9MFp8B+3fyOe8gQAAA==
     headers:
-      Content-Length:
-      - '1711'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '8811'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -8749,6 +8785,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 242ms
       x-request-id:
       - DUMMY
     status:
@@ -9165,90 +9205,96 @@ interactions:
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Primary
       Agreement Type</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_LabelItem\\\", \\\"value\\\": [\\\"web application development\\\"], \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '32668'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '32653'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109107, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 86, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 64,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 6733, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6016}, "total_tokens": 6819}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSy07DMBC89ysinxOUPtIG7oUbSAghIVJFxtk0hsSO7A1QVf131u4jqWgvlryz
+        s54Z73YUBEwW7C5gouIomraOlvPqZfz7+rb8uX++ny4fyxczUw8Ps6cN3L6y0DH0xycIPLJuhCYe
+        oNRqDwsDHMFNHS/SZDJPFvOpBxpdQO1o6xajJGqkktEkniRRnEbx4kCutBRgqeudrkGw9aeTqQr4
+        pXIcHisNWMvXQLVjExWNrl2FcWulRa6QhT0otEJQXvk2Y4ajVOuMbkkYZOyzsyhLKbhz4qoZy9hu
+        SDdQdpY7B6qr6wHAldLoeV746oDsTlJLsmqrnIKxlBI9b1G3zKM7OlfeenfmhrWGcsUc9Rf4sfPF
+        dLofyPrEezhNDiCSlHpAS8dpeGFiXgByWdtBfExwUUHRc5M0TU8eeFdI3WPxaGDxv6JL4/f2KfOB
+        utnV+T0gBLS0UHlroJDi3HbfZsBt5bW2U9ZeMbNgvmnPcpRg3H8UUPKu3i8LsxuL0OT0aWswrZF+
+        Y9yXj3ajPyUmE5IzAwAA
     headers:
-      Content-Length:
-      - '1247'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2907'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -9257,6 +9303,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 240ms
       x-request-id:
       - DUMMY
     status:
@@ -9674,116 +9724,122 @@ interactions:
       Provisions</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"For SOWs with a total value under $50,000,
       either Party may terminate for convenience upon five (5) days\u2019 prior written
-      notice\\\", \\\"justification\\\": \\\"This termination notice period for low-value
-      SOWs is shorter than the standard 30 days, which is an uncommon provision compared
-      to typical agreements.\\\", \\\"reference_paragraphs\\\": [\\\"27.2 Termination
-      for Convenience. Either Party may terminate this Agreement or any SOW for convenience
-      upon [30] days\u2019 prior written notice. In such case, Client will pay for
-      Services performed and non-cancellable commitments incurred through the effective
-      termination date. For SOWs with a total value under $50,000, either Party may
-      terminate for convenience upon five (5) days\u2019 prior written notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      notice\\\", \\\"justification\\\": \\\"This termination notice period for lower-value
+      SOWs is shorter than the standard 30 days, which is an uncommon provision.\\\",
+      \\\"reference_paragraphs\\\": [\\\"27.2 Termination for Convenience. Either
+      Party may terminate this Agreement or any SOW for convenience upon [30] days\u2019
+      prior written notice. In such case, Client will pay for Services performed and
+      non-cancellable commitments incurred through the effective termination date.
+      For SOWs with a total value under $50,000, either Party may terminate for convenience
+      upon five (5) days\u2019 prior written notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"Developer may include GPLv3-licensed
       build or test dependencies without prior written consent\\\", \\\"justification\\\":
-      \\\"Allowing GPLv3-licensed build or test dependencies without prior consent
-      is a specific exception to the usual requirement for prior approval of copyleft
-      licenses.\\\", \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer
-      may use OSS consistent with Exhibit H. Developer shall not include copyleft
-      OSS that would require disclosure of Client proprietary code without Client\u2019s
-      prior written consent. Notwithstanding the foregoing, Developer may include
-      GPLv3-licensed build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"Allowing GPLv3 build or test dependencies without prior consent is a specific
+      exception that deviates from typical open source license restrictions.\\\",
+      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
+      consistent with Exhibit H. Developer shall not include copyleft OSS that would
+      require disclosure of Client proprietary code without Client\u2019s prior written
+      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
+      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"If Client does not respond within the
       Review Period, the Deliverable is deemed Accepted\\\", \\\"justification\\\":
-      \\\"Automatic acceptance of deliverables upon Client's non-response within the
-      review period is a notable provision that may be considered unusual or risky
-      for the Client.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period. Unless
-      otherwise stated in the SOW, Client will have [10] business days to test and
-      either (a) provide written Acceptance or (b) provide a written list of material
-      non-conformities. If Client does not respond within the Review Period, the Deliverable
-      is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
-      in the SOW, the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      \\\"Automatic acceptance of deliverables upon client non-response within the
+      review period is a notable acceptance provision.\\\", \\\"reference_paragraphs\\\":
+      [\\\"7.2 Review Period. Unless otherwise stated in the SOW, Client will have
+      [10] business days to test and either (a) provide written Acceptance or (b)
+      provide a written list of material non-conformities. If Client does not respond
+      within the Review Period, the Deliverable is deemed Accepted. For Deliverables
+      classified as \\\\\\\"Critical\\\\\\\" in the SOW, the Review Period shall be
+      three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '34885'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '34781'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109109, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 470, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 448,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7189, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 6656}, "total_tokens": 7659}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSy2rDMBC85yuMznZxQvyg19JroaHQ0joYRd7Eam3JkdahJeTfu1Iedmh6EWhn
+        ZzUz2v0kCJis2H3ARM1RtF0TPab1y3zxtn193to+V7uH9yTuHlZfT3nLFyx0DL36BIFn1p3QxAOU
+        Wh1hYYAjuKnTLE9maZKlqQdaXUHjaJsOoyRqpZLRLJ4lUZxHcXYi11oKsNT1Qdcg2PvTyVQVfFM5
+        Ds+VFqzlG6DauYmKRjeuwri10iJXyMIBFFohKK98XzDDUapNQbckDAr22VuUaym4c+KqBSvYYUw3
+        sO4tdw5U3zQjgCul0fO88OUJOVykrsmqrUsKxlJK9LxF3TGPHuhceuv9lRvWGcoVS9Rf4Mdm02x6
+        HMiGxAd4lmUnFElLM+LN53l4Y2RZAXLZ2FF+THBRQzVwkzzPLyZ4X0k9YPFk5PGvpFvjj/4p9JHs
+        JP33gQEQAjpaqbIzUElxbXxoM+D28r+2S9peMrNgdrRpJUow7kcqWPO+Oa4Lsz8WoS3p2zZgOiP9
+        zrhPnxwmv7YXtfU1AwAA
     headers:
-      Content-Length:
-      - '1249'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '4677'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -9792,6 +9848,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 256ms
       x-request-id:
       - DUMMY
     status:
@@ -10207,156 +10267,141 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Risk
       Assessment Summary (Developer)</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"7.2\\\",
-      \\\"risk_description\\\": \\\"Automatic acceptance of deliverables if Client
-      does not respond within the review period may lead to acceptance of non-conforming
-      work.\\\", \\\"risk_severity\\\": 4}, \\\"justification\\\": \\\"The provision
-      states that deliverables are deemed accepted if the Client does not respond
-      within the review period, posing a risk of unintended acceptance.\\\", \\\"reference_paragraphs\\\":
-      [\\\"7.2 Review Period. Unless otherwise stated in the SOW, Client will have
-      [10] business days to test and either (a) provide written Acceptance or (b)
-      provide a written list of material non-conformities. If Client does not respond
-      within the Review Period, the Deliverable is deemed Accepted. For Deliverables
-      classified as \\\\\\\"Critical\\\\\\\" in the SOW, the Review Period shall be
-      three (3) business days.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"27.2\\\",
       \\\"risk_description\\\": \\\"Shorter termination notice period of 5 days for
-      SOWs under $50,000 may lead to abrupt project termination and financial risk.\\\",
-      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"The clause allows termination
-      for convenience with only 5 days' notice for low-value SOWs, which may disrupt
-      project continuity.\\\", \\\"reference_paragraphs\\\": [\\\"27.2 Termination
-      for Convenience. Either Party may terminate this Agreement or any SOW for convenience
-      upon [30] days\u2019 prior written notice. In such case, Client will pay for
-      Services performed and non-cancellable commitments incurred through the effective
-      termination date. For SOWs with a total value under $50,000, either Party may
-      terminate for convenience upon five (5) days\u2019 prior written notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      SOWs under $50,000 may risk abrupt project termination and insufficient transition
+      time\\\", \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"The provision
+      allows termination with only 5 days' notice for smaller SOWs, which may disrupt
+      project continuity and planning.\\\", \\\"reference_paragraphs\\\": [\\\"27.2
+      Termination for Convenience. Either Party may terminate this Agreement or any
+      SOW for convenience upon [30] days\u2019 prior written notice. In such case,
+      Client will pay for Services performed and non-cancellable commitments incurred
+      through the effective termination date. For SOWs with a total value under $50,000,
+      either Party may terminate for convenience upon five (5) days\u2019 prior written
+      notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_JsonObjectItem\\\",
+      \\\"value\\\": {\\\"provision_reference\\\": \\\"7.2\\\", \\\"risk_description\\\":
+      \\\"Automatic acceptance of deliverables if Client does not respond within the
+      review period may result in unintended acceptance of non-conforming work\\\",
+      \\\"risk_severity\\\": 4}, \\\"justification\\\": \\\"Deeming deliverables accepted
+      by default if Client fails to respond could expose Developer to risks of unaddressed
+      defects.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period. Unless otherwise
+      stated in the SOW, Client will have [10] business days to test and either (a)
+      provide written Acceptance or (b) provide a written list of material non-conformities.
+      If Client does not respond within the Review Period, the Deliverable is deemed
+      Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\" in the SOW,
+      the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"13.1\\\",
       \\\"risk_description\\\": \\\"Use of GPLv3-licensed build or test dependencies
-      without prior consent may risk disclosure of proprietary code if not properly
-      managed.\\\", \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"Allowing
-      GPLv3 dependencies without prior approval could inadvertently impose copyleft
-      obligations.\\\", \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer
-      may use OSS consistent with Exhibit H. Developer shall not include copyleft
-      OSS that would require disclosure of Client proprietary code without Client\u2019s
-      prior written consent. Notwithstanding the foregoing, Developer may include
-      GPLv3-licensed build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"21.1\\\",
-      \\\"risk_description\\\": \\\"Developer indemnifies Client against IP infringement
-      claims related to Work Product, but exclusions may limit coverage.\\\", \\\"risk_severity\\\":
-      4}, \\\"justification\\\": \\\"The indemnification clause protects Client but
-      has exclusions that may expose Client to some risks.\\\", \\\"reference_paragraphs\\\":
-      [\\\"21.1 By Developer. Developer will defend, indemnify, and hold harmless
-      Client against third-party claims alleging that the Work Product infringes or
-      misappropriates such third party\u2019s Intellectual Property Rights, and pay
-      resulting damages, costs, and reasonable attorneys\u2019 fees finally awarded
-      by a court or agreed in settlement.\\\", \\\"21.2 Exclusions. Developer has
-      no obligation for claims arising from (a) Client content or specifications,
-      (b) combinations with items not provided by Developer, (c) modifications not
-      made by Developer, or (d) use after Developer provides a non-infringing alternative.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"22.2\\\",
-      \\\"risk_description\\\": \\\"Liability cap limits each Party\u2019s total aggregate
-      liability to fees paid in prior 12 months, except for excluded claims.\\\",
-      \\\"risk_severity\\\": 4}, \\\"justification\\\": \\\"The liability cap restricts
-      financial exposure but excludes certain claims, which is a significant risk
-      consideration.\\\", \\\"reference_paragraphs\\\": [\\\"22.2 Cap. Except for
-      Excluded Claims, each Party\u2019s total aggregate liability arising out of
-      or related to this Agreement shall not exceed the total fees paid or payable
-      under the applicable SOW during the twelve (12) months preceding the event giving
-      rise to liability.\\\", \\\"22.3 Excluded Claims. \\\\\\\"Excluded Claims\\\\\\\"
-      means (a) a Party\u2019s indemnification obligations, (b) a Party\u2019s breach
-      of confidentiality obligations, (c) infringement or misappropriation of the
-      other Party\u2019s IPR, and (d) a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      without prior written consent may expose Developer to license compliance risks\\\",
+      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"Allowing certain GPLv3
+      dependencies without consent could create IP or compliance risks for Developer.\\\",
+      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
+      consistent with Exhibit H. Developer shall not include copyleft OSS that would
+      require disclosure of Client proprietary code without Client\u2019s prior written
+      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
+      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"27.4\\\",
+      \\\"risk_description\\\": \\\"Developer may suspend work if undisputed invoices
+      are over 30 days overdue and not cured within 10 days, risking project delays\\\",
+      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"Suspension rights due
+      to payment delays could interrupt project progress and affect timelines.\\\",
+      \\\"reference_paragraphs\\\": [\\\"27.4 Suspension. Developer may suspend work
+      upon written notice if undisputed invoices are more than [30] days overdue and
+      not cured within ten (10) days after notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '37217'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '35727'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"{\\\"rating\\\":
-        4, \\\"justification\\\": \\\"The extracted items accurately reflect and are
-        grounded in the cited provisions and capture plausible risk descriptions and
-        severities for the Developer. However, the assessment of the IP indemnity
-        (item 4) omits Section 21.6, which expressly states Developer\u2019s liability
-        for IP infringement claims is uncapped and therefore materially mitigates
-        the stated risk; this omission makes that item slightly overstated. Otherwise
-        the items are factual and supported by the document text.\\\"}\", \"refusal\":
-        null, \"role\": \"assistant\"}}], \"created\": 1766109114, \"id\": \"chatcmpl-DUMMY\",
-        \"model\": \"gpt-5-mini-2025-08-07\", \"object\": \"chat.completion\", \"prompt_filter_results\":
-        [{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\":
-        false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\":
-        {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}}], \"system_fingerprint\": null, \"usage\":
-        {\"completion_tokens\": 1007, \"completion_tokens_details\": {\"accepted_prediction_tokens\":
-        0, \"audio_tokens\": 0, \"reasoning_tokens\": 896, \"rejected_prediction_tokens\":
-        0}, \"prompt_tokens\": 7684, \"prompt_tokens_details\": {\"audio_tokens\":
-        0, \"cached_tokens\": 0}, \"total_tokens\": 8691}}"
+      string: !!binary |
+        H4sIAAAAAAAA/3VUwW4aMRC98xXWnhIJVrCBQHqsWilKFalNcysRMt5hdxKvvbJnISRC6kf0C/sl
+        HXshC2pyQXie582bmed97QmRYJ58EokqJamq1oOvl+X9Fcqn6+rq5u7a/7j7/L34dnN/m6lLfZP0
+        Q4ZdPoKiQ1aqLOcBoTUtrBxIgsA6ms4m2eVkOh1FoLI56JBW1DSYDCo0OMiG2WQwnA2G031yaVGB
+        51u/+CjEa/wNMk0Ozxwe9g+RCryXBXDscImDzuoQSaT36EkaSvodqKwhMFH56zxxktAUcz5d9MU8
+        eWw84QqVDJ2E6Dy5tZ4EElReSAciR8d9663wTV1bxz2K5VZQCSIQO6lIEDyTOIO0SPsim6aZkCYX
+        o4t0FAmUdXsGhSE7gCE9B68cLjni0D+1xWotG49LDeepuLYbWIPrx8tBj1hZJwI9elGh5zWE6uDw
+        JbAyQSQSZGPGF07Wtgb39/efHKAKd5SCmsejQBRgwEnNopb8b4XkT5NCjys0UuMLj+s4M8p3WBRc
+        mJGNdI4HvhWchDb3XG1TooZIx8MYt9IPzQaVXREXZG3FmW98DcbzCmKPxppabite2rlYNhT6rR14
+        Pp80yqssmYRKaThUO0s8ZlwDo0VJqfgZxocsLdiiMIGvnTJb1VsjecyRPijleUritvgcVNiV2JQ2
+        FJa0LwZ5wxYVdh3ndtiqYTum82R3bDgHq8bL4HnTaH0ESGMsRadFqz/skd2buXni6MtFqy8Y1pOt
+        k4ju+PchPpbmxP8J913VtCD7BJF2ejHLWsKke6MdPBpdHmBiMbpDZpPxuP8O5yIHkqj90ZNLlFQl
+        5F3uZDabvXUhmxxthw17R03+r+k9+nYAbK8j3cNs/GGFDog+ZWXslxzVaevdNQfhW/bRtbd5R82J
+        B7fmr9OCEFzYSQ4r2ej2E5P4rWd7L3hx/B5qfhG0X3tv1/sHwEpJ+WkFAAA=
     headers:
-      Content-Length:
-      - '1730'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '15295'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -10365,6 +10410,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 263ms
       x-request-id:
       - DUMMY
     status:
@@ -10781,119 +10830,123 @@ interactions:
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Agreement
       Risk Category (Client)</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_LabelItem\\\", \\\"value\\\": [\\\"medium\\\"], \\\"justification\\\":
-      \\\"The agreement includes standard protections and professional standards but
-      also contains some provisions that may pose moderate risks to the Client, such
-      as automatic acceptance and limited termination notice for low-value SOWs.\\\",
-      \\\"reference_paragraphs\\\": [\\\"7.2 Review Period. Unless otherwise stated
-      in the SOW, Client will have [10] business days to test and either (a) provide
-      written Acceptance or (b) provide a written list of material non-conformities.
-      If Client does not respond within the Review Period, the Deliverable is deemed
-      Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\" in the SOW,
-      the Review Period shall be three (3) business days.\\\", \\\"21.1 By Developer.
-      Developer will defend, indemnify, and hold harmless Client against third-party
-      claims alleging that the Work Product infringes or misappropriates such third
-      party\u2019s Intellectual Property Rights, and pay resulting damages, costs,
-      and reasonable attorneys\u2019 fees finally awarded by a court or agreed in
-      settlement.\\\", \\\"21.2 Exclusions. Developer has no obligation for claims
-      arising from (a) Client content or specifications, (b) combinations with items
-      not provided by Developer, (c) modifications not made by Developer, or (d) use
-      after Developer provides a non-infringing alternative.\\\", \\\"22.2 Cap. Except
-      for Excluded Claims, each Party\u2019s total aggregate liability arising out
-      of or related to this Agreement shall not exceed the total fees paid or payable
-      under the applicable SOW during the twelve (12) months preceding the event giving
-      rise to liability.\\\", \\\"22.3 Excluded Claims. \\\\\\\"Excluded Claims\\\\\\\"
-      means (a) a Party\u2019s indemnification obligations, (b) a Party\u2019s breach
-      of confidentiality obligations, (c) infringement or misappropriation of the
-      other Party\u2019s IPR, and (d) a Party\u2019s gross negligence or willful misconduct.\\\",
-      \\\"27.2 Termination for Convenience. Either Party may terminate this Agreement
-      or any SOW for convenience upon [30] days\u2019 prior written notice. In such
-      case, Client will pay for Services performed and non-cancellable commitments
-      incurred through the effective termination date. For SOWs with a total value
-      under $50,000, either Party may terminate for convenience upon five (5) days\u2019
-      prior written notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000,\"stream\":false}"
+      \\\"The agreement contains standard professional warranties, clear payment terms
+      with late fees, and reasonable termination rights, but includes some provisions
+      that may pose moderate risks such as automatic acceptance and short termination
+      notice for small SOWs.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period.
+      Unless otherwise stated in the SOW, Client will have [10] business days to test
+      and either (a) provide written Acceptance or (b) provide a written list of material
+      non-conformities. If Client does not respond within the Review Period, the Deliverable
+      is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
+      in the SOW, the Review Period shall be three (3) business days.\\\", \\\"15.3
+      Payment Terms. Payments are due within [30] days of invoice date. Late amounts
+      accrue interest at the lesser of 1.5% per month or the maximum allowed by law.
+      Notwithstanding the foregoing, invoices for fixed-price milestones are due within
+      ten (10) days of receipt.\\\", \\\"20.1 Performance Warranty. For ninety (90)
+      days after Acceptance, Developer warrants that the Work Product will materially
+      conform to the SOW and Documentation. For time-and-materials engagements, the
+      warranty period shall be sixty (60) days after Acceptance.\\\", \\\"20.2 Services
+      Warranty. Developer warrants it will perform Services in a professional and
+      workmanlike manner.\\\", \\\"20.3 Virus-Free. Developer warrants that, to its
+      knowledge using commercially reasonable scanning tools, Deliverables are free
+      from known malicious code at the time of delivery.\\\", \\\"27.2 Termination
+      for Convenience. Either Party may terminate this Agreement or any SOW for convenience
+      upon [30] days\u2019 prior written notice. In such case, Client will pay for
+      Services performed and non-cancellable commitments incurred through the effective
+      termination date. For SOWs with a total value under $50,000, either Party may
+      terminate for convenience upon five (5) days\u2019 prior written notice.\\\",
+      \\\"27.4 Suspension. Developer may suspend work upon written notice if undisputed
+      invoices are more than [30] days overdue and not cured within ten (10) days
+      after notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '34905'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '34760'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"detected": false, "filtered":
-        false}, "protected_material_text": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "{\"rating\": 5, \"justification\": \"\"}", "refusal": null,
-        "role": "assistant"}}], "created": 1766109124, "id": "chatcmpl-DUMMY", "model":
-        "gpt-5-mini-2025-08-07", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"detected": false, "filtered": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": null, "usage": {"completion_tokens": 598, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 576,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 7191, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 0}, "total_tokens": 7789}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3VSy26kMBC8z1cgn2HFkOWhHPO6RdnDaqNViJDX9IATYyO7yUOj+fe0PQ+INrlY
+        cldXu6rc21UUMdmy84iJnqMYRpVcF/3vX/ri5s998fc1La76d1V22Z17u3m5vWSxZ5h/TyDwyPoh
+        DPEApdF7WFjgCH7quqzyrMjLqgzAYFpQntaNmOTJILVMsjTLk7RK0vJA7o0U4Kjrga5RtA2nl6lb
+        eKNyGh8rAzjHO6DasYmK1ihfYdw56ZBrZPEMCqMRdFC+rZnlKHVX0y2Po5o9TQ7lRgrunfhqzWq2
+        W9ItbCbHvQM9KbUAuNYGAy8Ifzwgu5PUDVl1fUPBOEqJnndoRhbQHZ2Pwfr0yQ0bLeWKDZpnCGPL
+        dZHtB7I58RkuivUBRdKiFrwqO4u/GNm0gFwqt8iPCS56aGduXlXVyQSfWmlmLF0tPP4v6avxe/8U
+        +kL2z/TbB2ZACBhppZrRQivFZ+NzmwW/l9+1ndIOkpkD+0Kb1qAE63+khQ2f1H5dmHt3CEND39aB
+        Ha0MO+M/fbVbfQDfU9bfNQMAAA==
     headers:
-      Content-Length:
-      - '1246'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '8760'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -10902,6 +10955,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 256ms
       x-request-id:
       - DUMMY
     status:

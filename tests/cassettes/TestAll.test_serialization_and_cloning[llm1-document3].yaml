@@ -128,7 +128,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids\\\":
       [\\n            str,\\n            ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Term and termination</aspect_name>\\n        \\n
@@ -221,91 +221,97 @@ interactions:
       \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P29\\\">\\n
       \       <paragraph_id>P29</paragraph_id>\\n        \\n        <paragraph_text>\\n
       \       4. \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '18542'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '18517'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1766106804,
-        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
-        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
-        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
-        {"completion_tokens": 22, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 3877, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        3840}, "total_tokens": 3899}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcA0pdgIAAAD//3RSTW+jMBC951dEPkOF
+        CfnosXvoodqqlSp1DyFCjj0Bd8G2bFN1tcp/37FJAum2HIyYN+8x73mEaJZPd4/PBfXvq5f7h1+v
+        +5/3P0gSGHr/BtyfWTdcIw+81GqAuQXmIajS9WaZr4rNikag0wLaQKuNT4sbmnZSyTTP8mWaFSkt
+        TvRGSw4O+7b4OZ//jWcYVAn4wHKWnCsdOMdqwNq5CYtWt6FCmHPSeaY8SUaQa+VBxdm3pYrywys8
+        JXIMOqukKLGjJHdZSZIpbphltWWmwRYXera7AT6Wajf9j4VD71gwq/q2nQBMKe1ZCCs63J2Q48VT
+        q2tj9d59opIDZuWaCrN1GDTO77w2JKJHPHcxu/4qDoJCnfGV178h/m6xWa8HQTJe2gjn9AR6HLGd
+        0m43yReKlQDPZOsm+RPOeANiwl3T/OKB9ULqEctmE+v/T/SV/GBfqnqi8q38CHAOBleyMhaE5Neu
+        xzYLYa+/a7tEHQcmDuw77mnlJdhwHQIOrG+HZSPuj/PQVXhnNVhj5bBxB1OxLFsuKGW3ezI7zv4B
+        AAD//wMAtyrC7YADAAA=
     headers:
-      Content-Length:
-      - '1300'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '622'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -314,6 +320,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 134ms
       x-request-id:
       - DUMMY
     status:
@@ -448,7 +458,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids\\\":
       [\\n            str,\\n            ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Term and termination</aspect_name>\\n        \\n
@@ -527,92 +537,97 @@ interactions:
       \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P27\\\">\\n
       \       <paragraph_id>P27</paragraph_id>\\n        \\n        <paragraph_text>\\n
       \       \u65E5\u671F\uFF1A___________________________\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '17143'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '17118'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P6\",\n            \"P11\"\n        ]\n    }\n]", "refusal":
-        null, "role": "assistant"}}], "created": 1766106804, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 34,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3499, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3456},
-        "total_tokens": 3533}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3RTwY6bMBC95yuQz7ACAjTprSvtcaWVGu0lRMixB/AGbNc2VdtV/r1jSAJpdzkY
+        mPfmMfNmeF8FARGcfA0Ia6ljve6ip6J92u129feX/LV5/qOSEy9+vL2eVNM/nkjoM9TxDZi7Zj0w
+        hXnghJITzAxQB141+bLJ0yLbFMkI9IpD59Ma7aLsIYl6IUWUxmkexVmUZJf0VgkGFnl7fA2C9/H0
+        hUoOvzAch9dID9bSBjB2JWHQqM5HCLVWWEelI+EMMiUdyLH2fSlH+enmrxJzNHZWCV4ioyTf4pKE
+        S1xTQxtDdYsU6zn7GZ0YL8VdyiWYJCWZg4fp8VzKw7I2A/VgqTdIDl23AKiUylFv8OjK4YKcbz50
+        qtFGHe0/qaRGf21b4TwsDgd7tk5pMqJnPA+j38OdhQSFeu0qp04wfm6dbbeTIJkHvYDXF9Bhid0i
+        nq/T8APFioOjorOLmRFGWQt8qZlubj3QgQs1Y/Fq0fr/FX0kP7UvZLNQ+VR+BhgDjWtcaQNcsPuu
+        Z5oB/y98RrtZPRZMLJifuNuVE2D8ODjUdOimBSX2t3XQVzizBow2YtrSWlc0jvN1ktDtkazOq78A
+        AAD//wMACAba0rQDAAA=
     headers:
-      Content-Length:
-      - '1352'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '716'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -621,6 +636,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 123ms
       x-request-id:
       - DUMMY
     status:
@@ -763,7 +782,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
       [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
       [\\n                    {\\n                        \\\"sentence_id\\\": str,\\n
       \                   },\\n                    ...\\n                ]\\n            },\\n
@@ -938,121 +957,100 @@ interactions:
       \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P29-S0\\\">\\n
       \               <sentence_id>P29-S0</sentence_id>\\n                \\n                <sentence_text>\\n
       \               4. \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '26749'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '26724'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"aspect_id\": \"A0\",\n    \"paragraphs\": [\n      {\n        \"paragraph_id\":
-        \"P2\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P2-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P3\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P3-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P4\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P4-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P5\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P5-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P6\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P6-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P7\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P7-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P8\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P8-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P9\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P9-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P10\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P10-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P11\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P11-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P12\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P12-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P13\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P13-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P14\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P14-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P15\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P15-S0\"\n          }\n        ]\n      },\n      {\n        \"paragraph_id\":
-        \"P16\",\n        \"sentences\": [\n          {\n            \"sentence_id\":
-        \"P16-S0\"\n          },\n          {\n            \"sentence_id\": \"P16-S1\"\n          }\n        ]\n      }\n    ]\n  }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1766106805, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 579,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        5363, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 5120},
-        "total_tokens": 5942}}'
+      string: !!binary |
+        H4sIAAAAAAAA/8SXT2+jMBDF7/0UyGeoMDGE7G27W/XPpbta7SlEkQtuIDW2hR1ppSrffcckLKSN
+        euhWdg5EzJsZ+8fpvZeLIEBNhb4EqKypKVvFo+usvv79/Z5cbZ/Jjbq73SZt+43+vL9rO/6AQjsh
+        H7esNMPUZSlhjplGioNcdowaZrfieZ4mGcmzpBdaWTFuxzbKROQSR20jmiiJkzSKSYTJcbyWTck0
+        9C3hNQhe+qe9qKjYHyjH4VBpmdZ0w6A2NEGxk9xWENW60YYKg8JRLKUwTPR3XxaiX3/4s78CZhSQ
+        rZuqgI4CfY0LFE51RTu66aiqtW1YjtKrTWcm/i39kZwsHVs1s3cD9DO73znj7YLJUdEvQDg/s39b
+        Xp2W9uHHAGfuAGdeAIk7QOIFMHUHmHoBzNwBZl4A5+4A514Ac3eAuRfAhTvAhRdAHLsjxLEfROwQ
+        EftBdGhnsB8/gx0aGuzH0WCHlgb78TTYoanBflwNdmhr8Lu+Jvy0M/B/fMbx9ahAZTWNgx172mlq
+        M6nYcT4RqBDSUJtp+yC6uhi4hujJ5UZ18lG/GkVPEGl1vYYIrCEPQ8zURirUq3t4rvqIuztJrQgW
+        tcqsjXxm/XHpLJsdFqIxW0/keX5UDdyRT4QFweGZleuKGdpwPcnJfwEAAP//UkpOTM5ITUHSa2gE
+        7VcDAAAA//8C+b40JTMfIWfAheR3TCdhMx7i/8y8dCRTcBqPkEhOTi0oATqroCg1JTMZ1dsIZUWp
+        oPEHXMrgYQ12MDBVFZVlAhNVSWZqESg+UlLTEktzIIMCSsWVxSWpufHASEtPLSooyoSMDKQVxCca
+        GJgaGxomWiYpcdVyAQAAAP//AwDzJ5x3KBEAAA==
     headers:
-      Content-Length:
-      - '3728'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '5591'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1061,6 +1059,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 193ms
       x-request-id:
       - DUMMY
     status:
@@ -1203,7 +1205,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
       [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
       [\\n                    {\\n                        \\\"sentence_id\\\": str,\\n
       \                   },\\n                    ...\\n                ]\\n            },\\n
@@ -1349,111 +1351,99 @@ interactions:
       \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P27-S0\\\">\\n
       \               <sentence_id>P27-S0</sentence_id>\\n                \\n                <sentence_text>\\n
       \               \u65E5\u671F\uFF1A___________________________\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '24265'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '24240'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
-        [\n            {\n                \"paragraph_id\": \"P17\",\n                \"sentences\":
-        [\n                    {\n                        \"sentence_id\": \"P17-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P19\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P19-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P20\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P20-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P21\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P21-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P22\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P22-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P23\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P23-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P24\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P24-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P25\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P25-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P26\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P26-S0\"\n                    }\n                ]\n            },\n            {\n                \"paragraph_id\":
-        \"P27\",\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
-        \"P27-S0\"\n                    }\n                ]\n            }\n        ]\n    }\n]",
-        "refusal": null, "role": "assistant"}}], "created": 1766106812, "id": "chatcmpl-DUMMY",
-        "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 384,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        4794, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 4096},
-        "total_tokens": 5178}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcE0MzgUAAAD//6yWQY+bMBCF7/kVkc+w
+        MgQCOfbS81aVKrUhQg5MiHfBtmzTbVXlv3cMSyDZXWkPviDwm3n+JkQ8i5dvTx39Gv98/BVn8OPc
+        5O3z8YUErkMen6CyU9dDJbEPLJdilCsNzIJzjbI8jbdJvs0HoZM1tK6tUTZMHqKw44KHMY3TkCZh
+        lLy2nyWvwGDdHh/X63/D1YGKGv7gMg2mlQ6MYQ3g2lSEi1q2boUwY7ixTFgSzGIlhQUxsO8Lgebu
+        sl4XWK1wppLXBWoF+UILEkyaYpo1mqmzceJ+XL723tVcLR6j7Oox1hhwm+NsNzZ3VrelS7fwO0It
+        Cy/zw2G6vQSfxtt5xdt5xoupT7yY+saLvOJFvvFir3ixb7yNV7yNb7zEK17iGy/1ipf6xtt6xdv6
+        xvP6WY4/+Vkeb4ZnvD8sM0nDqTfMBaPo23YhMCGkZS5YhzQ8rKZRp/xrZaO0PJq7VnLCXDXnEnPY
+        YChj1hkrFRnUC14PQ872N9FJ0KhTtrTyGYbtkmyXjIZkDvhZ3uSbV9UiYzsLaZRlwTuWZQ2W8dYs
+        wppUrDpDvdhzS/PrEKyvuZw1ulrM/hbpPftxfi6ahcuH9rNQVaDw/FIqDTWvbseeyzS4Q9BHZdff
+        egDG/43+jYea0nLQ7n3UcGJ9O55MiPlrLHQlvrQGtNJ8PJ6cVMkoTTdRxHZHsrqs/gMAAP//AwAT
+        sbQ2rQkAAA==
     headers:
-      Content-Length:
-      - '3577'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '3853'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1462,6 +1452,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 175ms
       x-request-id:
       - DUMMY
     status:
@@ -1711,98 +1705,101 @@ interactions:
       id=\\\"P1-S1\\\">\\n                <sentence_id>P1-S1</sentence_id>\\n                \\n
       \               <sentence_text>\\n                \u672C\u534F\u8BAE\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94
       (5) \u5E74\u3002\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \       </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '20001'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '19974'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
-        [\\n            {\\n                \\\"value\\\": 5,\\n                \\\"justification\\\":
-        \\\"\u534F\u8BAE\u660E\u786E\u6307\u51FA\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94\u5E74\uFF0C\u76F4\u63A5\u8BF4\u660E\u4E86\u5408\u540C\u7684\u6301\u7EED\u65F6\u95F4\u3002\\\",\\n
-        \               \\\"reference_paragraphs\\\": [\\n                    {\\n
-        \                       \\\"reference_paragraph_id\\\": \\\"P1\\\",\\n                        \\\"reference_sentence_ids\\\":
-        [\\n                            \\\"P1-S1\\\"\\n                        ]\\n
-        \                   }\\n                ]\\n            }\\n        ]\\n    }\\n]\",
-        \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1766106816, \"id\":
-        \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\", \"object\": \"chat.completion\",
-        \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
-        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
-        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
-        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
-        \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\": 105, \"completion_tokens_details\":
-        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
-        0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 3840, \"prompt_tokens_details\":
-        {\"audio_tokens\": 0, \"cached_tokens\": 3712}, \"total_tokens\": 3945}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcE0NCQYAAAD//3xUTWvbQBC951eEPdtB
+        cuQ6OYecawikh9iItTSWN5G1YncVUoqhLaFNaZrm0JKSBkoPoVCIC8X9iPvxZ2rL7ql/obPyh+TE
+        iQ+yPe+90ZvdmdmogSyFZXdtM7y3tr7r7azXorubJKcVvLYNjpqolhyOOlCMByPYEUAV6KxmaaVY
+        uGOtlAoJ0OQu+FrmhSpvLZn5JgtYvmAUinnDypvWWN7gzAGJvC38u7j4IHlqo4ELexg2cpNIE6Sk
+        HmBsQsKg4L6OEColk4oGiuRS0OGBgiDxvlUJkvSjL/2paNiBUNnMrSClQtaMCsllCbCnBHWwOpsp
+        aErN2krxK/lS2S71I9DkYm4evB1JxerMofoQR2/uv3g5bLfjN0eD9+3hh/1++3T49OPg4vfg1+fe
+        5fP45Hz45Vt89ix+fRCfvet97/a6r/qXnX8/DwdvO/HR+fBTB7W97pP+8UH/+HBwuh8fPhr8uIhP
+        vv496fx5+HimrtSJgDoIwEOwQyqoJ2jYmFfkLcXemmt6sGVzroF5Ygn6yvAHc2+zkkrLZn4D099M
+        q86HWtfDV5gZxhjBSDXbX2g7klQ3eRD5fgagQcBVcr9JZ1fHSGvayz73QsFr8oqU1HFGZMPGmZI4
+        YNi3UvGQJGgLn9VkZqKZMSCYqIldrPgOJK9bXrHGQ0PSYU1h07DGqEKPfka3ak2QmZS2C4oyX2YG
+        jzjUaeBYpNqSWZgWQSOX8RQzFjK1X7c0L/2ofhZ4mSw3pk8BR48z2goFuMyZLTulCdAL7Sba9KwT
+        w0SC2MUFZSsGQt+HC3Ua+aMtQ+R9iXvBxkvzQISCjVZNPbSpYRSXTZOu1shCa+E/AAAA//8DAHXZ
+        wRN5BQAA
     headers:
-      Content-Length:
-      - '1805'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1372'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -1811,6 +1808,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 146ms
       x-request-id:
       - DUMMY
     status:
@@ -2011,92 +2012,97 @@ interactions:
       \       custom_data={} content={'years': None}\\n        </extracted_item_example>\\n
       \   </extracted_item_examples>\\n\\n    <extracted_item_type>dict (must be exactly
       as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_text>\\n\u672C\u534F\u8BAE\u7EC8\u6B62\u6216\u7ECF\u8981\u6C42\u540E\uFF0C\u63A5\u6536\u65B9\u5E94\u6839\u636E\u62AB\u9732\u65B9\u7684\u5224\u65AD\uFF0C\u5C06\u6240\u6709\u5305\u542B\u4FDD\u5BC6\u4FE1\u606F\u7684\u6750\u6599\u8FD4\u8FD8\u7ED9\u62AB\u9732\u65B9\u6216\u9500\u6BC1\u3002\\n\\n\u6240\u6709\u4E89\u8BAE\u5747\u7531\u52A0\u5229\u798F\u5C3C\u4E9A\u5DDE\u6CD5\u9662\u89E3\u51B3\u3002\u672C\u534F\u8BAE\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94
-      (5) \u5E74\u3002\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      (5) \u5E74\u3002\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '16272'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '16245'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
-        [\n      {\n        \"years\": 5\n      }\n    ]\n  }\n]", "refusal": null,
-        "role": "assistant"}}], "created": 1766106817, "id": "chatcmpl-DUMMY", "model":
-        "gpt-4.1-mini-2025-04-14", "object": "chat.completion", "prompt_filter_results":
-        [{"prompt_index": 0, "content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "jailbreak": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}}}],
-        "system_fingerprint": "fp_3dcd5944f5", "usage": {"completion_tokens": 36,
-        "completion_tokens_details": {"accepted_prediction_tokens": 0, "audio_tokens":
-        0, "reasoning_tokens": 0, "rejected_prediction_tokens": 0}, "prompt_tokens":
-        3156, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 3072},
-        "total_tokens": 3192}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcE03cwMAAAD//3RSy07DMBC89ysqnxOU
+        hKSlZwSCCwgkJKSmilxnm5omdrAdxEP9d9ZO8yi0F8fe2Znszu7jrni+qR5eb+X2/fvhEZ52d/fR
+        C/EsQ67fgJmOdcEk8sBwKVqYKaAGrGo4v0qiWXw1jx1QyRxKSytq48cXoV9xwf0oiBI/iP0wPtC3
+        kjPQmLfE53T6405bqMjhE8OB10Uq0JoWgLEuCYNKljZCqNZcGyoM8QaQSWFAuNqXqUBxe0ynqQUY
+        1CbjeYpgSq6DlHgdCJ9GUYY9ZdxApW3GssV6hTbxC6hycNJF9+1lZT94X42LUbBpNLWOiKYsRwAV
+        QhpqHXU2rA7Ivm+8lEWt5Fr/oZINGqq3GQ5A4zSwSW1kTRy6x3PlDG6OPCMoVGHjRu7A/e4yTGat
+        IBkmO4KTA2iwxHJMW4TeCcUsB0N5qUdDIoyyLZrZc6NFHPc90CbncsCCyaj1/xWdkm/b56IYqZyV
+        HwBmFwDLqhXknB13PaQpsMt/Lq232hVMNKgPXObMcFB2HDlsaFO2G0n0l8ZtynBmBaha8XYtN3VG
+        gyC5DEO6WJPJfvILAAD//wMAq1Pq76UDAAA=
     headers:
-      Content-Length:
-      - '1337'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '759'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2105,6 +2111,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 118ms
       x-request-id:
       - DUMMY
     status:
@@ -2316,94 +2326,101 @@ interactions:
       \   <amount_of_extracted_items>This concept may have zero or one extracted item,
       never multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>int
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_text>\\n\u672C\u534F\u8BAE\u7EC8\u6B62\u6216\u7ECF\u8981\u6C42\u540E\uFF0C\u63A5\u6536\u65B9\u5E94\u6839\u636E\u62AB\u9732\u65B9\u7684\u5224\u65AD\uFF0C\u5C06\u6240\u6709\u5305\u542B\u4FDD\u5BC6\u4FE1\u606F\u7684\u6750\u6599\u8FD4\u8FD8\u7ED9\u62AB\u9732\u65B9\u6216\u9500\u6BC1\u3002\\n\\n\u6240\u6709\u4E89\u8BAE\u5747\u7531\u52A0\u5229\u798F\u5C3C\u4E9A\u5DDE\u6CD5\u9662\u89E3\u51B3\u3002\u672C\u534F\u8BAE\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94
-      (5) \u5E74\u3002\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      (5) \u5E74\u3002\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '17085'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '17058'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \ {\\n    \\\"concept_id\\\": \\\"C0\\\",\\n    \\\"extracted_items\\\": [\\n
-        \     {\\n        \\\"value\\\": 4,\\n        \\\"justification\\\": \\\"\u534F\u8BAE\u660E\u786E\u89C4\u5B9A\u4E86\u81EA\u7B7E\u7F72\u4E4B\u65E5\u8D77\u6709\u6548\u671F\u4E3A\u4E94\u5E74\uFF0C\u8FD9\u5728\u4FDD\u5BC6\u534F\u8BAE\u4E2D\u5C5E\u4E8E\u8F83\u4E3A\u5408\u7406\u4E14\u5E38\u89C1\u7684\u671F\u9650\uFF0C\u65E2\u4FDD\u8BC1\u4E86\u4FE1\u606F\u7684\u4FDD\u5BC6\u6027\uFF0C\u4E5F\u907F\u514D\u671F\u9650\u8FC7\u957F\u5BFC\u81F4\u7684\u6267\u884C\u96BE\u5EA6\uFF0C\u56E0\u6B64\u4ECE\u6700\u4F73\u5B9E\u8DF5\u89D2\u5EA6\u6765\u770B\uFF0C\u671F\u9650\u8F83\u4E3A\u9002\u5F53\u3002\\\"\\n
-        \     }\\n    ]\\n  }\\n]\", \"refusal\": null, \"role\": \"assistant\"}}],
-        \"created\": 1766106818, \"id\": \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\",
-        \"object\": \"chat.completion\", \"prompt_filter_results\": [{\"prompt_index\":
-        0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\": false}, \"self_harm\":
-        {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\":
-        \"safe\"}}}], \"system_fingerprint\": \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\":
-        105, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\":
-        0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\":
-        3300, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\":
-        3200}, \"total_tokens\": 3405}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcM1I9gYAAAD//3RUz08TQRS+81eQObdk
+        W4rFo3rSeCDRg0qbzXR2Wga3u+vOLIGYJmAQ0YBygABNsYEQNFHbg79Ko+kf4+52e/Jf8M1u6W4R
+        9rA/3ve9772Z+d6KOfrk2cqD/P2HjzG5Xb17654992gRpWSGWVqkRFxkTRET8qhgphHBxKZYUKma
+        yc/OZG/kZvMzIVA1NarLtIol0rmpTLrKDJbOKtmZtJJLZ3LD9AWTEcqBNw+fk5PPw7ts1NDoMoSV
+        1EWkSjnHFQqxCxIEbVOXEYQ5Z1xgQ6BUDBLTENQIe58vGKF89JBXQcKEWkJlWgEoBXRHKaBUkkCX
+        hY0JrE5lgla5ZM3H+CW9OG0J6w6V5FzqKnjR4YKVGcFyE6PK3va7oNXyD972j1vBh3WvVXe7G27v
+        yGtvRFC/vu43Xvt7m36j6Xa6bnfXO//299dW0Dv0Gh+D4y23U3c7Xwarda/TCU4+Ba1ToPkHbW9n
+        s7+z4XZ2+5/P4N1vrLq/v3qt98HP76Fmc3C4Azr+/gmUC9prYd1jf60NKET8N6f+/o/BvqzlnjcH
+        az3v5TZwgt6rwV4POP3umX/U/LP6ooDG11qLP4vRK0SKydOxadnhWFrEcHQ9AWDDMEW4O6EvikOk
+        NnKCblYs2yzxS6moDA7jCyo4koM94dS5MC0UojW4F0PHOWMmQiBUBQ8I8ykNy01PK0PLodjqMTyb
+        H4ICWtSTaSNkTFHVqMBM5wnXIoLJAnhqlJu5mY1djh2NmTGmTCSW/n9HV8lHy2dGJaFyrXwMEDkL
+        0JZlU42R8VXHNJvKv8F1tNFWhw0jTu0lmG5VMGrL49BoGTt6NKKIr3AYKhXOrEJty2bRnJYtlZYy
+        GlZoRiujidrEPwAAAP//AwCPqnuCtgQAAA==
     headers:
-      Content-Length:
-      - '1627'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1557'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2412,6 +2429,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 124ms
       x-request-id:
       - DUMMY
     status:
@@ -2627,95 +2648,98 @@ interactions:
       LLC\\n\\n5678 Random Drive\\n\\nNew York, NY 00000\\n\\n\u8054\u7CFB\u4EBA\uFF1AJane
       Doe\uFF0C\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u7535\u8BDD\uFF1A(012) 345-6789\\n\\n\u7535\u5B50\u90AE\u4EF6\uFF1Ajane.doe@example.com\\n\\n\u7279\u6B64\u8BC1\u660E\uFF0C\u672C\u534F\u8BAE\u5404\u65B9\u5DF2\u4E8E\u4E0A\u8FF0\u65E5\u671F\u7B7E\u7F72\u672C\u4FDD\u5BC6\u534F\u8BAE\u3002\\n\\n\u7B7E\u7F72\u4EBA\uFF1A___________________________\\n\\n\u59D3\u540D\uFF1A_____\\n\\n\u804C\u52A1\uFF1A_____\\n\\n\u65E5\u671F\uFF1A___________________________\\n\\nExample.Com
       LLC\\n\\n\u7B7E\u7F72\u4EBA\uFF1A___________________________\\n\\n\u59D3\u540D\uFF1AJane
-      Doe\\n\\n\u804C\u52A1\uFF1A\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u65E5\u671F\uFF1A___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Doe\\n\\n\u804C\u52A1\uFF1A\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u65E5\u671F\uFF1A___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '17536'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '17509'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \ {\\n    \\\"concept_id\\\": \\\"C0\\\",\\n    \\\"extracted_items\\\": [\\n
-        \     \\\"Example.Com LLC (\u4E59\u65B9)\\\"\\n    ]\\n  },\\n  {\\n    \\\"concept_id\\\":
-        \\\"C1\\\",\\n    \\\"extracted_items\\\": [\\n      {\\n        \\\"labels\\\":
-        [\\n          \\\"Corporation\\\"\\n        ]\\n      }\\n    ]\\n  }\\n]\",
-        \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1766106820, \"id\":
-        \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\", \"object\": \"chat.completion\",
-        \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
-        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
-        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
-        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
-        \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\": 72, \"completion_tokens_details\":
-        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
-        0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 3429, \"prompt_tokens_details\":
-        {\"audio_tokens\": 0, \"cached_tokens\": 3072}, \"total_tokens\": 3501}}"
+      string: !!binary |
+        H4sIAAAAAAAA/4xTwY7TMBC99ysin0BqKiebtrvclqogxEocEBeaKnKdSWpw7Mh2d4uq/gbSfsr+
+        D+I7GCdNkwKLyMFJ5s08P88bH0ZBQEROXgWEb5njVS3D5Wy7FMVD9a5m7z+8fkhu7z+K+A39dPv2
+        83xPxr5Cb74Ad13VhGusAye0amFugDnwrNH8ehrPkuv5rAEqnYP0ZWXtwmQShZVQIoxpPA1pEkbJ
+        qXyrBQeLeSv8DYJDs3qhKoc9hum4i1RgLSsBY10SBo2WPkKYtcI6phwZ9yDXyoFqtK9SheR+CYLU
+        Axxql4k8RTAlC5qScQfC3hnG8UyZcFBZn7FqMY8u98w3YLLQVXB3twhe/Hh6/Pn96WVK2py1fx3H
+        /94u+s/tDt2HT5RsA/ISb4GFNrU2zHvSqTgr8c9xqCxV62GLDBQ7y7xPaiflAGBKaddwNuasT8jx
+        bIfUZW30xv5WSgq02W4zHAuLM4Ktt07XpEGPuK4b23cXThIkqrA/Tn+FZrurJL5pCUk/bz08j06g
+        Q4lyUDalp3G5ZMxycExIOxgdwhnfYs/72pj2o8Z2udA9RkeDo/+p6G/07fGFKgcsz9L3APdzgrJq
+        A7ngl6fu0wz4K/lc2rnVjWBiwdzjFcucAOPtyKFgO9neE2K/WRy6DD0rwdRGtJelqDNG6fQqitjN
+        hoyOo18AAAD//wMAsxrOKDsEAAA=
     headers:
-      Content-Length:
-      - '1487'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1051'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -2724,6 +2748,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 127ms
       x-request-id:
       - DUMMY
     status:
@@ -3127,98 +3155,100 @@ interactions:
       \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P29-S0\\\">\\n
       \               <sentence_id>P29-S0</sentence_id>\\n                \\n                <sentence_text>\\n
       \               4. \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '33815'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '33788'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
-        [\\n            {\\n                \\\"value\\\": \\\"16-07-2024\\\",\\n
-        \               \\\"justification\\\": \\\"\u534F\u8BAE\u4E8E2024\u5E747\u670816\u65E5\u7531\u5404\u65B9\u7B7E\u7F72\u5E76\u751F\u6548\uFF0C\u660E\u786E\u8BE5\u65E5\u671F\u4E3A\u5408\u540C\u751F\u6548\u65E5\u671F\u3002\\\",\\n
-        \               \\\"reference_paragraphs\\\": [\\n                    {\\n
-        \                       \\\"reference_paragraph_id\\\": \\\"P2\\\",\\n                        \\\"reference_sentence_ids\\\":
-        [\\n                            \\\"P2-S0\\\"\\n                        ]\\n
-        \                   }\\n                ]\\n            }\\n        ]\\n    }\\n]\",
-        \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1766106821, \"id\":
-        \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\", \"object\": \"chat.completion\",
-        \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
-        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
-        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
-        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
-        \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\": 115, \"completion_tokens_details\":
-        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
-        0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 6713, \"prompt_tokens_details\":
-        {\"audio_tokens\": 0, \"cached_tokens\": 6144}, \"total_tokens\": 6828}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcM02MwYAAAD//4xUzU7bQBC+8xRozzGK
+        Q7Ddcy/toRVSI/VAImtZT5IFx+vurhFVFQlVPSCVQg7054CEekA9NVWrqiqI9mWKE259hc7aJDYh
+        oObgOPP9ZGZ3Zp51A/qowb1G++mDx3H14Sbb2Gp4pGIUYn0DmJ6olphAHWguohxmEqgG42q73krN
+        qXuulwE9EUBoZJ1YW/Ul2+rxiFu1am3FqtYtu34l7wrOQCFvDX8uLr7InibRKIBtDFcrk0gPlKId
+        wNiEhEEpQhMhVCmuNI00qRQgE5GGKMt9rRll9vmX+TQNzCDWPg+aSGmS+9UmqZQJsK0lZVidzzX0
+        lGGtFfiMXyHbomECuaXtWFXXFF2/Zl1wNxKleZszak4016RvDi6Hw4uzfSNLT7+7o6Nd2xm9Pxkf
+        fk0Hr0bvTseff49/fUtPf4wPj0dvd/+e740+7I8/Di+/nCBtdHR88fMsHeymg730fCf99DoP/tl5
+        eUsSEtogAQ/Dj6mkHUnj7rxi7yj6Tq/pAa/W5iYwT6zAXB2+8OCuVArpas16gvd3O601H+rfDM8w
+        S4wrBCOtcp9h2omiptmjJAxLAI0iobOrzTq8dYX0pz0dik4sxbqakZI2zorq+jhbCgcN+1dpEZMM
+        7eOzlc1Ocm0cCBr1sJu12ITs7xzXXs4NSTG0BWxPUY05hiWdV3Mqcyz9ADTloSoNIGGUdXE8ptpi
+        WmkScFECFkqF38xnnndePI86/2NfAMzMNOYUSwg4u15zQZNgttpttOlBZwkTBXILt5SvOUhzGQG0
+        aRLmq4ao5wqXg4831gEZS57vm3bse8uu4zr3vOUVstBf+AcAAP//AwCsozmlfgUAAA==
     headers:
-      Content-Length:
-      - '1813'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1851'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3227,6 +3257,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 245ms
       x-request-id:
       - DUMMY
     status:
@@ -3457,105 +3491,105 @@ interactions:
       \u63A5\u6536\u65B9\u7684\u4E49\u52A1\uFF1A\\n\\n\u63A5\u6536\u4FDD\u5BC6\u4FE1\u606F\u7684\u4E00\u65B9\uFF08\u201C\u63A5\u6536\u65B9\u201D\uFF09\u5E94\uFF1A\\n\\na.
       \u4FDD\u6301\u4FDD\u5BC6\u4FE1\u606F\u7684\u4FDD\u5BC6\u6027\uFF0C\u672A\u7ECF\u62AB\u9732\u65B9\u4E8B\u5148\u4E66\u9762\u540C\u610F\uFF0C\u4E0D\u5F97\u5411\u4EFB\u4F55\u7B2C\u4E09\u65B9\u62AB\u9732\u3002\\n\\nb.\u4EC5\u5C06\u4FDD\u5BC6\u4FE1\u606F\u7528\u4E8E\u8BC4\u4F30\u6216\u53C2\u4E0E\u6F5C\u5728\u4E1A\u52A1\u5408\u4F5C\u3002\\n\\nc.
       \u91C7\u53D6\u4E00\u5207\u5FC5\u8981\u7684\u9884\u9632\u63AA\u65BD\u4FDD\u62A4\u4FDD\u5BC6\u4FE1\u606F\u7684\u673A\u5BC6\u6027\uFF0C\u8FD9\u4E9B\u9884\u9632\u63AA\u65BD\u4E0D\u5F97\u4F4E\u4E8E\u4FDD\u62A4\u5176\u81EA\u8EAB\u4FDD\u5BC6\u4FE1\u606F\u6240\u91C7\u53D6\u7684\u9884\u9632\u63AA\u65BD\u3002\\n\\n4.
-      \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '19558'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '19531'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \ {\\n    \\\"concept_id\\\": \\\"C0\\\",\\n    \\\"extracted_items\\\": [\\n
-        \     \\\"\u4FDD\u5BC6\u534F\u8BAE (NDA)\\\"\\n    ]\\n  },\\n  {\\n    \\\"concept_id\\\":
-        \\\"C1\\\",\\n    \\\"extracted_items\\\": [\\n      {\\n        \\\"aspects_names_and_summaries\\\":
-        [\\n          {\\n            \\\"aspect_name\\\": \\\"\u76EE\u7684\\\",\\n
-        \           \\\"aspect_summary\\\": \\\"\u672C\u534F\u8BAE\u65E8\u5728\u4FDD\u62A4\u53CC\u65B9\u5728\u6709\u5173\u6F5C\u5728\u4E1A\u52A1\u5408\u4F5C\u548C\u4F19\u4F34\u5173\u7CFB\u7684\u8BA8\u8BBA\u548C\u63A5\u89E6\u4E2D\u53EF\u80FD\u62AB\u9732\u7684\u673A\u5BC6\u4FE1\u606F\u3002\\\"\\n
-        \         },\\n          {\\n            \\\"aspect_name\\\": \\\"\u673A\u5BC6\u4FE1\u606F\u7684\u5B9A\u4E49\\\",\\n
-        \           \\\"aspect_summary\\\": \\\"\u5B9A\u4E49\u4E86\u673A\u5BC6\u4FE1\u606F\u7684\u8303\u56F4\uFF0C\u5305\u62EC\u5546\u4E1A\u4FE1\u606F\u3001\u6280\u672F\u4FE1\u606F\u3001\u5BA2\u6237\u548C\u5E02\u573A\u4FE1\u606F\u3001\u4EBA\u5458\u548C\u5185\u90E8\u4FE1\u606F\u3001\u77E5\u8BC6\u4EA7\u6743\u548C\u6218\u7565\u4FE1\u606F\uFF0C\u5E76\u8BF4\u660E\u4E86\u4E0D\u5305\u62EC\u7684\u4F8B\u5916\u60C5\u51B5\u3002\\\"\\n
-        \         },\\n          {\\n            \\\"aspect_name\\\": \\\"\u63A5\u6536\u65B9\u7684\u4E49\u52A1\\\",\\n
-        \           \\\"aspect_summary\\\": \\\"\u63A5\u6536\u65B9\u5E94\u4FDD\u6301\u4FDD\u5BC6\u4FE1\u606F\u7684\u4FDD\u5BC6\u6027\uFF0C\u4EC5\u7528\u4E8E\u8BC4\u4F30\u6216\u53C2\u4E0E\u6F5C\u5728\u4E1A\u52A1\u5408\u4F5C\uFF0C\u5E76\u91C7\u53D6\u5FC5\u8981\u7684\u9884\u9632\u63AA\u65BD\u4FDD\u62A4\u673A\u5BC6\u4FE1\u606F\u3002\\\"\\n
-        \         }\\n        ]\\n      }\\n    ]\\n  },\\n  {\\n    \\\"concept_id\\\":
-        \\\"C2\\\",\\n    \\\"extracted_items\\\": [\\n      \\\"1. \u76EE\u7684\uFF1A\\\",\\n
-        \     \\\"2. \u673A\u5BC6\u4FE1\u606F\u7684\u5B9A\u4E49\uFF1A\\\",\\n      \\\"3.
-        \u63A5\u6536\u65B9\u7684\u4E49\u52A1\uFF1A\\\",\\n      \\\"4. \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\\"\\n
-        \   ]\\n  }\\n]\", \"refusal\": null, \"role\": \"assistant\"}}], \"created\":
-        1766106822, \"id\": \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\",
-        \"object\": \"chat.completion\", \"prompt_filter_results\": [{\"prompt_index\":
-        0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\": false}, \"self_harm\":
-        {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\":
-        \"safe\"}}}], \"system_fingerprint\": \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\":
-        307, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\":
-        0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\":
-        4000, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\":
-        3072}, \"total_tokens\": 4307}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcM2NygYAAAD//6RVzU8TQRS/81c0e9Kk
+        bbalYD0aPaoHb0qbzbAdykq72+xsDWqagFAQLC0xBAGriYavKLZ+IIFS5I9xZ7o9+S/4ZodllyIG
+        Yw/bnfl9zHvzZt+Ygw/GBu/eH08M3743eu/JtSdjeXTnthTmCmP4IVYtTxVVDdBhSzN0AasmRhbm
+        rrFryYH4YCKZlF0gb2RwjsuyBSuSiMYieU3XInE5PhCRE5FY4kQ+amgqJsAbgmEo9NR98kD1DB6H
+        adfMncljQlAWw5xHgknTyPEZCRGiEQvplhT2QdXQLay7sQ+ldDDnj1AoxQEVFyxFy6QATEk35ZQU
+        9kA8bplIhZwUzcJ5whlDAuOoffyGNmfoQs1pNEJX7t66cTUlCTTN/0rhvy8Uu+RCT70XTkSkACUg
+        io5gDxSkZxRSzOeRqeGzoh5hUOxqRQyd143O2vRpHOeYwvuxILP6jsiVvdqm9W3Ins2v01qFLR/A
+        kNXnaPkbO6pzaH+Nzr+ji89tGL6s2O1Vu70LaOfbISznNLadRgvmWXXD2dq09z/RWtOZOmLzH7v1
+        r0Bg9Rbsq338jk02f0488zZV/Erhf0sxaAbetLFmH8xdMmNBtlszotKnJk5lir7e/dWu0EqZvdih
+        i9OdrQV69J62a4B237yl5R3anhB8Wpun5b3Ol0P6/COXLFbYqz2nuctWqtx5f0GYgND+8YKuL7Op
+        Mp35/v95VzfY0h7UhhsfzEE9LltmT0hbS7zGlcme7MWQTWxBNvZhubO0bbeq5wvvNKft9mfgdGdn
+        aW2ZHpedzcnu++nuyldW/cCWj8QBuqjM/iDtvZb+4eOKX/orjkVD4jP41V4LbFFKikdDfzw8vbx+
+        4J3b7F5SIhrq2UZWfdldXXd5wbxSejrYt0w8UiSIN0+9mMsFAKTrhoV483U7ZrrPOyZej8wZ2YJp
+        DJMeqTQCvZeMKtCrCTRu6IfEMgqSi5bgmXZ7cfFMe5XAKA+7axlj2F0uIcsnzVjyLwEfjievn6AW
+        xJgL6HzkjKWSwRbSciTQ0CUVqaNQslNtfzLhXwComNEMH5P7ArmfD+lP9iJ/Tc8GXC609wGVHzMI
+        q2DijKaeTdunmZhflBfRTvfaDVgi2HwEF59iadjk9cjgEVTMidtLIo8JnFkFipbFZsHUxBU2UlCQ
+        LA/0x2Lo+rDUV+r7DQAA//8DAHfJDnTRBwAA
     headers:
-      Content-Length:
-      - '2486'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '3265'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3564,6 +3598,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 142ms
       x-request-id:
       - DUMMY
     status:
@@ -3771,95 +3809,99 @@ interactions:
       \u5982\u679C\u672C\u534F\u8BAE\u7684\u4EFB\u4F55\u6761\u6B3E\u88AB\u53D1\u73B0\u4E0D\u53EF\u6267\u884C\uFF0C\u5219\u5176\u4F59\u6761\u6B3E\u5E94\u5C3D\u53EF\u80FD\u5168\u9762\u6267\u884C\uFF0C\u4E0D\u53EF\u6267\u884C\u7684\u6761\u6B3E\u5E94\u89C6\u4E3A\u5728\u5141\u8BB8\u4EE5\u6700\u63A5\u8FD1\u53CC\u65B9\u610F\u56FE\u7684\u65B9\u5F0F\u6267\u884C\u6240\u9700\u7684\u6709\u9650\u8303\u56F4\u5185\u8FDB\u884C\u4E86\u4FEE\u6539\u3002\\n\\nd.
       \u62AB\u9732\u65B9\u5E94\u662F\u6267\u884C\u672C\u5408\u540C\u7684\u5408\u9002\u4EBA\u9009\u3002\\n\\n\u7279\u6B64\u8BC1\u660E\uFF0C\u672C\u534F\u8BAE\u5404\u65B9\u5DF2\u4E8E\u4E0A\u8FF0\u65E5\u671F\u7B7E\u7F72\u672C\u4FDD\u5BC6\u534F\u8BAE\u3002\\n\\n_____\\n\\n\u7B7E\u7F72\u4EBA\uFF1A___________________________\\n\\n\u59D3\u540D\uFF1A_____\\n\\n\u804C\u52A1\uFF1A_____\\n\\n\u65E5\u671F\uFF1A___________________________\\n\\nExample.Com
       LLC\\n\\n\u7B7E\u7F72\u4EBA\uFF1A___________________________\\n\\n\u59D3\u540D\uFF1AJane
-      Doe\\n\\n\u804C\u52A1\uFF1A\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u65E5\u671F\uFF1A___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      Doe\\n\\n\u804C\u52A1\uFF1A\u6267\u884C\u5408\u4F19\u4EBA\\n\\n\u65E5\u671F\uFF1A___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '17414'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '17387'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
-        [\\n            \\\"6. \u6750\u6599\u8FD4\u8FD8\uFF1A\\\",\\n            \\\"7.
-        \u65E0\u8BB8\u53EF\uFF1A\\\",\\n            \\\"8. \u9002\u7528\u6CD5\u5F8B\u548C\u4E89\u8BAE\uFF1A\\\",\\n
-        \           \\\"9. \u5176\u4ED6\u4E8B\u9879\uFF1A\\\"\\n        ]\\n    }\\n]\",
-        \"refusal\": null, \"role\": \"assistant\"}}], \"created\": 1766106826, \"id\":
-        \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\", \"object\": \"chat.completion\",
-        \"prompt_filter_results\": [{\"prompt_index\": 0, \"content_filter_results\":
-        {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\":
-        false, \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\":
-        {\"filtered\": false, \"severity\": \"safe\"}}}], \"system_fingerprint\":
-        \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\": 66, \"completion_tokens_details\":
-        {\"accepted_prediction_tokens\": 0, \"audio_tokens\": 0, \"reasoning_tokens\":
-        0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\": 3450, \"prompt_tokens_details\":
-        {\"audio_tokens\": 0, \"cached_tokens\": 3328}, \"total_tokens\": 3516}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcC2wTAMAAAD//3RTTW/TQBC951dYe04i
+        O4lT94zEgQN/II6szXribHF2ze4GtaBICIkDKhIIlfIhIdEbp3BAQlAQ/TNJSE/8BWbtJHYg9cEf
+        894bz86b4Yk+iVm7696+ewfuBwBZ0H3YJnWrkIMjYGajajKJOjBcigJmCqgBm9U7CPxWtxME7RwY
+        yxhSK0sy0+g0vcaYC95ouS2/4XYaXmctH0nOQCOvh5+O8yi/20JFDMcYduubyBi0pglgbEPCoJKp
+        jRCqNdeGCkPqJcikMCDy2nuhyNMXD3uFFmaQmYjHIVJCcssNSb1KgGOjKMPTRdzAWFtWr8QLTrfp
+        LD+8XJ6/W12dra7e/vn5fidJQTpA0puPq9m3xYvP+xlB07l+/OT32afll9eLX6eLV8/nl89Ws9l+
+        9mHTWTz9Ov9xPr88vb74npNKTr94nYaiX+2GguFEU2uJmKRpBaBCSEOtpbkP/TUy3XY+lUmm5ED/
+        IyVDdFSPIpwAjeOAXdZGZiRHp3jv5w5PdkwjmGiMPTfyHuS/a3f8tcWkHK0S7vpr0GCJaUXmextk
+        J2MUg6E81ZUpIYyyEXq41XqHrXKq6CTmssTcWuXo/1e0L31xfC6SSpYb05cAs7OHZWUKYs52T13S
+        FNjtu4m2bXVeMNGgHuA2RYaDsnbEMKSTtFgJok80DnGEniWgMsWLvRhmEQy8mLrgxUNSm9b+AgAA
+        //8DAFfCq5QmBAAA
     headers:
-      Content-Length:
-      - '1466'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1123'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -3868,6 +3910,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 127ms
       x-request-id:
       - DUMMY
     status:
@@ -4101,95 +4147,106 @@ interactions:
       \u63A5\u6536\u65B9\u7684\u4E49\u52A1\uFF1A\\n\\n\u63A5\u6536\u4FDD\u5BC6\u4FE1\u606F\u7684\u4E00\u65B9\uFF08\u201C\u63A5\u6536\u65B9\u201D\uFF09\u5E94\uFF1A\\n\\na.
       \u4FDD\u6301\u4FDD\u5BC6\u4FE1\u606F\u7684\u4FDD\u5BC6\u6027\uFF0C\u672A\u7ECF\u62AB\u9732\u65B9\u4E8B\u5148\u4E66\u9762\u540C\u610F\uFF0C\u4E0D\u5F97\u5411\u4EFB\u4F55\u7B2C\u4E09\u65B9\u62AB\u9732\u3002\\n\\nb.\u4EC5\u5C06\u4FDD\u5BC6\u4FE1\u606F\u7528\u4E8E\u8BC4\u4F30\u6216\u53C2\u4E0E\u6F5C\u5728\u4E1A\u52A1\u5408\u4F5C\u3002\\n\\nc.
       \u91C7\u53D6\u4E00\u5207\u5FC5\u8981\u7684\u9884\u9632\u63AA\u65BD\u4FDD\u62A4\u4FDD\u5BC6\u4FE1\u606F\u7684\u673A\u5BC6\u6027\uFF0C\u8FD9\u4E9B\u9884\u9632\u63AA\u65BD\u4E0D\u5F97\u4F4E\u4E8E\u4FDD\u62A4\u5176\u81EA\u8EAB\u4FDD\u5BC6\u4FE1\u606F\u6240\u91C7\u53D6\u7684\u9884\u9632\u63AA\u65BD\u3002\\n\\n4.
-      \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\uFF1A\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '19748'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '19721'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
-        [\\n            {\\n                \\\"value\\\": 7,\\n                \\\"justification\\\":
-        \\\"\u8BE5\u4FDD\u5BC6\u534F\u8BAE\u6DB5\u76D6\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u8BE6\u7EC6\u5B9A\u4E49\uFF0C\u5305\u62EC\u591A\u79CD\u4FE1\u606F\u7C7B\u522B\uFF0C\u660E\u786E\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u6392\u9664\u8303\u56F4\uFF0C\u89C4\u5B9A\u4E86\u63A5\u6536\u65B9\u7684\u4FDD\u5BC6\u4E49\u52A1\u548C\u4F7F\u7528\u9650\u5236\uFF0C\u4F53\u73B0\u4E86\u8F83\u4E3A\u5168\u9762\u7684NDA\u5185\u5BB9\u3002\u534F\u8BAE\u4E2D\u8FD8\u5F3A\u8C03\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u4E13\u6709\u6743\u548C\u5408\u7406\u4FDD\u62A4\u63AA\u65BD\uFF0C\u7B26\u5408NDA\u7684\u57FA\u672C\u6700\u4F73\u5B9E\u8DF5\u3002\u7136\u800C\uFF0C\u534F\u8BAE\u4E2D\u7F3A\u5C11\u4E00\u4E9B\u5E38\u89C1\u7684\u6761\u6B3E\uFF0C\u5982\u534F\u8BAE\u671F\u9650\u3001\u8FDD\u7EA6\u8D23\u4EFB\u3001\u4E89\u8BAE\u89E3\u51B3\u673A\u5236\u7B49\uFF0C\u4E14\u90E8\u5206\u6761\u6B3E\u8868\u8FF0\u8F83\u4E3A\u7B80\u7565\uFF0C\u672A\u4F53\u73B0\u66F4\u7EC6\u81F4\u7684\u64CD\u4F5C\u89C4\u8303\u3002\u56E0\u6B64\uFF0C\u6574\u4F53\u8D28\u91CF\u8F83\u597D\u4F46\u4E0D\u5B8C\u7F8E\uFF0C\u8BC4\u5206\u4E3A7\u5206\u3002\\\"\\n
-        \           }\\n        ]\\n    }\\n]\", \"refusal\": null, \"role\": \"assistant\"}}],
-        \"created\": 1766106827, \"id\": \"chatcmpl-DUMMY\", \"model\": \"gpt-4.1-mini-2025-04-14\",
-        \"object\": \"chat.completion\", \"prompt_filter_results\": [{\"prompt_index\":
-        0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\":
-        \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\": false}, \"self_harm\":
-        {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\":
-        \"safe\"}}}], \"system_fingerprint\": \"fp_3dcd5944f5\", \"usage\": {\"completion_tokens\":
-        181, \"completion_tokens_details\": {\"accepted_prediction_tokens\": 0, \"audio_tokens\":
-        0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\": 0}, \"prompt_tokens\":
-        3988, \"prompt_tokens_details\": {\"audio_tokens\": 0, \"cached_tokens\":
-        3072}, \"total_tokens\": 4169}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcC0KCgQAAAD//3RU31PaWBR+96/o5Bk6
+        YGHFx+7u8+60MzvTGXGYGC6YNiRMEhx3d5wBf9BgkdpWLVDYihW0KrBtFRFE/5jm3huf+i/03EQM
+        9gcPEM53zne+c27uN/5rKPgkdl+a0OYe/TOPHil/PfzzwUPOwyqUmcdI0IdVdwUF6pAuKrIDCyri
+        dcRY/ROh4PgvgVAoaAMJJYokVhZP6t7AXb83Icqid9w3HvT6Al5/4Lp8VhEFpEHeFPy9c+df+5sJ
+        laNoHsI+zzCSQJrGxxHEhkkQVBWJRThe00RN52Wd87igoMg6km3tU2HZpnd+2CfMYAEl9YgYDUNK
+        mPvNF+Y8owloXld5AaaLiDpKaCxrysW/4XPL5ngphVjyhOdH8OOUposxUeDZEp3OVrtuXlZxO4vX
+        nlutFs6v4PVDs5f94/f71smptZYzu01aXsa7ZbN7QCppc/AJt/6zTk+sRoYeb385z0MJeXZEigVa
+        a0EmbV7QwUfyuk4qb/HLPH6eJ1tn5mWNZNqf0xmr3aD9LKSRSg+aOnHcKptnOUBvSBxJEMSrNSBx
+        0kjh5VVpl1Rr5Ojic3rREewQYuO12b0A2aO0TMyHPjYOQSTpnNA3W3gza3bLrNFqmlSYHtzaIcYp
+        PJi9Hn5RhAf6tm4BQ2+PVJegNTGKdLPuEAKPOXhFC/9DI7yyf1XdIek9UEIKdbLRgTGZclvz1dI+
+        NrLOOJA8Og7rNbikG/tXpXVsdOzpqmR1lxQOyNYAWtCjBl43yPZT/DQLSyYfFqEFXe5Y6Tzbtj01
+        HApuFnFl32lE3/doaTAUaeDGIt34eLN2UjnAtUOcLX05z7ERuhsQsfYytG+Q5s5wnxnrskp7Dev4
+        ndnvE2PL7OXYevfe4ewntlWjQ5s5nF3BrTMmcrNOihdmdw238mTzmB3Hm23S3GVQ/xz0W+klq/QC
+        r3ScEvYK2ZmwMTZy9xUcBDzb+SWzZ0ywMcrLVnvZ7MN5LIa52y/wgvt32nmEyPTolVNRLKXx7N7L
+        KUkaAXhZVnT7lbcv+/Q1snBzvSUlnlSVGe2bUi4GtqHNRsBmNPAcuMqariQ5G12A72nbRlK3nIED
+        ogRcbF15gux29yZDIYeQc/3LhcGUrlEdNEouEPBPXvvPbcpIFOm8KGkjXsQJvDALTuH2DAVc7+JT
+        UVFxMd/YyOzfS/oRvTO/KMdHWH5K7wICcziQlVRRVBRuj+2mqYh5/M/SbnZtC+Y0pM6BZ0d0Eans
+        PKIoxqckx3g57W8NrDIChxZHalIVHfeNJSO8zxe85/fzkzPc2MLYVwAAAP//AwAan6xmjAYAAA==
     headers:
-      Content-Length:
-      - '1960'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '3477'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4198,6 +4255,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 144ms
       x-request-id:
       - DUMMY
     status:
@@ -4332,7 +4393,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids\\\":
       [\\n            str,\\n            ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Categories of confidential information</aspect_name>\\n
@@ -4498,91 +4559,97 @@ interactions:
       \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P57\\\">\\n
       \       <paragraph_id>P57</paragraph_id>\\n        \\n        <paragraph_text>\\n
       \       \u65E5\u671F\uFF1A___________________________\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '24819'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '24794'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraph_ids\":
-        [\n            \"P21\"\n        ]\n    }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1766106831, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_3dcd5944f5", "usage": {"completion_tokens": 29, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 5291, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 5248}, "total_tokens": 5320}}'
+      string: !!binary |
+        H4sIAAAAAAAA/3RTTXObMBC9+1cwOkOGLzu4tzSTnntoezEeRpYWUCskjSQybTP+712BHXCacBCw
+        771l9+3ysokiIjj5FBHWU88GI5OnXf/0vHvYfRm/Vd9/PNr7v49un7ZV8Xk0OYmDQp9+AvNX1R3T
+        qAMvtJphZoF6CFmz+2qb78qq2k/AoDnIIOuMT8q7LBmEEkme5tskLZOsvMh7LRg45B3wNYpepjMU
+        qjj8xnAaXyMDOEc7wNiVhEGrZYgQ6pxwnipP4gVkWnlQU+2HWk3p51u4atQY7KwRvEZGTR7SmsRr
+        3FBLO0tNjxQXOIcFnRlf81vNNZrVZAke58dzrY7r4iy0o6PBITVKuQKoUtrT4PBky/GCnF+NkLoz
+        Vp/cGylp0WDXNzgQh9PBpp3XhkzoGc/jZPh44yHBRIPxjde/YPrcNt9nc0KyTHqBi+ICeixRrmRF
+        XsbvZGw4eCqkWw2NMMp64Cttli9DpiMXesHSzar1/yt6L/3cvlDdKsuH6ReAMTC4x42xwAW77Xqh
+        WQg/w0e0V6ungokD+4zL3XgBNoyDQ0tHOW8ocX+ch6HBmXVgjRXzmramoWm6LbKM7k9kc978AwAA
+        //8DADBJ5sC1AwAA
     headers:
-      Content-Length:
-      - '1331'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '892'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4591,6 +4658,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 179ms
       x-request-id:
       - DUMMY
     status:
@@ -4734,7 +4805,7 @@ interactions:
       text:\\n    -- Do not include any headers, explanations, or text outside of
       the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
       other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs:
+      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
       [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
@@ -4901,91 +4972,97 @@ interactions:
       \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P57\\\">\\n
       \       <paragraph_id>P57</paragraph_id>\\n        \\n        <paragraph_text>\\n
       \       \u65E5\u671F\uFF1A___________________________\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '25617'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '25592'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n    {\n        \"aspect_id\": \"A0\",\n        \"paragraphs\":
-        []\n    }\n]", "refusal": null, "role": "assistant"}}], "created": 1766106832,
-        "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14", "object": "chat.completion",
-        "prompt_filter_results": [{"prompt_index": 0, "content_filter_results": {"hate":
-        {"filtered": false, "severity": "safe"}, "jailbreak": {"filtered": false,
-        "detected": false}, "self_harm": {"filtered": false, "severity": "safe"},
-        "sexual": {"filtered": false, "severity": "safe"}, "violence": {"filtered":
-        false, "severity": "safe"}}}], "system_fingerprint": "fp_3dcd5944f5", "usage":
-        {"completion_tokens": 22, "completion_tokens_details": {"accepted_prediction_tokens":
-        0, "audio_tokens": 0, "reasoning_tokens": 0, "rejected_prediction_tokens":
-        0}, "prompt_tokens": 5434, "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens":
-        5376}, "total_tokens": 5456}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcC13igAAAAD//3RSTW+jMBC951dUPocK
+        CHTTYyvtYQ97qNRbiJAxA3FrbK/HtF2t8t93bNJA+sHBiHnzHvOe5wb71z8wNN0v8/Pt4VGrxtz/
+        3rB1YJjmCYR/Z10LQzzw0ugJFg64h6Ca/diW+U2xvU0jMJgWVKD11ifFdZYMUsskT/MySYskK070
+        g5ECkPp29Hl19S+eYVDdwhuVo1isDIDIe6DaexMVnVGhwjiiRM+1Z+sZFEZ70HH2XaWj/PQKT0Uc
+        S85q2VbUUbG7tGLrJW65473j9oChYbefsGOl98ufOOhG5MGpHpVaAFxr43lIKtrbn5Dj2ZAyvXWm
+        wQ9U1lFQeKgpWKSUaXj0xrKIHuncx+DGiywYCQ3W1948Q/xdWWyKSZDNNzbDeXYCPY2olrSyXH+h
+        WLfguVS4CJ8JLg7QLrh5sT174GMrzYylq4X1zxN9JT/Zl7pfqHwrPwNCgKV9rK2DVopL13Obg7DU
+        37Wdo44DMwT3QktaewkuXEcLHR/VtGkM/6KHoaY768FZJ6d162zN07TcZBm/bdjquPoPAAD//wMA
+        g+hItH0DAAA=
     headers:
-      Content-Length:
-      - '1297'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '791'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -4994,6 +5071,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 185ms
       x-request-id:
       - DUMMY
     status:
@@ -5376,120 +5457,106 @@ interactions:
       \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P57\\\">\\n
       \       <paragraph_id>P57</paragraph_id>\\n        \\n        <paragraph_text>\\n
       \       \u65E5\u671F\uFF1A___________________________\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"stream\":false,\"temperature\":0.3,\"top_p\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '31555'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '31528'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\"choices\": [{\"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"protected_material_code\": {\"filtered\":
-        false, \"detected\": false}, \"protected_material_text\": {\"filtered\": false,
-        \"detected\": false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"},
-        \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}, \"finish_reason\": \"stop\", \"index\": 0,
-        \"logprobs\": null, \"message\": {\"annotations\": [], \"content\": \"[\\n
-        \   {\\n        \\\"concept_id\\\": \\\"C0\\\",\\n        \\\"extracted_items\\\":
-        [\\n            {\\n                \\\"value\\\": \\\"\u5546\u4E1A\u4FE1\u606F\\\",\\n
-        \               \\\"justification\\\": \\\"\u6587\u6863\u4E2D\u660E\u786E\u5217\u51FA\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u7C7B\u522B\uFF0C\u5176\u4E2D\u5305\u62EC\u201C\u5546\u4E1A\u4FE1\u606F\uFF08\u5546\u4E1A\u8BA1\u5212\u3001\u6218\u7565\u548C\u6A21\u5F0F\uFF09\u201D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"\u6280\u672F\u4FE1\u606F\\\",\\n                \\\"justification\\\":
-        \\\"\u6587\u6863\u4E2D\u660E\u786E\u5217\u51FA\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u7C7B\u522B\uFF0C\u5176\u4E2D\u5305\u62EC\u201C\u6280\u672F\u4FE1\u606F\uFF08\u6280\u672F\u89C4\u8303\u548C\u6587\u6863\u3001\u7814\u53D1\u6D3B\u52A8\uFF09\u201D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"\u5BA2\u6237\u548C\u5E02\u573A\u4FE1\u606F\\\",\\n                \\\"justification\\\":
-        \\\"\u6587\u6863\u4E2D\u660E\u786E\u5217\u51FA\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u7C7B\u522B\uFF0C\u5176\u4E2D\u5305\u62EC\u201C\u5BA2\u6237\u548C\u5E02\u573A\u4FE1\u606F\uFF08\u5BA2\u6237\u540D\u5355\u548C\u8054\u7CFB\u4FE1\u606F\u3001\u9500\u552E\u5386\u53F2\u548C\u6A21\u5F0F\uFF09\u201D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"\u4EBA\u5458\u548C\u5185\u90E8\u4FE1\u606F\\\",\\n                \\\"justification\\\":
-        \\\"\u6587\u6863\u4E2D\u660E\u786E\u5217\u51FA\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u7C7B\u522B\uFF0C\u5176\u4E2D\u5305\u62EC\u201C\u4EBA\u5458\u548C\u5185\u90E8\u4FE1\u606F\uFF08\u5458\u5DE5\u540D\u5355\u548C\u8054\u7CFB\u4FE1\u606F\u3001\u96C7\u4F63\u534F\u8BAE\u548C\u4EBA\u4E8B\u6863\u6848\uFF09\u201D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"\u77E5\u8BC6\u4EA7\u6743\\\",\\n                \\\"justification\\\":
-        \\\"\u6587\u6863\u4E2D\u660E\u786E\u5217\u51FA\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u7C7B\u522B\uFF0C\u5176\u4E2D\u5305\u62EC\u201C\u77E5\u8BC6\u4EA7\u6743\uFF08\u5546\u4E1A\u79D8\u5BC6\u548C\u4E13\u6709\u6280\u672F\u3001\u4E13\u5229\u548C\u4E13\u5229\u7533\u8BF7\u3001\u7248\u6743\u548C\u7248\u6743\u7533\u8BF7\u3001\u5546\u6807\u548C\u5546\u6807\u7533\u8BF7\uFF09\u201D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"\u6218\u7565\u4FE1\u606F\\\",\\n                \\\"justification\\\":
-        \\\"\u6587\u6863\u4E2D\u660E\u786E\u5217\u51FA\u4E86\u4FDD\u5BC6\u4FE1\u606F\u7684\u7C7B\u522B\uFF0C\u5176\u4E2D\u5305\u62EC\u201C\u6218\u7565\u4FE1\u606F\uFF08\u5E76\u8D2D\u8BA1\u5212\u3001\u7ADE\u4E89\u5206\u6790\u548C\u6218\u7565\uFF09\u201D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            },\\n            {\\n                \\\"value\\\":
-        \\\"\u8F6F\u4EF6\u4EE3\u7801\\\",\\n                \\\"justification\\\":
-        \\\"\u6587\u6863\u4E2D\u6307\u51FA\u8F6F\u4EF6\u4EE3\u7801\u4E5F\u5E94\u5305\u62EC\u5728\u4FDD\u5BC6\u4FE1\u606F\u4E2D\u3002\\\",\\n
-        \               \\\"reference_paragraph_ids\\\": [\\n                    \\\"P21\\\"\\n
-        \               ]\\n            }\\n        ]\\n    }\\n]\", \"refusal\":
-        null, \"role\": \"assistant\"}}], \"created\": 1766106832, \"id\": \"chatcmpl-DUMMY\",
-        \"model\": \"gpt-4.1-mini-2025-04-14\", \"object\": \"chat.completion\", \"prompt_filter_results\":
-        [{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\":
-        false, \"severity\": \"safe\"}, \"jailbreak\": {\"filtered\": false, \"detected\":
-        false}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\":
-        {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\":
-        false, \"severity\": \"safe\"}}}], \"system_fingerprint\": \"fp_3dcd5944f5\",
-        \"usage\": {\"completion_tokens\": 471, \"completion_tokens_details\": {\"accepted_prediction_tokens\":
-        0, \"audio_tokens\": 0, \"reasoning_tokens\": 0, \"rejected_prediction_tokens\":
-        0}, \"prompt_tokens\": 6579, \"prompt_tokens_details\": {\"audio_tokens\":
-        0, \"cached_tokens\": 6144}, \"total_tokens\": 7050}}"
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcK2oigAAAAD//9RXQW/TSBS+91cgnxPk
+        hIS2193LavcC0kp7aKpo6kxSs45tPBPEalUppTRxaUqBTXcrNoWGqmoRS6JdUJs6rfgv4LHNqX9h
+        33hI7EJ6YA9ZJQfH8773vjfzjTX+/NM3PxaLpfJ3ZPr2jTL5Pn3zhwUT35QSvMJYuIUVOqi6qhhQ
+        h6lq6AJWLIwo5qyp6Zls+npmZjYVAmWjgDVeVjJpMnM1lSyruppMy+lsUs4kU5lP5YuGqmACeXMw
+        vHLl1/DKJ6oX8F0Iy4lBpIwJQSUMsUESBC1D4xEJEaISinQqJSJQMXSK9XDuczk9pBd//JfjsIJN
+        mlcLOUjJSd/KOSkRT8B3qYUUWF1epbhMeNZchH/GF5XdQVoFC0q2VXN7T913bW+5e4E8yr5VIVQt
+        qgrimooq7/e6195ze6+97Yd+u8PsP1jdcZ2a+26HdWuCzX963/+7z+xX56cNtnoEyayx6q3/9b7a
+        ijc9P7XFMOi0mf3kQ3XZs7f9rX32pOEdttnp5vnp2vvqzofqvUumZ+EitjAIlTeRhUoWMhdBsFFa
+        RDU30qmc9CU4fzG0lPg6Lb0HVa/VHbOW8aagpRgGB/eDxgqXMCQHUf3dJtt87L3tsweHk6Mo67zw
+        7GNYB+vdYy1n3I/pqO78eRXxRxtsYwvQYLnpv+kLFJT+2KyyZoc9rLHNfybwIXYdhz3e5ouurX5c
+        ORyz5CO7c8kheLx/qeR/1t2zPbaxGXQ6gAKJ66zDNLy2PTnC+8/3A1DIOfB2Vsamd7zp8CT2D7ah
+        lgvZ+81rrYkjBWSGIbNfijjc+M03QfeYny1rNpRDXNwM48Dm7db5ZoY3Ij5Bx3n4Hhr3cR5ryjfk
+        5Ch4+3r4avRfPXOdNWbXvGeP+NkSJk+OosFZ1+0fuf09f3f5vyjaqIOWIFKcxz15zpym0I+1DuMy
+        QwkIAxq7Zy2354zcAfdk3e1V/xfxouEnBCLzcXcIvSsEcYuqVzQtBiBdN2ioUOhL56cG2zFwoppR
+        Mi1jgXxWKhXB4ZLFPDhiAvYYXCehhimF6BJc50PHW7lgYiUgKoMHpcbPOGx3PTs9KwilyGpHcGaI
+        UpijFgHTcnYmMYIyX8AUqRqJ2WZJQcoimNqoZ0aObDaqFFQjwuSp2Nq/nNIoerF+VS/FWC6ljwCF
+        m3GYlmnhgqpcXHaUZmH+OXJZ2lDrcMISwdYd+LzIUxVbfD8KuIgqmvhGkMgvBFx9HjathC3TUsWH
+        QtHMI1nOXkul0OyCNLU09S8AAAD//wMAaeS/JTcNAAA=
     headers:
-      Content-Length:
-      - '3745'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '5261'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -5498,6 +5565,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 228ms
       x-request-id:
       - DUMMY
     status:

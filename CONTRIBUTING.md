@@ -379,11 +379,6 @@ Based on the test results and your changes, you'll fall into one of these four s
    # For OpenAI API tests
    CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
    
-   # For Azure OpenAI tests
-   CONTEXTGEM_AZURE_OPENAI_API_KEY=your_azure_openai_api_key
-   CONTEXTGEM_AZURE_OPENAI_API_BASE=your_azure_openai_base
-   CONTEXTGEM_AZURE_OPENAI_API_VERSION=your_azure_openai_api_version
-   
    # For debugging output
    CONTEXTGEM_LOGGER_LEVEL=DEBUG
    ```
@@ -474,9 +469,6 @@ Based on the test results and your changes, you'll fall into one of these four s
 **Automatically Redacted Variables:**
 
 - `CONTEXTGEM_OPENAI_API_KEY`
-- `CONTEXTGEM_AZURE_OPENAI_API_KEY`
-- `CONTEXTGEM_AZURE_OPENAI_API_BASE`
-- `CONTEXTGEM_AZURE_OPENAI_API_VERSION`
 
 **Adding New Variables:**
 

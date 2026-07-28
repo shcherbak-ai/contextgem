@@ -37,10 +37,8 @@ doc.add_concepts([total_revenue_concept])
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="azure/o4-mini",
-    api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-    api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-    api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+    model="openai/o4-mini",
+    api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 
 # Extract the concept

@@ -36,10 +36,8 @@ doc.aspects = [
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="azure/gpt-4.1-mini",
-    api_key=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_KEY"),
-    api_version=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_VERSION"),
-    api_base=os.getenv("CONTEXTGEM_AZURE_OPENAI_API_BASE"),
+    model="openai/gpt-4.1-mini",
+    api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 
 # Extract aspects from the document

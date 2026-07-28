@@ -26,15 +26,13 @@ and memory profiling support.
 
 from __future__ import annotations
 
-import asyncio
 import os
 from unittest.mock import patch
 
-import aiohttp.streams
 import nest_asyncio
 import pytest
 import tethered
-from vcr.stubs import httpcore_stubs
+from vcr.stubs import httpx_stubs
 
 from contextgem.internal.base.llms import _GENAI_PRICES_REFRESH_HOSTS
 from contextgem.internal.loggers import logger
@@ -44,42 +42,25 @@ from contextgem.public.utils import reload_logger_settings
 
 
 # Apply nest_asyncio to allow nested event loops
-# This fixes VCR's async handling issues where asyncio.run() is called
-# from sync code while an event loop is already running
+# This allows the sync litellm.completion() call in the acompletion patch below
+# to run its internal event loop while already inside a running loop
 nest_asyncio.apply()
 
 with _suppress_litellm_warnings_context():
     import litellm
 
 
-# Shim for vcrpy + aiohttp >= 3.14 compatibility.
-# aiohttp 3.14 removed ``aiohttp.streams.AsyncStreamReaderMixin`` (its async-iteration
-# helpers were folded into ``StreamReader``), but vcrpy (<=8.1.1) still subclasses it at
-# import time in ``vcr.stubs.aiohttp_stubs``, raising AttributeError at the setup of every
-# ``@pytest.mark.vcr`` test before any code runs. Our cassettes only record httpx/httpcore
-# traffic (litellm uses httpx, not aiohttp), so vcrpy's aiohttp ``MockStream`` is never
-# instantiated here — a no-op stand-in for the removed mixin lets the module import while
-# keeping the dev/test aiohttp version identical to what production resolves.
-# Remove once vcrpy ships aiohttp 3.14 support.
-if not hasattr(aiohttp.streams, "AsyncStreamReaderMixin"):
-
-    class _AsyncStreamReaderMixinShim:
-        """No-op stand-in for aiohttp's removed ``AsyncStreamReaderMixin``."""
-
-    aiohttp.streams.AsyncStreamReaderMixin = _AsyncStreamReaderMixinShim  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
-
-
 # Patch VCR's _deserialize_response to handle string bodies correctly
 # This fixes a bug where cassette bodies stored as strings cause TypeErrors
-_original_deserialize_response = httpcore_stubs._deserialize_response
+_original_deserialize_response = httpx_stubs._deserialize_response
 
 
-def _patched_deserialize_response(vcr_response):
+def _patched_deserialize_response(vcr_response, httpx):
     """
     Patched version of VCR's _deserialize_response that ensures body is bytes.
 
     VCR stores response bodies as strings in YAML cassettes for readability,
-    but httpcore's Response expects bytes. This patch converts string bodies
+    but ``httpx.ByteStream`` expects bytes. This patch converts string bodies
     to bytes before creating the Response object.
     """
     # Ensure body is bytes, not string
@@ -87,25 +68,11 @@ def _patched_deserialize_response(vcr_response):
     if isinstance(body, str):
         vcr_response["body"]["string"] = body.encode("utf-8")
 
-    return _original_deserialize_response(vcr_response)
+    return _original_deserialize_response(vcr_response, httpx)
 
 
 # Apply the patch
-httpcore_stubs._deserialize_response = _patched_deserialize_response  # ty: ignore[invalid-assignment]
-
-
-# Patch VCR's _run_async_function to fix a bug in httpcore stubs.
-# When called from inside a running event loop, VCR's original implementation
-# returns asyncio.ensure_future() (a Future object) instead of the actual result.
-# With nest_asyncio applied, we can safely use asyncio.run() in all cases.
-def _patched_run_async_function(async_func, *args, **kwargs):
-    """
-    Run async function using asyncio.run(), which works with nest_asyncio.
-    """
-    return asyncio.run(async_func(*args, **kwargs))
-
-
-httpcore_stubs._run_async_function = _patched_run_async_function  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+httpx_stubs._deserialize_response = _patched_deserialize_response  # ty: ignore[invalid-assignment]
 
 
 # Memory profiling behavior
@@ -194,7 +161,6 @@ def _cassette_exists(cassette_path: str) -> bool:
 _TETHERED_REPLAY_ALLOW = list(_SAT_MODEL_DOWNLOAD_HOSTS)
 
 _TETHERED_RECORDING_ALLOW = [
-    "*.openai.azure.com",  # Azure OpenAI
     "api.openai.com",  # OpenAI
     *_GENAI_PRICES_REFRESH_HOSTS,  # genai-prices auto-refresh
     *_TETHERED_REPLAY_ALLOW,
@@ -255,8 +221,7 @@ def vcr_compatible_acompletion(request):
     VCR.py cannot intercept httpx async requests made by litellm's acompletion.
 
     With nest_asyncio applied at module level, we can safely call sync
-    litellm.completion() from async context. VCR's _run_async_function is
-    also patched to use asyncio.run() which works with nested loops.
+    litellm.completion() from async context.
 
     TODO: Remove this when vcr supports acompletion() with litellm's httpx transport
     """

@@ -211,106 +211,104 @@ interactions:
       Last login: 2023-12-15\n- Sessions active: 2\n- Device: Mobile, Desktop\n\nRELATED
       ITEMS:\n1. Document Review (ID: 1)\n Description: Annual document review task\n
       Status: Active\n\n2. Access Audit (ID: 2)\n Description: System access verification\n
-      Status: Inactive\n\nSecurity Level: Advanced\n2FA: Enabled\n</document_text>"}],"model":"gpt-4.1-mini","max_tokens":4096,"stream":false,"temperature":0.3,"top_p":0.3}'
+      Status: Inactive\n\nSecurity Level: Advanced\n2FA: Enabled\n</document_text>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
     headers:
-      Accept:
+      accept:
       - application/json
-      Accept-Encoding:
+      accept-encoding:
       - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '18432'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - AzureOpenAI/Python 2.13.0
-      X-Stainless-Arch:
-      - other:amd64
-      X-Stainless-Async:
-      - 'false'
-      X-Stainless-Lang:
-      - python
-      X-Stainless-Package-Version:
-      - 2.13.0
-      X-Stainless-Raw-Response:
-      - 'true'
-      X-Stainless-Runtime:
-      - CPython
-      api-key:
-      - DUMMY
       authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '18405'
+      content-type:
+      - application/json
+      cookie:
       - DUMMY
       host:
       - DUMMY
+      user-agent:
+      - OpenAI/Python 2.49.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
       x-stainless-os:
       - DUMMY
+      x-stainless-package-version:
+      - 2.49.0
+      x-stainless-raw-response:
+      - 'true'
       x-stainless-read-timeout:
       - '120.0'
       x-stainless-retry-count:
       - '0'
+      x-stainless-runtime:
+      - CPython
       x-stainless-runtime-version:
       - DUMMY
     method: POST
-    uri: https://dummy-endpoint.local/openai/deployments/DUMMY-DEPLOYMENT/chat/completions?api-version=2025-03-01-preview
+    uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: '{"choices": [{"content_filter_results": {"hate": {"filtered": false,
-        "severity": "safe"}, "protected_material_code": {"filtered": false, "detected":
-        false}, "protected_material_text": {"filtered": false, "detected": false},
-        "self_harm": {"filtered": false, "severity": "safe"}, "sexual": {"filtered":
-        false, "severity": "safe"}, "violence": {"filtered": false, "severity": "safe"}},
-        "finish_reason": "stop", "index": 0, "logprobs": null, "message": {"annotations":
-        [], "content": "[\n  {\n    \"concept_id\": \"C0\",\n    \"extracted_items\":
-        [\n      {\n        \"user\": {\n          \"name\": \"Charlie Davis\",\n          \"age\":
-        42,\n          \"contact\": {\n            \"email\": \"charlie@example.com\",\n            \"phone\":
-        \"111-222-3333\",\n            \"address\": {\n              \"street\": \"101
-        Maple Dr\",\n              \"city\": \"Nowhere\",\n              \"country\":
-        \"Australia\"\n            },\n            \"contact_type\": \"primary\"\n          }\n        },\n        \"status\":
-        \"active\",\n        \"permissions\": [\n          {\n            \"resource\":
-        \"files\",\n            \"access\": \"read\"\n          },\n          {\n            \"resource\":
-        \"users\",\n            \"access\": \"admin\"\n          },\n          {\n            \"resource\":
-        \"settings\",\n            \"access\": \"write\"\n          }\n        ],\n        \"settings\":
-        {\n          \"theme\": \"dark\",\n          \"notifications\": {\n            \"email\":
-        true,\n            \"sms\": false,\n            \"frequency\": \"weekly\"\n          }\n        },\n        \"related_items\":
-        [\n          {\n            \"id\": 1,\n            \"name\": \"Document Review\",\n            \"description\":
-        \"Annual document review task\",\n            \"is_active\": true\n          },\n          {\n            \"id\":
-        2,\n            \"name\": \"Access Audit\",\n            \"description\":
-        \"System access verification\",\n            \"is_active\": false\n          }\n        ],\n        \"security_level\":
-        \"Advanced\"\n      }\n    ]\n  }\n]", "refusal": null, "role": "assistant"}}],
-        "created": 1766102581, "id": "chatcmpl-DUMMY", "model": "gpt-4.1-mini-2025-04-14",
-        "object": "chat.completion", "prompt_filter_results": [{"prompt_index": 0,
-        "content_filter_results": {"hate": {"filtered": false, "severity": "safe"},
-        "jailbreak": {"filtered": false, "detected": false}, "self_harm": {"filtered":
-        false, "severity": "safe"}, "sexual": {"filtered": false, "severity": "safe"},
-        "violence": {"filtered": false, "severity": "safe"}}}], "system_fingerprint":
-        "fp_3dcd5944f5", "usage": {"completion_tokens": 314, "completion_tokens_details":
-        {"accepted_prediction_tokens": 0, "audio_tokens": 0, "reasoning_tokens": 0,
-        "rejected_prediction_tokens": 0}, "prompt_tokens": 3705, "prompt_tokens_details":
-        {"audio_tokens": 0, "cached_tokens": 2048}, "total_tokens": 4019}}'
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLL3YJCwEAAAD//6RWS4/aMBC+8yuinGGV
+        BOju3oqKql7aQ1tVqhYUzToDeEns1HZ4tNr/3nGckEBCd1flEMAz883neebn6odSt/On4PBJ/h7L
+        /LsWH/ehP7QW8vEJmamtbpgkOzRcCidmCsGgRQ1v76bRu/HkLiwFmUwwtWbr3IwmN+Eo44KPoiCa
+        joLJKJxU5hvJGWrSe6C/nvenfFqiIsEDHQfD+iRDrWGNdFYr0aGSqT3xQWuuDQjjDxshk8KgKLk/
+        LASB24fnLayAYW5inixIuPA/BAt/WAvxYBQwulPMDWbaajw42QnBKRYalZW2Du2xgAwr2A2olKM3
+        hx3XJw+1Ht3Fqk2ii3PLmvx3kEtuGfDUgTMH/h4PYDNiE3PhwhrkGykqNmEYjqIoGo3p06MJSaIo
+        wj1urVQbhWgqoCD0PgP59OaqA1TegJujU/0i9xtU2K8lC2FUpTgryAOkHBb+ueZzh2gVn9gc8+pm
+        ueIZWKS26nPzp41hrwKm0M6ScPjunB7Boco41ZMU58m/KACnTDGThWIVkxVPUfcFl7EqttYCkguq
+        wze4sFX3kgtIqNn+w4dGY7hYv+Rmr6hDrkZ9eR71E2SnYcwG645JQG07jSKk4SvOwNQZud4WRhXY
+        oaxdE68g1V3hSuGvAgWr6nCPuE1fW0kKU+ifE70xdtMm7FBoBsZcsiKjieV9xR3HfU/4E9RM8dyG
+        omocIQpIvaS2VKWlZ0Bve8y5juuSd8F6Q4k4+tE/6M/K2vBmRcLNa7h/O2qKnOdKytuhOqX5Jepl
+        Ll9Zd6ygMj3GKe6wGp2zZAe0AFpdWJkv7Rf9Xra3iMJVocGuMlGkaUsAgirTVaXN/XJQh7HeWKlc
+        50o+6gtTmhKC601Mg0DTGqXtpI3M/VL6PLAXsJuxOFt2NONo8dLQk1ss3Y1vg6kD9JuV3BKH40pq
+        iGPaCCZBeDfsgYwTNNREurVefQZsQ+V9sg3vo2YdA2VZNrJg0Lp7l1IfvLs/DYUWylX4RsDs6iZa
+        ucKEs/NrN2oK7WvLNbVTrEvCVCRqR68hseGobD4SXEGRuncJX5dVGlPS1qho1bgXilUeQxBMx2EI
+        94/+4HnwFwAA//8DAALTmV1fCQAA
     headers:
-      Content-Length:
-      - '2803'
-      Content-Type:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
       - application/json
-      Date:
+      date:
       - DUMMY
-      Strict-Transport-Security:
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '3948'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
-      apim-request-id:
-      - DUMMY
-      azureml-model-session:
-      - DUMMY
-      x-accel-buffering:
-      - 'no'
+      transfer-encoding:
+      - chunked
       x-content-type-options:
       - nosniff
-      x-ms-deployment-name:
-      - DUMMY
-      x-ms-rai-invoked:
-      - DUMMY
-      x-ms-region:
-      - DUMMY
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - DUMMY
       x-ratelimit-limit-tokens:
@@ -319,6 +317,10 @@ interactions:
       - DUMMY
       x-ratelimit-remaining-tokens:
       - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 133ms
       x-request-id:
       - DUMMY
     status:
