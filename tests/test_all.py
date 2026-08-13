@@ -2026,6 +2026,201 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_init_sentence")
 
     @memory_profile_and_capture
+    def test_get_paragraph_and_sentence_index(self):
+        """
+        Tests for looking up paragraph/sentence positions in a document by object,
+        covering duplicate texts, unsupported in-place list mutations, lazy
+        sentence population, empty documents, and serialization round-trips.
+        """
+        # Paragraph lookup, with duplicate paragraph texts (adjacent and
+        # separated) resolving to their specific occurrences
+        para_texts = [
+            "Duplicate clause.",
+            "Duplicate clause.",
+            "Intro.",
+            "Duplicate clause.",
+            "End.",
+        ]
+        document = Document(paragraphs=[Paragraph(raw_text=i) for i in para_texts])
+        for idx, paragraph in enumerate(document.paragraphs):
+            assert document.get_paragraph_index(paragraph) == idx
+            # Repeated lookups are consistent
+            assert document.get_paragraph_index(paragraph) == idx
+        # Sorting references by position works with duplicate texts
+        refs = [
+            document.paragraphs[3],
+            document.paragraphs[0],
+            document.paragraphs[1],
+        ]
+        assert sorted(refs, key=document.get_paragraph_index) == [
+            document.paragraphs[0],
+            document.paragraphs[1],
+            document.paragraphs[3],
+        ]
+        # Single-paragraph document
+        single_para_document = Document(paragraphs=[Paragraph(raw_text="Only one.")])
+        assert (
+            single_para_document.get_paragraph_index(single_para_document.paragraphs[0])
+            == 0
+        )
+        # Foreign paragraph is not found, even with identical text
+        with pytest.raises(ValueError, match="not found"):
+            document.get_paragraph_index(Paragraph(raw_text="Duplicate clause."))
+        # Paragraphs of a same-text twin document are not found either
+        # (lookup is keyed by unique ID, not text equality)
+        twin_document = Document(paragraphs=[Paragraph(raw_text=i) for i in para_texts])
+        with pytest.raises(ValueError, match="not found"):
+            document.get_paragraph_index(twin_document.paragraphs[0])
+        # Document without paragraphs (image-only)
+        image_document = Document(images=[self.test_img_png_invoice])
+        with pytest.raises(ValueError, match="not found"):
+            image_document.get_paragraph_index(document.paragraphs[0])
+        with pytest.raises(ValueError, match="not found"):
+            image_document.get_sentence_index(Sentence(raw_text="Sent A."))
+
+        # Unsupported in-place mutations of the paragraphs list must not
+        # yield stale positions (lookups always reflect the live list state)
+        mutated_document = Document(
+            paragraphs=[Paragraph(raw_text=i) for i in ["P0.", "P1.", "P2."]]
+        )
+        first_para = mutated_document.paragraphs[0]
+        last_para = mutated_document.paragraphs[-1]
+        assert mutated_document.get_paragraph_index(last_para) == 2
+        # Insertion shifts positions
+        inserted_para = Paragraph(raw_text="Inserted.")
+        mutated_document.paragraphs.insert(0, inserted_para)
+        assert mutated_document.get_paragraph_index(first_para) == 1
+        assert mutated_document.get_paragraph_index(last_para) == 3
+        assert mutated_document.get_paragraph_index(inserted_para) == 0
+        # Removed paragraph no longer resolves
+        del mutated_document.paragraphs[-1]
+        with pytest.raises(ValueError, match="not found"):
+            mutated_document.get_paragraph_index(last_para)
+        assert mutated_document.get_paragraph_index(first_para) == 1
+        # Removal from the start shifts positions
+        del mutated_document.paragraphs[0]
+        assert mutated_document.get_paragraph_index(first_para) == 0
+
+        # Sentence lookup, with duplicate sentence texts within and
+        # across paragraphs resolving to their specific occurrences
+        document_with_sents = Document(
+            paragraphs=[
+                Paragraph(
+                    raw_text="Sent A. Sent A. Sent B.",
+                    sentences=[
+                        Sentence(raw_text="Sent A."),
+                        Sentence(raw_text="Sent A."),
+                        Sentence(raw_text="Sent B."),
+                    ],
+                ),
+                Paragraph(
+                    raw_text="Sent A. Sent C.",
+                    sentences=[
+                        Sentence(raw_text="Sent A."),
+                        Sentence(raw_text="Sent C."),
+                    ],
+                ),
+            ]
+        )
+        for para_idx, paragraph in enumerate(document_with_sents.paragraphs):
+            for sent_idx, sentence in enumerate(paragraph.sentences):
+                assert document_with_sents.get_sentence_index(sentence) == (
+                    para_idx,
+                    sent_idx,
+                )
+                # Repeated lookups are consistent
+                assert document_with_sents.get_sentence_index(sentence) == (
+                    para_idx,
+                    sent_idx,
+                )
+        # Positions sort in document order across paragraphs, matching the
+        # flattened `document.sentences` order
+        all_sents = document_with_sents.sentences
+        assert (
+            sorted(all_sents, key=document_with_sents.get_sentence_index) == all_sents
+        )
+        # Foreign sentence is not found, even with identical text
+        with pytest.raises(ValueError, match="not found"):
+            document_with_sents.get_sentence_index(Sentence(raw_text="Sent A."))
+
+        # Lookup error hints that sentences are not segmented yet
+        with pytest.raises(ValueError, match="no sentences segmented"):
+            document.get_sentence_index(Sentence(raw_text="Intro."))
+
+        # Sentences populated after earlier lookups resolve correctly,
+        # including partial (per-paragraph) population
+        document.paragraphs[2].sentences = [Sentence(raw_text="Intro.")]
+        assert document.get_sentence_index(document.paragraphs[2].sentences[0]) == (
+            2,
+            0,
+        )
+        document.paragraphs[4].sentences = [Sentence(raw_text="End.")]
+        assert document.get_sentence_index(document.paragraphs[4].sentences[0]) == (
+            4,
+            0,
+        )
+        # Previously populated sentences still resolve
+        assert document.get_sentence_index(document.paragraphs[2].sentences[0]) == (
+            2,
+            0,
+        )
+        # Once some sentences exist, the not-segmented hint no longer applies
+        with pytest.raises(ValueError, match="not found") as exc_info:
+            document.get_sentence_index(Sentence(raw_text="Intro."))
+        assert "no sentences segmented" not in str(exc_info.value)
+
+        # Unsupported in-place mutations of a paragraph's sentences list must not
+        # yield stale positions (lookups always reflect the live list state)
+        mutable_sents_para = document_with_sents.paragraphs[1]
+        tracked_sent = mutable_sents_para.sentences[-1]  # "Sent C." at (1, 1)
+        assert document_with_sents.get_sentence_index(tracked_sent) == (1, 1)
+        # Insertion shifts positions within the paragraph
+        inserted_sent = Sentence(raw_text="Sent A.")
+        mutable_sents_para.sentences.insert(0, inserted_sent)
+        assert document_with_sents.get_sentence_index(tracked_sent) == (1, 2)
+        assert document_with_sents.get_sentence_index(inserted_sent) == (1, 0)
+        # Removed sentence no longer resolves
+        del mutable_sents_para.sentences[-1]  # removes tracked_sent
+        with pytest.raises(ValueError, match="not found"):
+            document_with_sents.get_sentence_index(tracked_sent)
+        # Other paragraphs' sentences are unaffected
+        assert document_with_sents.get_sentence_index(
+            document_with_sents.paragraphs[0].sentences[0]
+        ) == (0, 0)
+
+        # Unique IDs survive serialization round-trips, so positions resolve
+        # across original/deserialized document boundaries, in both directions
+        deserialized_document = Document.from_dict(document.to_dict())
+        for idx in (0, 1, 3):
+            assert (
+                deserialized_document.get_paragraph_index(document.paragraphs[idx])
+                == idx
+            )
+            assert (
+                document.get_paragraph_index(deserialized_document.paragraphs[idx])
+                == idx
+            )
+        assert deserialized_document.get_sentence_index(
+            document.paragraphs[4].sentences[0]
+        ) == (4, 0)
+        assert document.get_sentence_index(
+            deserialized_document.paragraphs[2].sentences[0]
+        ) == (2, 0)
+        # Deserialized document's own objects resolve within itself
+        for idx, paragraph in enumerate(deserialized_document.paragraphs):
+            assert deserialized_document.get_paragraph_index(paragraph) == idx
+
+        # Performing lookups (which build internal position caches) must not
+        # affect document equality, serialization, or cloning
+        assert Document.from_dict(document.to_dict()) == document
+        assert Document.from_dict(document_with_sents.to_dict()) == document_with_sents
+        self.check_instance_serialization_and_cloning(document)
+
+        check_locals_memory_usage(
+            locals(), test_name="test_get_paragraph_and_sentence_index"
+        )
+
+    @memory_profile_and_capture
     def test_init_message(self):
         """
         Tests for constructing a _Message instance and validating its content schema.
@@ -4304,6 +4499,19 @@ class TestAll(TestUtils):
         assert content_topics_item.justification
         assert content_topics_item.reference_sentences
 
+        # Verify that extraction references resolve to positions in the document,
+        # in document order
+        ref_para_indices = [
+            document.get_paragraph_index(p)
+            for p in document_type_item.reference_paragraphs
+        ]
+        assert ref_para_indices == sorted(ref_para_indices)
+        ref_sent_positions = [
+            document.get_sentence_index(s)
+            for s in content_topics_item.reference_sentences
+        ]
+        assert ref_sent_positions == sorted(ref_sent_positions)
+
         # Log extracted items for verification
         self.log_extracted_items_for_instance(extracted_document_type)
         self.log_extracted_items_for_instance(extracted_content_topics)
@@ -5328,6 +5536,26 @@ class TestAll(TestUtils):
             assigned_instance_class=_Concept,
             compare_sequential_1_item_in_call=False,
         )
+
+        # Aspect-scoped concept references resolve to positions in the document,
+        # in document order (the LLM sees only the aspect's reference paragraphs
+        # as context for this extraction path)
+        for concept_name in ("Information in all forms", "Software code"):
+            concept_with_refs = attached_aspect.get_concept_by_name(concept_name)
+            assert concept_with_refs.extracted_items
+            for extracted_item in concept_with_refs.extracted_items:
+                assert extracted_item.reference_paragraphs
+                item_ref_para_indices = [
+                    self.document.get_paragraph_index(p)
+                    for p in extracted_item.reference_paragraphs
+                ]
+                assert item_ref_para_indices == sorted(item_ref_para_indices)
+                assert extracted_item.reference_sentences
+                item_ref_sent_positions = [
+                    self.document.get_sentence_index(s)
+                    for s in extracted_item.reference_sentences
+                ]
+                assert item_ref_sent_positions == sorted(item_ref_sent_positions)
 
         # No concepts defined for aspect. Logger warning and empty list returned.
         aspects_without_concepts = [
@@ -8394,6 +8622,12 @@ class TestAll(TestUtils):
         extracted_aspects = llm_group.extract_aspects_from_document(doc)
         assert extracted_aspects[0].extracted_items
         assert extracted_aspects[0].extracted_items[0].reference_paragraphs
+        # Aspect references resolve to positions in the document, in document order
+        aspect_ref_para_indices = [
+            doc.get_paragraph_index(p)
+            for p in extracted_aspects[0].reference_paragraphs
+        ]
+        assert aspect_ref_para_indices == sorted(aspect_ref_para_indices)
         # Check the paragraphs' texts for markdown content
         check_markdown_in_prompt(prompt_kwargs_key="paragraphs", expect_newlines=False)
 
@@ -8408,6 +8642,11 @@ class TestAll(TestUtils):
         extracted_aspects = llm_group.extract_aspects_from_document(doc)
         assert extracted_aspects[0].extracted_items
         assert extracted_aspects[0].extracted_items[0].reference_sentences
+        # Aspect references resolve to positions in the document, in document order
+        aspect_ref_sent_positions = [
+            doc.get_sentence_index(s) for s in extracted_aspects[0].reference_sentences
+        ]
+        assert aspect_ref_sent_positions == sorted(aspect_ref_sent_positions)
         # Check the paragraphs' texts for markdown content
         # Markdown does not apply to sentences that are passed to the aspects
         # extraction prompt when reference_depth="sentences"

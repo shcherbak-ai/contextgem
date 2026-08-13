@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.27.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.27.0) - 2026-08-13
+
+### Added
+
+- Added `Document.get_paragraph_index()` and `Document.get_sentence_index()` for locating paragraph and sentence objects within a document. Lookups are keyed by unique ID rather than text equality, so paragraphs/sentences with identical text (e.g. duplicate clauses in a contract) resolve to their specific occurrences. This makes the methods suitable for locating `reference_paragraphs`/`reference_sentences` returned during extraction, including after serialization round-trips, which preserve unique IDs. Lookups are O(1) on average via lazily built internal caches that are validated against the live document state and do not affect document equality, serialization, or cloning.
+
+### Changed
+
+- Upgraded pinned dependency versions: `litellm==1.96.2`, `openai==2.54.0`, `genai-prices==0.1.2`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
+
 ## [0.26.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.26.0) - 2026-07-28
 
 ### Added

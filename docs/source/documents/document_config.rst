@@ -93,3 +93,43 @@ For detailed guidance on creating and configuring these components, see:
 
 - :doc:`../aspects/aspects` - Complete guide to defining and using aspects
 - :doc:`../concepts/supported_concepts` - All available concept types and how to use them
+
+
+.. _locating-paras-and-sents:
+
+📍 Locating Paragraphs and Sentences
+--------------------------------------
+
+Extraction results reference the document's own :class:`~contextgem.public.paragraphs.Paragraph` and :class:`~contextgem.public.sentences.Sentence` objects (see e.g. :doc:`../aspects/aspects` for details on references). To find the position of such an object in the document, use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`:
+
+.. code-block:: python
+
+   # 0-based position of a paragraph in document.paragraphs
+   para_index = document.get_paragraph_index(paragraph)
+
+   # (paragraph_index, sentence_index) position of a sentence,
+   # where sentence_index is 0-based within the paragraph's sentences
+   para_index, sent_index = document.get_sentence_index(sentence)
+
+Lookups are keyed by each object's unique ID rather than text equality, so paragraphs or sentences with identical text (e.g. duplicate clauses in a contract) resolve to their specific occurrences. Unique IDs are preserved by serialization, so lookups also work across ``to_dict()``/``from_dict()`` round-trips.
+
+This makes the methods suitable for working with extraction references, e.g. citing where in the document extracted information was found, ordering references combined from multiple extracted items, or retrieving surrounding context:
+
+.. code-block:: python
+
+   # Human-readable citation for a reference paragraph
+   ref_para = concept.extracted_items[0].reference_paragraphs[0]
+   citation = f"Found in paragraph {document.get_paragraph_index(ref_para) + 1}"
+
+   # Order references combined from multiple extracted items
+   # (references within a single extracted item are already in document order)
+   combined_refs = [
+       para
+       for item in concept.extracted_items
+       for para in item.reference_paragraphs
+   ]
+   ordered_refs = sorted(combined_refs, key=document.get_paragraph_index)
+
+   # Surrounding context of a reference paragraph
+   ref_index = document.get_paragraph_index(ref_para)
+   context_window = document.paragraphs[max(0, ref_index - 2) : ref_index + 3]

@@ -213,6 +213,9 @@ When a :class:`~contextgem.public.concepts.LabelConcept` is extracted, it is pop
      - list[:class:`~contextgem.public.sentences.Sentence`]
      - List of sentence objects that informed the classification (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
+.. note::
+   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+
 
 💡 Best Practices
 -------------------

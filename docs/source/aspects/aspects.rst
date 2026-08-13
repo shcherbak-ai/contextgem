@@ -215,12 +215,14 @@ Example:
    References are always included for aspects. The ``reference_paragraphs`` field is automatically populated in extracted items of aspects, as they represent existing text segments in the document. The ``reference_sentences`` field is only populated when ``reference_depth`` is set to ``"sentences"``. You can access these references as follows:
    
    .. code-block:: python
-   
+
       # Always available for aspects
       aspect.extracted_items[0].reference_paragraphs
-      
+
       # Only populated if reference_depth="sentences"
       aspect.extracted_items[0].reference_sentences
+
+   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID rather than text equality, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
 
 
 💡 Best Practices

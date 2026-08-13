@@ -41,6 +41,7 @@ from aiolimiter import AsyncLimiter
 from dotenv import load_dotenv
 
 from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.base.documents import _POSITION_CACHE_KEYS
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.data_models import (
     _LLMCost,
@@ -246,6 +247,26 @@ def get_test_img(
     return create_image(test_img_path)
 
 
+def model_dict_without_position_caches(instance: _InstanceBase) -> dict:
+    """
+    Returns the instance's raw ``__dict__`` with document position lookup cache
+    entries excluded.
+
+    The position caches are derived state stored as plain instance-dict entries
+    (not model fields or private attributes): pydantic model equality ignores
+    them, ``to_dict()`` never serializes them, and they may or may not be
+    present depending on whether position lookups have been performed. They are
+    therefore excluded from raw ``__dict__`` comparisons, which assert that all
+    *model* state survives serialization round-trips and cloning.
+
+    :param instance: The instance whose ``__dict__`` to filter.
+    :type instance: _InstanceBase
+    :return: The instance's ``__dict__`` without position cache entries.
+    :rtype: dict
+    """
+    return {k: v for k, v in instance.__dict__.items() if k not in _POSITION_CACHE_KEYS}
+
+
 def remove_file(filepath):
     """
     Removes a file from the filesystem if it exists.
@@ -299,7 +320,9 @@ class TestUtils:
         # To / from dict
         instance_dict = instance.to_dict()
         new_instance = instance.__class__.from_dict(instance_dict)
-        assert new_instance.__dict__ == instance.__dict__
+        assert model_dict_without_position_caches(
+            new_instance
+        ) == model_dict_without_position_caches(instance)
         assert new_instance == instance
         for attr_name in attrs_to_recheck:
             if (
@@ -311,7 +334,9 @@ class TestUtils:
         # To / from json
         instance_json = instance.to_json()
         new_instance = instance.__class__.from_json(instance_json)
-        assert new_instance.__dict__ == instance.__dict__
+        assert model_dict_without_position_caches(
+            new_instance
+        ) == model_dict_without_position_caches(instance)
         assert new_instance == instance
         for attr_name in attrs_to_recheck:
             if (
@@ -326,7 +351,9 @@ class TestUtils:
         )
         instance.to_disk(disk_path)
         new_instance = instance.__class__.from_disk(disk_path)
-        assert new_instance.__dict__ == instance.__dict__
+        assert model_dict_without_position_caches(
+            new_instance
+        ) == model_dict_without_position_caches(instance)
         assert new_instance == instance
         for attr_name in attrs_to_recheck:
             if (
@@ -338,7 +365,9 @@ class TestUtils:
 
         # Cloning
         instance_clone = instance.clone()
-        assert instance_clone.__dict__ == instance.__dict__
+        assert model_dict_without_position_caches(
+            instance_clone
+        ) == model_dict_without_position_caches(instance)
         assert instance_clone == instance
         for attr_name in attrs_to_recheck:
             if (

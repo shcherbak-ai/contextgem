@@ -48,6 +48,9 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 * ``from_dict(dict_object)`` - Creates an object from a Python dictionary
 * ``from_disk(file_path)`` - Loads an object from a file on disk
 
+.. note::
+   Deserialization reconstructs the full state of the original object: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality.
+
 📝 Example Usage
 -----------------
 

@@ -62,6 +62,17 @@ from contextgem.internal.utils import (
 )
 
 
+# Instance-dict keys for the lazily built paragraph/sentence position lookup caches.
+# Deliberately stored as plain instance-dict entries rather than model fields or
+# private attributes: pydantic ignores non-field `__dict__` entries in model
+# equality (see pydantic GH-7444), and `to_dict()` serializes only fields and
+# allowlisted private attributes, so the caches never affect document equality,
+# serialization, or cloning.
+_PARA_POS_CACHE_KEY = "_para_index_map"
+_SENT_POS_CACHE_KEY = "_sent_index_map"
+_POSITION_CACHE_KEYS = (_PARA_POS_CACHE_KEY, _SENT_POS_CACHE_KEY)
+
+
 @_disable_direct_initialization
 class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
     """
@@ -154,6 +165,122 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         :rtype: list[_Sentence]
         """
         return list(itertools.chain.from_iterable(i.sentences for i in self.paragraphs))
+
+    def get_paragraph_index(self, paragraph: _Paragraph) -> int:
+        """
+        Returns the 0-based position of a paragraph in the document's ``paragraphs`` list.
+
+        Lookup is keyed by the paragraph's unique ID rather than text equality, so
+        paragraphs with identical text (e.g. duplicate clauses in a contract) resolve
+        to their specific occurrences. This makes the method suitable for locating
+        reference paragraphs (``reference_paragraphs``) returned during extraction.
+        Unique IDs are preserved by serialization, so lookups also work across
+        ``to_dict()``/``from_dict()`` round-trips.
+
+        Lookups are O(1) on average via a lazily built cache. The cache is an
+        internal implementation detail: it is validated against the live
+        document state on each hit, rebuilt when stale, and does not affect
+        document equality, serialization, or cloning.
+
+        :param paragraph: The paragraph to locate. Must be a paragraph object that
+            belongs to this document, e.g. accessed via ``document.paragraphs`` or
+            extraction references.
+        :type paragraph: _Paragraph
+        :return: 0-based index of the paragraph in ``document.paragraphs``.
+        :rtype: int
+        :raises ValueError: If the paragraph is not found in the document's paragraphs.
+        """
+        uid = paragraph.unique_id
+        index_map: dict[str, int] | None = self.__dict__.get(_PARA_POS_CACHE_KEY)
+        idx = index_map.get(uid) if index_map is not None else None
+        # Verify the cached entry against the live list, so that lookups never
+        # return stale positions (e.g. after unsupported in-place list mutations)
+        if idx is not None and not (
+            idx < len(self.paragraphs) and self.paragraphs[idx].unique_id == uid
+        ):
+            idx = None
+        if idx is None:
+            # Lazily (re)build the cache, e.g. on first use, after paragraphs
+            # have been populated, or when a cached entry went stale
+            index_map = {p.unique_id: i for i, p in enumerate(self.paragraphs)}
+            self.__dict__[_PARA_POS_CACHE_KEY] = index_map
+            idx = index_map.get(uid)
+        if idx is None:
+            raise ValueError(
+                "Paragraph was not found in the document's paragraphs. "
+                "Position lookup requires a paragraph object that belongs to this "
+                "document, e.g. one accessed via `document.paragraphs` or "
+                "extraction references."
+            )
+        return idx
+
+    def get_sentence_index(self, sentence: _Sentence) -> tuple[int, int]:
+        """
+        Returns the position of a sentence in the document as a
+        ``(paragraph_index, sentence_index)`` tuple, where ``paragraph_index`` is
+        the 0-based position of the sentence's paragraph in ``document.paragraphs``
+        and ``sentence_index`` is the 0-based position of the sentence within that
+        paragraph's ``sentences`` list.
+
+        Lookup is keyed by the sentence's unique ID rather than text equality, so
+        sentences with identical text resolve to their specific occurrences. This
+        makes the method suitable for locating reference sentences
+        (``reference_sentences``) returned during extraction. Unique IDs are
+        preserved by serialization, so lookups also work across
+        ``to_dict()``/``from_dict()`` round-trips. The returned tuples sort in
+        document order.
+
+        Lookups are O(1) on average via a lazily built cache. The cache is an
+        internal implementation detail: it is validated against the live
+        document state on each hit, rebuilt when stale, and does not affect
+        document equality, serialization, or cloning.
+
+        :param sentence: The sentence to locate. Must be a sentence object that
+            belongs to this document's paragraphs, e.g. accessed via
+            ``paragraph.sentences`` or extraction references.
+        :type sentence: _Sentence
+        :return: ``(paragraph_index, sentence_index)`` position of the sentence.
+        :rtype: tuple[int, int]
+        :raises ValueError: If the sentence is not found in the document's paragraphs.
+        """
+        uid = sentence.unique_id
+        index_map: dict[str, tuple[int, int]] | None = self.__dict__.get(
+            _SENT_POS_CACHE_KEY
+        )
+        pos = index_map.get(uid) if index_map is not None else None
+        # Verify the cached entry against the live lists, so that lookups never
+        # return stale positions (e.g. after unsupported in-place list mutations)
+        if pos is not None:
+            para_idx, sent_idx = pos
+            if not (
+                para_idx < len(self.paragraphs)
+                and sent_idx < len(self.paragraphs[para_idx].sentences)
+                and self.paragraphs[para_idx].sentences[sent_idx].unique_id == uid
+            ):
+                pos = None
+        if pos is None:
+            # Lazily (re)build the cache, e.g. on first use, after sentences
+            # have been segmented, or when a cached entry went stale
+            index_map = {
+                s.unique_id: (para_idx, sent_idx)
+                for para_idx, p in enumerate(self.paragraphs)
+                for sent_idx, s in enumerate(p.sentences)
+            }
+            self.__dict__[_SENT_POS_CACHE_KEY] = index_map
+            pos = index_map.get(uid)
+        if pos is None:
+            hint = (
+                " Note that the document's paragraphs have no sentences segmented yet."
+                if not any(p.sentences for p in self.paragraphs)
+                else ""
+            )
+            raise ValueError(
+                "Sentence was not found in the document's paragraphs. "
+                "Position lookup requires a sentence object that belongs to this "
+                "document, e.g. one accessed via `paragraph.sentences` or "
+                f"extraction references.{hint}"
+            )
+        return pos
 
     @_timer_decorator(
         "Document initialization",
