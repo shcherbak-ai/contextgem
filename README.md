@@ -269,7 +269,7 @@ ContextGem leverages LLMs' long context windows to deliver superior extraction a
 
 ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://github.com/BerriAI/litellm) integration:
 
-- **Cloud LLMs**: OpenAI, Anthropic, Google, Azure OpenAI, xAI, and more
+- **Cloud LLMs**: OpenAI, Anthropic, Google, Azure OpenAI, xAI, OrcaRouter, and more
 - **Local LLMs**: Run models locally using providers like Ollama, LM Studio, etc.
 - **Model Architectures**: Works with both reasoning/CoT-capable (e.g. gpt-5) and non-reasoning models (e.g. gpt-4.1)
 - **Simple API**: Unified interface for all LLMs with easy provider switching

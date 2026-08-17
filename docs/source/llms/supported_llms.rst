@@ -40,6 +40,15 @@ You can initialize cloud-based LLMs by specifying the provider and model name in
    :language: python
    :caption: Using cloud LLM providers
 
+.. note::
+   **OrcaRouter**: Any model can be routed through the `OrcaRouter <https://www.orcarouter.ai>`_
+   AI gateway by prefixing the model id with ``orcarouter/``. For example,
+   ``orcarouter/auto`` uses OrcaRouter's automatic model routing, while
+   ``orcarouter/openai/gpt-5.5`` pins a specific model behind the gateway. When no
+   ``api_key`` is provided, the ``ORCAROUTER_API_KEY`` environment variable is used,
+   and the gateway endpoint defaults to ``https://api.orcarouter.ai/v1``. See
+   `docs.orcarouter.ai <https://docs.orcarouter.ai>`_ for the list of available models.
+
 
 💻 Local LLMs
 ---------------

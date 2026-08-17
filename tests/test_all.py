@@ -1117,6 +1117,51 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_local_llms_vision")
 
+    def test_orcarouter_provider_config(self):
+        """
+        Tests initialization of OrcaRouter gateway models: default API base,
+        API key resolution from the ORCAROUTER_API_KEY environment variable,
+        LiteLLM model translation, and capability detection. No LLM API calls.
+        """
+
+        saved_key = os.environ.get("ORCAROUTER_API_KEY")
+        try:
+            os.environ["ORCAROUTER_API_KEY"] = "sk-orca-test-key"
+            llm = DocumentLLM(model="orcarouter/auto")
+            assert llm.api_base == "https://api.orcarouter.ai/v1"
+            assert llm.api_key == "sk-orca-test-key"
+            # Bare model names are re-prefixed so the gateway can route them
+            assert llm._get_litellm_model() == "openai/orcarouter/auto"
+            # Unknown models default to conservative capabilities (no crash)
+            assert not llm._supports_vision
+        finally:
+            if saved_key is None:
+                os.environ.pop("ORCAROUTER_API_KEY", None)
+            else:
+                os.environ["ORCAROUTER_API_KEY"] = saved_key
+
+        # Explicit api_base/api_key are preserved
+        llm_custom = DocumentLLM(
+            model="orcarouter/auto",
+            api_base="https://custom.example/v1",
+            api_key="sk-orca-custom",
+        )
+        assert llm_custom.api_base == "https://custom.example/v1"
+        assert llm_custom._get_litellm_model() == "openai/orcarouter/auto"
+
+        # Pinned namespaced models keep their full id on the wire and inherit
+        # capability detection from the underlying model
+        llm_pinned = DocumentLLM(
+            model="orcarouter/openai/gpt-5.5", api_key="sk-orca-custom"
+        )
+        assert llm_pinned._get_litellm_model() == "openai/openai/gpt-5.5"
+        assert llm_pinned._supports_vision
+
+        # Non-OrcaRouter models are passed through unchanged
+        llm_plain = DocumentLLM(model="openai/gpt-4.1-mini", api_key="sk-test")
+        assert llm_plain._get_litellm_model() == "openai/gpt-4.1-mini"
+        assert llm_plain.api_base is None
+
     @pytest.mark.vcr
     @memory_profile_and_capture
     def test_llm_extraction_error_exception(self):

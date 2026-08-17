@@ -31,6 +31,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+import os
 import warnings
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
@@ -145,6 +146,12 @@ _LOCAL_MODEL_PROVIDERS = [
     "ollama_chat/",
     "lm_studio/",
 ]
+
+# OrcaRouter is an OpenAI-compatible AI gateway; models are addressed by their
+# namespaced id (e.g. "orcarouter/auto", "openai/gpt-5.5"). See
+# https://docs.orcarouter.ai for the list of available models.
+_ORCAROUTER_MODEL_PREFIX = "orcarouter/"
+_ORCAROUTER_API_BASE = "https://api.orcarouter.ai/v1"
 
 # Rounding precision for reporting LLM costs (quantize on access only)
 _COST_QUANT = Decimal("0.00001")
@@ -3292,6 +3299,14 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type __context: Any
         """
         logger.info(f"Using model {self.model}")
+
+        # OrcaRouter: apply gateway defaults before logging API configuration
+        if self.model.startswith(_ORCAROUTER_MODEL_PREFIX):
+            if self.api_base is None:
+                self.api_base = _ORCAROUTER_API_BASE
+            if self.api_key is None:
+                self.api_key = os.getenv("ORCAROUTER_API_KEY")
+
         if self.api_key is None:
             logger.info("API key was not provided. Set `api_key`, if applicable.")
         if self.api_base is None:
@@ -4168,7 +4183,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         context_exceeded = False
         try:
             # Get model information to check context window
-            model_info = litellm.get_model_info(self.model)  # type: ignore[attr-defined]
+            model_info = litellm.get_model_info(  # type: ignore[attr-defined]
+                self._get_litellm_model()
+            )
             max_input_tokens = model_info.get("max_input_tokens")
 
             # If max_input_tokens is not available, skip validation
@@ -4180,7 +4197,9 @@ class _DocumentLLM(_GenericLLMProcessor):
 
             # Count tokens in the messages
             try:
-                token_count = litellm.token_counter(model=self.model, messages=messages)  # type: ignore[attr-defined]
+                token_count = litellm.token_counter(  # type: ignore[attr-defined]
+                    model=self._get_litellm_model(), messages=messages
+                )
             except Exception as e:
                 logger.warning(
                     f"Could not count tokens for model `{self.model}`: {e}. Skipping input token validation."
@@ -4231,7 +4250,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         output_exceeded = False
         try:
             # Get model information to check output token limits
-            model_info = litellm.get_model_info(self.model)  # type: ignore[attr-defined]
+            model_info = litellm.get_model_info(  # type: ignore[attr-defined]
+                self._get_litellm_model()
+            )
             max_output_tokens = model_info.get("max_output_tokens")
 
             # If max_output_tokens is not available, fall back to max_tokens
@@ -4335,12 +4356,12 @@ class _DocumentLLM(_GenericLLMProcessor):
         """
 
         request_config: dict[str, Any] = {
-            "model": self.model,
+            "model": self._get_litellm_model(),
         }
 
         if self._supports_reasoning:
             model_params: list[str] | None = litellm.get_supported_openai_params(  # type: ignore[attr-defined]
-                self.model
+                self._get_litellm_model()
             )
             if model_params is not None:
                 if "max_completion_tokens" in model_params:
@@ -4884,6 +4905,27 @@ class _DocumentLLM(_GenericLLMProcessor):
             Template, _get_template("extract_concept_items")
         )
 
+    def _get_litellm_model(self) -> str:
+        """
+        Returns the model identifier as expected by LiteLLM.
+
+        OrcaRouter models (``orcarouter/...``) are translated to LiteLLM's
+        OpenAI-compatible syntax. LiteLLM strips the first ``openai/`` segment and
+        forwards the remainder to ``api_base``, so the full OrcaRouter model id
+        (e.g. ``orcarouter/auto`` or ``openai/gpt-5.5``) is preserved on the wire.
+        Bare model names (no ``/``) are re-prefixed with ``orcarouter/`` so the
+        gateway can resolve its routing channel.
+
+        :return: The LiteLLM-facing model identifier.
+        :rtype: str
+        """
+        if not self.model.startswith(_ORCAROUTER_MODEL_PREFIX):
+            return self.model
+        model_id = self.model.split("/", 1)[1]
+        if "/" not in model_id:
+            model_id = f"{_ORCAROUTER_MODEL_PREFIX}{model_id}"
+        return f"openai/{model_id}"
+
     def _set_capabilities(self) -> None:
         """
         Sets the capabilities of the LLM based on litellm.supports_*()
@@ -4892,11 +4934,12 @@ class _DocumentLLM(_GenericLLMProcessor):
         :return: None
         :rtype: None
         """
-        self._supports_vision = litellm.supports_vision(self.model)  # type: ignore[attr-defined]
-        self._supports_reasoning = litellm.supports_reasoning(self.model)  # type: ignore[attr-defined]
-        self._supports_tools = litellm.supports_function_calling(self.model)  # type: ignore[attr-defined]
+        model = self._get_litellm_model()
+        self._supports_vision = litellm.supports_vision(model)  # type: ignore[attr-defined]
+        self._supports_reasoning = litellm.supports_reasoning(model)  # type: ignore[attr-defined]
+        self._supports_tools = litellm.supports_function_calling(model)  # type: ignore[attr-defined]
         self._supports_parallel_tool_calls = litellm.supports_parallel_function_calling(  # type: ignore[attr-defined]
-            self.model
+            model
         )
 
     def _set_system_message(self) -> None:

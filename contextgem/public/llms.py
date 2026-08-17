@@ -78,6 +78,8 @@ class DocumentLLM(_DocumentLLM):
 
     :ivar model: Model identifier in format {model_provider}/{model_name}.
         See https://docs.litellm.ai/docs/providers for supported providers.
+        OrcaRouter gateway models use the ``orcarouter/`` prefix (e.g.
+        ``orcarouter/auto``); see https://docs.orcarouter.ai for available models.
     :vartype model: str
     :ivar deployment_id: Deployment ID for the LLM. Primarily used with Azure OpenAI.
     :vartype deployment_id: str | None
