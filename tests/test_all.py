@@ -6827,6 +6827,93 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_llm_api_request_retries")
 
+    @memory_profile_and_capture
+    def test_async_limiter_per_llm(self):
+        """
+        Tests that, with concurrency enabled, the requests to each LLM, including
+        each fallback LLM, are paced by the async limiter of that LLM.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-4o-mini"
+        fallback_model = "openai/gpt-4o"
+
+        llm = DocumentLLM(
+            model=primary_model,
+            api_key="test_api_key",
+            fallback_llms=[
+                DocumentLLM(
+                    model=fallback_model, api_key="test_api_key", is_fallback=True
+                )
+            ],
+        )
+        llm.async_limiter = AsyncLimiter(10, 5)
+        llm.fallback_llms[0].async_limiter = AsyncLimiter(20, 5)
+
+        acquisitions: list[tuple[float, float]] = []
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the config of the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+                """
+                acquisitions.append((self.max_rate, self.time_period))
+                await super().acquire(amount)
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: requests to the primary LLM fail,
+            requests to the fallback LLM succeed.
+            """
+            if kwargs["model"] == primary_model:
+                raise litellm.AuthenticationError(
+                    message="Simulated API error",
+                    llm_provider="openai",
+                    model=primary_model,
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(
+                            content='[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+                        )
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        document = Document(
+            raw_text="Non-disclosure agreement\n\nThe parties agree as follows."
+        )
+        document.concepts = [
+            StringConcept(name="Title", description="Contract title"),
+            StringConcept(name="Parties", description="Contract parties"),
+        ]
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(llms_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+        ):
+            # With concurrency, each concept is processed in a separate request:
+            # first to the primary LLM, then to the fallback LLM
+            llm.extract_concepts_from_document(document, use_concurrency=True)
+            assert sorted(acquisitions) == [(10, 5)] * 2 + [(20, 5)] * 2
+            assert all(i.extracted_items for i in document.concepts)
+
+            # Without concurrency, requests are sent one by one, with no limiter
+            acquisitions.clear()
+            llm.extract_concepts_from_document(document, overwrite_existing=True)
+            assert acquisitions == []
+            assert all(i.extracted_items for i in document.concepts)
+
+        check_locals_memory_usage(locals(), test_name="test_async_limiter_per_llm")
+
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",

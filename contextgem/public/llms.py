@@ -154,6 +154,7 @@ class DocumentLLM(_DocumentLLM):
     :vartype output_language: LanguageRequirement
     :ivar async_limiter: Controls frequency of async LLM API requests for concurrent tasks.
         Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues.
+        Requests to a fallback LLM are controlled by the limiter of that fallback LLM.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
     :ivar seed: Seed for random number generation to help produce more consistent outputs

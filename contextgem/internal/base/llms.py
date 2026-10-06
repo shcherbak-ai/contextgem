@@ -2293,16 +2293,21 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         :return: None
         """
 
-        # If concurrency is enabled, recreate the async limiter as a new instance
-        # for the current event loop, presuming that we do not have intersecting
-        # event loops, i.e. all event loops in the framework are run sequentially.
-        async_limiter = (
-            AsyncLimiter(
-                max_rate=llm.async_limiter.max_rate,
-                time_period=llm.async_limiter.time_period,
-            )
+        # If concurrency is enabled, recreate the async limiter of the LLM, as well as
+        # of each of its fallback LLMs, as a new instance for the current event loop,
+        # presuming that we do not have intersecting event loops, i.e. all event loops
+        # in the framework are run sequentially. The limiters are keyed by the ID of
+        # the LLM instance, so that the requests to each LLM are paced by its own limiter.
+        async_limiters: dict[int, AsyncLimiter] = (
+            {
+                id(llm_instance): AsyncLimiter(
+                    max_rate=llm_instance.async_limiter.max_rate,
+                    time_period=llm_instance.async_limiter.time_period,
+                )
+                for llm_instance in [llm, *llm.fallback_llms]
+            }
             if use_concurrency
-            else None
+            else {}
         )
 
         async def run_extraction(
@@ -2396,7 +2401,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             max_images_to_analyze_per_call=max_images_to_analyze_per_call,
                             num_retries_failed_request=llm_instance.num_retries_failed_request,
                             max_retries_failed_request=llm_instance.max_retries_failed_request,
-                            async_limiter=async_limiter,
+                            async_limiter=async_limiters.get(id(llm_instance)),
                             raise_exception_on_extraction_error=raise_exception_on_extraction_error,
                             has_fallback_pending=not retry_is_final,
                         )
@@ -2516,7 +2521,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
                 "num_retries_failed_request": llm.num_retries_failed_request,
                 "max_retries_failed_request": llm.max_retries_failed_request,
-                "async_limiter": async_limiter,
+                "async_limiter": async_limiters.get(id(llm)),
                 "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
                 "has_fallback_pending": bool(llm.fallback_llms),
             }

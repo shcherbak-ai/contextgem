@@ -178,7 +178,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``async_limiter``
      - ``AsyncLimiter``
      - ``AsyncLimiter(3, 10)``
-     - Relevant when concurrency is enabled for extraction tasks. Controls frequency of async LLM API requests for concurrent tasks. Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues. See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details. See :doc:`../optimizations/optimization_speed` for an example of how to easily set up concurrency for extraction.
+     - Relevant when concurrency is enabled for extraction tasks. Controls frequency of async LLM API requests for concurrent tasks. Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues. Requests to a fallback LLM are controlled by the ``async_limiter`` of that fallback LLM. See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details. See :doc:`../optimizations/optimization_speed` for an example of how to easily set up concurrency for extraction.
 
 .. warning::
    **Auto-pricing accuracy**

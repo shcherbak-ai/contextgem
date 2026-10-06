@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fallback LLMs now apply their own `num_retries_failed_request` and `max_retries_failed_request` during extraction. Previously, these were ignored for fallback LLMs, and the last fallback LLM failed the extraction on its first API error, e.g. a single rate limit error.
 - A request that failed with an API error is no longer sent to the same LLM again during extraction. Previously, when a fallback LLM was configured or `raise_exception_on_extraction_error=False` was passed, such a request was repeated up to `max_retries_invalid_data` times without a delay, e.g. right after a rate limit error. `max_retries_invalid_data` now applies only when the LLM returns invalid data.
 - With concurrency enabled, an API error that fails the extraction is now raised as `LLMAPIError` right away. Previously, the failed request was sent again first, and the error was raised as `LLMExtractionError` if `max_retries_invalid_data=0` was set.
+- With concurrency enabled, requests to a fallback LLM are now paced by the `async_limiter` of that fallback LLM. Previously, the `async_limiter` set on a fallback LLM had no effect: requests to the fallback LLM shared the limiter of the primary LLM.
 
 ### Deprecated
 
