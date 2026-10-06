@@ -854,7 +854,7 @@ class TestUtils:
         """
         Configures an asynchronous rate limiter for mock responses within a specified
         DocumentLLM instance or DocumentLLMGroup. The limiter is applied to the primary model
-        and its fallback model, if applicable.
+        and its fallback models, if applicable.
 
         :param llm: A DocumentLLM or DocumentLLMGroup instance, representing the LLM
             models to configure.
@@ -869,14 +869,14 @@ class TestUtils:
 
             def set_new_limiter(model):
                 """
-                Helper function to set the async limiter on a model and its fallback.
+                Helper function to set the async limiter on a model and its fallbacks.
 
                 :param model: The DocumentLLM model to configure.
                 :type model: DocumentLLM
                 """
                 model.async_limiter = limiter
-                if model.fallback_llm:
-                    model.fallback_llm.async_limiter = limiter
+                for fallback_llm in model.fallback_llms:
+                    fallback_llm.async_limiter = limiter
 
             if isinstance(llm, DocumentLLMGroup):
                 for model in llm.llms:

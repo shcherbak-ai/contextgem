@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [0.28.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.28.0) - 2026-10-05
+
+### Added
+
+- Added the `fallback_llms` parameter to `DocumentLLM`, which accepts a list of fallback LLMs instead of a single one. Fallback LLMs are tried in the given order until one of them succeeds, for both extraction and chat, e.g. to fall back across several providers during an outage. Each fallback LLM must have `is_fallback=True` and the same role, output language, and tool configuration as the primary LLM, must differ in configuration from the primary LLM and from the other fallback LLMs, and cannot have fallback LLMs of its own. Usage and cost are tracked for the primary LLM and each of its fallback LLMs.
+
+### Changed
+
+- Serialized `DocumentLLM` data now stores fallback LLMs under the `fallback_llms` key. Data serialized by earlier versions (with a single `fallback_llm`) is still deserialized correctly.
+
+### Deprecated
+
+- The `fallback_llm` parameter and attribute of `DocumentLLM` are deprecated and will be removed in v1.0.0. Use `fallback_llms` instead, e.g. `fallback_llms=[fallback_llm]`. Until removal, `fallback_llm` keeps working with a `DeprecationWarning`: setting it replaces `fallback_llms` with that single LLM, and reading it returns the first fallback LLM, if any.
+
 ## [0.27.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.27.0) - 2026-08-13
 
 ### Added

@@ -13,14 +13,14 @@ main_model = DocumentLLM(
     system_message="",  # disable default system message for chat, or provide your own
 )
 
-# Optional: configure fallback LLM for reliability
+# Optional: configure fallback LLM(s) for reliability
 fallback_model = DocumentLLM(
     model="openai/gpt-4o-mini",  # or another provider/model
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),  # your API key for the LLM provider
     is_fallback=True,
     system_message="",  # also disable default system message for fallback, or provide your own
 )
-main_model.fallback_llm = fallback_model
+main_model.fallback_llms = [fallback_model]  # tried in the given order
 
 
 # Preserve conversation history across turns with a ChatSession

@@ -8,16 +8,24 @@ primary_llm = DocumentLLM(
     role="extractor_text",  # default role
 )
 
-# Fallback LLM
-fallback_llm = DocumentLLM(
+# First fallback LLM
+fallback_llm_1 = DocumentLLM(
     model="anthropic/claude-3-5-haiku",
     api_key="<your-anthropic-api-key>",
     role="extractor_text",  # Must match the primary LLM's role
     is_fallback=True,
 )
 
-# Assign fallback LLM to primary
-primary_llm.fallback_llm = fallback_llm
+# Second fallback LLM (optional)
+fallback_llm_2 = DocumentLLM(
+    model="gemini/gemini-2.0-flash",
+    api_key="<your-gemini-api-key>",
+    role="extractor_text",  # Must match the primary LLM's role
+    is_fallback=True,
+)
+
+# Assign fallback LLMs to primary, in the order they should be tried
+primary_llm.fallback_llms = [fallback_llm_1, fallback_llm_2]
 
 # Then use the primary LLM as usual
 # document = primary_llm.extract_all(document)

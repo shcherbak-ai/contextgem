@@ -135,8 +135,13 @@ class DocumentLLM(_DocumentLLM):
     :vartype auto_pricing_refresh: bool
     :ivar is_fallback: Indicates whether the LLM is a fallback model. Defaults to False.
     :vartype is_fallback: bool
-    :ivar fallback_llm: DocumentLLM to use as fallback if current one fails.
-        Must have the same role as the current LLM. Defaults to None.
+    :ivar fallback_llms: DocumentLLMs to use as fallbacks if the current one fails, tried
+        in the given order until one of them succeeds. Each must have ``is_fallback=True``
+        and the same role as the current LLM. Defaults to an empty list.
+    :vartype fallback_llms: list[DocumentLLM]
+    :ivar fallback_llm: [DEPRECATED] Use ``fallback_llms`` instead. Will be removed in v1.0.0.
+        A single DocumentLLM to use as fallback if the current one fails; setting it replaces
+        ``fallback_llms`` with that single LLM, and reading it returns the first fallback LLM.
     :vartype fallback_llm: DocumentLLM | None
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".

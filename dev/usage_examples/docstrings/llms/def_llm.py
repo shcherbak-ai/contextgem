@@ -24,4 +24,5 @@ fallback_text_extractor = DocumentLLM(
     # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
 )
 # Assign the fallback LLM to the primary LLM
-text_extractor.fallback_llm = fallback_text_extractor
+# (several fallback LLMs can be assigned, to be tried in the given order)
+text_extractor.fallback_llms = [fallback_text_extractor]

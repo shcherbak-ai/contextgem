@@ -135,10 +135,14 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``bool``
      - ``False``
      - Indicates whether the LLM is a fallback model. Fallback LLMs are optionally assigned to the primary LLM instance and are used when the primary LLM fails.
+   * - ``fallback_llms``
+     - ``list[DocumentLLM]``
+     - ``[]``
+     - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role as the primary LLM.
    * - ``fallback_llm``
      - ``DocumentLLM | None``
      - ``None``
-     - :class:`~contextgem.public.llms.DocumentLLM` to use as fallback if current one fails. Must have the same role as the primary LLM.
+     - **Deprecated since v0.28.0**, will be removed in v1.0.0. Use ``fallback_llms`` instead. A single :class:`~contextgem.public.llms.DocumentLLM` to use as fallback if current one fails.
    * - ``output_language``
      - ``str``
      - ``"en"``
@@ -184,14 +188,22 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
 💡 Advanced Configuration Examples
 ------------------------------------
 
-🔄 Configuring a Fallback LLM
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+🔄 Configuring Fallback LLMs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can set up a fallback LLM that will be used if the primary LLM fails:
+You can set up one or more fallback LLMs that will be used if the primary LLM fails. Fallback LLMs are tried in the order they are listed in ``fallback_llms``, until one of them succeeds:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/fallback_llm.py
    :language: python
-   :caption: Configuring a fallback LLM
+   :caption: Configuring fallback LLMs
+
+Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
+
+.. note::
+   Each LLM applies its own retry settings and timeout before the next fallback LLM is tried, so the more fallback LLMs you configure, the longer a request can take to fail when all of the LLMs are unavailable.
+
+.. warning::
+   **Deprecated since v0.28.0.** The ``fallback_llm`` parameter, which accepts a single fallback LLM, will be removed in v1.0.0. Use ``fallback_llms`` instead, e.g. ``fallback_llms=[fallback_llm]``.
 
 
 💰 Setting Up Cost Tracking

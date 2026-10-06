@@ -63,7 +63,10 @@ KEY_SENTENCES_PUBLIC = "sentences"
 # LLM attrs
 KEY_API_KEY_PUBLIC = "api_key"  # always redacted
 KEY_API_BASE_PUBLIC = "api_base"  # always redacted
-KEY_LLM_FALLBACK_PUBLIC = "fallback_llm"
+KEY_LLM_FALLBACKS_PUBLIC = "fallback_llms"
+# Deprecated single fallback LLM, superseded by `fallback_llms`. No longer serialized;
+# read only to restore LLMs serialized before v0.28.0.
+KEY_LLM_FALLBACK_LEGACY_PUBLIC = "fallback_llm"
 KEY_LLM_PRICING_PUBLIC = "pricing_details"
 KEY_LLMS_PUBLIC = "llms"
 
@@ -151,6 +154,7 @@ class _InstanceSerializer(BaseModel):
                 KEY_PARAGRAPHS_PUBLIC,
                 KEY_SENTENCES_PUBLIC,
                 KEY_LLMS_PUBLIC,
+                KEY_LLM_FALLBACKS_PUBLIC,
             ]:
                 base_dict[key] = [i.to_dict() for i in val]
 
@@ -168,7 +172,7 @@ class _InstanceSerializer(BaseModel):
                     # It's a tuple, convert to list for JSON serialization
                     base_dict[key] = list(val)
 
-            elif key in [KEY_LLM_FALLBACK_PUBLIC, KEY_LLM_PRICING_PUBLIC]:
+            elif key == KEY_LLM_PRICING_PUBLIC:
                 # Serialize only when provided
                 base_dict[key] = val.to_dict() if val is not None else val
 
@@ -383,7 +387,6 @@ class _InstanceSerializer(BaseModel):
         """
 
         from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
-        from contextgem.internal.base.llms import _DocumentLLM
         from contextgem.internal.data_models import _LLMUsage
 
         # Create a copy of the object dict due to further modification
@@ -393,6 +396,12 @@ class _InstanceSerializer(BaseModel):
         del obj_dict[KEY_CLASS_PRIVATE]
         if object_class_name != cls.__name__:
             raise TypeError(f"Class {object_class_name} does not match {cls.__name__}")
+
+        # Migrate the deprecated single fallback LLM to the list of fallback LLMs
+        if KEY_LLM_FALLBACK_LEGACY_PUBLIC in obj_dict:
+            legacy_fallback_llm = obj_dict.pop(KEY_LLM_FALLBACK_LEGACY_PUBLIC)
+            if legacy_fallback_llm is not None:
+                obj_dict[KEY_LLM_FALLBACKS_PUBLIC] = [legacy_fallback_llm]
 
         def reconstruct_entity_from_dict(
             entity_d: dict[str, Any],
@@ -493,11 +502,7 @@ class _InstanceSerializer(BaseModel):
                 if val is not None
                 else val
             ),
-            KEY_LLM_FALLBACK_PUBLIC: lambda val: (
-                _resolve_public_type(_DocumentLLM).from_dict(val)
-                if val is not None
-                else val
-            ),
+            KEY_LLM_FALLBACKS_PUBLIC: lambda_list_val(),
             KEY_LLMS_PUBLIC: lambda_list_val(),
             # Private attrs
             KEY_EXTRACTED_ITEMS_PRIVATE: lambda_list_val(),

@@ -390,10 +390,12 @@ class TestAll(TestUtils):
     }
     llm_invalid = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
     invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
-    invalid_llm_with_valid_fallback.fallback_llm = DocumentLLM(
-        **_llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
-        is_fallback=True,
-    )
+    invalid_llm_with_valid_fallback.fallback_llms = [
+        DocumentLLM(
+            **_llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
+            is_fallback=True,
+        )
+    ]
 
     # LLM with a non-EN output language setting
     llm_extractor_text_non_eng = DocumentLLM(
@@ -1184,6 +1186,7 @@ class TestAll(TestUtils):
             async_limiter: AsyncLimiter | None = None,
             drop_params: bool = False,
             raise_exception_on_llm_api_error: bool = True,
+            has_fallback_pending: bool = False,
         ):
             """
             Simulates a successful call that returns invalid JSON.
@@ -1502,19 +1505,23 @@ class TestAll(TestUtils):
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 role="extractor_text",
-                fallback_llm=self.llm_reasoner_vision,  # inconsistent role of the fallback LLM
+                fallback_llms=[
+                    self.llm_reasoner_vision
+                ],  # inconsistent role of the fallback LLM
             )
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 role="extractor_text",
-                fallback_llm=DocumentLLM(
-                    model="openai/gpt-4o-mini",
-                    api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                    role="extractor_text",
-                    is_fallback=True,
-                ),  # same params as the main LLM, except for `is_fallback` flag
+                fallback_llms=[
+                    DocumentLLM(
+                        model="openai/gpt-4o-mini",
+                        api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                        role="extractor_text",
+                        is_fallback=True,
+                    )
+                ],  # same params as the main LLM, except for `is_fallback` flag
             )
         with pytest.raises(ValueError):
             DocumentLLM(
@@ -1522,20 +1529,23 @@ class TestAll(TestUtils):
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 role="extractor_text",
                 is_fallback=True,
-                fallback_llm=self.llm_extractor_text,  # a fallback LLM is passed to fallback LLM
+                fallback_llms=[
+                    self.llm_extractor_text
+                ],  # a fallback LLM is passed to fallback LLM
             )
-        # Validate fallback LLM assignment
+        # Validate fallback LLMs assignment
         document_llm = DocumentLLM(
             model="openai/gpt-4o-mini",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert document_llm.is_group is False
+        assert document_llm.fallback_llms == []
         document_llm.is_fallback = True
         with pytest.raises(ValueError):
-            document_llm.fallback_llm = (
+            document_llm.fallback_llms = [
                 self.llm_extractor_text
-            )  # a fallback LLM is passed to fallback LLM
-        assert document_llm.fallback_llm is None  # No change due to invalid assignment
+            ]  # a fallback LLM is passed to fallback LLM
+        assert document_llm.fallback_llms == []  # No change due to invalid assignment
         document_llm.is_fallback = False
         with pytest.raises(ValueError):
             DocumentLLM(
@@ -1543,7 +1553,7 @@ class TestAll(TestUtils):
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 role="extractor_text",
                 is_fallback=False,
-                fallback_llm=document_llm,  # non-fallback LLM passed as a fallback
+                fallback_llms=[document_llm],  # non-fallback LLM passed as a fallback
             )
 
         with pytest.raises(ValueError):
@@ -1555,7 +1565,7 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="processor",  # invalid role
+                role="processor",  # ty: ignore[invalid-argument-type]  # invalid role
             )
         with pytest.raises(ValueError):
             DocumentLLM(
@@ -6256,6 +6266,280 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_extract_with_fallback")
 
+    @memory_profile_and_capture
+    def test_multiple_fallback_llms(self):
+        """
+        Tests for configuring multiple fallback LLMs, which are tried in the given
+        order, and for the deprecated single ``fallback_llm`` param.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        def create_llm(model: str, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with params that keep the stubbed calls deterministic.
+            """
+            return DocumentLLM(
+                model=model,
+                api_key="test_api_key",
+                system_message="",
+                max_retries_invalid_data=0,
+                **kwargs,
+            )
+
+        primary = create_llm("openai/gpt-4o-mini")
+        fallback_1 = create_llm("openai/gpt-4o", is_fallback=True)
+        fallback_2 = create_llm("openai/gpt-4.1-mini", is_fallback=True)
+        fallback_3 = create_llm("openai/gpt-4.1", is_fallback=True)
+        fallbacks = [fallback_1, fallback_2, fallback_3]
+
+        # === Config ===
+        assert primary.fallback_llms == []
+        primary.fallback_llms = fallbacks  # ty: ignore[invalid-assignment]
+        assert primary.fallback_llms == fallbacks
+        assert all(
+            assigned is original
+            for assigned, original in zip(primary.fallback_llms, fallbacks, strict=True)
+        )
+        assert (
+            create_llm("openai/gpt-4o-mini", fallback_llms=fallbacks).fallback_llms
+            == fallbacks
+        )
+
+        # Each fallback LLM is validated
+        with pytest.raises(ValueError, match="is_fallback=True"):
+            primary.fallback_llms = [fallback_1, create_llm("openai/gpt-4.1-nano")]
+        with pytest.raises(ValueError, match="same role"):
+            create_llm(
+                "openai/gpt-4o-mini",
+                fallback_llms=[
+                    fallback_1,
+                    create_llm(
+                        "openai/gpt-4.1-nano", role="reasoner_text", is_fallback=True
+                    ),
+                ],
+            )
+        with pytest.raises(ValueError, match="same output language"):
+            create_llm(
+                "openai/gpt-4o-mini",
+                fallback_llms=[
+                    fallback_1,
+                    create_llm(
+                        "openai/gpt-4.1-nano", output_language="adapt", is_fallback=True
+                    ),
+                ],
+            )
+        with pytest.raises(ValueError, match="same config params as the main LLM"):
+            create_llm(
+                "openai/gpt-4o-mini",
+                fallback_llms=[
+                    fallback_1,
+                    create_llm("openai/gpt-4o-mini", is_fallback=True),
+                ],
+            )
+        with pytest.raises(ValueError, match="same config params as each other"):
+            create_llm(
+                "openai/gpt-4o-mini",
+                fallback_llms=[
+                    fallback_1,
+                    create_llm("openai/gpt-4o", is_fallback=True),
+                ],
+            )
+        with pytest.raises(ValueError, match="same config params as each other"):
+            create_llm("openai/gpt-4o-mini", fallback_llms=[fallback_1, fallback_1])
+        with pytest.raises(ValueError, match="cannot have its own fallback LLMs"):
+            create_llm(
+                "openai/gpt-4.1-nano", is_fallback=True, fallback_llms=[fallback_1]
+            )
+
+        # Usage and cost are tracked for the primary LLM and each of its fallbacks,
+        # in the order they are tried
+        expected_models = [llm.model for llm in [primary, *fallbacks]]
+        assert [i.model for i in primary.get_usage()] == expected_models
+        assert [i.model for i in primary.get_cost()] == expected_models
+        assert [i.is_fallback for i in primary.get_usage()] == [False, True, True, True]
+
+        # Serialization
+        primary_dict = primary.to_dict()
+        assert "fallback_llm" not in primary_dict
+        assert len(primary_dict["fallback_llms"]) == len(fallbacks)
+        self._check_deserialized_llm_config_eq(primary)
+
+        # === Deprecated `fallback_llm` param (will be removed in v1.0.0) ===
+        def deprecation_warning_filenames(
+            warning_records: pytest.WarningsRecorder,
+        ) -> set[str]:
+            """
+            Returns the names of the files that the deprecation warnings point to.
+            """
+            return {
+                i.filename for i in warning_records if i.category is DeprecationWarning
+            }
+
+        # The warnings must point to the calling code, to be shown by default
+        with pytest.warns(DeprecationWarning, match="fallback_llms") as warning_records:
+            llm_deprecated = create_llm("openai/gpt-4o-mini", fallback_llm=fallback_1)
+        assert deprecation_warning_filenames(warning_records) == {__file__}
+        assert llm_deprecated.fallback_llms == [fallback_1]
+        with pytest.warns(DeprecationWarning, match="fallback_llms") as warning_records:
+            assert llm_deprecated.fallback_llm is fallback_1
+        assert deprecation_warning_filenames(warning_records) == {__file__}
+        with pytest.warns(DeprecationWarning, match="fallback_llms") as warning_records:
+            llm_deprecated.fallback_llm = fallback_2
+        assert deprecation_warning_filenames(warning_records) == {__file__}
+        assert llm_deprecated.fallback_llms == [fallback_2]
+        with (
+            pytest.warns(DeprecationWarning),
+            pytest.raises(ValueError, match="is_fallback=True"),
+        ):
+            llm_deprecated.fallback_llm = create_llm("openai/gpt-4.1-nano")
+        assert llm_deprecated.fallback_llms == [fallback_2]  # no change
+        with pytest.warns(DeprecationWarning):
+            llm_deprecated.fallback_llm = None
+        assert llm_deprecated.fallback_llms == []
+        with pytest.warns(DeprecationWarning):
+            assert llm_deprecated.fallback_llm is None
+        with pytest.warns(DeprecationWarning):
+            assert (
+                create_llm("openai/gpt-4o-mini", fallback_llm=None).fallback_llms == []
+            )
+        with (
+            pytest.warns(DeprecationWarning),
+            pytest.raises(ValueError, match="cannot be set together"),
+        ):
+            create_llm(
+                "openai/gpt-4o-mini",
+                fallback_llm=fallback_1,
+                fallback_llms=[fallback_2],
+            )
+
+        # LLMs serialized with the deprecated single `fallback_llm` are restored
+        # without a deprecation warning
+        legacy_llm_dict = create_llm(
+            "openai/gpt-4o-mini", fallback_llms=[fallback_1]
+        ).to_dict()
+        legacy_fallback_llm_dict = legacy_llm_dict.pop("fallback_llms")[0]
+        del legacy_fallback_llm_dict["fallback_llms"]
+        legacy_fallback_llm_dict["fallback_llm"] = None
+        legacy_llm_dict["fallback_llm"] = legacy_fallback_llm_dict
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            llm_from_legacy_dict = DocumentLLM.from_dict(legacy_llm_dict)
+        assert not any("fallback_llm" in str(x.message) for x in w)
+        assert len(llm_from_legacy_dict.fallback_llms) == 1
+        assert fallback_1._eq_deserialized_llm_config(
+            llm_from_legacy_dict.fallback_llms[0]
+        )
+        legacy_llm_dict["fallback_llm"] = None
+        assert DocumentLLM.from_dict(legacy_llm_dict).fallback_llms == []
+
+        # === Order of LLM calls ===
+        called_models: list[str] = []
+
+        def stub_llm_api(llm: DocumentLLM, answer: str | None) -> None:
+            """
+            Stubs the LLM API call, which fails if no answer is provided.
+            """
+
+            async def _send_messages_stub(self, **kwargs: Any):
+                """
+                Simulates a failed or a successful LLM API call.
+
+                Same params as `llm._send_messages_with_tools`.
+                """
+                called_models.append(self.model)
+                if answer is None:
+                    raise RuntimeError(f"Simulated API error for {self.model}")
+                return answer, False
+
+            llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)  # ty: ignore[invalid-assignment]
+
+        # Chat: fallbacks are tried in the given order until one of them succeeds
+        stub_llm_api(primary, None)
+        stub_llm_api(fallback_1, None)
+        stub_llm_api(fallback_2, "4")
+        stub_llm_api(fallback_3, "5")
+        assert primary.chat("What's 2+2?") == "4"
+        assert called_models == [primary.model, fallback_1.model, fallback_2.model]
+        usage_calls = [i.usage.calls for i in primary.get_usage()]
+        assert usage_calls[0] and usage_calls[1]  # failed calls are recorded
+        assert not usage_calls[3]  # the last fallback was not tried
+
+        called_models.clear()
+        chat_session = ChatSession()
+        assert primary.chat("What's 2+2?", chat_session=chat_session) == "4"
+        assert called_models == [primary.model, fallback_1.model, fallback_2.model]
+        # Ensure no duplicate messages in chat despite the calls to several LLMs
+        assert [i.role for i in chat_session.messages] == ["user", "assistant"]
+        assert chat_session.messages[0]._response_succeeded is True
+
+        # Chat: the error is raised only when the last fallback fails
+        called_models.clear()
+        stub_llm_api(fallback_2, None)
+        stub_llm_api(fallback_3, None)
+        with pytest.raises(LLMAPIError):
+            primary.chat("What's 2+2?")
+        assert called_models == expected_models
+
+        # Extraction: fallbacks are tried in the given order until one of them succeeds
+        document = Document(
+            raw_text="Non-disclosure agreement\n\nThe parties agree as follows."
+        )
+        document.concepts = [
+            StringConcept(name="Title", description="Contract title"),
+            StringConcept(name="Parties", description="Contract parties"),
+        ]
+        concepts_answer = (
+            '[{"concept_id": "C0", "extracted_items": ["Item 1"]}, '
+            '{"concept_id": "C1", "extracted_items": ["Item 2"]}]'
+        )
+        called_models.clear()
+        primary.reset_usage_and_cost()
+        assert not any(i.usage.calls for i in primary.get_usage())
+        stub_llm_api(fallback_2, concepts_answer)
+        primary.extract_concepts_from_document(document)
+        assert called_models == [primary.model, fallback_1.model, fallback_2.model]
+        assert [i.extracted_items[0].value for i in document.concepts] == [
+            "Item 1",
+            "Item 2",
+        ]
+
+        # Same with concurrency, i.e. with each concept processed in a separate call
+        concept_answer = '[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+        called_models.clear()
+        stub_llm_api(fallback_2, None)
+        stub_llm_api(fallback_3, concept_answer)
+        primary.extract_concepts_from_document(
+            document, overwrite_existing=True, use_concurrency=True
+        )
+        assert sorted(called_models) == sorted(expected_models * 2)
+        assert [i.extracted_items[0].value for i in document.concepts] == [
+            "Item",
+            "Item",
+        ]
+
+        # Extraction: the error is raised only when the last fallback fails
+        called_models.clear()
+        stub_llm_api(fallback_3, None)
+        with pytest.raises(LLMAPIError):
+            primary.extract_concepts_from_document(document, overwrite_existing=True)
+        assert called_models == expected_models
+        # But a warning is issued if `raise_exception_on_extraction_error` is False
+        called_models.clear()
+        document_unprocessed = Document(raw_text=document.raw_text)
+        document_unprocessed.concepts = [
+            StringConcept(name="Title", description="Contract title")
+        ]
+        with pytest.warns(UserWarning, match="LLM API"):
+            primary.extract_concepts_from_document(
+                document_unprocessed,
+                raise_exception_on_extraction_error=False,
+            )
+        assert called_models == expected_models
+        assert not any(i.extracted_items for i in document_unprocessed.concepts)
+
+        check_locals_memory_usage(locals(), test_name="test_multiple_fallback_llms")
+
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",
@@ -6997,9 +7281,9 @@ class TestAll(TestUtils):
                 with pytest.warns(UserWarning, match="default system message"):
                     model.chat("What's the result of 2+2?")
                 if model == self.invalid_llm_with_valid_fallback:
-                    assert model.fallback_llm is not None
+                    assert model.fallback_llms
                     response = (
-                        model.fallback_llm.get_usage()[0].usage.calls[-1].response
+                        model.fallback_llms[0].get_usage()[0].usage.calls[-1].response
                     )
                 else:
                     response = model.get_usage()[0].usage.calls[-1].response
@@ -7291,10 +7575,12 @@ class TestAll(TestUtils):
         bad_primary = DocumentLLM(**self._invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
         invalid_llm_kwargs_2 = deepcopy(self._invalid_llm_kwargs)
         invalid_llm_kwargs_2["model"] = "newmodel/123"
-        bad_primary.fallback_llm = DocumentLLM(
-            **invalid_llm_kwargs_2,  # ty: ignore[invalid-argument-type]
-            is_fallback=True,
-        )
+        bad_primary.fallback_llms = [
+            DocumentLLM(
+                **invalid_llm_kwargs_2,  # ty: ignore[invalid-argument-type]
+                is_fallback=True,
+            )
+        ]
 
         with pytest.raises(LLMAPIError):
             bad_primary.chat("Another failing call", chat_session=cs_err_fb)
@@ -7464,9 +7750,9 @@ class TestAll(TestUtils):
         # Test for `supports_tools` mismatch between main and fallback LLMs
         llm._supports_tools = False
         with pytest.raises(ValueError, match="supports_tools"):
-            llm.fallback_llm = llm_fallback
+            llm.fallback_llms = [llm_fallback]
         llm._supports_tools = True
-        llm.fallback_llm = llm_fallback
+        llm.fallback_llms = [llm_fallback]
 
         # Mark support exolicitly due to litellm bug where litellm.supports_parallel_function_calling()
         # returns False for all models: https://github.com/BerriAI/litellm/issues/13980

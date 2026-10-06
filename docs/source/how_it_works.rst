@@ -116,7 +116,7 @@ ContextGem uses the following models to extract information from documents:
 
 The ``role`` of an LLM is an abstraction used to assign various LLMs tasks of different complexity. For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, this aspect/concept is extracted from the document using the LLM with ``role="extractor_text"``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate role for a specific aspect/concept. But for simple use cases, when working with text-only documents and a single LLM, you can skip the role assignment completely, in which case the role will default to ``"extractor_text"``.
 
-An LLM can have a configurable fallback LLM with the same role.
+An LLM can have one or more configurable fallback LLMs with the same role, which are tried in the given order.
 
 See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`llm-roles-label` for more details.
 
@@ -128,7 +128,7 @@ See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`llm-roles-label` for 
 
 For more complex and granular extraction workflows, an LLM group can be used to extract different information from the same document using different LLMs with different roles. For example, a simpler LLM e.g. gpt-4o-mini can be used to extract specific aspects of the document, and a more powerful LLM e.g. o3-mini will handle the extraction of complex concepts that require reasoning over the aspects' context.
 
-Each LLM can have its own backend and configuration, and one fallback LLM with the same role.
+Each LLM can have its own backend and configuration, and one or more fallback LLMs with the same role.
 
 See :class:`~contextgem.public.llms.DocumentLLMGroup` and :ref:`llm-roles-label` for more details.
 
@@ -148,7 +148,7 @@ See :class:`~contextgem.public.llms.DocumentLLMGroup` and :ref:`llm-roles-label`
      - Extract payment terms from a contract
      - Detect anomalies in the payment terms
      - Extract invoice amounts
-   * - *Fallback LLM* (optional)
+   * - *Fallback LLM(s)* (optional)
      - gpt-4o-mini
      - o3-mini
      - gpt-4o-mini

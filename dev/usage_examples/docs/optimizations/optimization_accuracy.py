@@ -35,11 +35,13 @@ doc.concepts = [
 llm = DocumentLLM(
     model="openai/gpt-4o",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    fallback_llm=DocumentLLM(
-        model="openai/gpt-4-turbo",
-        api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-        is_fallback=True,
-    ),  # configure a fallback LLM
+    fallback_llms=[
+        DocumentLLM(
+            model="openai/gpt-4-turbo",
+            api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
+            is_fallback=True,
+        ),
+    ],  # configure one or more fallback LLMs
 )
 
 # Extract data from document with specific configuration options

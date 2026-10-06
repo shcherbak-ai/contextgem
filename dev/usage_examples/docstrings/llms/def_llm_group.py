@@ -17,7 +17,7 @@ text_extractor_fallback = DocumentLLM(
 )
 
 # Assign the fallback LLM to the primary text extractor
-text_extractor.fallback_llm = text_extractor_fallback
+text_extractor.fallback_llms = [text_extractor_fallback]
 
 # Create a text reasoner LLM
 text_reasoner = DocumentLLM(
@@ -46,7 +46,7 @@ llm_group = DocumentLLMGroup(
     output_language="en",  # All LLMs must have the same output language ("en" is default)
 )
 # This group will have 5 LLMs: four main ones, with different roles,
-# and one fallback LLM for a specific LLM. Each LLM can have a fallback LLM.
+# and one fallback LLM for a specific LLM. Each LLM can have one or more fallback LLMs.
 
 # Get usage statistics for the whole group or for a specific role
 group_usage = llm_group.get_usage()

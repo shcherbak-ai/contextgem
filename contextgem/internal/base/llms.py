@@ -154,6 +154,12 @@ _COST_QUANT = Decimal("0.00001")
 # and imported by tests/conftest.py to keep the test allowlist in sync.
 _GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
+# Deprecation message for the `fallback_llm` parameter/attribute of DocumentLLM
+_FALLBACK_LLM_DEPRECATION_MSG = (
+    "`fallback_llm` is deprecated and will be removed in v1.0.0. "
+    "Use `fallback_llms` instead, e.g. `fallback_llms=[fallback_llm]`."
+)
+
 
 class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     """
@@ -1461,6 +1467,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
         raise_exception_on_extraction_error: bool = True,
+        has_fallback_pending: bool = False,
     ) -> tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]:
         """
         Extracts items from either aspects or concepts using a specified LLM.
@@ -1511,6 +1518,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
+        :param has_fallback_pending: Whether a fallback LLM will be tried if the call to the
+            specified LLM fails. If True, an LLM API error is logged without being raised or
+            warned about, as it is not final. Defaults to False.
+        :type has_fallback_pending: bool
 
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if LLM processing fails
@@ -1822,6 +1833,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 max_retries_failed_request=max_retries_failed_request,
                 async_limiter=async_limiter,
                 raise_exception_on_llm_api_error=raise_exception_on_extraction_error,
+                has_fallback_pending=has_fallback_pending,
             )
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
             extracted_data = _validate_parsed_llm_output(
@@ -2346,7 +2358,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 :type instances: list[_Aspect] | list[_Concept]
                 :param n_retries: Number of retries to perform.
                 :type n_retries: int
-                :param retry_is_final: Whether the retry is final and will not be repeated by a fallback LLM.
+                :param retry_is_final: Whether the retry is final and will not be repeated by
+                    a (next) fallback LLM.
                 :type retry_is_final: bool
                 :return: True if retry was successful, False otherwise.
                 :rtype: bool
@@ -2378,6 +2391,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             max_retries_failed_request=0,
                             async_limiter=async_limiter,
                             raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+                            has_fallback_pending=not retry_is_final,
                         )
                         # Update usage stats and cost
                         await llm_instance._update_usage_and_cost(res)
@@ -2412,6 +2426,50 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                         return False
                 return True
 
+            async def retry_chunk_with_fallbacks(
+                chunk: list[_Aspect] | list[_Concept],
+                result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage],
+            ) -> bool:
+                """
+                Retries a single failed chunk on the primary LLM and then on each
+                fallback LLM in order (if configured), returning whether any
+                retry path produced a valid result.
+
+                :param chunk: The chunk of instances to retry.
+                :type chunk: list[_Aspect] | list[_Concept]
+                :param result: The original failed extraction result.
+                :type result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
+                :return: True if any retry succeeded, False otherwise.
+                :rtype: bool
+                """
+                retry_successful = False
+                if llm.max_retries_invalid_data > 0:
+                    retry_successful = await retry_processing_for_result(
+                        llm_instance=llm,
+                        res=result,
+                        instances=chunk,
+                        n_retries=llm.max_retries_invalid_data,
+                        retry_is_final=not llm.fallback_llms,
+                    )
+                n_fallbacks = len(llm.fallback_llms)
+                for i, fallback_llm in enumerate(llm.fallback_llms):
+                    if retry_successful:
+                        break
+                    logger.info(
+                        f"Trying with fallback LLM {fallback_llm.model} "
+                        f"({i + 1}/{n_fallbacks})"
+                    )
+                    retry_successful = await retry_processing_for_result(
+                        llm_instance=fallback_llm,
+                        res=result,
+                        instances=chunk,
+                        n_retries=max(
+                            fallback_llm.max_retries_invalid_data, 1
+                        ),  # retry with each fallback LLM at least once
+                        retry_is_final=i == n_fallbacks - 1,
+                    )
+                return retry_successful
+
             if use_concurrency:
                 # default - each item in a separate call
                 max_items_per_call_inner = max(1, max_items_per_call)
@@ -2443,6 +2501,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 "max_retries_failed_request": llm.max_retries_failed_request,
                 "async_limiter": async_limiter,
                 "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+                "has_fallback_pending": bool(llm.fallback_llms),
             }
             data_list = [
                 {**base_params, "instances_to_process": chunk} for chunk in data_chunks
@@ -2469,44 +2528,6 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 # Retry failed chunks concurrently. Original chunk order is preserved
                 # in `failed_pairs` so post-gather handling raises the first failure
                 # by chunk index, matching prior sequential semantics.
-                async def retry_chunk_with_fallback(
-                    chunk: list[_Aspect] | list[_Concept],
-                    result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage],
-                ) -> bool:
-                    """
-                    Retries a single failed chunk on the primary LLM and then on
-                    the fallback LLM (if configured), returning whether either
-                    retry path produced a valid result.
-
-                    :param chunk: The chunk of instances to retry.
-                    :type chunk: list[_Aspect] | list[_Concept]
-                    :param result: The original failed extraction result.
-                    :type result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
-                    :return: True if any retry succeeded, False otherwise.
-                    :rtype: bool
-                    """
-                    retry_successful = False
-                    if llm.max_retries_invalid_data > 0:
-                        retry_successful = await retry_processing_for_result(
-                            llm_instance=llm,
-                            res=result,
-                            instances=chunk,
-                            n_retries=llm.max_retries_invalid_data,
-                            retry_is_final=not llm.fallback_llm,
-                        )
-                    if not retry_successful and llm.fallback_llm:
-                        logger.info("Trying with fallback LLM")
-                        retry_successful = await retry_processing_for_result(
-                            llm_instance=llm.fallback_llm,
-                            res=result,
-                            instances=chunk,
-                            n_retries=max(
-                                llm.fallback_llm.max_retries_invalid_data, 1
-                            ),  # retry with fallback LLM at least once
-                            retry_is_final=True,
-                        )
-                    return retry_successful
-
                 failed_pairs = [
                     (chunk, result)
                     for chunk, result in zip(data_chunks, results, strict=True)
@@ -2515,7 +2536,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 if failed_pairs:
                     retry_outcomes = await asyncio.gather(
                         *(
-                            retry_chunk_with_fallback(chunk, result)
+                            retry_chunk_with_fallbacks(chunk, result)
                             for chunk, result in failed_pairs
                         ),
                         return_exceptions=True,
@@ -2526,7 +2547,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                         if isinstance(outcome, BaseException):
                             raise outcome
                         if not outcome:
-                            if llm.max_retries_invalid_data > 0 or llm.fallback_llm:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_llms:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have
                                     # been raised in case of extraction error such as invalid JSON.
@@ -2566,31 +2587,14 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     # Update usage stats and cost
                     await llm._update_usage_and_cost(result)
 
-                    # Retry if needed
+                    # Retry if needed, including with fallback LLMs if they are provided
                     if not _llm_call_result_is_valid(result):
-                        retry_successful = False
-                        if llm.max_retries_invalid_data > 0:
-                            retry_successful = await retry_processing_for_result(
-                                llm_instance=llm,
-                                res=result,
-                                instances=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
-                                n_retries=llm.max_retries_invalid_data,
-                                retry_is_final=not llm.fallback_llm,
-                            )
-                        # Retry with fallback LLM if it is provided
-                        if not retry_successful and llm.fallback_llm:
-                            logger.info("Trying with fallback LLM")
-                            retry_successful = await retry_processing_for_result(
-                                llm_instance=llm.fallback_llm,
-                                res=result,
-                                instances=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
-                                n_retries=max(
-                                    llm.fallback_llm.max_retries_invalid_data, 1
-                                ),  # retry with fallback LLM at least once
-                                retry_is_final=True,
-                            )
+                        retry_successful = await retry_chunk_with_fallbacks(
+                            chunk=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
+                            result=result,
+                        )
                         if not retry_successful:
-                            if llm.max_retries_invalid_data > 0 or llm.fallback_llm:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_llms:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have
                                     # been raised in case of extraction error such as invalid JSON.
@@ -2755,41 +2759,40 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         :param llm_role: The optional role of the LLM to filter the results. If provided,
             only results associated with LLMs matching this role are returned. If no LLM with
             the specified role exists, an exception is raised. If the matching LLM has
-            a fallback LLM, its usage or cost details are also collected. Defaults to None.
+            fallback LLMs, their usage or cost details are also collected. Defaults to None.
         :type llm_role: str | None
         :return: A list of containers, each representing usage or cost information for
-            a primary and fallback LLM, if it exists. The specific container type depends on
-            the retrieval type.
+            a primary LLM and its fallback LLMs, if any, in the order they are tried.
+            The specific container type depends on the retrieval type.
         :rtype: list[_LLMUsageOutputContainer | _LLMCostOutputContainer]
         """
 
         info_containers = []
-        # For individual LLM, use self and its fallback
+        # For individual LLM, use self and its fallbacks
         # For group, iterate through all LLMs in self.llms
         llms_to_process = self.llms if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         # Safe cast: llms_to_process contains only _DocumentLLM instances
         llms_to_process = cast(list["_DocumentLLM"], llms_to_process)
 
         for primary_llm in llms_to_process:
-            for llm in [primary_llm, primary_llm.fallback_llm]:
-                if llm:  # fallback LLM may be missing
-                    if retrieval_type == "usage":
-                        info_container = _LLMUsageOutputContainer(
-                            model=llm.model,
-                            role=llm.role,
-                            is_fallback=llm.is_fallback,
-                            usage=llm._get_raw_usage(),
-                        )
-                    elif retrieval_type == "cost":
-                        info_container = _LLMCostOutputContainer(
-                            model=llm.model,
-                            role=llm.role,
-                            is_fallback=llm.is_fallback,
-                            cost=llm._get_raw_cost(),
-                        )
-                    else:
-                        raise ValueError(f"Invalid retrieval type `{retrieval_type}`")
-                    info_containers.append(info_container)
+            for llm in [primary_llm, *primary_llm.fallback_llms]:
+                if retrieval_type == "usage":
+                    info_container = _LLMUsageOutputContainer(
+                        model=llm.model,
+                        role=llm.role,
+                        is_fallback=llm.is_fallback,
+                        usage=llm._get_raw_usage(),
+                    )
+                elif retrieval_type == "cost":
+                    info_container = _LLMCostOutputContainer(
+                        model=llm.model,
+                        role=llm.role,
+                        is_fallback=llm.is_fallback,
+                        cost=llm._get_raw_cost(),
+                    )
+                else:
+                    raise ValueError(f"Invalid retrieval type `{retrieval_type}`")
+                info_containers.append(info_container)
 
         if llm_role:
             info_containers = [
@@ -3137,10 +3140,11 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=False,
         description="Marks this LLM as a fallback model.",
     )
-    fallback_llm: _DocumentLLM | None = Field(
-        default=None,
+    fallback_llms: list[_DocumentLLM] = Field(
+        default_factory=list,
         description=(
-            "Fallback LLM to use if this one fails; must have the same role and output_language."
+            "Fallback LLMs to try, in the given order, if this one fails; "
+            "each must have the same role and output_language."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -3256,6 +3260,22 @@ class _DocumentLLM(_GenericLLMProcessor):
     def __init__(self, **data: Any):
         # Pop the async_limiter if provided; otherwise use a default.
         limiter = data.pop("async_limiter", None)
+
+        # Handle deprecated `fallback_llm` parameter (will be removed in v1.0.0)
+        if "fallback_llm" in data:
+            warnings.warn(
+                _FALLBACK_LLM_DEPRECATION_MSG,
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            fallback_llm = data.pop("fallback_llm")
+            if fallback_llm is not None:
+                if data.get("fallback_llms"):
+                    raise ValueError(
+                        "`fallback_llm` (deprecated) cannot be set together with "
+                        "`fallback_llms`. Use `fallback_llms` only."
+                    )
+                data["fallback_llms"] = [fallback_llm]
 
         # Convert @register_tool-decorated functions to OpenAI tool schemas
         raw_tools = data.get("tools")
@@ -3401,6 +3421,47 @@ class _DocumentLLM(_GenericLLMProcessor):
         self._async_limiter = value
 
     @property
+    def fallback_llm(self) -> _DocumentLLM | None:
+        """
+        Gets the first fallback LLM, if any.
+
+        .. deprecated:: 0.28.0
+            ``fallback_llm`` is deprecated and will be removed in v1.0.0.
+            Use ``fallback_llms`` instead.
+
+        :return: The first LLM in ``fallback_llms``, or None if no fallback LLMs are set.
+        :rtype: _DocumentLLM | None
+        """
+        warnings.warn(
+            _FALLBACK_LLM_DEPRECATION_MSG,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.fallback_llms[0] if self.fallback_llms else None
+
+    @fallback_llm.setter
+    def fallback_llm(self, value: _DocumentLLM | None) -> None:
+        """
+        Sets a single fallback LLM, replacing all LLMs in ``fallback_llms``.
+
+        .. deprecated:: 0.28.0
+            ``fallback_llm`` is deprecated and will be removed in v1.0.0.
+            Use ``fallback_llms`` instead.
+
+        :param value: The fallback LLM to set, or None to remove all fallback LLMs.
+        :type value: _DocumentLLM | None
+        :return: None
+        :rtype: None
+        """
+        warnings.warn(
+            _FALLBACK_LLM_DEPRECATION_MSG,
+            DeprecationWarning,
+            # Skip pydantic's `__setattr__` frames to point to the caller's assignment
+            stacklevel=4,
+        )
+        self.fallback_llms = [value] if value is not None else []
+
+    @property
     def is_group(self) -> bool:
         """
         Returns False indicating this is a single LLM, not a group.
@@ -3480,6 +3541,62 @@ class _DocumentLLM(_GenericLLMProcessor):
         :raises RuntimeError: If the LLM call fails and no fallback is available
         """
 
+        # Try this LLM first, then each fallback LLM in the given order
+        llms_to_try = [self, *self.fallback_llms]
+        response: str | None = None
+        for i, llm in enumerate(llms_to_try):
+            if i > 0:
+                logger.info(f"Using fallback LLM {llm.model} for chat")
+            response = await llm._chat_async(
+                prompt=prompt,
+                images=images,
+                chat_session=chat_session,
+                has_fallback_pending=i < len(llms_to_try) - 1,
+            )
+            if response is not None:
+                break
+
+        if response is None:
+            # This should never happen, as we have `raise_exception_on_llm_api_error=True`
+            # for chat, and such errors are skipped while a fallback LLM is yet to be tried,
+            # but raised when no fallback LLM is available or when the last fallback LLM
+            # also fails.
+            raise RuntimeError(
+                f"Failed to get response from LLM {self.model} and no fallback is available"
+            )
+
+        return response
+
+    async def _chat_async(
+        self,
+        prompt: str,
+        *,
+        images: list[_Image] | None = None,
+        chat_session: _ChatSession | None = None,
+        has_fallback_pending: bool = False,
+    ) -> str | None:
+        """
+        Asynchronously sends a prompt to this LLM only (without trying its fallback LLMs)
+        and gets a response.
+
+        :param prompt: The input prompt to send to the LLM
+        :type prompt: str
+        :param images: Optional list of Image instances for vision queries
+        :type images: list[Image] | None
+        :param chat_session: Optional stateful chat session to preserve and use history.
+        :type chat_session: _ChatSession | None
+        :param has_fallback_pending: Whether a fallback LLM will be tried if the call to
+            this LLM fails. If True, an LLM API error is logged without being raised,
+            and None is returned. Defaults to False.
+        :type has_fallback_pending: bool
+        :return: The LLM's response, or None if the LLM call fails while a fallback LLM
+            is yet to be tried
+        :rtype: str | None
+        :raises ValueError: If the prompt is empty or not a string
+        :raises ValueError: If images parameter is not a list of Image instances
+        :raises ValueError: If images are provided but the model doesn't support vision
+        """
+
         # Validate prompt
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Prompt must be a non-empty string")
@@ -3557,6 +3674,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             max_retries_failed_request=self.max_retries_failed_request,
             raise_exception_on_llm_api_error=True,  # always True for chat
             chat_session=chat_session,
+            has_fallback_pending=has_fallback_pending,
         )
 
         # Update usage and cost statistics
@@ -3564,26 +3682,10 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         response, _ = result
 
-        # If response is None and fallback LLM is available, try with fallback LLM
-        if response is None:
-            if self.fallback_llm:
-                logger.info(f"Using fallback LLM {self.fallback_llm.model} for chat")
-                return await self.fallback_llm.chat_async(
-                    prompt=prompt, images=images, chat_session=chat_session
-                )
-            else:
-                # This should never happen, as we have `raise_exception_on_llm_api_error=True`
-                # for chat, and such errors are skipped if fallback LLM is available, but raised
-                # when no fallback LLM is available or when fallback LLM also fails.
-                raise RuntimeError(
-                    f"Failed to get response from LLM {self.model} and no fallback is available"
-                )
-        else:
-            if chat_session is not None:
-                user_message_obj._response_succeeded = True  # set as answered
-                chat_session._append_message(
-                    _Message(role="assistant", content=response)
-                )
+        # If response is None, the caller will try with the next fallback LLM
+        if response is not None and chat_session is not None:
+            user_message_obj._response_succeeded = True  # set as answered
+            chat_session._append_message(_Message(role="assistant", content=response))
 
         return response
 
@@ -3822,12 +3924,14 @@ class _DocumentLLM(_GenericLLMProcessor):
         self_dict = self.__dict__.copy()
         other_dict = other.__dict__.copy()
 
-        # Skips check for fallback LLM, if it is set
-        if self.fallback_llm:
-            self_fallback_llm = self_dict.pop("fallback_llm")
-            other_fallback_llm = other_dict.pop("fallback_llm")
-            if not other_fallback_llm:
-                raise RuntimeError("Deserialized fallback LLM was not set")
+        # Fallback LLMs are compared separately, each with this same method
+        self_fallback_llms = self_dict.pop("fallback_llms")
+        other_fallback_llms = other_dict.pop("fallback_llms")
+        if len(self_fallback_llms) != len(other_fallback_llms):
+            raise RuntimeError("Deserialized fallback LLMs were not properly set")
+        for self_fallback_llm, other_fallback_llm in zip(
+            self_fallback_llms, other_fallback_llms, strict=True
+        ):
             if not self_fallback_llm._eq_deserialized_llm_config(other_fallback_llm):
                 logger.debug("Fallback LLM config of deserialized LLM is different.")
                 return False
@@ -3937,28 +4041,28 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
         return model
 
-    @field_validator("fallback_llm")
+    @field_validator("fallback_llms")
     @classmethod
-    def _validate_fallback_llm(
+    def _validate_fallback_llms(
         cls,
-        fallback_llm: _DocumentLLM | None,
-    ) -> _DocumentLLM | None:
+        fallback_llms: list[_DocumentLLM],
+    ) -> list[_DocumentLLM]:
         """
-        Validates the ``fallback_llm`` input to ensure it meets the expected condition
-        of being a fallback LLM model.
+        Validates the ``fallback_llms`` input to ensure each LLM meets the expected
+        condition of being a fallback LLM model.
 
-        :param fallback_llm: The _DocumentLLM instance to be validated.
-        :type fallback_llm: _DocumentLLM
-        :return: The valid fallback_llm that meets the expected criteria.
-        :rtype: _DocumentLLM
-        :raises ValueError: If the ``fallback_llm`` is not a fallback model, as
+        :param fallback_llms: The list of _DocumentLLM instances to be validated.
+        :type fallback_llms: list[_DocumentLLM]
+        :return: The valid fallback_llms that meet the expected criteria.
+        :rtype: list[_DocumentLLM]
+        :raises ValueError: If any of the ``fallback_llms`` is not a fallback model, as
             indicated by the ``is_fallback`` attribute set to ``False``.
         """
-        if fallback_llm is not None and not fallback_llm.is_fallback:
+        if any(not fallback_llm.is_fallback for fallback_llm in fallback_llms):
             raise ValueError(
                 "Fallback LLM must be a fallback model. Use `is_fallback=True`."
             )
-        return fallback_llm
+        return fallback_llms
 
     @field_validator("tools")
     @classmethod
@@ -4026,57 +4130,66 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
 
         # Fallback model validation
-        if self.is_fallback and self.fallback_llm:
+        if self.is_fallback and self.fallback_llms:
             raise ValueError(
-                "Fallback LLM cannot have its own fallback LLM "
+                "Fallback LLM cannot have its own fallback LLMs "
                 "and must be attached to a non-fallback model."
             )
 
-        if self.fallback_llm:
+        # Config params of the main LLM and of the fallback LLMs validated so far,
+        # without the `is_fallback` and `fallback_llms` params
+        main_llm_dict = {
+            k: v
+            for k, v in self.__dict__.items()
+            if k not in ["is_fallback", "fallback_llms"]
+        }
+        fallback_llm_dicts: list[dict[str, Any]] = []
+
+        for fallback_llm in self.fallback_llms:
             # Check for the consistency of the fallback LLM role and output language
-            if self.fallback_llm.role != self.role:
+            if fallback_llm.role != self.role:
                 raise ValueError(
                     f"The fallback LLM must have the same role `{self.role}` as the main one."
                 )
-            elif self.fallback_llm.output_language != self.output_language:
+            elif fallback_llm.output_language != self.output_language:
                 raise ValueError(
                     f"The fallback LLM must have the same output language `{self.output_language}` as the main one."
                 )
 
             # Validate tool-calling configuration parity
-            if self.tools != self.fallback_llm.tools:
+            if self.tools != fallback_llm.tools:
                 raise ValueError(
                     "Fallback LLM must have the same `tools` configuration as the main LLM"
                 )
-            if self.tools and self._supports_tools != self.fallback_llm._supports_tools:
+            if self.tools and self._supports_tools != fallback_llm._supports_tools:
                 raise ValueError(
                     "Fallback LLM must have the same `_supports_tools` configuration as the main LLM"
                 )
-            if self.tool_choice != self.fallback_llm.tool_choice:
+            if self.tool_choice != fallback_llm.tool_choice:
                 raise ValueError(
                     "Fallback LLM must have the same `tool_choice` configuration as the main LLM"
                 )
-            if self.parallel_tool_calls != self.fallback_llm.parallel_tool_calls:
+            if self.parallel_tool_calls != fallback_llm.parallel_tool_calls:
                 raise ValueError(
                     "Fallback LLM must have the same `parallel_tool_calls` configuration as the main LLM"
                 )
 
-            # Check that the fallback LLM is not the replica of the main LLM, just with different
-            # `is_fallback` and `fallback_llm` params
-            main_llm_dict = {
-                k: v
-                for k, v in self.__dict__.items()
-                if k not in ["is_fallback", "fallback_llm"]
-            }
+            # Check that the fallback LLM is not the replica of the main LLM or of another
+            # fallback LLM, just with different `is_fallback` and `fallback_llms` params
             fallback_llm_dict = {
                 k: v
-                for k, v in self.fallback_llm.__dict__.items()
-                if k not in ["is_fallback", "fallback_llm"]
+                for k, v in fallback_llm.__dict__.items()
+                if k not in ["is_fallback", "fallback_llms"]
             }
             if main_llm_dict == fallback_llm_dict:
                 raise ValueError(
                     "Fallback LLM must not have the exact same config params as the main LLM."
                 )
+            if fallback_llm_dict in fallback_llm_dicts:
+                raise ValueError(
+                    "Fallback LLMs must not have the exact same config params as each other."
+                )
+            fallback_llm_dicts.append(fallback_llm_dict)
 
         # Note: model-specific support for `reasoning_effort` values is not
         # validated here; validation is delegated to litellm / the provider API,
@@ -4706,6 +4819,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         drop_params: bool = False,
         raise_exception_on_llm_api_error: bool = True,
         chat_session: _ChatSession | None = None,
+        has_fallback_pending: bool = False,
     ) -> tuple[str | None, _LLMUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -4738,6 +4852,10 @@ class _DocumentLLM(_GenericLLMProcessor):
         :param chat_session: Optional chat session object used to persist tool messages during the
             tool-calling loop. If provided, assistant and tool messages are recorded on the session.
         :type chat_session: _ChatSession | None
+        :param has_fallback_pending: Whether a fallback LLM will be tried if this call fails.
+            If True, an error in the LLM API is logged without being raised or warned about,
+            as it is not final. Defaults to False.
+        :type has_fallback_pending: bool
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _LLMUsage]
@@ -4802,6 +4920,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                     drop_params=True,
                     raise_exception_on_llm_api_error=raise_exception_on_llm_api_error,
                     chat_session=chat_session,
+                    has_fallback_pending=has_fallback_pending,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
@@ -4810,7 +4929,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                     f"Exception occurred while calling LLM API with drop_params=True: {e}",
                     stacklevel=2,
                 )
-                if self.fallback_llm:
+                if has_fallback_pending:
                     logger.info(
                         "Call will be retried if retry params provided and/or a fallback LLM is configured."
                     )
@@ -4840,7 +4959,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         except Exception as e:
             # e.g. rate limit error
             logger.error(f"Exception occurred while calling LLM API: {e}")
-            if self.fallback_llm:
+            if has_fallback_pending:
                 logger.info(
                     "Call will be retried if retry params provided and/or a fallback LLM is configured."
                 )
@@ -4990,7 +5109,7 @@ class _DocumentLLM(_GenericLLMProcessor):
 
     def reset_usage_and_cost(self) -> None:
         """
-        Resets the usage and cost statistics for the LLM and its fallback LLM (if configured).
+        Resets the usage and cost statistics for the LLM and its fallback LLMs (if configured).
 
         This method clears accumulated usage and cost data, which is useful when processing
         multiple documents sequentially and tracking metrics for each document separately.
@@ -4999,10 +5118,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         :rtype: None
         """
 
-        for llm in [self, self.fallback_llm]:
-            if llm:
-                llm._usage = _LLMUsage()
-                llm._cost = _LLMCost()
+        for llm in [self, *self.fallback_llms]:
+            llm._usage = _LLMUsage()
+            llm._cost = _LLMCost()
 
     @tethered.scope(
         allow=list(_GENAI_PRICES_REFRESH_HOSTS),

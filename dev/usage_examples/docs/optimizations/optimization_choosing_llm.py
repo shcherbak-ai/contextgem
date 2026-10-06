@@ -19,7 +19,7 @@ base_llm_fallback = DocumentLLM(
     role="extractor_text",  # must have the same role as the parent LLM
     is_fallback=True,
 )
-base_llm.fallback_llm = base_llm_fallback
+base_llm.fallback_llms = [base_llm_fallback]
 
 advanced_llm = DocumentLLM(
     model="openai/o3-mini",
