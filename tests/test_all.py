@@ -22,6 +22,7 @@ Module defining tests for the framework.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import tempfile
@@ -281,12 +282,10 @@ class TestAll(TestUtils):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="extractor_text",
             ),
             Aspect(
                 name="Liability",
                 description="Clauses describing liability of the parties",
-                llm_role="extractor_text",
                 add_justifications=True,
                 concepts=[
                     StringConcept(
@@ -301,14 +300,13 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Business Information",
                 description="Categories of Business Information",
-                llm_role="extractor_text",
                 add_justifications=True,
                 add_references=True,
             ),
             BooleanConcept(
                 name="Invoice number check",
                 description="Invoice number is present in the document",
-                llm_role="extractor_vision",
+                modality="image",
                 add_justifications=True,
             ),
         ],
@@ -321,11 +319,10 @@ class TestAll(TestUtils):
 
     # LLMs
 
-    # Extractor text
-    _llm_extractor_text_kwargs_openai = {
+    # Extractor (LLM without a role, i.e. the default one in the LLM group)
+    _llm_extractor_kwargs_openai = {
         "model": "openai/gpt-4.1-mini",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-        "role": "extractor_text",
         "pricing_details": LLMPricing(  # Explicitly set pricing details
             **{
                 "input_per_1m_tokens": 0.40,
@@ -334,55 +331,26 @@ class TestAll(TestUtils):
         ),
     }
 
-    # Reasoner text
-    _llm_reasoner_text_kwargs_openai = {
+    # Reasoner (LLM with a role, i.e. the one that the aspects/concepts
+    # with the same role are routed to in the LLM group)
+    _llm_reasoner_kwargs_openai = {
         "model": "openai/gpt-5-mini",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-        "role": "reasoner_text",
+        "role": "reasoner",
         "auto_pricing": True,  # use auto-pricing
         "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
     }
 
-    # Extractor multimodal
-    _llm_extractor_multimodal_kwargs_openai = deepcopy(
-        _llm_extractor_text_kwargs_openai
-    )
-    _llm_extractor_multimodal_kwargs_openai["role"] = "extractor_multimodal"
+    # Extractor
+    llm_extractor = DocumentLLM(**_llm_extractor_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
-    # Reasoner multimodal
-    _llm_reasoner_multimodal_kwargs_openai = deepcopy(_llm_reasoner_text_kwargs_openai)
-    _llm_reasoner_multimodal_kwargs_openai["role"] = "reasoner_multimodal"
-
-    # Extractor text
-    llm_extractor_text = DocumentLLM(**_llm_extractor_text_kwargs_openai)  # ty: ignore[invalid-argument-type]
-
-    # Reasoner text
-    llm_reasoner_text = DocumentLLM(**_llm_reasoner_text_kwargs_openai)  # ty: ignore[invalid-argument-type]
-
-    # Extractor multimodal
-    llm_extractor_multimodal = DocumentLLM(**_llm_extractor_multimodal_kwargs_openai)  # ty: ignore[invalid-argument-type]
-
-    # Reasoner multimodal
-    llm_reasoner_multimodal = DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai)  # ty: ignore[invalid-argument-type]
-
-    # Extractor vision
-    _llm_extractor_vision_kwargs_openai = deepcopy(_llm_extractor_text_kwargs_openai)
-    _llm_extractor_vision_kwargs_openai["role"] = "extractor_vision"
-    llm_extractor_vision = DocumentLLM(**_llm_extractor_vision_kwargs_openai)  # ty: ignore[invalid-argument-type]
-
-    # Reasoner vision
-    _llm_reasoner_vision_kwargs_openai = deepcopy(_llm_reasoner_text_kwargs_openai)
-    _llm_reasoner_vision_kwargs_openai["role"] = "reasoner_vision"
-    llm_reasoner_vision = DocumentLLM(**_llm_reasoner_vision_kwargs_openai)  # ty: ignore[invalid-argument-type]
+    # Reasoner
+    llm_reasoner = DocumentLLM(**_llm_reasoner_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
     # LLM group
     _llm_group_llms = [
-        DocumentLLM(**_llm_extractor_text_kwargs_openai),  # ty: ignore[invalid-argument-type]
-        DocumentLLM(**_llm_reasoner_text_kwargs_openai),  # ty: ignore[invalid-argument-type]
-        DocumentLLM(**_llm_extractor_vision_kwargs_openai),  # ty: ignore[invalid-argument-type]
-        DocumentLLM(**_llm_reasoner_vision_kwargs_openai),  # ty: ignore[invalid-argument-type]
-        DocumentLLM(**_llm_extractor_multimodal_kwargs_openai),  # ty: ignore[invalid-argument-type]
-        DocumentLLM(**_llm_reasoner_multimodal_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_extractor_kwargs_openai),  # ty: ignore[invalid-argument-type]
+        DocumentLLM(**_llm_reasoner_kwargs_openai),  # ty: ignore[invalid-argument-type]
     ]  # newly initialized LLMs in group for separate usage and cost tracking)
     llm_group = DocumentLLMGroup(llms=_llm_group_llms)  # ty: ignore[invalid-argument-type]
 
@@ -390,20 +358,19 @@ class TestAll(TestUtils):
     _invalid_llm_kwargs = {
         "model": "helloworld/helloworld-v1",
         "api_key": "invalid_api_key",
-        "role": "extractor_text",
     }
     llm_invalid = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
     invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
     invalid_llm_with_valid_fallback.fallback_llms = [
         DocumentLLM(
-            **_llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
+            **_llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
             is_fallback=True,
         )
     ]
 
     # LLM with a non-EN output language setting
-    llm_extractor_text_non_eng = DocumentLLM(
-        **_llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
+    llm_extractor_non_eng = DocumentLLM(
+        **_llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
         output_language="adapt",
     )
 
@@ -463,11 +430,11 @@ class TestAll(TestUtils):
             _Aspect,
             name="Test Aspect",
             description="Test Description",
-            llm_role="reasoner_text",
+            llm_role="reasoner",
             reference_depth="sentences",
         )
         assert isinstance(pub_aspect, Aspect)
-        assert pub_aspect.llm_role == "reasoner_text"
+        assert pub_aspect.llm_role == "reasoner"
         assert pub_aspect.reference_depth == "sentences"
         assert _resolve_public_type(_Aspect) is Aspect
 
@@ -897,7 +864,7 @@ class TestAll(TestUtils):
         ]
         assert not document.sentences
         # Segmentation is triggered when LLM extraction method is called
-        self.llm_extractor_text.extract_aspects_from_document(document)
+        self.llm_extractor.extract_aspects_from_document(document)
         assert document.sentences
 
         # Some concepts require sentence segmentation (assignment after Document initialization)
@@ -912,7 +879,7 @@ class TestAll(TestUtils):
         ]
         assert not document.sentences
         # Segmentation is triggered when LLM extraction method is called
-        self.llm_extractor_text.extract_concepts_from_document(document)
+        self.llm_extractor.extract_concepts_from_document(document)
 
         # Some sub-aspects require sentence segmentation (assignment during Document initialization)
         document = Document(raw_text=get_test_document_text())
@@ -933,7 +900,7 @@ class TestAll(TestUtils):
         )
         assert not document.sentences
         # Segmentation is triggered when LLM extraction method is called
-        self.llm_extractor_text.extract_aspects_from_document(document)
+        self.llm_extractor.extract_aspects_from_document(document)
         assert document.sentences
 
         # Mixed - some aspects and concepts require sentence segmentation, some do not
@@ -971,7 +938,7 @@ class TestAll(TestUtils):
         )
         assert not document.sentences
         # Segmentation is triggered when LLM extraction method is called
-        self.llm_extractor_text.extract_all(document)
+        self.llm_extractor.extract_all(document)
         assert document.sentences
 
         # Test "from_aspects" and "from_concepts" methods
@@ -986,7 +953,7 @@ class TestAll(TestUtils):
             ]
         )
         assert not document.sentences
-        self.llm_extractor_text.extract_aspects_from_document(
+        self.llm_extractor.extract_aspects_from_document(
             document, from_aspects=[document.aspects[0]]
         )
         assert document.sentences
@@ -1002,7 +969,7 @@ class TestAll(TestUtils):
             ]
         )
         assert not document.sentences
-        self.llm_extractor_text.extract_concepts_from_document(
+        self.llm_extractor.extract_concepts_from_document(
             document, from_concepts=[document.concepts[0]]
         )
         assert document.sentences
@@ -1029,7 +996,7 @@ class TestAll(TestUtils):
         )
         document.assign_pipeline(extraction_pipeline)
         assert not document.sentences
-        self.llm_extractor_text.extract_all(document)
+        self.llm_extractor.extract_all(document)
         assert document.sentences
 
         check_locals_memory_usage(
@@ -1060,7 +1027,6 @@ class TestAll(TestUtils):
             model="ollama/deepseek-r1:32b",
             api_base="http://localhost:11434",
             seed=123,
-            role="reasoner_text",
         )
         llm_reasoning_ollama._supports_reasoning = True
         self.extract_with_local_llm(llm_reasoning_ollama)
@@ -1088,30 +1054,38 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Invoice number",
                 description="Number of the invoice",
-                llm_role="extractor_vision",
+                modality="image",
                 add_justifications=True,
             ),
         ]
         document = Document(
             images=[self.test_img_png_invoice], concepts=document_concepts
         )
-        # Warn about using ollama/ prefix for local vision models
+        # Warn about using ollama/ prefix when images are sent to a local model
+        llm_ollama_chat = DocumentLLM(
+            model="ollama_chat/gemma3:27b",
+            api_base="http://localhost:11434",
+        )
+        llm_ollama_chat._supports_vision = True
         with pytest.warns(UserWarning, match="use `ollama/` prefix instead"):
-            DocumentLLM(
-                model="ollama_chat/gemma3:27b",
-                api_base="http://localhost:11434",
-                role="extractor_vision",
+            llm_ollama_chat._ensure_vision_support_for_messages(
+                [
+                    llm_ollama_chat._build_user_message(
+                        message_text="Test", images=[self.test_img_png_invoice]
+                    )
+                ]
             )
 
         # Ollama
-        # Warn about the model not being detected as vision-capable
-        # TODO: remove this warning once litellm supports vision for this model
-        with pytest.warns(UserWarning, match="vision-capable"):
-            llm_ollama = DocumentLLM(
-                model="ollama/gemma3:27b",
-                api_base="http://localhost:11434",
-                role="extractor_vision",
-            )
+        llm_ollama = DocumentLLM(
+            model="ollama/gemma3:27b",
+            api_base="http://localhost:11434",
+        )
+        # The model is not detected as vision-capable, i.e. the extraction from images
+        # fails until the capability is declared explicitly
+        # TODO: remove this check once litellm supports vision for this model
+        with pytest.raises(ValueError, match="does not support vision"):
+            llm_ollama.extract_concepts_from_document(document)
         llm_ollama._supports_vision = True
         extracted_concepts = llm_ollama.extract_concepts_from_document(document)
         assert extracted_concepts[0].extracted_items
@@ -1490,9 +1464,9 @@ class TestAll(TestUtils):
         with pytest.raises(NotImplementedError):
             self.llm_group.model_dump_json()
         with pytest.raises(NotImplementedError):
-            self.llm_extractor_text.model_dump()
+            self.llm_extractor.model_dump()
         with pytest.raises(NotImplementedError):
-            self.llm_extractor_text.model_dump_json()
+            self.llm_extractor.model_dump_json()
 
         # Invalid params
         with pytest.raises(ValueError):
@@ -1509,21 +1483,18 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 fallback_llms=[
-                    self.llm_reasoner_vision
+                    self.llm_reasoner
                 ],  # inconsistent role of the fallback LLM
             )
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 fallback_llms=[
                     DocumentLLM(
                         model="openai/gpt-4o-mini",
                         api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                        role="extractor_text",
                         is_fallback=True,
                     )
                 ],  # same params as the main LLM, except for `is_fallback` flag
@@ -1532,10 +1503,9 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 is_fallback=True,
                 fallback_llms=[
-                    self.llm_extractor_text
+                    self.llm_extractor
                 ],  # a fallback LLM is passed to fallback LLM
             )
         # Validate fallback LLMs assignment
@@ -1548,7 +1518,7 @@ class TestAll(TestUtils):
         document_llm.is_fallback = True
         with pytest.raises(ValueError):
             document_llm.fallback_llms = [
-                self.llm_extractor_text
+                self.llm_extractor
             ]  # a fallback LLM is passed to fallback LLM
         assert document_llm.fallback_llms == []  # No change due to invalid assignment
         document_llm.is_fallback = False
@@ -1556,7 +1526,6 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 is_fallback=False,
                 fallback_llms=[document_llm],  # non-fallback LLM passed as a fallback
             )
@@ -1570,27 +1539,24 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="processor",  # ty: ignore[invalid-argument-type]  # invalid role
+                role="",  # invalid role (empty label)
             )
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 temperature=-1.0,  # negative temperature
             )
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 max_tokens=-4000,  # negative value
             )
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 pricing_details=LLMPricing(
                     **{  # invalid pricing details keys
                         "in": 0.1,
@@ -1602,7 +1568,6 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 pricing_details=LLMPricing(
                     **{  # invalid pricing details values
                         "input_per_1m_tokens": -0.00015,
@@ -1614,23 +1579,15 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key="",  # empty api key
-                role="extractor_text",
             )
 
         # Warnings
-        with pytest.warns(UserWarning, match="vision-capable"):
-            DocumentLLM(
-                model="openai/gpt-3.5-turbo",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_vision",  # model does not support vision
-            )
         with pytest.warns(
             UserWarning, match="`output_language` parameter will take no effect"
         ):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 output_language="adapt",
                 system_message="",
             )
@@ -1640,7 +1597,6 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-4o-mini",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_text",
                 output_language="adapt",
                 system_message="You are a helpful assistant.",
             )
@@ -1659,42 +1615,42 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError):
             DocumentLLMGroup(llms=[])
         with pytest.raises(ValueError):
-            DocumentLLMGroup(llms=[self.llm_reasoner_text])
+            DocumentLLMGroup(llms=[self.llm_reasoner])
         with pytest.raises(ValueError):
             DocumentLLMGroup(llms=[1, True])
         # Duplicate roles
         with pytest.raises(ValueError):
             DocumentLLMGroup(
                 llms=[
-                    self.llm_extractor_text,
-                    self.llm_extractor_text,
-                    self.llm_reasoner_text,
+                    self.llm_extractor,
+                    self.llm_extractor,
+                    self.llm_reasoner,
                 ]
             )
         with pytest.raises(ValueError):
             DocumentLLMGroup(
-                llms=[self.llm_extractor_text, self.llm_reasoner_text],
+                llms=[self.llm_extractor, self.llm_reasoner],
                 extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         with pytest.raises(ValueError):
             # Non-consistent output languages of the LLMs in the group
             DocumentLLMGroup(
                 llms=[
-                    self.llm_extractor_text,
-                    self.llm_extractor_text_non_eng,  # output lang set to "adapt"
+                    self.llm_extractor,
+                    self.llm_extractor_non_eng,  # output lang set to "adapt"
                 ],
                 output_language="en",
             )
         document_llm_group = DocumentLLMGroup(
-            llms=[self.llm_extractor_text, self.llm_reasoner_text]
+            llms=[self.llm_extractor, self.llm_reasoner]
         )
         assert document_llm_group.is_group is True
         # Validate assignment
         with pytest.raises(ValueError):
-            document_llm_group.llms = [self.llm_extractor_text, self.llm_extractor_text]
+            document_llm_group.llms = [self.llm_extractor, self.llm_extractor]
         assert document_llm_group.llms == [
-            self.llm_extractor_text,
-            self.llm_reasoner_text,
+            self.llm_extractor,
+            self.llm_reasoner,
         ]
 
         # No serialization for LLM instances
@@ -1706,13 +1662,434 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_init_llm_group")
 
     @memory_profile_and_capture
+    def test_llm_roles_and_concept_modality(self):
+        """
+        Tests for routing aspects/concepts to LLMs by the free-form LLM roles, for extracting
+        concepts from the content specified by their modality, and for the deprecated
+        predefined LLM role names.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        def create_llm(model: str, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with params that keep the stubbed calls deterministic.
+            """
+            return DocumentLLM(
+                model=model,
+                api_key="test_api_key",
+                system_message="",
+                max_retries_invalid_data=0,
+                **kwargs,
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document with text and an image, as well as with aspects
+            and concepts that have different LLM roles and modalities.
+            """
+            return Document(
+                raw_text="Non-disclosure agreement\n\nThe parties agree as follows.",
+                images=[self.test_img_png_invoice],
+                aspects=[
+                    Aspect(name="Parties", description="Contract parties"),
+                    Aspect(
+                        name="Term",
+                        description="Contract term",
+                        llm_role="complex",
+                        concepts=[
+                            StringConcept(
+                                name="Duration",
+                                description="Contract duration",
+                                llm_role="complex",
+                            )
+                        ],
+                    ),
+                ],
+                concepts=[
+                    StringConcept(name="Title", description="Contract title"),
+                    StringConcept(
+                        name="Type", description="Contract type", llm_role="complex"
+                    ),
+                    StringConcept(
+                        name="Stamp",
+                        description="Text of the stamp",
+                        llm_role="vision",
+                        modality="image",
+                    ),
+                    StringConcept(
+                        name="Date", description="Contract date", modality="multimodal"
+                    ),
+                ],
+            )
+
+        # (model, content type, names of the aspects/concepts in the call)
+        llm_calls: list[tuple[str, str, list[str]]] = []
+
+        def stub_llm_api(llm: DocumentLLM) -> None:
+            """
+            Stubs the LLM API call, recording the aspects/concepts sent to the LLM.
+            """
+
+            async def _send_messages_stub(self, *, llm_call_obj: Any, **kwargs: Any):
+                """
+                Simulates a successful LLM API call, which returns an extracted item
+                for each aspect/concept in the prompt.
+
+                Same params as `llm._send_messages_with_tools`.
+                """
+                prompt_kwargs = llm_call_obj.prompt_kwargs
+                if "aspects" in prompt_kwargs:
+                    instances = prompt_kwargs["aspects"]
+                    content_type = "text"
+                    answer = [
+                        {"aspect_id": f"A{i}", "paragraph_ids": ["P0"]}
+                        for i in range(len(instances))
+                    ]
+                else:
+                    instances = prompt_kwargs["concepts"]
+                    content_type = prompt_kwargs["data_type"]
+                    answer = [
+                        {"concept_id": f"C{i}", "extracted_items": ["Item"]}
+                        for i in range(len(instances))
+                    ]
+                llm_calls.append(
+                    (self.model, content_type, [i.name for i in instances])
+                )
+                return json.dumps(answer), False
+
+            llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)  # ty: ignore[invalid-assignment]
+
+        def check_all_extracted(document: Document) -> None:
+            """
+            Checks that all aspects and concepts of the document are extracted.
+            """
+            for aspect in document.aspects:
+                assert aspect.extracted_items
+                assert all(i.extracted_items for i in aspect.concepts)
+            assert all(i.extracted_items for i in document.concepts)
+            # A multimodal concept is extracted from both the text and the images
+            assert len(document.get_concept_by_name("Date").extracted_items) == 2
+
+        default_model = "openai/gpt-4.1-mini"
+        complex_model = "openai/gpt-4.1"
+        vision_model = "openai/gpt-4o"
+
+        # === Roles are free-form labels, and modality is a param of a concept ===
+        llm_no_role = create_llm(default_model)
+        assert llm_no_role.role is None
+        assert llm_no_role.list_roles == [None]
+        llm_complex = create_llm(complex_model, role=" complex ")
+        assert llm_complex.role == "complex"  # stripped
+        llm_complex.role = "advanced"
+        llm_complex.role = "complex"
+        llm_vision = create_llm(vision_model, role="vision")
+        for invalid_role in ["", "  ", 1]:
+            with pytest.raises(ValueError):
+                create_llm(default_model, role=invalid_role)
+            with pytest.raises(ValueError):
+                Aspect(name="Parties", description="Parties", llm_role=invalid_role)  # ty: ignore[invalid-argument-type]
+            with pytest.raises(ValueError):
+                StringConcept(name="Title", description="Title", llm_role=invalid_role)  # ty: ignore[invalid-argument-type]
+        concept = StringConcept(name="Title", description="Contract title")
+        assert concept.llm_role is None
+        assert concept.modality == "text"
+        concept.llm_role = "complex"
+        concept.modality = "multimodal"
+        assert (concept.llm_role, concept.modality) == ("complex", "multimodal")
+        with pytest.raises(ValueError):
+            concept.modality = "video"  # ty: ignore[invalid-assignment]
+        # Concepts extracted from images do not support references
+        with pytest.raises(ValueError, match="do not support references"):
+            StringConcept(
+                name="Title",
+                description="Contract title",
+                modality="image",
+                add_references=True,
+            )
+        concept.add_references = True
+        with pytest.raises(ValueError, match="do not support references"):
+            concept.modality = "image"
+        assert concept.modality == "multimodal"  # no change due to invalid assignment
+        # Roles assigned to the instances of a document, including sub-aspects
+        document = create_document()
+        document.aspects[0].aspects = [
+            Aspect(name="Signatories", description="Signatories", llm_role="deep")
+        ]
+        assert document.llm_roles == {None, "complex", "vision", "deep"}
+        assert document.aspects[1].llm_roles == {"complex"}
+
+        # === Standalone LLM extracts all aspects/concepts, regardless of their roles ===
+        for standalone_llm in [llm_no_role, llm_complex]:
+            stub_llm_api(standalone_llm)
+            llm_calls.clear()
+            document = create_document()
+            standalone_llm.extract_all(document)
+            check_all_extracted(document)
+            assert sorted(llm_calls) == sorted(
+                [
+                    (standalone_llm.model, "text", ["Parties", "Term"]),
+                    (standalone_llm.model, "text", ["Duration"]),
+                    (standalone_llm.model, "text", ["Title", "Type"]),
+                    (standalone_llm.model, "image", ["Stamp"]),
+                    (standalone_llm.model, "text", ["Date"]),
+                    (standalone_llm.model, "image", ["Date"]),
+                ]
+            )
+        # Concepts cannot be extracted from images with a model that does not support vision
+        llm_not_vision_capable = create_llm("openai/gpt-3.5-turbo")
+        stub_llm_api(llm_not_vision_capable)
+        llm_calls.clear()
+        document = create_document()
+        with pytest.raises(ValueError, match="does not support vision"):
+            llm_not_vision_capable.extract_concepts_from_document(
+                document, from_concepts=[document.get_concept_by_name("Stamp")]
+            )
+        assert not llm_calls  # no LLM calls are made
+
+        # === LLM group routes each aspect/concept to the LLM with the same role ===
+        stub_llm_api(llm_vision)
+        llm_group = DocumentLLMGroup(llms=[llm_no_role, llm_complex, llm_vision])
+        assert llm_group.list_roles == [None, "complex", "vision"]
+        llm_calls.clear()
+        document = create_document()
+        llm_group.extract_all(document)
+        check_all_extracted(document)
+        assert sorted(llm_calls) == sorted(
+            [
+                (default_model, "text", ["Parties"]),
+                (default_model, "text", ["Title"]),
+                (default_model, "text", ["Date"]),
+                (default_model, "image", ["Date"]),
+                (complex_model, "text", ["Term"]),
+                (complex_model, "text", ["Duration"]),
+                (complex_model, "text", ["Type"]),
+                (vision_model, "image", ["Stamp"]),
+            ]
+        )
+        assert [i.role for i in llm_group.get_usage(llm_role="vision")] == ["vision"]
+        assert [i.role for i in llm_group.get_usage()] == [None, "complex", "vision"]
+
+        # Roles must be unique in the group, and only one LLM can have no role
+        with pytest.raises(ValueError, match="different roles"):
+            DocumentLLMGroup(llms=[llm_no_role, create_llm(complex_model)])
+        with pytest.raises(ValueError, match="different roles"):
+            DocumentLLMGroup(
+                llms=[llm_complex, create_llm(default_model, role="complex")]
+            )
+
+        # Aspects/concepts that cannot be routed to an LLM in the group are not skipped
+        llm_calls.clear()
+        llm_group_no_vision = DocumentLLMGroup(llms=[llm_no_role, llm_complex])
+        document = create_document()
+        with pytest.raises(
+            ValueError, match="no LLM in the group has the role: `vision`"
+        ):
+            llm_group_no_vision.extract_all(document)
+        with pytest.raises(ValueError, match="`vision`"):
+            llm_group_no_vision.extract_concepts_from_document(document)
+        llm_group_no_default = DocumentLLMGroup(llms=[llm_complex, llm_vision])
+        with pytest.raises(ValueError, match=r"None \(no role\)"):
+            llm_group_no_default.extract_aspects_from_document(document)
+        assert not llm_calls  # no LLM calls are made
+        # While the routable ones can still be extracted
+        routable_concepts = [
+            i for i in document.concepts if i.llm_role in llm_group_no_vision.list_roles
+        ]
+        llm_group_no_vision.extract_concepts_from_document(
+            document, from_concepts=routable_concepts
+        )
+        assert all(i.extracted_items for i in routable_concepts)
+        assert not document.get_concept_by_name("Stamp").extracted_items
+
+        # === Deprecated predefined role names (will be removed in v2.0.0) ===
+        def deprecation_warning_filenames(
+            warning_records: pytest.WarningsRecorder,
+        ) -> set[str]:
+            """
+            Returns the names of the files that the deprecation warnings point to.
+            """
+            return {
+                i.filename for i in warning_records if i.category is DeprecationWarning
+            }
+
+        legacy_roles = {
+            # role name: (role, modality of a concept)
+            "extractor_text": (None, "text"),
+            "reasoner_text": ("reasoner_text", "text"),
+            "extractor_vision": ("extractor_vision", "image"),
+            "reasoner_vision": ("reasoner_vision", "image"),
+            "extractor_multimodal": ("extractor_multimodal", "multimodal"),
+            "reasoner_multimodal": ("reasoner_multimodal", "multimodal"),
+        }
+        for legacy_role, (expected_role, expected_modality) in legacy_roles.items():
+            # The warnings must point to the calling code, to be shown by default
+            with pytest.warns(DeprecationWarning, match=legacy_role) as warning_records:
+                llm_legacy = create_llm(default_model, role=legacy_role)
+            assert deprecation_warning_filenames(warning_records) == {__file__}
+            assert llm_legacy.role == expected_role
+
+            with pytest.warns(DeprecationWarning, match=legacy_role) as warning_records:
+                concept = StringConcept(
+                    name="Title", description="Contract title", llm_role=legacy_role
+                )
+            assert deprecation_warning_filenames(warning_records) == {__file__}
+            assert (concept.llm_role, concept.modality) == (
+                expected_role,
+                expected_modality,
+            )
+
+            # Assignment
+            concept = StringConcept(name="Title", description="Contract title")
+            with pytest.warns(DeprecationWarning, match=legacy_role) as warning_records:
+                concept.llm_role = legacy_role
+            assert deprecation_warning_filenames(warning_records) == {__file__}
+            assert (concept.llm_role, concept.modality) == (
+                expected_role,
+                expected_modality,
+            )
+            # The modality is not reset by an assignment of another attribute
+            concept.modality = "text"
+            concept.add_justifications = True
+            assert (concept.llm_role, concept.modality) == (expected_role, "text")
+
+            # Data serialized by earlier versions, i.e. without the modality
+            with pytest.warns(DeprecationWarning, match=legacy_role):
+                concept = StringConcept(
+                    name="Title", description="Contract title", llm_role=legacy_role
+                )
+            concept_dict = concept.to_dict()
+            assert concept_dict["modality"] == expected_modality
+            del concept_dict["modality"]
+            concept_dict["llm_role"] = legacy_role
+            with pytest.warns(DeprecationWarning, match=legacy_role):
+                concept_from_legacy_dict = StringConcept.from_dict(concept_dict)
+            assert (
+                concept_from_legacy_dict.llm_role,
+                concept_from_legacy_dict.modality,
+            ) == (expected_role, expected_modality)
+
+            # Aspects are extracted from text only
+            if expected_modality == "text":
+                with pytest.warns(DeprecationWarning, match=legacy_role):
+                    aspect = Aspect(
+                        name="Parties", description="Parties", llm_role=legacy_role
+                    )
+                assert aspect.llm_role == expected_role
+            else:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", DeprecationWarning)
+                    with pytest.raises(ValueError, match="not supported for aspects"):
+                        Aspect(
+                            name="Parties", description="Parties", llm_role=legacy_role
+                        )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            # A specified modality takes precedence over a deprecated role name
+            concept = StringConcept(
+                name="Title",
+                description="Contract title",
+                llm_role="extractor_vision",
+                modality="multimodal",
+            )
+            assert concept.modality == "multimodal"
+            # References are not supported for the concepts extracted from images
+            with pytest.raises(ValueError, match="do not support references"):
+                StringConcept(
+                    name="Title",
+                    description="Contract title",
+                    llm_role="reasoner_vision",
+                    add_references=True,
+                )
+            concept = StringConcept(
+                name="Title", description="Contract title", add_references=True
+            )
+            with pytest.raises(ValueError, match="do not support references"):
+                concept.llm_role = "extractor_vision"
+            assert (concept.llm_role, concept.modality) == (None, "text")
+            # Aspect-level concepts are extracted from text only
+            with pytest.raises(ValueError, match="extracted from text only"):
+                Aspect(
+                    name="Parties",
+                    description="Parties",
+                    concepts=[
+                        StringConcept(
+                            name="Title",
+                            description="Contract title",
+                            llm_role="extractor_multimodal",
+                        )
+                    ],
+                )
+
+            # The LLMs and the aspects/concepts with the same deprecated role name
+            # are still matched in an LLM group
+            llm_legacy_extractor = create_llm(default_model, role="extractor_text")
+            llm_legacy_reasoner = create_llm(complex_model, role="reasoner_text")
+            llm_legacy_vision = create_llm(vision_model, role="extractor_vision")
+            for llm_legacy in [
+                llm_legacy_extractor,
+                llm_legacy_reasoner,
+                llm_legacy_vision,
+            ]:
+                stub_llm_api(llm_legacy)
+            llm_group_legacy = DocumentLLMGroup(
+                llms=[llm_legacy_extractor, llm_legacy_reasoner, llm_legacy_vision]
+            )
+            document = Document(
+                raw_text="Non-disclosure agreement\n\nThe parties agree as follows.",
+                images=[self.test_img_png_invoice],
+                aspects=[
+                    Aspect(
+                        name="Parties",
+                        description="Contract parties",
+                        llm_role="extractor_text",
+                    ),
+                    Aspect(
+                        name="Term",
+                        description="Contract term",
+                        llm_role="reasoner_text",
+                    ),
+                ],
+                concepts=[
+                    StringConcept(name="Title", description="Contract title"),
+                    StringConcept(
+                        name="Type",
+                        description="Contract type",
+                        llm_role="reasoner_text",
+                    ),
+                    StringConcept(
+                        name="Stamp",
+                        description="Text of the stamp",
+                        llm_role="extractor_vision",
+                    ),
+                ],
+            )
+        llm_calls.clear()
+        llm_group_legacy.extract_all(document)
+        assert all(i.extracted_items for i in [*document.aspects, *document.concepts])
+        assert sorted(llm_calls) == sorted(
+            [
+                (default_model, "text", ["Parties"]),
+                (default_model, "text", ["Title"]),
+                (complex_model, "text", ["Term"]),
+                (complex_model, "text", ["Type"]),
+                (vision_model, "image", ["Stamp"]),
+            ]
+        )
+
+        check_locals_memory_usage(
+            locals(), test_name="test_llm_roles_and_concept_modality"
+        )
+
+    @memory_profile_and_capture
     def test_update_default_prompt(self):
         """
         Tests for updating the default prompt for the LLM.
         """
         # Test custom prompts assignment
         llm_with_updated_prompts = DocumentLLM(
-            **self._llm_extractor_text_kwargs_openai,  # ty: ignore[invalid-argument-type]
+            **self._llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
         )
         project_root = get_project_root_path()
         prompt_aspects_without_tags_path = (
@@ -2548,30 +2925,28 @@ class TestAll(TestUtils):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="extractor_vision",  # invalid LLM role  # type: ignore
+                llm_role="",  # invalid LLM role (empty label)
             )
         with pytest.raises(ValueError):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="extractor_multimodal",  # invalid LLM role  # type: ignore
+                modality="image",  # ty: ignore[unknown-argument]  # aspects are extracted from text only
             )
         aspect = Aspect(
             name="Categories of confidential information",
             description="Clauses describing confidential information covered by the NDA",
-            llm_role="extractor_text",
             add_justifications=True,
         )
         aspect_concepts = [
             StringConcept(
                 name="Business Information",
                 description="Categories of Business Information",
-                llm_role="extractor_text",
             ),
             StringConcept(
                 name="Technical Information",
                 description="Categories of Technical Information",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
             ),
         ]
         aspect.concepts = aspect_concepts
@@ -2593,28 +2968,27 @@ class TestAll(TestUtils):
                     StringConcept(  # duplicate name and description
                         name="Business Information",
                         description="Categories of Business Information",
-                        llm_role="extractor_text",
                         add_justifications=True,
                     )
                 ]
             )
-        with pytest.raises(ValueError, match="vision"):
+        with pytest.raises(ValueError, match="extracted from text only"):
             aspect.add_concepts(
                 [
                     StringConcept(
                         name="Random",
                         description="Random",
-                        llm_role="extractor_vision",  # invalid llm role
+                        modality="image",  # invalid modality for aspect-level concept
                     )
                 ]
             )
-        with pytest.raises(ValueError, match="multimodal"):
+        with pytest.raises(ValueError, match="extracted from text only"):
             aspect.add_concepts(
                 [
                     StringConcept(
                         name="Random",
                         description="Random",
-                        llm_role="extractor_multimodal",  # invalid llm role
+                        modality="multimodal",  # invalid modality for aspect-level concept
                     )
                 ]
             )
@@ -2645,7 +3019,6 @@ class TestAll(TestUtils):
         sub_aspect_same_name = Aspect(
             name="Categories of confidential information",  # Same name as parent aspect
             description="Different description",
-            llm_role="extractor_text",
         )
         with pytest.raises(ValueError):
             aspect.add_aspects([sub_aspect_same_name])
@@ -2653,7 +3026,6 @@ class TestAll(TestUtils):
         sub_aspect_same_description = Aspect(
             name="Different name",
             description="Clauses describing confidential information covered by the NDA",  # Same description as parent aspect
-            llm_role="extractor_text",
         )
         with pytest.raises(ValueError):
             aspect.add_aspects([sub_aspect_same_description])
@@ -2662,17 +3034,15 @@ class TestAll(TestUtils):
         main_aspect = Aspect(
             name="Main Aspect",
             description="Main aspect description",
-            llm_role="extractor_text",
         )
         sub_aspect = Aspect(
             name="Sub Aspect",
             description="Sub aspect description",
-            llm_role="reasoner_text",
+            llm_role="reasoner",
         )
         sub_sub_aspect = Aspect(
             name="Sub-Sub Aspect",
             description="Sub-sub aspect description",
-            llm_role="extractor_text",
         )
 
         # Adding a sub-aspect to the main aspect should work
@@ -2711,7 +3081,6 @@ class TestAll(TestUtils):
                 StringConcept(
                     name="Personnel Information",
                     description="Categories of information on personnel and staff",
-                    llm_role="extractor_text",
                     add_justifications=True,
                 )
             ]
@@ -2750,7 +3119,6 @@ class TestAll(TestUtils):
         string_concept = StringConcept(
             name="Business Information",
             description="Categories of Business Information",
-            llm_role="extractor_text",
             add_justifications=True,
         )
 
@@ -2787,7 +3155,6 @@ class TestAll(TestUtils):
         boolean_concept = BooleanConcept(
             name="Contract type check",
             description="Contract is an NDA",
-            llm_role="extractor_text",
             add_justifications=True,
         )
 
@@ -2876,7 +3243,7 @@ class TestAll(TestUtils):
             concept_negative_2,
             concept_impossible_to_determine_1,
             concept_impossible_to_determine_2,
-        ) = self.llm_extractor_text.extract_concepts_from_document(
+        ) = self.llm_extractor.extract_concepts_from_document(
             document, use_concurrency=True
         )
         assert concept_positive_1.extracted_items
@@ -2921,8 +3288,8 @@ class TestAll(TestUtils):
             reference_depth="sentences",
         )
         document.add_concepts([concept_multiple_items])
-        (concept_multiple_items,) = (
-            self.llm_extractor_text.extract_concepts_from_document(document)
+        (concept_multiple_items,) = self.llm_extractor.extract_concepts_from_document(
+            document
         )
         assert len(concept_multiple_items.extracted_items) == 3
         assert concept_multiple_items.extracted_items[0].value is True
@@ -2969,7 +3336,7 @@ class TestAll(TestUtils):
             json_obj_concept_positive,
             json_obj_concept_negative,
             json_obj_concept_impossible_to_determine,
-        ) = self.llm_extractor_text.extract_concepts_from_document(
+        ) = self.llm_extractor.extract_concepts_from_document(
             document, use_concurrency=True
         )
         assert json_obj_concept_positive.extracted_items
@@ -3234,7 +3601,7 @@ class TestAll(TestUtils):
                 structure={
                     "test": str,
                 },
-                llm_role="extractor_vision",
+                modality="image",
                 add_references=True,
                 # references are not supported in vision concepts
             )
@@ -3843,7 +4210,6 @@ class TestAll(TestUtils):
                 description=f"Testing {struct_name} structure",
                 structure=structure,
                 examples=[JsonObjectExample(content=valid_examples[struct_name])],
-                llm_role="extractor_text",
             )
 
             # Test instance serialization and cloning
@@ -3881,7 +4247,6 @@ class TestAll(TestUtils):
                 name="Invalid Structure",
                 description="Testing invalid structure",
                 structure={str: str},  # invalid mapping  # type: ignore
-                llm_role="extractor_text",
             )
 
         with pytest.raises(ValueError):
@@ -3889,7 +4254,6 @@ class TestAll(TestUtils):
                 name="Invalid Structure",
                 description="Testing invalid structure",
                 structure={int: "integer"},  # invalid mapping  # type: ignore
-                llm_role="extractor_text",
             )
 
         with pytest.raises(ValueError):
@@ -3897,7 +4261,6 @@ class TestAll(TestUtils):
                 name="Invalid Structure",
                 description="Testing invalid structure",
                 structure={},  # empty mapping
-                llm_role="extractor_text",
             )
 
         with pytest.raises(ValueError):
@@ -3905,7 +4268,6 @@ class TestAll(TestUtils):
                 name="Invalid Structure",
                 description="Testing invalid structure",
                 structure={"random": Exception},  # invalid value type
-                llm_role="extractor_text",
             )
 
         # Test with invalid type hints as structure values
@@ -3936,7 +4298,7 @@ class TestAll(TestUtils):
                 name="Vision Concept with References",
                 description="Testing vision concept with references",
                 structure={"test": str},
-                llm_role="extractor_vision",
+                modality="image",
                 add_references=True,
             )
 
@@ -3998,7 +4360,7 @@ class TestAll(TestUtils):
                 "description": str,
                 "score": int | float | None,
             },
-            llm_role="extractor_vision",
+            modality="image",
             add_justifications=True,
         )
 
@@ -4123,7 +4485,6 @@ class TestAll(TestUtils):
                     }
                 )
             ],
-            llm_role="extractor_text",
         )
 
         # Load the test text file as a Document
@@ -4172,12 +4533,10 @@ class TestAll(TestUtils):
         assert '"is_active": bool' in structure_str
 
         # Extract the concept
-        extracted_concepts = self.llm_extractor_text.extract_concepts_from_document(
-            document
-        )
+        extracted_concepts = self.llm_extractor.extract_concepts_from_document(document)
 
         # Verify prompt content from the LLM call log
-        prompt_string = self.llm_extractor_text.get_usage()[-1].usage.calls[-1].prompt
+        prompt_string = self.llm_extractor.get_usage()[-1].usage.calls[-1].prompt
         assert structure_str in prompt_string
 
         # Validate extraction results
@@ -4295,7 +4654,6 @@ class TestAll(TestUtils):
             description="Classify the type of legal document",
             labels=["NDA", "Consultancy Agreement", "Privacy Policy", "Other"],
             classification_type="multi_class",
-            llm_role="extractor_text",
             add_justifications=True,
         )
 
@@ -4305,7 +4663,7 @@ class TestAll(TestUtils):
             description="Identify all relevant topics covered in the document",
             labels=["Finance", "Legal", "Technology", "HR", "Operations", "Marketing"],
             classification_type="multi_label",
-            llm_role="reasoner_text",
+            llm_role="reasoner",
             add_references=True,
             reference_depth="sentences",
         )
@@ -4418,7 +4776,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_extract_label_concept(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -4442,7 +4800,6 @@ class TestAll(TestUtils):
                 "Other",
             ],
             classification_type="multi_class",
-            llm_role="extractor_text",
             add_justifications=True,
             add_references=True,
             reference_depth="paragraphs",
@@ -4462,7 +4819,6 @@ class TestAll(TestUtils):
                 "Contract Terms",
             ],
             classification_type="multi_label",
-            llm_role="extractor_text",
             add_justifications=True,
             add_references=True,
             reference_depth="sentences",
@@ -4543,7 +4899,6 @@ class TestAll(TestUtils):
                 "Nutrition Information",
             ],
             classification_type="multi_label",
-            llm_role="extractor_text",
         )
 
         document.add_concepts([irrelevant_concept])
@@ -4568,7 +4923,6 @@ class TestAll(TestUtils):
                 "Nutrition Information",
             ],
             classification_type="multi_class",
-            llm_role="extractor_text",
         )
         document.concepts = [irrelevant_concept]
         llm.extract_concepts_from_document(document)
@@ -4883,7 +5237,6 @@ class TestAll(TestUtils):
                     Aspect(
                         name="Liability",
                         description="Clauses describing liability of the parties",
-                        llm_role="extractor_text",
                         add_justifications=True,
                     )
                 ]
@@ -4893,7 +5246,6 @@ class TestAll(TestUtils):
                     StringConcept(
                         name="Business Information",
                         description="Categories of Business Information",
-                        llm_role="extractor_text",
                         add_justifications=True,
                     ),
                 ]
@@ -4905,12 +5257,10 @@ class TestAll(TestUtils):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="extractor_text",
             ),
             Aspect(
                 name="Liability",
                 description="Clauses describing liability of the parties",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
         ]
@@ -4934,7 +5284,6 @@ class TestAll(TestUtils):
                     Aspect(
                         name="liability",
                         description="clauses describing liability of the parties",
-                        llm_role="extractor_text",
                         add_justifications=True,
                     )
                 ]  # duplicate aspect (case-insensitive)
@@ -4945,7 +5294,7 @@ class TestAll(TestUtils):
                     Aspect(
                         name="Business Information",
                         description="Categories of Business Information",
-                        llm_role="extractor_vision",  # unsupported llm role for aspect  # type: ignore
+                        modality="image",  # ty: ignore[unknown-argument]  # aspects are extracted from text only
                     )
                 ]
             )
@@ -4982,13 +5331,12 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Business Information",
                 description="Categories of Business Information",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
             BooleanConcept(
                 name="Contract type check",
                 description="Contract is an NDA",
-                llm_role="extractor_vision",
+                modality="image",
                 add_justifications=True,
             ),
         ]
@@ -5004,7 +5352,6 @@ class TestAll(TestUtils):
                 StringConcept(
                     name="business information",
                     description="categories of business information",
-                    llm_role="extractor_text",
                 ),
             ]  # duplicate concept (case-insensitive)
         assert context.concepts == document_concepts
@@ -5020,7 +5367,7 @@ class TestAll(TestUtils):
                     name="Penalties",
                     description="Clauses describing contractual penalties",
                     add_justifications=True,
-                    llm_role="reasoner_text",
+                    llm_role="reasoner",
                 ),
                 Aspect(
                     name="Term and duration",
@@ -5208,7 +5555,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_system_messages")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5217,19 +5564,18 @@ class TestAll(TestUtils):
 
         self.config_llm_async_limiter_for_mock_responses(llm)
 
-        # Check for unsupported LLM roles
+        # Check for unsupported modality (aspects are extracted from text only)
         with pytest.raises(ValueError):
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="extractor_vision",  # type: ignore
+                modality="image",  # ty: ignore[unknown-argument]
             )
 
         document_aspects = [
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="extractor_text",
             ),
         ]
         self.document.aspects = document_aspects
@@ -5273,12 +5619,11 @@ class TestAll(TestUtils):
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="extractor_text",
             ),
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 add_justifications=True,
             ),
         ]
@@ -5349,12 +5694,12 @@ class TestAll(TestUtils):
             Aspect(
                 name="Non-compete",
                 description="Clauses containing non-compete provisions",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
             ),
             Aspect(
                 name="Penalties",
                 description="Clauses describing penalties for breaching the contract",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
             ),
         ]
         self.document.aspects = document_aspects
@@ -5364,15 +5709,9 @@ class TestAll(TestUtils):
             llm=llm,
             expected_n_calls_no_concurrency=(3 if llm.is_group else 2) * 3
             + 2,  # *3 due to 30 (1/3) paras per call, +2 due to sub-aspects
-            expected_n_calls_1_item_per_call=(
-                len(self.document.aspects) if llm.is_group else 6
-            )
-            * 3
+            expected_n_calls_1_item_per_call=len(self.document.aspects) * 3
             + 3,  # *3 due to 30 (1/3) paras per call, +3 due to sub-aspects
-            expected_n_calls_with_concurrency=(
-                len(self.document.aspects) if llm.is_group else 6
-            )
-            * 3
+            expected_n_calls_with_concurrency=len(self.document.aspects) * 3
             + 3,  # *3 due to 30 (1/3) paras per call, +3 due to sub-aspects
             func=llm.extract_aspects_from_document,
             func_kwargs={
@@ -5413,7 +5752,6 @@ class TestAll(TestUtils):
             original_container=[document_aspects[0]],
             assigned_container=extracted_aspects,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
 
         # Log sub-aspects for testing
@@ -5446,7 +5784,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_extract_concepts_from_aspect(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5497,7 +5835,6 @@ class TestAll(TestUtils):
             Aspect(
                 name="Confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="extractor_text",
                 concepts=aspect_concepts,
             )
         ]
@@ -5578,7 +5915,6 @@ class TestAll(TestUtils):
                 name="Term and termination",
                 description="All clauses addressing term and termination of the contract",
                 concepts=[],
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
         ]
@@ -5593,7 +5929,6 @@ class TestAll(TestUtils):
             original_container=aspects_without_concepts,
             assigned_container=self.document.aspects,
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
         assert extracted_concepts == []
 
@@ -5645,13 +5980,12 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
             ),
         ]
         with pytest.raises(ValueError):
@@ -5690,7 +6024,6 @@ class TestAll(TestUtils):
             original_container=aspect_concepts,  # ty: ignore[invalid-argument-type]
             assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         # Extract with different paragraph chunks for context
@@ -5705,7 +6038,6 @@ class TestAll(TestUtils):
             original_container=aspect_concepts,  # ty: ignore[invalid-argument-type]
             assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         # Overwrite check
@@ -5731,7 +6063,6 @@ class TestAll(TestUtils):
             original_container=[aspects[0].concepts[0]],
             assigned_container=extracted_concepts,
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         # Test concepts extraction from sub-aspects
@@ -5809,7 +6140,7 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_extract_concepts_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -5822,12 +6153,11 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="extractor_text",
             ),
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 add_justifications=True,
             ),
         ]
@@ -5870,47 +6200,40 @@ class TestAll(TestUtils):
             DateConcept(
                 name="Effective Date",
                 description="Contract start date",
-                llm_role="extractor_text",
             ),
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="extractor_text",
             ),
             StringConcept(
                 name="Parties",
                 description="Names of contract parties",
-                llm_role="extractor_text",
                 add_references=True,
             ),
             StringConcept(
                 name="Duration",
                 description="Contract duration",
-                llm_role="extractor_text",
                 add_references=True,
             ),
             NumericalConcept(
                 name="Duration in years",
                 description="Contract duration in years",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 numeric_type="int",
             ),
             BooleanConcept(
                 name="Contract type check",
                 description="Contract is a shareholder's agreement",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
             RatingConcept(
                 name="Contract quality",
                 description="Contract quality from NDA best practice perspective.",
-                llm_role="extractor_text",
                 rating_scale=(1, 10),
                 add_justifications=True,
                 justification_depth="balanced",
@@ -5929,7 +6252,7 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 add_justifications=True,
             ),
         ]
@@ -5964,12 +6287,8 @@ class TestAll(TestUtils):
         self.compare_with_concurrent_execution(
             llm=llm,
             expected_n_calls_no_concurrency=(5 if llm.is_group else 4),
-            expected_n_calls_with_concurrency=(
-                len(self.document.concepts) if llm.is_group else 7
-            ),
-            expected_n_calls_1_item_per_call=(
-                len(self.document.concepts) if llm.is_group else 7
-            ),
+            expected_n_calls_with_concurrency=len(self.document.concepts),
+            expected_n_calls_1_item_per_call=len(self.document.concepts),
             func=llm.extract_concepts_from_document,
             func_kwargs={
                 "document": self.document,
@@ -6003,7 +6322,6 @@ class TestAll(TestUtils):
             original_container=[document_concepts[0]],
             assigned_container=extracted_concepts,
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         # Extract with different paragraph chunks for context
@@ -6018,7 +6336,6 @@ class TestAll(TestUtils):
             original_container=[document_concepts[0]],
             assigned_container=extracted_concepts,
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         # Check usage tokens
@@ -6041,7 +6358,7 @@ class TestAll(TestUtils):
             document_docx_ua,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_extract_all(self, document: Document, llm: DocumentLLMGroup | DocumentLLM):
         """
@@ -6061,19 +6378,16 @@ class TestAll(TestUtils):
                     StringConcept(
                         name="Contract term",
                         description="Contract term",
-                        llm_role="extractor_text",
                     ),
                     NumericalConcept(
                         name="Duration",
                         description="Contract duration in years",
-                        llm_role="extractor_text",
                         numeric_type="int",
                         add_justifications=True,
                         add_references=True,
                         reference_depth="sentences",
                     ),
                 ],
-                llm_role="extractor_text",
             ),
             Aspect(
                 name="Parties",
@@ -6083,17 +6397,14 @@ class TestAll(TestUtils):
                         name="Contract party name",
                         description="Contract party name in the contract. "
                         "Exclude information on individual signatories.",
-                        llm_role="extractor_text",
                     ),
                     StringConcept(
                         name="Contract party name and role",
                         description="Contract party name and role in the contract. "
                         "Exclude information on individual signatories.",
                         examples=[StringExample(content="Company ABC (Supplier)")],
-                        llm_role="extractor_text",
                     ),
                 ],
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
         ]
@@ -6101,17 +6412,15 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
             ),
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="extractor_text",
             ),
             StringConcept(
                 name="Start date",
                 description="Contract start date",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
             JsonObjectConcept(
@@ -6129,8 +6438,8 @@ class TestAll(TestUtils):
         self.compare_with_concurrent_execution(
             llm=llm,
             expected_n_calls_no_concurrency=(8 if llm.is_group else 7),
-            expected_n_calls_with_concurrency=(10 if llm.is_group else 9),
-            expected_n_calls_1_item_per_call=(10 if llm.is_group else 9),
+            expected_n_calls_with_concurrency=10,
+            expected_n_calls_1_item_per_call=10,
             func=llm.extract_all,
             func_kwargs={
                 "document": document,
@@ -6151,13 +6460,11 @@ class TestAll(TestUtils):
             original_container=list(document_aspects),
             assigned_container=list(document.aspects),  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
         self.check_instance_container_states(
             original_container=list(document_concepts),
             assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         # No defined concepts - just a logger message must appear and no error thrown, empty list returned
@@ -6185,7 +6492,6 @@ class TestAll(TestUtils):
             original_container=document_aspects,
             assigned_container=document.aspects,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
 
         # No aspects, just document concepts
@@ -6194,17 +6500,15 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
             ),
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="extractor_text",
             ),
             StringConcept(
                 name="Start date",
                 description="Contract start date",
-                llm_role="extractor_text",
             ),
         ]
         document.concepts = document_concepts
@@ -6214,7 +6518,6 @@ class TestAll(TestUtils):
             original_container=list(document_concepts),
             assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
 
         with pytest.raises(ValueError):
@@ -6258,7 +6561,6 @@ class TestAll(TestUtils):
             original_container=document_concepts,  # ty: ignore[invalid-argument-type]
             assigned_container=document.concepts,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=_Concept,
-            llm_roles=self.invalid_llm_with_valid_fallback.list_roles,
         )
 
         # Check serialization of an LLM with fallback
@@ -6320,7 +6622,7 @@ class TestAll(TestUtils):
                 fallback_llms=[
                     fallback_1,
                     create_llm(
-                        "openai/gpt-4.1-nano", role="reasoner_text", is_fallback=True
+                        "openai/gpt-4.1-nano", role="reasoner", is_fallback=True
                     ),
                 ],
             )
@@ -6925,7 +7227,7 @@ class TestAll(TestUtils):
             document_docx_ua,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_serialization_and_cloning(
         self, document: Document, llm: DocumentLLMGroup | DocumentLLM
@@ -6957,7 +7259,6 @@ class TestAll(TestUtils):
                     NumericalConcept(
                         name="Duration",
                         description="Contract duration",
-                        llm_role="extractor_text",
                         numeric_type="int",
                         add_justifications=True,
                         add_references=True,
@@ -6985,7 +7286,6 @@ class TestAll(TestUtils):
                         singular_occurrence=True,
                     ),
                 ],
-                llm_role="extractor_text",
             ),
             Aspect(
                 name="Parties",
@@ -6996,7 +7296,6 @@ class TestAll(TestUtils):
                         description="Contract party name and role in the contract. "
                         "Exclude information on individual signatories. "
                         "Example: Company ABC (Supplier).",
-                        llm_role="extractor_text",
                         singular_occurrence=False,
                     ),
                     LabelConcept(
@@ -7012,7 +7311,6 @@ class TestAll(TestUtils):
                         classification_type="multi_label",
                     ),
                 ],
-                llm_role="extractor_text",
                 reference_depth="sentences",
             ),
         ]
@@ -7024,7 +7322,6 @@ class TestAll(TestUtils):
             DateConcept(
                 name="Start date",
                 description="Contract start date",
-                llm_role="extractor_text",
                 add_justifications=True,
                 add_references=True,
                 reference_depth="sentences",
@@ -7033,7 +7330,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 add_justifications=True,
                 singular_occurrence=True,
             ),
@@ -7049,19 +7346,18 @@ class TestAll(TestUtils):
                     "Licensing agreement",
                 ],
                 classification_type="multi_label",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 singular_occurrence=True,  # global document classification
             ),
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="extractor_text",
                 singular_occurrence=True,
             ),
             NumericalConcept(
                 name="Duration in years",
                 description="Contract duration in years",
-                llm_role="reasoner_text",
+                llm_role="reasoner",
                 numeric_type="int",
                 add_justifications=True,
                 singular_occurrence=True,
@@ -7092,26 +7388,26 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Section titles",
                 description="Section titles in the contract",
-                llm_role="extractor_text",
                 singular_occurrence=False,
             ),
             # Vision-related
             BooleanConcept(
                 name="Invoice check",
                 description="Whether the attached images contain an invoice",
-                llm_role="reasoner_vision",
+                llm_role="reasoner",
+                modality="image",
                 singular_occurrence=True,
             ),
             StringConcept(
                 name="Invoice amount",
                 description="The total amount of the attached invoice",
-                llm_role="extractor_vision",
+                modality="image",
                 singular_occurrence=False,  # multiple invoices in the document
             ),
             StringConcept(
                 name="Invoice number",
                 description="Number of the invoice",
-                llm_role="extractor_vision",
+                modality="image",
                 singular_occurrence=False,  # multiple invoices in the document
             ),
             LabelConcept(
@@ -7125,7 +7421,7 @@ class TestAll(TestUtils):
                     "Debit note",
                 ],
                 classification_type="multi_class",
-                llm_role="extractor_vision",
+                modality="image",
                 singular_occurrence=False,  # multiple invoices in the document
             ),
         ]
@@ -7237,13 +7533,11 @@ class TestAll(TestUtils):
             original_container=self.extraction_pipeline.aspects,  # ty: ignore[invalid-argument-type]
             assigned_container=document.aspects,  # ty: ignore[invalid-argument-type]
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
         self.check_instance_container_states(
             original_container=list(self.extraction_pipeline.concepts),
             assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
-            llm_roles=llm.list_roles,
         )
         self.check_instance_serialization_and_cloning(document)
         self.check_instance_serialization_and_cloning(self.extraction_pipeline)
@@ -7262,7 +7556,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor_text])
+    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
     @memory_profile_and_capture
     def test_aspect_extraction_from_paragraphs(
         self, llm: DocumentLLMGroup | DocumentLLM
@@ -7281,13 +7575,11 @@ class TestAll(TestUtils):
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="extractor_text",
                 add_justifications=True,
             ),
             Aspect(
                 name="Term and termination",
                 description="Term and termination clauses",
-                llm_role="extractor_text",
                 reference_depth="sentences",
             ),
             Aspect(
@@ -7296,7 +7588,6 @@ class TestAll(TestUtils):
                 "or irregularity in a contract's terms, structure, or execution - such as bizarre "
                 "clauses about intergalactic jurisdiction, mandatory sock-wearing policies, "
                 "or payment in rare seashells - that may indicate errors, conflicts, or potential risks.",
-                llm_role="extractor_text",
                 reference_depth="sentences",
             ),
         ]
@@ -7309,7 +7600,6 @@ class TestAll(TestUtils):
             original_container=aspects_to_extract,
             assigned_container=document.aspects,
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
         for aspect in extracted_aspects:
             self.check_extra_data_in_extracted_items(aspect)  # ty: ignore[invalid-argument-type]
@@ -7326,7 +7616,6 @@ class TestAll(TestUtils):
             original_container=aspects_to_extract,
             assigned_container=document.aspects,
             assigned_instance_class=Aspect,
-            llm_roles=llm.list_roles,
         )
 
         # Check usage tokens
@@ -7352,7 +7641,7 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Invoice number",
                 description="Number of the invoice",
-                llm_role="extractor_vision",
+                modality="image",
                 add_justifications=True,
             ),
             JsonObjectConcept(
@@ -7372,7 +7661,8 @@ class TestAll(TestUtils):
                         }
                     )
                 ],
-                llm_role="reasoner_vision",
+                llm_role="reasoner",
+                modality="image",
                 add_justifications=True,
             ),
             JsonObjectConcept(
@@ -7382,12 +7672,12 @@ class TestAll(TestUtils):
                     "line": str,
                     "amount": str,
                 },
-                llm_role="extractor_vision",
+                modality="image",
             ),
             NumericalConcept(
                 name="Total invoice amount",
                 description="Total amount of the invoice",
-                llm_role="extractor_vision",
+                modality="image",
                 numeric_type="float",
                 add_justifications=True,
             ),
@@ -7417,21 +7707,23 @@ class TestAll(TestUtils):
             NumericalConcept(
                 name="Number of bedrooms",
                 description="Number of bedrooms in the floor plan",
-                llm_role="reasoner_vision",
+                llm_role="reasoner",
+                modality="image",
                 numeric_type="int",
                 add_justifications=True,
             ),
             NumericalConcept(
                 name="Number of balconies",
                 description="Number of balconies in the floor plan",
-                llm_role="reasoner_vision",
+                llm_role="reasoner",
+                modality="image",
                 numeric_type="int",
                 add_justifications=True,
             ),
             StringConcept(
                 name="Room names",
                 description="Names of the rooms in the floor plan",
-                llm_role="extractor_vision",
+                modality="image",
             ),
         ]
         document = Document(
@@ -7468,12 +7760,10 @@ class TestAll(TestUtils):
         self.check_cost(self.llm_group)
 
         # Test error when model is not vision-capable
-        with pytest.warns(UserWarning, match="vision-capable"):
-            llm_not_vision_capable = DocumentLLM(
-                model="openai/gpt-3.5-turbo",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                role="extractor_vision",
-            )
+        llm_not_vision_capable = DocumentLLM(
+            model="openai/gpt-3.5-turbo",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+        )
         with pytest.raises(ValueError, match="does not support vision"):
             llm_not_vision_capable.chat(
                 "What's the type of this document?", images=[self.test_img_png_invoice]
@@ -7484,11 +7774,9 @@ class TestAll(TestUtils):
         )  # higher value for images
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize(
-        "llm", [llm_extractor_multimodal, llm_reasoner_multimodal, llm_group]
-    )
+    @pytest.mark.parametrize("llm", [llm_extractor, llm_reasoner, llm_group])
     @memory_profile_and_capture
-    def test_multimodal_roles(self, llm: DocumentLLM | DocumentLLMGroup):
+    def test_multimodal_concepts(self, llm: DocumentLLM | DocumentLLMGroup):
         """
         Tests for multimodal concept extraction from multimodal document (text + images).
         """
@@ -7500,18 +7788,14 @@ class TestAll(TestUtils):
                 StringConcept(
                     name="Invoice number",
                     description="Number of the invoice",
-                    llm_role=llm.role
-                    if isinstance(llm, DocumentLLM)
-                    else "extractor_multimodal",
+                    modality="multimodal",
                     add_references=True,
                     add_justifications=True,
                 ),
                 DateConcept(
                     name="Invoice date",
                     description="Date of the invoice",
-                    llm_role=llm.role
-                    if isinstance(llm, DocumentLLM)
-                    else "extractor_multimodal",
+                    modality="multimodal",
                     add_references=True,
                     reference_depth="sentences",
                 ),
@@ -7529,7 +7813,7 @@ class TestAll(TestUtils):
         concept_invoice_date = self.document_multimodal_docx.get_concept_by_name(
             "Invoice date"
         )
-        if isinstance(llm, DocumentLLMGroup) or llm.role == "extractor_multimodal":
+        if llm is not self.llm_reasoner:
             self.log_extracted_items_for_instance(concept_invoice_number)
             assert concept_invoice_number.extracted_items
             assert concept_invoice_number.extracted_items[0].reference_paragraphs
@@ -7538,7 +7822,7 @@ class TestAll(TestUtils):
                 i.reference_paragraphs for i in concept_invoice_number.extracted_items
             )  # refs will be added only for text content, not for images
             assert all(i.justification for i in concept_invoice_number.extracted_items)
-        elif isinstance(llm, DocumentLLM) and llm.role == "reasoner_multimodal":
+        else:
             self.log_extracted_items_for_instance(concept_invoice_date)
             assert concept_invoice_date.extracted_items
             assert concept_invoice_date.extracted_items[0].reference_paragraphs
@@ -7547,19 +7831,17 @@ class TestAll(TestUtils):
                 i.reference_paragraphs for i in concept_invoice_date.extracted_items
             )  # refs will be added only for text content, not for images
 
-        # Test together with aspects and other concepts with different roles
+        # Test together with aspects and other concepts routed to different LLMs
         if isinstance(llm, DocumentLLMGroup):
             self.document_multimodal_docx.add_aspects(
                 [
                     Aspect(
                         name="Invoices",
                         description="Provisions on invoices in the contract",
-                        llm_role="extractor_text",
                         concepts=[
                             NumericalConcept(
                                 name="Invoice number",
                                 description="Number of the invoice",
-                                llm_role="extractor_text",
                             )
                         ],
                     )
@@ -7572,7 +7854,7 @@ class TestAll(TestUtils):
                     StringConcept(
                         name="Document type",
                         description="Guess the type of the document",
-                        llm_role="reasoner_text",
+                        llm_role="reasoner",
                         add_justifications=True,
                     )
                 ]
@@ -7592,9 +7874,7 @@ class TestAll(TestUtils):
                 StringConcept(
                     name="Document type",
                     description="Type of the document",
-                    llm_role=llm.role
-                    if isinstance(llm, DocumentLLM)
-                    else "extractor_multimodal",
+                    modality="multimodal",
                 )
             ]
         )
@@ -7609,9 +7889,7 @@ class TestAll(TestUtils):
                 StringConcept(
                     name="Invoice number",
                     description="Number of the invoice",
-                    llm_role=llm.role
-                    if isinstance(llm, DocumentLLM)
-                    else "extractor_multimodal",
+                    modality="multimodal",
                 )
             ]
         )
@@ -7619,7 +7897,7 @@ class TestAll(TestUtils):
         invoice_number_concept = document.get_concept_by_name("Invoice number")
         assert invoice_number_concept.extracted_items
 
-        check_locals_memory_usage(locals(), test_name="test_multimodal_roles")
+        check_locals_memory_usage(locals(), test_name="test_multimodal_concepts")
 
     @pytest.mark.vcr
     @memory_profile_and_capture
@@ -7627,10 +7905,10 @@ class TestAll(TestUtils):
         """
         Tests for the chat method.
         """
-        for model in [
-            self.llm_extractor_text,
-            self.llm_extractor_vision,
-            self.invalid_llm_with_valid_fallback,
+        for model, with_image in [
+            (self.llm_extractor, False),
+            (self.llm_extractor, True),
+            (self.invalid_llm_with_valid_fallback, False),
         ]:
             with pytest.raises(ValueError):
                 model.chat("")
@@ -7640,7 +7918,7 @@ class TestAll(TestUtils):
                 model.chat(prompt="Test", images=[1])  # type: ignore
             with pytest.raises(TypeError):
                 model.chat(images=self.test_img_png_invoice)  # type: ignore
-            if model == self.llm_extractor_vision:
+            if with_image:
                 # Check with text + image
                 with pytest.warns(UserWarning, match="default system message"):
                     model.chat(
@@ -7747,7 +8025,7 @@ class TestAll(TestUtils):
         cs = ChatSession()
         # With default system message, a warning should be emitted on first call
         with pytest.warns(UserWarning, match="default system message"):
-            reply1 = self.llm_extractor_text.chat(
+            reply1 = self.llm_extractor.chat(
                 "What's the result of 3+5?",
                 chat_session=cs,
             )
@@ -7766,7 +8044,7 @@ class TestAll(TestUtils):
 
         # Second turn within same session
         with pytest.warns(UserWarning, match="default system message"):
-            reply2 = self.llm_extractor_text.chat(
+            reply2 = self.llm_extractor.chat(
                 "And what's 10-3?",
                 chat_session=cs,
             )
@@ -7782,7 +8060,7 @@ class TestAll(TestUtils):
         assert msgs2[-1].role == "assistant" and "7" in msgs2[-1].content
         # Follow-up: ask about previous answer to ensure history is preserved
         with pytest.warns(UserWarning, match="default system message"):
-            reply3 = self.llm_extractor_text.chat(
+            reply3 = self.llm_extractor.chat(
                 "What was your answer to my last question? Reply with only the number.",
                 chat_session=cs,
             )
@@ -7797,7 +8075,7 @@ class TestAll(TestUtils):
         # ChatSession: vision model with images
         cs_v = ChatSession()
         with pytest.warns(UserWarning, match="default system message"):
-            r_img = self.llm_extractor_vision.chat(
+            r_img = self.llm_extractor.chat(
                 "What's the type of this document?",
                 images=[self.test_img_png_invoice],
                 chat_session=cs_v,
@@ -7820,7 +8098,7 @@ class TestAll(TestUtils):
         assert msgs_v[2].role == "assistant" and "invoice" in msgs_v[2].content.lower()  # type: ignore
         # Follow-up in the same vision session without re-sending images: ensure history is preserved
         with pytest.warns(UserWarning, match="default system message"):
-            r_img2 = self.llm_extractor_vision.chat(
+            r_img2 = self.llm_extractor.chat(
                 "What type of document did you say it was earlier?",
                 chat_session=cs_v,
             )
@@ -9066,10 +9344,15 @@ class TestAll(TestUtils):
         # Create a new LLM group with new usage stats for each test iteration,
         # as we will supply markdown or raw text based on apply_markdown flag
         # and we need to isolate such prompts for inspection.
+        # The LLM without a role extracts from text, while the concepts to be
+        # extracted from images are routed to a separate LLM by the role.
         llm_group = DocumentLLMGroup(
             llms=[
-                DocumentLLM(**self._llm_extractor_text_kwargs_openai),  # ty: ignore[invalid-argument-type]
-                DocumentLLM(**self._llm_extractor_vision_kwargs_openai),  # ty: ignore[invalid-argument-type]
+                DocumentLLM(**self._llm_extractor_kwargs_openai),  # ty: ignore[invalid-argument-type]
+                DocumentLLM(
+                    **self._llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
+                    role="vision",
+                ),
             ]
         )
 
@@ -9108,8 +9391,10 @@ class TestAll(TestUtils):
             :type expect_newlines: bool
             :raises ValueError: If an invalid prompt_kwargs_key is provided
             """
-            # Only check text extraction calls
-            call_objs = llm_group.get_usage(llm_role="extractor_text")[0].usage.calls
+            # Only check text extraction calls, made by the LLM without a role
+            call_objs = next(
+                i for i in llm_group.get_usage() if i.role is None
+            ).usage.calls
             text_call_objs = [
                 c
                 for c in call_objs
@@ -9228,12 +9513,12 @@ class TestAll(TestUtils):
                 name="Hidden gems count",
                 description="Number of hidden gems in the document",
                 numeric_type="int",
-                llm_role="extractor_text",
             ),
             StringConcept(
                 name="Invoice total amount",
                 description="Total amount of the invoice",
-                llm_role="extractor_vision",
+                llm_role="vision",
+                modality="image",
             ),
         ]
         if apply_markdown:
@@ -9241,7 +9526,6 @@ class TestAll(TestUtils):
                 StringConcept(
                     name="Links in the document",
                     description="URLs mentioned in the document",
-                    llm_role="extractor_text",
                 )
             )
         doc.concepts = doc_concepts
@@ -9487,14 +9771,12 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Document title",
                 description="Title of the current document",
-                llm_role="extractor_text",
                 singular_occurrence=True,
             ),
             LabelConcept(
                 name="Document type",
                 description="Type of the current document",
                 labels=["legislation", "contract", "other"],
-                llm_role="extractor_text",
                 singular_occurrence=True,
             ),
             StringConcept(
@@ -9507,12 +9789,10 @@ class TestAll(TestUtils):
                     "Note that the entry into force date may not be the same as "
                     "the publication date."
                 ),
-                llm_role="extractor_text",
             ),  # entry into force date is modified in the test doc
             StringConcept(
                 name="Anomalies",
                 description="Anomalies in the document: unusual or unexpected content",
-                llm_role="extractor_text",
             ),  # anomaly is in the middle of the document
         ]
         doc = Document(raw_text=text_content)
@@ -9535,7 +9815,7 @@ class TestAll(TestUtils):
             )
 
         # Use params optimized for very long documents (200+ pages)
-        extracted_concepts = self.llm_extractor_text.extract_concepts_from_document(
+        extracted_concepts = self.llm_extractor.extract_concepts_from_document(
             doc,
             max_paragraphs_to_analyze_per_call=500,  # split into paragraph chunks
             use_concurrency=True,
@@ -9589,8 +9869,8 @@ class TestAll(TestUtils):
         """
 
         run_benchmark_for_module(
-            llm=self.llm_extractor_text,
-            judge_llm=self.llm_reasoner_text,
+            llm=self.llm_extractor,
+            judge_llm=self.llm_reasoner,
             module_name="tests.benchmark.configs.dev_contract",
             benchmark_name="Dev Contract (Text Only)",
         )

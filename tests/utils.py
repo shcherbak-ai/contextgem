@@ -50,7 +50,6 @@ from contextgem.internal.data_models import (
     _LLMUsageOutputContainer,
 )
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.types import LLMRoleAny
 from contextgem.internal.utils import (
     _are_prompt_template_brackets_balanced,
     _are_prompt_template_xml_tags_balanced,
@@ -451,7 +450,7 @@ class TestUtils:
         for usage_item in usages:
             assert isinstance(usage_item, _LLMUsageOutputContainer)
             assert hasattr(usage_item, "model") and usage_item.model
-            assert hasattr(usage_item, "role") and usage_item.role
+            assert hasattr(usage_item, "role")  # None for an LLM without a role
             assert hasattr(usage_item, "is_fallback")
             assert hasattr(usage_item, "usage") and usage_item.usage
             assert isinstance(usage_item.usage, _LLMUsage)
@@ -489,7 +488,7 @@ class TestUtils:
         for cost_item in costs:
             assert isinstance(cost_item, _LLMCostOutputContainer)
             assert hasattr(cost_item, "model") and cost_item.model
-            assert hasattr(cost_item, "role") and cost_item.role
+            assert hasattr(cost_item, "role")  # None for an LLM without a role
             assert hasattr(cost_item, "is_fallback")
             assert hasattr(cost_item, "cost") and cost_item.cost
             assert isinstance(cost_item.cost, _LLMCost)
@@ -569,7 +568,6 @@ class TestUtils:
         original_container: list[Aspect] | list[_Concept],
         assigned_container: list[Aspect] | list[_Concept],
         assigned_instance_class: type[Aspect | _Concept],
-        llm_roles: list[LLMRoleAny],
     ) -> None:
         """
         Checks the states of an original container and an assigned container of instances,
@@ -584,8 +582,6 @@ class TestUtils:
         :param assigned_instance_class: The expected class type of the instances in the
             assigned container.
         :type assigned_instance_class: type[Aspect, _Concept]
-        :param llm_roles: List of strings representing the roles of the LLM(s) involved in processing.
-        :type llm_roles: list[LLMRoleAny]
         :return: None
         """
         if len(original_container) or len(assigned_container):
@@ -605,9 +601,9 @@ class TestUtils:
                 :rtype: None
                 """
                 assert all(isinstance(i, assigned_instance_class) for i in instances)
-                # instances may have different LLM roles
-                filtered_instances = [i for i in instances if i.llm_role in llm_roles]
-                assert all(i._is_processed for i in filtered_instances)
+                # All instances are processed, regardless of their LLM roles: a standalone
+                # LLM extracts all instances, and an LLM group routes each instance to an LLM
+                assert all(i._is_processed for i in instances)
                 fields_to_group_by = [
                     "add_justifications",
                     "justification_depth",
@@ -617,7 +613,7 @@ class TestUtils:
                 ]
                 instance_groups = _group_instances_by_fields(
                     fields=fields_to_group_by,
-                    instances=cast(list[Aspect] | list[_Concept], filtered_instances),  # ty: ignore[invalid-argument-type]
+                    instances=cast(list[Aspect] | list[_Concept], instances),  # ty: ignore[invalid-argument-type]
                 )
                 for idx, group in enumerate(instance_groups, start=1):
                     logger.debug(
@@ -671,7 +667,7 @@ class TestUtils:
             instance.custom_data = {self.document: self.extraction_pipeline}  # type: ignore
         with pytest.raises(TypeError):
             instance.custom_data = {
-                self.llm_extractor_text: self.invalid_llm_with_valid_fallback  # type: ignore
+                self.llm_extractor: self.invalid_llm_with_valid_fallback  # type: ignore
             }
         instance.custom_data = {"test": True}
         instance.custom_data = {}
@@ -749,7 +745,6 @@ class TestUtils:
             original_container=original_container,
             assigned_container=assigned_container,
             assigned_instance_class=assigned_instance_class,
-            llm_roles=llm.list_roles,
         )
         time_no_concurrency_end = time.time()
         time_no_concurrency = time_no_concurrency_end - time_no_concurrency_start
@@ -923,7 +918,6 @@ class TestUtils:
         concept = StringConcept(
             name="Contract title",
             description="The title of the contract.",
-            llm_role=llm.role,
         )
         document.add_concepts([concept])
 

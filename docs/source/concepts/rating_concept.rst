@@ -82,9 +82,13 @@ When creating a ``RatingConcept``, you can specify the following parameters:
      - (Required)
      - Defines the boundaries for valid ratings as a tuple of (start, end) values (e.g., ``(1, 5)`` for a 1-5 star rating, or ``(0, 100)`` for a percentage-based evaluation). This parameter establishes the numerical range within which all ratings must fall, ensuring consistency across evaluations.
    * - ``llm_role``
+     - ``str | None``
+     - ``None``
+     - The role label of the LLM that extracts the concept when an LLM group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`llm-roles-label`.
+   * - ``modality``
      - ``str``
-     - ``"extractor_text"``
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``, ``"reasoner_multimodal"``. For more details, see :ref:`llm-roles-label`.
+     - ``"text"``
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``

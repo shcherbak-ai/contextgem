@@ -68,7 +68,8 @@ from contextgem.internal.typings.typed_class_utils import (
 )
 from contextgem.internal.typings.types import (
     ClassificationType,
-    LLMRoleAny,
+    LLMRole,
+    Modality,
     NonEmptyStr,
     ReferenceDepth,
 )
@@ -81,6 +82,7 @@ from contextgem.internal.typings.types_to_strings import (
 from contextgem.internal.typings.user_type_hints_validation import (
     _dynamic_pydantic_model,
 )
+from contextgem.internal.typings.validators import _get_legacy_llm_role_modality
 
 
 class _Concept(_ExtractedItemsAttributeProcessor):
@@ -94,11 +96,21 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     description: NonEmptyStr = Field(
         ..., description="Concept description (required, non-empty string)."
     )
-    llm_role: LLMRoleAny = Field(
-        default="extractor_text",
+    llm_role: LLMRole = Field(
+        default=None,
         description=(
-            "LLM role used for this concept. Valid values: 'extractor_text', 'reasoner_text', "
-            "'extractor_vision', 'reasoner_vision', 'extractor_multimodal', 'reasoner_multimodal'."
+            "Role label of the LLM that extracts this concept when a DocumentLLMGroup "
+            "is used: the concept is routed to the LLM in the group with the same `role`. "
+            "Defaults to None, which routes to the LLM without a role. "
+            "Ignored by a standalone DocumentLLM, which extracts every concept it is given."
+        ),
+    )
+    modality: Modality = Field(
+        default="text",
+        description=(
+            "Document content the concept is extracted from: 'text', 'image', or "
+            "'multimodal' (text and/or images, whichever the document has). 'image' and "
+            "'multimodal' are supported for document-level concepts only."
         ),
     )
     add_references: StrictBool = Field(
@@ -149,21 +161,42 @@ class _Concept(_ExtractedItemsAttributeProcessor):
         """
         pass
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Custom attribute setter that keeps the concept's modality consistent with
+        a deprecated legacy LLM role name assigned to the 'llm_role' attribute.
+
+        :param name: The name of the attribute to set
+        :type name: str
+        :param value: The value to assign to the attribute
+        :type value: Any
+        :return: None
+        :rtype: None
+        """
+
+        if name == "llm_role":
+            # A legacy LLM role name (will be removed in v2.0.0) also carried
+            # the modality, which is now a separate attribute of the concept.
+            legacy_modality = _get_legacy_llm_role_modality(value)
+            if legacy_modality is not None:
+                super().__setattr__("modality", legacy_modality)
+        super().__setattr__(name, value)
+
     @classmethod
     def _validate_concept_extraction_params(cls, data: dict[str, Any]):
         """
         Validates the parameters used for concept extraction within a specific context of
-        LLM roles.
+        the concept's modality.
 
         :param data: A dictionary containing parameters related to concept extraction.
         :type data: dict[str, Any]
-        :raises ValueError: If the LLM role ends with "_vision" and `add_references`
+        :raises ValueError: If the modality is "image" and `add_references`
             is set to True, as this combination is not supported.
         """
-        llm_role = data.get("llm_role")
-        add_references = data.get("add_references")
-        if llm_role and llm_role.endswith("_vision") and add_references:
-            raise ValueError("Vision concepts do not support references.")
+        if data.get("modality") == "image" and data.get("add_references"):
+            raise ValueError(
+                "Concepts extracted from images do not support references."
+            )
 
     @model_validator(mode="before")
     @classmethod
@@ -176,6 +209,13 @@ class _Concept(_ExtractedItemsAttributeProcessor):
         :return: The validated input data.
         """
         if isinstance(data, dict):
+            # A legacy LLM role name (will be removed in v2.0.0) also carried the modality,
+            # which is now a separate parameter of the concept. The modality is derived
+            # from such name only when the modality is not specified, i.e. upon the concept's
+            # initialization or deserialization of the data serialized by earlier versions.
+            legacy_modality = _get_legacy_llm_role_modality(data.get("llm_role"))
+            if legacy_modality is not None and "modality" not in data:
+                data = {**data, "modality": legacy_modality}
             cls._validate_concept_extraction_params(data)
         return data
 

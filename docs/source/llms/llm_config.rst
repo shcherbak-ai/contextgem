@@ -84,9 +84,9 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``None``
      - API version. Primarily used with Azure OpenAI.
    * - ``role``
-     - ``str``
-     - ``"extractor_text"``
-     - Role type for the LLM. Values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``, ``"reasoner_multimodal"``. The role parameter is an abstraction that can be explicitly assigned to extraction components (aspects and concepts) in the pipeline. ContextGem then routes extraction tasks based on these assigned roles, matching components with LLMs of the same role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). For more details, see :ref:`llm-roles-label`.
+     - ``str | None``
+     - ``None``
+     - Free-form role label of the LLM, used for routing in an LLM group. The same label can be explicitly assigned to extraction components (aspects and concepts) in the pipeline, using their ``llm_role`` parameter. ContextGem then routes extraction tasks based on these assigned roles, matching components with the LLM of the same role, while the components without a role are routed to the LLM without a role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). The role implies no capabilities of the model, and is ignored when the LLM is used on its own (not in a group), as a single LLM extracts all the aspects and concepts it is given. For more details, see :ref:`llm-roles-label`.
    * - ``system_message``
      - ``str | None``
      - ``None``
@@ -248,20 +248,19 @@ For reasoning (CoT-capable) models (such as OpenAI's o1/o3/o4), you can set reas
 ⚙️ Explicit Capability Declaration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Model vision capabilities are automatically detected using ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities, ContextGem will typically issue a warning, and you can explicitly declare the capability by setting ``_supports_vision=True`` on the LLM instance:
+Model vision capabilities are automatically detected using ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities, an error will be raised when images are sent to the model (e.g. when extracting concepts with the ``"image"`` or ``"multimodal"`` modality), and you can explicitly declare the capability by setting ``_supports_vision=True`` on the LLM instance:
 
 .. code-block:: python
 
    from contextgem import DocumentLLM
 
    # Example: Explicitly declare vision capability
-   # Warning will be issued if automatic vision capability detection fails
    llm = DocumentLLM(
        model="some_provider/custom_vision_model",
        api_base="http://localhost:3456/v1",
-       role="extractor_vision"
    )
-   # Declare capability if automatic detection fails (warning was issued)
+   # Declare capability if automatic detection fails
+   # (an error is raised when images are sent to the model)
    llm._supports_vision = True
 
 .. warning::
@@ -276,6 +275,8 @@ For complex document processing, you can organize multiple LLMs with different r
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/llm_group.py
    :language: python
    :caption: Using LLM group
+
+Each LLM in the group must have a unique ``role``, and only one LLM in the group can have no role. An aspect/concept is routed to the LLM with the ``role`` equal to the ``llm_role`` of the aspect/concept, and an aspect/concept without ``llm_role`` is routed to the LLM without ``role``. If an aspect/concept cannot be routed to any LLM in the group, an error is raised. For more details, see :ref:`llm-roles-label`.
 
 See a practical example of using an LLM group in :ref:`multi-llm-pipeline-label`.
 

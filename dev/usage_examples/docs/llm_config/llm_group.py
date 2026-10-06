@@ -2,17 +2,19 @@ from contextgem import DocumentLLM, DocumentLLMGroup
 
 
 # Create LLMs with different roles
-text_extractor = DocumentLLM(
+
+# LLM without a role: extracts all aspects/concepts that are not routed to another LLM
+extractor = DocumentLLM(
     model="openai/gpt-4o-mini",
     api_key="<your-openai-api-key>",
-    role="extractor_text",
     output_language="adapt",
 )
 
-text_reasoner = DocumentLLM(
+# LLM with a role: extracts the aspects/concepts that have `llm_role="reasoner"`
+reasoner = DocumentLLM(
     model="openai/o3-mini",
     api_key="<your-openai-api-key>",
-    role="reasoner_text",
+    role="reasoner",  # a label of your choice
     max_completion_tokens=16000,
     reasoning_effort="high",
     output_language="adapt",
@@ -20,7 +22,7 @@ text_reasoner = DocumentLLM(
 
 # Create a group
 llm_group = DocumentLLMGroup(
-    llms=[text_extractor, text_reasoner],
+    llms=[extractor, reasoner],
     output_language="adapt",  # All LLMs in the group must share the same output language setting
 )
 

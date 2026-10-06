@@ -100,7 +100,7 @@ contract_pipeline.concepts = [  # or use .add_concepts()
     StringConcept(
         name="Contract type",
         description="The type of agreement",
-        llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
+        llm_role="reasoner",  # for this concept, we use a more advanced LLM for reasoning
     ),
     StringConcept(
         name="Governing law",
@@ -122,7 +122,7 @@ contract_pipeline.concepts = [  # or use .add_concepts()
     RatingConcept(
         name="Duration adequacy",
         description="Contract duration adequacy considering the subject matter and best practices.",
-        llm_role="reasoner_text",  # for this concept, we use a more advanced LLM for reasoning
+        llm_role="reasoner",  # for this concept, we use a more advanced LLM for reasoning
         rating_scale=(1, 10),
         add_justifications=True,  # add justifications for the rating
         justification_depth="balanced",  # provide a balanced justification
@@ -143,7 +143,7 @@ doc2.assign_pipeline(
 llm_extractor = DocumentLLM(
     model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
-    role="extractor_text",  # signifies the LLM is used for data extraction tasks
+    # no role - the LLM extracts all aspects/concepts that are not routed to another LLM
     pricing_details=LLMPricing(  # optional, for costs calculation
         input_per_1m_tokens=0.150,
         output_per_1m_tokens=0.600,
@@ -153,7 +153,7 @@ llm_extractor = DocumentLLM(
 llm_reasoner = DocumentLLM(
     model="openai/o3-mini",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
-    role="reasoner_text",  # signifies the LLM is used for reasoning tasks
+    role="reasoner",  # the LLM extracts the aspects/concepts with the same `llm_role`
     pricing_details=LLMPricing(  # optional, for costs calculation
         input_per_1m_tokens=1.10,
         output_per_1m_tokens=4.40,

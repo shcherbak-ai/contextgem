@@ -34,23 +34,21 @@ from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BeforeValidator, Field, StrictStr, StringConstraints
 
-from contextgem.internal.typings.validators import _validate_is_json_dict
+from contextgem.internal.typings.validators import (
+    _normalize_llm_role,
+    _validate_is_json_dict,
+)
 
 
 NonEmptyStr = Annotated[
     StrictStr, StringConstraints(strip_whitespace=True, min_length=1)
 ]
 
-LLMRoleAny = Literal[
-    "extractor_text",
-    "reasoner_text",
-    "extractor_vision",
-    "reasoner_vision",
-    "extractor_multimodal",
-    "reasoner_multimodal",
-]
+# Free-form label that routes aspects/concepts to an LLM in an LLM group (None - no role).
+# For use as a field type in Pydantic models; handles the deprecated legacy role names.
+LLMRole = Annotated[NonEmptyStr | None, BeforeValidator(_normalize_llm_role)]
 
-LLMRoleAspect = Literal["extractor_text", "reasoner_text"]
+Modality = Literal["text", "image", "multimodal"]
 
 AssignedInstancesAttrName = Literal["aspects", "concepts"]
 

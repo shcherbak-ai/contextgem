@@ -19,6 +19,6 @@ cost_info = llm.get_cost()
 llm.reset_usage_and_cost()
 
 # The same methods are available for LLM groups, with optional filtering by LLM role
-# usage_info = llm_group.get_usage(llm_role="extractor_text")
-# cost_info = llm_group.get_cost(llm_role="extractor_text")
-# llm_group.reset_usage_and_cost(llm_role="extractor_text")
+# usage_info = llm_group.get_usage(llm_role="reasoner")
+# cost_info = llm_group.get_cost(llm_role="reasoner")
+# llm_group.reset_usage_and_cost(llm_role="reasoner")

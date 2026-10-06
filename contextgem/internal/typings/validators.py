@@ -22,12 +22,96 @@ Module defining custom validators.
 
 from __future__ import annotations
 
+import sys
+import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
     from contextgem.internal.typings.types import JSONDict
+
+
+# Compound LLM role names used before v1.0.0, mapped to the modality that each of them
+# implied for a concept. Deprecated, will be removed in v2.0.0.
+_LEGACY_LLM_ROLE_MODALITIES: dict[str, str] = {
+    "extractor_text": "text",
+    "reasoner_text": "text",
+    "extractor_vision": "image",
+    "reasoner_vision": "image",
+    "extractor_multimodal": "multimodal",
+    "reasoner_multimodal": "multimodal",
+}
+
+# The legacy role name that used to be the default, i.e. is equivalent to no role
+_LEGACY_DEFAULT_LLM_ROLE = "extractor_text"
+
+# Deprecation message for the legacy LLM role names
+_LEGACY_LLM_ROLE_DEPRECATION_MSG = (
+    "LLM role `{role}` is deprecated and will be removed in v2.0.0. LLM roles are now "
+    "free-form labels that route aspects/concepts to the LLMs of a DocumentLLMGroup: "
+    "use a label of your choice or omit the role, and set `modality` on a concept "
+    "to extract it from images."
+)
+
+# Packages whose frames are skipped when attributing a warning to the calling code
+_NON_CALLER_PACKAGES = ("contextgem", "pydantic", "pydantic_core")
+
+
+def _caller_stacklevel() -> int:
+    """
+    Returns the ``stacklevel`` that attributes a warning, issued by the function
+    calling this one, to the first frame outside of the framework and pydantic,
+    i.e. to the code that passed the value being validated.
+
+    :return: The stack level to pass to ``warnings.warn()``.
+    :rtype: int
+    """
+    stacklevel = 1
+    frame = sys._getframe(1)
+    while frame is not None:
+        module_name = frame.f_globals.get("__name__", "")
+        if module_name.split(".")[0] not in _NON_CALLER_PACKAGES:
+            return stacklevel
+        frame = frame.f_back
+        stacklevel += 1
+    return 2
+
+
+def _get_legacy_llm_role_modality(v: Any) -> str | None:
+    """
+    Returns the modality implied by a legacy (deprecated) LLM role name.
+
+    :param v: The LLM role value to check.
+    :type v: Any
+    :return: The implied modality, or None if the value is not a legacy LLM role name.
+    :rtype: str | None
+    """
+    return _LEGACY_LLM_ROLE_MODALITIES.get(v) if isinstance(v, str) else None
+
+
+def _normalize_llm_role(v: Any) -> Any:
+    """
+    Validator function that handles the legacy (deprecated) LLM role names.
+
+    A legacy role name is accepted with a deprecation warning. The name that used
+    to be the default (``"extractor_text"``) is converted to None (no role), while
+    the other legacy names are kept as regular role labels, so that the LLMs and
+    the aspects/concepts that use the same legacy name are still matched.
+
+    :param v: The LLM role value to validate.
+    :type v: Any
+    :return: The LLM role value, with the legacy default role converted to None.
+    :rtype: Any
+    """
+    if _get_legacy_llm_role_modality(v) is None:
+        return v
+    warnings.warn(
+        _LEGACY_LLM_ROLE_DEPRECATION_MSG.format(role=v),
+        DeprecationWarning,
+        stacklevel=_caller_stacklevel(),
+    )
+    return None if v == _LEGACY_DEFAULT_LLM_ROLE else v
 
 
 def _validate_sequence_is_list(

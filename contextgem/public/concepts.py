@@ -58,10 +58,16 @@ class StringConcept(_StringConcept):
     :vartype description: str
     :ivar examples: Example strings illustrating the concept usage.
     :vartype examples: list[StringExample]
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
@@ -102,10 +108,16 @@ class BooleanConcept(_BooleanConcept):
     :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
@@ -150,10 +162,16 @@ class NumericalConcept(_NumericalConcept):
     :ivar numeric_type: Type constraint for extracted numbers ("int", "float", or "any").
         Defaults to "any" for auto-detection.
     :vartype numeric_type: Literal["int", "float", "any"]
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
@@ -198,10 +216,16 @@ class RatingConcept(_RatingConcept):
     :ivar rating_scale: The rating scale defining valid value boundaries. Can be either a RatingScale
         object (deprecated, will be removed in v1.0.0) or a tuple of (start, end) integers.
     :vartype rating_scale: RatingScale | tuple[int, int]
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
@@ -276,10 +300,16 @@ class JsonObjectConcept(_JsonObjectConcept):
     :vartype structure: type | dict[str, Any]
     :ivar examples: Example JSON objects illustrating the concept usage.
     :vartype examples: list[JsonObjectExample]
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
@@ -321,10 +351,16 @@ class DateConcept(_DateConcept):
     :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
@@ -382,10 +418,16 @@ class LabelConcept(_LabelConcept):
     :ivar classification_type: Classification mode - "multi_class" for single label selection,
         "multi_label" for multiple label selection. Defaults to "multi_class".
     :vartype classification_type: ClassificationType
-    :ivar llm_role: The role of the LLM responsible for extracting the concept
-        ("extractor_text", "reasoner_text", "extractor_vision", "reasoner_vision",
-        "extractor_multimodal", "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype llm_role: LLMRoleAny
+    :ivar llm_role: The role label of the LLM that extracts the concept when
+        a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
+        with the same ``role``. Defaults to None, which routes the concept to the LLM
+        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+        concept it is given.
+    :vartype llm_role: str | None
+    :ivar modality: The document content the concept is extracted from: "text", "image",
+        or "multimodal" (text and/or images, whichever the document has). "image" and
+        "multimodal" are supported for document-level concepts only. Defaults to "text".
+    :vartype modality: Modality
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".

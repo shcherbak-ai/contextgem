@@ -40,12 +40,14 @@ class DocumentLLMGroup(_DocumentLLMGroup):
     """
     Represents a group of DocumentLLMs with unique roles for processing document content.
 
-    This class manages multiple LLMs assigned to specific roles for text and vision processing.
-    It ensures role compliance and facilitates extraction of aspects and concepts from documents.
+    This class manages multiple LLMs, each of which extracts the aspects and concepts routed
+    to it by its role, e.g. to use a smaller model for simpler tasks and a more capable
+    model for more complex ones.
 
-    :ivar llms: A list of DocumentLLM instances, each with a unique role (e.g., `extractor_text`,
-        `reasoner_text`, `extractor_vision`, `reasoner_vision`). At least 2 instances
-        with distinct roles are required.
+    :ivar llms: A list of DocumentLLM instances, each with a unique ``role``. An aspect/concept
+        is extracted by the LLM with the ``role`` equal to the ``llm_role`` of the aspect/concept,
+        and an aspect/concept without ``llm_role`` is extracted by the LLM without ``role``.
+        Only one LLM in the group can have no role. At least 2 instances are required.
     :vartype llms: list[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Values: "en" (always English) or "adapt" (matches document/image language).
@@ -73,8 +75,8 @@ class DocumentLLM(_DocumentLLM):
 
     This class serves as an abstraction for interacting with a LLM. It provides functionality
     for querying the LLM with text or image inputs, and manages prompt preparation and token
-    usage tracking. The class can be configured with different roles based on the document
-    processing task.
+    usage tracking. An LLM can be used on its own or, with a role assigned, as a part of
+    an LLM group.
 
     :ivar model: Model identifier in format {model_provider}/{model_name}.
         See https://docs.litellm.ai/docs/providers for supported providers.
@@ -87,10 +89,11 @@ class DocumentLLM(_DocumentLLM):
     :vartype api_base: str | None
     :ivar api_version: API version. Primarily used with Azure OpenAI.
     :vartype api_version: str | None
-    :ivar role: Role type for the LLM ("extractor_text", "reasoner_text",
-        "extractor_vision", "reasoner_vision", "extractor_multimodal",
-        "reasoner_multimodal"). Defaults to "extractor_text".
-    :vartype role: LLMRoleAny
+    :ivar role: Free-form role label of the LLM, used for routing in a ``DocumentLLMGroup``:
+        the LLM extracts the aspects/concepts with the same ``llm_role``. Defaults to None,
+        in which case the LLM extracts the aspects/concepts without ``llm_role``. Ignored
+        when the LLM is used on its own, as it then extracts all aspects/concepts.
+    :vartype role: str | None
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
     :vartype system_message: str | None
     :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
@@ -171,19 +174,22 @@ class DocumentLLM(_DocumentLLM):
             which are a collection of LLMs with unique roles, used for complex document processing tasks.
 
         - LLM role
-            The ``role`` of an LLM is an abstraction to differentiate between tasks of different complexity.
-            For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, it means that the
-            aspect/concept is extracted from the document using the LLM with the ``role`` set to "extractor_text".
-            This helps to channel different tasks to different LLMs, ensuring that the task is handled
-            by the most appropriate model. Usually, domain expertise is required to determine the most
-            appropriate role for a specific aspect/concept. But for simple use cases, you can skip the
-            role assignment completely, in which case the ``role`` will default to "extractor_text".
+            The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs
+            of a :class:`DocumentLLMGroup`. For example, if an aspect/concept is assigned
+            ``llm_role="complex"``, it means that the aspect/concept is extracted from the document
+            using the LLM in the group with the ``role`` set to "complex", while the aspects/concepts
+            without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel
+            different tasks to different LLMs, ensuring that the task is handled by the most
+            appropriate model. Usually, domain expertise is required to determine the most appropriate
+            LLM for a specific aspect/concept. A role is just a label and implies no capabilities
+            of the model. When an LLM is used on its own, i.e. not in a group, you can skip the role
+            assignment completely: the LLM extracts all aspects/concepts, regardless of their ``llm_role``.
 
         - Explicit capability declaration
             Model vision capabilities are automatically detected using
             ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities,
-            ContextGem will typically issue a warning, and you can explicitly declare the capability by
-            setting ``_supports_vision=True`` on the LLM instance.
+            an error will be raised when images are sent to the model, and you can explicitly declare
+            the capability by setting ``_supports_vision=True`` on the LLM instance.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_llm.py

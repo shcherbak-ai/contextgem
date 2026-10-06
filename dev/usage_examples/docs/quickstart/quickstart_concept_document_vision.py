@@ -24,7 +24,7 @@ doc_concept = NumericalConcept(
     name="Invoice Total",
     description="The total amount to be paid as shown on the invoice",
     numeric_type="float",
-    llm_role="extractor_vision",  # use vision model
+    modality="image",  # extract from the document images
 )
 
 # Add concept to the document
@@ -35,7 +35,6 @@ doc.add_concepts([doc_concept])
 llm = DocumentLLM(
     model="openai/gpt-4o-mini",  # Using a model with vision capabilities
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),  # your API key
-    role="extractor_vision",  # mark LLM as vision model
 )
 
 # Extract information from the document

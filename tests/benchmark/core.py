@@ -248,24 +248,16 @@ def run_benchmark_for_module(
     :rtype: _BenchmarkScores
     """
 
-    # Enforce text-only constraint for main LLM
+    # Enforce single-LLM constraint for main LLM
     if llm.is_group:
         raise ValueError(
-            "Group roles are not allowed for the main LLM in the benchmark."
-        )
-    if str(llm.role).endswith("_vision"):
-        raise ValueError(
-            "Vision role is not allowed for the main LLM in the text-only benchmark."
+            "LLM groups are not allowed for the main LLM in the benchmark."
         )
 
-    # Enforce text-only constraint for judge LLM
+    # Enforce single-LLM constraint for judge LLM
     if judge_llm.is_group:
         raise ValueError(
-            "Group roles are not allowed for the judge LLM in the benchmark."
-        )
-    if str(judge_llm.role).endswith("_vision"):
-        raise ValueError(
-            "Vision role is not allowed for the judge LLM in the text-only benchmark."
+            "LLM groups are not allowed for the judge LLM in the benchmark."
         )
 
     # Unset default system message on the judge LLM (use vanilla LLM for judge)
@@ -273,13 +265,8 @@ def run_benchmark_for_module(
 
     document = _load_benchmark_document(module_name)
 
-    # Align target roles with the main LLM role
-    for a in document.aspects:
-        a.llm_role = llm.role  # ty: ignore[invalid-assignment]
-    for c in document.concepts:
-        c.llm_role = llm.role
-
-    # Extraction
+    # Extraction (a single LLM extracts all aspects and concepts,
+    # regardless of the LLM roles assigned to them)
     try:
         llm.extract_aspects_from_document(
             document=document,

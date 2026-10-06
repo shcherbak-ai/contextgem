@@ -12,7 +12,7 @@ from ulid import ULID
 
 from contextgem.internal.base.mixins import _PostInitCollectorMixin
 from contextgem.internal.base.serialization import _InstanceSerializer
-from contextgem.internal.typings.types import JSONDictField, LLMRoleAny
+from contextgem.internal.typings.types import JSONDictField
 
 
 if TYPE_CHECKING:
@@ -64,11 +64,12 @@ class _AbstractGenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer,
 
     @property
     @abstractmethod
-    def list_roles(self) -> list[LLMRoleAny]:
+    def list_roles(self) -> list[str | None]:
         """
         Abstract property, to be implemented by subclasses.
 
         Returns the list of all LLM roles in the LLM group or LLM.
+        None on the list stands for an LLM without a role.
         """
         pass
 

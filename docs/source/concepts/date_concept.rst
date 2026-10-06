@@ -78,9 +78,13 @@ When creating a :class:`~contextgem.public.concepts.DateConcept`, you can specif
      - (Required)
      - A clear description of what date information to extract, which can include explicit dates to find, implicit dates to infer, or temporal relationships to identify. For date concepts, be specific about the exact date information sought (e.g., *"the contract signing date"* rather than just *"dates in the document"*) to ensure consistent and accurate extractions.
    * - ``llm_role``
+     - ``str | None``
+     - ``None``
+     - The role label of the LLM that extracts the concept when an LLM group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`llm-roles-label`.
+   * - ``modality``
      - ``str``
-     - ``"extractor_text"``
-     - The role of the LLM responsible for extracting the concept. Available values: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``, ``"reasoner_multimodal"``. For more details, see :ref:`llm-roles-label`.
+     - ``"text"``
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``

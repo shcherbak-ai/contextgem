@@ -1,11 +1,11 @@
 from contextgem import DocumentLLM, LLMPricing
 
 
-# Create a single LLM for text extraction
+# Create a single LLM, which extracts all aspects and concepts it is given
+# (a role is needed only for routing in an LLM group)
 text_extractor = DocumentLLM(
     model="openai/gpt-4o-mini",
     api_key="your-api-key",  # Replace with your actual API key
-    role="extractor_text",  # Role for text extraction
     pricing_details=LLMPricing(  # optional
         input_per_1m_tokens=0.150, output_per_1m_tokens=0.600
     ),
@@ -16,8 +16,7 @@ text_extractor = DocumentLLM(
 fallback_text_extractor = DocumentLLM(
     model="anthropic/claude-3-7-sonnet",
     api_key="your-anthropic-api-key",  # Replace with your actual API key
-    role="extractor_text",  # must be the same as the role of the primary LLM
-    is_fallback=True,
+    is_fallback=True,  # must have the same role as the primary LLM (here: no role)
     pricing_details=LLMPricing(  # optional
         input_per_1m_tokens=3.00, output_per_1m_tokens=15.00
     ),

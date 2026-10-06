@@ -32,9 +32,9 @@ from contextgem.internal.typings.types import (
     JSONDictField,
     JustificationDepth,
     LanguageRequirement,
-    LLMRoleAny,
-    LLMRoleAspect,
+    LLMRole,
     MessageRole,
+    Modality,
     NonEmptyStr,
     ReasoningEffort,
     ReferenceDepth,
@@ -66,8 +66,8 @@ from contextgem.internal.typings.validators import (
 __all__ = (
     # Types
     "NonEmptyStr",
-    "LLMRoleAny",
-    "LLMRoleAspect",
+    "LLMRole",
+    "Modality",
     "AssignedInstancesAttrName",
     "ExtractedInstanceType",
     "DefaultPromptType",

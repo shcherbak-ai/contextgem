@@ -95,7 +95,8 @@ from contextgem.internal.typings.types import (
     JSONDictField,
     JustificationDepth,
     LanguageRequirement,
-    LLMRoleAny,
+    LLMRole,
+    Modality,
     NonEmptyStr,
     ReasoningEffort,
     ReferenceDepth,
@@ -954,32 +955,64 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         document: _Document,
     ) -> None:
         """
-        Checks if all assigned LLM roles in the given document are present in the set
-        of LLM roles of the current LLM / LLM group instance. If there are missing roles,
-        a warning is logged. This process helps to check for completeness in data extraction
-        when full extraction method extract_all() is called.
+        Checks, before the full extraction method extract_all() is run with an LLM group,
+        that all aspects and concepts assigned to the given document, including sub-aspects
+        and aspect-level concepts, can be routed to the LLMs in the group. This ensures
+        that no LLM calls are made for the extraction that cannot be completed.
+
+        The check does not apply to a standalone LLM, which extracts all aspects
+        and concepts, regardless of their LLM roles.
 
         :param document: The document object to check for LLM role assignments.
         :type document: _Document
         :return: None
         :rtype: None
+        :raises ValueError: If the document contains aspects or concepts with LLM roles
+            that no LLM in the group has.
         """
 
         if self.is_group:
-            # Safe cast: self is a _DocumentLLMGroup because `is_group` is True
-            llm_roles = {i.role for i in cast("_DocumentLLMGroup", self).llms}
-        else:
-            # Safe cast: self is a _DocumentLLM because `is_group` is False
-            llm_roles = {cast("_DocumentLLM", self).role}
-        missing_llm_roles = document.llm_roles.difference(llm_roles)
+            self._check_llm_roles_are_routable(document.llm_roles)
+
+    def _check_llm_roles_are_routable(self, llm_roles: set[str | None]) -> None:
+        """
+        Checks that each of the given LLM roles, assigned to aspects or concepts,
+        is the role of an LLM in the current LLM group. An aspect or concept is routed
+        to the LLM in the group with the same role, and an aspect or concept without
+        a role (None) is routed to the LLM without a role.
+
+        :param llm_roles: LLM roles assigned to the aspects or concepts to be extracted.
+        :type llm_roles: set[str | None]
+        :return: None
+        :rtype: None
+        :raises ValueError: If any of the given LLM roles is not the role of an LLM
+            in the group.
+        """
+
+        def format_roles(roles: set[str | None]) -> str:
+            """
+            Formats LLM roles for an error message.
+
+            :param roles: LLM roles to format.
+            :type roles: set[str | None]
+            :return: Comma-separated LLM roles, with None described as no role.
+            :rtype: str
+            """
+            return ", ".join(
+                "None (no role)" if role is None else f"`{role}`"
+                for role in sorted(roles, key=lambda role: (role is not None, role))
+            )
+
+        group_roles = set(self.list_roles)
+        missing_llm_roles = llm_roles.difference(group_roles)
         if missing_llm_roles:
-            warnings.warn(
-                f"Document contains elements with LLM roles that are not found "
-                f"in the current {'LLM group' if self.is_group else 'LLM'}: "
-                f"{'LLM group roles' if self.is_group else 'LLM role'} {llm_roles}, "
-                f"missing LLM roles {missing_llm_roles}. "
-                f"Such elements will be ignored.",
-                stacklevel=2,
+            raise ValueError(
+                f"Some aspects/concepts cannot be routed to an LLM in the group, "
+                f"as no LLM in the group has the role: {format_roles(missing_llm_roles)}. "
+                f"Roles of the LLMs in the group: {format_roles(group_roles)}. "
+                f"An aspect/concept is extracted by the LLM with the `role` equal to "
+                f"the `llm_role` of the aspect/concept. An aspect/concept without `llm_role` "
+                f"is extracted by the LLM without `role`."
             )
 
     def _check_instances_and_llm_params(
@@ -1057,7 +1090,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             overwrite_existing=overwrite_existing,
         )
 
-        # Check DocumentLLMGroup
+        # Check DocumentLLMGroup. A standalone DocumentLLM extracts all the instances,
+        # regardless of their LLM roles, i.e. requires no check of the LLM roles.
         if llm_or_group.is_group:
             # Safe cast: llm_or_group is a _DocumentLLMGroup because `is_group` is True
             llm_group = cast("_DocumentLLMGroup", llm_or_group)
@@ -1065,18 +1099,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 raise ValueError(
                     "The provided DocumentLLMGroup does not contain any defined LLMs."
                 )
-
-        # Check DocumentLLM
-        else:
-            # Safe cast: llm_or_group is a _DocumentLLM because `is_group` is False
-            llm = cast("_DocumentLLM", llm_or_group)
-            # Inform about inconsistent LLM roles
-            if any(i.llm_role != llm.role for i in check_instances):
-                logger.warning(
-                    f"Some {instance_type}s rely on the LLM with a role different "
-                    f"than the current LLM's role `{llm.role}`. "
-                    f"This LLM will not extract such {instance_type}s."
-                )
+            # Each instance must be routable to an LLM in the group
+            llm_group._check_llm_roles_are_routable(
+                {i.llm_role for i in check_instances}
+            )
 
     @staticmethod
     def _check_instances_already_processed(
@@ -1120,6 +1146,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         justification_max_sents: int = 2,
         add_references: bool = False,
         reference_depth: ReferenceDepth = "paragraphs",
+        modality: Modality = "text",
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
     ) -> list[dict[str, dict | list[_Paragraph] | list[_Image]]]:
@@ -1161,6 +1188,11 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             paragraphs as references or sentences as references. Defaults to "paragraphs".
             ``extracted_items`` will have values based on this parameter.
         :type reference_depth: ReferenceDepth
+        :param modality: The document content the concepts are extracted from: "text", "image",
+            or "multimodal" (text and/or images, whichever the document has). Relevant only for
+            document-level concepts, as aspects and aspect-level concepts are always extracted
+            from text. Defaults to "text".
+        :type modality: Modality
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
         :type max_paragraphs_to_analyze_per_call: int
@@ -1202,26 +1234,26 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     has_text = bool(source.raw_text or source.paragraphs)
                     has_images = bool(source.images)
 
-                    # Multi-modal roles can work with text or images or both
-                    if llm.role.endswith("_multimodal"):
+                    # Multimodal concepts can be extracted from text or images or both
+                    if modality == "multimodal":
                         if not has_text and not has_images:
                             raise ValueError(
                                 "Document lacks text/paragraphs or images for multimodal concept extraction."
                             )
-                        # Multi-modal roles are flexible - they work with whatever content is available
-                        # For multi-modal roles, we leverage existing text/vision paths
+                        # Multimodal concepts are flexible - they are extracted from whatever
+                        # content is available, leveraging the existing text/vision paths
                         return "concept_document_multimodal"
 
-                    # Text-based roles
-                    elif llm.role.endswith("_text"):
+                    # Concepts extracted from text
+                    elif modality == "text":
                         if not has_text:
                             raise ValueError(
                                 "Document lacks text or paragraphs for concept extraction."
                             )
                         return "concept_document_text"
 
-                    # Vision-based roles
-                    elif llm.role.endswith("_vision"):
+                    # Concepts extracted from images
+                    elif modality == "image":
                         if not has_images:
                             raise ValueError(
                                 "Document lacks images to extract vision concepts from."
@@ -1232,7 +1264,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             )
                         return "concept_document_vision"
 
-                    raise ValueError(f"Unsupported LLM role: `{llm.role}`")
+                    raise ValueError(f"Unsupported modality: `{modality}`")
 
                 # Concept (aspect-level)
                 if isinstance(source, _Aspect):
@@ -1465,6 +1497,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         justification_max_sents: int = 2,
         add_references: bool = False,
         reference_depth: ReferenceDepth = "paragraphs",
+        modality: Modality = "text",
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
         num_retries_failed_request: int = 3,
@@ -1476,7 +1509,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         """
         Extracts items from either aspects or concepts using a specified LLM.
         This unified method handles extraction from both documents and aspects,
-        supporting both text and vision LLMs.
+        supporting both text and images as the content to extract from.
 
         :param extracted_item_type: Type of the item(s) being extracted ("aspect" or "concept")
         :type extracted_item_type: ExtractedInstanceType
@@ -1503,6 +1536,11 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             paragraphs as references or sentences as references. Defaults to "paragraphs".
             ``extracted_items`` will have values based on this parameter.
         :type reference_depth: ReferenceDepth
+        :param modality: The document content the concepts are extracted from: "text", "image",
+            or "multimodal" (text and/or images, whichever the document has). Relevant only for
+            document-level concepts, as aspects and aspect-level concepts are always extracted
+            from text. Defaults to "text".
+        :type modality: Modality
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
         :type max_paragraphs_to_analyze_per_call: int
@@ -1552,29 +1590,30 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     f"Aspect `{source.name}` must be assigned to the document"
                 )
 
-        def validate_vision_or_multimodal_llm_usage(
+        def validate_image_or_multimodal_extraction(
             extracted_item_type: ExtractedInstanceType,
-            llm: _DocumentLLM,
+            modality: Modality,
             source: _Document | _Aspect,
             add_references: bool,
         ) -> None:
             """
-            Validates usage constraints for vision or multimodal LLM roles.
+            Validates usage constraints for the extraction from images, i.e. for
+            the "image" and "multimodal" modalities.
 
-            - For roles ending with "_vision" or "_multimodal", only document-level concept
+            - For the "image" and "multimodal" modalities, only document-level concept
               extraction is allowed.
             - Raises ValueError when attempting aspect extraction, or concept extraction
-              from an Aspect, with a vision/multimodal role.
+              from an Aspect, with the "image" or "multimodal" modality.
             - For concept extraction with ``add_references=True``:
-              - "_multimodal": references are permitted only when the Document has text.
+              - "multimodal": references are permitted only when the Document has text.
                 Emits warnings when both text and images are present (references will be
                 added only for text) or when text is absent (no references will be added).
-              - "_vision": references are not supported and a ValueError is raised.
+              - "image": references are not supported and a ValueError is raised.
 
             :param extracted_item_type: Target extraction type ("aspect" or "concept").
             :type extracted_item_type: ExtractedInstanceType
-            :param llm: The LLM used for extraction.
-            :type llm: _DocumentLLM
+            :param modality: The document content to extract from.
+            :type modality: Modality
             :param source: The extraction source (Document or Aspect).
             :type source: _Document | _Aspect
             :param add_references: Whether to add references for extracted concepts.
@@ -1583,18 +1622,19 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             :rtype: None
             """
 
-            if any(llm.role.endswith(x) for x in ("_vision", "_multimodal")):
-                # Vision/multimodal LLM: only document-level concept extraction is valid
+            if modality != "text":
+                # Image/multimodal extraction: only document-level concept extraction is valid
                 if extracted_item_type == "aspect" or (
                     extracted_item_type == "concept" and isinstance(source, _Aspect)
                 ):
                     raise ValueError(
-                        "Vision/multimodal LLMs can be used only for document-level "
-                        "concept extraction."
+                        "Extraction from images is supported only for document-level "
+                        "concepts, i.e. the `image` and `multimodal` modalities cannot be "
+                        "used for aspects and aspect-level concepts."
                     )
                 if extracted_item_type == "concept" and add_references:
                     # Allow references for multimodal only when text is present
-                    if llm.role.endswith("_multimodal"):
+                    if modality == "multimodal":
                         has_text = isinstance(source, _Document) and bool(
                             source.raw_text or source.paragraphs
                         )
@@ -1662,9 +1702,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
         # Perform validations
         validate_source_in_document(source=source, document=document)
-        validate_vision_or_multimodal_llm_usage(
+        validate_image_or_multimodal_extraction(
             extracted_item_type=extracted_item_type,
-            llm=llm,
+            modality=modality,
             source=source,
             add_references=add_references,
         )
@@ -1685,9 +1725,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
         # Handle empty instances list
         if not instances_to_process:
-            logger.info(
-                f"No {extracted_item_type}s to process with LLM role `{llm.role}`"
-            )
+            logger.info(f"No {extracted_item_type}s to process with LLM `{llm.model}`")
             return [], _LLMUsage()
 
         # Prepare message kwargs list based on extraction params
@@ -1702,6 +1740,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             justification_max_sents=justification_max_sents,
             add_references=add_references,
             reference_depth=reference_depth,
+            modality=modality,
             max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
             max_images_to_analyze_per_call=max_images_to_analyze_per_call,
         )
@@ -1781,7 +1820,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     filtered_instances_to_process.append(i)
                 if not filtered_instances_to_process:
                     logger.debug(
-                        f"No {extracted_item_type}s left to process with LLM role `{llm.role}`"
+                        f"No {extracted_item_type}s left to process with LLM `{llm.model}`"
                     )
                     continue
                 # Do not include instances with a single occurrence that already have extracted items
@@ -2317,6 +2356,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             justification_max_sents: int = 2,
             add_references: bool = False,
             reference_depth: ReferenceDepth = "paragraphs",
+            modality: Modality = "text",
         ) -> None:
             """
             Utility function for extracting instances using the provided LLM.
@@ -2336,6 +2376,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 paragraphs as references or sentences as references. Defaults to "paragraphs".
                 ``extracted_items`` will have values based on this parameter.
             :type reference_depth: ReferenceDepth
+            :param modality: The document content the concepts are extracted from.
+                Defaults to "text".
+            :type modality: Modality
             :return: None
             :rtype: None
             """
@@ -2397,6 +2440,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             justification_max_sents=justification_max_sents,
                             add_references=add_references,
                             reference_depth=reference_depth,
+                            modality=modality,
                             max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                             max_images_to_analyze_per_call=max_images_to_analyze_per_call,
                             num_retries_failed_request=llm_instance.num_retries_failed_request,
@@ -2517,6 +2561,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 "justification_max_sents": justification_max_sents,
                 "add_references": add_references,
                 "reference_depth": reference_depth,
+                "modality": modality,
                 "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
                 "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
                 "num_retries_failed_request": llm.num_retries_failed_request,
@@ -2705,8 +2750,15 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         else:
             instances_to_process = all_instances
 
-        # First, filter by the current LLM role.
-        filtered_instances = [i for i in instances_to_process if i.llm_role == llm.role]
+        # First, select the instances to be extracted by the current LLM. In an LLM group,
+        # an instance is routed to the LLM with the same role. A standalone LLM extracts
+        # all the instances, regardless of their LLM roles.
+        if self.is_group:
+            filtered_instances = [
+                i for i in instances_to_process if i.llm_role == llm.role
+            ]
+        else:
+            filtered_instances = list(instances_to_process)
 
         # If we are not overwriting, check that none of the instances is already processed.
         self._check_instances_already_processed(
@@ -2725,6 +2777,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             "add_references",  # references are always added to aspects automatically
             "reference_depth",
         ]
+        if instance_type == "concept":
+            # Concepts with different modalities are extracted from different content
+            # (aspects are always extracted from text)
+            fields_to_group_by.append("modality")
         # Safe cast: filtered_instances contains only _Aspect or _Concept instances
         # based on instance_type
         typed_instances = (
@@ -2749,7 +2805,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             }
             logger.debug(
                 f"Processing group of {instance_class.__name__}s ({len(group)}) "
-                f"with LLM `{llm.role}` with params: {params_combination}"
+                f"with LLM `{llm.model}` with params: {params_combination}"
             )
             cals_and_kwargs.append(
                 (
@@ -2864,10 +2920,9 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         ...,
         min_length=2,
         description=(
-            "List of DocumentLLM instances assigned unique roles (e.g., "
-            "'extractor_text', 'reasoner_text', 'extractor_vision', 'reasoner_vision', "
-            "'extractor_multimodal', 'reasoner_multimodal'); "
-            "minimum 2."
+            "List of DocumentLLM instances with unique roles, i.e. at most one LLM "
+            "without a role; minimum 2. An aspect/concept is routed to the LLM with "
+            "the `role` equal to the `llm_role` of the aspect/concept."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -2880,21 +2935,15 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         ),
     )
 
-    _llm_extractor_text: _DocumentLLM | None = PrivateAttr(default=None)
-    _llm_reasoner_text: _DocumentLLM | None = PrivateAttr(default=None)
-    _llm_extractor_vision: _DocumentLLM | None = PrivateAttr(default=None)
-    _llm_reasoner_vision: _DocumentLLM | None = PrivateAttr(default=None)
-    _llm_extractor_multimodal: _DocumentLLM | None = PrivateAttr(default=None)
-    _llm_reasoner_multimodal: _DocumentLLM | None = PrivateAttr(default=None)
-
     def _set_private_attrs(self) -> None:
         """
         Initialize and configure private attributes for the LLM group.
+        The LLM group has no private attributes to set.
 
         :return: None
         :rtype: None
         """
-        self._assign_role_specific_llms()
+        return None
 
     @property
     def is_group(self) -> bool:
@@ -2907,12 +2956,12 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         return True
 
     @property
-    def list_roles(self) -> list[LLMRoleAny]:
+    def list_roles(self) -> list[str | None]:
         """
         Returns a list of all roles assigned to the LLMs in this group.
 
-        :return: A list of LLM role identifiers
-        :rtype: list[LLMRoleAny]
+        :return: A list of LLM roles, with None standing for the LLM without a role
+        :rtype: list[str | None]
         """
         return [i.role for i in self.llms]
 
@@ -2977,7 +3026,9 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
     def _validate_llms(cls, llms: list[_DocumentLLM]) -> list[_DocumentLLM]:
         """
         Validates the provided list of _DocumentLLMs ensuring that each
-        LLM has a unique role within the group.
+        LLM has a unique role within the group, so that each aspect/concept
+        is routed to a single LLM. No role (None) also counts as a role,
+        i.e. only one LLM in the group can have no role.
 
         :param llms: A list of `_DocumentLLM` instances to be validated.
         :type llms: list[_DocumentLLM]
@@ -2988,35 +3039,12 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         seen_roles = set()
         for llm in llms:
             if llm.role in seen_roles:
-                raise ValueError("LLMs must have different roles.")
+                raise ValueError(
+                    "LLMs in a group must have different roles, "
+                    "and only one LLM in a group can have no role."
+                )
             seen_roles.add(llm.role)
         return llms
-
-    def _assign_role_specific_llms(self) -> None:
-        """
-        Assigns specific LLMs to dedicated roles based on the role attribute of each LLM.
-
-        :return: None
-        :rtype: None
-        """
-
-        def get_llm_by_role(role: str) -> _DocumentLLM | None:
-            """
-            Finds and returns the first LLM with the specified role.
-
-            :param role: The role to search for among the LLMs.
-            :type role: str
-            :return: The _DocumentLLM with the matching role, or None if not found.
-            :rtype: _DocumentLLM | None
-            """
-            return next((i for i in self.llms if i.role == role), None)
-
-        self._llm_extractor_text = get_llm_by_role("extractor_text")
-        self._llm_reasoner_text = get_llm_by_role("reasoner_text")
-        self._llm_extractor_vision = get_llm_by_role("extractor_vision")
-        self._llm_reasoner_vision = get_llm_by_role("reasoner_vision")
-        self._llm_extractor_multimodal = get_llm_by_role("extractor_multimodal")
-        self._llm_reasoner_multimodal = get_llm_by_role("reasoner_multimodal")
 
     def get_usage(self, llm_role: str | None = None) -> list[_LLMUsageOutputContainer]:
         """
@@ -3024,7 +3052,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         LLM role if provided.
 
         :param llm_role: Optional; A string representing the role of the LLM to filter
-            the usage data. If None, returns usage for all LLMs in the group.
+            the usage data. If None, returns usage for all LLMs in the group, including
+            the LLM without a role.
         :type llm_role: str | None
         :return: A list of usage statistics containers for the specified LLMs and their fallbacks.
         :rtype: list[_LLMUsageOutputContainer]
@@ -3043,7 +3072,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         LLM role if provided.
 
         :param llm_role: Optional; A string representing the role of the LLM to filter
-            the cost data. If None, returns cost for all LLMs in the group.
+            the cost data. If None, returns cost for all LLMs in the group, including
+            the LLM without a role.
         :type llm_role: str | None
         :return: A list of cost statistics containers for the specified LLMs and their fallbacks.
         :rtype: list[_LLMCostOutputContainer]
@@ -3064,7 +3094,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         multiple documents sequentially and tracking metrics for each document separately.
 
         :param llm_role: Optional; A string representing the role of the LLM to reset statistics for.
-            If None, resets statistics for all LLMs in the group.
+            If None, resets statistics for all LLMs in the group, including the LLM without a role.
         :type llm_role: str | None
         :return: None
         :rtype: None
@@ -3094,9 +3124,6 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         :raises ValueError: Raised if any LLM's `output_language` differs from the
             group's `output_language`.
         """
-
-        # Set private attributes before validation
-        self._set_private_attrs()
 
         if any(i.output_language != self.output_language for i in self.llms):
             raise ValueError(
@@ -3133,11 +3160,13 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=None,  # specific to Azure OpenAI
         description="API version; used by some providers (e.g., Azure OpenAI).",
     )
-    role: LLMRoleAny = Field(
-        default="extractor_text",
+    role: LLMRole = Field(
+        default=None,
         description=(
-            "LLM role for pipeline routing (e.g., 'extractor_text', 'reasoner_text', "
-            "'extractor_vision', 'reasoner_vision', 'extractor_multimodal', 'reasoner_multimodal')."
+            "Free-form role label used for routing in a DocumentLLMGroup: the LLM "
+            "extracts the aspects/concepts with the same `llm_role`. Defaults to None, "
+            "i.e. the LLM extracts the aspects/concepts without `llm_role`. Ignored "
+            "when the LLM is used on its own, as it then extracts all aspects/concepts."
         ),
     )
     system_message: str | None = Field(
@@ -3381,27 +3410,14 @@ class _DocumentLLM(_GenericLLMProcessor):
                 "https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/"
             )
 
-        # Recommend `ollama_chat` prefix for better responses for Ollama models (text-only processing)
-        if self.model.startswith("ollama/") and not any(
-            self.role.endswith(x) for x in ("_vision", "_multimodal")
-        ):
+        # Recommend `ollama_chat` prefix for better responses for Ollama models
+        # (text-only processing, as the ollama_chat/ does not yet support image inputs)
+        if self.model.startswith("ollama/"):
             logger.info(
-                "For better responses with Ollama models, consider using "
-                "'ollama_chat/' prefix instead of 'ollama/', as recommended by LiteLLM: "
-                "https://docs.litellm.ai/docs/providers/ollama"
-            )
-
-        # Warn to use `ollama/` prefix for image processing when using local vision/multimodal
-        # models, as the ollama_chat/ does not yet support image inputs
-        if self.model.startswith("ollama_chat/") and any(
-            self.role.endswith(x) for x in ("_vision", "_multimodal")
-        ):
-            warnings.warn(
-                "Using `ollama_chat/` prefix for local vision/multimodal models is not recommended, "
-                "as it does not yet support image inputs. Please use `ollama/` prefix instead. "
-                "See https://github.com/ollama/ollama/issues/10255 and "
-                "https://github.com/ollama/ollama/issues/6451 for more details.",
-                stacklevel=2,
+                "For better responses with Ollama models when processing text only, "
+                "consider using 'ollama_chat/' prefix instead of 'ollama/', as recommended "
+                "by LiteLLM: https://docs.litellm.ai/docs/providers/ollama. "
+                "Keep the 'ollama/' prefix for processing images."
             )
 
         # Warn about auto-pricing accuracy limitations
@@ -3528,15 +3544,16 @@ class _DocumentLLM(_GenericLLMProcessor):
         return False
 
     @property
-    def list_roles(self) -> list[LLMRoleAny]:
+    def list_roles(self) -> list[str | None]:
         """
         Returns a list containing the role of this LLM.
 
-        (For a single LLM, this returns a list with just one element - the LLM's role.
-        For LLM groups, the method implementation returns roles of all LLMs in the group.)
+        (For a single LLM, this returns a list with just one element - the LLM's role,
+        or None if the LLM has no role. For LLM groups, the method implementation returns
+        roles of all LLMs in the group.)
 
         :return: A list containing the role of this LLM.
-        :rtype: list[LLMRoleAny]
+        :rtype: list[str | None]
         """
         return [self.role]
 
@@ -4251,46 +4268,11 @@ class _DocumentLLM(_GenericLLMProcessor):
         # validated here; validation is delegated to litellm / the provider API,
         # which raises an error at request time for unsupported combinations.
 
+        # Note: the LLM role is a free-form routing label that implies no capabilities
+        # of the model, i.e. vision and reasoning support is not validated against it.
+        # Vision support is validated at request time, when images are sent to the model.
+
         # Emit relevant warnings
-
-        # Vision support check - when applicable
-        if (
-            any(self.role.endswith(x) for x in ("_vision", "_multimodal"))
-            and not self._supports_vision
-        ):
-            # Prompt the user to override _supports_vision if the model is known to support
-            # vision while litellm does not detect it as vision-capable
-            warnings.warn(
-                f"Model `{self.model}` is assigned vision/multimodal role `{self.role}` but "
-                f"litellm does not detect it as vision-capable. This will cause "
-                f"vision-related operations to fail. If you know this model supports "
-                f"vision, manually set `_supports_vision=True` on the LLM instance.",
-                stacklevel=2,
-            )
-
-        # Reasoning support check - when applicable
-        if self.role.startswith("reasoner") and not self._supports_reasoning:
-            # Prompt the user to override _supports_reasoning if the model is known to support
-            # reasoning while litellm does not detect it as reasoning-capable
-            warnings.warn(
-                f"Model `{self.model}` is assigned reasoning role `{self.role}` but "
-                f"litellm does not detect it as reasoning-capable. This will cause "
-                f"reasoning-related prompt instructions to be skipped, which may limit "
-                f"the model's reasoning capabilities. If you know this model supports reasoning, "
-                f"manually set `_supports_reasoning=True` on the LLM instance.",
-                stacklevel=2,
-            )
-
-        # Extractor role with reasoning-capable model - suggest aligning role for routing clarity
-        if self.role.startswith("extractor") and self._supports_reasoning:
-            logger.info(
-                f"Model `{self.model}` is assigned extractor role `{self.role}`, "
-                f"while the model is reasoning-capable. If you intend to route reasoning tasks "
-                f"to this model, consider using a `reasoner_*` role to match aspect/concept `llm_role` "
-                f"and keep pipeline roles consistent. See "
-                f"https://contextgem.dev/optimizations/optimization_choosing_llm/",
-                stacklevel=2,
-            )
 
         if self.tools is not None and not self._supports_tools:
             warnings.warn(
@@ -4480,6 +4462,18 @@ class _DocumentLLM(_GenericLLMProcessor):
                 f"Model `{self.model}` does not support vision according to "
                 f"litellm.supports_vision(). To override this detection, "
                 f"manually set `_supports_vision=True` on the LLM instance."
+            )
+
+        # Warn to use `ollama/` prefix for image processing when using local models,
+        # as the ollama_chat/ does not yet support image inputs
+        if contains_image_content and self.model.startswith("ollama_chat/"):
+            warnings.warn(
+                "Using `ollama_chat/` prefix for processing images with local models is "
+                "not recommended, as it does not yet support image inputs. Please use "
+                "`ollama/` prefix instead. "
+                "See https://github.com/ollama/ollama/issues/10255 and "
+                "https://github.com/ollama/ollama/issues/6451 for more details.",
+                stacklevel=2,
             )
 
     def _messages_to_request(self, messages: list[_Message]) -> list[dict[str, Any]]:
@@ -5140,8 +5134,9 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         if self.pricing_details is None and not self.auto_pricing:
             logger.info(
-                f"No pricing params provided for the LLM `{self.model}` "
-                f"with role `{self.role}`. Costs for this LLM were not calculated."
+                f"No pricing params provided for the LLM `{self.model}`"
+                f"{f' with role `{self.role}`' if self.role else ''}. "
+                f"Costs for this LLM were not calculated."
             )
 
         # Quantize for presentation without mutating internal state

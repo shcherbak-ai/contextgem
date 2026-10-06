@@ -46,54 +46,104 @@ Since ContextGem specializes in deep single-document analysis, models with large
 🏷️ LLM Roles
 --------------
 
-The ``role`` of an LLM is an abstraction used to assign various LLMs tasks of different complexity. For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, this aspect/concept is extracted from the document using the LLM with ``role="extractor_text"``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate role for a specific aspect/concept.
+The ``role`` of an LLM is a free-form label used to route aspects/concepts to different LLMs in a :class:`~contextgem.public.llms.DocumentLLMGroup`. For example, if an aspect/concept is assigned ``llm_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
 
-In LLM groups, unique role assignments are especially important: each model in the group must have a distinct role so routing can unambiguously send each aspect/concept to the intended model.
+A role is a label of your choice (e.g. ``"reasoner"``, ``"complex"``, ``"vision"``) and implies no capabilities of the model: it is you who decides which model stands behind each role.
 
-For simple use cases, when working with text-only documents and a single LLM, you can skip the role assignments completely, in which case the roles will default to ``"extractor_text"``.
-
-.. list-table:: Available LLM roles
+.. list-table:: Routing of aspects/concepts to LLMs
    :header-rows: 1
-   :widths: 20 20 20 20
+   :widths: 30 35 35
 
-   * - Role
-     - Extraction Context
-     - Extracted Item Types
-     - Required LLM Capabilities
-   * - ``"extractor_text"``
-     - Text
-     - Aspects and concepts (aspect- and document-level)
-     - No reasoning required
-   * - ``"reasoner_text"``
-     - Text
-     - Aspects and concepts (aspect- and document-level)
-     - Reasoning-capable model
-   * - ``"extractor_vision"``
-     - Images
-     - Document-level concepts
-     - Vision-capable model
-   * - ``"reasoner_vision"``
-     - Images
-     - Document-level concepts
-     - Vision-capable and reasoning-capable model
-   * - ``"extractor_multimodal"``
-     - Text and/or images
-     - Document-level concepts
-     - Multimodal model supporting text and image inputs
-   * - ``"reasoner_multimodal"``
-     - Text and/or images
-     - Document-level concepts
-     - Reasoning-capable multimodal model supporting text and image inputs
+   * - Extraction with
+     - Aspect/concept without ``llm_role``
+     - Aspect/concept with ``llm_role="reasoner"``
+   * - Single LLM
+     - Extracted by the LLM
+     - Extracted by the LLM
+   * - LLM group
+     - Extracted by the LLM without ``role``
+     - Extracted by the LLM with ``role="reasoner"``
+
+In LLM groups, unique role assignments are especially important: each model in the group must have a distinct role (only one model can have no role), so routing can unambiguously send each aspect/concept to the intended model. If an aspect/concept is assigned a role that no LLM in the group has, an error is raised.
+
+For simple use cases, when working with a single LLM, you can skip the role assignments completely: a single LLM extracts all the aspects/concepts it is given, regardless of their ``llm_role``.
 
 .. note::
-  🧠 Only LLMs that support reasoning (chain of thought) should be assigned reasoning roles (``"reasoner_text"``, ``"reasoner_vision"``). For such models, internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses.
-
-.. note::
-  👁️ Only LLMs that support vision can be assigned vision roles (``"extractor_vision"``, ``"reasoner_vision"``).
-
-.. note::
-  🔀 Multimodal roles (``"extractor_multimodal"``, ``"reasoner_multimodal"``) reuse the existing text and vision extraction paths. If text exists, the text path runs first; if images exist, the vision path runs next. References are only supported for multimodal concepts when text is used.
+  🧠 For LLMs that support reasoning (chain of thought), internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses. Reasoning support is detected automatically using ``litellm.supports_reasoning()``, regardless of the role of the LLM. If this function does not correctly identify your model's capabilities, you can explicitly declare the capability by setting ``_supports_reasoning=True`` on the LLM instance.
 
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_choosing_llm.py
     :language: python
     :caption: Example of selecting different LLMs for different tasks
+
+
+.. _concept-modality-label:
+
+🖼️ Concept Modality
+---------------------
+
+The ``modality`` of a concept defines the document content that the concept is extracted from. The modality is independent of LLM roles: a concept is extracted from the specified content by whichever LLM it is given or routed to.
+
+.. list-table:: Available concept modalities
+   :header-rows: 1
+   :widths: 20 20 30 30
+
+   * - Modality
+     - Extraction Context
+     - Extracted Item Types
+     - Required LLM Capabilities
+   * - ``"text"`` (default)
+     - Text
+     - Concepts (aspect- and document-level). Aspects are always extracted from text.
+     - No specific capabilities required
+   * - ``"image"``
+     - Images
+     - Document-level concepts
+     - Vision-capable model
+   * - ``"multimodal"``
+     - Text and/or images
+     - Document-level concepts
+     - Vision-capable model, when the document has images
+
+.. note::
+  👁️ Only LLMs that support vision can extract concepts from images. Vision support is detected automatically using ``litellm.supports_vision()``, and an error is raised when images are sent to a model that does not support vision. See :doc:`../llms/llm_config` for declaring the capability explicitly.
+
+.. note::
+  🔀 Concepts with the ``"multimodal"`` modality reuse the existing text and image extraction paths. If text exists, the text path runs first; if images exist, the image path runs next. References are only supported for multimodal concepts when text is used.
+
+.. note::
+  🤖 A single multimodal LLM can extract concepts of all modalities. If you prefer a dedicated model for images, add it to an LLM group with a role (e.g. ``role="vision"``) and assign the same ``llm_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.
+
+
+.. _llm-roles-migration-label:
+
+🔁 Migrating from the Role Names Used Before v1.0.0
+-----------------------------------------------------
+
+Before v1.0.0, LLMs, aspects and concepts could only be assigned one of six predefined role names, which combined the routing (``extractor`` / ``reasoner``) with the content to extract from (``text`` / ``vision`` / ``multimodal``). These role names are deprecated and will be removed in v2.0.0.
+
+.. list-table:: Replacing the deprecated role names
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Before v1.0.0
+     - Since v1.0.0
+   * - ``"extractor_text"``
+     - Omit the role (this role was the default)
+   * - ``"reasoner_text"``
+     - A role label of your choice, e.g. ``"reasoner"``
+   * - ``"extractor_vision"``
+     - Omit the role, and set ``modality="image"`` on the concept
+   * - ``"reasoner_vision"``
+     - A role label of your choice, e.g. ``"reasoner"``, and ``modality="image"`` on the concept
+   * - ``"extractor_multimodal"``
+     - Omit the role, and set ``modality="multimodal"`` on the concept
+   * - ``"reasoner_multimodal"``
+     - A role label of your choice, e.g. ``"reasoner"``, and ``modality="multimodal"`` on the concept
+
+Until removal, the deprecated role names keep working with a ``DeprecationWarning``: ``"extractor_text"`` is treated as no role, the other names are kept as regular role labels, so that the LLMs and the aspects/concepts with the same name are still matched, and a ``*_vision`` or ``*_multimodal`` name assigned to a concept also sets the ``modality`` of the concept. The same applies to the documents and pipelines serialized with earlier versions.
+
+Note the following changes in behavior, which apply regardless of the role names used:
+
+- A single LLM extracts all the aspects/concepts it is given. Previously, it skipped the aspects/concepts with an ``llm_role`` different from its own ``role``. To extract only some of the aspects/concepts with a single LLM, use the ``from_aspects`` / ``from_concepts`` parameters of the extraction methods.
+- An LLM group raises an error when an aspect/concept cannot be routed to any LLM in the group. Previously, such aspects/concepts were skipped.
+- The same model no longer needs to be added to an LLM group several times, with different roles, to process text and images: a role no longer restricts the content that an LLM can process.

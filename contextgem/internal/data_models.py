@@ -44,7 +44,6 @@ from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.decorators import _expose_in_registry
 from contextgem.internal.typings.types import (
     DefaultDecimalField,
-    LLMRoleAny,
     MessageRole,
     NonEmptyStr,
 )
@@ -130,10 +129,8 @@ class _LLMUsageOutputContainer(BaseModel):
 
     :ivar model: The name or identifier of the model being used.
     :vartype model: str
-    :ivar role: The role of the model, which must be one of
-        "extractor_text", "reasoner_text", "extractor_vision",
-        "reasoner_vision", "extractor_multimodal", "reasoner_multimodal".
-    :vartype role: LLMRoleAny
+    :ivar role: The role label of the model, or None if the model has no role.
+    :vartype role: str | None
     :ivar is_fallback: Indicates whether the LLM is a fallback model.
     :vartype is_fallback: StrictBool
     :ivar usage: Detailed usage information encapsulated in a `_LLMUsage`
@@ -142,7 +139,7 @@ class _LLMUsageOutputContainer(BaseModel):
     """
 
     model: NonEmptyStr
-    role: LLMRoleAny
+    role: NonEmptyStr | None
     is_fallback: StrictBool
     usage: _LLMUsage
 
@@ -178,10 +175,8 @@ class _LLMCostOutputContainer(BaseModel):
 
     :ivar model: The name of the language model being used.
     :vartype model: str
-    :ivar role: The role of the model in processing, which can be one of:
-                "extractor_text", "reasoner_text", "extractor_vision",
-                "reasoner_vision", "extractor_multimodal", "reasoner_multimodal".
-    :vartype role: LLMRoleAny
+    :ivar role: The role label of the model, or None if the model has no role.
+    :vartype role: str | None
     :ivar is_fallback: Indicates if the LLM is a fallback model.
     :vartype is_fallback: bool
     :ivar cost: The _LLMCost object associated with the LLM execution.
@@ -189,7 +184,7 @@ class _LLMCostOutputContainer(BaseModel):
     """
 
     model: NonEmptyStr
-    role: LLMRoleAny
+    role: NonEmptyStr | None
     is_fallback: StrictBool
     cost: _LLMCost
 

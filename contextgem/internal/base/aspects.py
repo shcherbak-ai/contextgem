@@ -46,11 +46,14 @@ from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.items import _StringItem
 from contextgem.internal.typings.types import (
-    LLMRoleAspect,
+    LLMRole,
     NonEmptyStr,
     ReferenceDepth,
 )
-from contextgem.internal.typings.validators import _validate_sequence_is_list
+from contextgem.internal.typings.validators import (
+    _get_legacy_llm_role_modality,
+    _validate_sequence_is_list,
+)
 
 
 # Defines the maximum nesting level of sub-aspects.
@@ -88,14 +91,16 @@ class _Aspect(
         default_factory=list,
         description=(
             "Concepts associated with this aspect. Must be unique by name and description. "
-            "Concepts with vision or multimodal LLM roles are not allowed."
+            "Only concepts with 'text' modality are allowed."
         ),
     )  # using Sequence field with list validator for type checking
-    llm_role: LLMRoleAspect = Field(
-        default="extractor_text",
+    llm_role: LLMRole = Field(
+        default=None,
         description=(
-            "LLM role used for aspect extraction. Valid values: 'extractor_text' or "
-            "'reasoner_text'."
+            "Role label of the LLM that extracts this aspect when a DocumentLLMGroup "
+            "is used: the aspect is routed to the LLM in the group with the same `role`. "
+            "Defaults to None, which routes to the LLM without a role. "
+            "Ignored by a standalone DocumentLLM, which extracts every aspect it is given."
         ),
     )
     reference_depth: ReferenceDepth = Field(
@@ -156,21 +161,39 @@ class _Aspect(
         :type concepts: list[_Concept]
         :raises ValueError: If multiple concepts have the same name.
         :raises ValueError: If multiple concepts have the same description.
-        :raises ValueError: If any concept has an LLM role ending with '_vision'
-            or '_multimodal'.
+        :raises ValueError: If any concept has a modality other than 'text'.
         :return: The validated list of '_Concept' instances.
         :rtype: list[_Concept]
         """
 
-        if concepts and any(
-            i.llm_role.endswith(x) for x in ("_vision", "_multimodal") for i in concepts
-        ):
+        if any(i.modality != "text" for i in concepts):
             # Validate for Aspect-specific constraints.
             raise ValueError(
-                "Aspect-level concepts extraction using vision/multimodal LLMs is not supported. "
-                "Vision/multimodal LLMs can be used only for document-level concept extraction."
+                "Aspect-level concepts are extracted from text only. Concepts with "
+                "`image` or `multimodal` modality can be extracted only at the document level."
             )
         return concepts
+
+    @field_validator("llm_role", mode="before")
+    @classmethod
+    def _validate_llm_role(cls, llm_role: Any) -> Any:
+        """
+        Rejects the legacy (deprecated) LLM role names for vision/multimodal LLMs,
+        which were never supported for aspects, as aspects are extracted from text only.
+
+        :param llm_role: The LLM role value to validate.
+        :type llm_role: Any
+        :raises ValueError: If the LLM role is a legacy vision/multimodal role name.
+        :return: The validated LLM role value.
+        :rtype: Any
+        """
+
+        if _get_legacy_llm_role_modality(llm_role) not in (None, "text"):
+            raise ValueError(
+                f"LLM role `{llm_role}` is not supported for aspects, "
+                f"as aspects are extracted from text only."
+            )
+        return llm_role
 
     def _validate_and_process_sub_aspects(self, aspects: list[_Aspect]) -> None:
         """

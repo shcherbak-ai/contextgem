@@ -112,13 +112,13 @@ ContextGem uses the following models to extract information from documents:
 🤖 **DocumentLLM**
 ~~~~~~~~~~~~~~~~~~~
 
-**A single configurable LLM with a specific role to extract specific information from the document.**
+**A single configurable LLM to extract information from the document.**
 
-The ``role`` of an LLM is an abstraction used to assign various LLMs tasks of different complexity. For example, if an aspect/concept is assigned ``llm_role="extractor_text"``, this aspect/concept is extracted from the document using the LLM with ``role="extractor_text"``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate role for a specific aspect/concept. But for simple use cases, when working with text-only documents and a single LLM, you can skip the role assignment completely, in which case the role will default to ``"extractor_text"``.
+A single LLM extracts all the aspects and concepts it is given: from the document text and, for the concepts with the ``"image"`` or ``"multimodal"`` modality, from the document images (provided that the model supports vision). No role assignment is needed.
 
-An LLM can have one or more configurable fallback LLMs with the same role, which are tried in the given order.
+An LLM can have one or more configurable fallback LLMs, which are tried in the given order.
 
-See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`llm-roles-label` for more details.
+See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`concept-modality-label` for more details.
 
 
 🤖🤖 **DocumentLLMGroup**
@@ -127,6 +127,8 @@ See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`llm-roles-label` for 
 **A group of LLMs with different unique roles to extract different information from the document.**
 
 For more complex and granular extraction workflows, an LLM group can be used to extract different information from the same document using different LLMs with different roles. For example, a simpler LLM e.g. gpt-4o-mini can be used to extract specific aspects of the document, and a more powerful LLM e.g. o3-mini will handle the extraction of complex concepts that require reasoning over the aspects' context.
+
+The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs in the group. For example, if an aspect/concept is assigned ``llm_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
 
 Each LLM can have its own backend and configuration, and one or more fallback LLMs with the same role.
 
@@ -137,9 +139,9 @@ See :class:`~contextgem.public.llms.DocumentLLMGroup` and :ref:`llm-roles-label`
    :widths: 15 20 20 20
 
    * - 
-     - LLM 1 (``extractor_text``)
-     - LLM 2 (``reasoner_text``)
-     - LLM 3 (``extractor_vision``)
+     - LLM 1 (no role)
+     - LLM 2 (``role="reasoner"``)
+     - LLM 3 (``role="vision"``)
    * - *Model*
      - gpt-4.1-mini
      - o4-mini
