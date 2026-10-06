@@ -107,11 +107,15 @@ from contextgem.internal.typings.validators import (
     _validate_tool_parameters_schema,
 )
 from contextgem.internal.utils import (
+    _LLM_API_RETRIES_ATTEMPTED_ATTR,
     _async_multi_executor,
     _chunk_list,
     _clean_text_for_llm_prompt,
+    _get_llm_api_retry_delay,
     _get_template,
     _group_instances_by_fields,
+    _is_retryable_llm_api_error,
+    _llm_call_result_is_api_failure,
     _llm_call_result_is_valid,
     _parse_llm_output_as_json,
     _remove_thinking_content_from_llm_output,
@@ -2350,6 +2354,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 """
                 Checks the processed result for validity and retries it if invalid.
 
+                The retries stop as soon as an LLM API request fails, as such request
+                is already retried (if the error is transient) when it is sent.
+
                 :param llm_instance: The LLM instance to process the data.
                 :type llm_instance: _DocumentLLM
                 :param res: Result to check and retry if invalid.
@@ -2387,8 +2394,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             reference_depth=reference_depth,
                             max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                             max_images_to_analyze_per_call=max_images_to_analyze_per_call,
-                            num_retries_failed_request=0,  # do not repeat retries already performed by LiteLLM
-                            max_retries_failed_request=0,
+                            num_retries_failed_request=llm_instance.num_retries_failed_request,
+                            max_retries_failed_request=llm_instance.max_retries_failed_request,
                             async_limiter=async_limiter,
                             raise_exception_on_extraction_error=raise_exception_on_extraction_error,
                             has_fallback_pending=not retry_is_final,
@@ -2397,10 +2404,15 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                         await llm_instance._update_usage_and_cost(res)
                         if res[0] is not None:
                             break
+                        if _llm_call_result_is_api_failure(res):
+                            # The retries of the failed request are already performed,
+                            # i.e. sending it to the same LLM again is pointless
+                            break
                     if _llm_call_result_is_valid(res):
                         return True
                     else:
-                        if retry_is_final:
+                        # A failed LLM API request is already reported at this point
+                        if retry_is_final and not _llm_call_result_is_api_failure(res):
                             instance_names = [instance.name for instance in instances]
                             error_msg = (
                                 f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
@@ -2443,7 +2455,12 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 :rtype: bool
                 """
                 retry_successful = False
-                if llm.max_retries_invalid_data > 0:
+                # Retry on the primary LLM only if it returned invalid data. If its API
+                # request failed, the retries of that request are already performed.
+                if (
+                    llm.max_retries_invalid_data > 0
+                    and not _llm_call_result_is_api_failure(result)
+                ):
                     retry_successful = await retry_processing_for_result(
                         llm_instance=llm,
                         res=result,
@@ -2510,9 +2527,27 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             if (
                 use_concurrency and len(data_list) > 1
             ):  # Disable overhead if a single call
+
+                async def extract_items_or_api_error(**kwargs: Any) -> Any:
+                    """
+                    Extracts items from a single chunk, returning an LLM API error
+                    instead of raising it, so that the error is not suppressed by
+                    the concurrent executor.
+
+                    :param kwargs: Keyword arguments of `_extract_items_from_instances`.
+                    :type kwargs: Any
+                    :return: The extraction result, or the LLM API error raised
+                        during the extraction.
+                    :rtype: Any
+                    """
+                    try:
+                        return await self._extract_items_from_instances(**kwargs)
+                    except LLMAPIError as e:
+                        return e
+
                 # Process chunks concurrently
                 results = await _async_multi_executor(
-                    func=self._extract_items_from_instances,
+                    func=extract_items_or_api_error,
                     data_list=data_list,
                 )
                 if len(results) != len(data_chunks):
@@ -2523,7 +2558,16 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
                 # Update usage stats and cost
                 for result in results:
-                    await llm._update_usage_and_cost(result)
+                    if not isinstance(result, LLMAPIError):
+                        await llm._update_usage_and_cost(result)
+
+                # An LLM API error is raised only when it is final, i.e. the retries
+                # of the failed request are already performed and there is no fallback
+                # LLM to try. Re-raise the first such error by chunk index, instead of
+                # sending the failed request again.
+                for result in results:
+                    if isinstance(result, LLMAPIError):
+                        raise result
 
                 # Retry failed chunks concurrently. Original chunk order is preserved
                 # in `failed_pairs` so post-gather handling raises the first failure
@@ -3115,12 +3159,19 @@ class _DocumentLLM(_GenericLLMProcessor):
     num_retries_failed_request: StrictInt = Field(
         default=3,
         ge=0,
-        description="Client-side retry count for failed requests.",
+        description=(
+            "Retry count for requests that fail with a transient error "
+            "(timeout, rate limit, server or connection error); "
+            "retried with exponential backoff and jitter."
+        ),
     )
     max_retries_failed_request: StrictInt = Field(
         default=0,
         ge=0,  # provider-specific
-        description="Provider SDK retry count for failed requests.",
+        description=(
+            "Provider SDK retry count for failed requests; "
+            "applies to the first attempt of a request only."
+        ),
     )
     max_retries_invalid_data: StrictInt = Field(
         default=3,
@@ -4507,19 +4558,25 @@ class _DocumentLLM(_GenericLLMProcessor):
         drop_tool_choice: bool = False,
     ) -> Any:
         """
-        Sends a single non-streaming chat completion request.
+        Sends a single non-streaming chat completion request, retrying it if it fails
+        with a transient error.
+
+        Only transient errors (request timeouts, rate limits, server and connection errors)
+        are retried, with capped exponential backoff and jitter between the retries.
+        Non-transient errors (e.g. an invalid request or a failed authentication) are
+        raised right away. The number of retries attempted is recorded on the raised
+        exception.
 
         :param request_config: Base request configuration
         :type request_config: dict[str, Any]
         :param messages_payload: Provider-formatted messages to send
         :type messages_payload: list[dict[str, Any]]
-        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
-            Note that this parameter may override the value set on the LLM instance to prevent
-            accumulation of retries from failed requests and invalid data generation.
+        :param num_retries_failed_request: Optional number of retries when LLM request fails
+            with a transient error. Defaults to 3.
         :type num_retries_failed_request: int
         :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
-            retries when LLM request fails. Defaults to 0. This parameter may override the value set on
-            the LLM instance to prevent accumulation of retries from failed requests and invalid data generation.
+            retries performed by the provider's SDK when LLM request fails. Applies to the first
+            attempt only. Defaults to 0.
         :type max_retries_failed_request: int
         :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
             Used internally for automatic retry when UnsupportedParamsError occurs.
@@ -4534,17 +4591,43 @@ class _DocumentLLM(_GenericLLMProcessor):
         payload["messages"] = messages_payload
         if drop_tool_choice and "tool_choice" in payload:
             payload["tool_choice"] = None
-        return await litellm.acompletion(
-            **payload,
-            api_key=self.api_key,
-            api_base=self.api_base,
-            api_version=self.api_version,
-            num_retries=num_retries_failed_request,
-            max_retries=max_retries_failed_request,
-            timeout=self.timeout,
-            stream=False,  # always disabled in contextgem
-            drop_params=drop_params,
-        )
+
+        # The request is retried here rather than by litellm (`num_retries`), which
+        # retries any error, including non-transient ones, and applies backoff only
+        # to rate limit errors, with no jitter.
+        retries_attempted = 0
+        while True:
+            try:
+                return await litellm.acompletion(
+                    **payload,
+                    api_key=self.api_key,
+                    api_base=self.api_base,
+                    api_version=self.api_version,
+                    num_retries=0,
+                    # Provider-specific retries apply to the first attempt only,
+                    # to prevent accumulation of retries
+                    max_retries=(
+                        max_retries_failed_request if retries_attempted == 0 else 0
+                    ),
+                    timeout=self.timeout,
+                    stream=False,  # always disabled in contextgem
+                    drop_params=drop_params,
+                )
+            except Exception as e:
+                if (
+                    retries_attempted >= num_retries_failed_request
+                    or not _is_retryable_llm_api_error(e)
+                ):
+                    setattr(e, _LLM_API_RETRIES_ATTEMPTED_ATTR, retries_attempted)
+                    raise
+                retries_attempted += 1
+                delay = _get_llm_api_retry_delay(retries_attempted)
+                logger.info(
+                    f"LLM API request failed with a transient error "
+                    f"({type(e).__name__}). Retrying in {delay:.1f}s "
+                    f"({retries_attempted}/{num_retries_failed_request})"
+                )
+                await asyncio.sleep(delay)
 
     def _record_usage_call(
         self,
@@ -4697,13 +4780,11 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type llm_call_obj: _LLMCall
         :param usage: The usage object.
         :type usage: _LLMUsage
-        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
-            Note that this parameter may override the value set on the LLM instance to prevent
-            accumulation of retries from failed requests and invalid data generation.
+        :param num_retries_failed_request: Optional number of retries when LLM request fails
+            with a transient error. Defaults to 3.
         :type num_retries_failed_request: int
         :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
-            retries when LLM request fails. Defaults to 0. This parameter may override the value set on
-            the LLM instance to prevent accumulation of retries from failed requests and invalid data generation.
+            retries performed by the provider's SDK when LLM request fails. Defaults to 0.
         :type max_retries_failed_request: int
         :param async_limiter: The async limiter.
         :type async_limiter: AsyncLimiter | None
@@ -4830,13 +4911,11 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type messages: list[_Message]
         :param llm_call_obj: The _LLMCall object holding data on the initiated LLM call.
         :type llm_call_obj: _LLMCall
-        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
-            Note that this parameter may override the value set on the LLM instance to prevent
-            accumulation of retries from failed requests and invalid data generation.
+        :param num_retries_failed_request: Optional number of retries when LLM request fails
+            with a transient error. Defaults to 3.
         :type num_retries_failed_request: int
         :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
-            retries when LLM request fails. Defaults to 0. This parameter may override the value set on
-            the LLM instance to prevent accumulation of retries from failed requests and invalid data generation.
+            retries performed by the provider's SDK when LLM request fails. Defaults to 0.
         :type max_retries_failed_request: int
         :param async_limiter: An optional aiolimiter.AsyncLimiter instance that controls the frequency of
             async LLM API requests, when concurrency is enabled for certain tasks. If not provided,
@@ -4930,13 +5009,9 @@ class _DocumentLLM(_GenericLLMProcessor):
                     stacklevel=2,
                 )
                 if has_fallback_pending:
-                    logger.info(
-                        "Call will be retried if retry params provided and/or a fallback LLM is configured."
-                    )
+                    logger.info("The call will be retried with a fallback LLM.")
                 else:
-                    n_retries = max(
-                        num_retries_failed_request, max_retries_failed_request
-                    )
+                    n_retries = getattr(e, _LLM_API_RETRIES_ATTEMPTED_ATTR, 0)
                     if raise_exception_on_llm_api_error:
                         raise LLMAPIError(
                             "Exception occurred while calling LLM API",
@@ -4957,14 +5032,13 @@ class _DocumentLLM(_GenericLLMProcessor):
             # Propagate tool loop limit errors without wrapping
             raise
         except Exception as e:
-            # e.g. rate limit error
+            # e.g. rate limit error, after the retries of the request are exhausted,
+            # or a non-transient error such as failed authentication
             logger.error(f"Exception occurred while calling LLM API: {e}")
             if has_fallback_pending:
-                logger.info(
-                    "Call will be retried if retry params provided and/or a fallback LLM is configured."
-                )
+                logger.info("The call will be retried with a fallback LLM.")
             else:
-                n_retries = max(num_retries_failed_request, max_retries_failed_request)
+                n_retries = getattr(e, _LLM_API_RETRIES_ATTEMPTED_ATTR, 0)
                 if raise_exception_on_llm_api_error:
                     raise LLMAPIError(
                         "Exception occurred while calling LLM API",

@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Serialized `DocumentLLM` data now stores fallback LLMs under the `fallback_llms` key. Data serialized by earlier versions (with a single `fallback_llm`) is still deserialized correctly.
+- Failed LLM API requests are now retried by ContextGem instead of litellm, with `num_retries_failed_request` keeping its meaning. Only transient errors (request timeout, rate limit, server or connection error) are retried; non-transient errors (e.g. invalid request, failed authentication, exceeded context window) fail right away or are passed to a fallback LLM, instead of being retried as before. Retries are performed with exponential backoff and jitter (about 1, 2, 4, 8 seconds, capped at 10 seconds, each randomly shortened by up to a half); previously, only rate limit errors were retried with a backoff, without jitter, and other errors were retried immediately.
+- `LLMAPIError.retry_count`, as well as the corresponding warning messages, now report the number of retries actually attempted for the failed request, rather than the configured number of retries.
+
+### Fixed
+
+- Fallback LLMs now apply their own `num_retries_failed_request` and `max_retries_failed_request` during extraction. Previously, these were ignored for fallback LLMs, and the last fallback LLM failed the extraction on its first API error, e.g. a single rate limit error.
+- A request that failed with an API error is no longer sent to the same LLM again during extraction. Previously, when a fallback LLM was configured or `raise_exception_on_extraction_error=False` was passed, such a request was repeated up to `max_retries_invalid_data` times without a delay, e.g. right after a rate limit error. `max_retries_invalid_data` now applies only when the LLM returns invalid data.
+- With concurrency enabled, an API error that fails the extraction is now raised as `LLMAPIError` right away. Previously, the failed request was sent again first, and the error was raised as `LLMExtractionError` if `max_retries_invalid_data=0` was set.
 
 ### Deprecated
 

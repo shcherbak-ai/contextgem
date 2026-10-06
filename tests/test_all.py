@@ -36,6 +36,7 @@ from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
+from unittest.mock import patch
 
 import pytest
 from _pytest.nodes import Item as PytestItem
@@ -45,6 +46,7 @@ from lxml import etree
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, field_validator
 
+from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.attrs import (
     _AssignedAspectsProcessor,
@@ -109,7 +111,9 @@ from contextgem.internal.registry import (
     _resolve_public_type,
 )
 from contextgem.internal.utils import (
+    _get_llm_api_retry_delay,
     _get_template,
+    _is_retryable_llm_api_error,
     _load_sat_model,
     _split_text_into_paragraphs,
 )
@@ -1351,7 +1355,8 @@ class TestAll(TestUtils):
 
         # === Test invalid LLM without fallback LLM ===
         # raise_exception_on_extraction_error is True by default
-        with pytest.raises(LLMAPIError, match=r"LLM API.*3 retries"):
+        # (an invalid model is not a transient error, i.e. the request is not retried)
+        with pytest.raises(LLMAPIError, match=r"LLM API.*0 retries"):
             self.llm_invalid.extract_aspects_from_document(
                 document,
                 overwrite_existing=True,
@@ -1364,12 +1369,12 @@ class TestAll(TestUtils):
                 document,
                 overwrite_existing=True,
             )
-        with pytest.raises(LLMAPIError, match=r"LLM API.*3 retries"):
+        with pytest.raises(LLMAPIError, match=r"LLM API.*0 retries"):
             self.llm_invalid.extract_concepts_from_document(
                 document,
                 overwrite_existing=True,
             )
-        with pytest.raises(LLMAPIError, match=r"LLM API.*3 retries"):
+        with pytest.raises(LLMAPIError, match=r"LLM API.*0 retries"):
             self.llm_invalid.extract_all(
                 document,
                 overwrite_existing=True,
@@ -6539,6 +6544,288 @@ class TestAll(TestUtils):
         assert not any(i.extracted_items for i in document_unprocessed.concepts)
 
         check_locals_memory_usage(locals(), test_name="test_multiple_fallback_llms")
+
+    @memory_profile_and_capture
+    def test_llm_api_request_retries(self):
+        """
+        Tests for retrying failed LLM API requests: only transient errors are retried,
+        with a backoff between the retries, and each LLM, including each fallback LLM,
+        applies its own retry params.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+
+        def create_api_error(error_class: Any) -> Exception:
+            """
+            Creates an LLM API error of the specified litellm exception class.
+            """
+            return error_class(
+                message="Simulated API error",
+                model="openai/gpt-4o-mini",
+                llm_provider="openai",
+            )
+
+        rate_limit_error = create_api_error(litellm.RateLimitError)
+        auth_error = create_api_error(litellm.AuthenticationError)
+
+        # === Transient vs non-transient errors ===
+        for error in [
+            create_api_error(litellm.Timeout),
+            rate_limit_error,
+            create_api_error(litellm.InternalServerError),
+            create_api_error(litellm.ServiceUnavailableError),
+            create_api_error(litellm.APIConnectionError),
+            RuntimeError("Error not classified by litellm"),
+        ]:
+            assert _is_retryable_llm_api_error(error)
+        for error in [
+            create_api_error(litellm.BadRequestError),
+            auth_error,
+            create_api_error(litellm.NotFoundError),
+            create_api_error(litellm.ContextWindowExceededError),
+            create_api_error(litellm.ContentPolicyViolationError),
+        ]:
+            assert not _is_retryable_llm_api_error(error)
+
+        # === Backoff with jitter ===
+        for retry_number, backoff in [
+            (1, 1.0),
+            (2, 2.0),
+            (3, 4.0),
+            (4, 8.0),
+            (9, 10.0),
+        ]:
+            delays = {_get_llm_api_retry_delay(retry_number) for _ in range(50)}
+            assert all(backoff / 2 <= delay <= backoff for delay in delays)
+            assert len(delays) > 1  # delays are randomized
+
+        # === Retries of the requests ===
+        primary_model = "openai/gpt-4o-mini"
+        fallback_model_1 = "openai/gpt-4o"
+        fallback_model_2 = "openai/gpt-4.1"
+        invalid_answer = "<<<not-json>>>"
+        concepts_answer = '[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+
+        requests: list[tuple[str, int]] = []  # (model, provider-specific retries)
+        retry_numbers: list[int] = []
+        outcomes: dict[str, list[Exception | str]] = {}
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, with the outcomes of the requests to each model
+            taken from the queue of that model. The last outcome on the queue is repeated.
+            """
+            assert kwargs["num_retries"] == 0  # retries are not delegated to litellm
+            model = kwargs["model"]
+            requests.append((model, kwargs["max_retries"]))
+            queue = outcomes[model]
+            outcome = queue.pop(0) if len(queue) > 1 else queue[0]
+            if isinstance(outcome, Exception):
+                raise outcome
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=outcome)
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def retry_delay_stub(retry_number: int) -> float:
+            """
+            Records the retry and removes the delay before it.
+            """
+            retry_numbers.append(retry_number)
+            return 0.0
+
+        def set_outcomes(model_outcomes: dict[str, list[Exception | str]]) -> None:
+            """
+            Sets the outcomes of the requests to each model and resets the records.
+            """
+            outcomes.clear()
+            outcomes.update(model_outcomes)
+            requests.clear()
+            retry_numbers.clear()
+
+        def requested_models() -> list[str]:
+            """
+            Returns the models in the order the requests were sent to them.
+            """
+            return [model for model, _ in requests]
+
+        def create_llm(model: str = primary_model, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM, with the default retry params unless specified.
+            """
+            return DocumentLLM(
+                model=model, api_key="test_api_key", system_message="", **kwargs
+            )
+
+        def create_llm_with_fallbacks() -> DocumentLLM:
+            """
+            Creates an LLM with two fallback LLMs, each with different retry params.
+            """
+            return create_llm(
+                num_retries_failed_request=1,
+                fallback_llms=[
+                    create_llm(
+                        fallback_model_1,
+                        num_retries_failed_request=2,
+                        is_fallback=True,
+                    ),
+                    create_llm(
+                        fallback_model_2,
+                        num_retries_failed_request=3,
+                        is_fallback=True,
+                    ),
+                ],
+            )
+
+        def create_document(n_concepts: int = 1) -> Document:
+            """
+            Creates a document with the specified number of concepts to extract.
+            """
+            document = Document(
+                raw_text="Non-disclosure agreement\n\nThe parties agree as follows."
+            )
+            document.concepts = [
+                StringConcept(name=f"Concept {i}", description=f"Description {i}")
+                for i in range(n_concepts)
+            ]
+            return document
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(llms_module, "_get_llm_api_retry_delay", new=retry_delay_stub),
+        ):
+            # Transient errors are retried until the request succeeds
+            set_outcomes({primary_model: [rate_limit_error, rate_limit_error, "4"]})
+            assert create_llm().chat("What's 2+2?") == "4"
+            assert requested_models() == [primary_model] * 3
+            assert retry_numbers == [1, 2]
+
+            # ...or until the retries are exhausted
+            for num_retries in [3, 1, 0]:
+                set_outcomes({primary_model: [rate_limit_error]})
+                with pytest.raises(LLMAPIError) as exc_info:
+                    create_llm(num_retries_failed_request=num_retries).chat("Test")
+                assert exc_info.value.retry_count == num_retries
+                assert exc_info.value.original_error is rate_limit_error
+                assert requested_models() == [primary_model] * (1 + num_retries)
+                assert retry_numbers == list(range(1, num_retries + 1))
+
+            # Non-transient errors are not retried
+            set_outcomes({primary_model: [auth_error]})
+            with pytest.raises(LLMAPIError) as exc_info:
+                create_llm().chat("Test")
+            assert exc_info.value.retry_count == 0
+            assert exc_info.value.original_error is auth_error
+            assert requested_models() == [primary_model]
+            assert retry_numbers == []
+            # ...also when they follow a transient error
+            set_outcomes({primary_model: [rate_limit_error, auth_error]})
+            with pytest.raises(LLMAPIError) as exc_info:
+                create_llm().chat("Test")
+            assert exc_info.value.retry_count == 1
+            assert requested_models() == [primary_model] * 2
+
+            # Provider-specific retries apply to the first attempt only
+            set_outcomes({primary_model: [rate_limit_error, "4"]})
+            assert create_llm(max_retries_failed_request=2).chat("Test") == "4"
+            assert requests == [(primary_model, 2), (primary_model, 0)]
+
+            # Chat: each LLM applies its own retry params before the next one is tried
+            expected_requested_models = (
+                [primary_model] * 2 + [fallback_model_1] * 3 + [fallback_model_2] * 3
+            )
+            set_outcomes(
+                {
+                    primary_model: [rate_limit_error],
+                    fallback_model_1: [rate_limit_error],
+                    fallback_model_2: [rate_limit_error, rate_limit_error, "4"],
+                }
+            )
+            assert create_llm_with_fallbacks().chat("What's 2+2?") == "4"
+            assert requested_models() == expected_requested_models
+
+            # Extraction: same, and a failed request is not sent to the same LLM again
+            set_outcomes(
+                {
+                    primary_model: [rate_limit_error],
+                    fallback_model_1: [rate_limit_error],
+                    fallback_model_2: [
+                        rate_limit_error,
+                        rate_limit_error,
+                        concepts_answer,
+                    ],
+                }
+            )
+            document = create_document()
+            create_llm_with_fallbacks().extract_concepts_from_document(document)
+            assert requested_models() == expected_requested_models
+            assert document.concepts[0].extracted_items[0].value == "Item"
+
+            # Extraction: the last fallback LLM also retries its request before failing
+            set_outcomes(
+                {
+                    primary_model: [auth_error],
+                    fallback_model_1: [auth_error],
+                    fallback_model_2: [rate_limit_error],
+                }
+            )
+            with pytest.raises(LLMAPIError) as exc_info:
+                create_llm_with_fallbacks().extract_concepts_from_document(
+                    create_document()
+                )
+            assert exc_info.value.retry_count == 3
+            assert requested_models() == (
+                [primary_model, fallback_model_1] + [fallback_model_2] * 4
+            )
+
+            # Extraction: invalid data is requested again without a delay
+            set_outcomes({primary_model: [invalid_answer]})
+            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*2 retries"):
+                create_llm(max_retries_invalid_data=2).extract_concepts_from_document(
+                    create_document()
+                )
+            assert requested_models() == [primary_model] * 3
+            assert retry_numbers == []
+            # ...while a request that fails when repeated is passed to a fallback LLM
+            set_outcomes(
+                {
+                    primary_model: [invalid_answer, rate_limit_error],
+                    fallback_model_1: [concepts_answer],
+                }
+            )
+            document = create_document()
+            create_llm_with_fallbacks().extract_concepts_from_document(document)
+            assert requested_models() == [primary_model] * 3 + [fallback_model_1]
+            assert document.concepts[0].extracted_items[0].value == "Item"
+
+            # Extraction with concurrency: a final API error is raised as is,
+            # without sending the failed requests again
+            set_outcomes({primary_model: [auth_error]})
+            with pytest.raises(LLMAPIError) as exc_info:
+                create_llm().extract_concepts_from_document(
+                    create_document(n_concepts=2), use_concurrency=True
+                )
+            assert exc_info.value.original_error is auth_error
+            assert requested_models() == [primary_model] * 2  # one per concept
+
+            # Extraction: a warning is issued if `raise_exception_on_extraction_error`
+            # is False, without sending the failed request again
+            set_outcomes({primary_model: [rate_limit_error]})
+            document = create_document()
+            with pytest.warns(UserWarning, match=r"LLM API.*3 retries"):
+                create_llm().extract_concepts_from_document(
+                    document, raise_exception_on_extraction_error=False
+                )
+            assert requested_models() == [primary_model] * 4
+            assert not document.concepts[0].extracted_items
+
+        check_locals_memory_usage(locals(), test_name="test_llm_api_request_retries")
 
     @pytest.mark.vcr
     @pytest.mark.parametrize(

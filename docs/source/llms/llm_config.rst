@@ -110,15 +110,15 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``num_retries_failed_request``
      - ``int``
      - ``3``
-     - Number of retries when LLM request fails.
+     - Number of retries when LLM request fails with a transient error (request timeout, rate limit, server or connection error). Retries are performed with exponential backoff and jitter. Non-transient errors (e.g. invalid request, failed authentication, exceeded context window) are not retried. See :ref:`llm-retries-label`.
    * - ``max_retries_failed_request``
      - ``int``
      - ``0``
-     - LLM provider-specific retry count for failed requests.
+     - LLM provider-specific retry count for failed requests, i.e. retries performed by the provider's SDK, where supported. Applies to the first attempt of a request only.
    * - ``max_retries_invalid_data``
      - ``int``
      - ``3``
-     - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails).
+     - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails). Each retry is a new request.
    * - ``pricing_details``
      - ``LLMPricing | None``
      - ``None``
@@ -199,11 +199,30 @@ You can set up one or more fallback LLMs that will be used if the primary LLM fa
 
 Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
 
+The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, or, during extraction, when it keeps returning invalid data. See :ref:`llm-retries-label` for details.
+
 .. note::
    Each LLM applies its own retry settings and timeout before the next fallback LLM is tried, so the more fallback LLMs you configure, the longer a request can take to fail when all of the LLMs are unavailable.
 
 .. warning::
    **Deprecated since v0.28.0.** The ``fallback_llm`` parameter, which accepts a single fallback LLM, will be removed in v1.0.0. Use ``fallback_llms`` instead, e.g. ``fallback_llms=[fallback_llm]``.
+
+
+.. _llm-retries-label:
+
+🔁 How Failed Requests Are Retried
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Retries are configured per LLM, which also applies to each fallback LLM, and depend on why the request failed:
+
+- **Transient API errors** (request timeout, rate limit, server or connection error) are retried up to ``num_retries_failed_request`` times. The delay between the retries grows exponentially (about 1, 2, 4, 8 seconds, capped at 10 seconds) and is randomly shortened by up to a half (jitter), so that concurrent requests that failed together are not all retried at the same moment.
+- **Non-transient API errors** (e.g. invalid request, failed authentication, exceeded context window, content policy violation) are not retried, as the same request would fail again in the same way.
+- **Invalid data** returned by the LLM during extraction (the response cannot be parsed or validated) is requested again up to ``max_retries_invalid_data`` times, without a delay.
+
+When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``LLMAPIError`` is raised for a failed API request, or ``LLMExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method.
+
+.. note::
+   ``max_retries_failed_request`` sets the number of retries performed by the LLM provider's SDK, where supported (e.g. for OpenAI), in addition to the retries described above. It applies to the first attempt of a request only.
 
 
 💰 Setting Up Cost Tracking

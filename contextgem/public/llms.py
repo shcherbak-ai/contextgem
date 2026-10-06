@@ -115,12 +115,17 @@ class DocumentLLM(_DocumentLLM):
         Defaults to ``None`` (only ``temperature`` is sent). Some providers (e.g. Claude 4.x)
         reject requests that set both ``temperature`` and ``top_p``.
     :vartype top_p: float | None
-    :ivar num_retries_failed_request: Number of retries when LLM request fails. Defaults to 3.
+    :ivar num_retries_failed_request: Number of retries when LLM request fails with a transient
+        error (request timeout, rate limit, server or connection error). Retries are performed
+        with exponential backoff and jitter. Non-transient errors (e.g. invalid request,
+        failed authentication, exceeded context window) are not retried. Defaults to 3.
     :vartype num_retries_failed_request: int
-    :ivar max_retries_failed_request: LLM provider-specific retry count for failed requests.
-        Defaults to 0.
+    :ivar max_retries_failed_request: LLM provider-specific retry count for failed requests,
+        i.e. retries performed by the provider's SDK, where supported. Applies to the first
+        attempt of a request only. Defaults to 0.
     :vartype max_retries_failed_request: int
-    :ivar max_retries_invalid_data: Number of retries when LLM returns invalid data. Defaults to 3.
+    :ivar max_retries_invalid_data: Number of retries when LLM request succeeds but LLM returns
+        invalid data. Each retry is a new request. Defaults to 3.
     :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for LLM API calls. Defaults to 120 seconds.
     :vartype timeout: int
