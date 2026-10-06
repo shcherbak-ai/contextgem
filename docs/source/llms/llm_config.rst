@@ -86,7 +86,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``role``
      - ``str | None``
      - ``None``
-     - Free-form role label of the LLM, used for routing in an LLM group. The same label can be explicitly assigned to extraction components (aspects and concepts) in the pipeline, using their ``llm_role`` parameter. ContextGem then routes extraction tasks based on these assigned roles, matching components with the LLM of the same role, while the components without a role are routed to the LLM without a role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). The role implies no capabilities of the model, and is ignored when the LLM is used on its own (not in a group), as a single LLM extracts all the aspects and concepts it is given. For more details, see :ref:`llm-roles-label`.
+     - Free-form role label of the LLM (up to 64 printable characters), used for routing in an LLM group. The same label can be explicitly assigned to extraction components (aspects and concepts) in the pipeline, using their ``llm_role`` parameter. ContextGem then routes extraction tasks based on these assigned roles, matching components with the LLM of the same role, while the components without a role are routed to the LLM without a role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). The role implies no capabilities of the model, and is ignored when the LLM is used on its own (not in a group), as a single LLM extracts all the aspects and concepts it is given. For more details, see :ref:`llm-roles-label`.
    * - ``system_message``
      - ``str | None``
      - ``None``
@@ -197,7 +197,7 @@ You can set up one or more fallback LLMs that will be used if the primary LLM fa
    :language: python
    :caption: Configuring fallback LLMs
 
-Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
+Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. If the primary LLM is used to extract concepts from images, or is passed images in a chat, each of its fallback LLMs must support vision as well, which is checked before any requests are sent. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
 
 The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, or, during extraction, when it keeps returning invalid data. See :ref:`llm-retries-label` for details.
 
@@ -248,7 +248,7 @@ For reasoning (CoT-capable) models (such as OpenAI's o1/o3/o4), you can set reas
 ⚙️ Explicit Capability Declaration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Model vision capabilities are automatically detected using ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities, an error will be raised when images are sent to the model (e.g. when extracting concepts with the ``"image"`` or ``"multimodal"`` modality), and you can explicitly declare the capability by setting ``_supports_vision=True`` on the LLM instance:
+Model vision capabilities are automatically detected using ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities, an error will be raised when the model is to be sent images (e.g. when extracting concepts with the ``"image"`` or ``"multimodal"`` modality), and you can explicitly declare the capability by setting ``_supports_vision=True`` on the LLM instance:
 
 .. code-block:: python
 
@@ -260,7 +260,7 @@ Model vision capabilities are automatically detected using ``litellm.supports_vi
        api_base="http://localhost:3456/v1",
    )
    # Declare capability if automatic detection fails
-   # (an error is raised when images are sent to the model)
+   # (an error is raised when the model is to be sent images)
    llm._supports_vision = True
 
 .. warning::

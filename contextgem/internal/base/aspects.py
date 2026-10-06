@@ -50,10 +50,7 @@ from contextgem.internal.typings.types import (
     NonEmptyStr,
     ReferenceDepth,
 )
-from contextgem.internal.typings.validators import (
-    _get_legacy_llm_role_modality,
-    _validate_sequence_is_list,
-)
+from contextgem.internal.typings.validators import _validate_sequence_is_list
 
 
 # Defines the maximum nesting level of sub-aspects.
@@ -94,7 +91,7 @@ class _Aspect(
             "Only concepts with 'text' modality are allowed."
         ),
     )  # using Sequence field with list validator for type checking
-    llm_role: LLMRole = Field(
+    llm_role: LLMRole | None = Field(
         default=None,
         description=(
             "Role label of the LLM that extracts this aspect when a DocumentLLMGroup "
@@ -173,27 +170,6 @@ class _Aspect(
                 "`image` or `multimodal` modality can be extracted only at the document level."
             )
         return concepts
-
-    @field_validator("llm_role", mode="before")
-    @classmethod
-    def _validate_llm_role(cls, llm_role: Any) -> Any:
-        """
-        Rejects the legacy (deprecated) LLM role names for vision/multimodal LLMs,
-        which were never supported for aspects, as aspects are extracted from text only.
-
-        :param llm_role: The LLM role value to validate.
-        :type llm_role: Any
-        :raises ValueError: If the LLM role is a legacy vision/multimodal role name.
-        :return: The validated LLM role value.
-        :rtype: Any
-        """
-
-        if _get_legacy_llm_role_modality(llm_role) not in (None, "text"):
-            raise ValueError(
-                f"LLM role `{llm_role}` is not supported for aspects, "
-                f"as aspects are extracted from text only."
-            )
-        return llm_role
 
     def _validate_and_process_sub_aspects(self, aspects: list[_Aspect]) -> None:
         """

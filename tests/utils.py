@@ -33,7 +33,7 @@ from copy import deepcopy
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 from uuid import uuid4
 
 import pytest
@@ -613,7 +613,7 @@ class TestUtils:
                 ]
                 instance_groups = _group_instances_by_fields(
                     fields=fields_to_group_by,
-                    instances=cast(list[Aspect] | list[_Concept], instances),  # ty: ignore[invalid-argument-type]
+                    instances=instances,  # ty: ignore[invalid-argument-type]
                 )
                 for idx, group in enumerate(instance_groups, start=1):
                     logger.debug(

@@ -44,6 +44,7 @@ from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.decorators import _expose_in_registry
 from contextgem.internal.typings.types import (
     DefaultDecimalField,
+    LLMRole,
     MessageRole,
     NonEmptyStr,
 )
@@ -139,7 +140,7 @@ class _LLMUsageOutputContainer(BaseModel):
     """
 
     model: NonEmptyStr
-    role: NonEmptyStr | None
+    role: LLMRole | None
     is_fallback: StrictBool
     usage: _LLMUsage
 
@@ -184,7 +185,7 @@ class _LLMCostOutputContainer(BaseModel):
     """
 
     model: NonEmptyStr
-    role: NonEmptyStr | None
+    role: LLMRole | None
     is_fallback: StrictBool
     cost: _LLMCost
 

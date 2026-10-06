@@ -58,6 +58,7 @@ from contextgem.internal.typings.user_type_hints_validation import (
 )
 from contextgem.internal.typings.validators import (
     _validate_is_json_dict,
+    _validate_llm_role,
     _validate_sequence_is_list,
     _validate_tool_parameters_schema,
 )
@@ -105,5 +106,6 @@ __all__ = (
     # Validators
     "_validate_sequence_is_list",
     "_validate_is_json_dict",
+    "_validate_llm_role",
     "_validate_tool_parameters_schema",
 )

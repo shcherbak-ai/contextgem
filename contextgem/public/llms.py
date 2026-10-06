@@ -89,7 +89,7 @@ class DocumentLLM(_DocumentLLM):
     :vartype api_base: str | None
     :ivar api_version: API version. Primarily used with Azure OpenAI.
     :vartype api_version: str | None
-    :ivar role: Free-form role label of the LLM, used for routing in a ``DocumentLLMGroup``:
+    :ivar role: Free-form role label of the LLM (up to 64 printable characters), used for routing in a ``DocumentLLMGroup``:
         the LLM extracts the aspects/concepts with the same ``llm_role``. Defaults to None,
         in which case the LLM extracts the aspects/concepts without ``llm_role``. Ignored
         when the LLM is used on its own, as it then extracts all aspects/concepts.
@@ -145,7 +145,8 @@ class DocumentLLM(_DocumentLLM):
     :vartype is_fallback: bool
     :ivar fallback_llms: DocumentLLMs to use as fallbacks if the current one fails, tried
         in the given order until one of them succeeds. Each must have ``is_fallback=True``
-        and the same role as the current LLM. Defaults to an empty list.
+        and the same role as the current LLM, and must support vision if the current LLM
+        is used to extract concepts from images. Defaults to an empty list.
     :vartype fallback_llms: list[DocumentLLM]
     :ivar fallback_llm: [DEPRECATED] Use ``fallback_llms`` instead. Will be removed in v1.0.0.
         A single DocumentLLM to use as fallback if the current one fails; setting it replaces
@@ -188,7 +189,7 @@ class DocumentLLM(_DocumentLLM):
         - Explicit capability declaration
             Model vision capabilities are automatically detected using
             ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities,
-            an error will be raised when images are sent to the model, and you can explicitly declare
+            an error will be raised when the model is to be sent images, and you can explicitly declare
             the capability by setting ``_supports_vision=True`` on the LLM instance.
 
     Example:

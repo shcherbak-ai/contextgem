@@ -1664,9 +1664,8 @@ class TestAll(TestUtils):
     @memory_profile_and_capture
     def test_llm_roles_and_concept_modality(self):
         """
-        Tests for routing aspects/concepts to LLMs by the free-form LLM roles, for extracting
-        concepts from the content specified by their modality, and for the deprecated
-        predefined LLM role names.
+        Tests for routing aspects/concepts to LLMs by the free-form LLM roles, and for
+        extracting concepts from the content specified by their modality.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -1784,7 +1783,25 @@ class TestAll(TestUtils):
         llm_complex.role = "advanced"
         llm_complex.role = "complex"
         llm_vision = create_llm(vision_model, role="vision")
-        for invalid_role in ["", "  ", 1]:
+        # A role is a non-empty string of up to 64 printable characters
+        max_length_role = "r" * 64
+        assert create_llm(default_model, role=max_length_role).role == max_length_role
+        for valid_role in [
+            "Legal review (complex)",
+            "\u042e\u0440\u0438\u0441\u0442",
+            "\U0001f9e0",
+        ]:
+            assert create_llm(default_model, role=valid_role).role == valid_role
+        for invalid_role in [
+            "",
+            "  ",
+            1,
+            max_length_role + "r",  # too long
+            "line\nbreak",
+            "tab\tinside",
+            "control\x00character",
+            "zero\u200bwidth",  # invisible character
+        ]:
             with pytest.raises(ValueError):
                 create_llm(default_model, role=invalid_role)
             with pytest.raises(ValueError):
@@ -1836,16 +1853,6 @@ class TestAll(TestUtils):
                     (standalone_llm.model, "image", ["Date"]),
                 ]
             )
-        # Concepts cannot be extracted from images with a model that does not support vision
-        llm_not_vision_capable = create_llm("openai/gpt-3.5-turbo")
-        stub_llm_api(llm_not_vision_capable)
-        llm_calls.clear()
-        document = create_document()
-        with pytest.raises(ValueError, match="does not support vision"):
-            llm_not_vision_capable.extract_concepts_from_document(
-                document, from_concepts=[document.get_concept_by_name("Stamp")]
-            )
-        assert not llm_calls  # no LLM calls are made
 
         # === LLM group routes each aspect/concept to the LLM with the same role ===
         stub_llm_api(llm_vision)
@@ -1877,6 +1884,37 @@ class TestAll(TestUtils):
             DocumentLLMGroup(
                 llms=[llm_complex, create_llm(default_model, role="complex")]
             )
+        # This is also checked when extraction starts, as the role of an LLM
+        # can be changed after the LLM is added to a group
+        llm_changed_role = create_llm(vision_model, role="changed")
+        stub_llm_api(llm_changed_role)
+        llm_group_changed_role = DocumentLLMGroup(llms=[llm_no_role, llm_changed_role])
+        document = Document(
+            raw_text="Non-disclosure agreement",
+            aspects=[Aspect(name="Parties", description="Contract parties")],
+            concepts=[StringConcept(name="Title", description="Contract title")],
+        )
+        llm_changed_role.role = None
+        llm_calls.clear()
+        for extraction_method in [
+            llm_group_changed_role.extract_all,
+            llm_group_changed_role.extract_aspects_from_document,
+            llm_group_changed_role.extract_concepts_from_document,
+        ]:
+            with pytest.raises(
+                ValueError,
+                match=r"different roles.*several LLMs: None \(no role\)",
+            ):
+                extraction_method(document)
+        assert not llm_calls  # no LLM calls are made
+        llm_changed_role.role = "changed"
+        llm_group_changed_role.extract_all(document)
+        assert sorted(llm_calls) == sorted(
+            [
+                (default_model, "text", ["Parties"]),
+                (default_model, "text", ["Title"]),
+            ]
+        )
 
         # Aspects/concepts that cannot be routed to an LLM in the group are not skipped
         llm_calls.clear()
@@ -1902,184 +1940,315 @@ class TestAll(TestUtils):
         assert all(i.extracted_items for i in routable_concepts)
         assert not document.get_concept_by_name("Stamp").extracted_items
 
-        # === Deprecated predefined role names (will be removed in v2.0.0) ===
-        def deprecation_warning_filenames(
-            warning_records: pytest.WarningsRecorder,
-        ) -> set[str]:
-            """
-            Returns the names of the files that the deprecation warnings point to.
-            """
-            return {
-                i.filename for i in warning_records if i.category is DeprecationWarning
-            }
-
-        legacy_roles = {
-            # role name: (role, modality of a concept)
-            "extractor_text": (None, "text"),
-            "reasoner_text": ("reasoner_text", "text"),
-            "extractor_vision": ("extractor_vision", "image"),
-            "reasoner_vision": ("reasoner_vision", "image"),
-            "extractor_multimodal": ("extractor_multimodal", "multimodal"),
-            "reasoner_multimodal": ("reasoner_multimodal", "multimodal"),
-        }
-        for legacy_role, (expected_role, expected_modality) in legacy_roles.items():
-            # The warnings must point to the calling code, to be shown by default
-            with pytest.warns(DeprecationWarning, match=legacy_role) as warning_records:
-                llm_legacy = create_llm(default_model, role=legacy_role)
-            assert deprecation_warning_filenames(warning_records) == {__file__}
-            assert llm_legacy.role == expected_role
-
-            with pytest.warns(DeprecationWarning, match=legacy_role) as warning_records:
-                concept = StringConcept(
-                    name="Title", description="Contract title", llm_role=legacy_role
-                )
-            assert deprecation_warning_filenames(warning_records) == {__file__}
-            assert (concept.llm_role, concept.modality) == (
-                expected_role,
-                expected_modality,
-            )
-
-            # Assignment
-            concept = StringConcept(name="Title", description="Contract title")
-            with pytest.warns(DeprecationWarning, match=legacy_role) as warning_records:
-                concept.llm_role = legacy_role
-            assert deprecation_warning_filenames(warning_records) == {__file__}
-            assert (concept.llm_role, concept.modality) == (
-                expected_role,
-                expected_modality,
-            )
-            # The modality is not reset by an assignment of another attribute
-            concept.modality = "text"
-            concept.add_justifications = True
-            assert (concept.llm_role, concept.modality) == (expected_role, "text")
-
-            # Data serialized by earlier versions, i.e. without the modality
-            with pytest.warns(DeprecationWarning, match=legacy_role):
-                concept = StringConcept(
-                    name="Title", description="Contract title", llm_role=legacy_role
-                )
-            concept_dict = concept.to_dict()
-            assert concept_dict["modality"] == expected_modality
-            del concept_dict["modality"]
-            concept_dict["llm_role"] = legacy_role
-            with pytest.warns(DeprecationWarning, match=legacy_role):
-                concept_from_legacy_dict = StringConcept.from_dict(concept_dict)
-            assert (
-                concept_from_legacy_dict.llm_role,
-                concept_from_legacy_dict.modality,
-            ) == (expected_role, expected_modality)
-
-            # Aspects are extracted from text only
-            if expected_modality == "text":
-                with pytest.warns(DeprecationWarning, match=legacy_role):
-                    aspect = Aspect(
-                        name="Parties", description="Parties", llm_role=legacy_role
-                    )
-                assert aspect.llm_role == expected_role
-            else:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", DeprecationWarning)
-                    with pytest.raises(ValueError, match="not supported for aspects"):
-                        Aspect(
-                            name="Parties", description="Parties", llm_role=legacy_role
-                        )
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            # A specified modality takes precedence over a deprecated role name
-            concept = StringConcept(
-                name="Title",
-                description="Contract title",
-                llm_role="extractor_vision",
-                modality="multimodal",
-            )
-            assert concept.modality == "multimodal"
-            # References are not supported for the concepts extracted from images
-            with pytest.raises(ValueError, match="do not support references"):
-                StringConcept(
-                    name="Title",
-                    description="Contract title",
-                    llm_role="reasoner_vision",
-                    add_references=True,
-                )
-            concept = StringConcept(
-                name="Title", description="Contract title", add_references=True
-            )
-            with pytest.raises(ValueError, match="do not support references"):
-                concept.llm_role = "extractor_vision"
-            assert (concept.llm_role, concept.modality) == (None, "text")
-            # Aspect-level concepts are extracted from text only
-            with pytest.raises(ValueError, match="extracted from text only"):
-                Aspect(
-                    name="Parties",
-                    description="Parties",
-                    concepts=[
-                        StringConcept(
-                            name="Title",
-                            description="Contract title",
-                            llm_role="extractor_multimodal",
-                        )
-                    ],
-                )
-
-            # The LLMs and the aspects/concepts with the same deprecated role name
-            # are still matched in an LLM group
-            llm_legacy_extractor = create_llm(default_model, role="extractor_text")
-            llm_legacy_reasoner = create_llm(complex_model, role="reasoner_text")
-            llm_legacy_vision = create_llm(vision_model, role="extractor_vision")
-            for llm_legacy in [
-                llm_legacy_extractor,
-                llm_legacy_reasoner,
-                llm_legacy_vision,
-            ]:
-                stub_llm_api(llm_legacy)
-            llm_group_legacy = DocumentLLMGroup(
-                llms=[llm_legacy_extractor, llm_legacy_reasoner, llm_legacy_vision]
-            )
-            document = Document(
-                raw_text="Non-disclosure agreement\n\nThe parties agree as follows.",
-                images=[self.test_img_png_invoice],
-                aspects=[
-                    Aspect(
-                        name="Parties",
-                        description="Contract parties",
-                        llm_role="extractor_text",
-                    ),
-                    Aspect(
-                        name="Term",
-                        description="Contract term",
-                        llm_role="reasoner_text",
-                    ),
-                ],
-                concepts=[
-                    StringConcept(name="Title", description="Contract title"),
-                    StringConcept(
-                        name="Type",
-                        description="Contract type",
-                        llm_role="reasoner_text",
-                    ),
-                    StringConcept(
-                        name="Stamp",
-                        description="Text of the stamp",
-                        llm_role="extractor_vision",
-                    ),
-                ],
-            )
+        # === Vision support is checked before any LLM calls are made ===
+        text_only_model = "openai/gpt-3.5-turbo"
+        llm_text_only = create_llm(text_only_model)
+        assert not llm_text_only._supports_vision
+        stub_llm_api(llm_text_only)
+        # Concepts cannot be extracted from images by an LLM that does not support vision
         llm_calls.clear()
-        llm_group_legacy.extract_all(document)
-        assert all(i.extracted_items for i in [*document.aspects, *document.concepts])
-        assert sorted(llm_calls) == sorted(
-            [
-                (default_model, "text", ["Parties"]),
-                (default_model, "text", ["Title"]),
-                (complex_model, "text", ["Term"]),
-                (complex_model, "text", ["Type"]),
-                (vision_model, "image", ["Stamp"]),
-            ]
+        document = create_document()
+        for extraction_method in [
+            llm_text_only.extract_all,
+            llm_text_only.extract_concepts_from_document,
+        ]:
+            with pytest.raises(
+                ValueError,
+                match=f"^Model `{text_only_model}` does not support vision"
+                ".*from images: `Stamp`, `Date`",
+            ):
+                extraction_method(document)
+        assert not llm_calls  # no LLM calls are made
+        # While the concepts to be extracted from text can still be extracted
+        llm_text_only.extract_concepts_from_document(
+            document,
+            from_concepts=[i for i in document.concepts if i.modality == "text"],
         )
+        assert llm_calls == [(text_only_model, "text", ["Title", "Type"])]
+        # A multimodal concept is extracted from images only if the document has them
+        document_without_images = Document(
+            raw_text="Non-disclosure agreement",
+            concepts=[
+                StringConcept(
+                    name="Date", description="Contract date", modality="multimodal"
+                )
+            ],
+        )
+        llm_text_only.extract_all(document_without_images)
+        assert document_without_images.concepts[0].extracted_items
+
+        # A fallback LLM is sent the same content as the LLM it replaces,
+        # i.e. it must support vision as well
+        llm_text_only_fallback = create_llm(text_only_model, is_fallback=True)
+        llm_with_text_only_fallback = create_llm(
+            default_model, fallback_llms=[llm_text_only_fallback]
+        )
+        stub_llm_api(llm_text_only_fallback)
+        stub_llm_api(llm_with_text_only_fallback)
+        llm_calls.clear()
+        document = create_document()
+        for extraction_method in [
+            llm_with_text_only_fallback.extract_all,
+            llm_with_text_only_fallback.extract_concepts_from_document,
+        ]:
+            with pytest.raises(
+                ValueError,
+                match=f"^Fallback model `{text_only_model}` does not support vision",
+            ):
+                extraction_method(document)
+        # Same for the images sent in a chat
+        with pytest.raises(
+            ValueError,
+            match=f"^Fallback model `{text_only_model}` does not support vision",
+        ):
+            llm_with_text_only_fallback.chat(
+                "What is in the image?", images=[self.test_img_png_invoice]
+            )
+        assert not llm_calls  # no LLM calls are made
+        # Unless the vision support of the model is declared explicitly
+        llm_text_only_fallback._supports_vision = True
+        llm_with_text_only_fallback.extract_all(document)
+        check_all_extracted(document)
+
+        # In an LLM group, vision support is required only of the LLMs that
+        # the concepts to be extracted from images are routed to
+        llm_text_only_complex = create_llm(text_only_model, role="complex")
+        llm_text_only_vision = create_llm(text_only_model, role="vision")
+        stub_llm_api(llm_text_only_complex)
+        stub_llm_api(llm_text_only_vision)
+        document = create_document()
+        DocumentLLMGroup(
+            llms=[llm_no_role, llm_text_only_complex, llm_vision]
+        ).extract_all(document)
+        check_all_extracted(document)
+        llm_calls.clear()
+        document = create_document()
+        with pytest.raises(
+            ValueError,
+            match=f"^Model `{text_only_model}` does not support vision"
+            ".*from images: `Stamp`\\.",
+        ):
+            DocumentLLMGroup(
+                llms=[llm_no_role, llm_complex, llm_text_only_vision]
+            ).extract_all(document)
+        assert not llm_calls  # no LLM calls are made
 
         check_locals_memory_usage(
             locals(), test_name="test_llm_roles_and_concept_modality"
+        )
+
+    @pytest.mark.parametrize("use_concurrency", [False, True])
+    @memory_profile_and_capture
+    def test_nested_extraction_role_preflight(self, use_concurrency: bool):
+        """
+        Tests that, when extracting with an LLM group, the roles of the nested
+        aspects/concepts to be processed by the extraction method are validated before
+        any LLM calls are made, i.e. before the state of the document is changed, while
+        the roles of the aspects/concepts that are not selected or are skipped are not.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        group = DocumentLLMGroup(
+            llms=[
+                DocumentLLM(model="openai/gpt-4o-mini", api_key="test_api_key"),
+                DocumentLLM(
+                    model="openai/gpt-4o", api_key="test_api_key", role="other"
+                ),
+            ]
+        )
+        document = Document(
+            raw_text="The parties agree to these terms.",
+            aspects=[
+                Aspect(
+                    name="Parent",
+                    description="Parent section",
+                    concepts=[
+                        StringConcept(name="Selected", description="Selected concept"),
+                        StringConcept(
+                            name="Unselected",
+                            description="Unselected concept",
+                            llm_role="unselected",
+                        ),
+                    ],
+                    aspects=[
+                        Aspect(
+                            name="Child",
+                            description="Child section",
+                            llm_role="missing_aspect",
+                            concepts=[
+                                StringConcept(
+                                    name="Nested",
+                                    description="Nested concept",
+                                    llm_role="missing_concept",
+                                )
+                            ],
+                        ),
+                        Aspect(
+                            name="Empty",
+                            description="Absent section",
+                            concepts=[
+                                StringConcept(
+                                    name="Skipped",
+                                    description="Skipped concept",
+                                    llm_role="skipped",
+                                )
+                            ],
+                        ),
+                    ],
+                )
+            ],
+        )
+
+        async def send_messages_stub(self, *, llm_call_obj: Any, **kwargs: Any):
+            """
+            Simulates a successful LLM API call, which returns an extracted item for
+            each aspect/concept in the prompt, except for the aspect with no content.
+
+            Same params as `llm._send_messages_with_tools`.
+            """
+            params = llm_call_obj.prompt_kwargs
+            if "aspects" in params:
+                answer = [
+                    {
+                        "aspect_id": f"A{i}",
+                        "paragraph_ids": [] if aspect.name == "Empty" else ["P0"],
+                    }
+                    for i, aspect in enumerate(params["aspects"])
+                ]
+            else:
+                answer = [
+                    {"concept_id": f"C{i}", "extracted_items": ["Item"]}
+                    for i, _ in enumerate(params["concepts"])
+                ]
+            return json.dumps(answer), False
+
+        with patch.object(
+            _DocumentLLM,
+            "_send_messages_with_tools",
+            autospec=True,
+            side_effect=send_messages_stub,
+        ) as send_messages:
+            before = document.to_dict()
+            with pytest.raises(ValueError, match="`missing_aspect`"):
+                group.extract_aspects_from_document(
+                    document, use_concurrency=use_concurrency
+                )
+            send_messages.assert_not_called()
+            assert document.to_dict() == before
+
+            # A selected aspect includes its descendants, but no concept roles
+            # and no unrelated document aspects are needed for aspect extraction.
+            document.add_aspects(
+                [
+                    Aspect(
+                        name="Unrelated",
+                        description="Unrelated section",
+                        llm_role="unrelated",
+                    )
+                ]
+            )
+            parent = document.aspects[0]
+            before = document.to_dict()
+            with pytest.raises(ValueError, match="`missing_aspect`"):
+                group.extract_aspects_from_document(
+                    document, from_aspects=[parent], use_concurrency=use_concurrency
+                )
+            send_messages.assert_not_called()
+            assert document.to_dict() == before
+            parent.aspects[0].llm_role = None
+            group.extract_aspects_from_document(
+                document, from_aspects=[parent], use_concurrency=use_concurrency
+            )
+            assert parent._is_processed
+            assert not document.aspects[1]._is_processed
+
+            # Selecting a parent concept still extracts concepts in its non-empty
+            # descendants. Unknown roles there must fail before the parent call.
+            send_messages.reset_mock()
+            before = document.to_dict()
+            with pytest.raises(ValueError, match="`missing_concept`"):
+                group.extract_concepts_from_aspect(
+                    parent,
+                    document,
+                    from_concepts=[parent.concepts[0]],
+                    use_concurrency=use_concurrency,
+                )
+            send_messages.assert_not_called()
+            assert document.to_dict() == before
+            parent.aspects[0].concepts[0].llm_role = None
+            group.extract_concepts_from_aspect(
+                parent,
+                document,
+                from_concepts=[parent.concepts[0]],
+                use_concurrency=use_concurrency,
+            )
+            assert parent.concepts[0].extracted_items[0].value == "Item"
+            assert parent.aspects[0].concepts[0].extracted_items[0].value == "Item"
+            assert not parent.concepts[1]._is_processed
+            assert not parent.aspects[1].concepts[0]._is_processed
+
+        check_locals_memory_usage(
+            locals(), test_name="test_nested_extraction_role_preflight"
+        )
+
+    @memory_profile_and_capture
+    def test_llm_group_usage_and_cost_by_role(self):
+        """
+        Tests for retrieving and resetting the usage and cost of the LLMs in a group
+        by the LLM role, which also applies to the fallback LLMs of the LLM with such role.
+        """
+
+        fallback = DocumentLLM(
+            model="openai/gpt-4o",
+            api_key="test_api_key",
+            role="named",
+            is_fallback=True,
+        )
+        primary = DocumentLLM(
+            model="openai/gpt-4o-mini",
+            api_key="test_api_key",
+            role="named",
+            fallback_llms=[fallback],
+        )
+        llm_no_role = DocumentLLM(model="openai/gpt-4.1", api_key="test_api_key")
+        group = DocumentLLMGroup(llms=[primary, llm_no_role])
+        for llm in [primary, fallback, llm_no_role]:
+            llm._usage = _LLMUsage(input=10, output=5)
+            llm._cost = _LLMCost(input=Decimal("1"), total=Decimal("1"))
+
+        invalid_roles: list[Any] = ["", "  ", 1, "line\nbreak", "r" * 65]
+        for getter in [group.get_usage, group.get_cost]:
+            # The LLM with the role is selected together with its fallback LLMs
+            selected = getter(llm_role="named")
+            assert [i.model for i in selected] == [primary.model, fallback.model]
+            assert [i.is_fallback for i in selected] == [False, True]
+            # All LLMs are selected if no role is specified
+            assert [i.role for i in getter()] == ["named", "named", None]
+            assert len(getter(llm_role=None)) == 3
+            with pytest.raises(ValueError, match="`missing`"):
+                getter(llm_role="missing")
+            # The role is validated in the same way as the roles assigned to LLMs
+            assert len(getter(llm_role=" named ")) == 2
+            for invalid_role in invalid_roles:
+                with pytest.raises(ValueError, match="LLM role must"):
+                    getter(llm_role=invalid_role)
+
+        for invalid_role in invalid_roles:
+            with pytest.raises(ValueError, match="LLM role must"):
+                group.reset_usage_and_cost(llm_role=invalid_role)
+        assert all(i.usage.input == 10 for i in group.get_usage())  # no change
+        group.reset_usage_and_cost(llm_role=" named ")
+        assert [i.usage.input for i in group.get_usage()] == [0, 0, 10]
+        assert [i.cost.total for i in group.get_cost()] == [0, 0, 1]
+        with pytest.raises(ValueError, match="`missing`"):
+            group.reset_usage_and_cost(llm_role="missing")
+        group.reset_usage_and_cost()
+        assert all(i.usage.input == 0 for i in group.get_usage())
+        assert all(i.cost.total == 0 for i in group.get_cost())
+
+        check_locals_memory_usage(
+            locals(), test_name="test_llm_group_usage_and_cost_by_role"
         )
 
     @memory_profile_and_capture

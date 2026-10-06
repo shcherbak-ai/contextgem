@@ -196,6 +196,10 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
+[tool.ty.terminal]
+# Fail the check (exit code 1) on warning-level diagnostics as well
+error-on-warning = true
+
 [tool.ty.src]
 # Skip auto-generated notebooks (regenerated from dev/usage_examples) and
 # demonstration code (usage examples, optional-dep comparisons, code samples).

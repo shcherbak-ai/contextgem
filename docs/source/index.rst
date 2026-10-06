@@ -324,6 +324,13 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
+   :caption: Migration Guides
+   :hidden:
+   
+   migration_v1
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
    :hidden:
    

@@ -104,6 +104,7 @@ from contextgem.internal.typings.types import (
     ToolRegistration,
 )
 from contextgem.internal.typings.validators import (
+    _validate_llm_role,
     _validate_sequence_is_list,
     _validate_tool_parameters_schema,
 )
@@ -158,6 +159,12 @@ _COST_QUANT = Decimal("0.00001")
 # Used by `tethered.scope` to constrain egress in `_calculate_auto_pricing_costs`,
 # and imported by tests/conftest.py to keep the test allowlist in sync.
 _GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
+
+# Error message for the LLMs that have the same role in an LLM group
+_NON_UNIQUE_LLM_ROLES_MSG = (
+    "LLMs in a group must have different roles, "
+    "and only one LLM in a group can have no role."
+)
 
 # Deprecation message for the `fallback_llm` parameter/attribute of DocumentLLM
 _FALLBACK_LLM_DEPRECATION_MSG = (
@@ -284,6 +291,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         """
 
         self._check_llm_roles_before_extract_all(document)
+        self._check_vision_support_for_concepts(
+            document=document, concepts=document.concepts
+        )
 
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
@@ -977,16 +987,16 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     def _check_llm_roles_are_routable(self, llm_roles: set[str | None]) -> None:
         """
         Checks that each of the given LLM roles, assigned to aspects or concepts,
-        is the role of an LLM in the current LLM group. An aspect or concept is routed
-        to the LLM in the group with the same role, and an aspect or concept without
-        a role (None) is routed to the LLM without a role.
+        is the role of exactly one LLM in the current LLM group. An aspect or concept
+        is routed to the LLM in the group with the same role, and an aspect or concept
+        without a role (None) is routed to the LLM without a role.
 
         :param llm_roles: LLM roles assigned to the aspects or concepts to be extracted.
         :type llm_roles: set[str | None]
         :return: None
         :rtype: None
-        :raises ValueError: If any of the given LLM roles is not the role of an LLM
-            in the group.
+        :raises ValueError: If several LLMs in the group have the same role, or if any
+            of the given LLM roles is not the role of an LLM in the group.
         """
 
         def format_roles(roles: set[str | None]) -> str:
@@ -1003,7 +1013,20 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 for role in sorted(roles, key=lambda role: (role is not None, role))
             )
 
-        group_roles = set(self.list_roles)
+        # The roles of the LLMs are validated to be unique when a group is created
+        # or its LLMs are reassigned. However, the role of an LLM can be changed after
+        # the LLM is added to a group, which the group is not notified of.
+        roles_of_llms = self.list_roles
+        duplicate_roles = {
+            role for role in roles_of_llms if roles_of_llms.count(role) > 1
+        }
+        if duplicate_roles:
+            raise ValueError(
+                f"{_NON_UNIQUE_LLM_ROLES_MSG} "
+                f"Roles assigned to several LLMs: {format_roles(duplicate_roles)}."
+            )
+
+        group_roles = set(roles_of_llms)
         missing_llm_roles = llm_roles.difference(group_roles)
         if missing_llm_roles:
             raise ValueError(
@@ -1014,6 +1037,76 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 f"the `llm_role` of the aspect/concept. An aspect/concept without `llm_role` "
                 f"is extracted by the LLM without `role`."
             )
+
+    def _check_vision_support_for_concepts(
+        self,
+        document: _Document,
+        concepts: Sequence[_Concept],
+    ) -> None:
+        """
+        Checks, before any requests are sent, that each LLM that is to extract the given
+        document-level concepts from the images of the document supports vision.
+        The same is required of the fallback LLMs of such LLM, as a fallback LLM is sent
+        the same content as the LLM it replaces. Otherwise, a fallback LLM that does not
+        support vision would fail only when it is needed, i.e. after the requests
+        to the primary LLM are sent.
+
+        If the document has images, the concepts with the "image" and "multimodal"
+        modalities are extracted from them. In an LLM group, each concept is extracted
+        by the LLM that the concept is routed to by the role, i.e. the roles must be
+        checked to be routable before this check.
+
+        :param document: The document that the concepts are extracted from.
+        :type document: _Document
+        :param concepts: The document-level concepts to be extracted.
+        :type concepts: Sequence[_Concept]
+        :return: None
+        :rtype: None
+        :raises ValueError: If an LLM that is to extract concepts from images, or any
+            of its fallback LLMs, does not support vision.
+        """
+
+        if not document.images:
+            # No images are sent to the LLMs. Extraction of the concepts with the "image"
+            # modality from such document fails for the lack of images.
+            return
+
+        image_concepts = [i for i in concepts if i.modality != "text"]
+        if not image_concepts:
+            return
+
+        if self.is_group:
+            # Safe cast: self is a _DocumentLLMGroup because `is_group` is True
+            llms = cast("_DocumentLLMGroup", self).llms
+        else:
+            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            llms = [cast("_DocumentLLM", self)]
+
+        for llm in llms:
+            # In an LLM group, a concept is extracted by the LLM with the same role.
+            # A standalone LLM extracts all the concepts, regardless of their roles.
+            llm_image_concepts = [
+                i for i in image_concepts if not self.is_group or i.llm_role == llm.role
+            ]
+            if not llm_image_concepts:
+                continue
+            concept_names = ", ".join(f"`{i.name}`" for i in llm_image_concepts)
+            for llm_instance in [llm, *llm.fallback_llms]:
+                if llm_instance._supports_vision:
+                    continue
+                if llm_instance.is_fallback:
+                    subject = "Fallback model"
+                    condition = ", if the LLM it is a fallback for fails"
+                else:
+                    subject = "Model"
+                    condition = ""
+                raise ValueError(
+                    f"{subject} `{llm_instance.model}` does not support vision "
+                    f"according to litellm.supports_vision(), but it is to extract "
+                    f"the following concepts from images{condition}: {concept_names}. "
+                    f"To override this detection, manually set `_supports_vision=True` "
+                    f"on the LLM instance."
+                )
 
     def _check_instances_and_llm_params(
         self,
@@ -1027,7 +1120,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     ) -> None:
         """
         Validates instances and LLM parameters, ensuring compatibility with the target
-        and configurations provided.
+        and configurations provided. For an LLM group, validates the roles of all
+        descendants that this extraction will process before any requests are sent.
+        Aspect extraction checks aspect roles only; concept extraction from an aspect
+        checks concept roles in the selected aspect and its non-empty descendants.
 
         :param target: The target object, which should have an attribute corresponding
             to `instance_type` (e.g., 'aspects' for 'aspect', etc.). Expected to be an
@@ -1099,9 +1195,35 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 raise ValueError(
                     "The provided DocumentLLMGroup does not contain any defined LLMs."
                 )
-            # Each instance must be routable to an LLM in the group
-            llm_group._check_llm_roles_are_routable(
-                {i.llm_role for i in check_instances}
+            # Include the descendants that the public extraction method processes
+            # recursively, respecting the selection of top-level instances.
+            required_roles = {i.llm_role for i in check_instances}
+            if instance_type == "aspect":
+                pending_aspects = list(cast(Sequence[_Aspect], check_instances))
+            elif isinstance(target, _Aspect):
+                pending_aspects = list(target.aspects)
+            else:
+                pending_aspects = []
+            while pending_aspects:
+                aspect = pending_aspects.pop()
+                if instance_type == "aspect":
+                    required_roles.add(aspect.llm_role)
+                else:
+                    # Concept extraction skips this whole subtree when the aspect
+                    # has no extracted paragraphs to provide as context.
+                    if not aspect.reference_paragraphs:
+                        continue
+                    required_roles.update(i.llm_role for i in aspect.concepts)
+                pending_aspects.extend(aspect.aspects)
+            llm_group._check_llm_roles_are_routable(required_roles)
+
+        # Concepts can be extracted from images only at the document level
+        if instance_type == "concept" and isinstance(target, _Document):
+            llm_or_group._check_vision_support_for_concepts(
+                document=target,
+                # Safe cast: check_instances contains only _Concept instances
+                # because `instance_type` is "concept"
+                concepts=cast(Sequence[_Concept], check_instances),
             )
 
     @staticmethod
@@ -2864,7 +2986,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         :param llm_role: The optional role of the LLM to filter the results. If provided,
             only results associated with LLMs matching this role are returned. If no LLM with
             the specified role exists, an exception is raised. If the matching LLM has
-            fallback LLMs, their usage or cost details are also collected. Defaults to None.
+            fallback LLMs, their usage or cost details are also collected. The role is
+            validated in the same way as the roles assigned to LLMs. Defaults to None.
         :type llm_role: str | None
         :return: A list of containers, each representing usage or cost information for
             a primary LLM and its fallback LLMs, if any, in the order they are tried.
@@ -2899,7 +3022,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     raise ValueError(f"Invalid retrieval type `{retrieval_type}`")
                 info_containers.append(info_container)
 
-        if llm_role:
+        if llm_role is not None:
+            # Validate the role in the same way as the roles assigned to LLMs,
+            # e.g. remove the surrounding whitespace
+            llm_role = _validate_llm_role(llm_role)
             info_containers = [
                 i for i in info_containers if i.role == llm_role
             ]  # for both main and fallback LLMs
@@ -3039,10 +3165,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         seen_roles = set()
         for llm in llms:
             if llm.role in seen_roles:
-                raise ValueError(
-                    "LLMs in a group must have different roles, "
-                    "and only one LLM in a group can have no role."
-                )
+                raise ValueError(_NON_UNIQUE_LLM_ROLES_MSG)
             seen_roles.add(llm.role)
         return llms
 
@@ -3052,12 +3175,14 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         LLM role if provided.
 
         :param llm_role: Optional; A string representing the role of the LLM to filter
-            the usage data. If None, returns usage for all LLMs in the group, including
-            the LLM without a role.
+            the usage data, validated in the same way as the roles assigned to LLMs.
+            If None, returns usage for all LLMs in the group, including the LLM
+            without a role.
         :type llm_role: str | None
         :return: A list of usage statistics containers for the specified LLMs and their fallbacks.
         :rtype: list[_LLMUsageOutputContainer]
-        :raises ValueError: If no LLM with the specified role exists in the group.
+        :raises ValueError: If the specified role is invalid, or if no LLM with
+            the specified role exists in the group.
         """
         # Safe cast: _get_usage_or_cost with retrieval_type="usage"
         # returns only list of _LLMUsageOutputContainer
@@ -3072,12 +3197,14 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         LLM role if provided.
 
         :param llm_role: Optional; A string representing the role of the LLM to filter
-            the cost data. If None, returns cost for all LLMs in the group, including
-            the LLM without a role.
+            the cost data, validated in the same way as the roles assigned to LLMs.
+            If None, returns cost for all LLMs in the group, including the LLM
+            without a role.
         :type llm_role: str | None
         :return: A list of cost statistics containers for the specified LLMs and their fallbacks.
         :rtype: list[_LLMCostOutputContainer]
-        :raises ValueError: If no LLM with the specified role exists in the group.
+        :raises ValueError: If the specified role is invalid, or if no LLM with
+            the specified role exists in the group.
         """
         # Safe cast: _get_usage_or_cost with retrieval_type="cost"
         # returns only list of _LLMCostOutputContainer
@@ -3093,15 +3220,20 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         This method clears accumulated usage and cost data, which is useful when processing
         multiple documents sequentially and tracking metrics for each document separately.
 
-        :param llm_role: Optional; A string representing the role of the LLM to reset statistics for.
-            If None, resets statistics for all LLMs in the group, including the LLM without a role.
+        :param llm_role: Optional; A string representing the role of the LLM to reset statistics for,
+            validated in the same way as the roles assigned to LLMs. If None, resets statistics
+            for all LLMs in the group, including the LLM without a role.
         :type llm_role: str | None
         :return: None
         :rtype: None
-        :raises ValueError: If no LLM with the specified role exists in the group.
+        :raises ValueError: If the specified role is invalid, or if no LLM with
+            the specified role exists in the group.
         """
 
-        if llm_role:
+        if llm_role is not None:
+            # Validate the role in the same way as the roles assigned to LLMs,
+            # e.g. remove the surrounding whitespace
+            llm_role = _validate_llm_role(llm_role)
             try:
                 llm = next(i for i in self.llms if i.role == llm_role)
                 llm.reset_usage_and_cost()
@@ -3160,11 +3292,12 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=None,  # specific to Azure OpenAI
         description="API version; used by some providers (e.g., Azure OpenAI).",
     )
-    role: LLMRole = Field(
+    role: LLMRole | None = Field(
         default=None,
         description=(
-            "Free-form role label used for routing in a DocumentLLMGroup: the LLM "
-            "extracts the aspects/concepts with the same `llm_role`. Defaults to None, "
+            "Free-form role label (up to 64 printable characters) used for routing "
+            "in a DocumentLLMGroup: the LLM extracts the aspects/concepts with "
+            "the same `llm_role`. Defaults to None, "
             "i.e. the LLM extracts the aspects/concepts without `llm_role`. Ignored "
             "when the LLM is used on its own, as it then extracts all aspects/concepts."
         ),
@@ -3681,13 +3814,17 @@ class _DocumentLLM(_GenericLLMProcessor):
         ):
             raise ValueError("Images must be a list of Image instances")
 
-        # Check for vision support
-        if images and not self._supports_vision:
-            raise ValueError(
-                f"Model `{self.model}` does not support vision according to "
-                f"litellm.supports_vision(). To override this detection, "
-                f"manually set `_supports_vision=True` on the LLM instance."
-            )
+        # Check for vision support of the LLM and of its fallback LLMs, as a fallback
+        # LLM is sent the same images, if the LLM it is a fallback for fails
+        if images:
+            for llm in [self, *self.fallback_llms]:
+                if not llm._supports_vision:
+                    raise ValueError(
+                        f"{'Fallback model' if llm.is_fallback else 'Model'} "
+                        f"`{llm.model}` does not support vision according to "
+                        f"litellm.supports_vision(). To override this detection, "
+                        f"manually set `_supports_vision=True` on the LLM instance."
+                    )
 
         # If a chat session is provided, reuse chat logic with preserved history
         if chat_session is not None:
@@ -4270,7 +4407,8 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         # Note: the LLM role is a free-form routing label that implies no capabilities
         # of the model, i.e. vision and reasoning support is not validated against it.
-        # Vision support is validated at request time, when images are sent to the model.
+        # Vision support is validated when extraction of concepts from images starts,
+        # as well as at request time, when images are sent to the model.
 
         # Emit relevant warnings
 

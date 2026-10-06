@@ -82,7 +82,6 @@ from contextgem.internal.typings.types_to_strings import (
 from contextgem.internal.typings.user_type_hints_validation import (
     _dynamic_pydantic_model,
 )
-from contextgem.internal.typings.validators import _get_legacy_llm_role_modality
 
 
 class _Concept(_ExtractedItemsAttributeProcessor):
@@ -96,7 +95,7 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     description: NonEmptyStr = Field(
         ..., description="Concept description (required, non-empty string)."
     )
-    llm_role: LLMRole = Field(
+    llm_role: LLMRole | None = Field(
         default=None,
         description=(
             "Role label of the LLM that extracts this concept when a DocumentLLMGroup "
@@ -161,27 +160,6 @@ class _Concept(_ExtractedItemsAttributeProcessor):
         """
         pass
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        """
-        Custom attribute setter that keeps the concept's modality consistent with
-        a deprecated legacy LLM role name assigned to the 'llm_role' attribute.
-
-        :param name: The name of the attribute to set
-        :type name: str
-        :param value: The value to assign to the attribute
-        :type value: Any
-        :return: None
-        :rtype: None
-        """
-
-        if name == "llm_role":
-            # A legacy LLM role name (will be removed in v2.0.0) also carried
-            # the modality, which is now a separate attribute of the concept.
-            legacy_modality = _get_legacy_llm_role_modality(value)
-            if legacy_modality is not None:
-                super().__setattr__("modality", legacy_modality)
-        super().__setattr__(name, value)
-
     @classmethod
     def _validate_concept_extraction_params(cls, data: dict[str, Any]):
         """
@@ -209,13 +187,6 @@ class _Concept(_ExtractedItemsAttributeProcessor):
         :return: The validated input data.
         """
         if isinstance(data, dict):
-            # A legacy LLM role name (will be removed in v2.0.0) also carried the modality,
-            # which is now a separate parameter of the concept. The modality is derived
-            # from such name only when the modality is not specified, i.e. upon the concept's
-            # initialization or deserialization of the data serialized by earlier versions.
-            legacy_modality = _get_legacy_llm_role_modality(data.get("llm_role"))
-            if legacy_modality is not None and "modality" not in data:
-                data = {**data, "modality": legacy_modality}
             cls._validate_concept_extraction_params(data)
         return data
 
