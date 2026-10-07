@@ -41,9 +41,8 @@ from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.attrs import _AssignedInstancesProcessor
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.images import _Image
-from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
-from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPipeline
+from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.decorators import (
     _disable_direct_initialization,
     _post_init_method,
@@ -74,7 +73,7 @@ _POSITION_CACHE_KEYS = (_PARA_POS_CACHE_KEY, _SENT_POS_CACHE_KEY)
 
 
 @_disable_direct_initialization
-class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
+class _Document(_AssignedInstancesProcessor):
     """
     Internal implementation of the Document class.
     """
@@ -145,14 +144,12 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         :raises ValueError: If attempting to reassign a restricted attribute
             after it has already been assigned to a *truthy* value.
         """
-        if name in ["raw_text", "paragraphs", "_md_text"] and getattr(self, name, None):
-            # Prevent raw_text/paragraphs/_md_text reassignment once populated,
+        if name in ["raw_text", "paragraphs"] and getattr(self, name, None):
+            # Prevent raw_text/paragraphs reassignment once populated,
             # to prevent inconsistencies in analysis.
             raise ValueError(
                 f"The attribute `{name}` cannot be changed once populated."
             )
-        if name == "_md_text":
-            self._validate_md_text(value)
         super().__setattr__(name, value)
 
     @property
@@ -330,7 +327,7 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
 
     def assign_pipeline(
         self,
-        pipeline: _ExtractionPipeline | _DocumentPipeline,
+        pipeline: _ExtractionPipeline,
         overwrite_existing: bool = False,
     ) -> Self:
         """
@@ -339,9 +336,8 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         If the aspects or concepts are already associated with the document, an error is raised
         unless the `overwrite_existing` parameter is explicitly set to `True`.
 
-        :param pipeline: The ExtractionPipeline (or deprecated DocumentPipeline) object to
-            attach to the document.
-        :type pipeline: _ExtractionPipeline | _DocumentPipeline
+        :param pipeline: The ExtractionPipeline object to attach to the document.
+        :type pipeline: _ExtractionPipeline
         :param overwrite_existing: A boolean flag. If set to True, any existing aspects and
             concepts assigned to the document will be overwritten by the new pipeline.
             Defaults to False.
@@ -631,11 +627,10 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
     @model_validator(mode="after")
     def _validate_document_post(self) -> Self:
         """
-        Validates the consistency between document text attributes and paragraphs.
+        Validates the consistency between the document text and paragraphs.
 
         Verifies that:
-        - Document's `_md_text` cannot be populated without `raw_text` being set
-        - Each paragraph's text exists in the corresponding document text
+        - Each paragraph's text exists in the document text
         - Paragraphs are ordered according to their appearance in the document text
 
         Does nothing if both `raw_text` and `paragraphs` are not provided.
@@ -644,24 +639,7 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
 
         :return: The validated instance of the model.
         :raises ValueError: If paragraphs are not matched or ordered correctly in
-            the document text, or if `_md_text` is provided without `raw_text`.
-        """
-        self._run_post_validation()
-        return self
-
-    def _run_post_validation(self) -> None:
-        """
-        Performs document post-validation: normalizes top-level aspect nesting
-        levels and checks paragraph/markdown consistency.
-
-        Implemented as a plain method (separate from the ``model_validator``
-        wrapper) so it can also be invoked during deserialization, once private
-        attributes such as ``_md_text`` have been restored.
-
-        :return: None
-        :rtype: None
-        :raises ValueError: If paragraphs are not matched or ordered correctly in
-            the document text, or if `_md_text` is provided without `raw_text`.
+            the document text.
         """
 
         # Aspects attached to a document are top-level: normalize their nesting
@@ -669,16 +647,10 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
         # extraction engine's internal single-aspect documents).
         self._normalize_top_level_aspect_nesting()
 
-        # Validate that _md_text cannot be populated without raw_text
-        if self._md_text and not self.raw_text:
-            raise ValueError(
-                "Document's `_md_text` cannot be populated without `raw_text` being set."
-            )
-
         if self.raw_text and self.paragraphs:
             # Check that all paragraphs exist in the document raw text
             unmatched_paragraphs = _check_paragraphs_match_in_text(
-                self.paragraphs, self.raw_text, "raw"
+                self.paragraphs, self.raw_text
             )
             if unmatched_paragraphs:
                 unmatched_texts = [p.raw_text for p in unmatched_paragraphs]
@@ -687,37 +659,6 @@ class _Document(_AssignedInstancesProcessor, _MarkdownTextAttributesProcessor):
                     f"Unmatched paragraphs: {unmatched_texts}"
                 )
             # Check that paragraphs are ordered according to their appearance in the raw text
-            _check_paragraphs_ordering_in_text(self.paragraphs, self.raw_text, "raw")
+            _check_paragraphs_ordering_in_text(self.paragraphs, self.raw_text)
 
-            # If both document and paragraphs have _md_text, validate matching in _md_text as well
-            if self._md_text:
-                unmatched_md_paragraphs = _check_paragraphs_match_in_text(
-                    self.paragraphs, self._md_text, "markdown"
-                )
-                if unmatched_md_paragraphs:
-                    unmatched_md_texts = [p._md_text for p in unmatched_md_paragraphs]
-                    raise ValueError(
-                        f"Paragraphs with _md_text were not matched in document _md_text. "
-                        f"Unmatched _md_text: {unmatched_md_texts}"
-                    )
-                # Check that paragraphs are ordered according to their appearance in the markdown text
-                _check_paragraphs_ordering_in_text(
-                    self.paragraphs, self._md_text, "markdown"
-                )
-
-    def _revalidate_after_deserialization(self) -> None:
-        """
-        Re-runs document consistency validation after private attributes have
-        been restored during deserialization.
-
-        ``from_dict`` constructs the instance from public fields (running model
-        validators) and only then restores private attributes such as
-        ``_md_text``. Because the document's markdown-consistency checks are
-        gated on ``_md_text`` being populated, they are skipped at construction
-        time during deserialization; this hook re-runs them (and re-normalizes
-        aspect nesting levels) once the full state is in place.
-
-        :return: None
-        :rtype: None
-        """
-        self._run_post_validation()
+        return self

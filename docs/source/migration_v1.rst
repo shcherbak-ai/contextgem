@@ -133,7 +133,7 @@ Changes in Behavior
 Updating the Serialized Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Documents and extraction pipelines serialized with the earlier versions can be deserialized in v1.0. However, their aspects and concepts keep the predefined role names as regular role labels, and their concepts have the default ``"text"`` modality, as the serialized data has no modality. Update the roles and the modalities after deserializing the data, and serialize the data again:
+Documents and extraction pipelines serialized with the earlier versions can be deserialized in v1.0, unless they are affected by the removal of ``RatingScale`` or ``DocumentPipeline``: such data is to be updated first, as described in :ref:`migration-v1-rating-scales-label` and :ref:`migration-v1-pipelines-label`. However, the aspects and concepts of the deserialized documents and pipelines keep the predefined role names as regular role labels, and their concepts have the default ``"text"`` modality, as the serialized data has no modality. Update the roles and the modalities after deserializing the data, and serialize the data again:
 
 .. code-block:: python
    :caption: Updating a document serialized before v1.0
@@ -168,4 +168,208 @@ Documents and extraction pipelines serialized with the earlier versions can be d
    migrate_roles(document.concepts)
    document_json = document.to_json()
 
-The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`. For a serialized :class:`~contextgem.public.llms.DocumentLLM` or :class:`~contextgem.public.llms.DocumentLLMGroup`, update the ``role`` of each deserialized LLM in the same way, or create the LLMs anew.
+The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`. A serialized :class:`~contextgem.public.llms.DocumentLLM` or :class:`~contextgem.public.llms.DocumentLLMGroup` cannot be deserialized in v1.0 as is: either create the LLMs anew, or update the serialized data as described in :ref:`migration-v1-fallback-llms-label`, and then update the ``role`` of each deserialized LLM in the same way.
+
+
+.. _migration-v1-fallback-llms-label:
+
+🔄 Fallback LLMs
+------------------
+
+The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.DocumentLLM`, which accepted a single fallback LLM, are removed. Use ``fallback_llms`` instead, which accepts a list of fallback LLMs. The fallback LLMs are tried in the given order until one of them succeeds. See :doc:`llms/llm_config` for details.
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   llm = DocumentLLM(
+       model="openai/gpt-4o-mini",
+       api_key="<your-openai-api-key>",
+       fallback_llm=fallback_llm,
+   )
+
+   llm.fallback_llm = other_fallback_llm
+   current_fallback_llm = llm.fallback_llm
+
+.. code-block:: python
+   :caption: In v1.0
+
+   llm = DocumentLLM(
+       model="openai/gpt-4o-mini",
+       api_key="<your-openai-api-key>",
+       fallback_llms=[fallback_llm],
+   )
+
+   llm.fallback_llms = [other_fallback_llm]
+   current_fallback_llm = llm.fallback_llms[0] if llm.fallback_llms else None
+
+Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the ``fallback_llm`` attribute, raises an error in v1.0.
+
+**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized ``DocumentLLM`` or ``DocumentLLMGroup``, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, replace the ``fallback_llm`` key with ``fallback_llms`` before deserializing the data, and serialize the data again:
+
+.. code-block:: python
+   :caption: Updating an LLM serialized before v1.0
+
+   import json
+
+   from contextgem import DocumentLLM
+
+
+   def migrate_llm_dict(llm_dict):
+       """Replaces the single fallback LLM with a list of fallback LLMs."""
+       for group_llm_dict in llm_dict.get("llms", []):  # LLMs of an LLM group
+           migrate_llm_dict(group_llm_dict)
+       if "fallback_llm" in llm_dict:
+           fallback_llm_dict = llm_dict.pop("fallback_llm")
+           llm_dict["fallback_llms"] = (
+               [migrate_llm_dict(fallback_llm_dict)] if fallback_llm_dict else []
+           )
+       return llm_dict
+
+
+   llm_dict = json.loads(llm_json)  # serialized before v1.0
+   llm = DocumentLLM.from_dict(migrate_llm_dict(llm_dict))
+   llm_json = llm.to_json()
+
+For a serialized LLM group, use ``DocumentLLMGroup.from_dict()`` with the same function.
+
+
+.. _migration-v1-pipelines-label:
+
+🔗 Extraction Pipelines
+-------------------------
+
+``DocumentPipeline`` is removed. Use :class:`~contextgem.public.pipelines.ExtractionPipeline` instead, which has the same parameters and methods:
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   from contextgem import DocumentPipeline
+
+   pipeline = DocumentPipeline(aspects=aspects, concepts=concepts)
+
+.. code-block:: python
+   :caption: In v1.0
+
+   from contextgem import ExtractionPipeline
+
+   pipeline = ExtractionPipeline(aspects=aspects, concepts=concepts)
+
+**Serialized data.** A pipeline serialized as ``DocumentPipeline`` cannot be deserialized in v1.0 as is, as the serialized data stores the name of the class. Replace the class name before deserializing the data, and serialize the data again:
+
+.. code-block:: python
+   :caption: Updating a pipeline serialized as DocumentPipeline
+
+   import json
+
+   from contextgem import ExtractionPipeline
+
+   pipeline_dict = json.loads(pipeline_json)  # serialized as DocumentPipeline
+   pipeline_dict["__class__"] = "ExtractionPipeline"
+   pipeline = ExtractionPipeline.from_dict(pipeline_dict)
+   pipeline_json = pipeline.to_json()
+
+Serialized documents are not affected: a document stores the aspects and concepts of the pipeline assigned to it, not the pipeline itself.
+
+
+.. _migration-v1-rating-scales-label:
+
+⭐ Rating Scales
+-----------------
+
+``RatingScale`` is removed. Define the rating scale of a :class:`~contextgem.public.concepts.RatingConcept` as a tuple of ``(start, end)`` integers instead. The requirements for the scale are the same: the start value cannot be negative, and the end value must be greater than the start value.
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   from contextgem import RatingConcept, RatingScale
+
+   concept = RatingConcept(
+       name="Product quality",
+       description="Quality of the product",
+       rating_scale=RatingScale(start=1, end=5),
+   )
+
+   scale_start = concept.rating_scale.start
+   scale_end = concept.rating_scale.end
+
+.. code-block:: python
+   :caption: In v1.0
+
+   from contextgem import RatingConcept
+
+   concept = RatingConcept(
+       name="Product quality",
+       description="Quality of the product",
+       rating_scale=(1, 5),
+   )
+
+   scale_start, scale_end = concept.rating_scale
+
+``RatingScale()`` created without arguments had the scale from 0 to 10, which corresponds to ``rating_scale=(0, 10)``.
+
+**Serialized data.** A rating scale defined as a ``RatingScale`` object was serialized as an object (``{"start": 1, "end": 5, "__class__": "RatingScale"}``), while a rating scale defined as a tuple is serialized as a list (``[1, 5]``). Documents, pipelines, aspects, and concepts with the rating scales serialized as objects cannot be deserialized in v1.0 as is. Replace such rating scales with lists before deserializing the data, and serialize the data again:
+
+.. code-block:: python
+   :caption: Updating a document serialized with RatingScale objects
+
+   import json
+
+   from contextgem import Document
+
+
+   def migrate_rating_scales(instance_dict):
+       """Replaces the serialized RatingScale objects with [start, end] lists."""
+       for concept_dict in instance_dict.get("concepts", []):
+           rating_scale = concept_dict.get("rating_scale")
+           if isinstance(rating_scale, dict):
+               concept_dict["rating_scale"] = [rating_scale["start"], rating_scale["end"]]
+       for aspect_dict in instance_dict.get("aspects", []):  # including sub-aspects
+           migrate_rating_scales(aspect_dict)
+       return instance_dict
+
+
+   document_dict = json.loads(document_json)  # serialized before v1.0
+   document = Document.from_dict(migrate_rating_scales(document_dict))
+   document_json = document.to_json()
+
+The same function can be used for a serialized pipeline or aspect. For a concept that was serialized separately, replace the value of its ``rating_scale`` key in the same way. The rating scales that were defined as tuples are not affected.
+
+
+.. _migration-v1-docx-converter-label:
+
+📄 DOCX Converter
+------------------
+
+``DocxConverter`` is removed. Convert your files to text with a dedicated document conversion library, e.g. `Docling <https://github.com/docling-project/docling>`_ or `MarkItDown <https://github.com/microsoft/markitdown>`_, and pass the text to :class:`~contextgem.public.documents.Document`:
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   from contextgem import DocxConverter
+
+   document = DocxConverter().convert("path/to/file.docx")
+
+.. code-block:: python
+   :caption: In v1.0
+
+   from contextgem import Document
+
+   # text = <plain text or Markdown produced by the conversion library of your choice>
+   document = Document(raw_text=text)
+
+``DocxConverter.convert_to_text_format()`` and the exceptions of the converter (``DocxConverterError`` and its subclasses) are removed as well, and ContextGem no longer depends on ``lxml``.
+
+What else the converter provided, and how to get it in v1.0:
+
+- **Images.** The converter attached the images embedded in a DOCX file to the document. Extract the images with your conversion library, and pass them to the document via ``images``. See :func:`~contextgem.public.utils.create_image`.
+- **Additional context of paragraphs.** The converter described the style, list and table position of each paragraph in its ``additional_context``. To keep providing such details to the LLM, create the paragraphs yourself. See :ref:`paragraph-additional-context`.
+- **Markdown text.** The converter kept two versions of the text: the plain text in ``raw_text``, which was used for paragraph and sentence segmentation and was returned in references, and the Markdown text, which was sent to the LLM instead of the plain text. In v1.0, a document has only one text, ``raw_text``.
+
+Markdown can be passed as ``raw_text``: it is sent to the LLM as it is. Keep in mind that in this case:
+
+- The paragraphs and sentences returned in references contain the Markdown syntax.
+- With the default paragraph segmentation, each line of the text is a paragraph, e.g. each row of a Markdown table.
+- Sentence segmentation, which is used for sentence-level references (``reference_depth="sentences"``), is more accurate on plain text. On Markdown, a link, a table row or the emphasis markers can split a sentence or end up as a separate sentence. If you rely on sentence-level references, pass plain text.
+- Use the default ``paragraph_segmentation_mode="newlines"``. The ``"sat"`` mode detects considerably fewer paragraph breaks in Markdown than in plain text.
+
+**Serialized data.** Documents serialized with the earlier versions, including the documents created with ``DocxConverter``, can be deserialized in v1.0, subject to the other sections of this guide. The Markdown text stored in such documents is ignored: text is extracted from ``raw_text``, and the Markdown text is not kept when the document is serialized again. The additional context of the paragraphs is preserved.

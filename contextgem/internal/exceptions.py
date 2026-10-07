@@ -133,38 +133,3 @@ class LLMToolLoopLimitError(_BaseLLMError):
     """
 
     pass
-
-
-# DocxConverter exceptions
-
-
-class DocxConverterError(Exception):
-    """
-    Base exception class for DOCX converter errors.
-    """
-
-    pass
-
-
-class DocxFormatError(DocxConverterError):
-    """
-    Exception raised when the DOCX file format is invalid or corrupted.
-    """
-
-    pass
-
-
-class DocxXmlError(DocxConverterError):
-    """
-    Exception raised when there's an error parsing XML in the DOCX file.
-    """
-
-    pass
-
-
-class DocxContentError(DocxConverterError):
-    """
-    Exception raised when required content is missing from the DOCX file.
-    """
-
-    pass

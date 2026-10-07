@@ -276,7 +276,6 @@ ContextGem relies on these excellent open-source packages:
 - [genai-prices](https://github.com/pydantic/genai-prices): LLM pricing data and utilities (by Pydantic) to automatically estimate costs
 - [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering
 - [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
-- [lxml](https://github.com/lxml/lxml): High-performance XML processing library for parsing DOCX document structure
 - [pillow](https://github.com/python-pillow/Pillow): Image processing library for local model image handling
 - [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
 - [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation for unique object identification

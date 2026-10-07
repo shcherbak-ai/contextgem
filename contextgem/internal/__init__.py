@@ -26,7 +26,6 @@ from contextgem.internal.base import (
     _Document,
     _DocumentLLM,
     _DocumentLLMGroup,
-    _DocumentPipeline,
     _ExtractionPipeline,
     _Image,
     _JsonObjectClassStruct,
@@ -37,12 +36,10 @@ from contextgem.internal.base import (
     _NumericalConcept,
     _Paragraph,
     _RatingConcept,
-    _RatingScale,
     _Sentence,
     _StringConcept,
     _StringExample,
 )
-from contextgem.internal.converters import _DocxConverterBase, _DocxPackage
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,
@@ -57,7 +54,6 @@ from contextgem.internal.decorators import (
     _timer_decorator,
 )
 from contextgem.internal.exceptions import (
-    DocxConverterError,
     LLMAPIError,
     LLMExtractionError,
     LLMToolLoopLimitError,
@@ -93,7 +89,6 @@ from contextgem.internal.typings import (
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
-    TextMode,
     _deserialize_type_hint,
     _dynamic_pydantic_model,
     _format_dict_structure,
@@ -144,7 +139,6 @@ __all__ = (
     "_Document",
     "_DocumentLLM",
     "_DocumentLLMGroup",
-    "_DocumentPipeline",
     "_ExtractionPipeline",
     "_Image",
     "_JsonObjectClassStruct",
@@ -155,7 +149,6 @@ __all__ = (
     "_NumericalConcept",
     "_Paragraph",
     "_RatingConcept",
-    "_RatingScale",
     "_Sentence",
     "_StringConcept",
     "_StringExample",
@@ -178,7 +171,6 @@ __all__ = (
     "AsyncCalsAndKwargs",
     "DefaultDecimalField",
     "ReasoningEffort",
-    "TextMode",
     "_deserialize_type_hint",
     "_is_json_serializable_type",
     "_format_type",
@@ -236,13 +228,8 @@ __all__ = (
     "_clean_control_characters",
     "_is_text_content_empty",
     "_clean_text_for_llm_prompt",
-    # Converters
-    # DOCX
-    "_DocxConverterBase",
-    "_DocxPackage",
     # Exceptions
     "LLMExtractionError",
     "LLMAPIError",
     "LLMToolLoopLimitError",
-    "DocxConverterError",
 )

@@ -22,7 +22,7 @@ Module defining public data validation models.
 
 from __future__ import annotations
 
-from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
+from contextgem.internal.base.data_models import _LLMPricing
 from contextgem.internal.decorators import _expose_in_registry
 
 
@@ -43,31 +43,6 @@ class LLMPricing(_LLMPricing):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/data_models/def_llm_pricing.py
             :language: python
             :caption: LLM pricing definition
-    """
-
-    pass
-
-
-# TODO: remove this class in v1.0.0.
-@_expose_in_registry(additional_key=_RatingScale)  # ty: ignore[too-many-positional-arguments]
-class RatingScale(_RatingScale):
-    """
-    Represents a rating scale with defined minimum and maximum values.
-
-    .. deprecated:: 0.10.0
-        RatingScale is deprecated and will be removed in v1.0.0.
-        Use a tuple of (start, end) integers instead, e.g. (1, 5)
-        instead of RatingScale(start=1, end=5).
-
-    This class defines a numerical scale for rating concepts, with configurable
-    start and end values that determine the valid range for ratings.
-
-    :ivar start: The minimum value of the rating scale (inclusive).
-                 Must be greater than or equal to 0.
-    :vartype start: StrictInt
-    :ivar end: The maximum value of the rating scale (inclusive).
-              Must be greater than 0.
-    :vartype end: StrictInt
     """
 
     pass

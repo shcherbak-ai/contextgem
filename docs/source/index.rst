@@ -335,7 +335,6 @@ Indices and tables
    :hidden:
    
    api/documents
-   api/converters
    api/aspects
    api/concepts
    api/examples

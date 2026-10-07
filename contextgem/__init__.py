@@ -31,8 +31,6 @@ from contextgem.public import (
     Document,
     DocumentLLM,
     DocumentLLMGroup,
-    DocumentPipeline,
-    DocxConverter,
     ExtractionPipeline,
     Image,
     JsonObjectClassStruct,
@@ -43,7 +41,6 @@ from contextgem.public import (
     NumericalConcept,
     Paragraph,
     RatingConcept,
-    RatingScale,
     Sentence,
     StringConcept,
     StringExample,
@@ -69,7 +66,6 @@ __all__ = (
     "Document",
     # Pipelines
     "ExtractionPipeline",
-    "DocumentPipeline",  # deprecated, will be removed in v1.0.0
     # Paragraphs
     "Paragraph",
     # Sentences
@@ -85,14 +81,11 @@ __all__ = (
     "DocumentLLMGroup",
     # Data models
     "LLMPricing",
-    "RatingScale",  # deprecated, will be removed in v1.0.0
     # Utils
     "create_image",
     "image_to_base64",
     "reload_logger_settings",
     "JsonObjectClassStruct",
-    # Converters
-    "DocxConverter",
     # Decorators
     "register_tool",
 )

@@ -139,10 +139,6 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``list[DocumentLLM]``
      - ``[]``
      - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role as the primary LLM.
-   * - ``fallback_llm``
-     - ``DocumentLLM | None``
-     - ``None``
-     - **Deprecated since v0.28.0**, will be removed in v1.0.0. Use ``fallback_llms`` instead. A single :class:`~contextgem.public.llms.DocumentLLM` to use as fallback if current one fails.
    * - ``output_language``
      - ``str``
      - ``"en"``
@@ -193,7 +189,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
 
 You can set up one or more fallback LLMs that will be used if the primary LLM fails. Fallback LLMs are tried in the order they are listed in ``fallback_llms``, until one of them succeeds:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/fallback_llm.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/fallback_llms.py
    :language: python
    :caption: Configuring fallback LLMs
 
@@ -203,9 +199,6 @@ The next fallback LLM is tried when the current LLM fails for good, i.e. when it
 
 .. note::
    Each LLM applies its own retry settings and timeout before the next fallback LLM is tried, so the more fallback LLMs you configure, the longer a request can take to fail when all of the LLMs are unavailable.
-
-.. warning::
-   **Deprecated since v0.28.0.** The ``fallback_llm`` parameter, which accepts a single fallback LLM, will be removed in v1.0.0. Use ``fallback_llms`` instead, e.g. ``fallback_llms=[fallback_llm]``.
 
 
 .. _llm-retries-label:

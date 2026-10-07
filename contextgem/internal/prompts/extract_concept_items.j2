@@ -75,18 +75,12 @@ Your task is to:
         -- Recognize relationships between content (e.g., list items are related, table cells contain associated data)
         -- Assess content significance (e.g., styled text may indicate importance)
             {% endif %}
-            {% if is_markdown %}
-    - Note that paragraphs are provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
-            {% endif %}
         {% endif %}
     - Note that paragraphs are listed in the same order they appear in the original document.
     - You may be working with document fragments rather than complete documents. Focus on extracting information from the available content without making assumptions about missing parts.
 2. Identify whether each concept in the concepts list is addressed within the document paragraphs.
     {% else %}
 1. Read through the document text provided.
-        {% if is_markdown %}
-    - Note that the document text is provided in markdown format, which may include formatting elements such as headings, links, lists, and other markdown syntax.
-        {% endif %}
 2. Identify whether each concept in the concepts list is addressed within the document text.
     {% endif %}
     - Each concept is identified by a concept ID (for example, "C0", "C1", etc.) specified within <concept_id></concept_id> tags.
@@ -434,11 +428,7 @@ DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
 DOCUMENT PARAGRAPHS:
         {% endif %}
         {% for para_index, para_item in enumerate(paragraphs) %}
-            {% if is_markdown and para_item._md_text %}
-                {% set para_text = _clean_text_for_llm_prompt(para_item._md_text, preserve_linebreaks=True, strip_text=False) %}
-            {% else %}
-                {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
-            {% endif %}
+            {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
             {% if para_text %}
     <paragraph id="P{{ para_index }}">
         <paragraph_id>P{{ para_index }}</paragraph_id>

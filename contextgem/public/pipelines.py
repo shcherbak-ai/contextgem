@@ -31,7 +31,7 @@ assignable object.
 
 from __future__ import annotations
 
-from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPipeline
+from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.decorators import _expose_in_registry
 
 
@@ -59,28 +59,6 @@ class ExtractionPipeline(_ExtractionPipeline):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/pipelines/def_pipeline.py
             :language: python
             :caption: Extraction pipeline definition
-    """
-
-    pass
-
-
-# TODO: Remove this class in v1.0.0.
-@_expose_in_registry(additional_key=_DocumentPipeline)  # ty: ignore[too-many-positional-arguments]
-class DocumentPipeline(_DocumentPipeline):
-    """
-    Deprecated wrapper for ExtractionPipeline.
-
-    .. deprecated:: 0.14.1
-        DocumentPipeline is deprecated and will be removed in v1.0.0.
-        Use ExtractionPipeline instead.
-
-    This class was renamed to ExtractionPipeline to better reflect its purpose and scope:
-
-    * **Clearer semantics**: "ExtractionPipeline" explicitly describes what the pipeline does
-    * **Consistency**: Aligns with the framework's naming conventions for extraction-focused components
-
-    **Migration**: Simply replace ``DocumentPipeline`` with ``ExtractionPipeline`` in your imports.
-    All functionality remains identical.
     """
 
     pass

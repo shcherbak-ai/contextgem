@@ -148,10 +148,6 @@ class DocumentLLM(_DocumentLLM):
         and the same role as the current LLM, and must support vision if the current LLM
         is used to extract concepts from images. Defaults to an empty list.
     :vartype fallback_llms: list[DocumentLLM]
-    :ivar fallback_llm: [DEPRECATED] Use ``fallback_llms`` instead. Will be removed in v1.0.0.
-        A single DocumentLLM to use as fallback if the current one fails; setting it replaces
-        ``fallback_llms`` with that single LLM, and reading it returns the first fallback LLM.
-    :vartype fallback_llm: DocumentLLM | None
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
         Applies only when DocumentLLM's default system message is used.

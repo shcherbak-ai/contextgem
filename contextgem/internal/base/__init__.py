@@ -27,7 +27,7 @@ from contextgem.internal.base.concepts import (
     _RatingConcept,
     _StringConcept,
 )
-from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
+from contextgem.internal.base.data_models import _LLMPricing
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.images import _Image
@@ -39,7 +39,7 @@ from contextgem.internal.base.llms import (
     _DocumentLLMGroup,
 )
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
-from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPipeline
+from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 
 
@@ -56,7 +56,6 @@ __all__ = (
     "_StringConcept",
     # Data models (base)
     "_LLMPricing",
-    "_RatingScale",
     # Documents
     "_Document",
     # Examples
@@ -74,7 +73,6 @@ __all__ = (
     "_Paragraph",
     "_Sentence",
     # Pipelines
-    "_DocumentPipeline",
     "_ExtractionPipeline",
     # Utils (base)
     "_JsonObjectClassStruct",

@@ -9,21 +9,16 @@ from contextgem import (
     BooleanConcept,
     Document,
     DocumentLLM,
-    DocxConverter,
     ExtractionPipeline,
     StringConcept,
 )
 
 
 # Create a document object
-converter = DocxConverter()
-docx_path = str(
-    Path(__file__).resolve().parents[4]
-    / "tests"
-    / "docx_files"
-    / "en_nda_with_anomalies.docx"
+text_path = (
+    Path(__file__).resolve().parents[4] / "tests" / "ndas" / "en_nda_with_anomalies.txt"
 )  # your file path here (Path adapted for testing)
-doc = converter.convert(docx_path, strict_mode=True)
+doc = Document(raw_text=text_path.read_text(encoding="utf-8"))
 
 # Create an extraction pipeline
 extraction_pipeline = ExtractionPipeline(

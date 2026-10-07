@@ -22,9 +22,8 @@ Module that defines base classes for extraction pipeline subclasses.
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import BeforeValidator, Field
 
@@ -53,23 +52,3 @@ class _ExtractionPipeline(_AssignedInstancesProcessor):
         default_factory=list,
         description="Concepts to extract; specific data points.",
     )  # using Sequence field with list validator for type checking
-
-
-# TODO: Remove this class in v1.0.0.
-@_disable_direct_initialization
-class _DocumentPipeline(_ExtractionPipeline):
-    """
-    Internal implementation of the DocumentPipeline class.
-    """
-
-    def __init__(self, **data: Any) -> None:
-        """
-        Initialize DocumentPipeline with deprecation warning.
-        """
-        warnings.warn(
-            "DocumentPipeline is deprecated and will be removed in v1.0.0. "
-            "Use ExtractionPipeline instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(**data)

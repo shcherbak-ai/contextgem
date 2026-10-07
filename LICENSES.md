@@ -62,7 +62,6 @@
 |  └─ [urllib3 (2.7.0)](https://pypi.org/project/urllib3/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [yarl (1.24.5)](https://pypi.org/project/yarl/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [zipp (4.1.0)](https://pypi.org/project/zipp/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|[lxml (6.1.1)](https://pypi.org/project/lxml/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |[onnxruntime (1.23.2)](https://pypi.org/project/onnxruntime/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [coloredlogs (15.0.1)](https://pypi.org/project/coloredlogs/) (also: wtpsplit-lite)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [flatbuffers (25.12.19)](https://pypi.org/project/flatbuffers/) (also: wtpsplit-lite)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
@@ -95,7 +94,7 @@
 |[typing-extensions (4.16.0)](https://pypi.org/project/typing-extensions/)|python|prod|[pyproject.toml](pyproject.toml)|[PSF-2.0](https://spdx.org/licenses/PSF-2.0.html)|permissive|✓|
 |[wtpsplit-lite (0.2.0)](https://pypi.org/project/wtpsplit-lite/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 
-**Summary:** 0 violations, 2 warnings, 1 unknown, 77 ok (of which 4 reviewed)
+**Summary:** 0 violations, 2 warnings, 1 unknown, 76 ok (of which 4 reviewed)
 
 **Completed in:** 0.61s
 

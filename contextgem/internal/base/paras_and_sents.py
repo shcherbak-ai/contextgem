@@ -28,7 +28,6 @@ from pydantic import Field, field_validator, model_validator
 from typing_extensions import Self
 
 from contextgem.internal.base.instances import _InstanceBase
-from contextgem.internal.base.md_text import _MarkdownTextAttributesProcessor
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.types import NonEmptyStr
@@ -83,7 +82,7 @@ class _Sentence(_ParasAndSentsBase):
 
 
 @_disable_direct_initialization
-class _Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
+class _Paragraph(_ParasAndSentsBase):
     """
     Internal implementation of the Paragraph class.
     """
@@ -111,38 +110,28 @@ class _Paragraph(_ParasAndSentsBase, _MarkdownTextAttributesProcessor):
         :raises ValueError: If attempting to reassign a restricted attribute
             after it has already been assigned to a *truthy* value.
         """
-        if name in ["sentences", "_md_text"] and getattr(self, name, None):
-            # Prevent sentences and _md_text reassignment once populated,
+        if name == "sentences" and getattr(self, name, None):
+            # Prevent sentences reassignment once populated,
             # to prevent inconsistencies in analysis.
             raise ValueError(
                 f"The attribute `{name}` cannot be changed once populated."
             )
-        if name == "_md_text":
-            self._validate_md_text(value)
         super().__setattr__(name, value)
 
     @model_validator(mode="after")
     def _validate_paragraph_post(self) -> Self:
         """
-        Verifies that:
-        - all sentences within the `sentences` attribute, if they exist, have their
-            raw text content found within the `raw_text` attribute of the paragraph.
-        - when `_md_text` is populated, `raw_text` is also populated.
+        Verifies that all sentences within the `sentences` attribute, if they exist,
+        have their raw text content found within the `raw_text` attribute of the paragraph.
 
         :return: The validated Paragraph instance.
         :rtype: Self
         :raises ValueError: If any sentence's raw text is not matched within
-            the paragraph's raw text, or if `_md_text` is provided without `raw_text`
-            being set.
+            the paragraph's raw text.
         """
         if self.sentences and not all(
             i.raw_text in self.raw_text for i in self.sentences
         ):
             raise ValueError("Not all sentences were matched in paragraph text.")
-
-        if self._md_text and not self.raw_text:
-            raise ValueError(
-                "Paragraph's `_md_text` cannot be populated without `raw_text` being set."
-            )
 
         return self

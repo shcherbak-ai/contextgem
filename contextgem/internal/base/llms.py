@@ -166,12 +166,6 @@ _NON_UNIQUE_LLM_ROLES_MSG = (
     "and only one LLM in a group can have no role."
 )
 
-# Deprecation message for the `fallback_llm` parameter/attribute of DocumentLLM
-_FALLBACK_LLM_DEPRECATION_MSG = (
-    "`fallback_llm` is deprecated and will be removed in v1.0.0. "
-    "Use `fallback_llms` instead, e.g. `fallback_llms=[fallback_llm]`."
-)
-
 
 class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     """
@@ -1453,10 +1447,6 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                         # Add guidance that the paragraphs or sentences have additional context,
                         # such as formatting, list context, or table position.
                         prompt_kwargs["additional_context_for_paras_or_sents"] = True
-                    if all(p._md_text for p in paragraphs_chunk):
-                        # Add guidance that the paragraphs are in markdown format, e.g. when document
-                        # was converted from DOCX using DocxConverter in markdown mode.
-                        prompt_kwargs["is_markdown"] = True
 
                 # Concept (document- and aspect-levels)
                 elif extraction_level in {
@@ -1488,23 +1478,14 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             prompt_kwargs["additional_context_for_paras_or_sents"] = (
                                 True
                             )
-                        if all(p._md_text for p in paragraphs_chunk):
-                            # Add guidance that the paragraphs are in markdown format, e.g. when document
-                            # was converted from DOCX using DocxConverter in markdown mode.
-                            prompt_kwargs["is_markdown"] = True
                     else:
                         # Raw text of document/aspect used for concept extraction
                         if isinstance(source, _Document) and len(
                             paragraphs_chunk
                         ) == len(source.paragraphs):
-                            # If the document is being processed as a whole, use _md_text of the document,
-                            # if available (e.g. after being converted from DOCX using DocxConverter in markdown mode),
-                            # otherwise use raw_text.
-                            if source._md_text:
-                                text = source._md_text
-                                prompt_kwargs["is_markdown"] = True
-                            else:
-                                text = source.raw_text
+                            # If the document is being processed as a whole,
+                            # use raw_text of the document.
+                            text = source.raw_text
                             if text is None:
                                 raise ValueError(
                                     "Document lacks text for concept extraction."
@@ -1513,34 +1494,20 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                                 text,
                                 preserve_linebreaks=True,
                                 strip_text=True,
-                            )  # markdown or raw text of the document
+                            )  # raw text of the document
                         else:
-                            # If an aspect is being processed, or if the document is being processed in chunks,
-                            # use _md_text of the paragraphs, if available (e.g. when document was converted
-                            # from DOCX using DocxConverter in markdown mode), otherwise use raw_text.
-                            if all(p._md_text for p in paragraphs_chunk):
-                                prompt_kwargs["text"] = "\n\n".join(
-                                    [
-                                        _clean_text_for_llm_prompt(
-                                            p._md_text,  # type: ignore - p._md_text is checked above to not be None
-                                            preserve_linebreaks=True,  # preserve markdown markers etc.
-                                            strip_text=False,  # preserve markdown list indentation etc.
-                                        )
-                                        for p in paragraphs_chunk
-                                    ]
-                                )
-                                prompt_kwargs["is_markdown"] = True
-                            else:
-                                prompt_kwargs["text"] = "\n\n".join(
-                                    [
-                                        _clean_text_for_llm_prompt(
-                                            p.raw_text,
-                                            preserve_linebreaks=False,
-                                            strip_text=True,
-                                        )
-                                        for p in paragraphs_chunk
-                                    ]
-                                )
+                            # If an aspect is being processed, or if the document is being
+                            # processed in chunks, use raw_text of the paragraphs.
+                            prompt_kwargs["text"] = "\n\n".join(
+                                [
+                                    _clean_text_for_llm_prompt(
+                                        p.raw_text,
+                                        preserve_linebreaks=False,
+                                        strip_text=True,
+                                    )
+                                    for p in paragraphs_chunk
+                                ]
+                            )
 
                 else:
                     raise ValueError(
@@ -3479,22 +3446,6 @@ class _DocumentLLM(_GenericLLMProcessor):
         # Pop the async_limiter if provided; otherwise use a default.
         limiter = data.pop("async_limiter", None)
 
-        # Handle deprecated `fallback_llm` parameter (will be removed in v1.0.0)
-        if "fallback_llm" in data:
-            warnings.warn(
-                _FALLBACK_LLM_DEPRECATION_MSG,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            fallback_llm = data.pop("fallback_llm")
-            if fallback_llm is not None:
-                if data.get("fallback_llms"):
-                    raise ValueError(
-                        "`fallback_llm` (deprecated) cannot be set together with "
-                        "`fallback_llms`. Use `fallback_llms` only."
-                    )
-                data["fallback_llms"] = [fallback_llm]
-
         # Convert @register_tool-decorated functions to OpenAI tool schemas
         raw_tools = data.get("tools")
         if raw_tools is not None:
@@ -3624,47 +3575,6 @@ class _DocumentLLM(_GenericLLMProcessor):
         if not isinstance(value, AsyncLimiter):
             raise TypeError("async_limiter must be an AsyncLimiter instance")
         self._async_limiter = value
-
-    @property
-    def fallback_llm(self) -> _DocumentLLM | None:
-        """
-        Gets the first fallback LLM, if any.
-
-        .. deprecated:: 0.28.0
-            ``fallback_llm`` is deprecated and will be removed in v1.0.0.
-            Use ``fallback_llms`` instead.
-
-        :return: The first LLM in ``fallback_llms``, or None if no fallback LLMs are set.
-        :rtype: _DocumentLLM | None
-        """
-        warnings.warn(
-            _FALLBACK_LLM_DEPRECATION_MSG,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.fallback_llms[0] if self.fallback_llms else None
-
-    @fallback_llm.setter
-    def fallback_llm(self, value: _DocumentLLM | None) -> None:
-        """
-        Sets a single fallback LLM, replacing all LLMs in ``fallback_llms``.
-
-        .. deprecated:: 0.28.0
-            ``fallback_llm`` is deprecated and will be removed in v1.0.0.
-            Use ``fallback_llms`` instead.
-
-        :param value: The fallback LLM to set, or None to remove all fallback LLMs.
-        :type value: _DocumentLLM | None
-        :return: None
-        :rtype: None
-        """
-        warnings.warn(
-            _FALLBACK_LLM_DEPRECATION_MSG,
-            DeprecationWarning,
-            # Skip pydantic's `__setattr__` frames to point to the caller's assignment
-            stacklevel=4,
-        )
-        self.fallback_llms = [value] if value is not None else []
 
     @property
     def is_group(self) -> bool:

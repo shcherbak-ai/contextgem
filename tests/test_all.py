@@ -28,7 +28,6 @@ import re
 import tempfile
 import types
 import warnings
-import zipfile
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -43,7 +42,6 @@ import pytest
 from _pytest.nodes import Item as PytestItem
 from aiolimiter import AsyncLimiter
 from dotenv import load_dotenv
-from lxml import etree
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, field_validator
 
@@ -66,7 +64,7 @@ from contextgem.internal.base.concepts import (
     _RatingConcept,
     _StringConcept,
 )
-from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
+from contextgem.internal.base.data_models import _LLMPricing
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.images import _Image
@@ -76,10 +74,8 @@ from contextgem.internal.base.llms import (
     _DocumentLLMGroup,
 )
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
-from contextgem.internal.base.pipelines import _DocumentPipeline, _ExtractionPipeline
+from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
-from contextgem.internal.converters.docx import _DocxPackage
-from contextgem.internal.converters.docx.utils import WORD_XML_NAMESPACES
 from contextgem.internal.data_models import (
     _LLMCall,
     _LLMCost,
@@ -87,8 +83,6 @@ from contextgem.internal.data_models import (
     _Message,
 )
 from contextgem.internal.exceptions import (
-    DocxConverterError,
-    DocxFormatError,
     LLMAPIError,
     LLMExtractionError,
     LLMToolLoopLimitError,
@@ -126,7 +120,6 @@ from contextgem.public import (
     Document,
     DocumentLLM,
     DocumentLLMGroup,
-    DocxConverter,
     ExtractionPipeline,
     Image,
     JsonObjectClassStruct,
@@ -137,14 +130,12 @@ from contextgem.public import (
     NumericalConcept,
     Paragraph,
     RatingConcept,
-    RatingScale,
     Sentence,
     StringConcept,
     StringExample,
     register_tool,
     reload_logger_settings,
 )
-from contextgem.public.pipelines import DocumentPipeline
 from contextgem.public.utils import create_image, image_to_base64
 from tests.benchmark.core import run_benchmark_for_module
 from tests.conftest import VCR_REDACTION_MARKER
@@ -155,8 +146,6 @@ from tests.utils import (
     get_project_root_path,
     get_test_document_text,
     get_test_img,
-    read_text_file,
-    remove_file,
     set_dummy_env_variables_for_testing_from_cassettes,
     vcr_before_record_request,
     vcr_before_record_response,
@@ -219,55 +208,13 @@ class TestAll(TestUtils):
     document = Document(raw_text=get_test_document_text())
     document_ua = Document(raw_text=get_test_document_text(lang="ua"))
     document_zh = Document(raw_text=get_test_document_text(lang="zh"))
-    # From DOCX files
-    test_docx_nda_path = os.path.join(
-        get_project_root_path(), "tests", "docx_files", "en_nda_with_anomalies.docx"
+    # Serialized document with additional context for each paragraph
+    test_doc_with_additional_context_path = os.path.join(
+        get_project_root_path(),
+        "tests",
+        "other_files",
+        "doc_with_additional_context.json",
     )
-    test_docx_nda_ua_path = os.path.join(
-        get_project_root_path(), "tests", "docx_files", "ua_nda_with_anomalies.docx"
-    )
-    test_docx_badly_formatted_path = os.path.join(
-        get_project_root_path(), "tests", "docx_files", "badly_formatted.docx"
-    )
-    test_multimodal_docx_path = os.path.join(
-        get_project_root_path(), "tests", "docx_files", "multimodal.docx"
-    )
-    document_docx = DocxConverter().convert(test_docx_nda_path)
-    document_docx_ua = DocxConverter().convert(test_docx_nda_ua_path)
-    # Match badly formatted converted DOCX content (default mode - all content is included)
-    test_badly_formatted_converted_md_text = read_text_file(
-        os.path.join(
-            get_project_root_path(),
-            "tests",
-            "docx_converted",
-            "badly_formatted_md.txt",
-        )
-    )
-    test_badly_formatted_converted_raw_text = read_text_file(
-        os.path.join(
-            get_project_root_path(),
-            "tests",
-            "docx_converted",
-            "badly_formatted_raw.txt",
-        )
-    )
-    test_badly_formatted_converted_md_paras_text = read_text_file(
-        os.path.join(
-            get_project_root_path(),
-            "tests",
-            "docx_converted",
-            "badly_formatted_paras_md.txt",
-        )
-    )
-    test_badly_formatted_converted_raw_paras_text = read_text_file(
-        os.path.join(
-            get_project_root_path(),
-            "tests",
-            "docx_converted",
-            "badly_formatted_paras_raw.txt",
-        )
-    )
-    document_multimodal_docx = DocxConverter().convert(test_multimodal_docx_path)
 
     # Pre-load SaT model to cache it before VCR starts intercepting requests.
     # This prevents VCR's broken async handling from interfering with HuggingFace Hub downloads.
@@ -310,11 +257,6 @@ class TestAll(TestUtils):
                 add_justifications=True,
             ),
         ],
-    )
-    # Deprecated DocumentPipeline class (will be removed in v1.0.0)
-    document_pipeline = DocumentPipeline(
-        aspects=extraction_pipeline.aspects,
-        concepts=extraction_pipeline.concepts,
     )
 
     # LLMs
@@ -383,10 +325,34 @@ class TestAll(TestUtils):
     # Other
     test_img_png_apt_plan = get_test_img("apt_plan.png", "other")
 
+    # Document with both text and an image
+    document_multimodal = Document(
+        raw_text=(
+            "Invoices:\n\n#0001 (1 May 2025)\n\n#0002 (20 May 2025)\n\n"
+            "#0005 (16 June 2025)"
+        ),
+        images=[test_img_png_invoice],
+    )
+
     # Memory profiling
     memory_baseline: float = 0.0  # baseline memory usage
     memory_profiles: dict[str, str] = {}  # memory usage profiles
     memory_deltas: dict[str, float] = {}  # memory usage deltas (relative to baseline)
+
+    @pytest.fixture(autouse=True)
+    def restore_llms_output_language(self):
+        """
+        Restores the default output language of the LLMs shared by the tests.
+
+        The tests that process documents in other languages change the output language
+        of these LLMs. Restoring it after each test, including a failed one, keeps
+        the LLM requests of the other tests independent of the order of the tests.
+        """
+        yield
+        if self.llm_group.output_language != "en":
+            self.llm_group.group_update_output_language("en")
+        if self.llm_extractor.output_language != "en":
+            self.llm_extractor.output_language = "en"
 
     @memory_profile_and_capture
     def test_establish_memory_baseline(self):
@@ -499,7 +465,6 @@ class TestAll(TestUtils):
             _JsonObjectConcept,
             _LabelConcept,
             _LLMPricing,
-            _RatingScale,
             _StringExample,
             _JsonObjectExample,
             _Image,
@@ -507,7 +472,6 @@ class TestAll(TestUtils):
             _Paragraph,
             _Sentence,
             _ExtractionPipeline,
-            _DocumentPipeline,
             _DocumentLLM,
             _DocumentLLMGroup,
             _JsonObjectClassStruct,
@@ -2517,10 +2481,8 @@ class TestAll(TestUtils):
         """
         paragraph = Paragraph(raw_text="Test paragraph")
         assert paragraph.raw_text
-        assert not paragraph._md_text  # markdown text is not populated from raw text
         document = Document(paragraphs=[paragraph])
         assert document.raw_text  # to be populated from paragraphs
-        assert not document._md_text  # markdown text is not populated from paragraphs
         with pytest.raises(ValueError):
             Paragraph()
         with pytest.raises(ValueError):
@@ -2563,9 +2525,6 @@ class TestAll(TestUtils):
         """
         sentence = Sentence(raw_text="Test sentence")
         assert sentence.raw_text
-        assert not hasattr(
-            sentence, "_md_text"
-        )  # markdown text does not apply to sentences
         Paragraph(raw_text=sentence.raw_text, sentences=[sentence])
         # Warning is logged if linebreaks occur in additional context
         with pytest.raises(ValueError):
@@ -3680,6 +3639,13 @@ class TestAll(TestUtils):
                 rating_scale=(1.5, 3),  # float element  # type: ignore
             )
 
+        with pytest.raises(ValueError):
+            RatingConcept(
+                name="Invalid Concept",
+                description="Test invalid concept",
+                rating_scale={"start": 1, "end": 5},  # not a tuple  # type: ignore
+            )
+
         # Test attaching extracted items
         rating_item = _IntegerItem(value=3)
         valid_rating_concept.extracted_items = [rating_item]
@@ -3722,14 +3688,6 @@ class TestAll(TestUtils):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(valid_rating_concept)
         self.check_instance_serialization_and_cloning(concept_with_refs)
-
-        # Test deprecated RatingScale
-        with pytest.warns(DeprecationWarning):
-            RatingConcept(
-                name="Invalid Concept",
-                description="Test invalid concept",
-                rating_scale=RatingScale(start=1, end=5),
-            )
 
         check_locals_memory_usage(
             locals(), test_name="test_init_and_validate_rating_concept"
@@ -5232,9 +5190,7 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_init_item")
 
-    @pytest.mark.parametrize(
-        "context", [document, extraction_pipeline, document_pipeline]
-    )
+    @pytest.mark.parametrize("context", [document, extraction_pipeline])
     @memory_profile_and_capture(max_memory=2500.0)  # for testing larger SaT models
     def test_init_document_and_extraction_pipeline(
         self, context: Document | ExtractionPipeline
@@ -5280,9 +5236,6 @@ class TestAll(TestUtils):
                 ],
             )
             assert document.raw_text  # to be populated from paragraphs
-            assert (
-                not document._md_text
-            )  # markdown text is not populated from paragraphs
             assert not any(
                 i.sentences for i in document.paragraphs
             )  # sentences not segmented yet since `pre_segment_sentences` is False (default)
@@ -6521,10 +6474,8 @@ class TestAll(TestUtils):
         "document",
         [
             document,
-            document_docx,
             document_ua,
             document_zh,
-            document_docx_ua,
         ],
     )
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
@@ -6746,7 +6697,7 @@ class TestAll(TestUtils):
     def test_multiple_fallback_llms(self):
         """
         Tests for configuring multiple fallback LLMs, which are tried in the given
-        order, and for the deprecated single ``fallback_llm`` param.
+        order.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -6837,77 +6788,16 @@ class TestAll(TestUtils):
 
         # Serialization
         primary_dict = primary.to_dict()
-        assert "fallback_llm" not in primary_dict
         assert len(primary_dict["fallback_llms"]) == len(fallbacks)
         self._check_deserialized_llm_config_eq(primary)
 
-        # === Deprecated `fallback_llm` param (will be removed in v1.0.0) ===
-        def deprecation_warning_filenames(
-            warning_records: pytest.WarningsRecorder,
-        ) -> set[str]:
-            """
-            Returns the names of the files that the deprecation warnings point to.
-            """
-            return {
-                i.filename for i in warning_records if i.category is DeprecationWarning
-            }
-
-        # The warnings must point to the calling code, to be shown by default
-        with pytest.warns(DeprecationWarning, match="fallback_llms") as warning_records:
-            llm_deprecated = create_llm("openai/gpt-4o-mini", fallback_llm=fallback_1)
-        assert deprecation_warning_filenames(warning_records) == {__file__}
-        assert llm_deprecated.fallback_llms == [fallback_1]
-        with pytest.warns(DeprecationWarning, match="fallback_llms") as warning_records:
-            assert llm_deprecated.fallback_llm is fallback_1
-        assert deprecation_warning_filenames(warning_records) == {__file__}
-        with pytest.warns(DeprecationWarning, match="fallback_llms") as warning_records:
-            llm_deprecated.fallback_llm = fallback_2
-        assert deprecation_warning_filenames(warning_records) == {__file__}
-        assert llm_deprecated.fallback_llms == [fallback_2]
-        with (
-            pytest.warns(DeprecationWarning),
-            pytest.raises(ValueError, match="is_fallback=True"),
-        ):
-            llm_deprecated.fallback_llm = create_llm("openai/gpt-4.1-nano")
-        assert llm_deprecated.fallback_llms == [fallback_2]  # no change
-        with pytest.warns(DeprecationWarning):
-            llm_deprecated.fallback_llm = None
-        assert llm_deprecated.fallback_llms == []
-        with pytest.warns(DeprecationWarning):
-            assert llm_deprecated.fallback_llm is None
-        with pytest.warns(DeprecationWarning):
-            assert (
-                create_llm("openai/gpt-4o-mini", fallback_llm=None).fallback_llms == []
-            )
-        with (
-            pytest.warns(DeprecationWarning),
-            pytest.raises(ValueError, match="cannot be set together"),
-        ):
-            create_llm(
-                "openai/gpt-4o-mini",
-                fallback_llm=fallback_1,
-                fallback_llms=[fallback_2],
-            )
-
-        # LLMs serialized with the deprecated single `fallback_llm` are restored
-        # without a deprecation warning
-        legacy_llm_dict = create_llm(
-            "openai/gpt-4o-mini", fallback_llms=[fallback_1]
-        ).to_dict()
-        legacy_fallback_llm_dict = legacy_llm_dict.pop("fallback_llms")[0]
-        del legacy_fallback_llm_dict["fallback_llms"]
-        legacy_fallback_llm_dict["fallback_llm"] = None
-        legacy_llm_dict["fallback_llm"] = legacy_fallback_llm_dict
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            llm_from_legacy_dict = DocumentLLM.from_dict(legacy_llm_dict)
-        assert not any("fallback_llm" in str(x.message) for x in w)
-        assert len(llm_from_legacy_dict.fallback_llms) == 1
-        assert fallback_1._eq_deserialized_llm_config(
-            llm_from_legacy_dict.fallback_llms[0]
-        )
-        legacy_llm_dict["fallback_llm"] = None
-        assert DocumentLLM.from_dict(legacy_llm_dict).fallback_llms == []
+        # A single `fallback_llm` is rejected, i.e. not silently ignored,
+        # both as a param and in the serialized data
+        with pytest.raises(ValueError, match="fallback_llm\n"):
+            create_llm("openai/gpt-4o-mini", fallback_llm=fallback_1)
+        primary_dict["fallback_llm"] = primary_dict.pop("fallback_llms")[0]
+        with pytest.raises(ValueError, match="fallback_llm\n"):
+            DocumentLLM.from_dict(primary_dict)
 
         # === Order of LLM calls ===
         called_models: list[str] = []
@@ -7390,10 +7280,8 @@ class TestAll(TestUtils):
         "document",
         [
             document,
-            document_docx,
             document_ua,
             document_zh,
-            document_docx_ua,
         ],
     )
     @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
@@ -7951,8 +7839,8 @@ class TestAll(TestUtils):
         """
 
         # ===Text + images===
-        self.document_multimodal_docx.remove_all_instances()
-        self.document_multimodal_docx.add_concepts(
+        self.document_multimodal.remove_all_instances()
+        self.document_multimodal.add_concepts(
             [
                 StringConcept(
                     name="Invoice number",
@@ -7975,11 +7863,11 @@ class TestAll(TestUtils):
             match="When extracting from images, references will not be added",
         ):
             # Document has both text and images - warns that refs will be added only for text
-            llm.extract_concepts_from_document(self.document_multimodal_docx)
-        concept_invoice_number = self.document_multimodal_docx.get_concept_by_name(
+            llm.extract_concepts_from_document(self.document_multimodal)
+        concept_invoice_number = self.document_multimodal.get_concept_by_name(
             "Invoice number"
         )
-        concept_invoice_date = self.document_multimodal_docx.get_concept_by_name(
+        concept_invoice_date = self.document_multimodal.get_concept_by_name(
             "Invoice date"
         )
         if llm is not self.llm_reasoner:
@@ -8002,7 +7890,7 @@ class TestAll(TestUtils):
 
         # Test together with aspects and other concepts routed to different LLMs
         if isinstance(llm, DocumentLLMGroup):
-            self.document_multimodal_docx.add_aspects(
+            self.document_multimodal.add_aspects(
                 [
                     Aspect(
                         name="Invoices",
@@ -8016,9 +7904,9 @@ class TestAll(TestUtils):
                     )
                 ]
             )
-            llm.extract_aspects_from_document(self.document_multimodal_docx)
-            assert self.document_multimodal_docx.aspects[0].extracted_items
-            self.document_multimodal_docx.add_concepts(
+            llm.extract_aspects_from_document(self.document_multimodal)
+            assert self.document_multimodal.aspects[0].extracted_items
+            self.document_multimodal.add_concepts(
                 [
                     StringConcept(
                         name="Document type",
@@ -8028,13 +7916,13 @@ class TestAll(TestUtils):
                     )
                 ]
             )
-            llm.extract_all(self.document_multimodal_docx, overwrite_existing=True)
-            document_type_concept = self.document_multimodal_docx.get_concept_by_name(
+            llm.extract_all(self.document_multimodal, overwrite_existing=True)
+            document_type_concept = self.document_multimodal.get_concept_by_name(
                 "Document type"
             )
             assert document_type_concept.extracted_items
             self.log_extracted_items_for_instance(document_type_concept)
-            assert self.document_multimodal_docx.aspects[0].concepts[0].extracted_items
+            assert self.document_multimodal.aspects[0].concepts[0].extracted_items
 
         # ===Text only===
         document = Document(raw_text=get_test_document_text())
@@ -8987,7 +8875,7 @@ class TestAll(TestUtils):
             chat_with_tools,  # noqa: F401
             cost_tracking,  # noqa: F401
             detailed_usage,  # noqa: F401
-            fallback_llm,  # noqa: F401
+            fallback_llms,  # noqa: F401
             llm_api,  # noqa: F401
             llm_group,  # noqa: F401
             llm_local,  # noqa: F401
@@ -9067,452 +8955,18 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(locals(), test_name="test_docstring_examples")
 
-    @pytest.mark.parametrize("apply_markdown", [True, False])
-    @pytest.mark.parametrize("strict_mode", [True, False])
-    @pytest.mark.parametrize(
-        "include_options",
-        [
-            "default",  # All options set to True
-            "minimal",  # All options set to False
-            "no_images",  # All options True except images
-        ],
-    )
-    @memory_profile_and_capture
-    def test_docx_converter(
-        self, apply_markdown: bool, strict_mode: bool, include_options: str
-    ):
-        """
-        Tests for the DocxConverter class, covering both convert() and convert_to_text_format() methods.
-
-        This test uses parametrization to test different combinations of:
-        - apply_markdown (True/False)
-        - strict_mode (True/False)
-        - include_options (default/minimal/no_images)
-
-        It checks conversion from file path, file object, and BytesIO for compatibility.
-        """
-
-        # Define inclusion parameters based on the option
-        include_params = {
-            "default": {
-                "include_tables": True,
-                "include_comments": True,
-                "include_footnotes": True,
-                "include_headers": True,
-                "include_footers": True,
-                "include_textboxes": True,
-                "include_links": True,
-                "include_inline_formatting": True,
-                "include_images": True,
-            },
-            "minimal": {
-                "include_tables": False,
-                "include_comments": False,
-                "include_footnotes": False,
-                "include_headers": False,
-                "include_footers": False,
-                "include_textboxes": False,
-                "include_links": False,
-                "include_inline_formatting": False,
-                "include_images": False,
-            },
-            "no_images": {
-                "include_tables": True,
-                "include_comments": True,
-                "include_footnotes": True,
-                "include_headers": True,
-                "include_footers": True,
-                "include_textboxes": True,
-                "include_links": True,
-                "include_inline_formatting": True,
-                "include_images": False,
-            },
-        }[include_options]
-
-        # Utility function to verify all _DocxPackage attributes are populated
-        def verify_docx_package_attributes(test_file_path_or_object):
-            """
-            Utility function to verify all _DocxPackage attributes are populated correctly.
-
-            :param test_file_path_or_object: File path or file object to create DocxPackage from.
-            :type test_file_path_or_object: str | Path | BinaryIO
-            """
-            package = _DocxPackage(test_file_path_or_object)
-            try:
-                # Verify all attributes that are present in test DOCX file are populated
-                assert package.archive is not None, "Archive must be populated"
-                assert package.rels != {}, "Relationships must be populated"
-                assert package.main_document is not None, (
-                    "Main document must be populated"
-                )
-                assert package.styles is not None, "Styles must be populated"
-                assert package.numbering is not None, "Numbering must be populated"
-                assert package.footnotes is not None, "Footnotes must be populated"
-                assert package.comments is not None, "Comments must be populated"
-                assert package.headers, "Headers must be populated"
-                assert package.footers, "Footers must be populated"
-                assert package.images, "Images must be populated"
-                assert package.hyperlinks, "Hyperlinks must be populated"
-
-                logger.debug("All _DocxPackage attributes successfully verified")
-            finally:
-                if package:
-                    package.close()
-
-        # Prepare file objects for different input methods
-        with open(self.test_docx_badly_formatted_path, "rb") as f:
-            file_bytes = f.read()
-
-        # Create a BytesIO object that can be reset
-        def create_bytesio():
-            """
-            Creates a BytesIO object from the test file bytes.
-
-            :return: BytesIO object containing the test file data.
-            :rtype: BytesIO
-            """
-            return BytesIO(file_bytes)
-
-        # Function to open the file
-        def open_file():
-            """
-            Opens the test DOCX file in binary read mode.
-
-            :return: File object opened in binary mode.
-            :rtype: BinaryIO
-            """
-            return open(self.test_docx_badly_formatted_path, "rb")
-
-        # Create converter instance
-        converter = DocxConverter()
-
-        # Test with invalid file extension
-        with pytest.raises(DocxConverterError):
-            converter.convert("random_path.txt")
-
-        # Helper function to verify Document objects
-        def verify_document_equality(documents: list[Document]) -> None:
-            """
-            Helper function to verify Document objects have expected properties that are
-            consistent across documents created from different input sources.
-
-            :param documents: List of Document objects to verify.
-            :type documents: list[Document]
-            """
-            # Check that all documents have the expected properties
-            for doc in documents:
-                assert isinstance(doc, Document)
-                assert doc.raw_text, "Document should have raw text"
-                if include_options == "default":  # when all content is included
-                    assert (
-                        doc.raw_text.strip()
-                        == self.test_badly_formatted_converted_raw_text
-                    ), "Raw text does not match"
-                if apply_markdown:
-                    assert doc._md_text, (
-                        "Document should have markdown text when markdown is enabled"
-                    )
-                    if include_options == "default":  # when all content is included
-                        assert (
-                            doc._md_text.strip()
-                            == self.test_badly_formatted_converted_md_text
-                        ), "Markdown text does not match"
-                    with pytest.raises(ValueError):
-                        doc._md_text = "Random md text"  # cannot be set once populated
-                else:
-                    assert doc._md_text is None, (
-                        "Document should not have markdown text when markdown is disabled"
-                    )
-                assert doc.paragraphs, "Document should have paragraphs"
-
-                # Verify that each sentence inherits additional_context from its paragraph
-                paragraphs_raw_text = ""
-                paragraphs_md_text = ""
-                for paragraph in doc.paragraphs:
-                    assert paragraph.raw_text, "Paragraph should have raw text"
-                    paragraphs_raw_text += paragraph.raw_text + "\n"
-                    if apply_markdown:
-                        assert paragraph._md_text, (
-                            "Paragraph should have markdown text when markdown is enabled"
-                        )
-                        paragraphs_md_text += paragraph._md_text + "\n"
-                        with pytest.raises(ValueError):
-                            paragraph._md_text = (
-                                "Random md text"  # cannot be set once populated
-                            )
-                    else:
-                        assert paragraph._md_text is None, (
-                            "Paragraph should not have markdown text when markdown is disabled"
-                        )
-                    assert paragraph.additional_context, (
-                        "Paragraph should have additional context"
-                    )
-                    paragraphs_raw_text += paragraph.additional_context + "\n\n"
-                    if apply_markdown:
-                        paragraphs_md_text += paragraph.additional_context + "\n\n"
-                    for sentence in paragraph.sentences:
-                        assert (
-                            sentence.additional_context == paragraph.additional_context
-                        ), (
-                            "Sentence additional_context should match its paragraph's additional_context"
-                        )
-                        assert sentence.custom_data == paragraph.custom_data, (
-                            "Sentence custom_data should match its paragraph's custom_data"
-                        )
-                if include_options == "default":  # when all content is included
-                    assert (
-                        paragraphs_raw_text.strip()
-                        == self.test_badly_formatted_converted_raw_paras_text
-                    ), "Raw paragraphs text does not match"
-                if apply_markdown:
-                    if include_options == "default":  # when all content is included
-                        assert (
-                            paragraphs_md_text.strip()
-                            == self.test_badly_formatted_converted_md_paras_text
-                        ), "Markdown paragraphs text does not match"
-                else:
-                    assert paragraphs_md_text == "", (
-                        "Markdown paragraphs text should be empty when markdown is disabled"
-                    )
-
-            # Check that all documents have the same content
-            first_doc = documents[0]
-            for i, doc in enumerate(documents[1:], 1):
-                # Compare full texts
-                assert doc.raw_text == first_doc.raw_text, (
-                    f"Document {i} has different raw text"
-                )
-                if apply_markdown:
-                    assert doc._md_text and doc._md_text == first_doc._md_text, (
-                        f"Document {i} has different markdown text"
-                    )
-                assert len(doc.paragraphs) == len(first_doc.paragraphs), (
-                    f"Document {i} has different paragraph count"
-                )
-                # Compare paragraphs
-                for p_idx, para in enumerate(doc.paragraphs):
-                    assert para.raw_text == first_doc.paragraphs[p_idx].raw_text, (
-                        f"Paragraph {p_idx} has different raw text"
-                    )
-                    if apply_markdown:
-                        assert (
-                            para._md_text
-                            and para._md_text == first_doc.paragraphs[p_idx]._md_text
-                        ), f"Paragraph {p_idx} has different markdown text"
-                    for sent_idx, sent in enumerate(para.sentences):
-                        assert (
-                            sent.raw_text
-                            == first_doc.paragraphs[p_idx].sentences[sent_idx].raw_text
-                        ), f"Sentence {sent_idx} has different raw text"
-                        # markdown does not apply to sentences
-
-                # Check images if they should be included
-                if include_params["include_images"]:
-                    assert len(doc.images) == len(first_doc.images), (
-                        f"Document {i} has different image count"
-                    )
-
-        # Test 1: Test convert() method with different input sources
-        documents = []
-
-        # Convert from file path
-        verify_docx_package_attributes(self.test_docx_badly_formatted_path)
-        doc_from_path = converter.convert(
-            self.test_docx_badly_formatted_path,
-            apply_markdown=apply_markdown,
-            strict_mode=strict_mode,
-            **include_params,
-        )
-        documents.append(doc_from_path)
-
-        # Convert from file object
-        with open_file() as file_obj:
-            verify_docx_package_attributes(file_obj)
-            doc_from_obj = converter.convert(
-                file_obj,
-                apply_markdown=apply_markdown,
-                strict_mode=strict_mode,
-                **include_params,
-            )
-        documents.append(doc_from_obj)
-
-        # Convert from BytesIO
-        bytesio = create_bytesio()
-        verify_docx_package_attributes(bytesio)
-        doc_from_bytesio = converter.convert(
-            bytesio,
-            apply_markdown=apply_markdown,
-            strict_mode=strict_mode,
-            **include_params,
-        )
-        documents.append(doc_from_bytesio)
-
-        # Verify all documents are equal content-wise
-        verify_document_equality(documents)
-
-        # Test 2: Test convert_to_text_format() method with different formats and input sources
-        for output_format in ["markdown", "raw"]:
-            text_results = []
-
-            # Text conversion params (exclude include_images as it's not applicable to markdown)
-            text_params = {
-                k: v for k, v in include_params.items() if k != "include_images"
-            }
-
-            # Convert from file path
-            text_from_path = converter.convert_to_text_format(
-                self.test_docx_badly_formatted_path,
-                output_format=output_format,  # type: ignore
-                strict_mode=strict_mode,
-                **text_params,
-            )
-            text_results.append(text_from_path)
-
-            # Convert from file object
-            with open_file() as file_obj:
-                text_from_obj = converter.convert_to_text_format(
-                    file_obj,
-                    output_format=output_format,  # type: ignore
-                    strict_mode=strict_mode,
-                    **text_params,
-                )
-            text_results.append(text_from_obj)
-
-            # Convert from BytesIO
-            bytesio = create_bytesio()
-            text_from_bytesio = converter.convert_to_text_format(
-                bytesio,
-                output_format=output_format,  # type: ignore
-                strict_mode=strict_mode,
-                **text_params,
-            )
-            text_results.append(text_from_bytesio)
-
-            # Verify all text results are equal
-            first_result = text_results[0]
-            for i, result in enumerate(text_results[1:], 1):
-                assert result == first_result, (
-                    f"Text result {i} is different for format {output_format}"
-                )
-
-            # Match with the converted Document text content (must be the same)
-            for text_result in text_results:
-                if not include_params["include_images"]:
-                    if output_format == "raw":
-                        assert all(text_result == doc.raw_text for doc in documents)
-                    if apply_markdown and output_format == "markdown":
-                        assert all(text_result == doc._md_text for doc in documents)
-
-        check_locals_memory_usage(locals(), test_name="test_docx_converter")
-
-    @memory_profile_and_capture
-    def test_docx_converter_include_params(self):
-        """
-        Test that disabling include parameters affects document text content.
-        """
-        converter = DocxConverter()
-
-        # Define all include parameters to test
-        # Note: include_images doesn't affect md or raw text content, so we skip it
-        include_params = [
-            "include_tables",
-            "include_comments",
-            "include_footnotes",
-            "include_headers",
-            "include_footers",
-            "include_textboxes",
-            "include_links",
-            "include_inline_formatting",
-        ]
-
-        params_not_affecting_raw_text = [
-            "include_links",
-            "include_inline_formatting",
-        ]
-
-        # Try with markdown and without markdown
-        for apply_markdown in [True, False]:
-            # Convert with all parameters True (baseline default)
-            baseline_doc = converter.convert(
-                self.test_docx_badly_formatted_path, apply_markdown=apply_markdown
-            )
-
-            # Test each parameter by setting it to False while others remain True
-            for param_name in include_params:
-                kwargs = {param: True for param in include_params}
-                kwargs[param_name] = False
-
-                test_doc = converter.convert(
-                    self.test_docx_badly_formatted_path,
-                    apply_markdown=apply_markdown,
-                    **kwargs,
-                )
-
-                # Assert that text content is different when parameter is disabled
-                if param_name not in params_not_affecting_raw_text:
-                    assert test_doc.raw_text != baseline_doc.raw_text, (
-                        f"raw_text should differ when {param_name}=False"
-                    )
-                    test_doc_raw_paras_merged = "".join(
-                        p.raw_text for p in test_doc.paragraphs
-                    )
-                    baseline_doc_raw_paras_merged = "".join(
-                        p.raw_text for p in baseline_doc.paragraphs
-                    )
-                    assert test_doc_raw_paras_merged != baseline_doc_raw_paras_merged, (
-                        f"Paragraphs' raw_text should differ when {param_name}=False"
-                    )
-                if apply_markdown:
-                    assert test_doc._md_text != baseline_doc._md_text, (
-                        f"md_text should differ when {param_name}=False"
-                    )
-                    test_doc_md_paras_merged = "".join(  # ty: ignore[no-matching-overload]
-                        p._md_text for p in test_doc.paragraphs
-                    )
-                    baseline_doc_md_paras_merged = "".join(  # ty: ignore[no-matching-overload]
-                        p._md_text for p in baseline_doc.paragraphs
-                    )
-                    assert test_doc_md_paras_merged != baseline_doc_md_paras_merged, (
-                        f"Paragraphs' md_text should differ when {param_name}=False"
-                    )
-
-        check_locals_memory_usage(
-            locals(), test_name="test_docx_converter_include_params"
-        )
-
     @pytest.mark.vcr
-    @pytest.mark.parametrize("apply_markdown", [True, False])
     @memory_profile_and_capture
-    def test_docx_converter_llm_extract(self, apply_markdown: bool):
+    def test_extract_with_additional_context(self):
         """
-        Tests for LLM extraction from DOCX files.
+        Tests for LLM extraction from a document with additional context for paragraphs.
         """
 
-        converter = DocxConverter()
+        doc = Document.from_disk(self.test_doc_with_additional_context_path)
+        assert all(paragraph.additional_context for paragraph in doc.paragraphs)
 
-        doc = converter.convert(
-            self.test_docx_badly_formatted_path, apply_markdown=apply_markdown
-        )
-        if apply_markdown:
-            assert doc._md_text, (
-                "Document should have markdown text when markdown is enabled"
-            )
-            for para in doc.paragraphs:
-                assert para._md_text, (
-                    "Paragraph should have markdown text when markdown is enabled"
-                )
-        else:
-            assert doc._md_text is None, (
-                "Document should not have markdown text when markdown is disabled"
-            )
-            for para in doc.paragraphs:
-                assert para._md_text is None, (
-                    "Paragraph should not have markdown text when markdown is disabled"
-                )
-
-        # Create a new LLM group with new usage stats for each test iteration,
-        # as we will supply markdown or raw text based on apply_markdown flag
-        # and we need to isolate such prompts for inspection.
+        # Create a new LLM group with new usage stats,
+        # as we need to isolate the prompts for inspection.
         # The LLM without a role extracts from text, while the concepts to be
         # extracted from images are routed to a separate LLM by the role.
         llm_group = DocumentLLMGroup(
@@ -9525,40 +8979,13 @@ class TestAll(TestUtils):
             ]
         )
 
-        md_test_chars = ["**", "|", "##"]
-
-        def check_is_markdown(text: str, expect_newlines: bool = False) -> None:
+        def check_additional_context_in_prompt(prompt_kwargs_key: str) -> None:
             """
-            Checks that the text contains markdown.
-            """
-            if expect_newlines:
-                assert any(i in text for i in md_test_chars + ["\n"])
-            else:
-                assert any(i in text for i in md_test_chars)
-
-        def check_not_markdown(text: str) -> None:
-            """
-            Checks that the text does not contain markdown.
-            """
-            assert not any(i in text for i in md_test_chars)
-
-        def check_markdown_in_prompt(
-            prompt_kwargs_key: str,
-            expect_newlines: bool = False,
-        ) -> None:
-            """
-            Validates that prompt content contains or excludes markdown formatting based on the apply_markdown flag.
-
-            This function inspects LLM call objects to verify that text content submitted in prompts
-            either contains markdown formatting (when apply_markdown=True) or excludes it (when
-            apply_markdown=False). It checks both the specific prompt parameter content and the
-            full rendered prompt.
+            Validates that the additional context is included in the prompts that list
+            paragraphs, and is not included in the prompts with the text as a whole.
 
             :param prompt_kwargs_key: The key in prompt_kwargs to check ('text' or 'paragraphs')
             :type prompt_kwargs_key: str
-            :param expect_newlines: Whether to expect newlines in addition to markdown characters
-            :type expect_newlines: bool
-            :raises ValueError: If an invalid prompt_kwargs_key is provided
             """
             # Only check text extraction calls, made by the LLM without a role
             call_objs = next(
@@ -9579,105 +9006,24 @@ class TestAll(TestUtils):
             # i.e. submitting text fragments for extraction in the same pipeline.
             # We need to check each call separately.
             for text_call_obj in text_call_objs:
-                # Check for markdown flag in prompt kwargs
-                if apply_markdown:
-                    assert "is_markdown" in text_call_obj.prompt_kwargs
-                    assert text_call_obj.prompt_kwargs["is_markdown"]
-                    if (
-                        text_call_obj.prompt_kwargs.get("reference_depth")
-                        != "sentences"
-                    ):
-                        # md is not available for sentences
-                        assert "markdown format" in text_call_obj.prompt
-                    if text_call_obj.prompt_kwargs.get("paragraphs"):
-                        assert (
-                            "additional_context_for_paras_or_sents"
-                            in text_call_obj.prompt_kwargs
-                        )
-                        assert text_call_obj.prompt_kwargs[
-                            "additional_context_for_paras_or_sents"
-                        ]
-                        assert "additional context information" in text_call_obj.prompt
-                else:
-                    assert "is_markdown" not in text_call_obj.prompt_kwargs
-                    assert "markdown format" not in text_call_obj.prompt
-                    if text_call_obj.prompt_kwargs.get("paragraphs"):
-                        # Additional context is still provided even when markdown is disabled
-                        assert (
-                            "additional_context_for_paras_or_sents"
-                            in text_call_obj.prompt_kwargs
-                        )
-                        assert text_call_obj.prompt_kwargs[
-                            "additional_context_for_paras_or_sents"
-                        ]
-                        assert "additional context information" in text_call_obj.prompt
-
-                # Check the text of specific param in the prompt
-                if prompt_kwargs_key == "text":
-                    submitted_text_in_prompt = text_call_obj.prompt_kwargs[
-                        prompt_kwargs_key
-                    ]
-                elif prompt_kwargs_key == "paragraphs":
-                    if apply_markdown:
-                        p_md_texts = [
-                            p._md_text
-                            for p in text_call_obj.prompt_kwargs[prompt_kwargs_key]
-                        ]
-                        # Check that some paragraphs have non-stripped markdown text,
-                        # e.g. to keep indentation in lists
-                        assert any(t != t.strip() for t in p_md_texts), (
-                            "Expected some paragraphs to have non-stripped markdown text"
-                        )
-                        submitted_text_in_prompt = "".join(p_md_texts)
-                    else:
-                        submitted_text_in_prompt = "".join(
-                            [
-                                p.raw_text
-                                for p in text_call_obj.prompt_kwargs[prompt_kwargs_key]
-                            ]
-                        )
-                else:
-                    raise ValueError(f"Invalid prompt_kwargs_key: {prompt_kwargs_key}")
-                if apply_markdown:
-                    check_is_markdown(
-                        submitted_text_in_prompt,
-                        expect_newlines=expect_newlines,
-                    )
-                else:
-                    check_not_markdown(
-                        submitted_text_in_prompt,
-                    )
-                # Separately check for paragraph sentences (raw text only)
                 if prompt_kwargs_key == "paragraphs":
-                    for paragraph in text_call_obj.prompt_kwargs[prompt_kwargs_key]:
-                        for sentence in paragraph.sentences:
-                            check_not_markdown(sentence.raw_text)
-
-                # Check the full rendered prompt
-                submitted_prompt = text_call_obj.prompt
-                if apply_markdown:
-                    if text_call_obj.prompt_kwargs["reference_depth"] == "sentences":
-                        # Only sentences with raw text are passed to the prompt
-                        check_not_markdown(
-                            submitted_prompt,
-                        )
-                        # No markdown instructions in the prompt, as only sentences
-                        # with raw text are passed as context
-                        assert "markdown syntax" not in submitted_prompt.lower()
-                    else:
-                        check_is_markdown(
-                            submitted_prompt,
-                            expect_newlines=True,
-                        )
-                        # Check for markdown instructions in the prompt
-                        assert "markdown syntax" in submitted_prompt.lower()
-                else:
-                    check_not_markdown(
-                        submitted_prompt,
+                    assert text_call_obj.prompt_kwargs.get(
+                        "additional_context_for_paras_or_sents"
                     )
+                    assert "additional context information" in text_call_obj.prompt
+                    assert all(
+                        paragraph.additional_context in text_call_obj.prompt
+                        for paragraph in text_call_obj.prompt_kwargs["paragraphs"]
+                    )
+                else:
+                    assert (
+                        "additional_context_for_paras_or_sents"
+                        not in text_call_obj.prompt_kwargs
+                    )
+                    assert "<additional_context>" not in text_call_obj.prompt
 
         # Test concept extraction
-        doc_concepts = [
+        doc.concepts = [
             NumericalConcept(
                 name="Hidden gems count",
                 description="Number of hidden gems in the document",
@@ -9690,16 +9036,8 @@ class TestAll(TestUtils):
                 modality="image",
             ),
         ]
-        if apply_markdown:
-            doc_concepts.append(
-                StringConcept(
-                    name="Links in the document",
-                    description="URLs mentioned in the document",
-                )
-            )
-        doc.concepts = doc_concepts
 
-        # Test extraction from full text (markdown)
+        # Test extraction from full text
         extracted_concepts = llm_group.extract_concepts_from_document(doc)
         assert extracted_concepts[0].extracted_items
         logger.debug(extracted_concepts[0].extracted_items[0].value)
@@ -9707,21 +9045,14 @@ class TestAll(TestUtils):
         assert extracted_concepts[1].extracted_items
         logger.debug(extracted_concepts[1].extracted_items[0].value)
         assert "4800" in extracted_concepts[1].extracted_items[0].value
-        if apply_markdown:
-            assert extracted_concepts[2].extracted_items
-            logger.debug(extracted_concepts[2].extracted_items[0].value)
-            assert "example" in extracted_concepts[2].extracted_items[0].value
-        # Check the full text for markdown content
-        check_markdown_in_prompt(prompt_kwargs_key="text", expect_newlines=True)
+        check_additional_context_in_prompt(prompt_kwargs_key="text")
 
         # Test extraction with max paragraphs
-        # (paragraphs' _md_text and raw_text are used based on apply_markdown flag)
         extracted_concepts = llm_group.extract_concepts_from_document(
             doc, max_paragraphs_to_analyze_per_call=25, overwrite_existing=True
         )
         assert extracted_concepts[0].extracted_items
-        # Check the chunked text for markdown content
-        check_markdown_in_prompt(prompt_kwargs_key="text", expect_newlines=True)
+        check_additional_context_in_prompt(prompt_kwargs_key="text")
 
         # Test aspect extraction
 
@@ -9741,8 +9072,7 @@ class TestAll(TestUtils):
             for p in extracted_aspects[0].reference_paragraphs
         ]
         assert aspect_ref_para_indices == sorted(aspect_ref_para_indices)
-        # Check the paragraphs' texts for markdown content
-        check_markdown_in_prompt(prompt_kwargs_key="paragraphs", expect_newlines=False)
+        check_additional_context_in_prompt(prompt_kwargs_key="paragraphs")
 
         # Test with sentence-level refs
         doc.aspects = [
@@ -9760,15 +9090,15 @@ class TestAll(TestUtils):
             doc.get_sentence_index(s) for s in extracted_aspects[0].reference_sentences
         ]
         assert aspect_ref_sent_positions == sorted(aspect_ref_sent_positions)
-        # Check the paragraphs' texts for markdown content
-        # Markdown does not apply to sentences that are passed to the aspects
-        # extraction prompt when reference_depth="sentences"
-        check_markdown_in_prompt(
-            prompt_kwargs_key="paragraphs",
-            expect_newlines=False,
+        # Each sentence inherits the additional context of its paragraph
+        assert all(
+            sentence.additional_context == paragraph.additional_context
+            for paragraph in doc.paragraphs
+            for sentence in paragraph.sentences
         )
+        check_additional_context_in_prompt(prompt_kwargs_key="paragraphs")
 
-        # Test serialization and cloning after DOCX conversion and LLM extraction
+        # Test serialization and cloning after LLM extraction
         self.check_instance_serialization_and_cloning(doc)
         for aspect in doc.aspects:
             self.check_instance_serialization_and_cloning(aspect)
@@ -9783,138 +9113,8 @@ class TestAll(TestUtils):
         for image in doc.images:
             self.check_instance_serialization_and_cloning(image)
 
-        check_locals_memory_usage(locals(), test_name="test_docx_converter_llm_extract")
-
-    @memory_profile_and_capture
-    def test_docx_package_error_handling(self):
-        """
-        Tests for error handling in _DocxPackage initialization and XML loading.
-        """
-
-        # Test with invalid file path
-        with pytest.raises(DocxFormatError, match="not found"):
-            _DocxPackage("non_existent_file.docx")
-
-        try:
-            # Test with file that's not a zip
-            with open("tests/temp_not_a_docx.txt", "w") as f:
-                f.write("This is not a DOCX file")
-            with pytest.raises(DocxFormatError, match="not a valid"):
-                _DocxPackage("tests/temp_not_a_docx.txt")
-
-            # Test with file that's a zip but not a valid docx
-            with zipfile.ZipFile("tests/temp_invalid.docx", "w") as zip_file:
-                zip_file.writestr("dummy.txt", "This is not a valid DOCX structure")
-
-            with pytest.raises(DocxFormatError, match="missing word/document.xml"):
-                _DocxPackage("tests/temp_invalid.docx")
-
-        finally:
-            # Clean up
-            remove_file("tests/temp_not_a_docx.txt")
-            remove_file("tests/temp_invalid.docx")
-
-    @memory_profile_and_capture
-    def test_docx_converter_extract_paragraph_text(self):
-        """
-        Tests for paragraph text extraction from DOCX elements.
-        """
-
-        converter = DocxConverter()
-
-        # Create sample XML elements for testing using lxml
-        def create_text_element(text_content: str):
-            """
-            Creates a Word XML text element with the given content.
-
-            :param text_content: Text content to include in the element.
-            :type text_content: str
-            :return: XML element representing Word text.
-            :rtype: Element
-            """
-            element = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}t")
-            element.text = text_content
-            return element
-
-        def create_run_with_text(text_content: str):
-            """
-            Creates a Word XML run element containing a text element.
-
-            :param text_content: Text content for the run.
-            :type text_content: str
-            :return: XML element representing a Word run with text.
-            :rtype: Element
-            """
-            run = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
-            text_elem = create_text_element(text_content)
-            run.append(text_elem)
-            return run
-
-        def create_paragraph_with_runs(runs):
-            """
-            Creates a Word XML paragraph element containing the given runs.
-
-            :param runs: List of run elements to include in the paragraph.
-            :type runs: list[Element]
-            :return: XML element representing a Word paragraph.
-            :rtype: Element
-            """
-            para = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
-            for run in runs:
-                para.append(run)
-            return para
-
-        # Create a minimal mock package
-        class MockPackage:
-            def __init__(self):
-                self.styles = None
-                self.numbering = None
-
-        package = MockPackage()
-
-        # Basic paragraph with multiple runs
-        runs = [
-            create_run_with_text("First part. "),
-            create_run_with_text("Second part."),
-        ]
-        para = create_paragraph_with_runs(runs)
-        text = converter._extract_paragraph_text(para, package)  # type: ignore
-        assert text == "First part. Second part."
-
-        # Paragraph with line breaks
-        br_run = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
-        br_run.append(etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}br"))
-        runs_with_br = [
-            create_run_with_text("Before break"),
-            br_run,
-            create_run_with_text("After break"),
-        ]
-        para = create_paragraph_with_runs(runs_with_br)
-        text = converter._extract_paragraph_text(para, package)  # type: ignore
-        assert text == "Before break\nAfter break"
-
-        # Paragraph with footnote reference
-        run_with_footnote = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}r")
-        footnote_ref = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}footnoteReference")
-        footnote_ref.attrib[f"{{{WORD_XML_NAMESPACES['w']}}}id"] = "1"
-        run_with_footnote.append(footnote_ref)
-        para = create_paragraph_with_runs(
-            [create_run_with_text("Text with footnote "), run_with_footnote]
-        )
-        text = converter._extract_paragraph_text(para, package, markdown_mode=True)  # type: ignore
-        assert text == "Text with footnote [Footnote 1]"
-        text = converter._extract_paragraph_text(para, package, markdown_mode=False)  # type: ignore
-        assert text == "Text with footnote 1"
-
-        # Empty paragraph
-        # Create a paragraph element that will result in empty text
-        empty_para = etree.Element(f"{{{WORD_XML_NAMESPACES['w']}}}p")
-
-        result = converter._process_paragraph(empty_para, package)  # type: ignore
-        assert result is None
-
         check_locals_memory_usage(
-            locals(), test_name="test_docx_converter_extract_paragraph_text"
+            locals(), test_name="test_extract_with_additional_context"
         )
 
     @pytest.mark.vcr

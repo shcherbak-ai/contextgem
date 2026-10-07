@@ -22,7 +22,6 @@ Module defining the base classes for concept subclasses.
 
 from __future__ import annotations
 
-import warnings
 from abc import abstractmethod
 from datetime import date, datetime
 from types import UnionType
@@ -40,7 +39,6 @@ from pydantic import (
 from typing_extensions import Self
 
 from contextgem.internal.base.attrs import _ExtractedItemsAttributeProcessor
-from contextgem.internal.base.data_models import _RatingScale
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.decorators import (
@@ -341,12 +339,9 @@ class _RatingConcept(_Concept):
     Internal implementation of the RatingConcept class.
     """
 
-    rating_scale: _RatingScale | tuple[StrictInt, StrictInt] = Field(
+    rating_scale: tuple[StrictInt, StrictInt] = Field(
         ...,
-        description=(
-            "Rating scale boundaries. Prefer a tuple of (start, end) integers; "
-            "'RatingScale' is deprecated and will be removed in v1.0.0."
-        ),
+        description="Rating scale boundaries as a tuple of (start, end) integers.",
     )
 
     _extracted_items: list[_IntegerItem] = PrivateAttr(default_factory=list)
@@ -355,47 +350,27 @@ class _RatingConcept(_Concept):
     @classmethod
     def _validate_rating_scale(
         cls,
-        value: _RatingScale | tuple[int, int],
-    ) -> _RatingScale | tuple[int, int]:
+        value: tuple[int, int],
+    ) -> tuple[int, int]:
         """
-        Validates the rating scale and issues deprecation warning for _RatingScale.
+        Validates the rating scale.
 
         :param value: The rating scale value to validate.
-        :type value: _RatingScale | tuple[int, int]
+        :type value: tuple[int, int]
         :return: The validated rating scale.
-        :rtype: _RatingScale | tuple[int, int]
+        :rtype: tuple[int, int]
         :raises ValueError: If the rating scale is invalid.
         """
-        if isinstance(value, _RatingScale):
-            warnings.warn(
-                "RatingScale is deprecated and will be removed in v1.0.0. "
-                "Use a tuple of (start, end) integers instead, e.g. (1, 5) "
-                "instead of RatingScale(start=1, end=5).",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return value
-        elif isinstance(value, tuple):
-            if len(value) != 2:
-                raise ValueError(
-                    "Rating scale tuple must contain exactly 2 elements: (start, end)"
-                )
-            start, end = value
-            if not isinstance(start, int) or not isinstance(end, int):
-                raise ValueError("Rating scale tuple elements must be integers")
-            if start < 0:
-                raise ValueError("Rating scale start value must be >= 0")
-            if end <= 0:
-                raise ValueError("Rating scale end value must be > 0")
-            if end <= start:
-                raise ValueError(
-                    f"Rating scale end value ({end}) must be greater than start value ({start})"
-                )
-            return value
-        else:
+        start, end = value
+        if start < 0:
+            raise ValueError("Rating scale start value must be >= 0")
+        if end <= 0:
+            raise ValueError("Rating scale end value must be > 0")
+        if end <= start:
             raise ValueError(
-                "Rating scale must be either a RatingScale object or a tuple of (start, end) integers"
+                f"Rating scale end value ({end}) must be greater than start value ({start})"
             )
+        return value
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -422,8 +397,6 @@ class _RatingConcept(_Concept):
         """
         Gets the start value of the rating scale.
         """
-        if isinstance(self.rating_scale, _RatingScale):
-            return self.rating_scale.start
         return self.rating_scale[0]
 
     @property
@@ -431,8 +404,6 @@ class _RatingConcept(_Concept):
         """
         Gets the end value of the rating scale.
         """
-        if isinstance(self.rating_scale, _RatingScale):
-            return self.rating_scale.end
         return self.rating_scale[1]
 
     @property

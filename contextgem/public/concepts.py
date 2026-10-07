@@ -213,9 +213,9 @@ class RatingConcept(_RatingConcept):
     :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
-    :ivar rating_scale: The rating scale defining valid value boundaries. Can be either a RatingScale
-        object (deprecated, will be removed in v1.0.0) or a tuple of (start, end) integers.
-    :vartype rating_scale: RatingScale | tuple[int, int]
+    :ivar rating_scale: The rating scale defining valid value boundaries, as a tuple of
+        (start, end) integers.
+    :vartype rating_scale: tuple[int, int]
     :ivar llm_role: The role label of the LLM that extracts the concept when
         a ``DocumentLLMGroup`` is used: the concept is routed to the LLM in the group
         with the same ``role``. Defaults to None, which routes the concept to the LLM

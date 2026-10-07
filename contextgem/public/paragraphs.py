@@ -47,11 +47,19 @@ class Paragraph(_Paragraph):
     :ivar sentences: The individual sentences contained within the paragraph. Defaults to an empty list.
         Cannot be reassigned once populated.
     :vartype sentences: list[Sentence]
+    :ivar additional_context: Optional supplementary information about the paragraph, as a
+        single-line string, e.g. its structural role, formatting, or position in the document
+        ("Heading, level 2" or "Table: Fees, row 2, column 3"). It is passed to the LLM
+        together with the paragraph text in the prompts that list paragraphs, i.e. when
+        aspects are extracted, or when concepts are extracted with references. Sentences
+        segmented from the paragraph inherit it. Defaults to None.
+    :vartype additional_context: str | None
 
     Note:
         Normally, you do not need to construct paragraphs manually, as they are populated automatically
         from document's ``raw_text`` attribute. Only use this constructor for advanced use cases,
-        such as when you have a custom paragraph segmentation tool.
+        such as when you have a custom paragraph segmentation tool, or when you want to provide
+        additional context for the paragraphs.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/paragraphs/def_paragraph.py

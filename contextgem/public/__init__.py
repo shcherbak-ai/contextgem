@@ -26,15 +26,14 @@ from contextgem.public.concepts import (
     RatingConcept,
     StringConcept,
 )
-from contextgem.public.converters import DocxConverter
-from contextgem.public.data_models import LLMPricing, RatingScale
+from contextgem.public.data_models import LLMPricing
 from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.images import Image
 from contextgem.public.llms import ChatSession, DocumentLLM, DocumentLLMGroup
 from contextgem.public.paragraphs import Paragraph
-from contextgem.public.pipelines import DocumentPipeline, ExtractionPipeline
+from contextgem.public.pipelines import ExtractionPipeline
 from contextgem.public.sentences import Sentence
 from contextgem.public.utils import (
     JsonObjectClassStruct,
@@ -59,7 +58,6 @@ __all__ = (
     "Document",
     # Pipelines
     "ExtractionPipeline",
-    "DocumentPipeline",  # deprecated, will be removed in v1.0.0
     # Paragraphs
     "Paragraph",
     # Sentences
@@ -75,14 +73,11 @@ __all__ = (
     "ChatSession",
     # Data models
     "LLMPricing",
-    "RatingScale",  # deprecated, will be removed in v1.0.0
     # Utils
     "create_image",
     "image_to_base64",
     "reload_logger_settings",
     "JsonObjectClassStruct",
-    # Converters
-    "DocxConverter",
     # Decorators
     "register_tool",
 )

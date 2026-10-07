@@ -96,8 +96,6 @@ DefaultDecimalField = Field(
 
 ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 
-TextMode = Literal["raw", "markdown"]
-
 MessageRole = Literal["system", "user", "assistant", "tool"]
 
 # JSON-serializable types

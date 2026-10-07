@@ -40,7 +40,6 @@ from contextgem.internal.typings.types import (
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
-    TextMode,
     ToolHandler,
     ToolRegistration,
 )
@@ -80,7 +79,6 @@ __all__ = (
     "AsyncCalsAndKwargs",
     "DefaultDecimalField",
     "ReasoningEffort",
-    "TextMode",
     "MessageRole",
     "JSONDict",
     "JSONDictField",

@@ -53,7 +53,7 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
    * - ``paragraphs``
      - ``list[Paragraph]``
      - ``[]``
-     - List of :class:`~contextgem.public.paragraphs.Paragraph` instances in consecutive order as they appear in the document. Normally auto-populated from ``raw_text``.
+     - List of :class:`~contextgem.public.paragraphs.Paragraph` instances in consecutive order as they appear in the document. Normally auto-populated from ``raw_text``. See :ref:`paragraph-additional-context` for providing your own paragraphs with additional context.
    * - ``images``
      - ``list[Image]``
      - ``[]``
@@ -93,6 +93,25 @@ For detailed guidance on creating and configuring these components, see:
 
 - :doc:`../aspects/aspects` - Complete guide to defining and using aspects
 - :doc:`../concepts/supported_concepts` - All available concept types and how to use them
+
+
+.. _paragraph-additional-context:
+
+🧩 Providing Additional Context for Paragraphs
+-----------------------------------------------
+
+When you create the paragraphs yourself, e.g. from the structured output of a document conversion tool, you can describe each paragraph in its ``additional_context``: its structural role, formatting, or position in the document. This lets the LLM take the structure of the document into account, while the text of the paragraphs, which is returned in references, stays clean:
+
+.. literalinclude:: ../../../dev/usage_examples/docstrings/paragraphs/def_paragraph.py
+   :language: python
+   :caption: Paragraphs with additional context
+
+Pass such paragraphs to the document via ``paragraphs``. The additional context:
+
+- must be a single-line string;
+- is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
+- is inherited by the sentences segmented from the paragraph, and is passed to the LLM with each sentence when sentence-level references are used (``reference_depth="sentences"``);
+- is preserved when the document is serialized.
 
 
 .. _locating-paras-and-sents:

@@ -52,7 +52,6 @@ from contextgem.internal.typings.types import (
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
-    TextMode,
 )
 
 
@@ -303,8 +302,6 @@ def _clean_text_for_llm_prompt(
         # Remove all whitespace sequences with a single space
         cleaned = _RE_ANY_WHITESPACE.sub(" ", cleaned)
 
-    # We may want to preserve leading/trailing whitespace for markdown representation
-    # of paragraphs, e.g. for indentation in lists.
     return cleaned.strip() if strip_text else cleaned
 
 
@@ -932,26 +929,20 @@ def _is_json_serializable(data: Any) -> bool:
 
 
 def _check_paragraphs_match_in_text(
-    paragraphs: list[_Paragraph], document_text: str, text_mode: TextMode
+    paragraphs: list[_Paragraph], document_text: str
 ) -> list[_Paragraph]:
     """
-    Check that all relevant paragraph texts exist in the given document text.
+    Check that all paragraph texts exist in the given document text.
 
     :param paragraphs: List of paragraph objects to check
     :param document_text: The document text to search in
-    :param text_mode: Type of text being checked ('raw' or 'markdown')
     :return: List of unmatched paragraphs
     """
-    if text_mode == "raw":
-        return [p for p in paragraphs if p.raw_text not in document_text]
-    elif text_mode == "markdown":
-        return [p for p in paragraphs if p._md_text and p._md_text not in document_text]
-    else:
-        raise ValueError(f"Unknown text_mode: {text_mode}")
+    return [p for p in paragraphs if p.raw_text not in document_text]
 
 
 def _check_paragraphs_ordering_in_text(
-    paragraphs: list[_Paragraph], document_text: str, text_mode: TextMode
+    paragraphs: list[_Paragraph], document_text: str
 ) -> None:
     """
     Check that paragraphs are ordered according to their appearance in document text.
@@ -959,7 +950,6 @@ def _check_paragraphs_ordering_in_text(
 
     :param paragraphs: List of paragraph objects to check ordering for
     :param document_text: The document text to check ordering in
-    :param text_mode: Type of text being checked ('raw' or 'markdown')
     :raises ValueError: If paragraphs are not ordered correctly
     """
     if len(paragraphs) <= 1:
@@ -967,17 +957,8 @@ def _check_paragraphs_ordering_in_text(
 
     current_search_pos = 0
     for i in range(len(paragraphs) - 1):
-        current_para_text = (
-            paragraphs[i].raw_text if text_mode == "raw" else paragraphs[i]._md_text
-        )
-        next_para_text = (
-            paragraphs[i + 1].raw_text
-            if text_mode == "raw"
-            else paragraphs[i + 1]._md_text
-        )
-
-        if not current_para_text or not next_para_text:
-            continue
+        current_para_text = paragraphs[i].raw_text
+        next_para_text = paragraphs[i + 1].raw_text
 
         # Find current paragraph starting from the current search position
         current_pos = document_text.find(current_para_text, current_search_pos)
@@ -995,6 +976,6 @@ def _check_paragraphs_ordering_in_text(
             next_pos = document_text.find(next_para_text)
             if next_pos < current_search_pos:
                 raise ValueError(
-                    f"Paragraphs are not ordered according to their appearance "
-                    f"in the document's {text_mode} text."
+                    "Paragraphs are not ordered according to their appearance "
+                    "in the document's raw text."
                 )

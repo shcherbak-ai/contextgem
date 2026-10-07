@@ -64,9 +64,6 @@ KEY_SENTENCES_PUBLIC = "sentences"
 KEY_API_KEY_PUBLIC = "api_key"  # always redacted
 KEY_API_BASE_PUBLIC = "api_base"  # always redacted
 KEY_LLM_FALLBACKS_PUBLIC = "fallback_llms"
-# Deprecated single fallback LLM, superseded by `fallback_llms`. No longer serialized;
-# read only to restore LLMs serialized before v0.28.0.
-KEY_LLM_FALLBACK_LEGACY_PUBLIC = "fallback_llm"
 KEY_LLM_PRICING_PUBLIC = "pricing_details"
 KEY_LLMS_PUBLIC = "llms"
 
@@ -77,7 +74,6 @@ KEY_REFERENCE_PARAGRAPHS_PRIVATE = "_reference_paragraphs"
 KEY_REFERENCE_SENTENCES_PRIVATE = "_reference_sentences"
 KEY_IS_PROCESSED_PRIVATE = "_is_processed"
 KEY_NESTING_LEVEL_PRIVATE = "_nesting_level"
-KEY_MD_TEXT_PRIVATE = "_md_text"
 KEY_CLASS_PRIVATE = "__class__"
 # LLM attrs
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
@@ -163,14 +159,8 @@ class _InstanceSerializer(BaseModel):
                 base_dict[key] = self._serialize_structure_dict(val)
 
             elif key == KEY_RATING_SCALE_PUBLIC:
-                # Handle both RatingScale (deprecated, will be removed in v1.0.0)
-                # objects and tuples
-                if hasattr(val, "to_dict"):
-                    # It's a RatingScale (deprecated, will be removed in v1.0.0) object
-                    base_dict[key] = val.to_dict()
-                else:
-                    # It's a tuple, convert to list for JSON serialization
-                    base_dict[key] = list(val)
+                # Convert the tuple to a list for JSON serialization
+                base_dict[key] = list(val)
 
             elif key == KEY_LLM_PRICING_PUBLIC:
                 # Serialize only when provided
@@ -196,7 +186,6 @@ class _InstanceSerializer(BaseModel):
                 KEY_UNIQUE_ID_PRIVATE,
                 KEY_IS_PROCESSED_PRIVATE,
                 KEY_NESTING_LEVEL_PRIVATE,
-                KEY_MD_TEXT_PRIVATE,
                 KEY_LLM_SUPPORTS_VISION_PRIVATE,
                 KEY_LLM_SUPPORTS_REASONING_PRIVATE,
                 KEY_LLM_SUPPORTS_TOOLS_PRIVATE,
@@ -386,7 +375,7 @@ class _InstanceSerializer(BaseModel):
         :rtype: Self
         """
 
-        from contextgem.internal.base.data_models import _LLMPricing, _RatingScale
+        from contextgem.internal.base.data_models import _LLMPricing
         from contextgem.internal.data_models import _LLMUsage
 
         # Create a copy of the object dict due to further modification
@@ -396,12 +385,6 @@ class _InstanceSerializer(BaseModel):
         del obj_dict[KEY_CLASS_PRIVATE]
         if object_class_name != cls.__name__:
             raise TypeError(f"Class {object_class_name} does not match {cls.__name__}")
-
-        # Migrate the deprecated single fallback LLM to the list of fallback LLMs
-        if KEY_LLM_FALLBACK_LEGACY_PUBLIC in obj_dict:
-            legacy_fallback_llm = obj_dict.pop(KEY_LLM_FALLBACK_LEGACY_PUBLIC)
-            if legacy_fallback_llm is not None:
-                obj_dict[KEY_LLM_FALLBACKS_PUBLIC] = [legacy_fallback_llm]
 
         def reconstruct_entity_from_dict(
             entity_d: dict[str, Any],
@@ -491,11 +474,7 @@ class _InstanceSerializer(BaseModel):
                 # JsonObjectConcept structure is always converted to a dict
                 _deserialize_structure_dict(val)
             ),
-            KEY_RATING_SCALE_PUBLIC: lambda val: (
-                _resolve_public_type(_RatingScale).from_dict(val)
-                if isinstance(val, dict)
-                else tuple(val)
-            ),
+            KEY_RATING_SCALE_PUBLIC: lambda val: tuple(val),
             # LLM attrs
             KEY_LLM_PRICING_PUBLIC: lambda val: (
                 _resolve_public_type(_LLMPricing).from_dict(val)
@@ -546,27 +525,7 @@ class _InstanceSerializer(BaseModel):
             else:
                 setattr(new_instance, priv_k, priv_v)
 
-        # Re-run any validation that depends on private state restored above
-        # (and therefore could not run during construction from public fields).
-        new_instance._revalidate_after_deserialization()
-
         return new_instance
-
-    def _revalidate_after_deserialization(self) -> None:
-        """
-        Hook to re-run validation that depends on private attributes restored
-        after construction during :meth:`from_dict`.
-
-        Model validators run when the instance is constructed from its public
-        fields, before private attributes are restored, so any invariant gated
-        on private state is skipped at that point. Subclasses override this to
-        re-validate once the full state is in place. The base implementation is
-        a no-op.
-
-        :return: None
-        :rtype: None
-        """
-        return None
 
     @classmethod
     def _convert_llm_cost_dict(cls, cost_dict: dict[str, Any]) -> _LLMCost:
