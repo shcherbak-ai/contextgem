@@ -50,7 +50,7 @@ doc.add_aspects([doc_aspect])
 
 # Create an LLM for extraction
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",  # or any other LLM from e.g. Anthropic, etc.
+    model="openai/gpt-6-luna",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),  # your API key
 )
 

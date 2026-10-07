@@ -23,10 +23,7 @@ Supported LLMs
 
 ContextGem supports all LLM providers and models available through the LiteLLM integration. This means you can use models from major cloud providers like OpenAI, Anthropic, Google, Azure, and xAI, as well as run local models through providers like Ollama and LM Studio.
 
-ContextGem works with both types of LLM architectures:
-
-* Reasoning/CoT-capable models (e.g., ``openai/o4-mini``, ``ollama_chat/deepseek-r1:32b``)
-* Non-reasoning models (e.g., ``openai/gpt-4.1``, ``ollama_chat/llama3.3:70b``)
+Both models that support reasoning (chain of thought) and models that do not are supported.
 
 For a complete list of supported providers, see the `LiteLLM Providers documentation <https://docs.litellm.ai/docs/providers>`_.
 

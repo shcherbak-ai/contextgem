@@ -16,11 +16,11 @@ document = Document(
 
 # Define LLM with a fallback model
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     fallback_llms=[
         DocumentLLM(
-            model="openai/gpt-3.5-turbo",
+            model="openai/gpt-5.6-luna",
             api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
             is_fallback=True,
         ),

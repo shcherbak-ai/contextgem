@@ -31,7 +31,7 @@ def compute_invoice_total(items: list[InvoiceItem]) -> str:
 # Configure an LLM that supports tool use.
 # Simply pass the decorated function(s) directly.
 llm = DocumentLLM(
-    model="openai/gpt-4.1-mini",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
     system_message="You are a helpful assistant.",  # override default system message for chat
     tools=[compute_invoice_total],  # Pass the function directly

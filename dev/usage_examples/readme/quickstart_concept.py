@@ -37,7 +37,7 @@ doc.concepts = [
 
 # Define an LLM for extracting information from the document
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",  # or another provider/LLM
+    model="openai/gpt-6-luna",  # or another provider/LLM
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
     ),  # your API key for the LLM provider

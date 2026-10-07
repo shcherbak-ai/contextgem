@@ -33,7 +33,7 @@ doc.add_concepts([compliance_concept])
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 

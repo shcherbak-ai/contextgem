@@ -15,7 +15,7 @@ def get_weather(city: str) -> str:
 
 
 llm = DocumentLLM(
-    model="openai/gpt-4.1-mini",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
     system_message="You are a helpful assistant.",
     tools=[get_weather],

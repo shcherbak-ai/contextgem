@@ -124,7 +124,7 @@ doc.add_concepts([medical_assessment_concept])
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="openai/gpt-4.1",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 

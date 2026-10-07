@@ -114,7 +114,7 @@ doc.concepts = [
 
 # Define an LLM for extracting information from the document
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",  # or another provider/LLM
+    model="openai/gpt-6-luna",  # or another provider/LLM
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
     ),  # your API key for the LLM provider
@@ -232,7 +232,7 @@ document.add_concepts([concept])
 
 ```python
 llm = DocumentLLM(
-    model="openai/gpt-5-mini",  # or another provider/LLM
+    model="openai/gpt-6-luna",  # or another provider/LLM
     api_key="...",
 )
 document = llm.extract_all(document)
@@ -271,7 +271,7 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 
 - **Cloud LLMs**: OpenAI, Anthropic, Google, Azure OpenAI, xAI, and more
 - **Local LLMs**: Run models locally using providers like Ollama, LM Studio, etc.
-- **Model Architectures**: Works with both reasoning/CoT-capable (e.g. gpt-5) and non-reasoning models (e.g. gpt-4.1)
+- **Model Architectures**: Works with models with and without reasoning (CoT) capabilities
 - **Simple API**: Unified interface for all LLMs with easy provider switching
 
 > **💡 Model Selection Note:** For reliable structured extraction, we recommend using models with performance equivalent to or exceeding `gpt-4o-mini`. Smaller models (such as 8B parameter models) may struggle with ContextGem's detailed extraction instructions. If you encounter issues with smaller models, see our [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/) for potential solutions.

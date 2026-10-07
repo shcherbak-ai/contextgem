@@ -126,7 +126,7 @@ See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`concept-modality-labe
 
 **A group of LLMs with different unique roles to extract different information from the document.**
 
-For more complex and granular extraction workflows, an LLM group can be used to extract different information from the same document using different LLMs with different roles. For example, a simpler LLM e.g. gpt-4o-mini can be used to extract specific aspects of the document, and a more powerful LLM e.g. o3-mini will handle the extraction of complex concepts that require reasoning over the aspects' context.
+For more complex and granular extraction workflows, an LLM group can be used to extract different information from the same document using different LLMs with different roles. For example, a simpler LLM e.g. gpt-6-luna can be used to extract specific aspects of the document, and a more powerful LLM e.g. gpt-6.1-sol will handle the extraction of complex concepts that require reasoning over the aspects' context.
 
 The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs in the group. For example, if an aspect/concept is assigned ``llm_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
 
@@ -143,17 +143,17 @@ See :class:`~contextgem.public.llms.DocumentLLMGroup` and :ref:`llm-roles-label`
      - LLM 2 (``role="reasoner"``)
      - LLM 3 (``role="vision"``)
    * - *Model*
-     - gpt-4.1-mini
-     - o4-mini
-     - gpt-4.1-mini
+     - gpt-6-luna
+     - gpt-6.1-sol
+     - gpt-6-luna
    * - *Task*
      - Extract payment terms from a contract
      - Detect anomalies in the payment terms
      - Extract invoice amounts
    * - *Fallback LLM(s)* (optional)
-     - gpt-4o-mini
-     - o3-mini
-     - gpt-4o-mini
+     - gpt-5.6-luna
+     - gpt-5.6-sol
+     - gpt-5.6-luna
 
 .. image:: _static/contextgem_how_it_works_infographics.png
    :width: 100%

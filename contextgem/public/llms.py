@@ -139,7 +139,8 @@ class DocumentLLM(_DocumentLLM):
         Ignored when ``pricing_details`` is provided. Defaults to ``False``.
     :vartype auto_pricing: bool
     :ivar auto_pricing_refresh: Whether genai-prices should auto-refresh its cached
-        pricing data. Defaults to ``False``.
+        pricing data, e.g. to price a recently released model that the bundled
+        pricing data does not include yet. Defaults to ``False``.
     :vartype auto_pricing_refresh: bool
     :ivar is_fallback: Indicates whether the LLM is a fallback model. Defaults to False.
     :vartype is_fallback: bool

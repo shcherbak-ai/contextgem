@@ -9,13 +9,13 @@ from contextgem import Aspect, Document, DocumentLLM, DocumentLLMGroup, StringCo
 
 # LLM without a role - extracts all aspects/concepts that are not routed to another LLM
 base_llm = DocumentLLM(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
 )
 
 # Optional - attach a fallback LLM
 base_llm_fallback = DocumentLLM(
-    model="openai/gpt-3-5-turbo",
+    model="openai/gpt-5.6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     is_fallback=True,  # must have the same role as the parent LLM (here: no role)
 )
@@ -23,7 +23,7 @@ base_llm.fallback_llms = [base_llm_fallback]
 
 # LLM with a role - extracts the aspects/concepts with the same `llm_role`
 advanced_llm = DocumentLLM(
-    model="openai/o3-mini",
+    model="openai/gpt-6.1-sol",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     role="reasoner",  # a label of your choice
 )

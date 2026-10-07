@@ -129,7 +129,7 @@ doc.add_concepts(document_concepts)
 
 # Create an LLM for extraction
 llm = DocumentLLM(
-    model="openai/gpt-4o",  # or another LLM from e.g. Anthropic, Ollama, etc.
+    model="openai/gpt-6-luna",  # or another LLM from e.g. Anthropic, Ollama, etc.
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
     ),  # your API key for the applicable LLM provider

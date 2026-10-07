@@ -34,8 +34,8 @@ Since ContextGem specializes in deep single-document analysis, models with large
 
    * - Aspect Extraction
      - Concept Extraction
-   * - A **smaller/distilled non-reasoning model** capable of identifying relevant document sections (e.g., ``gpt-4o-mini``). This extraction resembles multi-label classification. Complex aspects may occasionally require larger or reasoning models.
-     - For *basic concepts* (e.g., titles, payment amounts, dates), the same **smaller/distilled non-reasoning model** is often sufficient (e.g., ``gpt-4o-mini``). For *complex concepts* requiring nuanced understanding within specific aspects or the entire document, consider a **larger non-reasoning model** (e.g., ``gpt-4o``). For concepts requiring advanced understanding or complex reasoning (e.g., logical deductions, evaluation), a **reasoning model** like ``o3-mini`` may be appropriate.
+   * - A **smaller/distilled model** capable of identifying relevant document sections (e.g., ``gpt-6-luna``). This extraction resembles multi-label classification. Complex aspects may occasionally require larger models.
+     - For *basic concepts* (e.g., titles, payment amounts, dates), the same **smaller/distilled model** is often sufficient (e.g., ``gpt-6-luna``). For *complex concepts* requiring nuanced understanding within specific aspects or the entire document, consider a **larger model** (e.g., ``gpt-6.1-sol``). For concepts requiring advanced understanding or complex reasoning (e.g., logical deductions, evaluation), consider the most capable model available to you, with a higher ``reasoning_effort`` if the model supports it.
 
 .. seealso::
    **Small Model Issues?** If you're experiencing issues with smaller models (e.g. 8B parameter models), such as JSON validation errors or inconsistent results, see our :doc:`troubleshooting guide <optimization_small_llm_troubleshooting>` for specific solutions and workarounds.

@@ -22,7 +22,7 @@ Optimizing for Cost
 
 ContextGem offers several strategies to optimize for cost efficiency while maintaining extraction quality:
 
-- **💸 Select Cost-Efficient Models**: Use smaller/distilled non-reasoning LLMs for extracting aspects and basic concepts (e.g. titles, payment amounts, dates).
+- **💸 Select Cost-Efficient Models**: Use smaller/distilled LLMs for extracting aspects and basic concepts (e.g. titles, payment amounts, dates).
 - **⚙️ Use Default Parameters**: All the extractions will be processed in as few LLM calls as possible.
 - **📉 Enable Justifications Only When Necessary**: Do not use justifications for simple aspects or concepts. This will reduce the number of tokens generated.
 - **📊 Monitor Usage and Cost**: Track LLM calls, token consumption, and cost to identify optimization opportunities.

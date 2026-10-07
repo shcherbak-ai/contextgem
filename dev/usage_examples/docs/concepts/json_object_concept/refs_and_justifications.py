@@ -64,7 +64,7 @@ doc.add_concepts([complaint_analysis_concept])
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="openai/gpt-4.1",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 

@@ -6,11 +6,11 @@ from contextgem import DocumentLLM, LLMPricing
 
 
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     pricing_details=LLMPricing(
-        input_per_1m_tokens=0.150,
-        output_per_1m_tokens=0.600,
+        input_per_1m_tokens=0.10,
+        output_per_1m_tokens=0.50,
     ),  # add pricing details to track costs
     # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
 )

@@ -77,7 +77,7 @@ doc.add_aspects([termination_aspect])
 
 # Create an LLM for extracting data from the document
 llm = DocumentLLM(
-    model="openai/gpt-4o",  # You can use models from other providers as well, e.g. "anthropic/claude-3-5-sonnet"
+    model="openai/gpt-6-luna",  # You can use models from other providers as well, e.g. "anthropic/claude-sonnet-5-5"
     api_key=os.environ.get(
         "CONTEXTGEM_OPENAI_API_KEY"
     ),  # your API key for OpenAI or another LLM provider

@@ -8,14 +8,14 @@ from contextgem.public import ChatSession
 
 # Initialize main LLM for chat
 main_model = DocumentLLM(
-    model="openai/gpt-4o",  # or another provider/model
+    model="openai/gpt-6-luna",  # or another provider/model
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),  # your API key for the LLM provider
     system_message="",  # disable default system message for chat, or provide your own
 )
 
 # Optional: configure fallback LLM(s) for reliability
 fallback_model = DocumentLLM(
-    model="openai/gpt-4o-mini",  # or another provider/model
+    model="openai/gpt-5.6-luna",  # or another provider/model
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),  # your API key for the LLM provider
     is_fallback=True,
     system_message="",  # also disable default system message for fallback, or provide your own

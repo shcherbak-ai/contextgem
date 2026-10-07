@@ -199,7 +199,7 @@ def _warm_token_encodings():
             allow=[_TOKEN_ENCODINGS_DOWNLOAD_HOST],
             label="tests._warm_token_encodings",
         ):
-            litellm.token_counter(model="gpt-4o-mini", text="warm-up")
+            litellm.token_counter(model="gpt-6-luna", text="warm-up")
     except Exception as e:
         logger.warning(
             f"Could not prepare the token encodings before the tests: {e}. "

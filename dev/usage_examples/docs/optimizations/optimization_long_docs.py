@@ -14,7 +14,7 @@ long_doc = Document(
 
 # Define and configure LLM
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
 )
 

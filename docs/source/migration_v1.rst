@@ -65,10 +65,10 @@ Updating the Code
 
    llm_group = DocumentLLMGroup(
        llms=[
-           DocumentLLM(model="openai/gpt-4o-mini", role="extractor_text"),
+           DocumentLLM(model="openai/gpt-6-luna", role="extractor_text"),
            # The same model, added again to extract from images
-           DocumentLLM(model="openai/gpt-4o-mini", role="extractor_vision"),
-           DocumentLLM(model="openai/o3-mini", role="reasoner_text"),
+           DocumentLLM(model="openai/gpt-6-luna", role="extractor_vision"),
+           DocumentLLM(model="openai/gpt-6.1-sol", role="reasoner_text"),
        ]
    )
 
@@ -95,8 +95,8 @@ Updating the Code
        llms=[
            # No role: extracts all aspects/concepts that are not routed to another LLM,
            # from text and from images
-           DocumentLLM(model="openai/gpt-4o-mini"),
-           DocumentLLM(model="openai/o3-mini", role="reasoner"),
+           DocumentLLM(model="openai/gpt-6-luna"),
+           DocumentLLM(model="openai/gpt-6.1-sol", role="reasoner"),
        ]
    )
 
@@ -183,7 +183,7 @@ The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.
    :caption: Before v1.0
 
    llm = DocumentLLM(
-       model="openai/gpt-4o-mini",
+       model="openai/gpt-6-luna",
        api_key="<your-openai-api-key>",
        fallback_llm=fallback_llm,
    )
@@ -195,7 +195,7 @@ The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.
    :caption: In v1.0
 
    llm = DocumentLLM(
-       model="openai/gpt-4o-mini",
+       model="openai/gpt-6-luna",
        api_key="<your-openai-api-key>",
        fallback_llms=[fallback_llm],
    )

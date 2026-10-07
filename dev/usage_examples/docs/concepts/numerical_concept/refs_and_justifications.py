@@ -37,7 +37,7 @@ doc.add_concepts([total_revenue_concept])
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="openai/o4-mini",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 

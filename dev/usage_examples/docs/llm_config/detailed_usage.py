@@ -2,7 +2,7 @@ from contextgem import DocumentLLM
 
 
 llm = DocumentLLM(
-    model="openai/gpt-4.1",
+    model="openai/gpt-6-luna",
     api_key="<your-openai-api-key>",
 )
 

@@ -33,11 +33,11 @@ doc.concepts = [
 
 # Define and configure LLM
 llm = DocumentLLM(
-    model="openai/gpt-4o",
+    model="openai/gpt-6.1-sol",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     fallback_llms=[
         DocumentLLM(
-            model="openai/gpt-4-turbo",
+            model="openai/gpt-5.6-sol",
             api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
             is_fallback=True,
         ),

@@ -90,7 +90,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``system_message``
      - ``str | None``
      - ``None``
-     - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Note that for certain models (such as OpenAI's o1-preview), system messages are not supported and will be ignored. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
+     - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
    * - ``max_tokens``
      - ``int``
      - ``4096``
@@ -130,7 +130,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``auto_pricing_refresh``
      - ``bool``
      - ``False``
-     - When ``auto_pricing`` is enabled, allow ``genai-prices`` to auto-refresh its cached pricing data at runtime.
+     - When ``auto_pricing`` is enabled, allow ``genai-prices`` to auto-refresh its cached pricing data at runtime. Enable it if the pricing data of a recently released model is not found, as the pricing data bundled with ``genai-prices`` may not include such a model yet.
    * - ``is_fallback``
      - ``bool``
      - ``False``
@@ -245,9 +245,9 @@ Some LLM providers cache the beginning of a prompt and reuse it across requests 
 🧠 Using Model-Specific Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For reasoning (CoT-capable) models (such as OpenAI's o1/o3/o4), you can set reasoning-specific parameters:
+For reasoning (CoT-capable) models (such as OpenAI's GPT-5 and GPT-6 models), you can set reasoning-specific parameters:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/o1_o4.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/reasoning_params.py
    :language: python
    :caption: Using model-specific parameters
 

@@ -4,13 +4,13 @@ from contextgem import DocumentLLM, DocumentLLMGroup
 # Create an extractor LLM with a fallback. This LLM has no role, i.e. it extracts
 # all aspects and concepts that are not routed to another LLM in the group.
 extractor = DocumentLLM(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-6-luna",
     api_key="your-openai-api-key",  # Replace with your actual API key
 )
 
 # Create a fallback LLM for the extractor
 extractor_fallback = DocumentLLM(
-    model="anthropic/claude-3-5-haiku",
+    model="anthropic/claude-haiku-4-5",
     api_key="your-anthropic-api-key",  # Replace with your actual API key
     is_fallback=True,  # Must have the same role as the primary LLM (here: no role)
 )
@@ -21,7 +21,7 @@ extractor.fallback_llms = [extractor_fallback]
 # Create a reasoner LLM. A role is a label of your choice: this LLM extracts
 # the aspects and concepts that have `llm_role="reasoner"`.
 reasoner = DocumentLLM(
-    model="openai/o3-mini",
+    model="openai/gpt-6.1-sol",
     api_key="your-openai-api-key",  # Replace with your actual API key
     role="reasoner",  # For more complex tasks that require reasoning
 )
@@ -29,7 +29,7 @@ reasoner = DocumentLLM(
 # Create an LLM dedicated to images. This LLM extracts the concepts that have
 # `llm_role="vision"`, e.g. the concepts with `modality="image"`.
 vision_extractor = DocumentLLM(
-    model="openai/gpt-5-mini",
+    model="openai/gpt-5.6-luna",
     api_key="your-openai-api-key",  # Replace with your actual API key
     role="vision",  # For extraction from images
 )

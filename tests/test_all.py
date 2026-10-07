@@ -264,12 +264,12 @@ class TestAll(TestUtils):
 
     # Extractor (LLM without a role, i.e. the default one in the LLM group)
     _llm_extractor_kwargs_openai = {
-        "model": "openai/gpt-4.1-mini",
+        "model": "openai/gpt-6-luna",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         "pricing_details": LLMPricing(  # Explicitly set pricing details
             **{
-                "input_per_1m_tokens": 0.40,
-                "output_per_1m_tokens": 1.60,
+                "input_per_1m_tokens": 0.10,
+                "output_per_1m_tokens": 0.50,
             }
         ),
     }
@@ -277,7 +277,7 @@ class TestAll(TestUtils):
     # Reasoner (LLM with a role, i.e. the one that the aspects/concepts
     # with the same role are routed to in the LLM group)
     _llm_reasoner_kwargs_openai = {
-        "model": "openai/gpt-5-mini",
+        "model": "openai/gpt-5.6-luna",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         "role": "reasoner",
         "auto_pricing": True,  # use auto-pricing
@@ -1404,33 +1404,49 @@ class TestAll(TestUtils):
         Tests the behaviour of the `DocumentLLM` class initialization.
         """
         DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
 
         # Optional params
         DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             top_p=None,
             temperature=None,
         )
 
-        # Default: temperature is sent, top_p is omitted (Claude 4.x rejects both)
+        # Default: temperature is set, top_p is not (Claude 4.x rejects both)
         llm_defaults = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert llm_defaults.temperature == 0.3
         assert llm_defaults.top_p is None
+
+        # Reasoning (CoT-capable) model: the sampling params are not sent,
+        # and the output is limited by `max_completion_tokens`
+        assert llm_defaults._supports_reasoning
         default_request_config = llm_defaults._build_request_config()
-        assert default_request_config["temperature"] == 0.3
-        assert "top_p" not in default_request_config
+        assert default_request_config["max_completion_tokens"] == 16000
+        for param in ["temperature", "top_p", "max_tokens"]:
+            assert param not in default_request_config
+
+        # Model without reasoning support: temperature is sent, top_p is omitted
+        # unless set, and the output is limited by `max_tokens`
+        non_reasoning_model = "cerebras/llama-3.3-70b"
+        llm_non_reasoning = DocumentLLM(
+            model=non_reasoning_model, api_key="test_api_key"
+        )
+        assert not llm_non_reasoning._supports_reasoning
+        non_reasoning_request_config = llm_non_reasoning._build_request_config()
+        assert non_reasoning_request_config["temperature"] == 0.3
+        assert non_reasoning_request_config["max_tokens"] == 4096
+        for param in ["top_p", "max_completion_tokens"]:
+            assert param not in non_reasoning_request_config
 
         llm_with_top_p = DocumentLLM(
-            model="openai/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            top_p=0.3,
+            model=non_reasoning_model, api_key="test_api_key", top_p=0.3
         )
         assert llm_with_top_p._build_request_config()["top_p"] == 0.3
 
@@ -1449,7 +1465,7 @@ class TestAll(TestUtils):
             DocumentLLM()
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
@@ -1457,7 +1473,7 @@ class TestAll(TestUtils):
         # Fallback LLM validation
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 fallback_llms=[
                     self.llm_reasoner
@@ -1465,11 +1481,11 @@ class TestAll(TestUtils):
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 fallback_llms=[
                     DocumentLLM(
-                        model="openai/gpt-4o-mini",
+                        model="openai/gpt-6-luna",
                         api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                         is_fallback=True,
                     )
@@ -1477,7 +1493,7 @@ class TestAll(TestUtils):
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 is_fallback=True,
                 fallback_llms=[
@@ -1486,7 +1502,7 @@ class TestAll(TestUtils):
             )
         # Validate fallback LLMs assignment
         document_llm = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert document_llm.is_group is False
@@ -1500,7 +1516,7 @@ class TestAll(TestUtils):
         document_llm.is_fallback = False
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 is_fallback=False,
                 fallback_llms=[document_llm],  # non-fallback LLM passed as a fallback
@@ -1508,30 +1524,30 @@ class TestAll(TestUtils):
 
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="gpt-4o-mini",  # no provider prefix in model name
+                model="gpt-6-luna",  # no provider prefix in model name
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 role="",  # invalid role (empty label)
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 temperature=-1.0,  # negative temperature
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 max_tokens=-4000,  # negative value
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 pricing_details=LLMPricing(
                     **{  # invalid pricing details keys
@@ -1542,7 +1558,7 @@ class TestAll(TestUtils):
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 pricing_details=LLMPricing(
                     **{  # invalid pricing details values
@@ -1553,7 +1569,7 @@ class TestAll(TestUtils):
             )
         with pytest.raises(ValueError):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key="",  # empty api key
             )
 
@@ -1562,7 +1578,7 @@ class TestAll(TestUtils):
             UserWarning, match="`output_language` parameter will take no effect"
         ):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 output_language="adapt",
                 system_message="",
@@ -1571,7 +1587,7 @@ class TestAll(TestUtils):
             UserWarning, match="`output_language` parameter will take no effect"
         ):
             DocumentLLM(
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 output_language="adapt",
                 system_message="You are a helpful assistant.",
@@ -1746,9 +1762,9 @@ class TestAll(TestUtils):
             # A multimodal concept is extracted from both the text and the images
             assert len(document.get_concept_by_name("Date").extracted_items) == 2
 
-        default_model = "openai/gpt-4.1-mini"
-        complex_model = "openai/gpt-4.1"
-        vision_model = "openai/gpt-4o"
+        default_model = "openai/gpt-6-luna"
+        complex_model = "openai/gpt-6.1-sol"
+        vision_model = "openai/gpt-5.6-luna"
 
         # === Roles are free-form labels, and modality is a param of a concept ===
         llm_no_role = create_llm(default_model)
@@ -1917,7 +1933,7 @@ class TestAll(TestUtils):
         assert not document.get_concept_by_name("Stamp").extracted_items
 
         # === Vision support is checked before any LLM calls are made ===
-        text_only_model = "openai/gpt-3.5-turbo"
+        text_only_model = "cerebras/llama-3.3-70b"
         llm_text_only = create_llm(text_only_model)
         assert not llm_text_only._supports_vision
         stub_llm_api(llm_text_only)
@@ -2027,9 +2043,9 @@ class TestAll(TestUtils):
 
         group = DocumentLLMGroup(
             llms=[
-                DocumentLLM(model="openai/gpt-4o-mini", api_key="test_api_key"),
+                DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key"),
                 DocumentLLM(
-                    model="openai/gpt-4o", api_key="test_api_key", role="other"
+                    model="openai/gpt-6.1-sol", api_key="test_api_key", role="other"
                 ),
             ]
         )
@@ -2176,18 +2192,18 @@ class TestAll(TestUtils):
         """
 
         fallback = DocumentLLM(
-            model="openai/gpt-4o",
+            model="openai/gpt-5.6-luna",
             api_key="test_api_key",
             role="named",
             is_fallback=True,
         )
         primary = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key="test_api_key",
             role="named",
             fallback_llms=[fallback],
         )
-        llm_no_role = DocumentLLM(model="openai/gpt-4.1", api_key="test_api_key")
+        llm_no_role = DocumentLLM(model="openai/gpt-6.1-sol", api_key="test_api_key")
         group = DocumentLLMGroup(llms=[primary, llm_no_role])
         for llm in [primary, fallback, llm_no_role]:
             llm._usage = _LLMUsage(input=10, output=5)
@@ -2285,9 +2301,7 @@ class TestAll(TestUtils):
                 usage=completion_usages.pop(0),
             )
 
-        def create_llm(
-            model: str = "openai/gpt-4.1-mini", **kwargs: Any
-        ) -> DocumentLLM:
+        def create_llm(model: str = "openai/gpt-6-luna", **kwargs: Any) -> DocumentLLM:
             """
             Creates an LLM with the specified pricing params.
             """
@@ -2418,8 +2432,8 @@ class TestAll(TestUtils):
             # is merged, as the price tier of a model with tiered prices depends
             # on the number of input tokens in a request.
             for model, has_price_tiers in [
-                ("openai/gpt-4.1-mini", False),
-                ("anthropic/claude-sonnet-4-5", True),  # higher prices above 200K
+                ("anthropic/claude-haiku-4-5", False),
+                ("openai/gpt-6-luna", True),  # higher prices above 272K
             ]:
                 with pytest.warns(
                     UserWarning, match="prices will not be 100% accurate."
@@ -2466,6 +2480,15 @@ class TestAll(TestUtils):
                 assert (
                     merged_usage_prices != (cost.input, cost.output)
                 ) == has_price_tiers
+
+        # === Missing pricing data ===
+        # The warning suggests refreshing the pricing data, as the bundled data
+        # may not include a recently released model
+        with pytest.warns(UserWarning, match="auto_pricing_refresh=True"):
+            llm = create_llm("openai/gptXX", auto_pricing=True)
+        # ...unless the refresh is already enabled
+        llm.auto_pricing_refresh = True
+        assert "auto_pricing_refresh" not in llm._get_missing_auto_pricing_advice()
 
         # === Pricing model ===
         invalid_pricing_cases: list[dict[str, Any]] = [
@@ -5842,8 +5865,8 @@ class TestAll(TestUtils):
 
         # Test 1: Max input tokens validation
         llm = DocumentLLM(
-            model="openai/gpt-4o-mini",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            model="anthropic/claude-haiku-4-5",  # 200k context window
+            api_key="...",  # dummy key (no LLM calls are made)
         )
 
         # Create a very long message that should exceed input limits
@@ -5859,9 +5882,9 @@ class TestAll(TestUtils):
 
         # Test 2: Max output tokens validation
         llm_excessive_output = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            max_tokens=999999,  # excessive output tokens
+            max_completion_tokens=999999,  # excessive output tokens
         )
 
         with pytest.raises(
@@ -5881,38 +5904,20 @@ class TestAll(TestUtils):
         """
         system_message = "When asked, introduce yourself as ContextGem."
 
-        non_reasoning_model = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+        model = DocumentLLM(
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message=system_message,
         )
-        o1_model = DocumentLLM(
-            model="openai/o1",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            reasoning_effort="low",
-            system_message=system_message,
-        )
-        o3_mini_model = DocumentLLM(
-            model="openai/o3-mini",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            system_message=system_message,
-        )
-        o4_mini_model = DocumentLLM(
-            model="openai/o4-mini",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            system_message=system_message,
-            reasoning_effort="low",
-        )
-        for model in [non_reasoning_model, o1_model, o3_mini_model, o4_mini_model]:
-            model.chat("What's your name?")
-            response = model.get_usage()[0].usage.calls[-1].response
-            assert response is not None
-            assert "ContextGem" in response
-            logger.debug(response)
+        model.chat("What's your name?")
+        response = model.get_usage()[0].usage.calls[-1].response
+        assert response is not None
+        assert "ContextGem" in response
+        logger.debug(response)
 
         # Test empty system message
         model = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
@@ -5920,7 +5925,7 @@ class TestAll(TestUtils):
 
         # Test None system message (set to default system message) with default output language (en)
         model = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert (
@@ -5930,7 +5935,7 @@ class TestAll(TestUtils):
 
         # Test None system message (set to default system message) with non-en output language (adapt)
         model = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             output_language="adapt",
         )
@@ -5941,7 +5946,7 @@ class TestAll(TestUtils):
 
         # Test with custom system message
         model = DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="You are a helpful assistant that can answer questions and help with tasks.",
         )
@@ -6990,10 +6995,10 @@ class TestAll(TestUtils):
                 **kwargs,
             )
 
-        primary = create_llm("openai/gpt-4o-mini")
-        fallback_1 = create_llm("openai/gpt-4o", is_fallback=True)
-        fallback_2 = create_llm("openai/gpt-4.1-mini", is_fallback=True)
-        fallback_3 = create_llm("openai/gpt-4.1", is_fallback=True)
+        primary = create_llm("openai/gpt-6-luna")
+        fallback_1 = create_llm("openai/gpt-5.6-luna", is_fallback=True)
+        fallback_2 = create_llm("openai/gpt-6.1-sol", is_fallback=True)
+        fallback_3 = create_llm("openai/gpt-5.6-sol", is_fallback=True)
         fallbacks = [fallback_1, fallback_2, fallback_3]
 
         # === Config ===
@@ -7005,54 +7010,56 @@ class TestAll(TestUtils):
             for assigned, original in zip(primary.fallback_llms, fallbacks, strict=True)
         )
         assert (
-            create_llm("openai/gpt-4o-mini", fallback_llms=fallbacks).fallback_llms
+            create_llm("openai/gpt-6-luna", fallback_llms=fallbacks).fallback_llms
             == fallbacks
         )
 
         # Each fallback LLM is validated
         with pytest.raises(ValueError, match="is_fallback=True"):
-            primary.fallback_llms = [fallback_1, create_llm("openai/gpt-4.1-nano")]
+            primary.fallback_llms = [fallback_1, create_llm("openai/gpt-5.6-terra")]
         with pytest.raises(ValueError, match="same role"):
             create_llm(
-                "openai/gpt-4o-mini",
+                "openai/gpt-6-luna",
                 fallback_llms=[
                     fallback_1,
                     create_llm(
-                        "openai/gpt-4.1-nano", role="reasoner", is_fallback=True
+                        "openai/gpt-5.6-terra", role="reasoner", is_fallback=True
                     ),
                 ],
             )
         with pytest.raises(ValueError, match="same output language"):
             create_llm(
-                "openai/gpt-4o-mini",
+                "openai/gpt-6-luna",
                 fallback_llms=[
                     fallback_1,
                     create_llm(
-                        "openai/gpt-4.1-nano", output_language="adapt", is_fallback=True
+                        "openai/gpt-5.6-terra",
+                        output_language="adapt",
+                        is_fallback=True,
                     ),
                 ],
             )
         with pytest.raises(ValueError, match="same config params as the main LLM"):
             create_llm(
-                "openai/gpt-4o-mini",
+                "openai/gpt-6-luna",
                 fallback_llms=[
                     fallback_1,
-                    create_llm("openai/gpt-4o-mini", is_fallback=True),
+                    create_llm("openai/gpt-6-luna", is_fallback=True),
                 ],
             )
         with pytest.raises(ValueError, match="same config params as each other"):
             create_llm(
-                "openai/gpt-4o-mini",
+                "openai/gpt-6-luna",
                 fallback_llms=[
                     fallback_1,
-                    create_llm("openai/gpt-4o", is_fallback=True),
+                    create_llm("openai/gpt-5.6-luna", is_fallback=True),
                 ],
             )
         with pytest.raises(ValueError, match="same config params as each other"):
-            create_llm("openai/gpt-4o-mini", fallback_llms=[fallback_1, fallback_1])
+            create_llm("openai/gpt-6-luna", fallback_llms=[fallback_1, fallback_1])
         with pytest.raises(ValueError, match="cannot have its own fallback LLMs"):
             create_llm(
-                "openai/gpt-4.1-nano", is_fallback=True, fallback_llms=[fallback_1]
+                "openai/gpt-5.6-terra", is_fallback=True, fallback_llms=[fallback_1]
             )
 
         # Usage and cost are tracked for the primary LLM and each of its fallbacks,
@@ -7070,7 +7077,7 @@ class TestAll(TestUtils):
         # A single `fallback_llm` is rejected, i.e. not silently ignored,
         # both as a param and in the serialized data
         with pytest.raises(ValueError, match="fallback_llm\n"):
-            create_llm("openai/gpt-4o-mini", fallback_llm=fallback_1)
+            create_llm("openai/gpt-6-luna", fallback_llm=fallback_1)
         primary_dict["fallback_llm"] = primary_dict.pop("fallback_llms")[0]
         with pytest.raises(ValueError, match="fallback_llm\n"):
             DocumentLLM.from_dict(primary_dict)
@@ -7200,7 +7207,7 @@ class TestAll(TestUtils):
             """
             return error_class(
                 message="Simulated API error",
-                model="openai/gpt-4o-mini",
+                model="openai/gpt-6-luna",
                 llm_provider="openai",
             )
 
@@ -7239,9 +7246,9 @@ class TestAll(TestUtils):
             assert len(delays) > 1  # delays are randomized
 
         # === Retries of the requests ===
-        primary_model = "openai/gpt-4o-mini"
-        fallback_model_1 = "openai/gpt-4o"
-        fallback_model_2 = "openai/gpt-4.1"
+        primary_model = "openai/gpt-6-luna"
+        fallback_model_1 = "openai/gpt-5.6-luna"
+        fallback_model_2 = "openai/gpt-6.1-sol"
         invalid_answer = "<<<not-json>>>"
         concepts_answer = '[{"concept_id": "C0", "extracted_items": ["Item"]}]'
 
@@ -7474,8 +7481,8 @@ class TestAll(TestUtils):
         """
 
         litellm = llms_module.litellm
-        primary_model = "openai/gpt-4o-mini"
-        fallback_model = "openai/gpt-4o"
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
 
         llm = DocumentLLM(
             model=primary_model,
@@ -8094,7 +8101,7 @@ class TestAll(TestUtils):
 
         # Test error when model is not vision-capable
         llm_not_vision_capable = DocumentLLM(
-            model="openai/gpt-3.5-turbo",
+            model="cerebras/llama-3.3-70b",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         with pytest.raises(ValueError, match="does not support vision"):
@@ -8277,7 +8284,7 @@ class TestAll(TestUtils):
             logger.debug(response)
 
         # Test for non-vision model
-        text_only_model = DocumentLLM(model="openai/gpt-3.5-turbo")
+        text_only_model = DocumentLLM(model="cerebras/llama-3.3-70b")
         with pytest.raises(ValueError, match="vision"):
             text_only_model.chat(
                 "What's the type of this document?", images=[self.test_img_png_invoice]
@@ -8285,7 +8292,7 @@ class TestAll(TestUtils):
 
         # Test for empty system message
         model = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
@@ -8303,7 +8310,7 @@ class TestAll(TestUtils):
 
         # Test for None system message (output language "en", which is the default)
         model = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert model.system_message == self.default_system_message_en
@@ -8315,7 +8322,7 @@ class TestAll(TestUtils):
 
         # Test for None system message (output language "adapt")
         model = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             output_language="adapt",
         )
@@ -8328,7 +8335,7 @@ class TestAll(TestUtils):
 
         # Test with custom system message
         model = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="Your name is John Doe. Introduce yourself as such.",
         )
@@ -8446,7 +8453,7 @@ class TestAll(TestUtils):
         self.check_instance_serialization_and_cloning(cs_v)
 
         # Non-vision model must still fail with images even with a ChatSession
-        text_only_model = DocumentLLM(model="openai/gpt-3.5-turbo")
+        text_only_model = DocumentLLM(model="cerebras/llama-3.3-70b")
         cs_empty = ChatSession()
         with pytest.raises(ValueError, match="vision"):
             text_only_model.chat(
@@ -8460,7 +8467,7 @@ class TestAll(TestUtils):
 
         # ChatSession: empty system message should not warn
         no_sys_model = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
@@ -8486,7 +8493,7 @@ class TestAll(TestUtils):
         # ChatSession: custom system message should not warn and be first
         custom_sys = "Your name is John Doe. Introduce yourself as such."
         m_custom = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message=custom_sys,
         )
@@ -8717,7 +8724,7 @@ class TestAll(TestUtils):
 
         # Configure LLM for tools; leave tool_choice to auto so it can call both
         llm_fallback = DocumentLLM(
-            model="openai/gpt-4.1",
+            model="openai/gpt-5.6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
             tools=tools,
@@ -8725,7 +8732,7 @@ class TestAll(TestUtils):
             is_fallback=True,
         )
         llm = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
             tools=tools,
@@ -8825,7 +8832,7 @@ class TestAll(TestUtils):
         """
 
         llm = DocumentLLM(
-            model="openai/gpt-4.1-mini",
+            model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             system_message="",
         )
@@ -9155,7 +9162,7 @@ class TestAll(TestUtils):
             llm_api,  # noqa: F401
             llm_group,  # noqa: F401
             llm_local,  # noqa: F401
-            o1_o4,  # noqa: F401
+            reasoning_params,  # noqa: F401
             tracking_usage_and_cost,  # noqa: F401
         )
         from dev.usage_examples.docs.llms.llm_extraction_methods import (
@@ -9448,7 +9455,7 @@ class TestAll(TestUtils):
         too_long_doc = Document(raw_text=text_content * 5)
         too_long_doc.concepts = doc_concepts
         llm_short_context = DocumentLLM(
-            model="openai/gpt-4o-mini",  # 128k context window
+            model="anthropic/claude-haiku-4-5",  # 200k context window
             api_key="...",  # dummy key (pre-call validation will fail)
         )
         with pytest.raises(
@@ -9532,7 +9539,7 @@ class TestAll(TestUtils):
         # Use an LLM with auto pricing enabled and no manual pricing details
         with pytest.warns(UserWarning, match="prices will not be 100% accurate."):
             llm = DocumentLLM(
-                model="openai/gpt-4.1-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 auto_pricing=True,
                 auto_pricing_refresh=True,  # test with auto-refresh
@@ -9591,7 +9598,7 @@ class TestAll(TestUtils):
         # Setting auto-pricing and LLMPricing together
         with pytest.raises(ValueError, match="auto_pricing=True"):
             DocumentLLM(
-                model="openai/gpt-4.1-mini",
+                model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 pricing_details=LLMPricing(
                     input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006

@@ -3244,7 +3244,7 @@ class _DocumentLLM(_GenericLLMProcessor):
     # LLM config
     model: NonEmptyStr = Field(
         ...,
-        description="Model identifier '<provider>/<model>' (e.g., 'openai/gpt-4o').",
+        description="Model identifier '<provider>/<model>' (e.g., 'openai/gpt-6-luna').",
     )
     deployment_id: NonEmptyStr | None = Field(
         default=None,
@@ -3289,8 +3289,9 @@ class _DocumentLLM(_GenericLLMProcessor):
     reasoning_effort: ReasoningEffort | None = Field(
         default=None,
         description=(
-            "Reasoning effort for CoT-capable models: 'minimal' (gpt-5 models only) | "
-            "'low' | 'medium' | 'high'."
+            "Reasoning effort for CoT-capable models: 'none' | 'minimal' | 'low' | "
+            "'medium' | 'high' | 'xhigh' | 'max'. Support for specific values varies "
+            "by model and provider."
         ),
     )  # for reasoning (CoT-capable) models
     num_retries_failed_request: StrictInt = Field(
@@ -3514,22 +3515,6 @@ class _DocumentLLM(_GenericLLMProcessor):
                 "The price data cannot be exactly correct because model providers do not provide "
                 "exact price information for their APIs in a format which can be reliably processed. "
                 "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
-                stacklevel=2,
-            )
-
-        # Warn about unreliable parallel tool calling behavior on some GPT-5 deployments
-        # TODO: remove this once this is fixed
-        if self.parallel_tool_calls and (
-            self.model.startswith("azure/gpt-5")
-            or self.model.startswith("openai/gpt-5")
-        ):
-            warnings.warn(
-                "parallel_tool_calls=True set for a GPT-5 model. Many GPT-5 deployments currently do not "
-                "execute true parallel tool calling, which may result in the same number of LLM API calls "
-                "as sequential execution. Consider models known to support this reliably "
-                "(e.g., 'openai/gpt-4.1-mini') or disable parallel_tool_calls until resolved. "
-                "See https://learn.microsoft.com/en-us/answers/questions/5523783/gpt-5-not-parallel-tool-calling "
-                "for more details.",
                 stacklevel=2,
             )
 
@@ -3946,8 +3931,8 @@ class _DocumentLLM(_GenericLLMProcessor):
 
     def _check_and_build_system_message(self) -> _Message | None:
         """
-        Optionally builds a 'system' role message based on model support and
-        configured message. Returns None if no system message should be added.
+        Optionally builds a 'system' role message based on the configured message.
+        Returns None if no system message should be added.
 
         :return: A `_Message` representing the system message with role and content,
             or None if no system message should be added.
@@ -3955,13 +3940,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         """
         sys_msg = self.system_message
         if sys_msg and sys_msg.strip():
-            if not any(i in self.model for i in ["o1-preview", "o1-mini"]):
-                # o1/o1-mini models don't support system/developer messages
-                return _Message(role="system", content=sys_msg)
-            warnings.warn(
-                f"System message ignored for the model `{self.model}`.",
-                stacklevel=2,
-            )
+            return _Message(role="system", content=sys_msg)
         return None
 
     def _update_default_prompt(
@@ -5426,8 +5405,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                     warning_msg = (
                         f"Unable to fetch pricing data for model `{self.model}`: {e}. "
                         "Auto-pricing is skipped. "
-                        "Consider setting `pricing_details=LLMPricing(...)` "
-                        "or disabling auto-pricing."
+                        f"{self._get_missing_auto_pricing_advice()}"
                     )
                     warnings.warn(
                         warning_msg,
@@ -5471,6 +5449,29 @@ class _DocumentLLM(_GenericLLMProcessor):
             # Calls data
             self._usage.calls += new_usage.calls
 
+    def _get_missing_auto_pricing_advice(self) -> str:
+        """
+        Returns the advice for the warnings issued when the pricing data of the model
+        cannot be fetched. Unless the refresh of the pricing data is already enabled,
+        it is suggested first, as the pricing data bundled with genai-prices may not
+        include a recently released model.
+
+        :return: Advice on getting the costs of the LLM calculated
+        :rtype: str
+        """
+
+        if self.auto_pricing_refresh:
+            return (
+                "Consider setting `pricing_details=LLMPricing(...)` "
+                "or disabling auto-pricing."
+            )
+        return (
+            "The bundled pricing data may not include recently released models: "
+            "consider setting `auto_pricing_refresh=True` to fetch the latest "
+            "pricing data, setting `pricing_details=LLMPricing(...)`, "
+            "or disabling auto-pricing."
+        )
+
     def _set_provider_and_model_for_auto_pricing(self) -> None:
         """
         Sets (provider_id, model_ref) pair for genai-prices from `model` field.
@@ -5511,8 +5512,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             warning_msg = (
                 f"Unable to fetch pricing data for model `{self.model}`: {e}. "
                 "Auto-pricing will be skipped. "
-                "Consider setting `pricing_details=LLMPricing(...)` "
-                "or disabling auto-pricing."
+                f"{self._get_missing_auto_pricing_advice()}"
             )
             warnings.warn(
                 warning_msg,

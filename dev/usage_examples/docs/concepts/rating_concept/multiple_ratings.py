@@ -54,7 +54,7 @@ doc.add_concepts([atmosphere_rating, food_rating, service_rating, value_rating])
 
 # Configure DocumentLLM with your API parameters
 llm = DocumentLLM(
-    model="openai/gpt-4.1",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 

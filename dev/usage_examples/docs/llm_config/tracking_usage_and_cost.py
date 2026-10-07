@@ -2,7 +2,7 @@ from contextgem import DocumentLLM
 
 
 llm = DocumentLLM(
-    model="anthropic/claude-3-5-haiku",
+    model="anthropic/claude-haiku-4-5",
     api_key="<your-anthropic-api-key>",
     auto_pricing=True,  # or set `pricing_details=LLMPricing(...)` manually
 )

@@ -33,7 +33,7 @@ doc.add_concepts([doc_concept])
 
 # Create an LLM for extraction
 llm = DocumentLLM(
-    model="openai/gpt-4o-mini",  # Using a model with vision capabilities
+    model="openai/gpt-6-luna",  # Using a model with vision capabilities
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),  # your API key
 )
 

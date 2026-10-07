@@ -40,7 +40,7 @@ doc.add_concepts([completion_date_concept])
 
 # Configure DocumentLLM
 llm = DocumentLLM(
-    model="openai/gpt-4.1",
+    model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
 )
 
