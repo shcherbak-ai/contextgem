@@ -64,6 +64,7 @@ from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.base.serialization import _is_deserialization_in_progress
 from contextgem.internal.base.utils import _is_registered_tool
 from contextgem.internal.data_models import (
     _Message,
@@ -3449,6 +3450,11 @@ class _DocumentLLM(_GenericModelProcessor):
     # Tool registry: name -> ToolRegistration
     _tool_registry: dict[str, ToolRegistration] = PrivateAttr(default_factory=dict)
 
+    # Fallback LLMs as of the last validation. The config params of the fallback LLMs
+    # are checked for redundancy when the fallback LLMs are set, not each time
+    # another param of the LLM is assigned.
+    _validated_fallback_models: tuple[_DocumentLLM, ...] = PrivateAttr(default=())
+
     # Private attributes must be set only once before model validation.
     # We shouldn't set private attributes in post-init method because
     # some model validators which run before post-init require access to
@@ -4223,8 +4229,6 @@ class _DocumentLLM(_GenericModelProcessor):
         :raises ValueError: If the LLM model is not properly configured.
         """
 
-        self._sync_tool_registry_from_tools()
-
         # pricing_details and auto_pricing are mutually exclusive
         if self.pricing_details is not None and self.auto_pricing:
             raise ValueError(
@@ -4247,6 +4251,28 @@ class _DocumentLLM(_GenericModelProcessor):
                 "Fallback LLM cannot have its own fallback LLMs "
                 "and must be attached to a non-fallback model."
             )
+
+        # A fallback LLM with the same config params as the main LLM or as another
+        # fallback LLM is redundant. This is checked when the fallback LLMs are set,
+        # i.e. when the LLM is created with them or they are assigned, except when
+        # the LLM is deserialized: the API credentials are removed from the serialized
+        # data, i.e. the LLMs that differ only in `api_key` or `api_base` (e.g. the same
+        # model served from another endpoint) have the same config params in such data.
+        # For the same reason, this is not checked when another param is assigned:
+        # the API credentials of a deserialized LLM and of its fallback LLMs are set
+        # again one by one, i.e. some of these LLMs have the same config params
+        # until all the credentials are set.
+        fallback_models_are_set = len(self.fallback_models) != len(
+            self._validated_fallback_models
+        ) or any(
+            current is not validated
+            for current, validated in zip(
+                self.fallback_models, self._validated_fallback_models, strict=True
+            )
+        )
+        check_same_config = (
+            fallback_models_are_set and not _is_deserialization_in_progress()
+        )
 
         # Config params of the main LLM and of the fallback LLMs validated so far,
         # without the `is_fallback` and `fallback_models` params
@@ -4293,15 +4319,23 @@ class _DocumentLLM(_GenericModelProcessor):
                 for k, v in fallback_llm.__dict__.items()
                 if k not in ["is_fallback", "fallback_models"]
             }
-            if main_llm_dict == fallback_llm_dict:
-                raise ValueError(
-                    "Fallback LLM must not have the exact same config params as the main LLM."
-                )
-            if fallback_llm_dict in fallback_llm_dicts:
-                raise ValueError(
-                    "Fallback LLMs must not have the exact same config params as each other."
-                )
+            if check_same_config:
+                if main_llm_dict == fallback_llm_dict:
+                    raise ValueError(
+                        "Fallback LLM must not have the exact same config params as the main LLM."
+                    )
+                if fallback_llm_dict in fallback_llm_dicts:
+                    raise ValueError(
+                        "Fallback LLMs must not have the exact same config params as each other."
+                    )
             fallback_llm_dicts.append(fallback_llm_dict)
+
+        # The fallback LLMs are valid, i.e. are not to be checked for redundancy again
+        self._validated_fallback_models = tuple(self.fallback_models)
+
+        # The state derived from the params is updated after all the checks pass:
+        # if an assigned value is rejected, only the params are restored
+        self._sync_tool_registry_from_tools()
 
         # Note: model-specific support for `reasoning_effort` values is not
         # validated here; validation is delegated to litellm / the provider API,

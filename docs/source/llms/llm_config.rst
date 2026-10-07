@@ -193,7 +193,7 @@ You can set up one or more fallback LLMs that will be used if the primary LLM fa
    :language: python
    :caption: Configuring fallback LLMs
 
-Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. If the primary LLM is used to extract concepts from images, or is passed images in a chat, each of its fallback LLMs must support vision as well, which is checked before any requests are sent. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
+Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. A fallback LLM must also differ from the primary LLM, and from the other fallback LLMs, in at least one configuration parameter, e.g. the model, the API key or the API base, as an exact copy would only repeat the same request. This is checked when the fallback LLMs are set, i.e. when the primary LLM is created with them or when ``fallback_models`` is assigned. If the primary LLM is used to extract concepts from images, or is passed images in a chat, each of its fallback LLMs must support vision as well, which is checked before any requests are sent. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
 
 The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, or, during extraction, when it keeps returning invalid data. See :ref:`llm-retries-label` for details.
 

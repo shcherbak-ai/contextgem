@@ -1725,6 +1725,186 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_pre_v1_names_rejected")
 
     @memory_profile_and_capture
+    def test_rejected_assignment_keeps_instance_unchanged(self):
+        """
+        Tests that an instance is left unchanged when a value assigned to its param
+        is rejected by the validation that involves the other params of the instance,
+        i.e. the rejected value is not kept.
+
+        No LLM API calls are made, i.e. no cassette is required.
+        """
+
+        def check_rejected(
+            instance: Any, param: str, value: Any, error_match: str
+        ) -> None:
+            """
+            Checks that the value is rejected for the param of the instance,
+            and that the params of the instance are the same as before.
+            """
+            params_before = {
+                name: getattr(instance, name) for name in type(instance).model_fields
+            }
+            params_set_before = set(instance.model_fields_set)
+            with pytest.raises(ValueError, match=error_match):
+                setattr(instance, param, value)
+            for name, value_before in params_before.items():
+                assert getattr(instance, name) is value_before
+            assert instance.model_fields_set == params_set_before
+
+        def create_llm(model: str = "openai/gpt-6-luna", **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with the given params.
+            """
+            return DocumentLLM(model=model, api_key="test_api_key", **kwargs)
+
+        def create_llm_with_fallback(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with a fallback LLM, both with the given params.
+            """
+            return create_llm(
+                fallback_models=[
+                    create_llm("openai/gpt-6.1-sol", is_fallback=True, **kwargs)
+                ],
+                **kwargs,
+            )
+
+        @register_tool
+        def rollback_test_tool_1(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            return f"Status of {order_id}"
+
+        @register_tool
+        def rollback_test_tool_2(order_id: str) -> str:
+            """
+            Returns the total of the order.
+            """
+            return f"Total of {order_id}"
+
+        # === LLM ===
+        check_rejected(
+            create_llm_with_fallback(role="extractor"),
+            "role",
+            "reasoner",
+            "must have the same role",
+        )
+        check_rejected(
+            create_llm_with_fallback(),
+            "output_language",
+            "adapt",
+            "must have the same output language",
+        )
+        check_rejected(
+            create_llm_with_fallback(),
+            "is_fallback",
+            True,
+            "cannot have its own fallback LLMs",
+        )
+        check_rejected(
+            create_llm(
+                pricing_details=ModelPricing(
+                    input_per_1m_tokens=0.1, output_per_1m_tokens=0.5
+                )
+            ),
+            "auto_pricing",
+            True,
+            "cannot be set together with `auto_pricing=True`",
+        )
+        llm = create_llm_with_fallback()
+        fallback_llm = llm.fallback_models[0]
+        check_rejected(
+            llm,
+            "fallback_models",
+            [fallback_llm, create_llm(is_fallback=True)],
+            "same config params as the main LLM",
+        )
+        assert llm.fallback_models == [fallback_llm]
+        # The rejected fallback LLMs are not taken for the validated ones,
+        # i.e. are rejected again
+        check_rejected(
+            llm,
+            "fallback_models",
+            [fallback_llm, create_llm(is_fallback=True)],
+            "same config params as the main LLM",
+        )
+        # The LLM remains valid, i.e. its other params can be assigned
+        llm.temperature = 0.5
+        llm.fallback_models = []
+        assert llm.fallback_models == []
+
+        # The state derived from the params is not changed either
+        llm_with_tools = create_llm_with_fallback(tools=[rollback_test_tool_1])
+        other_tools = create_llm(tools=[rollback_test_tool_2]).tools
+        assert list(llm_with_tools._tool_registry) == ["rollback_test_tool_1"]
+        check_rejected(
+            llm_with_tools,
+            "tools",
+            other_tools,
+            "must have the same `tools` configuration",
+        )
+        assert list(llm_with_tools._tool_registry) == ["rollback_test_tool_1"]
+
+        # === Model group ===
+        check_rejected(
+            DocumentModelGroup(
+                models=[create_llm(), create_llm("openai/gpt-6.1-sol", role="reasoner")]
+            ),
+            "output_language",
+            "adapt",
+            "must have the same value of `output_language`",
+        )
+
+        # === Concept ===
+        json_object_concept = JsonObjectConcept(
+            name="Party",
+            description="Party details",
+            structure={"name": str},
+            examples=[JsonObjectExample(content={"name": "Acme Inc."})],
+        )
+        check_rejected(
+            json_object_concept,
+            "examples",
+            [JsonObjectExample(content={"name": 1})],
+            "Invalid JSON object structure",
+        )
+        check_rejected(
+            json_object_concept,
+            "structure",
+            {"name": int},
+            "Invalid JSON object structure",
+        )
+        # The concept validates the extracted values against the structure it has
+        assert json_object_concept._process_item_value({"name": "Other Inc."}) == {
+            "name": "Other Inc."
+        }
+
+        # === Paragraph ===
+        check_rejected(
+            Paragraph(raw_text="The liability of the parties is capped."),
+            "sentences",
+            [Sentence(raw_text="This sentence is not in the paragraph.")],
+            "Not all sentences were matched",
+        )
+
+        # === Aspect ===
+        sub_aspect = Aspect(name="Liability caps", description="Liability caps")
+        aspect = Aspect(
+            name="Liability", description="Liability clauses", aspects=[sub_aspect]
+        )
+        check_rejected(
+            aspect,
+            "aspects",
+            [sub_aspect, Aspect(name="Liability", description="Liability clauses")],
+            "cannot have the same name as parent aspect",
+        )
+        assert [i.name for i in aspect.aspects] == ["Liability caps"]
+
+        check_locals_memory_usage(
+            locals(), test_name="test_rejected_assignment_keeps_instance_unchanged"
+        )
+
+    @memory_profile_and_capture
     def test_model_roles_and_concept_modality(self):
         """
         Tests for routing aspects/concepts to LLMs by the free-form model roles, and for
@@ -7275,6 +7455,162 @@ class TestAll(TestUtils):
         assert not any(i.extracted_items for i in document_unprocessed.concepts)
 
         check_locals_memory_usage(locals(), test_name="test_multiple_fallback_models")
+
+    @memory_profile_and_capture
+    def test_deserialize_fallback_models_differing_in_credentials(self):
+        """
+        Tests that an LLM can be deserialized if its fallback LLMs differ from it,
+        or from each other, only in the API credentials.
+
+        The API credentials are removed from the serialized data, so such LLMs have
+        the same config params in that data, while a fallback LLM with the same config
+        params as the main LLM, or as another fallback LLM, is rejected when
+        the fallback LLMs are set.
+
+        No LLM API calls are made, i.e. no cassette is required.
+        """
+
+        from contextgem.internal.base.serialization import (
+            _is_deserialization_in_progress,
+        )
+
+        api_base_1 = "https://endpoint-1.example.com/v1"
+        api_base_2 = "https://endpoint-2.example.com/v1"
+
+        def create_llm(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM of the same model with the given params.
+            """
+            return DocumentLLM(model="openai/gpt-6-luna", **kwargs)
+
+        # Fallback LLM that differs from the main LLM only in the API base,
+        # e.g. the same model served from another endpoint
+        llm_other_api_base = create_llm(
+            api_key="api_key_1",
+            api_base=api_base_1,
+            fallback_models=[
+                create_llm(api_key="api_key_1", api_base=api_base_2, is_fallback=True)
+            ],
+        )
+        # Fallback LLM that differs from the main LLM only in the API key
+        llm_other_api_key = create_llm(
+            api_key="api_key_1",
+            api_base=api_base_1,
+            fallback_models=[
+                create_llm(api_key="api_key_2", api_base=api_base_1, is_fallback=True)
+            ],
+        )
+        # Fallback LLMs that differ only in the API credentials from the main LLM
+        # and from each other
+        llm_fallbacks_other_credentials = create_llm(
+            api_key="api_key_1",
+            api_base=api_base_1,
+            role="reasoner",
+            fallback_models=[
+                create_llm(
+                    api_key="api_key_1",
+                    api_base=api_base_2,
+                    role="reasoner",
+                    is_fallback=True,
+                ),
+                create_llm(
+                    api_key="api_key_2",
+                    api_base=api_base_2,
+                    role="reasoner",
+                    is_fallback=True,
+                ),
+            ],
+        )
+        model_group = DocumentModelGroup(
+            models=[llm_other_api_base, llm_fallbacks_other_credentials]
+        )
+
+        # Deserialized from JSON, from a dict and from disk
+        for instance in [
+            llm_other_api_base,
+            llm_other_api_key,
+            llm_fallbacks_other_credentials,
+            model_group,
+        ]:
+            self._check_deserialized_llm_config_eq(instance)
+
+        # The other params of the fallback LLMs are preserved, and the API credentials
+        # are not, i.e. the deserialized LLMs have the same config params
+        llm_deserialized = DocumentLLM.from_json(
+            llm_fallbacks_other_credentials.to_json()
+        )
+        assert len(llm_deserialized.fallback_models) == 2
+        for llm in [llm_deserialized, *llm_deserialized.fallback_models]:
+            assert llm.model == "openai/gpt-6-luna"
+            assert llm.role == "reasoner"
+            assert llm.api_key is None
+            assert llm.api_base is None
+        assert [i.is_fallback for i in llm_deserialized.fallback_models] == [True, True]
+
+        # The API credentials can be set again in any order: the fallback LLMs are
+        # not checked for the same config params when another param is assigned,
+        # as the LLMs have the same config params until all the credentials are set
+        fallback_llm_1, fallback_llm_2 = llm_deserialized.fallback_models
+        llm_deserialized.api_key = "api_key_1"  # both fallback LLMs are still the same
+        fallback_llm_1.api_key = "api_key_1"  # same as the main LLM
+        fallback_llm_2.api_base = api_base_2
+        llm_deserialized.api_base = api_base_1
+        fallback_llm_1.api_base = api_base_2
+        llm_deserialized.timeout = 60  # an unrelated param
+        fallback_llm_2.api_key = "api_key_2"
+        original_llms = [
+            llm_fallbacks_other_credentials,
+            *llm_fallbacks_other_credentials.fallback_models,
+        ]
+        for llm, original_llm in zip(
+            [llm_deserialized, fallback_llm_1, fallback_llm_2],
+            original_llms,
+            strict=True,
+        ):
+            assert llm.api_key == original_llm.api_key
+            assert llm.api_base == original_llm.api_base
+
+        # The other requirements for the fallback LLMs still apply to the
+        # serialized data, e.g. the role of the main LLM
+        llm_dict = llm_other_api_base.to_dict()
+        llm_dict["fallback_models"][0]["role"] = "another_role"
+        with pytest.raises(ValueError, match="must have the same role"):
+            DocumentLLM.from_dict(llm_dict)
+        # ... and a failed deserialization does not affect the validation that follows
+        assert not _is_deserialization_in_progress()
+
+        # Fallback LLMs with the same config params are still rejected when
+        # created or assigned, including for a deserialized LLM
+        with pytest.raises(ValueError, match="same config params as the main LLM"):
+            create_llm(
+                api_key="api_key_1",
+                api_base=api_base_1,
+                fallback_models=[
+                    create_llm(
+                        api_key="api_key_1", api_base=api_base_1, is_fallback=True
+                    )
+                ],
+            )
+        with pytest.raises(ValueError, match="same config params as each other"):
+            create_llm(
+                api_key="api_key_1",
+                api_base=api_base_1,
+                fallback_models=[
+                    create_llm(api_key="api_key_2", is_fallback=True),
+                    create_llm(api_key="api_key_2", is_fallback=True),
+                ],
+            )
+        llm_deserialized = DocumentLLM.from_json(llm_other_api_base.to_json())
+        llm_deserialized.api_key = "api_key_1"
+        with pytest.raises(ValueError, match="same config params as the main LLM"):
+            llm_deserialized.fallback_models = [
+                create_llm(api_key="api_key_1", is_fallback=True)
+            ]
+
+        check_locals_memory_usage(
+            locals(),
+            test_name="test_deserialize_fallback_models_differing_in_credentials",
+        )
 
     @memory_profile_and_capture
     def test_model_api_request_retries(self):

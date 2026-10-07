@@ -128,13 +128,23 @@ class _Aspect(
         """
 
         if name == "aspects":
-            field_validator = _Aspect.__pydantic_validator__.validate_assignment
-            # Safe cast: Pydantic validator returns validated instance, we know it's an Aspect
-            # since we're validating the "aspects" field of an Aspect object
-            validated_instance = cast(_Aspect, field_validator(self, "aspects", value))
-            aspects = validated_instance.aspects
-            self._validate_and_process_sub_aspects(aspects)  # ty: ignore[invalid-argument-type]
-            super().__setattr__(name, aspects)
+            # The sub-aspects are validated here, without the attribute setter of
+            # the base class, i.e. the fields are to be restored here as well
+            # if the sub-aspects are rejected
+            fields_snapshot = self._get_fields_snapshot()
+            try:
+                field_validator = _Aspect.__pydantic_validator__.validate_assignment
+                # Safe cast: Pydantic validator returns validated instance, we know it's an Aspect
+                # since we're validating the "aspects" field of an Aspect object
+                validated_instance = cast(
+                    _Aspect, field_validator(self, "aspects", value)
+                )
+                aspects = validated_instance.aspects
+                self._validate_and_process_sub_aspects(aspects)  # ty: ignore[invalid-argument-type]
+                super().__setattr__(name, aspects)
+            except Exception:
+                self._restore_fields(fields_snapshot)
+                raise
         else:
             super().__setattr__(name, value)
 

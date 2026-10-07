@@ -76,3 +76,7 @@ processed_doc_deserialized = Document.from_json(
 
 # All extracted data is preserved!
 assert processed_doc_deserialized.aspects[0].concepts[0].extracted_items
+
+# API credentials (API key and API base) are not included in the serialized
+# LLM config, so set them again before using the deserialized LLM
+llm_deserialized.api_key = os.getenv("CONTEXTGEM_OPENAI_API_KEY")

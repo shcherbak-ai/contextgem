@@ -32,6 +32,7 @@ The following ContextGem objects support serialization:
 * :class:`~contextgem.public.documents.Document` - Contains document content and extracted information
 * :class:`~contextgem.public.pipelines.ExtractionPipeline` - Defines extraction structure and logic
 * :class:`~contextgem.public.llms.DocumentLLM` - Stores LLM configuration for document processing
+* :class:`~contextgem.public.llms.DocumentModelGroup` - Stores the configuration of the LLMs in the group
 
 Each object supports three serialization methods:
 
@@ -49,7 +50,32 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 * ``from_disk(file_path)`` - Loads an object from a file on disk
 
 .. note::
-   Deserialization reconstructs the full state of the original object: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality.
+   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality. For LLMs, see :ref:`serialization-llm-credentials-label`.
+
+
+.. _serialization-llm-credentials-label:
+
+🔑 API Credentials of LLMs
+---------------------------
+
+The API credentials of an LLM, i.e. its ``api_key`` and ``api_base``, are never included in the serialized data, so that they do not end up in the files, logs or other systems that the serialized data is passed to. The usage and cost statistics of an LLM are not included either. The other configuration parameters of the LLM are preserved, together with its fallback LLMs.
+
+A deserialized LLM therefore has no API credentials. Set them again before using the LLM, both for the LLM and for each of its fallback LLMs:
+
+.. code-block:: python
+   :caption: Setting the API credentials of a deserialized LLM
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM.from_json(llm_config_json)  # or from_dict() / from_disk()
+
+   llm.api_key = "<your-api-key>"
+   llm.api_base = "<your-api-base>"  # if applicable
+   for fallback_llm in llm.fallback_models:
+       fallback_llm.api_key = "<your-fallback-api-key>"
+       fallback_llm.api_base = "<your-fallback-api-base>"  # if applicable
+
+For a deserialized :class:`~contextgem.public.llms.DocumentModelGroup`, do the same for each LLM in its ``models``.
 
 📝 Example Usage
 -----------------

@@ -10,7 +10,10 @@ from typing import TYPE_CHECKING
 from pydantic import ConfigDict, Field, PrivateAttr
 from ulid import ULID
 
-from contextgem.internal.base.mixins import _PostInitCollectorMixin
+from contextgem.internal.base.mixins import (
+    _AssignmentRollbackMixin,
+    _PostInitCollectorMixin,
+)
 from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.typings.types import JSONDictField
 
@@ -22,7 +25,9 @@ if TYPE_CHECKING:
     )
 
 
-class _AbstractInstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
+class _AbstractInstanceBase(
+    _PostInitCollectorMixin, _AssignmentRollbackMixin, _InstanceSerializer, ABC
+):
     """
     Abstract base for instance-like Pydantic models.
     """
@@ -45,7 +50,9 @@ class _AbstractInstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         return self._unique_id
 
 
-class _AbstractGenericModelProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
+class _AbstractGenericModelProcessor(
+    _PostInitCollectorMixin, _AssignmentRollbackMixin, _InstanceSerializer, ABC
+):
     """
     Abstract base for model-backed processors (single or grouped).
     """

@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from contextvars import ContextVar
 from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
@@ -101,6 +102,27 @@ _PRIVATE_ATTR_PUBLIC_PROPERTY: dict[str, str] = {
     KEY_REFERENCE_PARAGRAPHS_PRIVATE: "reference_paragraphs",
     KEY_REFERENCE_SENTENCES_PRIVATE: "reference_sentences",
 }
+
+# Set while an instance is being created from its serialized data, for the
+# validation that cannot be applied to such data (see the function below)
+_DESERIALIZATION_IN_PROGRESS: ContextVar[bool] = ContextVar(
+    "_DESERIALIZATION_IN_PROGRESS", default=False
+)
+
+
+def _is_deserialization_in_progress() -> bool:
+    """
+    Checks whether an instance is currently being created from its serialized data.
+
+    Serialized data is the data of an instance that was valid when it was serialized,
+    but not all of that data is serialized, e.g. the API credentials of an LLM are
+    removed. The validation that relies on the removed data gives a wrong result
+    for the serialized data, and is to be skipped while such data is deserialized.
+
+    :return: True if called while an instance is being deserialized, False otherwise.
+    :rtype: bool
+    """
+    return _DESERIALIZATION_IN_PROGRESS.get()
 
 
 class _InstanceSerializer(BaseModel):
@@ -369,6 +391,9 @@ class _InstanceSerializer(BaseModel):
         into a new instance of the class. It handles complex nested structures like aspects,
         concepts, and extracted items, properly reconstructing each component.
 
+        A deserialized LLM or model group has no API credentials, as they are not
+        included in the serialized data, i.e. they are to be set again.
+
         :param obj_dict: Dictionary containing the serialized object data.
         :type obj_dict: dict[str, Any]
         :return: A new instance of the class with restored attributes.
@@ -510,7 +535,12 @@ class _InstanceSerializer(BaseModel):
             else:
                 constructor_kwargs[k] = final_val
 
-        new_instance = cls(**constructor_kwargs)
+        # Let the validation know that the instance is created from serialized data
+        token = _DESERIALIZATION_IN_PROGRESS.set(True)
+        try:
+            new_instance = cls(**constructor_kwargs)
+        finally:
+            _DESERIALIZATION_IN_PROGRESS.reset(token)
 
         # Set private attrs separately. Where a private attr is exposed through a
         # public property carrying validation, assign via that property so the

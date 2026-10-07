@@ -21,7 +21,8 @@ Module defining base mixin classes for extending functionality through class com
 
 This module provides mixin classes that can be used to add specific behaviors to other classes
 through multiple inheritance. Currently includes the _PostInitCollectorMixin which enables
-post-initialization processing for Pydantic models.
+post-initialization processing for Pydantic models, and the _AssignmentRollbackMixin which
+keeps a Pydantic model unchanged when an assignment to its field is rejected.
 """
 
 from __future__ import annotations
@@ -83,3 +84,76 @@ class _PostInitCollectorMixin(BaseModel):
                     methods.append(value)
                     seen_ids.add(id(value))
         cls.__post_init_methods__ = methods
+
+
+class _AssignmentRollbackMixin(BaseModel):
+    """
+    A mixin class that keeps an instance unchanged when an assignment to its field
+    is rejected.
+
+    With ``validate_assignment=True``, Pydantic calls the validators of the model that
+    run after the validation of the fields (``@model_validator(mode="after")``) when
+    the new value is already assigned. If such a validator rejects the value, the error
+    is raised, but the rejected value is kept, i.e. the instance is left in the state
+    that the error reports as invalid. This mixin restores the fields of the instance
+    as they were before the assignment.
+
+    Only the fields of the instance are restored. A validator that derives other state
+    from the fields, e.g. private attributes, is to update that state after all its
+    checks pass, so that there is nothing else to restore.
+    """
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Assigns the value to the attribute, restoring the fields of the instance
+        if the value is assigned to a field and is rejected.
+
+        :param name: The name of the attribute to set.
+        :type name: str
+        :param value: The value to assign to the attribute.
+        :type value: Any
+        :return: None
+        :rtype: None
+        """
+        if name not in type(self).model_fields:
+            # Private attributes and properties are not validated by the model
+            super().__setattr__(name, value)
+            return
+
+        fields_snapshot = self._get_fields_snapshot()
+        try:
+            super().__setattr__(name, value)
+        except Exception:
+            self._restore_fields(fields_snapshot)
+            raise
+
+    def _get_fields_snapshot(self) -> tuple[dict[str, Any], set[str]]:
+        """
+        Returns the current values of the fields of the instance, to be restored with
+        ``_restore_fields()`` if an assignment that follows is rejected.
+
+        The values are not copied, i.e. the snapshot does not cover the changes made
+        to a value in place.
+
+        :return: The values of the fields, and the names of the fields that were set
+            explicitly.
+        :rtype: tuple[dict[str, Any], set[str]]
+        """
+        return self.__dict__.copy(), self.__pydantic_fields_set__.copy()
+
+    def _restore_fields(self, fields_snapshot: tuple[dict[str, Any], set[str]]) -> None:
+        """
+        Restores the fields of the instance from the snapshot returned by
+        ``_get_fields_snapshot()``, without validation: the snapshot is taken from
+        the instance, i.e. its values are already validated.
+
+        :param fields_snapshot: The snapshot of the fields to restore.
+        :type fields_snapshot: tuple[dict[str, Any], set[str]]
+        :return: None
+        :rtype: None
+        """
+        fields, fields_set = fields_snapshot
+        self.__dict__.clear()
+        self.__dict__.update(fields)
+        self.__pydantic_fields_set__.clear()
+        self.__pydantic_fields_set__.update(fields_set)

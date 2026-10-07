@@ -88,8 +88,10 @@ class DocumentLLM(_DocumentLLM):
     :ivar deployment_id: Deployment ID for the LLM. Primarily used with Azure OpenAI.
     :vartype deployment_id: str | None
     :ivar api_key: API key for LLM authentication. Not required for local models (e.g., Ollama).
+        Not included in the serialized LLM data, i.e. to be set again after deserialization.
     :vartype api_key: str | None
-    :ivar api_base: Base URL of the API endpoint.
+    :ivar api_base: Base URL of the API endpoint. Not included in the serialized LLM data,
+        i.e. to be set again after deserialization.
     :vartype api_base: str | None
     :ivar api_version: API version. Primarily used with Azure OpenAI.
     :vartype api_version: str | None
@@ -150,8 +152,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype is_fallback: bool
     :ivar fallback_models: DocumentLLMs to use as fallbacks if the current one fails, tried
         in the given order until one of them succeeds. Each must have ``is_fallback=True``
-        and the same role as the current LLM, and must support vision if the current LLM
-        is used to extract concepts from images. Defaults to an empty list.
+        and the same role as the current LLM, must differ from the current LLM and from
+        each other in at least one config param, and must support vision if the current
+        LLM is used to extract concepts from images. Defaults to an empty list.
     :vartype fallback_models: list[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
