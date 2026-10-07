@@ -170,6 +170,43 @@ _TETHERED_RECORDING_ALLOW = [
 # Held privately in this module so test code cannot trip the policy off.
 _TETHERED_LOCK = object()
 
+# Host that tiktoken downloads the token encodings from. Deliberately not a part
+# of the allowlists above: it is reachable only while the token encodings are
+# prepared before the tests start (see `_warm_token_encodings`).
+_TOKEN_ENCODINGS_DOWNLOAD_HOST = "openaipublic.blob.core.windows.net"  # nosec B105 - not a password
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _warm_token_encodings():
+    """
+    Counts tokens once before the tests start, so that the token encodings
+    used by litellm are available during the tests.
+
+    The Windows build of litellm bundles the token encoding files with Windows
+    line endings. tiktoken rejects such files (hash mismatch) and downloads them
+    again on the first token count. During a test, this download is blocked (by VCR
+    in replay mode, by tethered otherwise), in which case tokens cannot be counted
+    and the tests that rely on token counting fail.
+
+    Here, the download happens before VCR and tethered are activated for a test,
+    with the egress limited to the single host it needs, and the encodings are
+    cached in the virtual environment. tiktoken verifies each download against
+    the hash pinned in its package. No network call is made if the encodings are
+    valid, i.e. on Linux and macOS, or once they are cached.
+    """
+    try:
+        with tethered.scope(
+            allow=[_TOKEN_ENCODINGS_DOWNLOAD_HOST],
+            label="tests._warm_token_encodings",
+        ):
+            litellm.token_counter(model="gpt-4o-mini", text="warm-up")
+    except Exception as e:
+        logger.warning(
+            f"Could not prepare the token encodings before the tests: {e}. "
+            "The tests that rely on token counting may fail. "
+            "See the Windows note in CONTRIBUTING.md (Running Tests)."
+        )
+
 
 @pytest.fixture(autouse=True)
 def _tethered_network_guard(request):

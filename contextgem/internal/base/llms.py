@@ -114,6 +114,7 @@ from contextgem.internal.utils import (
     _chunk_list,
     _clean_text_for_llm_prompt,
     _get_llm_api_retry_delay,
+    _get_llm_cache_token_counts,
     _get_template,
     _group_instances_by_fields,
     _is_retryable_llm_api_error,
@@ -1850,6 +1851,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 return new
             existing.input += new.input
             existing.output += new.output
+            existing.cache_read += new.cache_read
+            existing.cache_write += new.cache_write
             existing.calls += new.calls
             return existing
 
@@ -4696,8 +4699,15 @@ class _DocumentLLM(_GenericLLMProcessor):
         :param completion_obj: The raw completion object from the LLM.
         :type completion_obj: Any
         """
-        usage.input += completion_obj.usage.prompt_tokens
-        usage.output += completion_obj.usage.completion_tokens
+        call_obj._input_tokens = completion_obj.usage.prompt_tokens
+        call_obj._output_tokens = completion_obj.usage.completion_tokens
+        call_obj._cache_read_tokens, call_obj._cache_write_tokens = (
+            _get_llm_cache_token_counts(completion_obj.usage)
+        )
+        usage.input += call_obj._input_tokens
+        usage.output += call_obj._output_tokens
+        usage.cache_read += call_obj._cache_read_tokens
+        usage.cache_write += call_obj._cache_write_tokens
         call_obj._record_response_timestamp()
         call_obj.response = answer_text
         usage.calls.append(call_obj)
@@ -5257,18 +5267,34 @@ class _DocumentLLM(_GenericLLMProcessor):
         ),
     )
     def _calculate_auto_pricing_costs(
-        self, input_tokens: int, output_tokens: int
+        self,
+        input_tokens: int,
+        output_tokens: int,
+        cache_read_tokens: int = 0,
+        cache_write_tokens: int = 0,
     ) -> tuple[Decimal, Decimal]:
         """
         Utility method to calculate costs using genai-prices for the given
         input/output token counts. Requires `_auto_pricing_provider_id` and
         `_auto_pricing_model_ref` to be set.
 
-        :param input_tokens: Number of input tokens
+        The input tokens read from and written to the prompt cache are priced
+        at the cache prices of the model, where genai-prices has such prices,
+        and as regular input tokens otherwise.
+
+        :param input_tokens: Number of input tokens, including the tokens read from
+            and written to the prompt cache
         :type input_tokens: int
         :param output_tokens: Number of output tokens
         :type output_tokens: int
-        :return: Tuple of (input_cost, output_cost) as Decimals
+        :param cache_read_tokens: Number of input tokens read from the prompt cache.
+            Defaults to 0.
+        :type cache_read_tokens: int
+        :param cache_write_tokens: Number of input tokens written to the prompt cache.
+            Defaults to 0.
+        :type cache_write_tokens: int
+        :return: Tuple of (input_cost, output_cost) as Decimals, where the input cost
+            includes the cost of the tokens read from and written to the prompt cache
         :rtype: tuple[Decimal, Decimal]
         :raises LookupError: If auto-pricing provider/model are not set
         :raises Exception: Propagates exceptions from genai-prices lookup/calculation
@@ -5281,6 +5307,14 @@ class _DocumentLLM(_GenericLLMProcessor):
             raise LookupError(
                 "Auto-pricing provider/model are not set for this LLM instance"
             )
+
+        # Cache tokens are a part of the input tokens, in genai-prices as well
+        usage = _GPUsage(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
+        )
 
         if self.auto_pricing_refresh and not self._auto_pricing_refresh_attempted:
             # Attempt price update only once, as it involves a network call
@@ -5295,13 +5329,13 @@ class _DocumentLLM(_GenericLLMProcessor):
                 except Exception as e:
                     logger.error(f"Error updating LLM API prices: {e}.")
                 price_data = _calc_auto_price(
-                    _GPUsage(input_tokens=input_tokens, output_tokens=output_tokens),
+                    usage,
                     model_ref=self._auto_pricing_model_ref,
                     provider_id=self._auto_pricing_provider_id,
                 )
         else:
             price_data = _calc_auto_price(
-                _GPUsage(input_tokens=input_tokens, output_tokens=output_tokens),
+                usage,
                 model_ref=self._auto_pricing_model_ref,
                 provider_id=self._auto_pricing_provider_id,
             )
@@ -5316,7 +5350,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         provided pricing details for the LLM or if auto-pricing is enabled.
 
         :param usage: _LLMUsage instance containing usage information on
-                      additional number of input and output tokens processed.
+                      additional number of input and output tokens processed,
+                      including the input tokens read from and written to
+                      the prompt cache, and on the calls that used these tokens.
         :type usage: _LLMUsage
 
         :return: None
@@ -5329,11 +5365,28 @@ class _DocumentLLM(_GenericLLMProcessor):
             cost_output: Decimal = Decimal("0")
 
             if self.pricing_details:
-                cost_input = (Decimal(str(usage.input)) / mil_dec) * Decimal(
-                    str(self.pricing_details.input_per_1m_tokens)
+                pricing = self.pricing_details
+                input_price = Decimal(str(pricing.input_per_1m_tokens))
+                # Cache tokens are a part of the input tokens, and are priced
+                # as regular input tokens unless they have a price of their own
+                cache_read_price = (
+                    input_price
+                    if pricing.cache_read_per_1m_tokens is None
+                    else Decimal(str(pricing.cache_read_per_1m_tokens))
                 )
+                cache_write_price = (
+                    input_price
+                    if pricing.cache_write_per_1m_tokens is None
+                    else Decimal(str(pricing.cache_write_per_1m_tokens))
+                )
+                regular_input = usage.input - usage.cache_read - usage.cache_write
+                cost_input = (
+                    Decimal(str(regular_input)) * input_price
+                    + Decimal(str(usage.cache_read)) * cache_read_price
+                    + Decimal(str(usage.cache_write)) * cache_write_price
+                ) / mil_dec
                 cost_output = (Decimal(str(usage.output)) / mil_dec) * Decimal(
-                    str(self.pricing_details.output_per_1m_tokens)
+                    str(pricing.output_per_1m_tokens)
                 )
 
             elif self.auto_pricing:
@@ -5345,13 +5398,30 @@ class _DocumentLLM(_GenericLLMProcessor):
                     # If not set, skip cost update
                     return
                 try:
-                    cost_input, cost_output = self._calculate_auto_pricing_costs(
-                        usage.input, usage.output
-                    )
-                    if not isinstance(cost_input, Decimal) or not isinstance(
-                        cost_output, Decimal
+                    # Each call is priced on its own, as the prices of some models
+                    # depend on the number of input tokens in a request (price tiers),
+                    # which the usage summed up over several calls would misrepresent
+                    call_costs = [
+                        self._calculate_auto_pricing_costs(
+                            call._input_tokens,
+                            call._output_tokens,
+                            cache_read_tokens=call._cache_read_tokens,
+                            cache_write_tokens=call._cache_write_tokens,
+                        )
+                        for call in usage.calls
+                    ]
+                    if not all(
+                        isinstance(cost, Decimal)
+                        for call_cost in call_costs
+                        for cost in call_cost
                     ):
                         raise RuntimeError("Auto-pricing returned non-Decimal values")
+                    cost_input = sum(
+                        (call_cost[0] for call_cost in call_costs), Decimal("0")
+                    )
+                    cost_output = sum(
+                        (call_cost[1] for call_cost in call_costs), Decimal("0")
+                    )
                 except Exception as e:
                     warning_msg = (
                         f"Unable to fetch pricing data for model `{self.model}`: {e}. "
@@ -5376,8 +5446,8 @@ class _DocumentLLM(_GenericLLMProcessor):
     ) -> None:
         """
         Updates the LLM usage and cost details based on the given processing result.
-        This method  modifies the LLM instance's usage statistics and increments the associated
-        cost if pricing params are provided.
+        This method modifies the LLM instance's usage statistics, whether or not pricing
+        params are provided, and increments the associated cost if they are provided.
 
         :param result: A tuple containing an optional value and usage data. The usage
             data is used to update the instance's input and output usage, as well as
@@ -5391,11 +5461,13 @@ class _DocumentLLM(_GenericLLMProcessor):
             if result is None:
                 return
             new_usage = result[1]
-            # Pricing data
-            if self.pricing_details or self.auto_pricing:
-                self._usage.input += new_usage.input
-                self._usage.output += new_usage.output
-                self._increment_cost(new_usage)
+            # Tokens data
+            self._usage.input += new_usage.input
+            self._usage.output += new_usage.output
+            self._usage.cache_read += new_usage.cache_read
+            self._usage.cache_write += new_usage.cache_write
+            # Pricing data (if pricing is configured)
+            self._increment_cost(new_usage)
             # Calls data
             self._usage.calls += new_usage.calls
 

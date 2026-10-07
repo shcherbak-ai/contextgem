@@ -76,6 +76,13 @@ class _LLMCall(BaseModel):
     response: StrictStr | None = Field(default=None)
     timestamp_received: StrictInt | None = Field(default=None)
 
+    # Tokens used by the call, kept to price each call on its own.
+    # Zero if the response is not received.
+    _input_tokens: int = PrivateAttr(default=0)
+    _output_tokens: int = PrivateAttr(default=0)
+    _cache_read_tokens: int = PrivateAttr(default=0)
+    _cache_write_tokens: int = PrivateAttr(default=0)
+
     def _record_response_timestamp(self) -> None:
         """
         Records the timestamp (in ms) when the response is received.
@@ -102,10 +109,19 @@ class _LLMUsage(_InstanceSerializer):
     """
     Represents the input and output usage of a LLM.
 
-    :ivar input: Represents the number of tokens used for the input of the LLM.
+    :ivar input: Represents the number of tokens used for the input of the LLM,
+        including the tokens read from and written to the prompt cache of the LLM provider.
     :vartype input: int
     :ivar output: Represents the number of tokens generated as output by the LLM.
     :vartype output: int
+    :ivar cache_read: Represents the number of input tokens read from the prompt cache
+        of the LLM provider, i.e. the part of ``input`` that the provider has served
+        from the cache. Zero if the provider does not report cached tokens.
+    :vartype cache_read: int
+    :ivar cache_write: Represents the number of input tokens written to the prompt cache
+        of the LLM provider, i.e. the part of ``input`` that the provider has stored
+        in the cache. Zero if the provider does not report such tokens.
+    :vartype cache_write: int
     :ivar calls: A list of _LLMCall objects representing the data on the individual calls made to the LLM.
     :vartype calls: list[_LLMCall]
     """
@@ -115,6 +131,14 @@ class _LLMUsage(_InstanceSerializer):
         ge=0,
     )
     output: StrictInt = Field(
+        default=0,
+        ge=0,
+    )
+    cache_read: StrictInt = Field(
+        default=0,
+        ge=0,
+    )
+    cache_write: StrictInt = Field(
         default=0,
         ge=0,
     )
@@ -154,7 +178,8 @@ class _LLMCost(_InstanceSerializer):
     Represents a structure for tracking the cost associated with an LLM's
     processing inputs, outputs, and the total processing cost.
 
-    :ivar input: Cost associated with processing the input.
+    :ivar input: Cost associated with processing the input, including the cost
+        of the input tokens read from and written to the prompt cache of the LLM provider.
     :vartype input: Decimal
     :ivar output: Cost associated with generating the output.
     :vartype output: Decimal

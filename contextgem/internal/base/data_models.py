@@ -44,6 +44,22 @@ class _LLMPricing(_InstanceSerializer):
         ge=0,
         description="Cost for generating 1 million output tokens.",
     )
+    cache_read_per_1m_tokens: StrictFloat | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Cost for processing 1 million input tokens read from the prompt cache. "
+            "If not set, such tokens are priced as regular input tokens."
+        ),
+    )
+    cache_write_per_1m_tokens: StrictFloat | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Cost for processing 1 million input tokens written to the prompt cache. "
+            "If not set, such tokens are priced as regular input tokens."
+        ),
+    )
 
     model_config = ConfigDict(
         extra="forbid", frozen=True

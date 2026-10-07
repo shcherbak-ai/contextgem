@@ -647,6 +647,43 @@ def _get_llm_api_retry_delay(retry_number: int) -> float:
     return backoff * random.uniform(0.5, 1.0)  # nosec B311 - not a security context
 
 
+def _get_llm_cache_token_counts(completion_usage: Any) -> tuple[int, int]:
+    """
+    Retrieves the number of input tokens read from, and written to, the prompt cache
+    of the LLM provider, as reported in the usage data of a completion.
+
+    Relies on the prompt token details that litellm populates in the same way for all
+    LLM providers that report such tokens, where they are a part of the prompt tokens.
+    Missing or invalid counts are treated as zero, and the counts are capped so that
+    together they do not exceed the number of prompt tokens, e.g. if a custom API
+    endpoint reports them separately from the prompt tokens.
+
+    :param completion_usage: The usage data of a completion returned by litellm.
+    :type completion_usage: Any
+    :return: A tuple of the number of tokens read from the cache and the number
+        of tokens written to the cache.
+    :rtype: tuple[int, int]
+    """
+    details = getattr(completion_usage, "prompt_tokens_details", None)
+
+    def get_count(attr_name: str) -> int:
+        """
+        Retrieves a token count from the prompt token details.
+
+        :param attr_name: The name of the attribute holding the token count.
+        :type attr_name: str
+        :return: The token count, or zero if it is missing or invalid.
+        :rtype: int
+        """
+        count = getattr(details, attr_name, None)
+        return count if isinstance(count, int) and count > 0 else 0
+
+    prompt_tokens = completion_usage.prompt_tokens
+    cache_read = min(get_count("cached_tokens"), prompt_tokens)
+    cache_write = min(get_count("cache_write_tokens"), prompt_tokens - cache_read)
+    return cache_read, cache_write
+
+
 def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | None:
     """
     Removes thinking content enclosed in <think></think> tags from the beginning of LLM outputs.

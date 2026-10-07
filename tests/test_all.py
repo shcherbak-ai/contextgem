@@ -107,6 +107,7 @@ from contextgem.internal.registry import (
 )
 from contextgem.internal.utils import (
     _get_llm_api_retry_delay,
+    _get_llm_cache_token_counts,
     _get_template,
     _is_retryable_llm_api_error,
     _load_sat_model,
@@ -431,10 +432,21 @@ class TestAll(TestUtils):
         """
         # LLM usage model
         _LLMUsage(input=30, output=10)
+        _LLMUsage(input=30, output=10, cache_read=20, cache_write=5)
         with pytest.raises(ValueError):
             _LLMUsage(input=-1, output=2)
+        with pytest.raises(ValueError):
+            _LLMUsage(input=30, output=10, cache_read=-1)
+        with pytest.raises(ValueError):
+            _LLMUsage(input=30, output=10, cache_write=-1)
         # LLM pricing model
         LLMPricing(input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006)
+        LLMPricing(
+            input_per_1m_tokens=0.00015,
+            output_per_1m_tokens=0.0006,
+            cache_read_per_1m_tokens=0.000075,
+            cache_write_per_1m_tokens=0.0001875,
+        )
         with pytest.raises(ValueError):
             LLMPricing(input_per_1m_tokens=-1, output_per_1m_tokens=0)
         with pytest.raises(ValueError):
@@ -2213,6 +2225,270 @@ class TestAll(TestUtils):
 
         check_locals_memory_usage(
             locals(), test_name="test_llm_group_usage_and_cost_by_role"
+        )
+
+    @memory_profile_and_capture
+    def test_cached_tokens_usage_and_cost(self):
+        """
+        Tests for tracking the input tokens read from and written to the prompt cache
+        of the LLM provider, and for pricing such tokens when calculating the costs.
+        """
+
+        litellm = llms_module.litellm
+        answer = '[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+
+        # === Cache token counts reported by litellm ===
+        usage_cases: list[tuple[dict[str, Any], tuple[int, int]]] = [
+            # No cache tokens reported
+            ({}, (0, 0)),
+            ({"prompt_tokens_details": {"cached_tokens": None}}, (0, 0)),
+            # As reported e.g. for OpenAI, Gemini
+            ({"prompt_tokens_details": {"cached_tokens": 1500}}, (1500, 0)),
+            # As reported e.g. for Anthropic, Bedrock
+            ({"cache_read_input_tokens": 1200}, (1200, 0)),
+            ({"cache_creation_input_tokens": 500}, (0, 500)),
+            (
+                {"cache_read_input_tokens": 1200, "cache_creation_input_tokens": 500},
+                (1200, 500),
+            ),
+            # As reported e.g. for DeepSeek
+            ({"prompt_cache_hit_tokens": 800}, (800, 0)),
+            # Cache tokens are a part of the prompt tokens, i.e. cannot exceed them
+            ({"prompt_tokens_details": {"cached_tokens": 3000}}, (2000, 0)),
+            (
+                {"cache_read_input_tokens": 1500, "cache_creation_input_tokens": 900},
+                (1500, 500),
+            ),
+        ]
+        for usage_kwargs, expected_counts in usage_cases:
+            completion_usage = litellm.Usage(
+                prompt_tokens=2000, completion_tokens=100, **usage_kwargs
+            )
+            assert _get_llm_cache_token_counts(completion_usage) == expected_counts
+        # Usage data without the prompt token details
+        assert _get_llm_cache_token_counts(
+            types.SimpleNamespace(prompt_tokens=2000, completion_tokens=100)
+        ) == (0, 0)
+
+        # === Usage and cost of an LLM ===
+        completion_usages: list[Any] = []  # usage data of the upcoming completions
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, with the usage data of each completion
+            taken from the queue.
+            """
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(message=types.SimpleNamespace(content=answer))
+                ],
+                usage=completion_usages.pop(0),
+            )
+
+        def create_llm(
+            model: str = "openai/gpt-4.1-mini", **kwargs: Any
+        ) -> DocumentLLM:
+            """
+            Creates an LLM with the specified pricing params.
+            """
+            return DocumentLLM(
+                model=model, api_key="test_api_key", system_message="", **kwargs
+            )
+
+        def queue_completion_usages() -> None:
+            """
+            Queues the usage data of two completions: the first one writes
+            a part of the prompt to the cache, the second one reads it from the cache.
+            """
+            completion_usages[:] = [
+                litellm.Usage(
+                    prompt_tokens=200_000,
+                    completion_tokens=10_000,
+                    cache_creation_input_tokens=150_000,
+                ),
+                litellm.Usage(
+                    prompt_tokens=200_000,
+                    completion_tokens=10_000,
+                    prompt_tokens_details={"cached_tokens": 150_000},
+                ),
+            ]
+
+        def calc_auto_prices(
+            model: str, **usage_kwargs: int
+        ) -> tuple[Decimal, Decimal]:
+            """
+            Calculates the input and output prices of the usage with genai-prices.
+            """
+            provider_id, model_ref = model.split("/")
+            price = llms_module._calc_auto_price(
+                llms_module._GPUsage(**usage_kwargs),
+                model_ref=model_ref,
+                provider_id=provider_id,
+            )
+            return price.input_price, price.output_price
+
+        def check_usage(llm: DocumentLLM) -> None:
+            """
+            Checks the usage of the LLM after the two queued completions.
+            """
+            assert not completion_usages  # both completions are received
+            usage = llm.get_usage()[0].usage
+            assert (usage.input, usage.output) == (400_000, 20_000)
+            assert (usage.cache_read, usage.cache_write) == (150_000, 150_000)
+            assert len(usage.calls) == 2
+
+        document = Document(
+            raw_text="Non-disclosure agreement\n\nThe parties agree as follows."
+        )
+        document.concepts = [StringConcept(name="Title", description="Contract title")]
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # Cache tokens are priced at the cache prices, if set
+            for pricing_kwargs, expected_input_cost in [
+                # 100K regular * 1.0 + 150K read * 0.1 + 150K written * 1.25
+                (
+                    {
+                        "cache_read_per_1m_tokens": 0.1,
+                        "cache_write_per_1m_tokens": 1.25,
+                    },
+                    Decimal("0.3025"),
+                ),
+                # 250K regular and written * 1.0 + 150K read * 0.1
+                ({"cache_read_per_1m_tokens": 0.1}, Decimal("0.265")),
+                # 250K regular and read * 1.0 + 150K written * 1.25
+                ({"cache_write_per_1m_tokens": 1.25}, Decimal("0.4375")),
+                # 150K read * 0.0 (cache tokens can be free of charge)
+                ({"cache_read_per_1m_tokens": 0.0}, Decimal("0.25")),
+                # ...and as regular input tokens otherwise: 400K * 1.0
+                ({}, Decimal("0.4")),
+            ]:
+                llm = create_llm(
+                    pricing_details=LLMPricing(
+                        input_per_1m_tokens=1.0,
+                        output_per_1m_tokens=4.0,
+                        **pricing_kwargs,
+                    )
+                )
+                # Each paragraph is processed in a separate request,
+                # with the usage of the requests merged
+                queue_completion_usages()
+                llm.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                    max_paragraphs_to_analyze_per_call=1,
+                )
+                check_usage(llm)
+                cost = llm.get_cost()[0].cost
+                assert cost.input == expected_input_cost
+                assert cost.output == Decimal("0.08")  # 20K * 4.0
+                assert cost.total == cost.input + cost.output
+                self._check_deserialized_llm_config_eq(llm)
+
+            # The same applies to chat
+            llm = create_llm(
+                pricing_details=LLMPricing(
+                    input_per_1m_tokens=1.0,
+                    output_per_1m_tokens=4.0,
+                    cache_read_per_1m_tokens=0.1,
+                    cache_write_per_1m_tokens=1.25,
+                )
+            )
+            queue_completion_usages()
+            llm.chat("Test")
+            llm.chat("Test")
+            check_usage(llm)
+            assert llm.get_cost()[0].cost.input == Decimal("0.3025")
+
+            llm.reset_usage_and_cost()
+            usage = llm.get_usage()[0].usage
+            assert (usage.cache_read, usage.cache_write) == (0, 0)
+
+            # Tokens are counted whether or not pricing is configured
+            llm = create_llm()
+            queue_completion_usages()
+            llm.extract_concepts_from_document(
+                document, overwrite_existing=True, max_paragraphs_to_analyze_per_call=1
+            )
+            check_usage(llm)
+            cost = llm.get_cost()[0].cost
+            assert (cost.input, cost.output, cost.total) == (0, 0, 0)
+
+            # Auto-pricing: cache tokens are priced at the cache prices of the model.
+            # Each request is priced on its own, also when the usage of the requests
+            # is merged, as the price tier of a model with tiered prices depends
+            # on the number of input tokens in a request.
+            for model, has_price_tiers in [
+                ("openai/gpt-4.1-mini", False),
+                ("anthropic/claude-sonnet-4-5", True),  # higher prices above 200K
+            ]:
+                with pytest.warns(
+                    UserWarning, match="prices will not be 100% accurate."
+                ):
+                    llm = create_llm(model, auto_pricing=True)
+                queue_completion_usages()
+                llm.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                    max_paragraphs_to_analyze_per_call=1,
+                )
+                check_usage(llm)
+                request_prices = [
+                    calc_auto_prices(
+                        model,
+                        input_tokens=200_000,
+                        output_tokens=10_000,
+                        **cache_tokens,
+                    )
+                    for cache_tokens in [
+                        {"cache_write_tokens": 150_000},
+                        {"cache_read_tokens": 150_000},
+                    ]
+                ]
+                cost = llm.get_cost()[0].cost
+                assert cost.input == sum(i[0] for i in request_prices)
+                assert cost.output == sum(i[1] for i in request_prices)
+                # ...which differs from the price of the same tokens without the cache
+                assert (
+                    cost.input
+                    != 2
+                    * calc_auto_prices(
+                        model, input_tokens=200_000, output_tokens=10_000
+                    )[0]
+                )
+                # ...and from the price of the merged usage, if it gets to another tier
+                merged_usage_prices = calc_auto_prices(
+                    model,
+                    input_tokens=400_000,
+                    output_tokens=20_000,
+                    cache_read_tokens=150_000,
+                    cache_write_tokens=150_000,
+                )
+                assert (
+                    merged_usage_prices != (cost.input, cost.output)
+                ) == has_price_tiers
+
+        # === Pricing model ===
+        invalid_pricing_cases: list[dict[str, Any]] = [
+            {"cache_read_per_1m_tokens": -0.1},
+            {"cache_write_per_1m_tokens": -0.1},
+            {"cache_read_per_1m_tokens": "0.1"},
+        ]
+        for invalid_pricing_kwargs in invalid_pricing_cases:
+            with pytest.raises(ValueError):
+                LLMPricing(
+                    input_per_1m_tokens=1.0,
+                    output_per_1m_tokens=4.0,
+                    **invalid_pricing_kwargs,
+                )
+        # Pricing serialized without the cache prices can still be deserialized
+        pricing = LLMPricing(input_per_1m_tokens=1.0, output_per_1m_tokens=4.0)
+        pricing_dict = pricing.to_dict()
+        for key in ["cache_read_per_1m_tokens", "cache_write_per_1m_tokens"]:
+            assert pricing_dict.pop(key) is None
+        assert LLMPricing.from_dict(pricing_dict) == pricing
+
+        check_locals_memory_usage(
+            locals(), test_name="test_cached_tokens_usage_and_cost"
         )
 
     @memory_profile_and_capture

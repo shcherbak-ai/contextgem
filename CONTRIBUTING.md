@@ -512,6 +512,8 @@ LLM API calls are deliberately **not** scoped — endpoints are user-configured 
 
 The fixture activates tethered in **hardened mode** (`locked=True` with a private lock token, `external_subprocess_policy="block"`), so test code can't disable the policy mid-test and non-Python subprocesses are refused — closing the shell-egress bypass.
 
+The policy above applies while a test runs. Before the tests start, the `_warm_token_encodings` session fixture counts tokens once, so that the token encodings used by `litellm` are available during the tests. On Windows, this downloads the encodings if `tiktoken` rejects the bundled ones (see the Windows note in [Running Tests](#-running-tests)). The download is wrapped with `tethered.scope` that allows a single host (`openaipublic.blob.core.windows.net`), which is deliberately not a part of the replay and recording allowlists, and `tiktoken` verifies each downloaded encoding against the hash pinned in its package.
+
 The host allowlists in `tests/conftest.py` are sourced from the production constants (`_SAT_MODEL_DOWNLOAD_HOSTS`, `_GENAI_PRICES_REFRESH_HOSTS`) so the test allowlist cannot drift from the per-call production scopes. If you add tests that connect to new endpoints (other than these two), update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
 
 ---
@@ -530,6 +532,14 @@ Run specific tests:
 # Run a specific test method
 uv run pytest tests/test_all.py::TestAll::test_extract_all
 ```
+
+**🪟 Windows only**: The first test run after `litellm` is installed or reinstalled in your virtual environment (e.g. after upgrading the dependencies) needs network access, to download the token encodings before the tests start. This happens automatically. If the download fails (e.g. you are offline or behind a proxy), a warning is logged at the start of the test run, and several unrelated-looking tests fail, such as the local LLM tests, `test_input_output_token_validation`, and `test_very_long_doc_extraction`. In that case, run the following command once, with network access, and run the tests again:
+
+```bash
+uv run python -c "import litellm; litellm.token_counter(model='gpt-4o-mini', text='test')"
+```
+
+> **Why:** The Windows build of `litellm` bundles the token encoding files with Windows line endings, which the tokenizer library (`tiktoken`) rejects, so that the encodings are downloaded on the first token count instead. During a test, this download is blocked (by VCR in replay mode, by `tethered` in the tests that are not VCR-marked), in which case tokens cannot be counted. Therefore, the encodings are downloaded before the tests start (see [Network Egress Control](#network-egress-control)) and cached in the virtual environment. The Linux and macOS builds of `litellm` are not affected.
 
 **🔍 Optional Memory Profiling**: For performance testing, you can enable memory profiling to analyze memory usage during test execution:
 

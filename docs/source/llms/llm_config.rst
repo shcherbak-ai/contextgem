@@ -122,7 +122,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``pricing_details``
      - ``LLMPricing | None``
      - ``None``
-     - :class:`~contextgem.public.data_models.LLMPricing` object with pricing details for cost calculation.
+     - :class:`~contextgem.public.data_models.LLMPricing` object with pricing details for cost calculation: the prices of input and output tokens and, optionally, of the input tokens read from and written to the prompt cache of the provider.
    * - ``auto_pricing``
      - ``bool``
      - ``False``
@@ -228,6 +228,20 @@ You can configure pricing parameters to track costs:
    :caption: Setting up LLM cost tracking
 
 
+.. _llm-cached-tokens-label:
+
+💾 How Cached Tokens Are Priced
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some LLM providers cache the beginning of a prompt and reuse it across requests (prompt caching), in which case they report how many input tokens of a request were read from the cache, and some of them also how many were written to it. Tokens read from the cache are usually priced lower than regular input tokens, while tokens written to the cache may be priced higher. ContextGem does not configure prompt caching, but takes such tokens into account in the calculated costs whenever the provider reports them:
+
+- With ``auto_pricing=True``, they are priced at the cache prices of the model, if ``genai-prices`` has such prices, and as regular input tokens otherwise.
+- With ``pricing_details``, they are priced at the optional ``cache_read_per_1m_tokens`` and ``cache_write_per_1m_tokens`` of :class:`~contextgem.public.data_models.LLMPricing`. If a cache price is not set, the corresponding tokens are priced as regular input tokens, i.e. at ``input_per_1m_tokens``.
+
+.. note::
+   Tokens written to the cache are priced at the standard cache write price of the model. A longer cache lifetime that a provider may offer at a higher price (e.g. 1-hour cache writes of Anthropic models) is not priced separately. Such a lifetime has to be requested explicitly, which ContextGem does not do.
+
+
 🧠 Using Model-Specific Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -282,6 +296,10 @@ You can track input/output token usage and costs:
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/tracking_usage_and_cost.py
    :language: python
    :caption: Tracking usage and cost
+
+Token usage is tracked for every LLM, while costs are calculated only if pricing is configured for the LLM, i.e. ``pricing_details`` or ``auto_pricing`` is set.
+
+The ``input`` token count includes the tokens that the LLM provider read from, or wrote to, its prompt cache. Such tokens are also counted separately, as ``cache_read`` and ``cache_write``, which are zero if the provider does not report them. Accordingly, the ``input`` cost includes the cost of such tokens (see :ref:`llm-cached-tokens-label`).
 
 The usage statistics include not only token counts but also detailed information about each individual call made to the LLM. You can access the call history, including prompts, responses, and timestamps:
 

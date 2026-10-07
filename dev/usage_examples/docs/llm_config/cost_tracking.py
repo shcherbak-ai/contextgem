@@ -8,6 +8,8 @@ llm = DocumentLLM(
     pricing_details=LLMPricing(
         input_per_1m_tokens=0.150,  # Cost per 1M input tokens
         output_per_1m_tokens=0.600,  # Cost per 1M output tokens
+        # Optional: cost per 1M input tokens read from the provider's prompt cache
+        cache_read_per_1m_tokens=0.075,
     ),
 )
 
