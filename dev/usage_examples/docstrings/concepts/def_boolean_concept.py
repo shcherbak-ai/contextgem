@@ -5,7 +5,7 @@ from contextgem import BooleanConcept
 has_confidentiality = BooleanConcept(
     name="Contains confidentiality clause",
     description="Determines whether the contract includes provisions requiring parties to maintain confidentiality",
-    llm_role="reasoner",
+    model_role="reasoner",
     singular_occurrence=True,
     add_justifications=True,
     justification_depth="brief",

@@ -22,12 +22,12 @@ Module defining public data validation models.
 
 from __future__ import annotations
 
-from contextgem.internal.base.data_models import _LLMPricing
+from contextgem.internal.base.data_models import _ModelPricing
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_LLMPricing)  # ty: ignore[too-many-positional-arguments]
-class LLMPricing(_LLMPricing):
+@_expose_in_registry(additional_key=_ModelPricing)  # ty: ignore[too-many-positional-arguments]
+class ModelPricing(_ModelPricing):
     """
     Represents the pricing details for an LLM.
 
@@ -50,9 +50,9 @@ class LLMPricing(_LLMPricing):
     :vartype cache_write_per_1m_tokens: StrictFloat | None
 
     Example:
-        .. literalinclude:: ../../../dev/usage_examples/docstrings/data_models/def_llm_pricing.py
+        .. literalinclude:: ../../../dev/usage_examples/docstrings/data_models/def_model_pricing.py
             :language: python
-            :caption: LLM pricing definition
+            :caption: Model pricing definition
     """
 
     pass

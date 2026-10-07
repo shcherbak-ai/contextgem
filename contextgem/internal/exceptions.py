@@ -23,12 +23,12 @@ Module defining custom exceptions for the ContextGem framework.
 from __future__ import annotations
 
 
-# LLM exceptions
+# Model exceptions
 
 
-class _BaseLLMError(Exception):
+class _BaseModelError(Exception):
     """
-    Base exception class for LLM-related errors.
+    Base exception class for model-related errors.
 
     :ivar message: Human-readable error description
     :vartype message: str
@@ -77,12 +77,12 @@ class _BaseLLMError(Exception):
         return base_msg
 
 
-class LLMExtractionError(_BaseLLMError):
+class ModelExtractionError(_BaseModelError):
     """
-    Exception raised when LLM extraction operations fail after all configured retries.
+    Exception raised when model extraction operations fail after all configured retries.
 
     This exception is typically raised when:
-    - LLM extraction attempts have been exhausted without success
+    - Model extraction attempts have been exhausted without success
     - The extracted data doesn't meet validation requirements
     - Parsing of extracted content fails consistently
 
@@ -97,9 +97,9 @@ class LLMExtractionError(_BaseLLMError):
     pass
 
 
-class LLMAPIError(_BaseLLMError):
+class ModelAPIError(_BaseModelError):
     """
-    Exception raised when LLM API calls fail.
+    Exception raised when model API calls fail.
 
     This exception is typically raised when:
     - Network errors occur during API communication
@@ -122,7 +122,7 @@ class LLMAPIError(_BaseLLMError):
 # Tool calling / tooling exceptions
 
 
-class LLMToolLoopLimitError(_BaseLLMError):
+class LLMToolLoopLimitError(_BaseModelError):
     """
     Exception raised when the assistant's tool-calling loop reaches the
     configured `tool_max_rounds` limit and the model continues requesting tools.

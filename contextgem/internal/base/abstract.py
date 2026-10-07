@@ -1,5 +1,5 @@
 """
-Abstract base layer for instance and LLM processor types.
+Abstract base layer for instance and model processor types.
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ from contextgem.internal.typings.types import JSONDictField
 
 if TYPE_CHECKING:
     from contextgem.internal.data_models import (
-        _LLMCostOutputContainer,
-        _LLMUsageOutputContainer,
+        _ModelCostOutputContainer,
+        _ModelUsageOutputContainer,
     )
 
 
@@ -45,9 +45,9 @@ class _AbstractInstanceBase(_PostInitCollectorMixin, _InstanceSerializer, ABC):
         return self._unique_id
 
 
-class _AbstractGenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
+class _AbstractGenericModelProcessor(_PostInitCollectorMixin, _InstanceSerializer, ABC):
     """
-    Abstract base for LLM-backed processors (single or grouped).
+    Abstract base for model-backed processors (single or grouped).
     """
 
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
@@ -68,7 +68,7 @@ class _AbstractGenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer,
         """
         Abstract property, to be implemented by subclasses.
 
-        Returns the list of all LLM roles in the LLM group or LLM.
+        Returns the list of all model roles in the model group or LLM.
         None on the list stands for an LLM without a role.
         """
         pass
@@ -78,26 +78,26 @@ class _AbstractGenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer,
         """
         Abstract method, to be implemented by subclasses.
 
-        Sets private attributes for the LLM group or LLM, e.g. prompts, capabilities, etc.
+        Sets private attributes for the model group or LLM, e.g. prompts, capabilities, etc.
         """
         pass
 
     @abstractmethod
-    def get_usage(self, *args, **kwargs) -> list[_LLMUsageOutputContainer]:
+    def get_usage(self, *args, **kwargs) -> list[_ModelUsageOutputContainer]:
         """
         Abstract method, to be implemented by subclasses.
 
-        Returns the usage data for the LLM group or LLM.
+        Returns the usage data for the model group or LLM.
         """
         pass
 
     @abstractmethod
-    def get_cost(self, *args, **kwargs) -> list[_LLMCostOutputContainer]:
+    def get_cost(self, *args, **kwargs) -> list[_ModelCostOutputContainer]:
         """
         Abstract method, to be implemented by subclasses.
 
-        Returns the cost data for the LLM group or LLM as a list of
-        `_LLMCostOutputContainer` entries. Implementations may accept optional
+        Returns the cost data for the model group or LLM as a list of
+        `_ModelCostOutputContainer` entries. Implementations may accept optional
         filter parameters (e.g., role) where applicable.
         """
         pass
@@ -107,7 +107,7 @@ class _AbstractGenericLLMProcessor(_PostInitCollectorMixin, _InstanceSerializer,
         """
         Abstract method, to be implemented by subclasses.
 
-        Resets the usage and cost data for the LLM group or LLM. Implementations
+        Resets the usage and cost data for the model group or LLM. Implementations
         may support optional filters (e.g., by role) where applicable.
         """
         pass

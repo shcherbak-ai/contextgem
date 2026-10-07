@@ -44,23 +44,23 @@ from contextgem.internal.base.serialization import _InstanceSerializer
 from contextgem.internal.decorators import _expose_in_registry
 from contextgem.internal.typings.types import (
     DefaultDecimalField,
-    LLMRole,
     MessageRole,
+    ModelRole,
     NonEmptyStr,
 )
 
 
-class _LLMCall(BaseModel):
+class _ModelCall(BaseModel):
     """
-    Holds data on an individual call to the LLM.
+    Holds data on an individual call to the model.
 
     :ivar timestamp_sent: The epoch timestamp (in ms) when the prompt was sent.
     :vartype timestamp_sent: int
     :ivar prompt_kwargs: The kwargs passed for prompt rendering.
     :vartype prompt_kwargs: dict[str, Any]
-    :ivar prompt: The fully rendered input prompt sent to the LLM.
+    :ivar prompt: The fully rendered input prompt sent to the model.
     :vartype prompt: str
-    :ivar response: The raw text response returned by the LLM for the given prompt.
+    :ivar response: The raw text response returned by the model for the given prompt.
         Defaults to None if the response is not yet received.
     :vartype response: str | None
     :ivar timestamp_received: The epoch timestamp (in ms) when the response was received.
@@ -95,7 +95,7 @@ class _LLMCall(BaseModel):
 
     def _get_time_spent(self):
         """
-        Calculates the time spent on the LLM call in seconds.
+        Calculates the time spent on the model call in seconds.
 
         :return: Time difference between `timestamp_received` and `timestamp_sent` in seconds,
                  as a float limited to 2 decimal points, or None if `timestamp_received` is not set.
@@ -105,25 +105,25 @@ class _LLMCall(BaseModel):
         return round((self.timestamp_received - self.timestamp_sent) / 1000, 2)
 
 
-class _LLMUsage(_InstanceSerializer):
+class _ModelUsage(_InstanceSerializer):
     """
-    Represents the input and output usage of a LLM.
+    Represents the input and output usage of a model.
 
-    :ivar input: Represents the number of tokens used for the input of the LLM,
-        including the tokens read from and written to the prompt cache of the LLM provider.
+    :ivar input: Represents the number of tokens used for the input of the model,
+        including the tokens read from and written to the prompt cache of the model provider.
     :vartype input: int
-    :ivar output: Represents the number of tokens generated as output by the LLM.
+    :ivar output: Represents the number of tokens generated as output by the model.
     :vartype output: int
     :ivar cache_read: Represents the number of input tokens read from the prompt cache
-        of the LLM provider, i.e. the part of ``input`` that the provider has served
+        of the model provider, i.e. the part of ``input`` that the provider has served
         from the cache. Zero if the provider does not report cached tokens.
     :vartype cache_read: int
     :ivar cache_write: Represents the number of input tokens written to the prompt cache
-        of the LLM provider, i.e. the part of ``input`` that the provider has stored
+        of the model provider, i.e. the part of ``input`` that the provider has stored
         in the cache. Zero if the provider does not report such tokens.
     :vartype cache_write: int
-    :ivar calls: A list of _LLMCall objects representing the data on the individual calls made to the LLM.
-    :vartype calls: list[_LLMCall]
+    :ivar calls: A list of _ModelCall objects representing the data on the individual calls made to the model.
+    :vartype calls: list[_ModelCall]
     """
 
     input: StrictInt = Field(
@@ -142,44 +142,44 @@ class _LLMUsage(_InstanceSerializer):
         default=0,
         ge=0,
     )
-    calls: list[_LLMCall] = Field(default_factory=list)
+    calls: list[_ModelCall] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
 
-class _LLMUsageOutputContainer(BaseModel):
+class _ModelUsageOutputContainer(BaseModel):
     """
-    Container class for storing the usage data storage unit for an LLM,
-    i.e. part of the list returned by the LLM's get_usage() method.
+    Container class for storing the usage data storage unit for a model,
+    i.e. part of the list returned by the model's get_usage() method.
 
     :ivar model: The name or identifier of the model being used.
     :vartype model: str
     :ivar role: The role label of the model, or None if the model has no role.
     :vartype role: str | None
-    :ivar is_fallback: Indicates whether the LLM is a fallback model.
+    :ivar is_fallback: Indicates whether the model is a fallback model.
     :vartype is_fallback: StrictBool
-    :ivar usage: Detailed usage information encapsulated in a `_LLMUsage`
+    :ivar usage: Detailed usage information encapsulated in a `_ModelUsage`
         object.
-    :vartype usage: _LLMUsage
+    :vartype usage: _ModelUsage
     """
 
     model: NonEmptyStr
-    role: LLMRole | None
+    role: ModelRole | None
     is_fallback: StrictBool
-    usage: _LLMUsage
+    usage: _ModelUsage
 
     model_config = ConfigDict(
         extra="forbid", frozen=True
     )  # make immutable once created
 
 
-class _LLMCost(_InstanceSerializer):
+class _ModelCost(_InstanceSerializer):
     """
-    Represents a structure for tracking the cost associated with an LLM's
+    Represents a structure for tracking the cost associated with a model's
     processing inputs, outputs, and the total processing cost.
 
     :ivar input: Cost associated with processing the input, including the cost
-        of the input tokens read from and written to the prompt cache of the LLM provider.
+        of the input tokens read from and written to the prompt cache of the model provider.
     :vartype input: Decimal
     :ivar output: Cost associated with generating the output.
     :vartype output: Decimal
@@ -194,25 +194,25 @@ class _LLMCost(_InstanceSerializer):
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
 
-class _LLMCostOutputContainer(BaseModel):
+class _ModelCostOutputContainer(BaseModel):
     """
-    Container class for storing the cost data storage unit for an LLM,
-    i.e. part of the list returned by the LLM's get_cost() method.
+    Container class for storing the cost data storage unit for a model,
+    i.e. part of the list returned by the model's get_cost() method.
 
     :ivar model: The name of the language model being used.
     :vartype model: str
     :ivar role: The role label of the model, or None if the model has no role.
     :vartype role: str | None
-    :ivar is_fallback: Indicates if the LLM is a fallback model.
+    :ivar is_fallback: Indicates if the model is a fallback model.
     :vartype is_fallback: bool
-    :ivar cost: The _LLMCost object associated with the LLM execution.
-    :vartype cost: _LLMCost
+    :ivar cost: The _ModelCost object associated with the model execution.
+    :vartype cost: _ModelCost
     """
 
     model: NonEmptyStr
-    role: LLMRole | None
+    role: ModelRole | None
     is_fallback: StrictBool
-    cost: _LLMCost
+    cost: _ModelCost
 
     model_config = ConfigDict(
         extra="forbid", frozen=True

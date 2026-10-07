@@ -1,4 +1,4 @@
-from contextgem import DocumentLLM, DocumentLLMGroup
+from contextgem import DocumentLLM, DocumentModelGroup
 
 
 # Create an extractor LLM with a fallback. This LLM has no role, i.e. it extracts
@@ -16,10 +16,10 @@ extractor_fallback = DocumentLLM(
 )
 
 # Assign the fallback LLM to the primary extractor
-extractor.fallback_llms = [extractor_fallback]
+extractor.fallback_models = [extractor_fallback]
 
 # Create a reasoner LLM. A role is a label of your choice: this LLM extracts
-# the aspects and concepts that have `llm_role="reasoner"`.
+# the aspects and concepts that have `model_role="reasoner"`.
 reasoner = DocumentLLM(
     model="openai/gpt-6.1-sol",
     api_key="your-openai-api-key",  # Replace with your actual API key
@@ -27,29 +27,29 @@ reasoner = DocumentLLM(
 )
 
 # Create an LLM dedicated to images. This LLM extracts the concepts that have
-# `llm_role="vision"`, e.g. the concepts with `modality="image"`.
+# `model_role="vision"`, e.g. the concepts with `modality="image"`.
 vision_extractor = DocumentLLM(
     model="openai/gpt-5.6-luna",
     api_key="your-openai-api-key",  # Replace with your actual API key
     role="vision",  # For extraction from images
 )
 
-# Create a DocumentLLMGroup with all three LLMs
-llm_group = DocumentLLMGroup(
-    llms=[extractor, reasoner, vision_extractor],
+# Create a DocumentModelGroup with all three LLMs
+model_group = DocumentModelGroup(
+    models=[extractor, reasoner, vision_extractor],
     output_language="en",  # All LLMs must have the same output language ("en" is default)
 )
 # This group will have 4 LLMs: three main ones, with different roles,
 # and one fallback LLM for a specific LLM. Each LLM can have one or more fallback LLMs.
 
 # Get usage statistics for the whole group or for a specific role
-group_usage = llm_group.get_usage()
-reasoner_usage = llm_group.get_usage(llm_role="reasoner")
+group_usage = model_group.get_usage()
+reasoner_usage = model_group.get_usage(model_role="reasoner")
 
 # Get cost statistics for the whole group or for a specific role
-all_costs = llm_group.get_cost()
-reasoner_cost = llm_group.get_cost(llm_role="reasoner")
+all_costs = model_group.get_cost()
+reasoner_cost = model_group.get_cost(model_role="reasoner")
 
 # Reset usage and cost statistics for the whole group or for a specific role
-llm_group.reset_usage_and_cost()
-llm_group.reset_usage_and_cost(llm_role="reasoner")
+model_group.reset_usage_and_cost()
+model_group.reset_usage_and_cost(model_role="reasoner")

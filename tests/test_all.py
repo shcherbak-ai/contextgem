@@ -64,28 +64,28 @@ from contextgem.internal.base.concepts import (
     _RatingConcept,
     _StringConcept,
 )
-from contextgem.internal.base.data_models import _LLMPricing
+from contextgem.internal.base.data_models import _ModelPricing
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.base.llms import (
     _DocumentLLM,
-    _DocumentLLMGroup,
+    _DocumentModelGroup,
 )
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.data_models import (
-    _LLMCall,
-    _LLMCost,
-    _LLMUsage,
     _Message,
+    _ModelCall,
+    _ModelCost,
+    _ModelUsage,
 )
 from contextgem.internal.exceptions import (
-    LLMAPIError,
-    LLMExtractionError,
     LLMToolLoopLimitError,
+    ModelAPIError,
+    ModelExtractionError,
 )
 from contextgem.internal.items import (
     _BooleanItem,
@@ -106,10 +106,10 @@ from contextgem.internal.registry import (
     _resolve_public_type,
 )
 from contextgem.internal.utils import (
-    _get_llm_api_retry_delay,
     _get_llm_cache_token_counts,
+    _get_model_api_retry_delay,
     _get_template,
-    _is_retryable_llm_api_error,
+    _is_retryable_model_api_error,
     _load_sat_model,
     _split_text_into_paragraphs,
 )
@@ -120,14 +120,14 @@ from contextgem.public import (
     DateConcept,
     Document,
     DocumentLLM,
-    DocumentLLMGroup,
+    DocumentModelGroup,
     ExtractionPipeline,
     Image,
     JsonObjectClassStruct,
     JsonObjectConcept,
     JsonObjectExample,
     LabelConcept,
-    LLMPricing,
+    ModelPricing,
     NumericalConcept,
     Paragraph,
     RatingConcept,
@@ -262,11 +262,11 @@ class TestAll(TestUtils):
 
     # LLMs
 
-    # Extractor (LLM without a role, i.e. the default one in the LLM group)
+    # Extractor (LLM without a role, i.e. the default one in the model group)
     _llm_extractor_kwargs_openai = {
         "model": "openai/gpt-6-luna",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-        "pricing_details": LLMPricing(  # Explicitly set pricing details
+        "pricing_details": ModelPricing(  # Explicitly set pricing details
             **{
                 "input_per_1m_tokens": 0.10,
                 "output_per_1m_tokens": 0.50,
@@ -275,7 +275,7 @@ class TestAll(TestUtils):
     }
 
     # Reasoner (LLM with a role, i.e. the one that the aspects/concepts
-    # with the same role are routed to in the LLM group)
+    # with the same role are routed to in the model group)
     _llm_reasoner_kwargs_openai = {
         "model": "openai/gpt-5.6-luna",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
@@ -290,12 +290,12 @@ class TestAll(TestUtils):
     # Reasoner
     llm_reasoner = DocumentLLM(**_llm_reasoner_kwargs_openai)  # ty: ignore[invalid-argument-type]
 
-    # LLM group
-    _llm_group_llms = [
+    # Model group
+    _model_group_llms = [
         DocumentLLM(**_llm_extractor_kwargs_openai),  # ty: ignore[invalid-argument-type]
         DocumentLLM(**_llm_reasoner_kwargs_openai),  # ty: ignore[invalid-argument-type]
     ]  # newly initialized LLMs in group for separate usage and cost tracking)
-    llm_group = DocumentLLMGroup(llms=_llm_group_llms)  # ty: ignore[invalid-argument-type]
+    model_group = DocumentModelGroup(models=_model_group_llms)  # ty: ignore[invalid-argument-type]
 
     # LLM with fallback
     _invalid_llm_kwargs = {
@@ -304,7 +304,7 @@ class TestAll(TestUtils):
     }
     llm_invalid = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
     invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
-    invalid_llm_with_valid_fallback.fallback_llms = [
+    invalid_llm_with_valid_fallback.fallback_models = [
         DocumentLLM(
             **_llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
             is_fallback=True,
@@ -350,8 +350,8 @@ class TestAll(TestUtils):
         the LLM requests of the other tests independent of the order of the tests.
         """
         yield
-        if self.llm_group.output_language != "en":
-            self.llm_group.group_update_output_language("en")
+        if self.model_group.output_language != "en":
+            self.model_group.group_update_output_language("en")
         if self.llm_extractor.output_language != "en":
             self.llm_extractor.output_language = "en"
 
@@ -397,11 +397,11 @@ class TestAll(TestUtils):
             _Aspect,
             name="Test Aspect",
             description="Test Description",
-            llm_role="reasoner",
+            model_role="reasoner",
             reference_depth="sentences",
         )
         assert isinstance(pub_aspect, Aspect)
-        assert pub_aspect.llm_role == "reasoner"
+        assert pub_aspect.model_role == "reasoner"
         assert pub_aspect.reference_depth == "sentences"
         assert _resolve_public_type(_Aspect) is Aspect
 
@@ -430,35 +430,35 @@ class TestAll(TestUtils):
         """
         Tests for attribute validation models.
         """
-        # LLM usage model
-        _LLMUsage(input=30, output=10)
-        _LLMUsage(input=30, output=10, cache_read=20, cache_write=5)
+        # Usage data model
+        _ModelUsage(input=30, output=10)
+        _ModelUsage(input=30, output=10, cache_read=20, cache_write=5)
         with pytest.raises(ValueError):
-            _LLMUsage(input=-1, output=2)
+            _ModelUsage(input=-1, output=2)
         with pytest.raises(ValueError):
-            _LLMUsage(input=30, output=10, cache_read=-1)
+            _ModelUsage(input=30, output=10, cache_read=-1)
         with pytest.raises(ValueError):
-            _LLMUsage(input=30, output=10, cache_write=-1)
-        # LLM pricing model
-        LLMPricing(input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006)
-        LLMPricing(
+            _ModelUsage(input=30, output=10, cache_write=-1)
+        # Pricing data model
+        ModelPricing(input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006)
+        ModelPricing(
             input_per_1m_tokens=0.00015,
             output_per_1m_tokens=0.0006,
             cache_read_per_1m_tokens=0.000075,
             cache_write_per_1m_tokens=0.0001875,
         )
         with pytest.raises(ValueError):
-            LLMPricing(input_per_1m_tokens=-1, output_per_1m_tokens=0)
+            ModelPricing(input_per_1m_tokens=-1, output_per_1m_tokens=0)
         with pytest.raises(ValueError):
-            LLMPricing(input_per_1m_tokens=0.1)
-        # LLM cost model
-        _LLMCost(input=Decimal("0.01"), output=Decimal("0.02"), total=Decimal("0.03"))
+            ModelPricing(input_per_1m_tokens=0.1)
+        # Cost data model
+        _ModelCost(input=Decimal("0.01"), output=Decimal("0.02"), total=Decimal("0.03"))
         with pytest.raises(ValueError):
-            _LLMCost(
+            _ModelCost(
                 input=-Decimal("0.01"), output=Decimal("0.02"), total=Decimal("0.03")
             )
         with pytest.raises(ValueError):
-            _LLMCost(input=-Decimal("0.001"))
+            _ModelCost(input=-Decimal("0.001"))
 
     @memory_profile_and_capture
     def test_init_instance_bases(self):
@@ -476,7 +476,7 @@ class TestAll(TestUtils):
             _RatingConcept,
             _JsonObjectConcept,
             _LabelConcept,
-            _LLMPricing,
+            _ModelPricing,
             _StringExample,
             _JsonObjectExample,
             _Image,
@@ -485,7 +485,7 @@ class TestAll(TestUtils):
             _Sentence,
             _ExtractionPipeline,
             _DocumentLLM,
-            _DocumentLLMGroup,
+            _DocumentModelGroup,
             _JsonObjectClassStruct,
         ]
         for base_class in base_instance_classes:
@@ -1075,9 +1075,9 @@ class TestAll(TestUtils):
 
     @pytest.mark.vcr
     @memory_profile_and_capture
-    def test_llm_extraction_error_exception(self):
+    def test_model_extraction_error_exception(self):
         """
-        Tests for raising an exception when an LLM extraction error occurs.
+        Tests for raising an exception when a model extraction error occurs.
         """
 
         @contextmanager
@@ -1134,12 +1134,12 @@ class TestAll(TestUtils):
         async def _invalid_json_query_stub(
             self,
             messages: list[_Message],
-            llm_call_obj: _LLMCall,
+            model_call_obj: _ModelCall,
             num_retries_failed_request: int = 3,
             max_retries_failed_request: int = 0,
             async_limiter: AsyncLimiter | None = None,
             drop_params: bool = False,
-            raise_exception_on_llm_api_error: bool = True,
+            raise_exception_on_model_api_error: bool = True,
             has_fallback_pending: bool = False,
         ):
             """
@@ -1147,12 +1147,12 @@ class TestAll(TestUtils):
 
             Same params as `llm._query_llm`.
             """
-            return "<<<not-json>>>", _LLMUsage()
+            return "<<<not-json>>>", _ModelUsage()
 
         _orig_query_llm = llm._query_llm
         llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
         try:
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*1 retries"):
                 llm.extract_aspects_from_document(
                     document,
                     overwrite_existing=True,
@@ -1165,12 +1165,12 @@ class TestAll(TestUtils):
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*1 retries"):
                 llm.extract_concepts_from_document(
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*1 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*1 retries"):
                 llm.extract_all(
                     document,
                     overwrite_existing=True,
@@ -1233,7 +1233,7 @@ class TestAll(TestUtils):
         _orig_query_llm_no_retry = llm._query_llm
         llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
         try:
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*0 retries"):
                 llm.extract_aspects_from_document(
                     document,
                     overwrite_existing=True,
@@ -1246,12 +1246,12 @@ class TestAll(TestUtils):
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*0 retries"):
                 llm.extract_concepts_from_document(
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*0 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*0 retries"):
                 llm.extract_all(
                     document,
                     overwrite_existing=True,
@@ -1306,7 +1306,7 @@ class TestAll(TestUtils):
         # === Test invalid LLM without fallback LLM ===
         # raise_exception_on_extraction_error is True by default
         # (an invalid model is not a transient error, i.e. the request is not retried)
-        with pytest.raises(LLMAPIError, match=r"LLM API.*0 retries"):
+        with pytest.raises(ModelAPIError, match=r"LLM API.*0 retries"):
             self.llm_invalid.extract_aspects_from_document(
                 document,
                 overwrite_existing=True,
@@ -1319,12 +1319,12 @@ class TestAll(TestUtils):
                 document,
                 overwrite_existing=True,
             )
-        with pytest.raises(LLMAPIError, match=r"LLM API.*0 retries"):
+        with pytest.raises(ModelAPIError, match=r"LLM API.*0 retries"):
             self.llm_invalid.extract_concepts_from_document(
                 document,
                 overwrite_existing=True,
             )
-        with pytest.raises(LLMAPIError, match=r"LLM API.*0 retries"):
+        with pytest.raises(ModelAPIError, match=r"LLM API.*0 retries"):
             self.llm_invalid.extract_all(
                 document,
                 overwrite_existing=True,
@@ -1395,7 +1395,7 @@ class TestAll(TestUtils):
         assert all(i.extracted_items for i in document.aspects[0].concepts)
 
         check_locals_memory_usage(
-            locals(), test_name="test_llm_extraction_error_exception"
+            locals(), test_name="test_model_extraction_error_exception"
         )
 
     @memory_profile_and_capture
@@ -1452,9 +1452,9 @@ class TestAll(TestUtils):
 
         # Unsupported methods
         with pytest.raises(NotImplementedError):
-            self.llm_group.model_dump()
+            self.model_group.model_dump()
         with pytest.raises(NotImplementedError):
-            self.llm_group.model_dump_json()
+            self.model_group.model_dump_json()
         with pytest.raises(NotImplementedError):
             self.llm_extractor.model_dump()
         with pytest.raises(NotImplementedError):
@@ -1475,7 +1475,7 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                fallback_llms=[
+                fallback_models=[
                     self.llm_reasoner
                 ],  # inconsistent role of the fallback LLM
             )
@@ -1483,7 +1483,7 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                fallback_llms=[
+                fallback_models=[
                     DocumentLLM(
                         model="openai/gpt-6-luna",
                         api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
@@ -1496,7 +1496,7 @@ class TestAll(TestUtils):
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 is_fallback=True,
-                fallback_llms=[
+                fallback_models=[
                     self.llm_extractor
                 ],  # a fallback LLM is passed to fallback LLM
             )
@@ -1506,20 +1506,20 @@ class TestAll(TestUtils):
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
         assert document_llm.is_group is False
-        assert document_llm.fallback_llms == []
+        assert document_llm.fallback_models == []
         document_llm.is_fallback = True
         with pytest.raises(ValueError):
-            document_llm.fallback_llms = [
+            document_llm.fallback_models = [
                 self.llm_extractor
             ]  # a fallback LLM is passed to fallback LLM
-        assert document_llm.fallback_llms == []  # No change due to invalid assignment
+        assert document_llm.fallback_models == []  # No change due to invalid assignment
         document_llm.is_fallback = False
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 is_fallback=False,
-                fallback_llms=[document_llm],  # non-fallback LLM passed as a fallback
+                fallback_models=[document_llm],  # non-fallback LLM passed as a fallback
             )
 
         with pytest.raises(ValueError):
@@ -1549,7 +1549,7 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                pricing_details=LLMPricing(
+                pricing_details=ModelPricing(
                     **{  # invalid pricing details keys
                         "in": 0.1,
                         "out": 0.2,
@@ -1560,7 +1560,7 @@ class TestAll(TestUtils):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                pricing_details=LLMPricing(
+                pricing_details=ModelPricing(
                     **{  # invalid pricing details values
                         "input_per_1m_tokens": -0.00015,
                         "output_per_1m_tokens": 0.0006,
@@ -1596,67 +1596,138 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_init_api_llm")
 
     @memory_profile_and_capture
-    def test_init_llm_group(self):
+    def test_init_model_group(self):
         """
-        Tests the behavior of the `DocumentLLMGroup` class initialization.
+        Tests the behavior of the `DocumentModelGroup` class initialization.
         """
 
         # Invalid params
         with pytest.raises(ValueError):
-            DocumentLLMGroup()
+            DocumentModelGroup()
         with pytest.raises(ValueError):
-            DocumentLLMGroup(llms=[])
+            DocumentModelGroup(models=[])
         with pytest.raises(ValueError):
-            DocumentLLMGroup(llms=[self.llm_reasoner])
+            DocumentModelGroup(models=[self.llm_reasoner])
         with pytest.raises(ValueError):
-            DocumentLLMGroup(llms=[1, True])
+            DocumentModelGroup(models=[1, True])
         # Duplicate roles
         with pytest.raises(ValueError):
-            DocumentLLMGroup(
-                llms=[
+            DocumentModelGroup(
+                models=[
                     self.llm_extractor,
                     self.llm_extractor,
                     self.llm_reasoner,
                 ]
             )
         with pytest.raises(ValueError):
-            DocumentLLMGroup(
-                llms=[self.llm_extractor, self.llm_reasoner],
+            DocumentModelGroup(
+                models=[self.llm_extractor, self.llm_reasoner],
                 extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
         with pytest.raises(ValueError):
             # Non-consistent output languages of the LLMs in the group
-            DocumentLLMGroup(
-                llms=[
+            DocumentModelGroup(
+                models=[
                     self.llm_extractor,
                     self.llm_extractor_non_eng,  # output lang set to "adapt"
                 ],
                 output_language="en",
             )
-        document_llm_group = DocumentLLMGroup(
-            llms=[self.llm_extractor, self.llm_reasoner]
+        document_model_group = DocumentModelGroup(
+            models=[self.llm_extractor, self.llm_reasoner]
         )
-        assert document_llm_group.is_group is True
+        assert document_model_group.is_group is True
         # Validate assignment
         with pytest.raises(ValueError):
-            document_llm_group.llms = [self.llm_extractor, self.llm_extractor]
-        assert document_llm_group.llms == [
+            document_model_group.models = [self.llm_extractor, self.llm_extractor]
+        assert document_model_group.models == [
             self.llm_extractor,
             self.llm_reasoner,
         ]
 
         # No serialization for LLM instances
         with pytest.raises(NotImplementedError):
-            document_llm_group.model_dump()
+            document_model_group.model_dump()
         with pytest.raises(NotImplementedError):
-            document_llm_group.model_dump_json()
+            document_model_group.model_dump_json()
 
-        check_locals_memory_usage(locals(), test_name="test_init_llm_group")
+        check_locals_memory_usage(locals(), test_name="test_init_model_group")
 
     @memory_profile_and_capture
-    def test_llm_roles_and_concept_modality(self):
+    def test_pre_v1_names_rejected(self):
         """
-        Tests for routing aspects/concepts to LLMs by the free-form LLM roles, and for
+        Tests that the names of the classes and parameters that were renamed in v1.0
+        are rejected, i.e. not silently ignored, both in the code and in the
+        serialized data.
+        """
+
+        import contextgem
+        from contextgem.internal import exceptions
+
+        # Renamed classes are not available under the old names
+        for module, old_name in [
+            (contextgem, "DocumentLLMGroup"),
+            (contextgem, "LLMPricing"),
+            (exceptions, "LLMAPIError"),
+            (exceptions, "LLMExtractionError"),
+        ]:
+            assert not hasattr(module, old_name)
+
+        # Renamed params
+        with pytest.raises(ValueError, match="llm_role\n"):
+            Aspect(
+                name="Liability",
+                description="Liability clauses",
+                llm_role="reasoner",  # ty: ignore[unknown-argument]
+            )
+        with pytest.raises(ValueError, match="llm_role\n"):
+            StringConcept(
+                name="Title",
+                description="Contract title",
+                llm_role="reasoner",  # ty: ignore[unknown-argument]
+            )
+        with pytest.raises(ValueError, match="llms\n"):
+            DocumentModelGroup(
+                llms=[self.llm_extractor, self.llm_reasoner],  # ty: ignore[unknown-argument]
+            )
+        model_group = DocumentModelGroup(models=[self.llm_extractor, self.llm_reasoner])
+        for method in [
+            model_group.get_usage,
+            model_group.get_cost,
+            model_group.reset_usage_and_cost,
+        ]:
+            with pytest.raises(TypeError, match="llm_role"):
+                method(llm_role=self.llm_reasoner.role)  # ty: ignore[unknown-argument]
+
+        # Renamed keys and class names in the serialized data
+        concept = StringConcept(
+            name="Title", description="Contract title", model_role="reasoner"
+        )
+        concept_dict = concept.to_dict()
+        concept_dict["llm_role"] = concept_dict.pop("model_role")
+        with pytest.raises(ValueError, match="llm_role\n"):
+            StringConcept.from_dict(concept_dict)
+        model_group_dict = model_group.to_dict()
+        model_group_dict["llms"] = model_group_dict.pop("models")
+        with pytest.raises(ValueError, match="llms\n"):
+            DocumentModelGroup.from_dict(model_group_dict)
+        model_group_dict = model_group.to_dict()
+        model_group_dict["__class__"] = "DocumentLLMGroup"
+        with pytest.raises(TypeError, match="DocumentLLMGroup"):
+            DocumentModelGroup.from_dict(model_group_dict)
+        pricing_dict = ModelPricing(
+            input_per_1m_tokens=0.1, output_per_1m_tokens=0.5
+        ).to_dict()
+        pricing_dict["__class__"] = "LLMPricing"
+        with pytest.raises(TypeError, match="LLMPricing"):
+            ModelPricing.from_dict(pricing_dict)
+
+        check_locals_memory_usage(locals(), test_name="test_pre_v1_names_rejected")
+
+    @memory_profile_and_capture
+    def test_model_roles_and_concept_modality(self):
+        """
+        Tests for routing aspects/concepts to LLMs by the free-form model roles, and for
         extracting concepts from the content specified by their modality.
 
         LLM API calls are stubbed, i.e. no cassette is required.
@@ -1677,7 +1748,7 @@ class TestAll(TestUtils):
         def create_document() -> Document:
             """
             Creates a document with text and an image, as well as with aspects
-            and concepts that have different LLM roles and modalities.
+            and concepts that have different model roles and modalities.
             """
             return Document(
                 raw_text="Non-disclosure agreement\n\nThe parties agree as follows.",
@@ -1687,12 +1758,12 @@ class TestAll(TestUtils):
                     Aspect(
                         name="Term",
                         description="Contract term",
-                        llm_role="complex",
+                        model_role="complex",
                         concepts=[
                             StringConcept(
                                 name="Duration",
                                 description="Contract duration",
-                                llm_role="complex",
+                                model_role="complex",
                             )
                         ],
                     ),
@@ -1700,12 +1771,12 @@ class TestAll(TestUtils):
                 concepts=[
                     StringConcept(name="Title", description="Contract title"),
                     StringConcept(
-                        name="Type", description="Contract type", llm_role="complex"
+                        name="Type", description="Contract type", model_role="complex"
                     ),
                     StringConcept(
                         name="Stamp",
                         description="Text of the stamp",
-                        llm_role="vision",
+                        model_role="vision",
                         modality="image",
                     ),
                     StringConcept(
@@ -1717,19 +1788,19 @@ class TestAll(TestUtils):
         # (model, content type, names of the aspects/concepts in the call)
         llm_calls: list[tuple[str, str, list[str]]] = []
 
-        def stub_llm_api(llm: DocumentLLM) -> None:
+        def stub_model_api(llm: DocumentLLM) -> None:
             """
             Stubs the LLM API call, recording the aspects/concepts sent to the LLM.
             """
 
-            async def _send_messages_stub(self, *, llm_call_obj: Any, **kwargs: Any):
+            async def _send_messages_stub(self, *, model_call_obj: Any, **kwargs: Any):
                 """
                 Simulates a successful LLM API call, which returns an extracted item
                 for each aspect/concept in the prompt.
 
                 Same params as `llm._send_messages_with_tools`.
                 """
-                prompt_kwargs = llm_call_obj.prompt_kwargs
+                prompt_kwargs = model_call_obj.prompt_kwargs
                 if "aspects" in prompt_kwargs:
                     instances = prompt_kwargs["aspects"]
                     content_type = "text"
@@ -1797,15 +1868,19 @@ class TestAll(TestUtils):
             with pytest.raises(ValueError):
                 create_llm(default_model, role=invalid_role)
             with pytest.raises(ValueError):
-                Aspect(name="Parties", description="Parties", llm_role=invalid_role)  # ty: ignore[invalid-argument-type]
+                Aspect(name="Parties", description="Parties", model_role=invalid_role)  # ty: ignore[invalid-argument-type]
             with pytest.raises(ValueError):
-                StringConcept(name="Title", description="Title", llm_role=invalid_role)  # ty: ignore[invalid-argument-type]
+                StringConcept(
+                    name="Title",
+                    description="Title",
+                    model_role=invalid_role,  # ty: ignore[invalid-argument-type]
+                )
         concept = StringConcept(name="Title", description="Contract title")
-        assert concept.llm_role is None
+        assert concept.model_role is None
         assert concept.modality == "text"
-        concept.llm_role = "complex"
+        concept.model_role = "complex"
         concept.modality = "multimodal"
-        assert (concept.llm_role, concept.modality) == ("complex", "multimodal")
+        assert (concept.model_role, concept.modality) == ("complex", "multimodal")
         with pytest.raises(ValueError):
             concept.modality = "video"  # ty: ignore[invalid-assignment]
         # Concepts extracted from images do not support references
@@ -1823,14 +1898,14 @@ class TestAll(TestUtils):
         # Roles assigned to the instances of a document, including sub-aspects
         document = create_document()
         document.aspects[0].aspects = [
-            Aspect(name="Signatories", description="Signatories", llm_role="deep")
+            Aspect(name="Signatories", description="Signatories", model_role="deep")
         ]
-        assert document.llm_roles == {None, "complex", "vision", "deep"}
-        assert document.aspects[1].llm_roles == {"complex"}
+        assert document.model_roles == {None, "complex", "vision", "deep"}
+        assert document.aspects[1].model_roles == {"complex"}
 
         # === Standalone LLM extracts all aspects/concepts, regardless of their roles ===
         for standalone_llm in [llm_no_role, llm_complex]:
-            stub_llm_api(standalone_llm)
+            stub_model_api(standalone_llm)
             llm_calls.clear()
             document = create_document()
             standalone_llm.extract_all(document)
@@ -1846,13 +1921,13 @@ class TestAll(TestUtils):
                 ]
             )
 
-        # === LLM group routes each aspect/concept to the LLM with the same role ===
-        stub_llm_api(llm_vision)
-        llm_group = DocumentLLMGroup(llms=[llm_no_role, llm_complex, llm_vision])
-        assert llm_group.list_roles == [None, "complex", "vision"]
+        # === model group routes each aspect/concept to the LLM with the same role ===
+        stub_model_api(llm_vision)
+        model_group = DocumentModelGroup(models=[llm_no_role, llm_complex, llm_vision])
+        assert model_group.list_roles == [None, "complex", "vision"]
         llm_calls.clear()
         document = create_document()
-        llm_group.extract_all(document)
+        model_group.extract_all(document)
         check_all_extracted(document)
         assert sorted(llm_calls) == sorted(
             [
@@ -1866,21 +1941,25 @@ class TestAll(TestUtils):
                 (vision_model, "image", ["Stamp"]),
             ]
         )
-        assert [i.role for i in llm_group.get_usage(llm_role="vision")] == ["vision"]
-        assert [i.role for i in llm_group.get_usage()] == [None, "complex", "vision"]
+        assert [i.role for i in model_group.get_usage(model_role="vision")] == [
+            "vision"
+        ]
+        assert [i.role for i in model_group.get_usage()] == [None, "complex", "vision"]
 
         # Roles must be unique in the group, and only one LLM can have no role
         with pytest.raises(ValueError, match="different roles"):
-            DocumentLLMGroup(llms=[llm_no_role, create_llm(complex_model)])
+            DocumentModelGroup(models=[llm_no_role, create_llm(complex_model)])
         with pytest.raises(ValueError, match="different roles"):
-            DocumentLLMGroup(
-                llms=[llm_complex, create_llm(default_model, role="complex")]
+            DocumentModelGroup(
+                models=[llm_complex, create_llm(default_model, role="complex")]
             )
         # This is also checked when extraction starts, as the role of an LLM
         # can be changed after the LLM is added to a group
         llm_changed_role = create_llm(vision_model, role="changed")
-        stub_llm_api(llm_changed_role)
-        llm_group_changed_role = DocumentLLMGroup(llms=[llm_no_role, llm_changed_role])
+        stub_model_api(llm_changed_role)
+        model_group_changed_role = DocumentModelGroup(
+            models=[llm_no_role, llm_changed_role]
+        )
         document = Document(
             raw_text="Non-disclosure agreement",
             aspects=[Aspect(name="Parties", description="Contract parties")],
@@ -1889,9 +1968,9 @@ class TestAll(TestUtils):
         llm_changed_role.role = None
         llm_calls.clear()
         for extraction_method in [
-            llm_group_changed_role.extract_all,
-            llm_group_changed_role.extract_aspects_from_document,
-            llm_group_changed_role.extract_concepts_from_document,
+            model_group_changed_role.extract_all,
+            model_group_changed_role.extract_aspects_from_document,
+            model_group_changed_role.extract_concepts_from_document,
         ]:
             with pytest.raises(
                 ValueError,
@@ -1900,7 +1979,7 @@ class TestAll(TestUtils):
                 extraction_method(document)
         assert not llm_calls  # no LLM calls are made
         llm_changed_role.role = "changed"
-        llm_group_changed_role.extract_all(document)
+        model_group_changed_role.extract_all(document)
         assert sorted(llm_calls) == sorted(
             [
                 (default_model, "text", ["Parties"]),
@@ -1910,23 +1989,25 @@ class TestAll(TestUtils):
 
         # Aspects/concepts that cannot be routed to an LLM in the group are not skipped
         llm_calls.clear()
-        llm_group_no_vision = DocumentLLMGroup(llms=[llm_no_role, llm_complex])
+        model_group_no_vision = DocumentModelGroup(models=[llm_no_role, llm_complex])
         document = create_document()
         with pytest.raises(
             ValueError, match="no LLM in the group has the role: `vision`"
         ):
-            llm_group_no_vision.extract_all(document)
+            model_group_no_vision.extract_all(document)
         with pytest.raises(ValueError, match="`vision`"):
-            llm_group_no_vision.extract_concepts_from_document(document)
-        llm_group_no_default = DocumentLLMGroup(llms=[llm_complex, llm_vision])
+            model_group_no_vision.extract_concepts_from_document(document)
+        model_group_no_default = DocumentModelGroup(models=[llm_complex, llm_vision])
         with pytest.raises(ValueError, match=r"None \(no role\)"):
-            llm_group_no_default.extract_aspects_from_document(document)
+            model_group_no_default.extract_aspects_from_document(document)
         assert not llm_calls  # no LLM calls are made
         # While the routable ones can still be extracted
         routable_concepts = [
-            i for i in document.concepts if i.llm_role in llm_group_no_vision.list_roles
+            i
+            for i in document.concepts
+            if i.model_role in model_group_no_vision.list_roles
         ]
-        llm_group_no_vision.extract_concepts_from_document(
+        model_group_no_vision.extract_concepts_from_document(
             document, from_concepts=routable_concepts
         )
         assert all(i.extracted_items for i in routable_concepts)
@@ -1936,7 +2017,7 @@ class TestAll(TestUtils):
         text_only_model = "cerebras/llama-3.3-70b"
         llm_text_only = create_llm(text_only_model)
         assert not llm_text_only._supports_vision
-        stub_llm_api(llm_text_only)
+        stub_model_api(llm_text_only)
         # Concepts cannot be extracted from images by an LLM that does not support vision
         llm_calls.clear()
         document = create_document()
@@ -1973,10 +2054,10 @@ class TestAll(TestUtils):
         # i.e. it must support vision as well
         llm_text_only_fallback = create_llm(text_only_model, is_fallback=True)
         llm_with_text_only_fallback = create_llm(
-            default_model, fallback_llms=[llm_text_only_fallback]
+            default_model, fallback_models=[llm_text_only_fallback]
         )
-        stub_llm_api(llm_text_only_fallback)
-        stub_llm_api(llm_with_text_only_fallback)
+        stub_model_api(llm_text_only_fallback)
+        stub_model_api(llm_with_text_only_fallback)
         llm_calls.clear()
         document = create_document()
         for extraction_method in [
@@ -2002,15 +2083,15 @@ class TestAll(TestUtils):
         llm_with_text_only_fallback.extract_all(document)
         check_all_extracted(document)
 
-        # In an LLM group, vision support is required only of the LLMs that
+        # In a model group, vision support is required only of the LLMs that
         # the concepts to be extracted from images are routed to
         llm_text_only_complex = create_llm(text_only_model, role="complex")
         llm_text_only_vision = create_llm(text_only_model, role="vision")
-        stub_llm_api(llm_text_only_complex)
-        stub_llm_api(llm_text_only_vision)
+        stub_model_api(llm_text_only_complex)
+        stub_model_api(llm_text_only_vision)
         document = create_document()
-        DocumentLLMGroup(
-            llms=[llm_no_role, llm_text_only_complex, llm_vision]
+        DocumentModelGroup(
+            models=[llm_no_role, llm_text_only_complex, llm_vision]
         ).extract_all(document)
         check_all_extracted(document)
         llm_calls.clear()
@@ -2020,20 +2101,20 @@ class TestAll(TestUtils):
             match=f"^Model `{text_only_model}` does not support vision"
             ".*from images: `Stamp`\\.",
         ):
-            DocumentLLMGroup(
-                llms=[llm_no_role, llm_complex, llm_text_only_vision]
+            DocumentModelGroup(
+                models=[llm_no_role, llm_complex, llm_text_only_vision]
             ).extract_all(document)
         assert not llm_calls  # no LLM calls are made
 
         check_locals_memory_usage(
-            locals(), test_name="test_llm_roles_and_concept_modality"
+            locals(), test_name="test_model_roles_and_concept_modality"
         )
 
     @pytest.mark.parametrize("use_concurrency", [False, True])
     @memory_profile_and_capture
     def test_nested_extraction_role_preflight(self, use_concurrency: bool):
         """
-        Tests that, when extracting with an LLM group, the roles of the nested
+        Tests that, when extracting with a model group, the roles of the nested
         aspects/concepts to be processed by the extraction method are validated before
         any LLM calls are made, i.e. before the state of the document is changed, while
         the roles of the aspects/concepts that are not selected or are skipped are not.
@@ -2041,8 +2122,8 @@ class TestAll(TestUtils):
         LLM API calls are stubbed, i.e. no cassette is required.
         """
 
-        group = DocumentLLMGroup(
-            llms=[
+        group = DocumentModelGroup(
+            models=[
                 DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key"),
                 DocumentLLM(
                     model="openai/gpt-6.1-sol", api_key="test_api_key", role="other"
@@ -2060,19 +2141,19 @@ class TestAll(TestUtils):
                         StringConcept(
                             name="Unselected",
                             description="Unselected concept",
-                            llm_role="unselected",
+                            model_role="unselected",
                         ),
                     ],
                     aspects=[
                         Aspect(
                             name="Child",
                             description="Child section",
-                            llm_role="missing_aspect",
+                            model_role="missing_aspect",
                             concepts=[
                                 StringConcept(
                                     name="Nested",
                                     description="Nested concept",
-                                    llm_role="missing_concept",
+                                    model_role="missing_concept",
                                 )
                             ],
                         ),
@@ -2083,7 +2164,7 @@ class TestAll(TestUtils):
                                 StringConcept(
                                     name="Skipped",
                                     description="Skipped concept",
-                                    llm_role="skipped",
+                                    model_role="skipped",
                                 )
                             ],
                         ),
@@ -2092,14 +2173,14 @@ class TestAll(TestUtils):
             ],
         )
 
-        async def send_messages_stub(self, *, llm_call_obj: Any, **kwargs: Any):
+        async def send_messages_stub(self, *, model_call_obj: Any, **kwargs: Any):
             """
             Simulates a successful LLM API call, which returns an extracted item for
             each aspect/concept in the prompt, except for the aspect with no content.
 
             Same params as `llm._send_messages_with_tools`.
             """
-            params = llm_call_obj.prompt_kwargs
+            params = model_call_obj.prompt_kwargs
             if "aspects" in params:
                 answer = [
                     {
@@ -2136,7 +2217,7 @@ class TestAll(TestUtils):
                     Aspect(
                         name="Unrelated",
                         description="Unrelated section",
-                        llm_role="unrelated",
+                        model_role="unrelated",
                     )
                 ]
             )
@@ -2148,7 +2229,7 @@ class TestAll(TestUtils):
                 )
             send_messages.assert_not_called()
             assert document.to_dict() == before
-            parent.aspects[0].llm_role = None
+            parent.aspects[0].model_role = None
             group.extract_aspects_from_document(
                 document, from_aspects=[parent], use_concurrency=use_concurrency
             )
@@ -2168,7 +2249,7 @@ class TestAll(TestUtils):
                 )
             send_messages.assert_not_called()
             assert document.to_dict() == before
-            parent.aspects[0].concepts[0].llm_role = None
+            parent.aspects[0].concepts[0].model_role = None
             group.extract_concepts_from_aspect(
                 parent,
                 document,
@@ -2185,10 +2266,10 @@ class TestAll(TestUtils):
         )
 
     @memory_profile_and_capture
-    def test_llm_group_usage_and_cost_by_role(self):
+    def test_model_group_usage_and_cost_by_role(self):
         """
         Tests for retrieving and resetting the usage and cost of the LLMs in a group
-        by the LLM role, which also applies to the fallback LLMs of the LLM with such role.
+        by the model role, which also applies to the fallback LLMs of the LLM with such role.
         """
 
         fallback = DocumentLLM(
@@ -2201,46 +2282,46 @@ class TestAll(TestUtils):
             model="openai/gpt-6-luna",
             api_key="test_api_key",
             role="named",
-            fallback_llms=[fallback],
+            fallback_models=[fallback],
         )
         llm_no_role = DocumentLLM(model="openai/gpt-6.1-sol", api_key="test_api_key")
-        group = DocumentLLMGroup(llms=[primary, llm_no_role])
+        group = DocumentModelGroup(models=[primary, llm_no_role])
         for llm in [primary, fallback, llm_no_role]:
-            llm._usage = _LLMUsage(input=10, output=5)
-            llm._cost = _LLMCost(input=Decimal("1"), total=Decimal("1"))
+            llm._usage = _ModelUsage(input=10, output=5)
+            llm._cost = _ModelCost(input=Decimal("1"), total=Decimal("1"))
 
         invalid_roles: list[Any] = ["", "  ", 1, "line\nbreak", "r" * 65]
         for getter in [group.get_usage, group.get_cost]:
             # The LLM with the role is selected together with its fallback LLMs
-            selected = getter(llm_role="named")
+            selected = getter(model_role="named")
             assert [i.model for i in selected] == [primary.model, fallback.model]
             assert [i.is_fallback for i in selected] == [False, True]
             # All LLMs are selected if no role is specified
             assert [i.role for i in getter()] == ["named", "named", None]
-            assert len(getter(llm_role=None)) == 3
+            assert len(getter(model_role=None)) == 3
             with pytest.raises(ValueError, match="`missing`"):
-                getter(llm_role="missing")
+                getter(model_role="missing")
             # The role is validated in the same way as the roles assigned to LLMs
-            assert len(getter(llm_role=" named ")) == 2
+            assert len(getter(model_role=" named ")) == 2
             for invalid_role in invalid_roles:
-                with pytest.raises(ValueError, match="LLM role must"):
-                    getter(llm_role=invalid_role)
+                with pytest.raises(ValueError, match="Model role must"):
+                    getter(model_role=invalid_role)
 
         for invalid_role in invalid_roles:
-            with pytest.raises(ValueError, match="LLM role must"):
-                group.reset_usage_and_cost(llm_role=invalid_role)
+            with pytest.raises(ValueError, match="Model role must"):
+                group.reset_usage_and_cost(model_role=invalid_role)
         assert all(i.usage.input == 10 for i in group.get_usage())  # no change
-        group.reset_usage_and_cost(llm_role=" named ")
+        group.reset_usage_and_cost(model_role=" named ")
         assert [i.usage.input for i in group.get_usage()] == [0, 0, 10]
         assert [i.cost.total for i in group.get_cost()] == [0, 0, 1]
         with pytest.raises(ValueError, match="`missing`"):
-            group.reset_usage_and_cost(llm_role="missing")
+            group.reset_usage_and_cost(model_role="missing")
         group.reset_usage_and_cost()
         assert all(i.usage.input == 0 for i in group.get_usage())
         assert all(i.cost.total == 0 for i in group.get_cost())
 
         check_locals_memory_usage(
-            locals(), test_name="test_llm_group_usage_and_cost_by_role"
+            locals(), test_name="test_model_group_usage_and_cost_by_role"
         )
 
     @memory_profile_and_capture
@@ -2377,7 +2458,7 @@ class TestAll(TestUtils):
                 ({}, Decimal("0.4")),
             ]:
                 llm = create_llm(
-                    pricing_details=LLMPricing(
+                    pricing_details=ModelPricing(
                         input_per_1m_tokens=1.0,
                         output_per_1m_tokens=4.0,
                         **pricing_kwargs,
@@ -2400,7 +2481,7 @@ class TestAll(TestUtils):
 
             # The same applies to chat
             llm = create_llm(
-                pricing_details=LLMPricing(
+                pricing_details=ModelPricing(
                     input_per_1m_tokens=1.0,
                     output_per_1m_tokens=4.0,
                     cache_read_per_1m_tokens=0.1,
@@ -2498,17 +2579,17 @@ class TestAll(TestUtils):
         ]
         for invalid_pricing_kwargs in invalid_pricing_cases:
             with pytest.raises(ValueError):
-                LLMPricing(
+                ModelPricing(
                     input_per_1m_tokens=1.0,
                     output_per_1m_tokens=4.0,
                     **invalid_pricing_kwargs,
                 )
         # Pricing serialized without the cache prices can still be deserialized
-        pricing = LLMPricing(input_per_1m_tokens=1.0, output_per_1m_tokens=4.0)
+        pricing = ModelPricing(input_per_1m_tokens=1.0, output_per_1m_tokens=4.0)
         pricing_dict = pricing.to_dict()
         for key in ["cache_read_per_1m_tokens", "cache_write_per_1m_tokens"]:
             assert pricing_dict.pop(key) is None
-        assert LLMPricing.from_dict(pricing_dict) == pricing
+        assert ModelPricing.from_dict(pricing_dict) == pricing
 
         check_locals_memory_usage(
             locals(), test_name="test_cached_tokens_usage_and_cost"
@@ -3352,7 +3433,7 @@ class TestAll(TestUtils):
             Aspect(
                 name="Categories of confidential information",
                 description="Clauses describing confidential information covered by the NDA",
-                llm_role="",  # invalid LLM role (empty label)
+                model_role="",  # invalid model role (empty label)
             )
         with pytest.raises(ValueError):
             Aspect(
@@ -3373,7 +3454,7 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Technical Information",
                 description="Categories of Technical Information",
-                llm_role="reasoner",
+                model_role="reasoner",
             ),
         ]
         aspect.concepts = aspect_concepts
@@ -3465,7 +3546,7 @@ class TestAll(TestUtils):
         sub_aspect = Aspect(
             name="Sub Aspect",
             description="Sub aspect description",
-            llm_role="reasoner",
+            model_role="reasoner",
         )
         sub_sub_aspect = Aspect(
             name="Sub-Sub Aspect",
@@ -5089,7 +5170,7 @@ class TestAll(TestUtils):
             description="Identify all relevant topics covered in the document",
             labels=["Finance", "Legal", "Technology", "HR", "Operations", "Marketing"],
             classification_type="multi_label",
-            llm_role="reasoner",
+            model_role="reasoner",
             add_references=True,
             reference_depth="sentences",
         )
@@ -5202,9 +5283,9 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
-    def test_extract_label_concept(self, llm: DocumentLLMGroup | DocumentLLM):
+    def test_extract_label_concept(self, llm: DocumentModelGroup | DocumentLLM):
         """
         Tests for label concept extraction from document using LLMs.
         """
@@ -5788,7 +5869,7 @@ class TestAll(TestUtils):
                     name="Penalties",
                     description="Clauses describing contractual penalties",
                     add_justifications=True,
-                    llm_role="reasoner",
+                    model_role="reasoner",
                 ),
                 Aspect(
                     name="Term and duration",
@@ -5958,9 +6039,9 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_system_messages")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
-    def test_extract_aspects_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
+    def test_extract_aspects_from_document(self, llm: DocumentModelGroup | DocumentLLM):
         """
         Tests the aspects extraction functionality of LLMs.
         """
@@ -6026,7 +6107,7 @@ class TestAll(TestUtils):
             Aspect(
                 name="Parties",
                 description="Information on the parties in the contract",
-                llm_role="reasoner",
+                model_role="reasoner",
                 add_justifications=True,
             ),
         ]
@@ -6097,12 +6178,12 @@ class TestAll(TestUtils):
             Aspect(
                 name="Non-compete",
                 description="Clauses containing non-compete provisions",
-                llm_role="reasoner",
+                model_role="reasoner",
             ),
             Aspect(
                 name="Penalties",
                 description="Clauses describing penalties for breaching the contract",
-                llm_role="reasoner",
+                model_role="reasoner",
             ),
         ]
         self.document.aspects = document_aspects
@@ -6187,9 +6268,9 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
-    def test_extract_concepts_from_aspect(self, llm: DocumentLLMGroup | DocumentLLM):
+    def test_extract_concepts_from_aspect(self, llm: DocumentModelGroup | DocumentLLM):
         """
         Tests for concept extraction from aspect.
         """
@@ -6388,7 +6469,7 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="reasoner",
+                model_role="reasoner",
             ),
         ]
         with pytest.raises(ValueError):
@@ -6543,9 +6624,11 @@ class TestAll(TestUtils):
         )
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
-    def test_extract_concepts_from_document(self, llm: DocumentLLMGroup | DocumentLLM):
+    def test_extract_concepts_from_document(
+        self, llm: DocumentModelGroup | DocumentLLM
+    ):
         """
         Tests for concept extraction from document.
         """
@@ -6560,7 +6643,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner",
+                model_role="reasoner",
                 add_justifications=True,
             ),
         ]
@@ -6626,7 +6709,7 @@ class TestAll(TestUtils):
             NumericalConcept(
                 name="Duration in years",
                 description="Contract duration in years",
-                llm_role="reasoner",
+                model_role="reasoner",
                 numeric_type="int",
             ),
             BooleanConcept(
@@ -6655,7 +6738,7 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Title",
                 description="Contract title",
-                llm_role="reasoner",
+                model_role="reasoner",
                 add_justifications=True,
             ),
         ]
@@ -6759,9 +6842,11 @@ class TestAll(TestUtils):
             document_zh,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
-    def test_extract_all(self, document: Document, llm: DocumentLLMGroup | DocumentLLM):
+    def test_extract_all(
+        self, document: Document, llm: DocumentModelGroup | DocumentLLM
+    ):
         """
         Tests for extracting all aspects and concepts from the document and its aspects.
         """
@@ -6813,7 +6898,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner",
+                model_role="reasoner",
             ),
             StringConcept(
                 name="Title",
@@ -6901,7 +6986,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner",
+                model_role="reasoner",
             ),
             StringConcept(
                 name="Title",
@@ -6975,7 +7060,7 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_extract_with_fallback")
 
     @memory_profile_and_capture
-    def test_multiple_fallback_llms(self):
+    def test_multiple_fallback_models(self):
         """
         Tests for configuring multiple fallback LLMs, which are tried in the given
         order.
@@ -7002,25 +7087,27 @@ class TestAll(TestUtils):
         fallbacks = [fallback_1, fallback_2, fallback_3]
 
         # === Config ===
-        assert primary.fallback_llms == []
-        primary.fallback_llms = fallbacks  # ty: ignore[invalid-assignment]
-        assert primary.fallback_llms == fallbacks
+        assert primary.fallback_models == []
+        primary.fallback_models = fallbacks  # ty: ignore[invalid-assignment]
+        assert primary.fallback_models == fallbacks
         assert all(
             assigned is original
-            for assigned, original in zip(primary.fallback_llms, fallbacks, strict=True)
+            for assigned, original in zip(
+                primary.fallback_models, fallbacks, strict=True
+            )
         )
         assert (
-            create_llm("openai/gpt-6-luna", fallback_llms=fallbacks).fallback_llms
+            create_llm("openai/gpt-6-luna", fallback_models=fallbacks).fallback_models
             == fallbacks
         )
 
         # Each fallback LLM is validated
         with pytest.raises(ValueError, match="is_fallback=True"):
-            primary.fallback_llms = [fallback_1, create_llm("openai/gpt-5.6-terra")]
+            primary.fallback_models = [fallback_1, create_llm("openai/gpt-5.6-terra")]
         with pytest.raises(ValueError, match="same role"):
             create_llm(
                 "openai/gpt-6-luna",
-                fallback_llms=[
+                fallback_models=[
                     fallback_1,
                     create_llm(
                         "openai/gpt-5.6-terra", role="reasoner", is_fallback=True
@@ -7030,7 +7117,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="same output language"):
             create_llm(
                 "openai/gpt-6-luna",
-                fallback_llms=[
+                fallback_models=[
                     fallback_1,
                     create_llm(
                         "openai/gpt-5.6-terra",
@@ -7042,7 +7129,7 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="same config params as the main LLM"):
             create_llm(
                 "openai/gpt-6-luna",
-                fallback_llms=[
+                fallback_models=[
                     fallback_1,
                     create_llm("openai/gpt-6-luna", is_fallback=True),
                 ],
@@ -7050,16 +7137,16 @@ class TestAll(TestUtils):
         with pytest.raises(ValueError, match="same config params as each other"):
             create_llm(
                 "openai/gpt-6-luna",
-                fallback_llms=[
+                fallback_models=[
                     fallback_1,
                     create_llm("openai/gpt-5.6-luna", is_fallback=True),
                 ],
             )
         with pytest.raises(ValueError, match="same config params as each other"):
-            create_llm("openai/gpt-6-luna", fallback_llms=[fallback_1, fallback_1])
+            create_llm("openai/gpt-6-luna", fallback_models=[fallback_1, fallback_1])
         with pytest.raises(ValueError, match="cannot have its own fallback LLMs"):
             create_llm(
-                "openai/gpt-5.6-terra", is_fallback=True, fallback_llms=[fallback_1]
+                "openai/gpt-5.6-terra", is_fallback=True, fallback_models=[fallback_1]
             )
 
         # Usage and cost are tracked for the primary LLM and each of its fallbacks,
@@ -7071,21 +7158,21 @@ class TestAll(TestUtils):
 
         # Serialization
         primary_dict = primary.to_dict()
-        assert len(primary_dict["fallback_llms"]) == len(fallbacks)
+        assert len(primary_dict["fallback_models"]) == len(fallbacks)
         self._check_deserialized_llm_config_eq(primary)
 
         # A single `fallback_llm` is rejected, i.e. not silently ignored,
         # both as a param and in the serialized data
         with pytest.raises(ValueError, match="fallback_llm\n"):
             create_llm("openai/gpt-6-luna", fallback_llm=fallback_1)
-        primary_dict["fallback_llm"] = primary_dict.pop("fallback_llms")[0]
+        primary_dict["fallback_llm"] = primary_dict.pop("fallback_models")[0]
         with pytest.raises(ValueError, match="fallback_llm\n"):
             DocumentLLM.from_dict(primary_dict)
 
         # === Order of LLM calls ===
         called_models: list[str] = []
 
-        def stub_llm_api(llm: DocumentLLM, answer: str | None) -> None:
+        def stub_model_api(llm: DocumentLLM, answer: str | None) -> None:
             """
             Stubs the LLM API call, which fails if no answer is provided.
             """
@@ -7104,10 +7191,10 @@ class TestAll(TestUtils):
             llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)  # ty: ignore[invalid-assignment]
 
         # Chat: fallbacks are tried in the given order until one of them succeeds
-        stub_llm_api(primary, None)
-        stub_llm_api(fallback_1, None)
-        stub_llm_api(fallback_2, "4")
-        stub_llm_api(fallback_3, "5")
+        stub_model_api(primary, None)
+        stub_model_api(fallback_1, None)
+        stub_model_api(fallback_2, "4")
+        stub_model_api(fallback_3, "5")
         assert primary.chat("What's 2+2?") == "4"
         assert called_models == [primary.model, fallback_1.model, fallback_2.model]
         usage_calls = [i.usage.calls for i in primary.get_usage()]
@@ -7124,9 +7211,9 @@ class TestAll(TestUtils):
 
         # Chat: the error is raised only when the last fallback fails
         called_models.clear()
-        stub_llm_api(fallback_2, None)
-        stub_llm_api(fallback_3, None)
-        with pytest.raises(LLMAPIError):
+        stub_model_api(fallback_2, None)
+        stub_model_api(fallback_3, None)
+        with pytest.raises(ModelAPIError):
             primary.chat("What's 2+2?")
         assert called_models == expected_models
 
@@ -7145,7 +7232,7 @@ class TestAll(TestUtils):
         called_models.clear()
         primary.reset_usage_and_cost()
         assert not any(i.usage.calls for i in primary.get_usage())
-        stub_llm_api(fallback_2, concepts_answer)
+        stub_model_api(fallback_2, concepts_answer)
         primary.extract_concepts_from_document(document)
         assert called_models == [primary.model, fallback_1.model, fallback_2.model]
         assert [i.extracted_items[0].value for i in document.concepts] == [
@@ -7156,8 +7243,8 @@ class TestAll(TestUtils):
         # Same with concurrency, i.e. with each concept processed in a separate call
         concept_answer = '[{"concept_id": "C0", "extracted_items": ["Item"]}]'
         called_models.clear()
-        stub_llm_api(fallback_2, None)
-        stub_llm_api(fallback_3, concept_answer)
+        stub_model_api(fallback_2, None)
+        stub_model_api(fallback_3, concept_answer)
         primary.extract_concepts_from_document(
             document, overwrite_existing=True, use_concurrency=True
         )
@@ -7169,8 +7256,8 @@ class TestAll(TestUtils):
 
         # Extraction: the error is raised only when the last fallback fails
         called_models.clear()
-        stub_llm_api(fallback_3, None)
-        with pytest.raises(LLMAPIError):
+        stub_model_api(fallback_3, None)
+        with pytest.raises(ModelAPIError):
             primary.extract_concepts_from_document(document, overwrite_existing=True)
         assert called_models == expected_models
         # But a warning is issued if `raise_exception_on_extraction_error` is False
@@ -7187,10 +7274,10 @@ class TestAll(TestUtils):
         assert called_models == expected_models
         assert not any(i.extracted_items for i in document_unprocessed.concepts)
 
-        check_locals_memory_usage(locals(), test_name="test_multiple_fallback_llms")
+        check_locals_memory_usage(locals(), test_name="test_multiple_fallback_models")
 
     @memory_profile_and_capture
-    def test_llm_api_request_retries(self):
+    def test_model_api_request_retries(self):
         """
         Tests for retrying failed LLM API requests: only transient errors are retried,
         with a backoff between the retries, and each LLM, including each fallback LLM,
@@ -7203,7 +7290,7 @@ class TestAll(TestUtils):
 
         def create_api_error(error_class: Any) -> Exception:
             """
-            Creates an LLM API error of the specified litellm exception class.
+            Creates a model API error of the specified litellm exception class.
             """
             return error_class(
                 message="Simulated API error",
@@ -7223,7 +7310,7 @@ class TestAll(TestUtils):
             create_api_error(litellm.APIConnectionError),
             RuntimeError("Error not classified by litellm"),
         ]:
-            assert _is_retryable_llm_api_error(error)
+            assert _is_retryable_model_api_error(error)
         for error in [
             create_api_error(litellm.BadRequestError),
             auth_error,
@@ -7231,7 +7318,7 @@ class TestAll(TestUtils):
             create_api_error(litellm.ContextWindowExceededError),
             create_api_error(litellm.ContentPolicyViolationError),
         ]:
-            assert not _is_retryable_llm_api_error(error)
+            assert not _is_retryable_model_api_error(error)
 
         # === Backoff with jitter ===
         for retry_number, backoff in [
@@ -7241,7 +7328,7 @@ class TestAll(TestUtils):
             (4, 8.0),
             (9, 10.0),
         ]:
-            delays = {_get_llm_api_retry_delay(retry_number) for _ in range(50)}
+            delays = {_get_model_api_retry_delay(retry_number) for _ in range(50)}
             assert all(backoff / 2 <= delay <= backoff for delay in delays)
             assert len(delays) > 1  # delays are randomized
 
@@ -7313,7 +7400,7 @@ class TestAll(TestUtils):
             """
             return create_llm(
                 num_retries_failed_request=1,
-                fallback_llms=[
+                fallback_models=[
                     create_llm(
                         fallback_model_1,
                         num_retries_failed_request=2,
@@ -7342,7 +7429,9 @@ class TestAll(TestUtils):
 
         with (
             patch.object(litellm, "acompletion", new=acompletion_stub),
-            patch.object(llms_module, "_get_llm_api_retry_delay", new=retry_delay_stub),
+            patch.object(
+                llms_module, "_get_model_api_retry_delay", new=retry_delay_stub
+            ),
         ):
             # Transient errors are retried until the request succeeds
             set_outcomes({primary_model: [rate_limit_error, rate_limit_error, "4"]})
@@ -7353,7 +7442,7 @@ class TestAll(TestUtils):
             # ...or until the retries are exhausted
             for num_retries in [3, 1, 0]:
                 set_outcomes({primary_model: [rate_limit_error]})
-                with pytest.raises(LLMAPIError) as exc_info:
+                with pytest.raises(ModelAPIError) as exc_info:
                     create_llm(num_retries_failed_request=num_retries).chat("Test")
                 assert exc_info.value.retry_count == num_retries
                 assert exc_info.value.original_error is rate_limit_error
@@ -7362,7 +7451,7 @@ class TestAll(TestUtils):
 
             # Non-transient errors are not retried
             set_outcomes({primary_model: [auth_error]})
-            with pytest.raises(LLMAPIError) as exc_info:
+            with pytest.raises(ModelAPIError) as exc_info:
                 create_llm().chat("Test")
             assert exc_info.value.retry_count == 0
             assert exc_info.value.original_error is auth_error
@@ -7370,7 +7459,7 @@ class TestAll(TestUtils):
             assert retry_numbers == []
             # ...also when they follow a transient error
             set_outcomes({primary_model: [rate_limit_error, auth_error]})
-            with pytest.raises(LLMAPIError) as exc_info:
+            with pytest.raises(ModelAPIError) as exc_info:
                 create_llm().chat("Test")
             assert exc_info.value.retry_count == 1
             assert requested_models() == [primary_model] * 2
@@ -7419,7 +7508,7 @@ class TestAll(TestUtils):
                     fallback_model_2: [rate_limit_error],
                 }
             )
-            with pytest.raises(LLMAPIError) as exc_info:
+            with pytest.raises(ModelAPIError) as exc_info:
                 create_llm_with_fallbacks().extract_concepts_from_document(
                     create_document()
                 )
@@ -7430,7 +7519,7 @@ class TestAll(TestUtils):
 
             # Extraction: invalid data is requested again without a delay
             set_outcomes({primary_model: [invalid_answer]})
-            with pytest.raises(LLMExtractionError, match=r"invalid JSON.*2 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*2 retries"):
                 create_llm(max_retries_invalid_data=2).extract_concepts_from_document(
                     create_document()
                 )
@@ -7451,7 +7540,7 @@ class TestAll(TestUtils):
             # Extraction with concurrency: a final API error is raised as is,
             # without sending the failed requests again
             set_outcomes({primary_model: [auth_error]})
-            with pytest.raises(LLMAPIError) as exc_info:
+            with pytest.raises(ModelAPIError) as exc_info:
                 create_llm().extract_concepts_from_document(
                     create_document(n_concepts=2), use_concurrency=True
                 )
@@ -7469,7 +7558,7 @@ class TestAll(TestUtils):
             assert requested_models() == [primary_model] * 4
             assert not document.concepts[0].extracted_items
 
-        check_locals_memory_usage(locals(), test_name="test_llm_api_request_retries")
+        check_locals_memory_usage(locals(), test_name="test_model_api_request_retries")
 
     @memory_profile_and_capture
     def test_async_limiter_per_llm(self):
@@ -7487,14 +7576,14 @@ class TestAll(TestUtils):
         llm = DocumentLLM(
             model=primary_model,
             api_key="test_api_key",
-            fallback_llms=[
+            fallback_models=[
                 DocumentLLM(
                     model=fallback_model, api_key="test_api_key", is_fallback=True
                 )
             ],
         )
         llm.async_limiter = AsyncLimiter(10, 5)
-        llm.fallback_llms[0].async_limiter = AsyncLimiter(20, 5)
+        llm.fallback_models[0].async_limiter = AsyncLimiter(20, 5)
 
         acquisitions: list[tuple[float, float]] = []
 
@@ -7567,10 +7656,10 @@ class TestAll(TestUtils):
             document_zh,
         ],
     )
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
     def test_serialization_and_cloning(
-        self, document: Document, llm: DocumentLLMGroup | DocumentLLM
+        self, document: Document, llm: DocumentModelGroup | DocumentLLM
     ):
         """
         Tests for custom serialization, deserialization, and cloning of application class instances,
@@ -7670,7 +7759,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Is a contract",
                 description="Document is a contract",
-                llm_role="reasoner",
+                model_role="reasoner",
                 add_justifications=True,
                 singular_occurrence=True,
             ),
@@ -7686,7 +7775,7 @@ class TestAll(TestUtils):
                     "Licensing agreement",
                 ],
                 classification_type="multi_label",
-                llm_role="reasoner",
+                model_role="reasoner",
                 singular_occurrence=True,  # global document classification
             ),
             StringConcept(
@@ -7697,7 +7786,7 @@ class TestAll(TestUtils):
             NumericalConcept(
                 name="Duration in years",
                 description="Contract duration in years",
-                llm_role="reasoner",
+                model_role="reasoner",
                 numeric_type="int",
                 add_justifications=True,
                 singular_occurrence=True,
@@ -7734,7 +7823,7 @@ class TestAll(TestUtils):
             BooleanConcept(
                 name="Invoice check",
                 description="Whether the attached images contain an invoice",
-                llm_role="reasoner",
+                model_role="reasoner",
                 modality="image",
                 singular_occurrence=True,
             ),
@@ -7896,10 +7985,10 @@ class TestAll(TestUtils):
         check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_group, llm_extractor])
+    @pytest.mark.parametrize("llm", [model_group, llm_extractor])
     @memory_profile_and_capture
     def test_aspect_extraction_from_paragraphs(
-        self, llm: DocumentLLMGroup | DocumentLLM
+        self, llm: DocumentModelGroup | DocumentLLM
     ):
         """
         Tests for extracting aspects if only paragraphs are provided for a document.
@@ -8001,7 +8090,7 @@ class TestAll(TestUtils):
                         }
                     )
                 ],
-                llm_role="reasoner",
+                model_role="reasoner",
                 modality="image",
                 add_justifications=True,
             ),
@@ -8026,14 +8115,14 @@ class TestAll(TestUtils):
             images=[self.test_img_png_invoice], concepts=document_concepts
         )
 
-        self.config_llm_async_limiter_for_mock_responses(self.llm_group)
+        self.config_llm_async_limiter_for_mock_responses(self.model_group)
 
         self.compare_with_concurrent_execution(
-            llm=self.llm_group,
+            llm=self.model_group,
             expected_n_calls_no_concurrency=3,
             expected_n_calls_with_concurrency=4,
             expected_n_calls_1_item_per_call=4,
-            func=self.llm_group.extract_concepts_from_document,
+            func=self.model_group.extract_concepts_from_document,
             func_kwargs={
                 "document": document,
             },
@@ -8047,7 +8136,7 @@ class TestAll(TestUtils):
             NumericalConcept(
                 name="Number of bedrooms",
                 description="Number of bedrooms in the floor plan",
-                llm_role="reasoner",
+                model_role="reasoner",
                 modality="image",
                 numeric_type="int",
                 add_justifications=True,
@@ -8055,7 +8144,7 @@ class TestAll(TestUtils):
             NumericalConcept(
                 name="Number of balconies",
                 description="Number of balconies in the floor plan",
-                llm_role="reasoner",
+                model_role="reasoner",
                 modality="image",
                 numeric_type="int",
                 add_justifications=True,
@@ -8071,11 +8160,11 @@ class TestAll(TestUtils):
         )
 
         self.compare_with_concurrent_execution(
-            llm=self.llm_group,
+            llm=self.model_group,
             expected_n_calls_no_concurrency=2,
             expected_n_calls_with_concurrency=3,
             expected_n_calls_1_item_per_call=3,
-            func=self.llm_group.extract_concepts_from_document,
+            func=self.model_group.extract_concepts_from_document,
             func_kwargs={
                 "document": document,
             },
@@ -8095,9 +8184,9 @@ class TestAll(TestUtils):
         )
 
         # Check usage tokens
-        self.check_usage(self.llm_group)
+        self.check_usage(self.model_group)
         # Check cost
-        self.check_cost(self.llm_group)
+        self.check_cost(self.model_group)
 
         # Test error when model is not vision-capable
         llm_not_vision_capable = DocumentLLM(
@@ -8114,9 +8203,9 @@ class TestAll(TestUtils):
         )  # higher value for images
 
     @pytest.mark.vcr
-    @pytest.mark.parametrize("llm", [llm_extractor, llm_reasoner, llm_group])
+    @pytest.mark.parametrize("llm", [llm_extractor, llm_reasoner, model_group])
     @memory_profile_and_capture
-    def test_multimodal_concepts(self, llm: DocumentLLM | DocumentLLMGroup):
+    def test_multimodal_concepts(self, llm: DocumentLLM | DocumentModelGroup):
         """
         Tests for multimodal concept extraction from multimodal document (text + images).
         """
@@ -8172,7 +8261,7 @@ class TestAll(TestUtils):
             )  # refs will be added only for text content, not for images
 
         # Test together with aspects and other concepts routed to different LLMs
-        if isinstance(llm, DocumentLLMGroup):
+        if isinstance(llm, DocumentModelGroup):
             self.document_multimodal.add_aspects(
                 [
                     Aspect(
@@ -8194,7 +8283,7 @@ class TestAll(TestUtils):
                     StringConcept(
                         name="Document type",
                         description="Guess the type of the document",
-                        llm_role="reasoner",
+                        model_role="reasoner",
                         add_justifications=True,
                     )
                 ]
@@ -8273,9 +8362,9 @@ class TestAll(TestUtils):
                 with pytest.warns(UserWarning, match="default system message"):
                     model.chat("What's the result of 2+2?")
                 if model == self.invalid_llm_with_valid_fallback:
-                    assert model.fallback_llms
+                    assert model.fallback_models
                     response = (
-                        model.fallback_llms[0].get_usage()[0].usage.calls[-1].response
+                        model.fallback_models[0].get_usage()[0].usage.calls[-1].response
                     )
                 else:
                     response = model.get_usage()[0].usage.calls[-1].response
@@ -8537,7 +8626,7 @@ class TestAll(TestUtils):
         # provided ChatSession should remain with _response_succeeded == False and
         # no assistant message should be appended.
         cs_err = ChatSession()
-        with pytest.raises(LLMAPIError):
+        with pytest.raises(ModelAPIError):
             self.llm_invalid.chat("Will this fail?", chat_session=cs_err)
 
         msgs = cs_err.messages
@@ -8550,7 +8639,7 @@ class TestAll(TestUtils):
         )
 
         # Second attempt with the same prompt should not duplicate the user message
-        with pytest.raises(LLMAPIError):
+        with pytest.raises(ModelAPIError):
             self.llm_invalid.chat("Will this fail?", chat_session=cs_err)
         msgs2 = cs_err.messages
         assert len(msgs2) == 2
@@ -8567,14 +8656,14 @@ class TestAll(TestUtils):
         bad_primary = DocumentLLM(**self._invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
         invalid_llm_kwargs_2 = deepcopy(self._invalid_llm_kwargs)
         invalid_llm_kwargs_2["model"] = "newmodel/123"
-        bad_primary.fallback_llms = [
+        bad_primary.fallback_models = [
             DocumentLLM(
                 **invalid_llm_kwargs_2,  # ty: ignore[invalid-argument-type]
                 is_fallback=True,
             )
         ]
 
-        with pytest.raises(LLMAPIError):
+        with pytest.raises(ModelAPIError):
             bad_primary.chat("Another failing call", chat_session=cs_err_fb)
 
         msgs = cs_err_fb.messages
@@ -8742,9 +8831,9 @@ class TestAll(TestUtils):
         # Test for `supports_tools` mismatch between main and fallback LLMs
         llm._supports_tools = False
         with pytest.raises(ValueError, match="supports_tools"):
-            llm.fallback_llms = [llm_fallback]
+            llm.fallback_models = [llm_fallback]
         llm._supports_tools = True
-        llm.fallback_llms = [llm_fallback]
+        llm.fallback_models = [llm_fallback]
 
         # Mark support exolicitly due to litellm bug where litellm.supports_parallel_function_calling()
         # returns False for all models: https://github.com/BerriAI/litellm/issues/13980
@@ -9158,10 +9247,10 @@ class TestAll(TestUtils):
             chat_with_tools,  # noqa: F401
             cost_tracking,  # noqa: F401
             detailed_usage,  # noqa: F401
-            fallback_llms,  # noqa: F401
+            fallback_models,  # noqa: F401
             llm_api,  # noqa: F401
-            llm_group,  # noqa: F401
             llm_local,  # noqa: F401
+            model_group,  # noqa: F401
             reasoning_params,  # noqa: F401
             tracking_usage_and_cost,  # noqa: F401
         )
@@ -9216,7 +9305,7 @@ class TestAll(TestUtils):
             def_string_concept,  # noqa: F401
         )
         from dev.usage_examples.docstrings.data_models import (
-            def_llm_pricing,  # noqa: F401
+            def_model_pricing,  # noqa: F401
         )
         from dev.usage_examples.docstrings.documents import def_document  # noqa: F401
         from dev.usage_examples.docstrings.examples import (
@@ -9226,7 +9315,7 @@ class TestAll(TestUtils):
         from dev.usage_examples.docstrings.images import def_image  # noqa: F401
         from dev.usage_examples.docstrings.llms import (  # noqa: F401
             def_llm,
-            def_llm_group,
+            def_model_group,
         )
         from dev.usage_examples.docstrings.paragraphs import def_paragraph  # noqa: F401
         from dev.usage_examples.docstrings.pipelines import def_pipeline  # noqa: F401
@@ -9248,12 +9337,12 @@ class TestAll(TestUtils):
         doc = Document.from_disk(self.test_doc_with_additional_context_path)
         assert all(paragraph.additional_context for paragraph in doc.paragraphs)
 
-        # Create a new LLM group with new usage stats,
+        # Create a new model group with new usage stats,
         # as we need to isolate the prompts for inspection.
         # The LLM without a role extracts from text, while the concepts to be
         # extracted from images are routed to a separate LLM by the role.
-        llm_group = DocumentLLMGroup(
-            llms=[
+        model_group = DocumentModelGroup(
+            models=[
                 DocumentLLM(**self._llm_extractor_kwargs_openai),  # ty: ignore[invalid-argument-type]
                 DocumentLLM(
                     **self._llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
@@ -9272,7 +9361,7 @@ class TestAll(TestUtils):
             """
             # Only check text extraction calls, made by the LLM without a role
             call_objs = next(
-                i for i in llm_group.get_usage() if i.role is None
+                i for i in model_group.get_usage() if i.role is None
             ).usage.calls
             text_call_objs = [
                 c
@@ -9315,13 +9404,13 @@ class TestAll(TestUtils):
             StringConcept(
                 name="Invoice total amount",
                 description="Total amount of the invoice",
-                llm_role="vision",
+                model_role="vision",
                 modality="image",
             ),
         ]
 
         # Test extraction from full text
-        extracted_concepts = llm_group.extract_concepts_from_document(doc)
+        extracted_concepts = model_group.extract_concepts_from_document(doc)
         assert extracted_concepts[0].extracted_items
         logger.debug(extracted_concepts[0].extracted_items[0].value)
         assert extracted_concepts[0].extracted_items[0].value == 3
@@ -9331,7 +9420,7 @@ class TestAll(TestUtils):
         check_additional_context_in_prompt(prompt_kwargs_key="text")
 
         # Test extraction with max paragraphs
-        extracted_concepts = llm_group.extract_concepts_from_document(
+        extracted_concepts = model_group.extract_concepts_from_document(
             doc, max_paragraphs_to_analyze_per_call=25, overwrite_existing=True
         )
         assert extracted_concepts[0].extracted_items
@@ -9346,7 +9435,7 @@ class TestAll(TestUtils):
                 description="Clauses describing the obligations of the receiving party",
             )
         ]
-        extracted_aspects = llm_group.extract_aspects_from_document(doc)
+        extracted_aspects = model_group.extract_aspects_from_document(doc)
         assert extracted_aspects[0].extracted_items
         assert extracted_aspects[0].extracted_items[0].reference_paragraphs
         # Aspect references resolve to positions in the document, in document order
@@ -9365,7 +9454,7 @@ class TestAll(TestUtils):
                 reference_depth="sentences",
             )
         ]
-        extracted_aspects = llm_group.extract_aspects_from_document(doc)
+        extracted_aspects = model_group.extract_aspects_from_document(doc)
         assert extracted_aspects[0].extracted_items
         assert extracted_aspects[0].extracted_items[0].reference_sentences
         # Aspect references resolve to positions in the document, in document order
@@ -9595,12 +9684,12 @@ class TestAll(TestUtils):
                 auto_pricing=True,
             )
 
-        # Setting auto-pricing and LLMPricing together
+        # Setting auto-pricing and ModelPricing together
         with pytest.raises(ValueError, match="auto_pricing=True"):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                pricing_details=LLMPricing(
+                pricing_details=ModelPricing(
                     input_per_1m_tokens=0.00015, output_per_1m_tokens=0.0006
                 ),
                 auto_pricing=True,

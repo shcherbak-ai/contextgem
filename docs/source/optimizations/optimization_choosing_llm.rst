@@ -41,12 +41,12 @@ Since ContextGem specializes in deep single-document analysis, models with large
    **Small Model Issues?** If you're experiencing issues with smaller models (e.g. 8B parameter models), such as JSON validation errors or inconsistent results, see our :doc:`troubleshooting guide <optimization_small_llm_troubleshooting>` for specific solutions and workarounds.
 
 
-.. _llm-roles-label:
+.. _model-roles-label:
 
-🏷️ LLM Roles
+🏷️ Model Roles
 --------------
 
-The ``role`` of an LLM is a free-form label used to route aspects/concepts to different LLMs in a :class:`~contextgem.public.llms.DocumentLLMGroup`. For example, if an aspect/concept is assigned ``llm_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
+The ``role`` of an LLM is a free-form label used to route aspects/concepts to different LLMs in a :class:`~contextgem.public.llms.DocumentModelGroup`. For example, if an aspect/concept is assigned ``model_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``model_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
 
 A role is a label of your choice (e.g. ``"reasoner"``, ``"complex"``, ``"vision"``) and implies no capabilities of the model: it is you who decides which model stands behind each role. A role is a string of up to 64 printable characters: the surrounding whitespace is removed, and line breaks, tabs, and other control or invisible characters are not allowed. Roles are compared exactly, i.e. they are case-sensitive.
 
@@ -55,18 +55,18 @@ A role is a label of your choice (e.g. ``"reasoner"``, ``"complex"``, ``"vision"
    :widths: 30 35 35
 
    * - Extraction with
-     - Aspect/concept without ``llm_role``
-     - Aspect/concept with ``llm_role="reasoner"``
+     - Aspect/concept without ``model_role``
+     - Aspect/concept with ``model_role="reasoner"``
    * - Single LLM
      - Extracted by the LLM
      - Extracted by the LLM
-   * - LLM group
+   * - Model group
      - Extracted by the LLM without ``role``
      - Extracted by the LLM with ``role="reasoner"``
 
-In LLM groups, unique role assignments are especially important: each model in the group must have a distinct role (only one model can have no role), so routing can unambiguously send each aspect/concept to the intended model. If an aspect/concept is assigned a role that no LLM in the group has, an error is raised. This is checked before any requests are sent by the extraction method, including for the nested aspects/concepts that the method processes.
+In model groups, unique role assignments are especially important: each model in the group must have a distinct role (only one model can have no role), so routing can unambiguously send each aspect/concept to the intended model. If an aspect/concept is assigned a role that no LLM in the group has, an error is raised. This is checked before any requests are sent by the extraction method, including for the nested aspects/concepts that the method processes.
 
-For simple use cases, when working with a single LLM, you can skip the role assignments completely: a single LLM extracts all the aspects/concepts it is given, regardless of their ``llm_role``.
+For simple use cases, when working with a single LLM, you can skip the role assignments completely: a single LLM extracts all the aspects/concepts it is given, regardless of their ``model_role``.
 
 .. seealso::
    **Upgrading from an earlier version?** Before v1.0, roles were predefined names that also determined the content to extract from. See :doc:`../migration_v1` for updating your code and serialized data.
@@ -84,7 +84,7 @@ For simple use cases, when working with a single LLM, you can skip the role assi
 🖼️ Concept Modality
 ---------------------
 
-The ``modality`` of a concept defines the document content that the concept is extracted from. The modality is independent of LLM roles: a concept is extracted from the specified content by whichever LLM it is given or routed to.
+The ``modality`` of a concept defines the document content that the concept is extracted from. The modality is independent of model roles: a concept is extracted from the specified content by whichever LLM it is given or routed to.
 
 .. list-table:: Available concept modalities
    :header-rows: 1
@@ -114,4 +114,4 @@ The ``modality`` of a concept defines the document content that the concept is e
   🔀 Concepts with the ``"multimodal"`` modality reuse the existing text and image extraction paths. If text exists, the text path runs first; if images exist, the image path runs next. References are only supported for multimodal concepts when text is used.
 
 .. note::
-  🤖 A single multimodal LLM can extract concepts of all modalities. If you prefer a dedicated model for images, add it to an LLM group with a role (e.g. ``role="vision"``) and assign the same ``llm_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.
+  🤖 A single multimodal LLM can extract concepts of all modalities. If you prefer a dedicated model for images, add it to a model group with a role (e.g. ``role="vision"``) and assign the same ``model_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.

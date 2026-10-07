@@ -56,22 +56,22 @@ from pydantic import (
 )
 from typing_extensions import Self
 
-from contextgem.internal.base.abstract import _AbstractGenericLLMProcessor
+from contextgem.internal.base.abstract import _AbstractGenericModelProcessor
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.concepts import _Concept
-from contextgem.internal.base.data_models import _LLMPricing
+from contextgem.internal.base.data_models import _ModelPricing
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.base.utils import _is_registered_tool
 from contextgem.internal.data_models import (
-    _LLMCall,
-    _LLMCost,
-    _LLMCostOutputContainer,
-    _LLMUsage,
-    _LLMUsageOutputContainer,
     _Message,
+    _ModelCall,
+    _ModelCost,
+    _ModelCostOutputContainer,
+    _ModelUsage,
+    _ModelUsageOutputContainer,
 )
 from contextgem.internal.decorators import (
     _disable_direct_initialization,
@@ -79,9 +79,9 @@ from contextgem.internal.decorators import (
     _timer_decorator,
 )
 from contextgem.internal.exceptions import (
-    LLMAPIError,
-    LLMExtractionError,
     LLMToolLoopLimitError,
+    ModelAPIError,
+    ModelExtractionError,
 )
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
@@ -95,8 +95,8 @@ from contextgem.internal.typings.types import (
     JSONDictField,
     JustificationDepth,
     LanguageRequirement,
-    LLMRole,
     Modality,
+    ModelRole,
     NonEmptyStr,
     ReasoningEffort,
     ReferenceDepth,
@@ -104,22 +104,22 @@ from contextgem.internal.typings.types import (
     ToolRegistration,
 )
 from contextgem.internal.typings.validators import (
-    _validate_llm_role,
+    _validate_model_role,
     _validate_sequence_is_list,
     _validate_tool_parameters_schema,
 )
 from contextgem.internal.utils import (
-    _LLM_API_RETRIES_ATTEMPTED_ATTR,
+    _MODEL_API_RETRIES_ATTEMPTED_ATTR,
     _async_multi_executor,
     _chunk_list,
     _clean_text_for_llm_prompt,
-    _get_llm_api_retry_delay,
     _get_llm_cache_token_counts,
+    _get_model_api_retry_delay,
     _get_template,
     _group_instances_by_fields,
-    _is_retryable_llm_api_error,
-    _llm_call_result_is_api_failure,
-    _llm_call_result_is_valid,
+    _is_retryable_model_api_error,
+    _model_call_result_is_api_failure,
+    _model_call_result_is_valid,
     _parse_llm_output_as_json,
     _remove_thinking_content_from_llm_output,
     _run_async_calls,
@@ -139,7 +139,7 @@ if TYPE_CHECKING:
     # recognise the self-import idiom, but pyright/mypy do — keep it for them.
     from contextgem.internal.base.llms import (
         _DocumentLLM,  # ty: ignore[unresolved-import]
-        _DocumentLLMGroup,  # ty: ignore[unresolved-import]
+        _DocumentModelGroup,  # ty: ignore[unresolved-import]
     )
 
 
@@ -153,7 +153,7 @@ _LOCAL_MODEL_PROVIDERS = [
     "lm_studio/",
 ]
 
-# Rounding precision for reporting LLM costs (quantize on access only)
+# Rounding precision for reporting model costs (quantize on access only)
 _COST_QUANT = Decimal("0.00001")
 
 # Network destinations required by genai-prices to refresh cached pricing data.
@@ -161,21 +161,21 @@ _COST_QUANT = Decimal("0.00001")
 # and imported by tests/conftest.py to keep the test allowlist in sync.
 _GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
-# Error message for the LLMs that have the same role in an LLM group
-_NON_UNIQUE_LLM_ROLES_MSG = (
+# Error message for the LLMs that have the same role in a model group
+_NON_UNIQUE_MODEL_ROLES_MSG = (
     "LLMs in a group must have different roles, "
     "and only one LLM in a group can have no role."
 )
 
 
-class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
+class _GenericModelProcessor(_AbstractGenericModelProcessor):
     """
-    Base class that handles processing logic using LLMs.
+    Base class that handles processing logic using models.
 
-    This class provides the foundation for implementing LLM-based processing
+    This class provides the foundation for implementing model-based processing
     operations within the ContextGem framework. It defines the core interface and shared
     functionality for document analysis, information extraction, and content processing
-    using various LLM backends.
+    using various model backends.
     """
 
     def extract_all(
@@ -285,7 +285,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         :rtype: _Document
         """
 
-        self._check_llm_roles_before_extract_all(document)
+        self._check_model_roles_before_extract_all(document)
         self._check_vision_support_for_concepts(
             document=document, concepts=document.concepts
         )
@@ -480,10 +480,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         }
 
         if self.is_group:
-            # Safe cast: self is a _DocumentLLMGroup because `is_group` is True
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
             cals_and_kwargs = [
                 (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
-                for llm in cast("_DocumentLLMGroup", self).llms
+                for llm in cast("_DocumentModelGroup", self).models
             ]
             # Safe cast: List comprehension creates tuples of (async_method, kwargs)
             # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
@@ -710,10 +710,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         }
 
         if self.is_group:
-            # Safe cast: self is a _DocumentLLMGroup because `is_group` is True
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
             cals_and_kwargs = [
                 (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
-                for llm in cast("_DocumentLLMGroup", self).llms
+                for llm in cast("_DocumentModelGroup", self).models
             ]
             # Safe cast: List comprehension creates tuples of (async_method, kwargs)
             # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
@@ -935,10 +935,10 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         }
 
         if self.is_group:
-            # Safe cast: self is a _DocumentLLMGroup because `is_group` is True
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
             cals_and_kwargs = [
                 (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
-                for llm in cast("_DocumentLLMGroup", self).llms
+                for llm in cast("_DocumentModelGroup", self).models
             ]
             # Safe cast: List comprehension creates tuples of (async_method, kwargs)
             # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
@@ -955,52 +955,52 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         # Explicitly return list of concepts for type checking
         return list(from_concepts) if from_concepts else list(document.concepts)
 
-    def _check_llm_roles_before_extract_all(
+    def _check_model_roles_before_extract_all(
         self,
         document: _Document,
     ) -> None:
         """
-        Checks, before the full extraction method extract_all() is run with an LLM group,
+        Checks, before the full extraction method extract_all() is run with a model group,
         that all aspects and concepts assigned to the given document, including sub-aspects
         and aspect-level concepts, can be routed to the LLMs in the group. This ensures
         that no LLM calls are made for the extraction that cannot be completed.
 
         The check does not apply to a standalone LLM, which extracts all aspects
-        and concepts, regardless of their LLM roles.
+        and concepts, regardless of their model roles.
 
-        :param document: The document object to check for LLM role assignments.
+        :param document: The document object to check for model role assignments.
         :type document: _Document
         :return: None
         :rtype: None
-        :raises ValueError: If the document contains aspects or concepts with LLM roles
+        :raises ValueError: If the document contains aspects or concepts with model roles
             that no LLM in the group has.
         """
 
         if self.is_group:
-            self._check_llm_roles_are_routable(document.llm_roles)
+            self._check_model_roles_are_routable(document.model_roles)
 
-    def _check_llm_roles_are_routable(self, llm_roles: set[str | None]) -> None:
+    def _check_model_roles_are_routable(self, model_roles: set[str | None]) -> None:
         """
-        Checks that each of the given LLM roles, assigned to aspects or concepts,
-        is the role of exactly one LLM in the current LLM group. An aspect or concept
+        Checks that each of the given model roles, assigned to aspects or concepts,
+        is the role of exactly one LLM in the current model group. An aspect or concept
         is routed to the LLM in the group with the same role, and an aspect or concept
         without a role (None) is routed to the LLM without a role.
 
-        :param llm_roles: LLM roles assigned to the aspects or concepts to be extracted.
-        :type llm_roles: set[str | None]
+        :param model_roles: Model roles assigned to the aspects or concepts to be extracted.
+        :type model_roles: set[str | None]
         :return: None
         :rtype: None
         :raises ValueError: If several LLMs in the group have the same role, or if any
-            of the given LLM roles is not the role of an LLM in the group.
+            of the given model roles is not the role of an LLM in the group.
         """
 
         def format_roles(roles: set[str | None]) -> str:
             """
-            Formats LLM roles for an error message.
+            Formats model roles for an error message.
 
-            :param roles: LLM roles to format.
+            :param roles: Model roles to format.
             :type roles: set[str | None]
-            :return: Comma-separated LLM roles, with None described as no role.
+            :return: Comma-separated model roles, with None described as no role.
             :rtype: str
             """
             return ", ".join(
@@ -1017,19 +1017,19 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         }
         if duplicate_roles:
             raise ValueError(
-                f"{_NON_UNIQUE_LLM_ROLES_MSG} "
+                f"{_NON_UNIQUE_MODEL_ROLES_MSG} "
                 f"Roles assigned to several LLMs: {format_roles(duplicate_roles)}."
             )
 
         group_roles = set(roles_of_llms)
-        missing_llm_roles = llm_roles.difference(group_roles)
-        if missing_llm_roles:
+        missing_model_roles = model_roles.difference(group_roles)
+        if missing_model_roles:
             raise ValueError(
                 f"Some aspects/concepts cannot be routed to an LLM in the group, "
-                f"as no LLM in the group has the role: {format_roles(missing_llm_roles)}. "
+                f"as no LLM in the group has the role: {format_roles(missing_model_roles)}. "
                 f"Roles of the LLMs in the group: {format_roles(group_roles)}. "
                 f"An aspect/concept is extracted by the LLM with the `role` equal to "
-                f"the `llm_role` of the aspect/concept. An aspect/concept without `llm_role` "
+                f"the `model_role` of the aspect/concept. An aspect/concept without `model_role` "
                 f"is extracted by the LLM without `role`."
             )
 
@@ -1047,7 +1047,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         to the primary LLM are sent.
 
         If the document has images, the concepts with the "image" and "multimodal"
-        modalities are extracted from them. In an LLM group, each concept is extracted
+        modalities are extracted from them. In a model group, each concept is extracted
         by the LLM that the concept is routed to by the role, i.e. the roles must be
         checked to be routable before this check.
 
@@ -1071,22 +1071,24 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             return
 
         if self.is_group:
-            # Safe cast: self is a _DocumentLLMGroup because `is_group` is True
-            llms = cast("_DocumentLLMGroup", self).llms
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
+            llms = cast("_DocumentModelGroup", self).models
         else:
             # Safe cast: self is a _DocumentLLM because `is_group` is False
             llms = [cast("_DocumentLLM", self)]
 
         for llm in llms:
-            # In an LLM group, a concept is extracted by the LLM with the same role.
+            # In a model group, a concept is extracted by the LLM with the same role.
             # A standalone LLM extracts all the concepts, regardless of their roles.
             llm_image_concepts = [
-                i for i in image_concepts if not self.is_group or i.llm_role == llm.role
+                i
+                for i in image_concepts
+                if not self.is_group or i.model_role == llm.role
             ]
             if not llm_image_concepts:
                 continue
             concept_names = ", ".join(f"`{i.name}`" for i in llm_image_concepts)
-            for llm_instance in [llm, *llm.fallback_llms]:
+            for llm_instance in [llm, *llm.fallback_models]:
                 if llm_instance._supports_vision:
                     continue
                 if llm_instance.is_fallback:
@@ -1106,7 +1108,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     def _check_instances_and_llm_params(
         self,
         target: _Document | _Aspect,
-        llm_or_group: _DocumentLLM | _DocumentLLMGroup,
+        llm_or_group: _DocumentLLM | _DocumentModelGroup,
         instances_to_process: Sequence[_Aspect]
         | Sequence[_Concept]
         | None,  # using Sequence type with list validator for type checking
@@ -1115,7 +1117,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     ) -> None:
         """
         Validates instances and LLM parameters, ensuring compatibility with the target
-        and configurations provided. For an LLM group, validates the roles of all
+        and configurations provided. For a model group, validates the roles of all
         descendants that this extraction will process before any requests are sent.
         Aspect extraction checks aspect roles only; concept extraction from an aspect
         checks concept roles in the selected aspect and its non-empty descendants.
@@ -1124,9 +1126,9 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             to `instance_type` (e.g., 'aspects' for 'aspect', etc.). Expected to be an
             instance of either _Document or _Aspect.
         :type target: _Document | _Aspect
-        :param llm_or_group: The LLM or an LLM group to be validated. This may either
-            be a standalone DocumentLLM or a DocumentLLMGroup to ensure compatibility.
-        :type llm_or_group: _DocumentLLM | _DocumentLLMGroup
+        :param llm_or_group: The LLM or a model group to be validated. This may either
+            be a standalone DocumentLLM or a DocumentModelGroup to ensure compatibility.
+        :type llm_or_group: _DocumentLLM | _DocumentModelGroup
         :param instances_to_process: A list of instances to process, which must match
             the specified instance-type (`aspect` or `concept`). If not provided,
             defaults to instances present in the target attribute.
@@ -1181,18 +1183,18 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             overwrite_existing=overwrite_existing,
         )
 
-        # Check DocumentLLMGroup. A standalone DocumentLLM extracts all the instances,
-        # regardless of their LLM roles, i.e. requires no check of the LLM roles.
+        # Check DocumentModelGroup. A standalone DocumentLLM extracts all the instances,
+        # regardless of their model roles, i.e. requires no check of the model roles.
         if llm_or_group.is_group:
-            # Safe cast: llm_or_group is a _DocumentLLMGroup because `is_group` is True
-            llm_group = cast("_DocumentLLMGroup", llm_or_group)
-            if not llm_group.llms:
+            # Safe cast: llm_or_group is a _DocumentModelGroup because `is_group` is True
+            model_group = cast("_DocumentModelGroup", llm_or_group)
+            if not model_group.models:
                 raise ValueError(
-                    "The provided DocumentLLMGroup does not contain any defined LLMs."
+                    "The provided DocumentModelGroup does not contain any defined LLMs."
                 )
             # Include the descendants that the public extraction method processes
             # recursively, respecting the selection of top-level instances.
-            required_roles = {i.llm_role for i in check_instances}
+            required_roles = {i.model_role for i in check_instances}
             if instance_type == "aspect":
                 pending_aspects = list(cast(Sequence[_Aspect], check_instances))
             elif isinstance(target, _Aspect):
@@ -1202,15 +1204,15 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             while pending_aspects:
                 aspect = pending_aspects.pop()
                 if instance_type == "aspect":
-                    required_roles.add(aspect.llm_role)
+                    required_roles.add(aspect.model_role)
                 else:
                     # Concept extraction skips this whole subtree when the aspect
                     # has no extracted paragraphs to provide as context.
                     if not aspect.reference_paragraphs:
                         continue
-                    required_roles.update(i.llm_role for i in aspect.concepts)
+                    required_roles.update(i.model_role for i in aspect.concepts)
                 pending_aspects.extend(aspect.aspects)
-            llm_group._check_llm_roles_are_routable(required_roles)
+            model_group._check_model_roles_are_routable(required_roles)
 
         # Concepts can be extracted from images only at the document level
         if instance_type == "concept" and isinstance(target, _Document):
@@ -1595,7 +1597,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         async_limiter: AsyncLimiter | None = None,
         raise_exception_on_extraction_error: bool = True,
         has_fallback_pending: bool = False,
-    ) -> tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]:
+    ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
         """
         Extracts items from either aspects or concepts using a specified LLM.
         This unified method handles extraction from both documents and aspects,
@@ -1651,14 +1653,14 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :param has_fallback_pending: Whether a fallback LLM will be tried if the call to the
-            specified LLM fails. If True, an LLM API error is logged without being raised or
+            specified LLM fails. If True, a model API error is logged without being raised or
             warned about, as it is not final. Defaults to False.
         :type has_fallback_pending: bool
 
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if LLM processing fails
-            (1) _LLMUsage instance with LLM usage information
-        :rtype: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
+            (1) _ModelUsage instance with model usage information
+        :rtype: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
         """
 
         def validate_source_in_document(
@@ -1811,12 +1813,12 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             logger.info(
                 f"Aspect `{source.name}` does not have any extracted items to extract concepts from"
             )
-            return [], _LLMUsage()
+            return [], _ModelUsage()
 
         # Handle empty instances list
         if not instances_to_process:
             logger.info(f"No {extracted_item_type}s to process with LLM `{llm.model}`")
-            return [], _LLMUsage()
+            return [], _ModelUsage()
 
         # Prepare message kwargs list based on extraction params
         message_kwargs_list = self._prepare_message_kwargs_list(
@@ -1835,16 +1837,18 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             max_images_to_analyze_per_call=max_images_to_analyze_per_call,
         )
 
-        def merge_usage_data(existing: _LLMUsage | None, new: _LLMUsage) -> _LLMUsage:
+        def merge_usage_data(
+            existing: _ModelUsage | None, new: _ModelUsage
+        ) -> _ModelUsage:
             """
             Aggregates usage data from all LLM calls.
 
             :param existing: The existing usage data to merge with the new usage data.
-            :type existing: _LLMUsage | None
+            :type existing: _ModelUsage | None
             :param new: The new usage data to merge with the existing usage data.
-            :type new: _LLMUsage
+            :type new: _ModelUsage
             :return: The latest aggregated usage data from all LLM calls.
-            :rtype: _LLMUsage
+            :rtype: _ModelUsage
             """
 
             if existing is None:
@@ -1856,7 +1860,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             existing.calls += new.calls
             return existing
 
-        all_usage_data: _LLMUsage | None = None
+        all_usage_data: _ModelUsage | None = None
         sources_mapper: dict[
             str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
         ] = {}
@@ -1954,8 +1958,8 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 llm._build_user_message(message_text=rendered_prompt, images=images)
             )
 
-            # Initialize the LLM call object to pass to the LLM query method
-            llm_call_obj = _LLMCall(
+            # Initialize the model call object to pass to the LLM query method
+            model_call_obj = _ModelCall(
                 prompt_kwargs=prompt_kwargs,
                 prompt=rendered_prompt,
             )
@@ -1963,11 +1967,11 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
                 messages=messages,
-                llm_call_obj=llm_call_obj,
+                model_call_obj=model_call_obj,
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
                 async_limiter=async_limiter,
-                raise_exception_on_llm_api_error=raise_exception_on_extraction_error,
+                raise_exception_on_model_api_error=raise_exception_on_extraction_error,
                 has_fallback_pending=has_fallback_pending,
             )
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
@@ -2370,7 +2374,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                                             ]
                 source_instance._is_processed = True
 
-        return instances_to_process, all_usage_data or _LLMUsage()
+        return instances_to_process, all_usage_data or _ModelUsage()
 
     async def _extract_instances(
         self,
@@ -2435,7 +2439,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     max_rate=llm_instance.async_limiter.max_rate,
                     time_period=llm_instance.async_limiter.time_period,
                 )
-                for llm_instance in [llm, *llm.fallback_llms]
+                for llm_instance in [llm, *llm.fallback_models]
             }
             if use_concurrency
             else {}
@@ -2480,13 +2484,13 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
             if llm is None:
                 raise ValueError(
-                    f"No LLM with role `{instances_to_process[0].llm_role}` is defined in the group, "
+                    f"No LLM with role `{instances_to_process[0].model_role}` is defined in the group, "
                     f"while some {instance_type}s rely on such LLM."
                 )
 
             async def retry_processing_for_result(
                 llm_instance: _DocumentLLM,
-                res: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage],
+                res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
                 instances: list[_Aspect] | list[_Concept],
                 n_retries: int = 0,
                 retry_is_final: bool = False,
@@ -2500,7 +2504,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 :param llm_instance: The LLM instance to process the data.
                 :type llm_instance: _DocumentLLM
                 :param res: Result to check and retry if invalid.
-                :type res: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
+                :type res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
                 :param instances: List of processed instances associated with the result.
                 :type instances: list[_Aspect] | list[_Concept]
                 :param n_retries: Number of retries to perform.
@@ -2514,7 +2518,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
                 if n_retries <= 0:
                     return False
-                if not _llm_call_result_is_valid(res):
+                if not _model_call_result_is_valid(res):
                     for i in range(n_retries):
                         logger.info(
                             f"Retrying {instance_type}s with invalid JSON "
@@ -2545,15 +2549,17 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                         await llm_instance._update_usage_and_cost(res)
                         if res[0] is not None:
                             break
-                        if _llm_call_result_is_api_failure(res):
+                        if _model_call_result_is_api_failure(res):
                             # The retries of the failed request are already performed,
                             # i.e. sending it to the same LLM again is pointless
                             break
-                    if _llm_call_result_is_valid(res):
+                    if _model_call_result_is_valid(res):
                         return True
                     else:
                         # A failed LLM API request is already reported at this point
-                        if retry_is_final and not _llm_call_result_is_api_failure(res):
+                        if retry_is_final and not _model_call_result_is_api_failure(
+                            res
+                        ):
                             instance_names = [instance.name for instance in instances]
                             error_msg = (
                                 f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
@@ -2561,7 +2567,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                             )
                             if raise_exception_on_extraction_error:
                                 logger.error(error_msg)
-                                raise LLMExtractionError(
+                                raise ModelExtractionError(
                                     error_msg, retry_count=n_retries
                                 )
                             else:
@@ -2581,7 +2587,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
             async def retry_chunk_with_fallbacks(
                 chunk: list[_Aspect] | list[_Concept],
-                result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage],
+                result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
             ) -> bool:
                 """
                 Retries a single failed chunk on the primary LLM and then on each
@@ -2591,7 +2597,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 :param chunk: The chunk of instances to retry.
                 :type chunk: list[_Aspect] | list[_Concept]
                 :param result: The original failed extraction result.
-                :type result: tuple[list[_Aspect] | list[_Concept] | None, _LLMUsage]
+                :type result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
                 :return: True if any retry succeeded, False otherwise.
                 :rtype: bool
                 """
@@ -2600,17 +2606,17 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 # request failed, the retries of that request are already performed.
                 if (
                     llm.max_retries_invalid_data > 0
-                    and not _llm_call_result_is_api_failure(result)
+                    and not _model_call_result_is_api_failure(result)
                 ):
                     retry_successful = await retry_processing_for_result(
                         llm_instance=llm,
                         res=result,
                         instances=chunk,
                         n_retries=llm.max_retries_invalid_data,
-                        retry_is_final=not llm.fallback_llms,
+                        retry_is_final=not llm.fallback_models,
                     )
-                n_fallbacks = len(llm.fallback_llms)
-                for i, fallback_llm in enumerate(llm.fallback_llms):
+                n_fallbacks = len(llm.fallback_models)
+                for i, fallback_llm in enumerate(llm.fallback_models):
                     if retry_successful:
                         break
                     logger.info(
@@ -2660,7 +2666,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 "max_retries_failed_request": llm.max_retries_failed_request,
                 "async_limiter": async_limiters.get(id(llm)),
                 "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
-                "has_fallback_pending": bool(llm.fallback_llms),
+                "has_fallback_pending": bool(llm.fallback_models),
             }
             data_list = [
                 {**base_params, "instances_to_process": chunk} for chunk in data_chunks
@@ -2672,19 +2678,19 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
                 async def extract_items_or_api_error(**kwargs: Any) -> Any:
                     """
-                    Extracts items from a single chunk, returning an LLM API error
+                    Extracts items from a single chunk, returning a model API error
                     instead of raising it, so that the error is not suppressed by
                     the concurrent executor.
 
                     :param kwargs: Keyword arguments of `_extract_items_from_instances`.
                     :type kwargs: Any
-                    :return: The extraction result, or the LLM API error raised
+                    :return: The extraction result, or the model API error raised
                         during the extraction.
                     :rtype: Any
                     """
                     try:
                         return await self._extract_items_from_instances(**kwargs)
-                    except LLMAPIError as e:
+                    except ModelAPIError as e:
                         return e
 
                 # Process chunks concurrently
@@ -2700,15 +2706,15 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
 
                 # Update usage stats and cost
                 for result in results:
-                    if not isinstance(result, LLMAPIError):
+                    if not isinstance(result, ModelAPIError):
                         await llm._update_usage_and_cost(result)
 
-                # An LLM API error is raised only when it is final, i.e. the retries
+                # A model API error is raised only when it is final, i.e. the retries
                 # of the failed request are already performed and there is no fallback
                 # LLM to try. Re-raise the first such error by chunk index, instead of
                 # sending the failed request again.
                 for result in results:
-                    if isinstance(result, LLMAPIError):
+                    if isinstance(result, ModelAPIError):
                         raise result
 
                 # Retry failed chunks concurrently. Original chunk order is preserved
@@ -2717,7 +2723,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                 failed_pairs = [
                     (chunk, result)
                     for chunk, result in zip(data_chunks, results, strict=True)
-                    if not _llm_call_result_is_valid(result)
+                    if not _model_call_result_is_valid(result)
                 ]
                 if failed_pairs:
                     retry_outcomes = await asyncio.gather(
@@ -2733,7 +2739,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                         if isinstance(outcome, BaseException):
                             raise outcome
                         if not outcome:
-                            if llm.max_retries_invalid_data > 0 or llm.fallback_llms:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_models:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have
                                     # been raised in case of extraction error such as invalid JSON.
@@ -2749,7 +2755,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                                     f"Failed {instance_type}s: {instance_names}"
                                 )
                                 if raise_exception_on_extraction_error:
-                                    raise LLMExtractionError(error_msg, retry_count=0)
+                                    raise ModelExtractionError(error_msg, retry_count=0)
                                 else:
                                     warning_msg = (
                                         error_msg
@@ -2774,13 +2780,13 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     await llm._update_usage_and_cost(result)
 
                     # Retry if needed, including with fallback LLMs if they are provided
-                    if not _llm_call_result_is_valid(result):
+                    if not _model_call_result_is_valid(result):
                         retry_successful = await retry_chunk_with_fallbacks(
                             chunk=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
                             result=result,
                         )
                         if not retry_successful:
-                            if llm.max_retries_invalid_data > 0 or llm.fallback_llms:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_models:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have
                                     # been raised in case of extraction error such as invalid JSON.
@@ -2799,7 +2805,7 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                                     f"Failed {instance_type}s: {instance_names}"
                                 )
                                 if raise_exception_on_extraction_error:
-                                    raise LLMExtractionError(error_msg, retry_count=0)
+                                    raise ModelExtractionError(error_msg, retry_count=0)
                                 else:
                                     warning_msg = (
                                         error_msg
@@ -2842,12 +2848,12 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
         else:
             instances_to_process = all_instances
 
-        # First, select the instances to be extracted by the current LLM. In an LLM group,
+        # First, select the instances to be extracted by the current LLM. In a model group,
         # an instance is routed to the LLM with the same role. A standalone LLM extracts
-        # all the instances, regardless of their LLM roles.
+        # all the instances, regardless of their model roles.
         if self.is_group:
             filtered_instances = [
-                i for i in instances_to_process if i.llm_role == llm.role
+                i for i in instances_to_process if i.model_role == llm.role
             ]
         else:
             filtered_instances = list(instances_to_process)
@@ -2942,47 +2948,47 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
     def _get_usage_or_cost(
         self,
         retrieval_type: Literal["usage", "cost"],
-        llm_role: str | None = None,
-    ) -> list[_LLMUsageOutputContainer | _LLMCostOutputContainer]:
+        model_role: str | None = None,
+    ) -> list[_ModelUsageOutputContainer | _ModelCostOutputContainer]:
         """
         Retrieves specified information (usage or cost) for either a single LLM or LLMs in a group.
-        For groups, optionally filters the results by the specified LLM role.
+        For groups, optionally filters the results by the specified model role.
         Iterates through primary LLMs and their fallback counterparts, collecting
         details about their usage or cost based on the specified retrieval type.
 
         :param retrieval_type: Determines the type of information to retrieve. Must be either
-            "usage" to collect LLM usage statistics or "cost" to collect cost details.
+            "usage" to collect model usage statistics or "cost" to collect cost details.
         :type retrieval_type: Literal["usage", "cost"]
-        :param llm_role: The optional role of the LLM to filter the results. If provided,
+        :param model_role: The optional role of the LLM to filter the results. If provided,
             only results associated with LLMs matching this role are returned. If no LLM with
             the specified role exists, an exception is raised. If the matching LLM has
             fallback LLMs, their usage or cost details are also collected. The role is
             validated in the same way as the roles assigned to LLMs. Defaults to None.
-        :type llm_role: str | None
+        :type model_role: str | None
         :return: A list of containers, each representing usage or cost information for
             a primary LLM and its fallback LLMs, if any, in the order they are tried.
             The specific container type depends on the retrieval type.
-        :rtype: list[_LLMUsageOutputContainer | _LLMCostOutputContainer]
+        :rtype: list[_ModelUsageOutputContainer | _ModelCostOutputContainer]
         """
 
         info_containers = []
         # For individual LLM, use self and its fallbacks
-        # For group, iterate through all LLMs in self.llms
-        llms_to_process = self.llms if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        # For group, iterate through all LLMs in self.models
+        llms_to_process = self.models if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         # Safe cast: llms_to_process contains only _DocumentLLM instances
         llms_to_process = cast(list["_DocumentLLM"], llms_to_process)
 
         for primary_llm in llms_to_process:
-            for llm in [primary_llm, *primary_llm.fallback_llms]:
+            for llm in [primary_llm, *primary_llm.fallback_models]:
                 if retrieval_type == "usage":
-                    info_container = _LLMUsageOutputContainer(
+                    info_container = _ModelUsageOutputContainer(
                         model=llm.model,
                         role=llm.role,
                         is_fallback=llm.is_fallback,
                         usage=llm._get_raw_usage(),
                     )
                 elif retrieval_type == "cost":
-                    info_container = _LLMCostOutputContainer(
+                    info_container = _ModelCostOutputContainer(
                         model=llm.model,
                         role=llm.role,
                         is_fallback=llm.is_fallback,
@@ -2992,33 +2998,33 @@ class _GenericLLMProcessor(_AbstractGenericLLMProcessor):
                     raise ValueError(f"Invalid retrieval type `{retrieval_type}`")
                 info_containers.append(info_container)
 
-        if llm_role is not None:
+        if model_role is not None:
             # Validate the role in the same way as the roles assigned to LLMs,
             # e.g. remove the surrounding whitespace
-            llm_role = _validate_llm_role(llm_role)
+            model_role = _validate_model_role(model_role)
             info_containers = [
-                i for i in info_containers if i.role == llm_role
+                i for i in info_containers if i.role == model_role
             ]  # for both main and fallback LLMs
             if not info_containers:
                 raise ValueError(
-                    f"No LLM with the given role `{llm_role}` was found in group."
+                    f"No LLM with the given role `{model_role}` was found in group."
                 )
         return info_containers
 
 
 @_disable_direct_initialization
-class _DocumentLLMGroup(_GenericLLMProcessor):
+class _DocumentModelGroup(_GenericModelProcessor):
     """
-    Internal implementation of the ``DocumentLLMGroup`` class.
+    Internal implementation of the ``DocumentModelGroup`` class.
     """
 
-    llms: list[_DocumentLLM] = Field(
+    models: list[_DocumentLLM] = Field(
         ...,
         min_length=2,
         description=(
             "List of DocumentLLM instances with unique roles, i.e. at most one LLM "
             "without a role; minimum 2. An aspect/concept is routed to the LLM with "
-            "the `role` equal to the `llm_role` of the aspect/concept."
+            "the `role` equal to the `model_role` of the aspect/concept."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -3033,8 +3039,8 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
 
     def _set_private_attrs(self) -> None:
         """
-        Initialize and configure private attributes for the LLM group.
-        The LLM group has no private attributes to set.
+        Initialize and configure private attributes for the model group.
+        The model group has no private attributes to set.
 
         :return: None
         :rtype: None
@@ -3046,7 +3052,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         """
         Returns True indicating this is a group of LLMs.
 
-        :return: Always True for DocumentLLMGroup instances.
+        :return: Always True for DocumentModelGroup instances.
         :rtype: bool
         """
         return True
@@ -3056,10 +3062,10 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         """
         Returns a list of all roles assigned to the LLMs in this group.
 
-        :return: A list of LLM roles, with None standing for the LLM without a role
+        :return: A list of model roles, with None standing for the LLM without a role
         :rtype: list[str | None]
         """
-        return [i.role for i in self.llms]
+        return [i.role for i in self.models]
 
     def group_update_output_language(
         self, output_language: LanguageRequirement
@@ -3072,7 +3078,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         :return: None
         :rtype: None
         """
-        for llm in self.llms:
+        for llm in self.models:
             llm.output_language = output_language
         self.output_language = output_language
         logger.info(
@@ -3081,20 +3087,20 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
 
     def _eq_deserialized_llm_config(
         self,
-        other: _DocumentLLMGroup,
+        other: _DocumentModelGroup,
     ) -> bool:
         """
-        Custom config equality method to compare this _DocumentLLMGroup with a deserialized instance.
+        Custom config equality method to compare this _DocumentModelGroup with a deserialized instance.
 
         Uses the `_eq_deserialized_llm_config` method of the _DocumentLLM class to compare each LLM
         in the group, including fallbacks, if any.
 
-        :param other: Another _DocumentLLMGroup instance to compare with
-        :type other: _DocumentLLMGroup
+        :param other: Another _DocumentModelGroup instance to compare with
+        :type other: _DocumentModelGroup
         :return: True if the instances are equal, False otherwise
         :rtype: bool
         """
-        for self_llm, other_llm in zip(self.llms, other.llms, strict=True):
+        for self_llm, other_llm in zip(self.models, other.models, strict=True):
             if not self_llm._eq_deserialized_llm_config(other_llm):
                 return False
         return True
@@ -3107,7 +3113,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
         :return: None
         :rtype: None
         """
-        models_with_tools = [llm.model for llm in self.llms if llm.tools]
+        models_with_tools = [llm.model for llm in self.models if llm.tools]
         if models_with_tools:
             models_with_tools_list = ", ".join(models_with_tools)
             warnings.warn(
@@ -3117,117 +3123,121 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
                 stacklevel=2,
             )
 
-    @field_validator("llms")
+    @field_validator("models")
     @classmethod
-    def _validate_llms(cls, llms: list[_DocumentLLM]) -> list[_DocumentLLM]:
+    def _validate_models(cls, models: list[_DocumentLLM]) -> list[_DocumentLLM]:
         """
         Validates the provided list of _DocumentLLMs ensuring that each
         LLM has a unique role within the group, so that each aspect/concept
         is routed to a single LLM. No role (None) also counts as a role,
         i.e. only one LLM in the group can have no role.
 
-        :param llms: A list of `_DocumentLLM` instances to be validated.
-        :type llms: list[_DocumentLLM]
+        :param models: A list of `_DocumentLLM` instances to be validated.
+        :type models: list[_DocumentLLM]
         :return: A validated list of `_DocumentLLM` instances.
         :rtype: list[_DocumentLLM]
-        :raises ValueError: If not all LLM roles are unique.
+        :raises ValueError: If not all model roles are unique.
         """
         seen_roles = set()
-        for llm in llms:
+        for llm in models:
             if llm.role in seen_roles:
-                raise ValueError(_NON_UNIQUE_LLM_ROLES_MSG)
+                raise ValueError(_NON_UNIQUE_MODEL_ROLES_MSG)
             seen_roles.add(llm.role)
-        return llms
+        return models
 
-    def get_usage(self, llm_role: str | None = None) -> list[_LLMUsageOutputContainer]:
+    def get_usage(
+        self, model_role: str | None = None
+    ) -> list[_ModelUsageOutputContainer]:
         """
         Retrieves the usage information of the LLMs in the group, filtered by the specified
-        LLM role if provided.
+        model role if provided.
 
-        :param llm_role: Optional; A string representing the role of the LLM to filter
+        :param model_role: Optional; A string representing the role of the LLM to filter
             the usage data, validated in the same way as the roles assigned to LLMs.
             If None, returns usage for all LLMs in the group, including the LLM
             without a role.
-        :type llm_role: str | None
+        :type model_role: str | None
         :return: A list of usage statistics containers for the specified LLMs and their fallbacks.
-        :rtype: list[_LLMUsageOutputContainer]
+        :rtype: list[_ModelUsageOutputContainer]
         :raises ValueError: If the specified role is invalid, or if no LLM with
             the specified role exists in the group.
         """
         # Safe cast: _get_usage_or_cost with retrieval_type="usage"
-        # returns only list of _LLMUsageOutputContainer
+        # returns only list of _ModelUsageOutputContainer
         return cast(
-            list["_LLMUsageOutputContainer"],
-            self._get_usage_or_cost(retrieval_type="usage", llm_role=llm_role),
+            list["_ModelUsageOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="usage", model_role=model_role),
         )
 
-    def get_cost(self, llm_role: str | None = None) -> list[_LLMCostOutputContainer]:
+    def get_cost(
+        self, model_role: str | None = None
+    ) -> list[_ModelCostOutputContainer]:
         """
         Retrieves the accumulated cost information of the LLMs in the group, filtered by the specified
-        LLM role if provided.
+        model role if provided.
 
-        :param llm_role: Optional; A string representing the role of the LLM to filter
+        :param model_role: Optional; A string representing the role of the LLM to filter
             the cost data, validated in the same way as the roles assigned to LLMs.
             If None, returns cost for all LLMs in the group, including the LLM
             without a role.
-        :type llm_role: str | None
+        :type model_role: str | None
         :return: A list of cost statistics containers for the specified LLMs and their fallbacks.
-        :rtype: list[_LLMCostOutputContainer]
+        :rtype: list[_ModelCostOutputContainer]
         :raises ValueError: If the specified role is invalid, or if no LLM with
             the specified role exists in the group.
         """
         # Safe cast: _get_usage_or_cost with retrieval_type="cost"
-        # returns only list of _LLMCostOutputContainer
+        # returns only list of _ModelCostOutputContainer
         return cast(
-            list["_LLMCostOutputContainer"],
-            self._get_usage_or_cost(retrieval_type="cost", llm_role=llm_role),
+            list["_ModelCostOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="cost", model_role=model_role),
         )
 
-    def reset_usage_and_cost(self, llm_role: str | None = None) -> None:
+    def reset_usage_and_cost(self, model_role: str | None = None) -> None:
         """
         Resets the usage and cost statistics for LLMs in the group.
 
         This method clears accumulated usage and cost data, which is useful when processing
         multiple documents sequentially and tracking metrics for each document separately.
 
-        :param llm_role: Optional; A string representing the role of the LLM to reset statistics for,
+        :param model_role: Optional; A string representing the role of the LLM to reset statistics for,
             validated in the same way as the roles assigned to LLMs. If None, resets statistics
             for all LLMs in the group, including the LLM without a role.
-        :type llm_role: str | None
+        :type model_role: str | None
         :return: None
         :rtype: None
         :raises ValueError: If the specified role is invalid, or if no LLM with
             the specified role exists in the group.
         """
 
-        if llm_role is not None:
+        if model_role is not None:
             # Validate the role in the same way as the roles assigned to LLMs,
             # e.g. remove the surrounding whitespace
-            llm_role = _validate_llm_role(llm_role)
+            model_role = _validate_model_role(model_role)
             try:
-                llm = next(i for i in self.llms if i.role == llm_role)
+                llm = next(i for i in self.models if i.role == model_role)
                 llm.reset_usage_and_cost()
             except StopIteration:
                 raise ValueError(
-                    f"No LLM with the given role `{llm_role}` was found in group."
+                    f"No LLM with the given role `{model_role}` was found in group."
                 ) from None
         else:
-            for llm in self.llms:
+            for llm in self.models:
                 llm.reset_usage_and_cost()
 
     @model_validator(mode="after")
-    def _validate_document_llm_group_post(self) -> Self:
+    def _validate_document_model_group_post(self) -> Self:
         """
-        Validates the LLM group to ensure consistency of the `output_language`
+        Validates the model group to ensure consistency of the `output_language`
         attribute across all LLMs within the group.
 
-        :return: The LLM group instance after successful validation.
+        :return: The model group instance after successful validation.
         :rtype: Self
         :raises ValueError: Raised if any LLM's `output_language` differs from the
             group's `output_language`.
         """
 
-        if any(i.output_language != self.output_language for i in self.llms):
+        if any(i.output_language != self.output_language for i in self.models):
             raise ValueError(
                 "All LLMs in the group must have the same value of "
                 "`output_language` attribute as the group."
@@ -3236,7 +3246,7 @@ class _DocumentLLMGroup(_GenericLLMProcessor):
 
 
 @_disable_direct_initialization
-class _DocumentLLM(_GenericLLMProcessor):
+class _DocumentLLM(_GenericModelProcessor):
     """
     Internal implementation of the ``DocumentLLM`` class.
     """
@@ -3262,13 +3272,13 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=None,  # specific to Azure OpenAI
         description="API version; used by some providers (e.g., Azure OpenAI).",
     )
-    role: LLMRole | None = Field(
+    role: ModelRole | None = Field(
         default=None,
         description=(
             "Free-form role label (up to 64 printable characters) used for routing "
-            "in a DocumentLLMGroup: the LLM extracts the aspects/concepts with "
-            "the same `llm_role`. Defaults to None, "
-            "i.e. the LLM extracts the aspects/concepts without `llm_role`. Ignored "
+            "in a DocumentModelGroup: the LLM extracts the aspects/concepts with "
+            "the same `model_role`. Defaults to None, "
+            "i.e. the LLM extracts the aspects/concepts without `model_role`. Ignored "
             "when the LLM is used on its own, as it then extracts all aspects/concepts."
         ),
     )
@@ -3321,7 +3331,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         ge=0,
         description="Request timeout in seconds.",
     )
-    pricing_details: _LLMPricing | None = Field(
+    pricing_details: _ModelPricing | None = Field(
         default=None,
         description="Explicit pricing configuration for cost calculation.",
     )
@@ -3329,7 +3339,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         default=False,
         description="Marks this LLM as a fallback model.",
     )
-    fallback_llms: list[_DocumentLLM] = Field(
+    fallback_models: list[_DocumentLLM] = Field(
         default_factory=list,
         description=(
             "Fallback LLMs to try, in the given order, if this one fails; "
@@ -3422,9 +3432,9 @@ class _DocumentLLM(_GenericLLMProcessor):
     _async_limiter: AsyncLimiter = PrivateAttr()
 
     # Token counting
-    _usage: _LLMUsage = PrivateAttr(default_factory=_LLMUsage)
+    _usage: _ModelUsage = PrivateAttr(default_factory=_ModelUsage)
     # Processing cost
-    _cost: _LLMCost = PrivateAttr(default_factory=_LLMCost)
+    _cost: _ModelCost = PrivateAttr(default_factory=_ModelCost)
 
     # Async lock to guard shared state during async updates
     _async_lock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
@@ -3580,7 +3590,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         Returns a list containing the role of this LLM.
 
         (For a single LLM, this returns a list with just one element - the LLM's role,
-        or None if the LLM has no role. For LLM groups, the method implementation returns
+        or None if the LLM has no role. For model groups, the method implementation returns
         roles of all LLMs in the group.)
 
         :return: A list containing the role of this LLM.
@@ -3646,7 +3656,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         """
 
         # Try this LLM first, then each fallback LLM in the given order
-        llms_to_try = [self, *self.fallback_llms]
+        llms_to_try = [self, *self.fallback_models]
         response: str | None = None
         for i, llm in enumerate(llms_to_try):
             if i > 0:
@@ -3661,7 +3671,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                 break
 
         if response is None:
-            # This should never happen, as we have `raise_exception_on_llm_api_error=True`
+            # This should never happen, as we have `raise_exception_on_model_api_error=True`
             # for chat, and such errors are skipped while a fallback LLM is yet to be tried,
             # but raised when no fallback LLM is available or when the last fallback LLM
             # also fails.
@@ -3690,7 +3700,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
         :param has_fallback_pending: Whether a fallback LLM will be tried if the call to
-            this LLM fails. If True, an LLM API error is logged without being raised,
+            this LLM fails. If True, a model API error is logged without being raised,
             and None is returned. Defaults to False.
         :type has_fallback_pending: bool
         :return: The LLM's response, or None if the LLM call fails while a fallback LLM
@@ -3715,7 +3725,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         # Check for vision support of the LLM and of its fallback LLMs, as a fallback
         # LLM is sent the same images, if the LLM it is a fallback for fails
         if images:
-            for llm in [self, *self.fallback_llms]:
+            for llm in [self, *self.fallback_models]:
                 if not llm._supports_vision:
                     raise ValueError(
                         f"{'Fallback model' if llm.is_fallback else 'Model'} "
@@ -3762,8 +3772,8 @@ class _DocumentLLM(_GenericLLMProcessor):
                 messages.append(system_msg)
             messages.append(self._build_user_message(prompt, images))
 
-        # Create LLM call object to track the interaction
-        llm_call = _LLMCall(prompt_kwargs={}, prompt=prompt)
+        # Create model call object to track the interaction
+        model_call = _ModelCall(prompt_kwargs={}, prompt=prompt)
 
         # Warn if using default system message
         if self.system_message == self._get_default_system_message():
@@ -3777,10 +3787,10 @@ class _DocumentLLM(_GenericLLMProcessor):
         # Send message to LLM
         result = await self._query_llm(
             messages=messages,
-            llm_call_obj=llm_call,
+            model_call_obj=model_call,
             num_retries_failed_request=self.num_retries_failed_request,
             max_retries_failed_request=self.max_retries_failed_request,
-            raise_exception_on_llm_api_error=True,  # always True for chat
+            raise_exception_on_model_api_error=True,  # always True for chat
             chat_session=chat_session,
             has_fallback_pending=has_fallback_pending,
         )
@@ -4027,12 +4037,12 @@ class _DocumentLLM(_GenericLLMProcessor):
         other_dict = other.__dict__.copy()
 
         # Fallback LLMs are compared separately, each with this same method
-        self_fallback_llms = self_dict.pop("fallback_llms")
-        other_fallback_llms = other_dict.pop("fallback_llms")
-        if len(self_fallback_llms) != len(other_fallback_llms):
+        self_fallback_models = self_dict.pop("fallback_models")
+        other_fallback_models = other_dict.pop("fallback_models")
+        if len(self_fallback_models) != len(other_fallback_models):
             raise RuntimeError("Deserialized fallback LLMs were not properly set")
         for self_fallback_llm, other_fallback_llm in zip(
-            self_fallback_llms, other_fallback_llms, strict=True
+            self_fallback_models, other_fallback_models, strict=True
         ):
             if not self_fallback_llm._eq_deserialized_llm_config(other_fallback_llm):
                 logger.debug("Fallback LLM config of deserialized LLM is different.")
@@ -4077,7 +4087,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             return False
 
         # Check that usage and cost stats were reset pre-serialization
-        if not (other._usage == _LLMUsage() and other._cost == _LLMCost()):
+        if not (other._usage == _ModelUsage() and other._cost == _ModelCost()):
             raise RuntimeError(
                 "Usage and cost stats were not properly reset during serialization"
             )
@@ -4143,28 +4153,28 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
         return model
 
-    @field_validator("fallback_llms")
+    @field_validator("fallback_models")
     @classmethod
-    def _validate_fallback_llms(
+    def _validate_fallback_models(
         cls,
-        fallback_llms: list[_DocumentLLM],
+        fallback_models: list[_DocumentLLM],
     ) -> list[_DocumentLLM]:
         """
-        Validates the ``fallback_llms`` input to ensure each LLM meets the expected
+        Validates the ``fallback_models`` input to ensure each LLM meets the expected
         condition of being a fallback LLM model.
 
-        :param fallback_llms: The list of _DocumentLLM instances to be validated.
-        :type fallback_llms: list[_DocumentLLM]
-        :return: The valid fallback_llms that meet the expected criteria.
+        :param fallback_models: The list of _DocumentLLM instances to be validated.
+        :type fallback_models: list[_DocumentLLM]
+        :return: The valid fallback_models that meet the expected criteria.
         :rtype: list[_DocumentLLM]
-        :raises ValueError: If any of the ``fallback_llms`` is not a fallback model, as
+        :raises ValueError: If any of the ``fallback_models`` is not a fallback model, as
             indicated by the ``is_fallback`` attribute set to ``False``.
         """
-        if any(not fallback_llm.is_fallback for fallback_llm in fallback_llms):
+        if any(not fallback_llm.is_fallback for fallback_llm in fallback_models):
             raise ValueError(
                 "Fallback LLM must be a fallback model. Use `is_fallback=True`."
             )
-        return fallback_llms
+        return fallback_models
 
     @field_validator("tools")
     @classmethod
@@ -4219,7 +4229,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         if self.pricing_details is not None and self.auto_pricing:
             raise ValueError(
                 "`pricing_details` cannot be set together with `auto_pricing=True`. "
-                "Provide manual LLMPricing or enable auto_pricing, not both."
+                "Provide manual ModelPricing or enable auto_pricing, not both."
             )
 
         if (
@@ -4232,22 +4242,22 @@ class _DocumentLLM(_GenericLLMProcessor):
             )
 
         # Fallback model validation
-        if self.is_fallback and self.fallback_llms:
+        if self.is_fallback and self.fallback_models:
             raise ValueError(
                 "Fallback LLM cannot have its own fallback LLMs "
                 "and must be attached to a non-fallback model."
             )
 
         # Config params of the main LLM and of the fallback LLMs validated so far,
-        # without the `is_fallback` and `fallback_llms` params
+        # without the `is_fallback` and `fallback_models` params
         main_llm_dict = {
             k: v
             for k, v in self.__dict__.items()
-            if k not in ["is_fallback", "fallback_llms"]
+            if k not in ["is_fallback", "fallback_models"]
         }
         fallback_llm_dicts: list[dict[str, Any]] = []
 
-        for fallback_llm in self.fallback_llms:
+        for fallback_llm in self.fallback_models:
             # Check for the consistency of the fallback LLM role and output language
             if fallback_llm.role != self.role:
                 raise ValueError(
@@ -4277,11 +4287,11 @@ class _DocumentLLM(_GenericLLMProcessor):
                 )
 
             # Check that the fallback LLM is not the replica of the main LLM or of another
-            # fallback LLM, just with different `is_fallback` and `fallback_llms` params
+            # fallback LLM, just with different `is_fallback` and `fallback_models` params
             fallback_llm_dict = {
                 k: v
                 for k, v in fallback_llm.__dict__.items()
-                if k not in ["is_fallback", "fallback_llms"]
+                if k not in ["is_fallback", "fallback_models"]
             }
             if main_llm_dict == fallback_llm_dict:
                 raise ValueError(
@@ -4297,7 +4307,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         # validated here; validation is delegated to litellm / the provider API,
         # which raises an error at request time for unsupported combinations.
 
-        # Note: the LLM role is a free-form routing label that implies no capabilities
+        # Note: the model role is a free-form routing label that implies no capabilities
         # of the model, i.e. vision and reasoning support is not validated against it.
         # Vision support is validated when extraction of concepts from images starts,
         # as well as at request time, when images are sent to the model.
@@ -4645,12 +4655,12 @@ class _DocumentLLM(_GenericLLMProcessor):
             except Exception as e:
                 if (
                     retries_attempted >= num_retries_failed_request
-                    or not _is_retryable_llm_api_error(e)
+                    or not _is_retryable_model_api_error(e)
                 ):
-                    setattr(e, _LLM_API_RETRIES_ATTEMPTED_ATTR, retries_attempted)
+                    setattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, retries_attempted)
                     raise
                 retries_attempted += 1
-                delay = _get_llm_api_retry_delay(retries_attempted)
+                delay = _get_model_api_retry_delay(retries_attempted)
                 logger.info(
                     f"LLM API request failed with a transient error "
                     f"({type(e).__name__}). Retrying in {delay:.1f}s "
@@ -4661,20 +4671,20 @@ class _DocumentLLM(_GenericLLMProcessor):
     def _record_usage_call(
         self,
         *,
-        usage: _LLMUsage,
+        usage: _ModelUsage,
         answer_text: str | None,
-        call_obj: _LLMCall,
+        call_obj: _ModelCall,
         completion_obj: Any,
     ) -> None:
         """
         Accumulates token usage and records metadata for a call into the given usage object.
 
-        :param usage: The _LLMUsage object to accumulate token usage and metadata.
-        :type usage: _LLMUsage
+        :param usage: The _ModelUsage object to accumulate token usage and metadata.
+        :type usage: _ModelUsage
         :param answer_text: The text of the answer from the LLM.
         :type answer_text: str | None
-        :param call_obj: The _LLMCall object to record the response timestamp and response.
-        :type call_obj: _LLMCall
+        :param call_obj: The _ModelCall object to record the response timestamp and response.
+        :type call_obj: _ModelCall
         :param completion_obj: The raw completion object from the LLM.
         :type completion_obj: Any
         """
@@ -4795,8 +4805,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         *,
         request_config: dict[str, Any],
         request_messages: list[dict[str, Any]],
-        llm_call_obj: _LLMCall,
-        usage: _LLMUsage,
+        model_call_obj: _ModelCall,
+        usage: _ModelUsage,
         num_retries_failed_request: int = 3,
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
@@ -4812,10 +4822,10 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type request_config: dict[str, Any]
         :param request_messages: The request messages.
         :type request_messages: list[dict[str, Any]]
-        :param llm_call_obj: The LLM call object.
-        :type llm_call_obj: _LLMCall
+        :param model_call_obj: The model call object.
+        :type model_call_obj: _ModelCall
         :param usage: The usage object.
-        :type usage: _LLMUsage
+        :type usage: _ModelUsage
         :param num_retries_failed_request: Optional number of retries when LLM request fails
             with a transient error. Defaults to 3.
         :type num_retries_failed_request: int
@@ -4858,7 +4868,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         self._record_usage_call(
             usage=usage,
             answer_text=answer,
-            call_obj=llm_call_obj,
+            call_obj=model_call_obj,
             completion_obj=chat_completion,
         )
 
@@ -4899,7 +4909,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             if chat_session is not None:
                 chat_session._extend_tool_messages(tool_messages)
 
-            followup_call = _LLMCall(prompt_kwargs={}, prompt="<tools_round_trip>")
+            followup_call = _ModelCall(prompt_kwargs={}, prompt="<tools_round_trip>")
             send_completion_coro = self._send_non_streaming_completion(
                 request_config=request_config,
                 messages_payload=request_messages,
@@ -4929,15 +4939,15 @@ class _DocumentLLM(_GenericLLMProcessor):
         self,
         *,
         messages: list[_Message],
-        llm_call_obj: _LLMCall,
+        model_call_obj: _ModelCall,
         num_retries_failed_request: int = 3,
         max_retries_failed_request: int = 0,
         async_limiter: AsyncLimiter | None = None,
         drop_params: bool = False,
-        raise_exception_on_llm_api_error: bool = True,
+        raise_exception_on_model_api_error: bool = True,
         chat_session: _ChatSession | None = None,
         has_fallback_pending: bool = False,
-    ) -> tuple[str | None, _LLMUsage]:
+    ) -> tuple[str | None, _ModelUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
         configuration.
@@ -4945,8 +4955,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         :param messages: Full chat messages to send to the LLM. Must be a list
             of `_Message` objects including any applicable system message and the user turn.
         :type messages: list[_Message]
-        :param llm_call_obj: The _LLMCall object holding data on the initiated LLM call.
-        :type llm_call_obj: _LLMCall
+        :param model_call_obj: The _ModelCall object holding data on the initiated LLM call.
+        :type model_call_obj: _ModelCall
         :param num_retries_failed_request: Optional number of retries when LLM request fails
             with a transient error. Defaults to 3.
         :type num_retries_failed_request: int
@@ -4960,10 +4970,10 @@ class _DocumentLLM(_GenericLLMProcessor):
         :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
             Used internally for automatic retry when UnsupportedParamsError occurs.
         :type drop_params: bool
-        :param raise_exception_on_llm_api_error: Whether to raise an exception if the LLM call fails
+        :param raise_exception_on_model_api_error: Whether to raise an exception if the LLM call fails
             due to an error in the LLM API. If False, a warning will be issued instead, and no data
             will be returned. Defaults to True.
-        :type raise_exception_on_llm_api_error: bool, optional
+        :type raise_exception_on_model_api_error: bool, optional
         :param chat_session: Optional chat session object used to persist tool messages during the
             tool-calling loop. If provided, assistant and tool messages are recorded on the session.
         :type chat_session: _ChatSession | None
@@ -4973,7 +4983,7 @@ class _DocumentLLM(_GenericLLMProcessor):
         :type has_fallback_pending: bool
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
-        :rtype: tuple[str | None, _LLMUsage]
+        :rtype: tuple[str | None, _ModelUsage]
         """
 
         # Validate vision support and convert messages
@@ -4988,14 +4998,14 @@ class _DocumentLLM(_GenericLLMProcessor):
         request_config = self._build_request_config()
 
         # Create an empty usage dict in case the call fails without the possibility to retrieve usage tokens
-        usage = _LLMUsage()
+        usage = _ModelUsage()
 
         # Make API call and process response (with tool loop if enabled)
         try:
             answer, tool_calls_remaining = await self._send_messages_with_tools(
                 request_config=request_config,
                 request_messages=request_messages,
-                llm_call_obj=llm_call_obj,
+                model_call_obj=model_call_obj,
                 usage=usage,
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
@@ -5028,12 +5038,12 @@ class _DocumentLLM(_GenericLLMProcessor):
                 # Recursively call with drop_params=True
                 return await self._query_llm(
                     messages=messages,
-                    llm_call_obj=llm_call_obj,
+                    model_call_obj=model_call_obj,
                     num_retries_failed_request=num_retries_failed_request,
                     max_retries_failed_request=max_retries_failed_request,
                     async_limiter=async_limiter,
                     drop_params=True,
-                    raise_exception_on_llm_api_error=raise_exception_on_llm_api_error,
+                    raise_exception_on_model_api_error=raise_exception_on_model_api_error,
                     chat_session=chat_session,
                     has_fallback_pending=has_fallback_pending,
                 )
@@ -5047,9 +5057,9 @@ class _DocumentLLM(_GenericLLMProcessor):
                 if has_fallback_pending:
                     logger.info("The call will be retried with a fallback LLM.")
                 else:
-                    n_retries = getattr(e, _LLM_API_RETRIES_ATTEMPTED_ATTR, 0)
-                    if raise_exception_on_llm_api_error:
-                        raise LLMAPIError(
+                    n_retries = getattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, 0)
+                    if raise_exception_on_model_api_error:
+                        raise ModelAPIError(
                             "Exception occurred while calling LLM API",
                             retry_count=n_retries,
                             original_error=e,
@@ -5074,9 +5084,9 @@ class _DocumentLLM(_GenericLLMProcessor):
             if has_fallback_pending:
                 logger.info("The call will be retried with a fallback LLM.")
             else:
-                n_retries = getattr(e, _LLM_API_RETRIES_ATTEMPTED_ATTR, 0)
-                if raise_exception_on_llm_api_error:
-                    raise LLMAPIError(
+                n_retries = getattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, 0)
+                if raise_exception_on_model_api_error:
+                    raise ModelAPIError(
                         "Exception occurred while calling LLM API",
                         retry_count=n_retries,
                         original_error=e,
@@ -5092,7 +5102,7 @@ class _DocumentLLM(_GenericLLMProcessor):
                         stacklevel=2,
                     )
 
-        usage.calls.append(llm_call_obj)  # record the call details (call unfinished)
+        usage.calls.append(model_call_obj)  # record the call details (call unfinished)
         return None, usage
 
     def _set_prompts(self) -> None:
@@ -5148,16 +5158,16 @@ class _DocumentLLM(_GenericLLMProcessor):
             template_extension="j2",
         ).render({"output_language": self.output_language})  # type: ignore[attr-defined]
 
-    def _get_raw_usage(self) -> _LLMUsage:
+    def _get_raw_usage(self) -> _ModelUsage:
         """
         Retrieves the raw usage information of the LLM.
 
-        :return: _LLMUsage object containing usage data for the LLM.
-        :rtype: _LLMUsage
+        :return: _ModelUsage object containing usage data for the LLM.
+        :rtype: _ModelUsage
         """
         return self._usage
 
-    def _get_raw_cost(self) -> _LLMCost:
+    def _get_raw_cost(self) -> _ModelCost:
         """
         Retrieves the cost information of the LLM, quantized for reporting.
 
@@ -5165,8 +5175,8 @@ class _DocumentLLM(_GenericLLMProcessor):
         only on access to ensure stable presentation while avoiding stepwise
         rounding errors during accumulation.
 
-        :return: _LLMCost object containing quantized cost data for the LLM.
-        :rtype: _LLMCost
+        :return: _ModelCost object containing quantized cost data for the LLM.
+        :rtype: _ModelCost
         """
 
         if self.pricing_details is None and not self.auto_pricing:
@@ -5180,9 +5190,9 @@ class _DocumentLLM(_GenericLLMProcessor):
         input_q = self._cost.input.quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
         output_q = self._cost.output.quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
         total_q = (input_q + output_q).quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
-        return _LLMCost(input=input_q, output=output_q, total=total_q)
+        return _ModelCost(input=input_q, output=output_q, total=total_q)
 
-    def get_usage(self) -> list[_LLMUsageOutputContainer]:
+    def get_usage(self) -> list[_ModelUsageOutputContainer]:
         """
         Retrieves the usage information of the LLM and its fallback LLM if configured.
 
@@ -5190,17 +5200,17 @@ class _DocumentLLM(_GenericLLMProcessor):
         fallback LLM (if configured), providing insights into API consumption.
 
         :return: A list of usage statistics containers for the LLM and its fallback.
-        :rtype: list[_LLMUsageOutputContainer]
+        :rtype: list[_ModelUsageOutputContainer]
         """
 
         # Safe cast: _get_usage_or_cost with retrieval_type="usage"
-        # returns only list of _LLMUsageOutputContainer
+        # returns only list of _ModelUsageOutputContainer
         return cast(
-            list["_LLMUsageOutputContainer"],
+            list["_ModelUsageOutputContainer"],
             self._get_usage_or_cost(retrieval_type="usage"),
         )
 
-    def get_cost(self) -> list[_LLMCostOutputContainer]:
+    def get_cost(self) -> list[_ModelCostOutputContainer]:
         """
         Retrieves the accumulated cost information of the LLM and its fallback LLM if configured.
 
@@ -5208,13 +5218,13 @@ class _DocumentLLM(_GenericLLMProcessor):
         fallback LLM (if configured), providing insights into API usage expenses.
 
         :return: A list of cost statistics containers for the LLM and its fallback.
-        :rtype: list[_LLMCostOutputContainer]
+        :rtype: list[_ModelCostOutputContainer]
         """
 
         # Safe cast: _get_usage_or_cost with retrieval_type="cost"
-        # returns only list of _LLMCostOutputContainer
+        # returns only list of _ModelCostOutputContainer
         return cast(
-            list["_LLMCostOutputContainer"],
+            list["_ModelCostOutputContainer"],
             self._get_usage_or_cost(retrieval_type="cost"),
         )
 
@@ -5229,19 +5239,19 @@ class _DocumentLLM(_GenericLLMProcessor):
         :rtype: None
         """
 
-        for llm in [self, *self.fallback_llms]:
-            llm._usage = _LLMUsage()
-            llm._cost = _LLMCost()
+        for llm in [self, *self.fallback_models]:
+            llm._usage = _ModelUsage()
+            llm._cost = _ModelCost()
 
     @tethered.scope(
         allow=list(_GENAI_PRICES_REFRESH_HOSTS),
         label="contextgem._calculate_auto_pricing_costs",
         hint=(
-            "ContextGem refreshes LLM pricing data from raw.githubusercontent.com "
+            "ContextGem refreshes model pricing data from raw.githubusercontent.com "
             "via genai-prices when DocumentLLM(auto_pricing_refresh=True). "
             "If your app uses tethered.activate(), allow raw.githubusercontent.com "
             "— or set auto_pricing_refresh=False to use bundled pricing data, "
-            "or set pricing_details=LLMPricing(...) to bypass genai-prices entirely. "
+            "or set pricing_details=ModelPricing(...) to bypass genai-prices entirely. "
             "See https://contextgem.dev/llms/llm_config/"
         ),
     )
@@ -5322,17 +5332,17 @@ class _DocumentLLM(_GenericLLMProcessor):
         output_cost = Decimal(str(price_data.output_price))
         return input_cost, output_cost
 
-    def _increment_cost(self, usage: _LLMUsage) -> None:
+    def _increment_cost(self, usage: _ModelUsage) -> None:
         """
         Calculates and increments the self._cost attribute values based on
         the additional usage details provided. Relevant only if the user has
         provided pricing details for the LLM or if auto-pricing is enabled.
 
-        :param usage: _LLMUsage instance containing usage information on
+        :param usage: _ModelUsage instance containing usage information on
                       additional number of input and output tokens processed,
                       including the input tokens read from and written to
                       the prompt cache, and on the calls that used these tokens.
-        :type usage: _LLMUsage
+        :type usage: _ModelUsage
 
         :return: None
         :rtype: None
@@ -5420,17 +5430,17 @@ class _DocumentLLM(_GenericLLMProcessor):
             self._cost.total += cost_total
 
     async def _update_usage_and_cost(
-        self, result: tuple[Any, _LLMUsage] | None
+        self, result: tuple[Any, _ModelUsage] | None
     ) -> None:
         """
-        Updates the LLM usage and cost details based on the given processing result.
+        Updates the model usage and cost details based on the given processing result.
         This method modifies the LLM instance's usage statistics, whether or not pricing
         params are provided, and increments the associated cost if they are provided.
 
         :param result: A tuple containing an optional value and usage data. The usage
             data is used to update the instance's input and output usage, as well as
             the total cost. If the result is None, the method does nothing.
-        :type result: tuple[Any, _LLMUsage]
+        :type result: tuple[Any, _ModelUsage]
         :return: None
         :rtype: None
         """
@@ -5462,13 +5472,13 @@ class _DocumentLLM(_GenericLLMProcessor):
 
         if self.auto_pricing_refresh:
             return (
-                "Consider setting `pricing_details=LLMPricing(...)` "
+                "Consider setting `pricing_details=ModelPricing(...)` "
                 "or disabling auto-pricing."
             )
         return (
             "The bundled pricing data may not include recently released models: "
             "consider setting `auto_pricing_refresh=True` to fetch the latest "
-            "pricing data, setting `pricing_details=LLMPricing(...)`, "
+            "pricing data, setting `pricing_details=ModelPricing(...)`, "
             "or disabling auto-pricing."
         )
 
@@ -5491,7 +5501,7 @@ class _DocumentLLM(_GenericLLMProcessor):
             warning_msg = (
                 f"Could not derive auto-pricing provider/model from `{self.model}`. "
                 f"Auto-pricing will be skipped. "
-                f"Consider setting `pricing_details=LLMPricing(...)` "
+                f"Consider setting `pricing_details=ModelPricing(...)` "
                 f"or disabling auto-pricing."
             )
             warnings.warn(

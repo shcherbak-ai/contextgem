@@ -121,20 +121,20 @@ An LLM can have one or more configurable fallback LLMs, which are tried in the g
 See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`concept-modality-label` for more details.
 
 
-🤖🤖 **DocumentLLMGroup**
+🤖🤖 **DocumentModelGroup**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **A group of LLMs with different unique roles to extract different information from the document.**
 
-For more complex and granular extraction workflows, an LLM group can be used to extract different information from the same document using different LLMs with different roles. For example, a simpler LLM e.g. gpt-6-luna can be used to extract specific aspects of the document, and a more powerful LLM e.g. gpt-6.1-sol will handle the extraction of complex concepts that require reasoning over the aspects' context.
+For more complex and granular extraction workflows, a model group can be used to extract different information from the same document using different LLMs with different roles. For example, a simpler LLM e.g. gpt-6-luna can be used to extract specific aspects of the document, and a more powerful LLM e.g. gpt-6.1-sol will handle the extraction of complex concepts that require reasoning over the aspects' context.
 
-The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs in the group. For example, if an aspect/concept is assigned ``llm_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
+The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs in the group. For example, if an aspect/concept is assigned ``model_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``model_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
 
 Each LLM can have its own backend and configuration, and one or more fallback LLMs with the same role.
 
-See :class:`~contextgem.public.llms.DocumentLLMGroup` and :ref:`llm-roles-label` for more details.
+See :class:`~contextgem.public.llms.DocumentModelGroup` and :ref:`model-roles-label` for more details.
 
-.. list-table:: LLM Group Workflow Example
+.. list-table:: Model Group Workflow Example
    :header-rows: 1
    :widths: 15 20 20 20
 

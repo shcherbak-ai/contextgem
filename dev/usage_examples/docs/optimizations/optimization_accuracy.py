@@ -35,7 +35,7 @@ doc.concepts = [
 llm = DocumentLLM(
     model="openai/gpt-6.1-sol",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    fallback_llms=[
+    fallback_models=[
         DocumentLLM(
             model="openai/gpt-5.6-sol",
             api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),

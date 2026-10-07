@@ -79,10 +79,10 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
      - ``list[JsonObjectExample]``
      - ``[]``
      - Optional. Example JSON objects illustrating the concept usage. Such examples must conform to the ``structure`` schema. Examples significantly improve extraction accuracy by showing the LLM concrete instances of the expected output format and content patterns. This is particularly valuable for complex schemas with nested structures or when there are specific formatting conventions that should be followed (e.g., how dates, identifiers, or specialized fields should be represented). Examples also help clarify how to handle edge cases or ambiguous information in the source document.
-   * - ``llm_role``
+   * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the LLM that extracts the concept when an LLM group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`llm-roles-label`.
+     - The role label of the LLM that extracts the concept when a model group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`model-roles-label`.
    * - ``modality``
      - ``str``
      - ``"text"``

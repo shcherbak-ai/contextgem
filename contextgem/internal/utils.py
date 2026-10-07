@@ -37,7 +37,7 @@ import tethered
 from jinja2 import Environment, Template, nodes
 from wtpsplit_lite import SaT
 
-from contextgem.internal.data_models import _LLMUsage
+from contextgem.internal.data_models import _ModelUsage
 from contextgem.internal.llm_output_structs.aspect_structs import (
     _get_aspect_extraction_output_struct,
 )
@@ -74,18 +74,18 @@ _SAT_MODEL_DOWNLOAD_HOSTS: tuple[str, ...] = (
     "*.hf.co",
 )
 
-# HTTP status codes of LLM API errors that are worth retrying, in addition to
+# HTTP status codes of model API errors that are worth retrying, in addition to
 # server errors (5xx): request timeout, conflict (lock timeout), rate limit.
-_LLM_API_RETRYABLE_STATUS_CODES: frozenset[int] = frozenset({408, 409, 429})
+_MODEL_API_RETRYABLE_STATUS_CODES: frozenset[int] = frozenset({408, 409, 429})
 
 # Bounds (in seconds) of the exponential backoff between the retries
 # of a failed LLM API request.
-_LLM_API_RETRY_BACKOFF_BASE = 1.0
-_LLM_API_RETRY_BACKOFF_MAX = 10.0
+_MODEL_API_RETRY_BACKOFF_BASE = 1.0
+_MODEL_API_RETRY_BACKOFF_MAX = 10.0
 
 # Name of the attribute set on an exception raised by a failed LLM API request,
 # holding the number of retries attempted for that request.
-_LLM_API_RETRIES_ATTEMPTED_ATTR = "_contextgem_retries_attempted"
+_MODEL_API_RETRIES_ATTEMPTED_ATTR = "_contextgem_retries_attempted"
 
 
 # Pre-compiled patterns for hot-path text cleaning and LLM-output parsing.
@@ -557,7 +557,7 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         return asyncio.run(coro)
 
 
-def _llm_call_result_is_valid(res: tuple[Any, _LLMUsage] | None) -> bool:
+def _model_call_result_is_valid(res: tuple[Any, _ModelUsage] | None) -> bool:
     """
     Determines whether the result from a LLM call is valid.
 
@@ -565,22 +565,22 @@ def _llm_call_result_is_valid(res: tuple[Any, _LLMUsage] | None) -> bool:
     Result may be one of the following:
     - None - if LLM processing failed (e.g. due to RateLimitError, or another uncaught exception).
         In this case, token and cost calculation is not possible.
-    - None, _LLMUsage - if LLM processing failed due to a caught exception or failed data validation,
+    - None, _ModelUsage - if LLM processing failed due to a caught exception or failed data validation,
         e.g. invalid data returned by the LLM. In this case, token and cost calculation is still possible.
-    - Any, _LLMUsage - if LLM processing was successful and result is validated. In this case,
+    - Any, _ModelUsage - if LLM processing was successful and result is validated. In this case,
         token and cost calculation are performed as normal.
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
-        result value, and the second element is LLM usage stats dict that follows the _LLMUsage pattern,
+        result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
         or None if the result is not received or failed validation.
-    :type res: tuple[Any, _LLMUsage] | None
+    :type res: tuple[Any, _ModelUsage] | None
     :return: A boolean indicating whether the result is successfully received and validated.
     :rtype: bool
     """
     return not (res is None or res[0] is None)
 
 
-def _llm_call_result_is_api_failure(res: tuple[Any, _LLMUsage] | None) -> bool:
+def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bool:
     """
     Determines whether the result from a LLM call is invalid because the LLM API
     request failed, as opposed to the LLM returning invalid data.
@@ -591,9 +591,9 @@ def _llm_call_result_is_api_failure(res: tuple[Any, _LLMUsage] | None) -> bool:
     retryable), so that sending the same request to the same LLM again is pointless.
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
-        result value, and the second element is LLM usage stats dict that follows the _LLMUsage pattern,
+        result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
         or None if the result is not received (in which case the reason of the failure is unknown).
-    :type res: tuple[Any, _LLMUsage] | None
+    :type res: tuple[Any, _ModelUsage] | None
     :return: A boolean indicating whether the result is invalid due to a failed LLM API request.
     :rtype: bool
     """
@@ -603,7 +603,7 @@ def _llm_call_result_is_api_failure(res: tuple[Any, _LLMUsage] | None) -> bool:
     return bool(calls) and calls[-1].timestamp_received is None
 
 
-def _is_retryable_llm_api_error(error: Exception) -> bool:
+def _is_retryable_model_api_error(error: Exception) -> bool:
     """
     Determines whether a failed LLM API request is worth retrying, i.e. whether
     the error is transient.
@@ -623,10 +623,10 @@ def _is_retryable_llm_api_error(error: Exception) -> bool:
     status_code = getattr(error, "status_code", None)
     if not isinstance(status_code, int):
         return True
-    return status_code in _LLM_API_RETRYABLE_STATUS_CODES or status_code >= 500
+    return status_code in _MODEL_API_RETRYABLE_STATUS_CODES or status_code >= 500
 
 
-def _get_llm_api_retry_delay(retry_number: int) -> float:
+def _get_model_api_retry_delay(retry_number: int) -> float:
     """
     Calculates the delay before a retry of a failed LLM API request.
 
@@ -641,8 +641,8 @@ def _get_llm_api_retry_delay(retry_number: int) -> float:
     :rtype: float
     """
     backoff = min(
-        _LLM_API_RETRY_BACKOFF_BASE * 2 ** (retry_number - 1),
-        _LLM_API_RETRY_BACKOFF_MAX,
+        _MODEL_API_RETRY_BACKOFF_BASE * 2 ** (retry_number - 1),
+        _MODEL_API_RETRY_BACKOFF_MAX,
     )
     return backoff * random.uniform(0.5, 1.0)  # nosec B311 - not a security context
 

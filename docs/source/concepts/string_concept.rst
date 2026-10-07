@@ -75,10 +75,10 @@ When creating a :class:`~contextgem.public.concepts.StringConcept`, you can spec
      - ``list[StringExample]``
      - ``[]``
      - Optional. Example values that help the LLM better understand what to extract and the expected format (e.g., *"Party Name (Role)"* format for contract parties). This additional guidance helps improve extraction accuracy and consistency.
-   * - ``llm_role``
+   * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the LLM that extracts the concept when an LLM group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`llm-roles-label`.
+     - The role label of the LLM that extracts the concept when a model group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`model-roles-label`.
    * - ``modality``
      - ``str``
      - ``"text"``

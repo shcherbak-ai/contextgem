@@ -44,10 +44,10 @@ from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.documents import _POSITION_CACHE_KEYS
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.data_models import (
-    _LLMCost,
-    _LLMCostOutputContainer,
-    _LLMUsage,
-    _LLMUsageOutputContainer,
+    _ModelCost,
+    _ModelCostOutputContainer,
+    _ModelUsage,
+    _ModelUsageOutputContainer,
 )
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import (
@@ -60,7 +60,7 @@ from contextgem.public import (
     Aspect,
     Document,
     DocumentLLM,
-    DocumentLLMGroup,
+    DocumentModelGroup,
     Image,
     StringConcept,
     create_image,
@@ -381,14 +381,14 @@ class TestUtils:
             self.check_custom_data_json_serializable(instance)
 
     def _check_deserialized_llm_config_eq(
-        self, instance: DocumentLLM | DocumentLLMGroup
+        self, instance: DocumentLLM | DocumentModelGroup
     ) -> None:
         """
-        Checks if the LLM config of a deserialized DocumentLLM/DocumentLLMGroup is equal to
+        Checks if the LLM config of a deserialized DocumentLLM/DocumentModelGroup is equal to
         the LLM config of the original instance.
 
-        :param instance: The original DocumentLLM or DocumentLLMGroup instance to be checked.
-        :type instance: DocumentLLM | DocumentLLMGroup
+        :param instance: The original DocumentLLM or DocumentModelGroup instance to be checked.
+        :type instance: DocumentLLM | DocumentModelGroup
         :return: None
         """
         # From json
@@ -396,8 +396,8 @@ class TestUtils:
         if isinstance(instance, DocumentLLM):
             new_instance = DocumentLLM.from_json(instance_json)
             assert instance._eq_deserialized_llm_config(new_instance)
-        else:  # DocumentLLMGroup
-            new_instance = DocumentLLMGroup.from_json(instance_json)
+        else:  # DocumentModelGroup
+            new_instance = DocumentModelGroup.from_json(instance_json)
             assert instance._eq_deserialized_llm_config(new_instance)
 
         # From dict
@@ -405,8 +405,8 @@ class TestUtils:
         if isinstance(instance, DocumentLLM):
             new_instance = DocumentLLM.from_dict(instance_dict)
             assert instance._eq_deserialized_llm_config(new_instance)
-        else:  # DocumentLLMGroup
-            new_instance = DocumentLLMGroup.from_dict(instance_dict)
+        else:  # DocumentModelGroup
+            new_instance = DocumentModelGroup.from_dict(instance_dict)
             assert instance._eq_deserialized_llm_config(new_instance)
 
         # From disk
@@ -417,8 +417,8 @@ class TestUtils:
         if isinstance(instance, DocumentLLM):
             new_instance = DocumentLLM.from_disk(disk_path)
             assert instance._eq_deserialized_llm_config(new_instance)
-        else:  # DocumentLLMGroup
-            new_instance = DocumentLLMGroup.from_disk(disk_path)
+        else:  # DocumentModelGroup
+            new_instance = DocumentModelGroup.from_disk(disk_path)
             assert instance._eq_deserialized_llm_config(new_instance)
         remove_file(disk_path)
 
@@ -428,31 +428,31 @@ class TestUtils:
         with pytest.raises(NotImplementedError):
             instance.model_dump_json()
 
-    def check_usage(self, llm: DocumentLLMGroup | DocumentLLM) -> None:
+    def check_usage(self, llm: DocumentModelGroup | DocumentLLM) -> None:
         """
         Evaluates the usage stats for an LLM or a group of LLMs
-        (when using DocumentLLMGroup). Ensures that the usage information is recorded
+        (when using DocumentModelGroup). Ensures that the usage information is recorded
         properly and validates the structure and presence of related data.
 
-        :param llm: A DocumentLLM or DocumentLLMGroup instance to assess usage
-            data. Must be an instance of either DocumentLLM or DocumentLLMGroup.
+        :param llm: A DocumentLLM or DocumentModelGroup instance to assess usage
+            data. Must be an instance of either DocumentLLM or DocumentModelGroup.
         :return: None
         """
 
         usages = llm.get_usage()
         assert isinstance(usages, list)
 
-        # For LLM group: At least one LLM in group must have recorded tokens usage
+        # For model group: At least one LLM in group must have recorded tokens usage
         # For individual LLM: Either the primary model or its fallback model must have recorded usage
         usage_input_used = False
         usage_output_used = False
         for usage_item in usages:
-            assert isinstance(usage_item, _LLMUsageOutputContainer)
+            assert isinstance(usage_item, _ModelUsageOutputContainer)
             assert hasattr(usage_item, "model") and usage_item.model
             assert hasattr(usage_item, "role")  # None for an LLM without a role
             assert hasattr(usage_item, "is_fallback")
             assert hasattr(usage_item, "usage") and usage_item.usage
-            assert isinstance(usage_item.usage, _LLMUsage)
+            assert isinstance(usage_item.usage, _ModelUsage)
             if usage_item.usage.input > 0:
                 assert usage_item.usage.calls
                 for call in usage_item.usage.calls:
@@ -466,13 +466,13 @@ class TestUtils:
         assert usage_input_used and usage_output_used
 
     @staticmethod
-    def check_cost(llm: DocumentLLMGroup | DocumentLLM) -> None:
+    def check_cost(llm: DocumentModelGroup | DocumentLLM) -> None:
         """
         Checks the cost details of a LLM or a group of LLMs, ensuring that the
         cost calculation and structure meet the required conditions.
 
         :param llm: The LLM or group of LLMs whose processing cost is to be checked.
-        :type llm: DocumentLLMGroup | DocumentLLM
+        :type llm: DocumentModelGroup | DocumentLLM
         :return: None
         :rtype: None
         """
@@ -480,17 +480,17 @@ class TestUtils:
         costs = llm.get_cost()
         assert isinstance(costs, list)
 
-        # For LLM group: At least one LLM in group must have recorded costs
+        # For model group: At least one LLM in group must have recorded costs
         # For individual LLM: Either the primary model or its fallback model must have recorded costs
         cost_input_updated = False
         cost_output_updated = False
         for cost_item in costs:
-            assert isinstance(cost_item, _LLMCostOutputContainer)
+            assert isinstance(cost_item, _ModelCostOutputContainer)
             assert hasattr(cost_item, "model") and cost_item.model
             assert hasattr(cost_item, "role")  # None for an LLM without a role
             assert hasattr(cost_item, "is_fallback")
             assert hasattr(cost_item, "cost") and cost_item.cost
-            assert isinstance(cost_item.cost, _LLMCost)
+            assert isinstance(cost_item.cost, _ModelCost)
             if cost_item.cost.input > Decimal("0"):
                 cost_input_updated = True
             if cost_item.cost.output > Decimal("0"):
@@ -600,8 +600,8 @@ class TestUtils:
                 :rtype: None
                 """
                 assert all(isinstance(i, assigned_instance_class) for i in instances)
-                # All instances are processed, regardless of their LLM roles: a standalone
-                # LLM extracts all instances, and an LLM group routes each instance to an LLM
+                # All instances are processed, regardless of their model roles: a standalone
+                # LLM extracts all instances, and a model group routes each instance to an LLM
                 assert all(i._is_processed for i in instances)
                 fields_to_group_by = [
                     "add_justifications",
@@ -617,7 +617,7 @@ class TestUtils:
                 for idx, group in enumerate(instance_groups, start=1):
                     logger.debug(
                         f"Checking group {idx} ({len(group)} instances "
-                        f"with LLM role(s) {[i.llm_role for i in group]})"
+                        f"with model role(s) {[i.model_role for i in group]})"
                     )
                     if not group:
                         continue
@@ -632,7 +632,7 @@ class TestUtils:
                     except AssertionError as e:
                         warnings.warn(
                             f"Check has failed for instance group ({len(group)}) "
-                            f"with LLM role(s) {[i.llm_role for i in group]}: {e}. "
+                            f"with model role(s) {[i.model_role for i in group]}: {e}. "
                             f"Instance group: {[i.name for i in group]}",
                             stacklevel=2,
                         )
@@ -674,7 +674,7 @@ class TestUtils:
 
     def compare_with_concurrent_execution(
         self,
-        llm: DocumentLLMGroup | DocumentLLM,
+        llm: DocumentModelGroup | DocumentLLM,
         expected_n_calls_no_concurrency: int,
         expected_n_calls_1_item_per_call: int,
         expected_n_calls_with_concurrency: int,
@@ -692,7 +692,7 @@ class TestUtils:
         processing with only one item processed per call. It validates the expected number of
         function calls and final states after execution.
 
-        :param llm: The DocumentLLMGroup or DocumentLLM instance involved in the testing process.
+        :param llm: The DocumentModelGroup or DocumentLLM instance involved in the testing process.
         :param expected_n_calls_no_concurrency: The expected number of LLM calls when
             concurrency is not utilized in execution.
         :param expected_n_calls_1_item_per_call: The expected number of LLM calls during
@@ -816,7 +816,7 @@ class TestUtils:
         )
 
     def config_llms_for_output_lang(
-        self, document: Document, llm: DocumentLLMGroup | DocumentLLM
+        self, document: Document, llm: DocumentModelGroup | DocumentLLM
     ) -> None:
         """
         Configures the output language adaptation for the LLMs
@@ -824,8 +824,8 @@ class TestUtils:
 
         :param document: The document for which the output language of the LLM is being configured.
         :type document: Document
-        :param llm: The LLM group or single LLM instance to be configured.
-        :type llm: DocumentLLMGroup | DocumentLLM
+        :param llm: The model group or single LLM instance to be configured.
+        :type llm: DocumentModelGroup | DocumentLLM
 
         :return: None
         """
@@ -835,7 +835,7 @@ class TestUtils:
             output_language = "adapt"
         else:
             output_language = "en"
-        if isinstance(llm, DocumentLLMGroup):
+        if isinstance(llm, DocumentModelGroup):
             llm.group_update_output_language(output_language)
         else:  # DocumentLLM
             llm.output_language = output_language
@@ -843,16 +843,16 @@ class TestUtils:
 
     @staticmethod
     def config_llm_async_limiter_for_mock_responses(
-        llm: DocumentLLMGroup | DocumentLLM,
+        llm: DocumentModelGroup | DocumentLLM,
     ) -> None:
         """
         Configures an asynchronous rate limiter for mock responses within a specified
-        DocumentLLM instance or DocumentLLMGroup. The limiter is applied to the primary model
+        DocumentLLM instance or DocumentModelGroup. The limiter is applied to the primary model
         and its fallback models, if applicable.
 
-        :param llm: A DocumentLLM or DocumentLLMGroup instance, representing the LLM
+        :param llm: A DocumentLLM or DocumentModelGroup instance, representing the LLM
             models to configure.
-        :type llm: DocumentLLMGroup | DocumentLLM
+        :type llm: DocumentModelGroup | DocumentLLM
         :return: None
         :rtype: None
         """
@@ -869,11 +869,11 @@ class TestUtils:
                 :type model: DocumentLLM
                 """
                 model.async_limiter = limiter
-                for fallback_llm in model.fallback_llms:
+                for fallback_llm in model.fallback_models:
                     fallback_llm.async_limiter = limiter
 
-            if isinstance(llm, DocumentLLMGroup):
-                for model in llm.llms:
+            if isinstance(llm, DocumentModelGroup):
+                for model in llm.models:
                     set_new_limiter(model)
             else:
                 set_new_limiter(llm)

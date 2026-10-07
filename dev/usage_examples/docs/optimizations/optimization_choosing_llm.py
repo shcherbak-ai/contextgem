@@ -2,7 +2,7 @@
 
 import os
 
-from contextgem import Aspect, Document, DocumentLLM, DocumentLLMGroup, StringConcept
+from contextgem import Aspect, Document, DocumentLLM, DocumentModelGroup, StringConcept
 
 
 # Define LLMs
@@ -19,9 +19,9 @@ base_llm_fallback = DocumentLLM(
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
     is_fallback=True,  # must have the same role as the parent LLM (here: no role)
 )
-base_llm.fallback_llms = [base_llm_fallback]
+base_llm.fallback_models = [base_llm_fallback]
 
-# LLM with a role - extracts the aspects/concepts with the same `llm_role`
+# LLM with a role - extracts the aspects/concepts with the same `model_role`
 advanced_llm = DocumentLLM(
     model="openai/gpt-6.1-sol",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
@@ -29,8 +29,8 @@ advanced_llm = DocumentLLM(
 )
 
 # You can organize LLMs in a group to use them in a pipeline
-llm_group = DocumentLLMGroup(
-    llms=[base_llm, advanced_llm],
+model_group = DocumentModelGroup(
+    models=[base_llm, advanced_llm],
 )
 
 # Route aspects/concepts to the LLMs in the group
@@ -40,18 +40,18 @@ document = Document(
         Aspect(
             name="aspect_name",
             description="aspect_description",
-            # no `llm_role` - extracted by the LLM without a role
+            # no `model_role` - extracted by the LLM without a role
             concepts=[
                 StringConcept(
                     name="concept_name",
                     description="concept_description",
-                    llm_role="reasoner",  # extracted by the LLM with the "reasoner" role
+                    model_role="reasoner",  # extracted by the LLM with the "reasoner" role
                 )
             ],
         )
     ],
 )
 
-# Then use the LLM group to extract all information from the document
+# Then use the model group to extract all information from the document
 # This will use different LLMs for different aspects/concepts under the hood
-# document = llm_group.extract_all(document)
+# document = model_group.extract_all(document)

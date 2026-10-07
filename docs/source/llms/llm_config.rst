@@ -86,7 +86,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``role``
      - ``str | None``
      - ``None``
-     - Free-form role label of the LLM (up to 64 printable characters), used for routing in an LLM group. The same label can be explicitly assigned to extraction components (aspects and concepts) in the pipeline, using their ``llm_role`` parameter. ContextGem then routes extraction tasks based on these assigned roles, matching components with the LLM of the same role, while the components without a role are routed to the LLM without a role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). The role implies no capabilities of the model, and is ignored when the LLM is used on its own (not in a group), as a single LLM extracts all the aspects and concepts it is given. For more details, see :ref:`llm-roles-label`.
+     - Free-form role label of the LLM (up to 64 printable characters), used for routing in a model group. The same label can be explicitly assigned to extraction components (aspects and concepts) in the pipeline, using their ``model_role`` parameter. ContextGem then routes extraction tasks based on these assigned roles, matching components with the LLM of the same role, while the components without a role are routed to the LLM without a role. This allows you to structure your pipeline with different models for different tasks (e.g., using simpler models for basic extractions and more powerful models for complex reasoning). The role implies no capabilities of the model, and is ignored when the LLM is used on its own (not in a group), as a single LLM extracts all the aspects and concepts it is given. For more details, see :ref:`model-roles-label`.
    * - ``system_message``
      - ``str | None``
      - ``None``
@@ -120,9 +120,9 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``3``
      - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails). Each retry is a new request.
    * - ``pricing_details``
-     - ``LLMPricing | None``
+     - ``ModelPricing | None``
      - ``None``
-     - :class:`~contextgem.public.data_models.LLMPricing` object with pricing details for cost calculation: the prices of input and output tokens and, optionally, of the input tokens read from and written to the prompt cache of the provider.
+     - :class:`~contextgem.public.data_models.ModelPricing` object with pricing details for cost calculation: the prices of input and output tokens and, optionally, of the input tokens read from and written to the prompt cache of the provider.
    * - ``auto_pricing``
      - ``bool``
      - ``False``
@@ -135,7 +135,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``bool``
      - ``False``
      - Indicates whether the LLM is a fallback model. Fallback LLMs are optionally assigned to the primary LLM instance and are used when the primary LLM fails.
-   * - ``fallback_llms``
+   * - ``fallback_models``
      - ``list[DocumentLLM]``
      - ``[]``
      - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role as the primary LLM.
@@ -187,9 +187,9 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
 🔄 Configuring Fallback LLMs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can set up one or more fallback LLMs that will be used if the primary LLM fails. Fallback LLMs are tried in the order they are listed in ``fallback_llms``, until one of them succeeds:
+You can set up one or more fallback LLMs that will be used if the primary LLM fails. Fallback LLMs are tried in the order they are listed in ``fallback_models``, until one of them succeeds:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/fallback_llms.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/fallback_models.py
    :language: python
    :caption: Configuring fallback LLMs
 
@@ -212,7 +212,7 @@ Retries are configured per LLM, which also applies to each fallback LLM, and dep
 - **Non-transient API errors** (e.g. invalid request, failed authentication, exceeded context window, content policy violation) are not retried, as the same request would fail again in the same way.
 - **Invalid data** returned by the LLM during extraction (the response cannot be parsed or validated) is requested again up to ``max_retries_invalid_data`` times, without a delay.
 
-When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``LLMAPIError`` is raised for a failed API request, or ``LLMExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method.
+When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method.
 
 .. note::
    ``max_retries_failed_request`` sets the number of retries performed by the LLM provider's SDK, where supported (e.g. for OpenAI), in addition to the retries described above. It applies to the first attempt of a request only.
@@ -236,7 +236,7 @@ You can configure pricing parameters to track costs:
 Some LLM providers cache the beginning of a prompt and reuse it across requests (prompt caching), in which case they report how many input tokens of a request were read from the cache, and some of them also how many were written to it. Tokens read from the cache are usually priced lower than regular input tokens, while tokens written to the cache may be priced higher. ContextGem does not configure prompt caching, but takes such tokens into account in the calculated costs whenever the provider reports them:
 
 - With ``auto_pricing=True``, they are priced at the cache prices of the model, if ``genai-prices`` has such prices, and as regular input tokens otherwise.
-- With ``pricing_details``, they are priced at the optional ``cache_read_per_1m_tokens`` and ``cache_write_per_1m_tokens`` of :class:`~contextgem.public.data_models.LLMPricing`. If a cache price is not set, the corresponding tokens are priced as regular input tokens, i.e. at ``input_per_1m_tokens``.
+- With ``pricing_details``, they are priced at the optional ``cache_read_per_1m_tokens`` and ``cache_write_per_1m_tokens`` of :class:`~contextgem.public.data_models.ModelPricing`. If a cache price is not set, the corresponding tokens are priced as regular input tokens, i.e. at ``input_per_1m_tokens``.
 
 .. note::
    Tokens written to the cache are priced at the standard cache write price of the model. A longer cache lifetime that a provider may offer at a higher price (e.g. 1-hour cache writes of Anthropic models) is not priced separately. Such a lifetime has to be requested explicitly, which ContextGem does not do.
@@ -274,18 +274,18 @@ Model vision capabilities are automatically detected using ``litellm.supports_vi
    Explicit capability declarations should only be used when automatic capability detection fails. Incorrectly setting this flag may lead to unexpected behavior or API errors.
 
 
-🤖🤖 LLM Groups
+🤖🤖 Model Groups
 -----------------
 
 For complex document processing, you can organize multiple LLMs with different roles into a group:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/llm_group.py
+.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/model_group.py
    :language: python
-   :caption: Using LLM group
+   :caption: Using model group
 
-Each LLM in the group must have a unique ``role``, and only one LLM in the group can have no role. An aspect/concept is routed to the LLM with the ``role`` equal to the ``llm_role`` of the aspect/concept, and an aspect/concept without ``llm_role`` is routed to the LLM without ``role``. If an aspect/concept cannot be routed to any LLM in the group, an error is raised. For more details, see :ref:`llm-roles-label`.
+Each LLM in the group must have a unique ``role``, and only one LLM in the group can have no role. An aspect/concept is routed to the LLM with the ``role`` equal to the ``model_role`` of the aspect/concept, and an aspect/concept without ``model_role`` is routed to the LLM without ``role``. If an aspect/concept cannot be routed to any LLM in the group, an error is raised. For more details, see :ref:`model-roles-label`.
 
-See a practical example of using an LLM group in :ref:`multi-llm-pipeline-label`.
+See a practical example of using a model group in :ref:`multi-llm-pipeline-label`.
 
 
 📊 Accessing Usage and Cost Statistics

@@ -46,7 +46,7 @@ from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.items import _StringItem
 from contextgem.internal.typings.types import (
-    LLMRole,
+    ModelRole,
     NonEmptyStr,
     ReferenceDepth,
 )
@@ -91,10 +91,10 @@ class _Aspect(
             "Only concepts with 'text' modality are allowed."
         ),
     )  # using Sequence field with list validator for type checking
-    llm_role: LLMRole | None = Field(
+    model_role: ModelRole | None = Field(
         default=None,
         description=(
-            "Role label of the LLM that extracts this aspect when a DocumentLLMGroup "
+            "Role label of the LLM that extracts this aspect when a DocumentModelGroup "
             "is used: the aspect is routed to the LLM in the group with the same `role`. "
             "Defaults to None, which routes to the LLM without a role. "
             "Ignored by a standalone DocumentLLM, which extracts every aspect it is given."

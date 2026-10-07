@@ -42,7 +42,7 @@ from pydantic import (
 
 from contextgem.internal.typings.validators import (
     _validate_is_json_dict,
-    _validate_llm_role,
+    _validate_model_role,
 )
 
 
@@ -50,8 +50,8 @@ NonEmptyStr = Annotated[
     StrictStr, StringConstraints(strip_whitespace=True, min_length=1)
 ]
 
-# Free-form label that routes aspects/concepts to an LLM in an LLM group
-LLMRole = Annotated[StrictStr, AfterValidator(_validate_llm_role)]
+# Free-form label that routes aspects/concepts to an LLM in a model group
+ModelRole = Annotated[StrictStr, AfterValidator(_validate_model_role)]
 
 Modality = Literal["text", "image", "multimodal"]
 

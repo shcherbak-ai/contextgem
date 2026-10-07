@@ -48,7 +48,7 @@ from contextgem.internal.typings.types_to_strings import _serialize_type_hint
 
 
 if TYPE_CHECKING:
-    from contextgem.internal.data_models import _LLMCost
+    from contextgem.internal.data_models import _ModelCost
 
 
 # Public attrs
@@ -63,9 +63,9 @@ KEY_SENTENCES_PUBLIC = "sentences"
 # LLM attrs
 KEY_API_KEY_PUBLIC = "api_key"  # always redacted
 KEY_API_BASE_PUBLIC = "api_base"  # always redacted
-KEY_LLM_FALLBACKS_PUBLIC = "fallback_llms"
-KEY_LLM_PRICING_PUBLIC = "pricing_details"
-KEY_LLMS_PUBLIC = "llms"
+KEY_FALLBACK_MODELS_PUBLIC = "fallback_models"
+KEY_MODEL_PRICING_PUBLIC = "pricing_details"
+KEY_MODELS_PUBLIC = "models"
 
 # Private attrs
 KEY_UNIQUE_ID_PRIVATE = "_unique_id"
@@ -77,8 +77,8 @@ KEY_NESTING_LEVEL_PRIVATE = "_nesting_level"
 KEY_CLASS_PRIVATE = "__class__"
 # LLM attrs
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
-KEY_LLM_USAGE_PRIVATE = "_usage"
-KEY_LLM_COST_PRIVATE = "_cost"
+KEY_MODEL_USAGE_PRIVATE = "_usage"
+KEY_MODEL_COST_PRIVATE = "_cost"
 KEY_LLM_SUPPORTS_VISION_PRIVATE = "_supports_vision"
 KEY_LLM_SUPPORTS_REASONING_PRIVATE = "_supports_reasoning"
 KEY_LLM_SUPPORTS_TOOLS_PRIVATE = "_supports_tools"
@@ -121,18 +121,18 @@ class _InstanceSerializer(BaseModel):
         - All public attributes
         - Special handling for specific public and private attributes
 
-        When an LLM or LLM group is serialized, its API credentials and usage/cost stats are removed.
+        When an LLM or model group is serialized, its API credentials and usage/cost stats are removed.
 
         :return: A dictionary representation of the current object with all necessary data for serialization
         :rtype: dict[str, Any]
         """
 
-        from contextgem.internal.base.llms import _DocumentLLM, _DocumentLLMGroup
-        from contextgem.internal.data_models import _LLMCost, _LLMUsage
+        from contextgem.internal.base.llms import _DocumentLLM, _DocumentModelGroup
+        from contextgem.internal.data_models import _ModelCost, _ModelUsage
 
-        if isinstance(self, _DocumentLLM | _DocumentLLMGroup):
+        if isinstance(self, _DocumentLLM | _DocumentModelGroup):
             logger.info(
-                "API credentials and usage/cost stats are removed from the serialized LLM/LLM group."
+                "API credentials and usage/cost stats are removed from the serialized LLM/model group."
             )
 
         # Start with normal public fields serialization
@@ -149,8 +149,8 @@ class _InstanceSerializer(BaseModel):
                 KEY_IMAGES_PUBLIC,
                 KEY_PARAGRAPHS_PUBLIC,
                 KEY_SENTENCES_PUBLIC,
-                KEY_LLMS_PUBLIC,
-                KEY_LLM_FALLBACKS_PUBLIC,
+                KEY_MODELS_PUBLIC,
+                KEY_FALLBACK_MODELS_PUBLIC,
             ]:
                 base_dict[key] = [i.to_dict() for i in val]
 
@@ -162,7 +162,7 @@ class _InstanceSerializer(BaseModel):
                 # Convert the tuple to a list for JSON serialization
                 base_dict[key] = list(val)
 
-            elif key == KEY_LLM_PRICING_PUBLIC:
+            elif key == KEY_MODEL_PRICING_PUBLIC:
                 # Serialize only when provided
                 base_dict[key] = val.to_dict() if val is not None else val
 
@@ -201,13 +201,13 @@ class _InstanceSerializer(BaseModel):
                     "time_period": val.time_period,
                 }
 
-            elif key == KEY_LLM_USAGE_PRIVATE:
+            elif key == KEY_MODEL_USAGE_PRIVATE:
                 # Reset usage stats when LLM is serialized
-                base_dict[key] = _LLMUsage().to_dict()
+                base_dict[key] = _ModelUsage().to_dict()
 
-            elif key == KEY_LLM_COST_PRIVATE:
+            elif key == KEY_MODEL_COST_PRIVATE:
                 # Reset cost stats when LLM is serialized
-                cost_dict = _LLMCost().to_dict()
+                cost_dict = _ModelCost().to_dict()
                 # Convert Decimal objects to floats in the cost dictionary
                 base_dict[key] = self._convert_decimal_to_float(cost_dict)
 
@@ -375,8 +375,8 @@ class _InstanceSerializer(BaseModel):
         :rtype: Self
         """
 
-        from contextgem.internal.base.data_models import _LLMPricing
-        from contextgem.internal.data_models import _LLMUsage
+        from contextgem.internal.base.data_models import _ModelPricing
+        from contextgem.internal.data_models import _ModelUsage
 
         # Create a copy of the object dict due to further modification
         obj_dict = deepcopy(obj_dict)
@@ -476,20 +476,20 @@ class _InstanceSerializer(BaseModel):
             ),
             KEY_RATING_SCALE_PUBLIC: lambda val: tuple(val),
             # LLM attrs
-            KEY_LLM_PRICING_PUBLIC: lambda val: (
-                _resolve_public_type(_LLMPricing).from_dict(val)
+            KEY_MODEL_PRICING_PUBLIC: lambda val: (
+                _resolve_public_type(_ModelPricing).from_dict(val)
                 if val is not None
                 else val
             ),
-            KEY_LLM_FALLBACKS_PUBLIC: lambda_list_val(),
-            KEY_LLMS_PUBLIC: lambda_list_val(),
+            KEY_FALLBACK_MODELS_PUBLIC: lambda_list_val(),
+            KEY_MODELS_PUBLIC: lambda_list_val(),
             # Private attrs
             KEY_EXTRACTED_ITEMS_PRIVATE: lambda_list_val(),
             KEY_REFERENCE_PARAGRAPHS_PRIVATE: lambda_list_val(),
             KEY_REFERENCE_SENTENCES_PRIVATE: lambda_list_val(),
             # LLM attrs
-            KEY_LLM_USAGE_PRIVATE: lambda val: _LLMUsage.from_dict(val),
-            KEY_LLM_COST_PRIVATE: lambda val: cls._convert_llm_cost_dict(val),
+            KEY_MODEL_USAGE_PRIVATE: lambda val: _ModelUsage.from_dict(val),
+            KEY_MODEL_COST_PRIVATE: lambda val: cls._convert_model_cost_dict(val),
             KEY_ASYNC_LIMITER_PRIVATE: lambda val: AsyncLimiter(
                 max_rate=val["max_rate"], time_period=val["time_period"]
             ),
@@ -528,24 +528,24 @@ class _InstanceSerializer(BaseModel):
         return new_instance
 
     @classmethod
-    def _convert_llm_cost_dict(cls, cost_dict: dict[str, Any]) -> _LLMCost:
+    def _convert_model_cost_dict(cls, cost_dict: dict[str, Any]) -> _ModelCost:
         """
-        Converts a dictionary containing _LLMCost data to an _LLMCost instance,
+        Converts a dictionary containing _ModelCost data to an _ModelCost instance,
         ensuring float values are converted to Decimal.
 
-        :param cost_dict: Dictionary containing _LLMCost data
+        :param cost_dict: Dictionary containing _ModelCost data
         :type cost_dict: dict[str, Any]
-        :return: An _LLMCost instance
-        :rtype: _LLMCost
+        :return: An _ModelCost instance
+        :rtype: _ModelCost
         """
-        from contextgem.internal.data_models import _LLMCost
+        from contextgem.internal.data_models import _ModelCost
 
         # Convert float values to Decimal
         cost_dict["input"] = Decimal(str(cost_dict["input"]))
         cost_dict["output"] = Decimal(str(cost_dict["output"]))
         cost_dict["total"] = Decimal(str(cost_dict["total"]))
 
-        return _LLMCost.from_dict(cost_dict)
+        return _ModelCost.from_dict(cost_dict)
 
     @classmethod
     def from_json(cls, json_string: str) -> Self:

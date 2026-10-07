@@ -45,12 +45,12 @@ class Aspect(_Aspect):
     :ivar concepts: A list of concepts associated with the aspect. These concepts must be
         unique in both name and description, and must have the "text" modality.
     :vartype concepts: list[_Concept]
-    :ivar llm_role: The role label of the LLM that extracts the aspect when
-        a ``DocumentLLMGroup`` is used: the aspect is routed to the LLM in the group
+    :ivar model_role: The role label of the LLM that extracts the aspect when
+        a ``DocumentModelGroup`` is used: the aspect is routed to the LLM in the group
         with the same ``role``. Defaults to None, which routes the aspect to the LLM
         without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
         aspect it is given.
-    :vartype llm_role: str | None
+    :vartype model_role: str | None
     :ivar reference_depth: The structural depth of references (paragraphs or sentences).
         Defaults to "paragraphs". Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth

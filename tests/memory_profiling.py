@@ -52,7 +52,7 @@ from memory_profiler import profile
 from pympler import asizeof
 
 from contextgem.internal.base.instances import _InstanceBase
-from contextgem.internal.base.llms import _GenericLLMProcessor
+from contextgem.internal.base.llms import _GenericModelProcessor
 from contextgem.internal.loggers import logger
 from tests.conftest import is_memory_profiling_enabled
 
@@ -70,7 +70,7 @@ MAX_BASELINE_MEMORY = 1000.0
 
 DEFAULT_TARGET_CLASSES_FOR_MEMORY_USAGE_PROFILING = (
     _InstanceBase,
-    _GenericLLMProcessor,
+    _GenericModelProcessor,
 )
 
 F = TypeVar("F", bound=Callable[..., Any])

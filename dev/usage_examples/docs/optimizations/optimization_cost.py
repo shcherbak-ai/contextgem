@@ -2,13 +2,13 @@
 
 import os
 
-from contextgem import DocumentLLM, LLMPricing
+from contextgem import DocumentLLM, ModelPricing
 
 
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    pricing_details=LLMPricing(
+    pricing_details=ModelPricing(
         input_per_1m_tokens=0.10,
         output_per_1m_tokens=0.50,
     ),  # add pricing details to track costs

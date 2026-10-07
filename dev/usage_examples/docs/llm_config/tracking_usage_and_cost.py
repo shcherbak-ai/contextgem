@@ -4,7 +4,7 @@ from contextgem import DocumentLLM
 llm = DocumentLLM(
     model="anthropic/claude-haiku-4-5",
     api_key="<your-anthropic-api-key>",
-    auto_pricing=True,  # or set `pricing_details=LLMPricing(...)` manually
+    auto_pricing=True,  # or set `pricing_details=ModelPricing(...)` manually
 )
 
 # Perform some extraction tasks
@@ -28,7 +28,7 @@ print(f"Total cost: {cost.total}")
 # Reset usage and cost statistics
 llm.reset_usage_and_cost()
 
-# The same methods are available for LLM groups, with optional filtering by LLM role
-# usage_info = llm_group.get_usage(llm_role="reasoner")
-# cost_info = llm_group.get_cost(llm_role="reasoner")
-# llm_group.reset_usage_and_cost(llm_role="reasoner")
+# The same methods are available for model groups, with optional filtering by model role
+# usage_info = model_group.get_usage(model_role="reasoner")
+# cost_info = model_group.get_cost(model_role="reasoner")
+# model_group.reset_usage_and_cost(model_role="reasoner")

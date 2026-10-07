@@ -553,8 +553,8 @@ uv run pytest --mem-profile
 
 Warnings generated during tests are often expected and by design. Many warnings are intentionally triggered to test error handling, edge cases, and warning systems. Common expected warnings include:
 
-- LLM extraction errors and retries (testing error handling)
-- Missing LLM roles (testing validation logic)
+- Model extraction errors and retries (testing error handling)
+- Missing model roles (testing validation logic)
 - Concurrency optimization warnings (testing performance comparisons)
 - Deprecation warnings from dependencies
 

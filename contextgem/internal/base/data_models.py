@@ -29,9 +29,9 @@ from contextgem.internal.decorators import _disable_direct_initialization
 
 
 @_disable_direct_initialization
-class _LLMPricing(_InstanceSerializer):
+class _ModelPricing(_InstanceSerializer):
     """
-    Internal implementation of the LLMPricing class.
+    Internal implementation of the ModelPricing class.
     """
 
     input_per_1m_tokens: StrictFloat = Field(

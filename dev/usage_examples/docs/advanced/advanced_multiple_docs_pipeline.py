@@ -8,11 +8,11 @@ from contextgem import (
     DateConcept,
     Document,
     DocumentLLM,
-    DocumentLLMGroup,
+    DocumentModelGroup,
     ExtractionPipeline,
     JsonObjectConcept,
     JsonObjectExample,
-    LLMPricing,
+    ModelPricing,
     NumericalConcept,
     RatingConcept,
     StringConcept,
@@ -100,7 +100,7 @@ contract_pipeline.concepts = [  # or use .add_concepts()
     StringConcept(
         name="Contract type",
         description="The type of agreement",
-        llm_role="reasoner",  # for this concept, we use a more advanced LLM for reasoning
+        model_role="reasoner",  # for this concept, we use a more advanced LLM for reasoning
     ),
     StringConcept(
         name="Governing law",
@@ -122,7 +122,7 @@ contract_pipeline.concepts = [  # or use .add_concepts()
     RatingConcept(
         name="Duration adequacy",
         description="Contract duration adequacy considering the subject matter and best practices.",
-        llm_role="reasoner",  # for this concept, we use a more advanced LLM for reasoning
+        model_role="reasoner",  # for this concept, we use a more advanced LLM for reasoning
         rating_scale=(1, 10),
         add_justifications=True,  # add justifications for the rating
         justification_depth="balanced",  # provide a balanced justification
@@ -139,12 +139,12 @@ doc2.assign_pipeline(
     contract_pipeline
 )  # assigns pipeline aspects and concepts to the document
 
-# Create an LLM group for data extraction and reasoning
+# Create a model group for data extraction and reasoning
 llm_extractor = DocumentLLM(
     model="openai/gpt-6-luna",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
     # no role - the LLM extracts all aspects/concepts that are not routed to another LLM
-    pricing_details=LLMPricing(  # optional, for costs calculation
+    pricing_details=ModelPricing(  # optional, for costs calculation
         input_per_1m_tokens=0.10,
         output_per_1m_tokens=0.50,
     ),
@@ -153,21 +153,21 @@ llm_extractor = DocumentLLM(
 llm_reasoner = DocumentLLM(
     model="openai/gpt-6.1-sol",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
-    role="reasoner",  # the LLM extracts the aspects/concepts with the same `llm_role`
-    pricing_details=LLMPricing(  # optional, for costs calculation
+    role="reasoner",  # the LLM extracts the aspects/concepts with the same `model_role`
+    pricing_details=ModelPricing(  # optional, for costs calculation
         input_per_1m_tokens=2.00,
         output_per_1m_tokens=10.00,
     ),
     # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
 )
-# The LLM group is used for all extraction tasks within the pipeline
-llm_group = DocumentLLMGroup(llms=[llm_extractor, llm_reasoner])
+# The model group is used for all extraction tasks within the pipeline
+model_group = DocumentModelGroup(models=[llm_extractor, llm_reasoner])
 
 # Extract all information from the documents at once
-doc1 = llm_group.extract_all(
+doc1 = model_group.extract_all(
     doc1, use_concurrency=True
 )  # use concurrency to speed up extraction
-doc2 = llm_group.extract_all(
+doc2 = model_group.extract_all(
     doc2, use_concurrency=True
 )  # use concurrency to speed up extraction
 # Or use async variants .extract_all_async(...)
@@ -199,4 +199,4 @@ print(doc2.get_concept_by_name("Duration adequacy").extracted_items[0].justifica
 
 # Output processing costs (requires setting the pricing details for each LLM)
 print("\nProcessing costs:")
-print(llm_group.get_cost())
+print(model_group.get_cost())

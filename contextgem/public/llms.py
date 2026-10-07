@@ -31,12 +31,16 @@ processing patterns and provides detailed usage statistics for monitoring and co
 
 from __future__ import annotations
 
-from contextgem.internal.base.llms import _ChatSession, _DocumentLLM, _DocumentLLMGroup
+from contextgem.internal.base.llms import (
+    _ChatSession,
+    _DocumentLLM,
+    _DocumentModelGroup,
+)
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_DocumentLLMGroup)  # ty: ignore[too-many-positional-arguments]
-class DocumentLLMGroup(_DocumentLLMGroup):
+@_expose_in_registry(additional_key=_DocumentModelGroup)  # ty: ignore[too-many-positional-arguments]
+class DocumentModelGroup(_DocumentModelGroup):
     """
     Represents a group of DocumentLLMs with unique roles for processing document content.
 
@@ -44,11 +48,11 @@ class DocumentLLMGroup(_DocumentLLMGroup):
     to it by its role, e.g. to use a smaller model for simpler tasks and a more capable
     model for more complex ones.
 
-    :ivar llms: A list of DocumentLLM instances, each with a unique ``role``. An aspect/concept
-        is extracted by the LLM with the ``role`` equal to the ``llm_role`` of the aspect/concept,
-        and an aspect/concept without ``llm_role`` is extracted by the LLM without ``role``.
+    :ivar models: A list of DocumentLLM instances, each with a unique ``role``. An aspect/concept
+        is extracted by the LLM with the ``role`` equal to the ``model_role`` of the aspect/concept,
+        and an aspect/concept without ``model_role`` is extracted by the LLM without ``role``.
         Only one LLM in the group can have no role. At least 2 instances are required.
-    :vartype llms: list[DocumentLLM]
+    :vartype models: list[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Values: "en" (always English) or "adapt" (matches document/image language).
         All LLMs in the group must share the same output_language setting.
@@ -60,9 +64,9 @@ class DocumentLLMGroup(_DocumentLLMGroup):
         for the group.
 
     Example:
-        .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_llm_group.py
+        .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_model_group.py
             :language: python
-            :caption: LLM group definition
+            :caption: Model group definition
     """
 
     pass
@@ -76,7 +80,7 @@ class DocumentLLM(_DocumentLLM):
     This class serves as an abstraction for interacting with a LLM. It provides functionality
     for querying the LLM with text or image inputs, and manages prompt preparation and token
     usage tracking. An LLM can be used on its own or, with a role assigned, as a part of
-    an LLM group.
+    a model group.
 
     :ivar model: Model identifier in format {model_provider}/{model_name}.
         See https://docs.litellm.ai/docs/providers for supported providers.
@@ -89,9 +93,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype api_base: str | None
     :ivar api_version: API version. Primarily used with Azure OpenAI.
     :vartype api_version: str | None
-    :ivar role: Free-form role label of the LLM (up to 64 printable characters), used for routing in a ``DocumentLLMGroup``:
-        the LLM extracts the aspects/concepts with the same ``llm_role``. Defaults to None,
-        in which case the LLM extracts the aspects/concepts without ``llm_role``. Ignored
+    :ivar role: Free-form role label of the LLM (up to 64 printable characters), used for routing in a ``DocumentModelGroup``:
+        the LLM extracts the aspects/concepts with the same ``model_role``. Defaults to None,
+        in which case the LLM extracts the aspects/concepts without ``model_role``. Ignored
         when the LLM is used on its own, as it then extracts all aspects/concepts.
     :vartype role: str | None
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
@@ -132,9 +136,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for LLM API calls. Defaults to 120 seconds.
     :vartype timeout: int
-    :ivar pricing_details: LLMPricing object with pricing details for cost calculation.
+    :ivar pricing_details: ModelPricing object with pricing details for cost calculation.
         Defaults to None.
-    :vartype pricing_details: LLMPricing | None
+    :vartype pricing_details: ModelPricing | None
     :ivar auto_pricing: Enable automatic LLM cost calculation using genai-prices.
         Ignored when ``pricing_details`` is provided. Defaults to ``False``.
     :vartype auto_pricing: bool
@@ -144,11 +148,11 @@ class DocumentLLM(_DocumentLLM):
     :vartype auto_pricing_refresh: bool
     :ivar is_fallback: Indicates whether the LLM is a fallback model. Defaults to False.
     :vartype is_fallback: bool
-    :ivar fallback_llms: DocumentLLMs to use as fallbacks if the current one fails, tried
+    :ivar fallback_models: DocumentLLMs to use as fallbacks if the current one fails, tried
         in the given order until one of them succeeds. Each must have ``is_fallback=True``
         and the same role as the current LLM, and must support vision if the current LLM
         is used to extract concepts from images. Defaults to an empty list.
-    :vartype fallback_llms: list[DocumentLLM]
+    :vartype fallback_models: list[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
         Applies only when DocumentLLM's default system message is used.
@@ -167,21 +171,21 @@ class DocumentLLM(_DocumentLLM):
 
     Note:
 
-        - LLM groups
-            Refer to the :class:`DocumentLLMGroup` class for more information on constructing LLM groups,
+        - Model groups
+            Refer to the :class:`DocumentModelGroup` class for more information on constructing model groups,
             which are a collection of LLMs with unique roles, used for complex document processing tasks.
 
-        - LLM role
+        - Model role
             The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs
-            of a :class:`DocumentLLMGroup`. For example, if an aspect/concept is assigned
-            ``llm_role="complex"``, it means that the aspect/concept is extracted from the document
+            of a :class:`DocumentModelGroup`. For example, if an aspect/concept is assigned
+            ``model_role="complex"``, it means that the aspect/concept is extracted from the document
             using the LLM in the group with the ``role`` set to "complex", while the aspects/concepts
-            without ``llm_role`` are extracted using the LLM without ``role``. This helps to channel
+            without ``model_role`` are extracted using the LLM without ``role``. This helps to channel
             different tasks to different LLMs, ensuring that the task is handled by the most
             appropriate model. Usually, domain expertise is required to determine the most appropriate
             LLM for a specific aspect/concept. A role is just a label and implies no capabilities
             of the model. When an LLM is used on its own, i.e. not in a group, you can skip the role
-            assignment completely: the LLM extracts all aspects/concepts, regardless of their ``llm_role``.
+            assignment completely: the LLM extracts all aspects/concepts, regardless of their ``model_role``.
 
         - Explicit capability declaration
             Model vision capabilities are automatically detected using

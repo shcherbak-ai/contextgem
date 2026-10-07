@@ -66,8 +66,8 @@ from contextgem.internal.typings.typed_class_utils import (
 )
 from contextgem.internal.typings.types import (
     ClassificationType,
-    LLMRole,
     Modality,
+    ModelRole,
     NonEmptyStr,
     ReferenceDepth,
 )
@@ -93,10 +93,10 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     description: NonEmptyStr = Field(
         ..., description="Concept description (required, non-empty string)."
     )
-    llm_role: LLMRole | None = Field(
+    model_role: ModelRole | None = Field(
         default=None,
         description=(
-            "Role label of the LLM that extracts this concept when a DocumentLLMGroup "
+            "Role label of the LLM that extracts this concept when a DocumentModelGroup "
             "is used: the concept is routed to the LLM in the group with the same `role`. "
             "Defaults to None, which routes to the LLM without a role. "
             "Ignored by a standalone DocumentLLM, which extracts every concept it is given."

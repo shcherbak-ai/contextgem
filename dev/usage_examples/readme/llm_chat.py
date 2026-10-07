@@ -20,7 +20,7 @@ fallback_model = DocumentLLM(
     is_fallback=True,
     system_message="",  # also disable default system message for fallback, or provide your own
 )
-main_model.fallback_llms = [fallback_model]  # tried in the given order
+main_model.fallback_models = [fallback_model]  # tried in the given order
 
 
 # Preserve conversation history across turns with a ChatSession

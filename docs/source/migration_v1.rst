@@ -23,14 +23,128 @@ Migrating to v1.0
 This guide describes the changes in ContextGem v1.0 that require updating the code and the serialized data created with the earlier versions.
 
 
-🏷️ LLM Roles and Concept Modality
+.. _migration-v1-renames-label:
+
+✏️ Renamed Classes and Parameters
+-----------------------------------
+
+In v1.0, the classes, parameters and attributes that are not specific to LLMs are renamed, so that their names refer to models in general. :class:`~contextgem.public.llms.DocumentLLM` keeps its name.
+
+.. list-table:: Renamed classes, parameters and attributes
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Before v1.0
+     - In v1.0
+   * - ``DocumentLLMGroup``
+     - ``DocumentModelGroup``
+   * - ``llms`` parameter and attribute of ``DocumentLLMGroup``
+     - ``models``
+   * - ``llm_role`` parameter and attribute of aspects and concepts
+     - ``model_role``
+   * - ``llm_role`` argument of ``get_usage()``, ``get_cost()`` and ``reset_usage_and_cost()`` of ``DocumentLLMGroup``
+     - ``model_role``
+   * - ``llm_roles`` property of documents, pipelines and aspects
+     - ``model_roles``
+   * - ``LLMPricing``
+     - ``ModelPricing``
+   * - ``LLMAPIError``
+     - ``ModelAPIError``
+   * - ``LLMExtractionError``
+     - ``ModelExtractionError``
+
+Only the names are changed by the renaming. The other changes to model groups, roles and fallback LLMs are described in the sections below. The old names are removed: using them raises an error.
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   from contextgem import BooleanConcept, DocumentLLM, DocumentLLMGroup, LLMPricing
+
+   llm_group = DocumentLLMGroup(
+       llms=[
+           DocumentLLM(
+               model="openai/gpt-6-luna",
+               pricing_details=LLMPricing(
+                   input_per_1m_tokens=0.10,
+                   output_per_1m_tokens=0.50,
+               ),
+           ),
+           DocumentLLM(model="openai/gpt-6.1-sol", role="reasoner_text"),
+       ]
+   )
+
+   concept = BooleanConcept(
+       name="Liability cap",
+       description="Liability of the parties is capped",
+       llm_role="reasoner_text",
+   )
+
+   reasoner_usage = llm_group.get_usage(llm_role="reasoner_text")
+
+.. code-block:: python
+   :caption: In v1.0
+
+   from contextgem import BooleanConcept, DocumentLLM, DocumentModelGroup, ModelPricing
+
+   model_group = DocumentModelGroup(
+       models=[
+           DocumentLLM(
+               model="openai/gpt-6-luna",
+               pricing_details=ModelPricing(
+                   input_per_1m_tokens=0.10,
+                   output_per_1m_tokens=0.50,
+               ),
+           ),
+           DocumentLLM(model="openai/gpt-6.1-sol", role="reasoner"),
+       ]
+   )
+
+   concept = BooleanConcept(
+       name="Liability cap",
+       description="Liability of the parties is capped",
+       model_role="reasoner",
+   )
+
+   reasoner_usage = model_group.get_usage(model_role="reasoner")
+
+The role names used in the example are changed as well, see :ref:`migration-v1-roles-label`.
+
+**Serialized data.** The serialized data stores the names of the parameters and of the classes. Documents, pipelines, aspects and concepts serialized with the earlier versions have the ``llm_role`` key in each aspect and concept, and cannot be deserialized in v1.0 as is: a validation error is raised for the ``llm_role`` key. Rename the key before deserializing the data:
+
+.. code-block:: python
+   :caption: Renaming the role key in a document serialized before v1.0
+
+   import json
+
+   from contextgem import Document
+
+
+   def rename_role_keys(instance_dict):
+       """Renames the role key of aspects and concepts, including the nested ones."""
+       if "llm_role" in instance_dict:
+           instance_dict["model_role"] = instance_dict.pop("llm_role")
+       for key in ("aspects", "concepts"):
+           for nested_dict in instance_dict.get(key, []):
+               rename_role_keys(nested_dict)
+       return instance_dict
+
+
+   document_dict = json.loads(document_json)  # serialized before v1.0
+   document = Document.from_dict(rename_role_keys(document_dict))
+
+The same function can be used for a serialized pipeline, aspect or concept. The deserialized aspects and concepts still have the role names used before v1.0, which are to be updated as described in :ref:`migration-v1-roles-label`. For the serialized LLMs and model groups, see :ref:`migration-v1-fallback-llms-label`.
+
+
+.. _migration-v1-roles-label:
+
+🏷️ Model Roles and Concept Modality
 -----------------------------------
 
 Before v1.0, LLMs, aspects and concepts were assigned one of six predefined roles: ``"extractor_text"``, ``"reasoner_text"``, ``"extractor_vision"``, ``"reasoner_vision"``, ``"extractor_multimodal"``, and ``"reasoner_multimodal"``. A role combined two things: the LLM to route an aspect/concept to (``extractor`` / ``reasoner``), and the document content to extract from (``text`` / ``vision`` / ``multimodal``).
 
 In v1.0, these are two independent settings:
 
-- The ``role`` of an LLM and the ``llm_role`` of an aspect/concept are free-form labels (strings of up to 64 printable characters), which are used only to route aspects/concepts to the LLMs in an LLM group. They default to ``None`` (no role). See :ref:`llm-roles-label`.
+- The ``role`` of an LLM and the ``model_role`` of an aspect/concept (``llm_role`` before v1.0, see :ref:`migration-v1-renames-label`) are free-form labels (strings of up to 64 printable characters), which are used only to route aspects/concepts to the LLMs in a model group. They default to ``None`` (no role). See :ref:`model-roles-label`.
 - The ``modality`` of a concept (``"text"``, ``"image"`` or ``"multimodal"``) sets the document content the concept is extracted from. It defaults to ``"text"``. See :ref:`concept-modality-label`.
 
 The predefined role names have no special meaning in v1.0. If they are still used, they are treated as any other role labels.
@@ -89,10 +203,10 @@ Updating the Code
 .. code-block:: python
    :caption: In v1.0
 
-   from contextgem import BooleanConcept, DocumentLLM, DocumentLLMGroup, StringConcept
+   from contextgem import BooleanConcept, DocumentLLM, DocumentModelGroup, StringConcept
 
-   llm_group = DocumentLLMGroup(
-       llms=[
+   model_group = DocumentModelGroup(
+       models=[
            # No role: extracts all aspects/concepts that are not routed to another LLM,
            # from text and from images
            DocumentLLM(model="openai/gpt-6-luna"),
@@ -110,7 +224,7 @@ Updating the Code
        BooleanConcept(
            name="Liability cap",
            description="Liability of the parties is capped",
-           llm_role="reasoner",
+           model_role="reasoner",
        ),
    ]
 
@@ -121,12 +235,12 @@ Updating the Code
 Changes in Behavior
 ~~~~~~~~~~~~~~~~~~~~
 
-- **No default role name.** ``role`` and ``llm_role`` default to ``None`` instead of ``"extractor_text"``. In an LLM group, an aspect/concept without ``llm_role`` is routed to the LLM without ``role``. An aspect/concept with ``llm_role="extractor_text"`` is no longer matched with an LLM that has no role specified, and vice versa.
-- **A single LLM extracts everything it is given.** An LLM used on its own (not in a group) extracts all the aspects/concepts it is given, regardless of their ``llm_role``. Previously, it skipped the aspects/concepts with an ``llm_role`` different from its own ``role``. To extract only some of the aspects/concepts with a single LLM, use the ``from_aspects`` / ``from_concepts`` parameters of the extraction methods.
-- **An LLM group does not skip aspects/concepts.** An LLM group raises an error when an aspect/concept cannot be routed to any LLM in the group, i.e. when no LLM in the group has the ``role`` equal to the ``llm_role`` of the aspect/concept. Previously, such aspects/concepts were skipped.
-- **A role does not restrict what an LLM can process.** The same model no longer needs to be added to an LLM group several times, with different roles, to process both text and images. To use a dedicated model for images, give it a role of your choice (e.g. ``role="vision"``) and assign the same ``llm_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.
+- **No default role name.** ``role`` and ``model_role`` default to ``None`` instead of ``"extractor_text"``. In a model group, an aspect/concept without ``model_role`` is routed to the LLM without ``role``. An aspect/concept with ``model_role="extractor_text"`` is no longer matched with an LLM that has no role specified, and vice versa.
+- **A single LLM extracts everything it is given.** An LLM used on its own (not in a group) extracts all the aspects/concepts it is given, regardless of their ``model_role``. Previously, it skipped the aspects/concepts with a ``model_role`` different from its own ``role``. To extract only some of the aspects/concepts with a single LLM, use the ``from_aspects`` / ``from_concepts`` parameters of the extraction methods.
+- **A model group does not skip aspects/concepts.** A model group raises an error when an aspect/concept cannot be routed to any LLM in the group, i.e. when no LLM in the group has the ``role`` equal to the ``model_role`` of the aspect/concept. Previously, such aspects/concepts were skipped.
+- **A role does not restrict what an LLM can process.** The same model no longer needs to be added to a model group several times, with different roles, to process both text and images. To use a dedicated model for images, give it a role of your choice (e.g. ``role="vision"``) and assign the same ``model_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.
 - **Model capabilities are not checked against the role.** The warnings about a model not being detected as vision-capable or reasoning-capable are no longer issued when an LLM with a specific role is created. Instead, an error is raised before any requests are sent, if the LLM that is to extract concepts from images, or any of its fallback LLMs, is not detected as vision-capable. See :doc:`llms/llm_config` for declaring the capability explicitly.
-- **The role passed to the usage and cost methods of an LLM group is validated.** The ``llm_role`` argument of ``get_usage()``, ``get_cost()`` and ``reset_usage_and_cost()`` of an LLM group is validated in the same way as the roles assigned to LLMs: the surrounding whitespace is removed, and an invalid role raises an error. Previously, the argument was compared as passed, and an empty string selected all LLMs. Omit the argument to select all LLMs.
+- **The role passed to the usage and cost methods of a model group is validated.** The ``model_role`` argument of ``get_usage()``, ``get_cost()`` and ``reset_usage_and_cost()`` of a model group is validated in the same way as the roles assigned to LLMs: the surrounding whitespace is removed, and an invalid role raises an error. Previously, the argument was compared as passed, and an empty string selected all LLMs. Omit the argument to select all LLMs.
 - **Cached input tokens are priced separately.** The input tokens that the LLM provider reports as read from, or written to, its prompt cache are now priced at the cache prices of the model with ``auto_pricing=True``, so the calculated input costs are lower for the requests served from the cache, and can be higher for the requests written to it. Previously, all input tokens were priced as regular input tokens, which still applies with ``pricing_details``, unless the cache prices are set. See :ref:`llm-cached-tokens-label`.
 - **Aspects accept any role label.** As before, aspects and aspect-level concepts are extracted from text only: a concept with the ``"image"`` or ``"multimodal"`` modality cannot be assigned to an aspect.
 
@@ -134,10 +248,14 @@ Changes in Behavior
 Updating the Serialized Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Documents and extraction pipelines serialized with the earlier versions can be deserialized in v1.0, unless they are affected by the removal of ``RatingScale`` or ``DocumentPipeline``: such data is to be updated first, as described in :ref:`migration-v1-rating-scales-label` and :ref:`migration-v1-pipelines-label`. However, the aspects and concepts of the deserialized documents and pipelines keep the predefined role names as regular role labels, and their concepts have the default ``"text"`` modality, as the serialized data has no modality. Update the roles and the modalities after deserializing the data, and serialize the data again:
+Documents and extraction pipelines serialized with the earlier versions cannot be deserialized in v1.0 as is: the role key of their aspects and concepts is to be renamed first, as described in :ref:`migration-v1-renames-label`. The data affected by the removal of ``RatingScale`` or ``DocumentPipeline`` is to be updated before deserializing as well, as described in :ref:`migration-v1-rating-scales-label` and :ref:`migration-v1-pipelines-label`.
+
+The aspects and concepts of the deserialized documents and pipelines keep the predefined role names as regular role labels, and their concepts have the default ``"text"`` modality, as the serialized data has no modality. Update the roles and the modalities after deserializing the data, and serialize the data again:
 
 .. code-block:: python
    :caption: Updating a document serialized before v1.0
+
+   import json
 
    from contextgem import Document
 
@@ -155,21 +273,23 @@ Documents and extraction pipelines serialized with the earlier versions can be d
    def migrate_roles(instances):
        """Migrates the roles of aspects/concepts, including the nested ones."""
        for instance in instances:
-           if instance.llm_role in ROLES_MIGRATION:
-               role, modality = ROLES_MIGRATION[instance.llm_role]
-               instance.llm_role = role
+           if instance.model_role in ROLES_MIGRATION:
+               role, modality = ROLES_MIGRATION[instance.model_role]
+               instance.model_role = role
                if hasattr(instance, "modality"):  # concepts only
                    instance.modality = modality
            migrate_roles(getattr(instance, "aspects", []))  # sub-aspects
            migrate_roles(getattr(instance, "concepts", []))  # aspect-level concepts
 
 
-   document = Document.from_json(document_json)  # serialized before v1.0
+   document_dict = json.loads(document_json)  # serialized before v1.0
+   # rename_role_keys() is defined in "Renamed Classes and Parameters"
+   document = Document.from_dict(rename_role_keys(document_dict))
    migrate_roles(document.aspects)
    migrate_roles(document.concepts)
    document_json = document.to_json()
 
-The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`. A serialized :class:`~contextgem.public.llms.DocumentLLM` or :class:`~contextgem.public.llms.DocumentLLMGroup` cannot be deserialized in v1.0 as is: either create the LLMs anew, or update the serialized data as described in :ref:`migration-v1-fallback-llms-label`, and then update the ``role`` of each deserialized LLM in the same way.
+The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`. A serialized LLM or model group cannot be deserialized in v1.0 as is either: create the LLMs anew, or update the serialized data as described in :ref:`migration-v1-fallback-llms-label`, and then update the ``role`` of each deserialized LLM in the same way.
 
 
 .. _migration-v1-fallback-llms-label:
@@ -177,7 +297,7 @@ The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`.
 🔄 Fallback LLMs
 ------------------
 
-The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.DocumentLLM`, which accepted a single fallback LLM, are removed. Use ``fallback_llms`` instead, which accepts a list of fallback LLMs. The fallback LLMs are tried in the given order until one of them succeeds. See :doc:`llms/llm_config` for details.
+The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.DocumentLLM`, which accepted a single fallback LLM, are removed. Use ``fallback_models`` instead, which accepts a list of fallback LLMs. The fallback LLMs are tried in the given order until one of them succeeds. See :doc:`llms/llm_config` for details.
 
 .. code-block:: python
    :caption: Before v1.0
@@ -197,15 +317,15 @@ The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.
    llm = DocumentLLM(
        model="openai/gpt-6-luna",
        api_key="<your-openai-api-key>",
-       fallback_llms=[fallback_llm],
+       fallback_models=[fallback_llm],
    )
 
-   llm.fallback_llms = [other_fallback_llm]
-   current_fallback_llm = llm.fallback_llms[0] if llm.fallback_llms else None
+   llm.fallback_models = [other_fallback_llm]
+   current_fallback_llm = llm.fallback_models[0] if llm.fallback_models else None
 
 Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the ``fallback_llm`` attribute, raises an error in v1.0.
 
-**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized ``DocumentLLM`` or ``DocumentLLMGroup``, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, replace the ``fallback_llm`` key with ``fallback_llms`` before deserializing the data, and serialize the data again:
+**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
 
 .. code-block:: python
    :caption: Updating an LLM serialized before v1.0
@@ -216,14 +336,21 @@ Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the
 
 
    def migrate_llm_dict(llm_dict):
-       """Replaces the single fallback LLM with a list of fallback LLMs."""
-       for group_llm_dict in llm_dict.get("llms", []):  # LLMs of an LLM group
-           migrate_llm_dict(group_llm_dict)
+       """Updates a serialized LLM or model group to the format of v1.0."""
+       if llm_dict["__class__"] == "DocumentLLMGroup":
+           llm_dict["__class__"] = "DocumentModelGroup"
+           llm_dict["models"] = [migrate_llm_dict(d) for d in llm_dict.pop("llms")]
+           return llm_dict
        if "fallback_llm" in llm_dict:
            fallback_llm_dict = llm_dict.pop("fallback_llm")
-           llm_dict["fallback_llms"] = (
+           llm_dict["fallback_models"] = (
                [migrate_llm_dict(fallback_llm_dict)] if fallback_llm_dict else []
            )
+       if llm_dict.get("pricing_details"):
+           llm_dict["pricing_details"]["__class__"] = "ModelPricing"
+       # Empty usage and cost containers, created anew when the LLM is deserialized
+       llm_dict.pop("_usage", None)
+       llm_dict.pop("_cost", None)
        return llm_dict
 
 
@@ -231,7 +358,7 @@ Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the
    llm = DocumentLLM.from_dict(migrate_llm_dict(llm_dict))
    llm_json = llm.to_json()
 
-For a serialized LLM group, use ``DocumentLLMGroup.from_dict()`` with the same function.
+For a serialized model group, use ``DocumentModelGroup.from_dict()`` with the same function.
 
 
 .. _migration-v1-pipelines-label:
@@ -266,10 +393,11 @@ For a serialized LLM group, use ``DocumentLLMGroup.from_dict()`` with the same f
 
    pipeline_dict = json.loads(pipeline_json)  # serialized as DocumentPipeline
    pipeline_dict["__class__"] = "ExtractionPipeline"
-   pipeline = ExtractionPipeline.from_dict(pipeline_dict)
+   # rename_role_keys() is defined in "Renamed Classes and Parameters"
+   pipeline = ExtractionPipeline.from_dict(rename_role_keys(pipeline_dict))
    pipeline_json = pipeline.to_json()
 
-Serialized documents are not affected: a document stores the aspects and concepts of the pipeline assigned to it, not the pipeline itself.
+Serialized documents are not affected by the removal of ``DocumentPipeline``: a document stores the aspects and concepts of the pipeline assigned to it, not the pipeline itself.
 
 
 .. _migration-v1-rating-scales-label:
@@ -330,7 +458,9 @@ Serialized documents are not affected: a document stores the aspects and concept
 
 
    document_dict = json.loads(document_json)  # serialized before v1.0
-   document = Document.from_dict(migrate_rating_scales(document_dict))
+   # rename_role_keys() is defined in "Renamed Classes and Parameters"
+   document_dict = rename_role_keys(migrate_rating_scales(document_dict))
+   document = Document.from_dict(document_dict)
    document_json = document.to_json()
 
 The same function can be used for a serialized pipeline or aspect. For a concept that was serialized separately, replace the value of its ``rating_scale`` key in the same way. The rating scales that were defined as tuples are not affected.

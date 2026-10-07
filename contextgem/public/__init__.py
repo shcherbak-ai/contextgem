@@ -26,12 +26,12 @@ from contextgem.public.concepts import (
     RatingConcept,
     StringConcept,
 )
-from contextgem.public.data_models import LLMPricing
+from contextgem.public.data_models import ModelPricing
 from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.images import Image
-from contextgem.public.llms import ChatSession, DocumentLLM, DocumentLLMGroup
+from contextgem.public.llms import ChatSession, DocumentLLM, DocumentModelGroup
 from contextgem.public.paragraphs import Paragraph
 from contextgem.public.pipelines import ExtractionPipeline
 from contextgem.public.sentences import Sentence
@@ -69,10 +69,10 @@ __all__ = (
     "JsonObjectExample",
     # LLMs
     "DocumentLLM",
-    "DocumentLLMGroup",
+    "DocumentModelGroup",
     "ChatSession",
     # Data models
-    "LLMPricing",
+    "ModelPricing",
     # Utils
     "create_image",
     "image_to_base64",

@@ -62,12 +62,12 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
 
     @property
     @abstractmethod
-    def llm_roles(self) -> set[str | None]:
+    def model_roles(self) -> set[str | None]:
         """
         Abstract property, to be implemented by subclasses.
 
-        Returns a set of LLM roles associated with the object's assigned instances.
-        None in the set stands for the instances without an LLM role.
+        Returns a set of model roles associated with the object's assigned instances.
+        None in the set stands for the instances without a model role.
 
         :return: set
         """
@@ -185,22 +185,22 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
             raise AttributeError("Instance has no `aspects` attribute.")
 
     @property
-    def llm_roles(self) -> set[str | None]:
+    def model_roles(self) -> set[str | None]:
         """
-        A set of LLM roles associated with the object's aspects, as well as
+        A set of model roles associated with the object's aspects, as well as
         with the sub-aspects and concepts of such aspects. None in the set
-        stands for the instances without an LLM role.
+        stands for the instances without a model role.
 
-        :return: A set containing unique LLM roles gathered from aspects,
+        :return: A set containing unique model roles gathered from aspects,
             their sub-aspects and concepts.
         :rtype: set[str | None]
         """
-        llm_roles: set[str | None] = set()
+        model_roles: set[str | None] = set()
         for aspect in self.aspects:
-            llm_roles.add(aspect.llm_role)
+            model_roles.add(aspect.model_role)
             # Roles of the aspect's sub-aspects and concepts
-            llm_roles |= aspect.llm_roles
-        return llm_roles
+            model_roles |= aspect.model_roles
+        return model_roles
 
     def add_aspects(
         self,
@@ -317,18 +317,18 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
             raise AttributeError("Instance has no `concepts` attribute.")
 
     @property
-    def llm_roles(self) -> set[str | None]:
+    def model_roles(self) -> set[str | None]:
         """
-        A set of LLM roles associated with the object's concepts. None in the set
-        stands for the concepts without an LLM role.
+        A set of model roles associated with the object's concepts. None in the set
+        stands for the concepts without a model role.
 
-        :return: A set containing unique LLM roles gathered from concepts.
+        :return: A set containing unique model roles gathered from concepts.
         :rtype: set[str | None]
         """
-        llm_roles: set[str | None] = set()
+        model_roles: set[str | None] = set()
         for concept in self.concepts:
-            llm_roles.add(concept.llm_role)
-        return llm_roles
+            model_roles.add(concept.model_role)
+        return model_roles
 
     def add_concepts(
         self,
@@ -429,16 +429,16 @@ class _AssignedInstancesProcessor(
     """
 
     @property
-    def llm_roles(self) -> set[str | None]:
+    def model_roles(self) -> set[str | None]:
         """
-        A set of LLM roles associated with the object's aspects and concepts.
-        None in the set stands for the instances without an LLM role.
+        A set of model roles associated with the object's aspects and concepts.
+        None in the set stands for the instances without a model role.
 
-        :return: A set containing unique LLM roles gathered from aspects and concepts.
+        :return: A set containing unique model roles gathered from aspects and concepts.
         :rtype: set[str | None]
         """
-        aspects_roles = _AssignedAspectsProcessor.llm_roles.__get__(self)
-        concepts_roles = _AssignedConceptsProcessor.llm_roles.__get__(self)
+        aspects_roles = _AssignedAspectsProcessor.model_roles.__get__(self)
+        concepts_roles = _AssignedConceptsProcessor.model_roles.__get__(self)
         return aspects_roles | concepts_roles
 
     def remove_all_instances(self) -> Self:

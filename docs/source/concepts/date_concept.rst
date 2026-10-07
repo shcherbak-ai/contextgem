@@ -77,10 +77,10 @@ When creating a :class:`~contextgem.public.concepts.DateConcept`, you can specif
      - ``str``
      - (Required)
      - A clear description of what date information to extract, which can include explicit dates to find, implicit dates to infer, or temporal relationships to identify. For date concepts, be specific about the exact date information sought (e.g., *"the contract signing date"* rather than just *"dates in the document"*) to ensure consistent and accurate extractions.
-   * - ``llm_role``
+   * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the LLM that extracts the concept when an LLM group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`llm-roles-label`.
+     - The role label of the LLM that extracts the concept when a model group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`model-roles-label`.
    * - ``modality``
      - ``str``
      - ``"text"``

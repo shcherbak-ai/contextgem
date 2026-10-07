@@ -251,13 +251,13 @@ def run_benchmark_for_module(
     # Enforce single-LLM constraint for main LLM
     if llm.is_group:
         raise ValueError(
-            "LLM groups are not allowed for the main LLM in the benchmark."
+            "Model groups are not allowed for the main LLM in the benchmark."
         )
 
     # Enforce single-LLM constraint for judge LLM
     if judge_llm.is_group:
         raise ValueError(
-            "LLM groups are not allowed for the judge LLM in the benchmark."
+            "Model groups are not allowed for the judge LLM in the benchmark."
         )
 
     # Unset default system message on the judge LLM (use vanilla LLM for judge)
@@ -266,7 +266,7 @@ def run_benchmark_for_module(
     document = _load_benchmark_document(module_name)
 
     # Extraction (a single LLM extracts all aspects and concepts,
-    # regardless of the LLM roles assigned to them)
+    # regardless of the model roles assigned to them)
     try:
         llm.extract_aspects_from_document(
             document=document,

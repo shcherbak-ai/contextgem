@@ -30,14 +30,14 @@ from contextgem.public import (
     DateConcept,
     Document,
     DocumentLLM,
-    DocumentLLMGroup,
+    DocumentModelGroup,
     ExtractionPipeline,
     Image,
     JsonObjectClassStruct,
     JsonObjectConcept,
     JsonObjectExample,
     LabelConcept,
-    LLMPricing,
+    ModelPricing,
     NumericalConcept,
     Paragraph,
     RatingConcept,
@@ -78,9 +78,9 @@ __all__ = (
     # LLMs
     "ChatSession",
     "DocumentLLM",
-    "DocumentLLMGroup",
+    "DocumentModelGroup",
     # Data models
-    "LLMPricing",
+    "ModelPricing",
     # Utils
     "create_image",
     "image_to_base64",

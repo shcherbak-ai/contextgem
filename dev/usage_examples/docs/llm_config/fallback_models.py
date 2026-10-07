@@ -22,7 +22,7 @@ fallback_llm_2 = DocumentLLM(
 )
 
 # Assign fallback LLMs to primary, in the order they should be tried
-primary_llm.fallback_llms = [fallback_llm_1, fallback_llm_2]
+primary_llm.fallback_models = [fallback_llm_1, fallback_llm_2]
 
 # Then use the primary LLM as usual
 # document = primary_llm.extract_all(document)

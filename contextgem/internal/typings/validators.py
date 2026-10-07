@@ -30,40 +30,40 @@ if TYPE_CHECKING:
     from contextgem.internal.typings.types import JSONDict
 
 
-# Maximum number of characters in an LLM role
-_MAX_LLM_ROLE_LENGTH = 64
+# Maximum number of characters in a model role
+_MAX_MODEL_ROLE_LENGTH = 64
 
 
-def _validate_llm_role(v: str) -> str:
+def _validate_model_role(v: str) -> str:
     """
-    Validator function for an LLM role, i.e. a free-form label that routes
-    aspects/concepts to an LLM in an LLM group. Ensures that the role is a non-empty
+    Validator function for a model role, i.e. a free-form label that routes
+    aspects/concepts to an LLM in a model group. Ensures that the role is a non-empty
     string of a limited length that consists of printable characters only, so that
     it remains readable in error messages, logs, and usage data.
 
     Can be used either as a field validator (e.g. in a pydantic field -
-    Annotated[StrictStr, AfterValidator(_validate_llm_role)]) or as a standalone
-    function, e.g. to validate an LLM role passed as an argument.
+    Annotated[StrictStr, AfterValidator(_validate_model_role)]) or as a standalone
+    function, e.g. to validate a model role passed as an argument.
 
-    :param v: The LLM role to validate.
+    :param v: The model role to validate.
     :type v: str
-    :return: The validated LLM role, with the surrounding whitespace removed.
+    :return: The validated model role, with the surrounding whitespace removed.
     :rtype: str
-    :raises ValueError: If the LLM role is not a string, is empty, exceeds the maximum
+    :raises ValueError: If the model role is not a string, is empty, exceeds the maximum
         length, or contains non-printable characters.
     """
     if not isinstance(v, str):
-        raise ValueError("LLM role must be a string")
+        raise ValueError("Model role must be a string")
     v = v.strip()
     if not v:
-        raise ValueError("LLM role must be a non-empty string")
-    if len(v) > _MAX_LLM_ROLE_LENGTH:
+        raise ValueError("Model role must be a non-empty string")
+    if len(v) > _MAX_MODEL_ROLE_LENGTH:
         raise ValueError(
-            f"LLM role must not be longer than {_MAX_LLM_ROLE_LENGTH} characters"
+            f"Model role must not be longer than {_MAX_MODEL_ROLE_LENGTH} characters"
         )
     if not v.isprintable():
         raise ValueError(
-            "LLM role must consist of printable characters only, i.e. it must not "
+            "Model role must consist of printable characters only, i.e. it must not "
             "contain line breaks, tabs, or other control or invisible characters"
         )
     return v

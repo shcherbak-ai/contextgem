@@ -91,10 +91,10 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
      - ``str``
      - ``"multi_class"``
      - Classification mode. Available values: ``"multi_class"`` (select exactly one label), ``"multi_label"`` (select one or more labels).
-   * - ``llm_role``
+   * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the LLM that extracts the concept when an LLM group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`llm-roles-label`.
+     - The role label of the LLM that extracts the concept when a model group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`model-roles-label`.
    * - ``modality``
      - ``str``
      - ``"text"``

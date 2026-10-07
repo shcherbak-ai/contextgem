@@ -21,7 +21,7 @@
 Extraction Methods
 ==================
 
-This guide documents the extraction methods provided by the :class:`~contextgem.public.llms.DocumentLLM` and :class:`~contextgem.public.llms.DocumentLLMGroup` classes for extracting aspects and concepts from documents using large language models.
+This guide documents the extraction methods provided by the :class:`~contextgem.public.llms.DocumentLLM` and :class:`~contextgem.public.llms.DocumentModelGroup` classes for extracting aspects and concepts from documents using large language models.
 
 |
 
@@ -90,7 +90,7 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -174,7 +174,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -266,7 +266,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -355,7 +355,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``LLMExtractionError`` will be raised, and if the LLM API call fails, ``LLMAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 

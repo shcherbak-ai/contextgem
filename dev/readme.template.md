@@ -155,7 +155,7 @@ document.add_concepts([concept])
 <thead>
 <tr>
 <th width="50%" align="left">🤖 <strong>LLM</strong></th>
-<th width="50%" align="left">🤖🤖 <i>Alternative</i>: <strong>LLM Group (advanced)</strong></th>
+<th width="50%" align="left">🤖🤖 <i>Alternative</i>: <strong>Model Group (advanced)</strong></th>
 </tr>
 </thead>
 <tbody>

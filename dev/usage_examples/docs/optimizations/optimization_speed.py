@@ -18,7 +18,7 @@ document = Document(
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    fallback_llms=[
+    fallback_models=[
         DocumentLLM(
             model="openai/gpt-5.6-luna",
             api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
@@ -29,7 +29,7 @@ llm = DocumentLLM(
 llm.async_limiter = AsyncLimiter(
     10, 5
 )  # e.g. 10 acquisitions per 5-second period; adjust to your LLM API setup
-llm.fallback_llms[0].async_limiter = AsyncLimiter(
+llm.fallback_models[0].async_limiter = AsyncLimiter(
     20, 5
 )  # e.g. 20 acquisitions per 5-second period; adjust to your LLM API setup
 
