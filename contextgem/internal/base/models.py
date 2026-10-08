@@ -1,0 +1,3231 @@
+#
+# ContextGem
+#
+# Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+"""
+Module defining the base classes for LLM subclasses.
+
+This module provides foundational class structures for LLM implementations
+in the ContextGem framework. It includes base classes and utility functions
+that define the interface and common functionality for different types of LLMs,
+enabling document analysis, information extraction, and reasoning capabilities
+across the framework.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import warnings
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+from aiolimiter import AsyncLimiter
+from pydantic import Field, field_validator, model_validator
+from typing_extensions import Self
+
+from contextgem.internal.base.abstract import _AbstractGenericModelProcessor
+from contextgem.internal.base.aspects import _Aspect
+from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.base.documents import _Document
+from contextgem.internal.base.images import _Image
+from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.data_models import (
+    _Message,
+    _ModelCall,
+    _ModelCostOutputContainer,
+    _ModelUsage,
+    _ModelUsageOutputContainer,
+)
+from contextgem.internal.decorators import (
+    _disable_direct_initialization,
+    _timer_decorator,
+)
+from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
+from contextgem.internal.items import _ExtractedItem, _StringItem
+from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _publicize
+from contextgem.internal.typings.types import (
+    AsyncCalsAndKwargs,
+    ExtractedInstanceType,
+    JustificationDepth,
+    LanguageRequirement,
+    Modality,
+    ReferenceDepth,
+)
+from contextgem.internal.typings.validators import (
+    _validate_model_role,
+    _validate_sequence_is_list,
+)
+from contextgem.internal.utils import (
+    _async_multi_executor,
+    _chunk_list,
+    _clean_text_for_llm_prompt,
+    _group_instances_by_fields,
+    _model_call_result_is_api_failure,
+    _model_call_result_is_output_truncated,
+    _model_call_result_is_valid,
+    _parse_llm_output_as_json,
+    _remove_thinking_content_from_llm_output,
+    _run_async_calls,
+    _run_sync,
+    _validate_parsed_llm_output,
+)
+
+
+if TYPE_CHECKING:
+    # `_DocumentLLM` is defined in `llms.py`, which imports this module, so that
+    # this module cannot import it at runtime. Here, it is used only in annotations
+    # and `cast(...)` calls, and as the item type of the `models` field
+    # of `_DocumentModelGroup`. Pydantic resolves the type of that field when
+    # the public `DocumentModelGroup` class is created, in the namespace of its
+    # module, which imports `_DocumentLLM` for this purpose.
+    from contextgem.internal.base.llms import _DocumentLLM
+
+    # Self-import resolves the string forward references used by `cast(...)` calls
+    # later in this module (cast("_DocumentModelGroup", self), etc.). ty doesn't
+    # recognise the self-import idiom, but pyright/mypy do — keep it for them.
+    from contextgem.internal.base.models import (
+        _DocumentModelGroup,  # ty: ignore[unresolved-import]
+    )
+
+
+# Error message for the LLMs that have the same role in a model group
+_NON_UNIQUE_MODEL_ROLES_MSG = (
+    "LLMs in a group must have different roles, "
+    "and only one LLM in a group can have no role."
+)
+
+
+class _GenericModelProcessor(_AbstractGenericModelProcessor):
+    """
+    Base class that handles processing logic using models.
+
+    This class provides the foundation for implementing model-based processing
+    operations within the ContextGem framework. It defines the core interface and shared
+    functionality for document analysis, information extraction, and content processing
+    using various model backends.
+    """
+
+    def extract_all(
+        self,
+        document: _Document,
+        *,
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> _Document:
+        """
+        Extracts all aspects and concepts from a document and its aspects.
+
+        This method performs comprehensive extraction by processing the document for aspects
+        and concepts, then extracting concepts from each aspect. The operation can be
+        configured for concurrent processing and customized extraction parameters.
+
+        This is the synchronous version of `extract_all_async()`.
+
+        :param document: The document to analyze.
+        :type document: _Document
+        :param overwrite_existing: Whether to overwrite already processed aspects and concepts with
+            newly extracted information. Defaults to False.
+        :type overwrite_existing: bool, optional
+        :param max_items_per_call: Maximum number of items with the same extraction params to process
+            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled, defaults to 1.
+            For complex tasks, you should not set a high value, in order to avoid prompt overloading.
+        :type max_items_per_call: int, optional
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool, optional
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
+            single LLM prompt. Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int, optional
+        :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
+            Defaults to 0 (all images). Relevant only for document-level concepts.
+        :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: The document with extracted aspects and concepts.
+        :rtype: _Document
+        """
+        return _run_sync(
+            self.extract_all_async(
+                document=document,
+                overwrite_existing=overwrite_existing,
+                max_items_per_call=max_items_per_call,
+                use_concurrency=use_concurrency,
+                max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+            )
+        )
+
+    @_timer_decorator(process_name="All aspects and concepts extraction")
+    async def extract_all_async(
+        self,
+        document: _Document,
+        *,
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> _Document:
+        """
+        Asynchronously extracts all aspects and concepts from a document and its aspects.
+
+        This method performs comprehensive extraction by processing the document for aspects
+        and concepts, then extracting concepts from each aspect. The operation can be
+        configured for concurrent processing and customized extraction parameters.
+
+        :param document: The document to analyze.
+        :type document: _Document
+        :param overwrite_existing: Whether to overwrite already processed aspects and concepts with
+            newly extracted information. Defaults to False.
+        :type overwrite_existing: bool, optional
+        :param max_items_per_call: Maximum number of items with the same extraction params to process
+            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            defaults to 1. For complex tasks, you should not set a high value, in order to avoid
+            prompt overloading.
+        :type max_items_per_call: int, optional
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool, optional
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
+            single LLM prompt. Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int, optional
+        :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
+            Defaults to 0 (all images). Relevant only for document-level concepts.
+        :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: The document with extracted aspects and concepts.
+        :rtype: _Document
+        """
+
+        self._check_model_roles_before_extract_all(document)
+        self._check_vision_support_for_concepts(
+            document=document, concepts=document.concepts
+        )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
+
+        # Extract all aspects in the document
+        await self.extract_aspects_from_document_async(
+            document=document,
+            overwrite_existing=overwrite_existing,
+            max_items_per_call=max_items_per_call,
+            use_concurrency=use_concurrency,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+            raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+        )
+
+        extract_concepts_kwargs = {
+            "document": document,
+            "overwrite_existing": overwrite_existing,
+            "max_items_per_call": max_items_per_call,
+            "use_concurrency": use_concurrency,
+            "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+        }
+        aspect_kwargs_list = [
+            {**extract_concepts_kwargs, "aspect": i} for i in document.aspects
+        ]
+
+        aspect_cals_and_kwargs = [
+            (self.extract_concepts_from_aspect_async, i) for i in aspect_kwargs_list
+        ]
+        doc_concepts_cals_and_kwargs = [
+            (
+                self.extract_concepts_from_document_async,
+                {
+                    **extract_concepts_kwargs,
+                    "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
+                },
+            )
+        ]
+        # Safe cast: Concatenating two lists of (async_callable, kwargs) tuples
+        # Type checker needs help to understand the result is still AsyncCalsAndKwargs
+        cals_and_kwargs = cast(
+            AsyncCalsAndKwargs, aspect_cals_and_kwargs + doc_concepts_cals_and_kwargs
+        )
+        await _run_async_calls(
+            cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+        )
+
+        return document
+
+    def extract_aspects_from_document(
+        self,
+        document: _Document,
+        *,
+        from_aspects: Sequence[_Aspect]
+        | None = None,  # using Sequence type with list validator for type checking
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> list[_Aspect]:
+        """
+        Extracts aspects from the provided document using predefined LLMs.
+
+        If an aspect instance has ``extracted_items`` populated, the ``reference_paragraphs`` field will be
+        automatically populated from these items.
+
+        This is the synchronous version of `extract_aspects_from_document_async()`.
+
+        :param document: The document from which aspects are to be extracted.
+        :type document: _Document
+        :param from_aspects: Existing aspects to use as a base for extraction. If None, uses all
+            document's aspects.
+        :type from_aspects: list[_Aspect] | None
+        :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
+            Defaults to False.
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum items with the same extraction params to process per LLM call.
+            Defaults to 0 (all items in single call). For complex tasks, you should not set a value, to avoid
+            prompt overloading. If concurrency is enabled, defaults to 1 (each item processed separately).
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
+            Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: List of processed _Aspect objects with extracted items.
+        :rtype: list[_Aspect]
+        """
+        return _run_sync(
+            self.extract_aspects_from_document_async(
+                document=document,
+                from_aspects=from_aspects,
+                overwrite_existing=overwrite_existing,
+                max_items_per_call=max_items_per_call,
+                use_concurrency=use_concurrency,
+                max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+            )
+        )
+
+    @_timer_decorator(process_name="Aspects extraction from document")
+    async def extract_aspects_from_document_async(
+        self,
+        document: _Document,
+        *,
+        from_aspects: Sequence[_Aspect]
+        | None = None,  # using Sequence type with list validator for type checking
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> list[_Aspect]:
+        """
+        Extracts aspects from the provided document using predefined LLMs asynchronously.
+
+        If an aspect instance has ``extracted_items`` populated, the ``reference_paragraphs`` field will be
+        automatically populated from these items.
+
+        :param document: The document from which aspects are to be extracted.
+        :type document: _Document
+        :param from_aspects: Existing aspects to use as a base for extraction. If None, uses all
+            document's aspects.
+        :type from_aspects: list[_Aspect] | None
+        :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
+            Defaults to False.
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum number of items with the same extraction params to process
+            per LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            defaults to 1. For complex tasks, you should not set a high value, in order to avoid
+            prompt overloading.
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
+            Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: List of processed _Aspect objects with extracted items.
+        :rtype: list[_Aspect]
+        """
+
+        if from_aspects is not None:
+            from_aspects = _validate_sequence_is_list(from_aspects)
+
+        self._check_instances_and_llm_params(
+            target=document,
+            llm_or_group=self,
+            instances_to_process=from_aspects,
+            instance_type="aspect",
+            overwrite_existing=overwrite_existing,
+        )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
+
+        extract_instances_kwargs = {
+            "context": document,
+            "instance_type": "aspect",
+            "document": document,
+            "from_instances": from_aspects,
+            "overwrite_existing": overwrite_existing,
+            "max_items_per_call": max_items_per_call,
+            "use_concurrency": use_concurrency,
+            "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+        }
+
+        if self.is_group:
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
+            cals_and_kwargs = [
+                (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
+                for llm in cast("_DocumentModelGroup", self).models
+            ]
+            # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+            # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+            await _run_async_calls(
+                cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+            )
+        else:
+            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            await self._extract_instances(
+                **extract_instances_kwargs,  # ty: ignore[invalid-argument-type]
+                llm=cast("_DocumentLLM", self),
+            )
+
+        document_aspects = from_aspects if from_aspects else document.aspects
+
+        # Extract sub-aspects
+        extract_sub_aspects_kwargs = {
+            "overwrite_existing": overwrite_existing,
+            "max_items_per_call": max_items_per_call,
+            "use_concurrency": use_concurrency,
+            "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+        }
+        # Build per-aspect sub-aspect documents up front; validation and
+        # skip-logging stay deterministic before any concurrent work starts.
+        sub_aspect_jobs: list[tuple[_Aspect, _Document]] = []
+        for aspect in document_aspects:
+            if not aspect.aspects:
+                continue
+            # Validate proper nesting level of sub-aspects
+            self._validate_sub_aspects_nesting_level(aspect)
+            logger.info(f"Extracting sub-aspects for aspect `{aspect.name}`")
+            if not aspect.reference_paragraphs:
+                logger.info(
+                    f"Aspect `{aspect.name}` has no extracted paragraphs. "
+                    f"Sub-aspects will not be extracted."
+                )
+                continue
+            # Treat an aspect as a document containing sub-aspects
+            aspect_document = _publicize(
+                _Document,
+                paragraphs=aspect.reference_paragraphs,
+            )
+            # Keep the sub-aspects' nesting levels intact: the extraction engine
+            # checks "aspect is assigned to document" via instance equality (which
+            # includes `_nesting_level`), so the added aspects must stay equal to
+            # the instances being processed rather than being normalized to 0.
+            aspect_document._suppress_aspect_nesting_normalization = True
+            aspect_document.add_aspects(aspect.aspects)  # ty: ignore[invalid-argument-type]
+            sub_aspect_jobs.append((aspect, aspect_document))
+
+        if sub_aspect_jobs:
+            cals_and_kwargs = [
+                (
+                    self.extract_aspects_from_document_async,
+                    {**extract_sub_aspects_kwargs, "document": doc},
+                )
+                for _, doc in sub_aspect_jobs
+            ]
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+            await _run_async_calls(
+                cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+            )
+            for aspect, doc in sub_aspect_jobs:
+                # Overwrite the sub-aspects with the newly extracted ones,
+                # as the sub-aspects were deep-copied when attached to
+                # the aspect document.
+                aspect.aspects = doc.aspects
+
+        return document_aspects  # ty: ignore[invalid-return-type]
+
+    def extract_concepts_from_aspect(
+        self,
+        aspect: _Aspect,
+        document: _Document,
+        *,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> list[_Concept]:
+        """
+        Extracts concepts associated with a given aspect in a document.
+
+        This method processes an aspect to extract related concepts using LLMs.
+        If the aspect has not been previously processed, a ValueError is raised.
+
+        This is the synchronous version of `extract_concepts_from_aspect_async()`.
+
+        :param aspect: The aspect from which to extract concepts.
+        :type aspect: _Aspect
+        :param document: The document that contains the aspect.
+        :type document: _Document
+        :param from_concepts: List of existing concepts to process. Defaults to None.
+        :type from_concepts: list[_Concept] | None
+        :param overwrite_existing: Whether to overwrite already processed concepts with newly
+            extracted information. Defaults to False.
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum number of items with the same extraction params to process
+            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            defaults to 1. For complex tasks, you should not set a high value, in order to avoid
+            prompt overloading.
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
+            single LLM prompt. Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: List of processed concept objects.
+        :rtype: list[_Concept]
+        """
+        return _run_sync(
+            self.extract_concepts_from_aspect_async(
+                aspect=aspect,
+                document=document,
+                from_concepts=from_concepts,
+                overwrite_existing=overwrite_existing,
+                max_items_per_call=max_items_per_call,
+                use_concurrency=use_concurrency,
+                max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+            )
+        )
+
+    @_timer_decorator(process_name="Concept extraction from aspect")
+    async def extract_concepts_from_aspect_async(
+        self,
+        aspect: _Aspect,
+        document: _Document,
+        *,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> list[_Concept]:
+        """
+        Asynchronously extracts concepts from a specified aspect using LLMs.
+
+        This method processes an aspect to extract related concepts using LLMs.
+        If the aspect has not been previously processed, a ValueError is raised.
+
+        :param aspect: The aspect from which to extract concepts.
+        :type aspect: _Aspect
+        :param document: The document that contains the aspect.
+        :type document: _Document
+        :param from_concepts: List of existing concepts to process. Defaults to None.
+        :type from_concepts: list[_Concept] | None
+        :param overwrite_existing: Whether to overwrite already processed concepts with newly
+            extracted information. Defaults to False.
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum number of items with the same extraction params to process
+            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            defaults to 1. For complex tasks, you should not set a high value, in order to avoid
+            prompt overloading.
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
+            single LLM prompt. Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: List of processed concept objects.
+        :rtype: list[_Concept]
+        """
+
+        if from_concepts is not None:
+            from_concepts = _validate_sequence_is_list(from_concepts)
+
+        self._check_instances_and_llm_params(
+            target=aspect,
+            llm_or_group=self,
+            instances_to_process=from_concepts,
+            instance_type="concept",
+            overwrite_existing=overwrite_existing,
+        )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
+
+        if not aspect._is_processed:
+            if aspect.extracted_items:
+                raise RuntimeError(
+                    "Aspect is not marked as processed, yet it has extracted items."
+                )
+            raise ValueError(
+                f"Aspect `{aspect.name}` is not yet processed. "
+                f"Use `extract_aspects_from_document` first.`"
+            )
+
+        extract_instances_kwargs = {
+            "context": aspect,
+            "instance_type": "concept",
+            "document": document,
+            "from_instances": from_concepts,
+            "overwrite_existing": overwrite_existing,
+            "max_items_per_call": max_items_per_call,
+            "use_concurrency": use_concurrency,
+            "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+        }
+
+        if self.is_group:
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
+            cals_and_kwargs = [
+                (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
+                for llm in cast("_DocumentModelGroup", self).models
+            ]
+            # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+            # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+            await _run_async_calls(
+                cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+            )
+        else:
+            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            await self._extract_instances(
+                **extract_instances_kwargs,  # ty: ignore[invalid-argument-type]
+                llm=cast("_DocumentLLM", self),
+            )
+
+        # Extract concepts from sub-aspects
+        extract_concepts_from_sub_aspects_kwargs = {
+            "overwrite_existing": overwrite_existing,
+            "max_items_per_call": max_items_per_call,
+            "use_concurrency": use_concurrency,
+            "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+        }
+        if aspect.aspects:
+            # Validate proper nesting level of sub-aspects
+            self._validate_sub_aspects_nesting_level(aspect)
+            logger.info(
+                f"Extracting concepts from sub-aspects for aspect `{aspect.name}`"
+            )
+            sub_aspect_jobs: list[tuple[_Aspect, _Document]] = []
+            for sub_aspect in aspect.aspects:
+                if not sub_aspect.reference_paragraphs:
+                    logger.info(
+                        f"Sub-aspect `{sub_aspect.name}` has no paragraphs. "
+                        f"Concepts will not be extracted."
+                    )
+                    continue
+                # Treat an aspect as a document containing sub-aspects
+                sub_aspect_document = _publicize(
+                    _Document,
+                    paragraphs=sub_aspect.reference_paragraphs,
+                )
+                # Keep the sub-aspect's nesting level intact: the extraction engine
+                # checks "aspect is assigned to document" via instance equality
+                # (which includes `_nesting_level`), so the added aspect must stay
+                # equal to the instance being processed rather than normalized to 0.
+                sub_aspect_document._suppress_aspect_nesting_normalization = True
+                sub_aspect_document.add_aspects([sub_aspect])
+                sub_aspect_jobs.append((sub_aspect, sub_aspect_document))
+
+            if sub_aspect_jobs:
+                cals_and_kwargs = [
+                    (
+                        self.extract_concepts_from_aspect_async,
+                        {
+                            **extract_concepts_from_sub_aspects_kwargs,
+                            "aspect": sub_aspect,
+                            "document": sub_aspect_document,
+                        },
+                    )
+                    for sub_aspect, sub_aspect_document in sub_aspect_jobs
+                ]
+                cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+                results = await _run_async_calls(
+                    cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+                )
+                for (sub_aspect, _), sub_aspect_concepts in zip(
+                    sub_aspect_jobs, results, strict=True
+                ):
+                    # Overwrite the sub-aspects with the newly extracted ones,
+                    # as the sub-aspects were deep-copied when attached to
+                    # the sub-aspect document.
+                    sub_aspect.concepts = sub_aspect_concepts
+
+        # Explicitly return list of concepts for type checking
+        return list(from_concepts) if from_concepts else list(aspect.concepts)
+
+    def extract_concepts_from_document(
+        self,
+        document: _Document,
+        *,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> list[_Concept]:
+        """
+        Extracts concepts from the provided document using predefined LLMs.
+
+        This is the synchronous version of `extract_concepts_from_document_async()`.
+
+        :param document: The document from which concepts are to be extracted.
+        :type document: _Document
+        :param from_concepts: Existing concepts to use as a base for extraction. If None, uses all
+            document's concepts.
+        :type from_concepts: list[_Concept] | None
+        :param overwrite_existing: Whether to overwrite already processed concepts with
+            newly extracted information. Defaults to False.
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum items with the same extraction params to process per LLM call.
+            Defaults to 0 (all items in single call). For complex tasks, you should not set a value, to avoid
+            prompt overloading. If concurrency is enabled, defaults to 1 (each item processed separately).
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
+            Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
+            Defaults to 0 (all images).
+        :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: List of processed Concept objects with extracted items.
+        :rtype: list[_Concept]
+        """
+        return _run_sync(
+            self.extract_concepts_from_document_async(
+                document=document,
+                from_concepts=from_concepts,
+                overwrite_existing=overwrite_existing,
+                max_items_per_call=max_items_per_call,
+                use_concurrency=use_concurrency,
+                max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+            )
+        )
+
+    @_timer_decorator(process_name="Concepts extraction from document")
+    async def extract_concepts_from_document_async(
+        self,
+        document: _Document,
+        *,
+        from_concepts: Sequence[_Concept]
+        | None = None,  # using Sequence type with list validator for type checking
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> list[_Concept]:
+        """
+        Extracts concepts from the provided document using predefined LLMs asynchronously.
+
+        This method processes a document to extract concepts using configured LLMs.
+
+        :param document: The document from which concepts are to be extracted.
+        :type document: _Document
+        :param from_concepts: Existing concepts to use as a base for extraction. If None, uses all
+            document's concepts.
+        :type from_concepts: list[_Concept] | None
+        :param overwrite_existing: Whether to overwrite already processed concepts with
+            newly extracted information. Defaults to False.
+            Defaults to False.
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum number of items with the same extraction params to process
+            per LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            defaults to 1. For complex tasks, you should not set a high value, in order to avoid
+            prompt overloading.
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
+            Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
+            Defaults to 0 (all images).
+        :type max_images_to_analyze_per_call: int, optional
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: List of processed Concept objects with extracted items.
+        :rtype: list[_Concept]
+        """
+
+        if from_concepts is not None:
+            from_concepts = _validate_sequence_is_list(from_concepts)
+
+        self._check_instances_and_llm_params(
+            target=document,
+            llm_or_group=self,
+            instances_to_process=from_concepts,
+            instance_type="concept",
+            overwrite_existing=overwrite_existing,
+        )
+
+        # Check if sentence segmentation is required for some aspects or concepts
+        if document._requires_sentence_segmentation():
+            document._segment_sents()
+
+        # Tools are not used in extraction workflows
+        self._warn_tools_ignored_if_enabled()
+
+        extract_instances_kwargs = {
+            "context": document,
+            "instance_type": "concept",
+            "document": document,
+            "from_instances": from_concepts,
+            "overwrite_existing": overwrite_existing,
+            "max_items_per_call": max_items_per_call,
+            "use_concurrency": use_concurrency,
+            "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+            "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
+            "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+        }
+
+        if self.is_group:
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
+            cals_and_kwargs = [
+                (self._extract_instances, {**extract_instances_kwargs, "llm": llm})
+                for llm in cast("_DocumentModelGroup", self).models
+            ]
+            # Safe cast: List comprehension creates tuples of (async_method, kwargs)
+            # Type checker needs help to recognize this matches AsyncCalsAndKwargs format
+            cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
+            await _run_async_calls(
+                cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+            )
+        else:
+            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            await self._extract_instances(
+                **extract_instances_kwargs, llm=cast("_DocumentLLM", self)
+            )
+
+        # Explicitly return list of concepts for type checking
+        return list(from_concepts) if from_concepts else list(document.concepts)
+
+    def _check_model_roles_before_extract_all(
+        self,
+        document: _Document,
+    ) -> None:
+        """
+        Checks, before the full extraction method extract_all() is run with a model group,
+        that all aspects and concepts assigned to the given document, including sub-aspects
+        and aspect-level concepts, can be routed to the LLMs in the group. This ensures
+        that no LLM calls are made for the extraction that cannot be completed.
+
+        The check does not apply to a standalone LLM, which extracts all aspects
+        and concepts, regardless of their model roles.
+
+        :param document: The document object to check for model role assignments.
+        :type document: _Document
+        :return: None
+        :rtype: None
+        :raises ValueError: If the document contains aspects or concepts with model roles
+            that no LLM in the group has.
+        """
+
+        if self.is_group:
+            self._check_model_roles_are_routable(document.model_roles)
+
+    def _check_model_roles_are_routable(self, model_roles: set[str | None]) -> None:
+        """
+        Checks that each of the given model roles, assigned to aspects or concepts,
+        is the role of exactly one LLM in the current model group. An aspect or concept
+        is routed to the LLM in the group with the same role, and an aspect or concept
+        without a role (None) is routed to the LLM without a role.
+
+        :param model_roles: Model roles assigned to the aspects or concepts to be extracted.
+        :type model_roles: set[str | None]
+        :return: None
+        :rtype: None
+        :raises ValueError: If several LLMs in the group have the same role, or if any
+            of the given model roles is not the role of an LLM in the group.
+        """
+
+        def format_roles(roles: set[str | None]) -> str:
+            """
+            Formats model roles for an error message.
+
+            :param roles: Model roles to format.
+            :type roles: set[str | None]
+            :return: Comma-separated model roles, with None described as no role.
+            :rtype: str
+            """
+            return ", ".join(
+                "None (no role)" if role is None else f"`{role}`"
+                for role in sorted(roles, key=lambda role: (role is not None, role))
+            )
+
+        # The roles of the LLMs are validated to be unique when a group is created
+        # or its LLMs are reassigned. However, the role of an LLM can be changed after
+        # the LLM is added to a group, which the group is not notified of.
+        roles_of_llms = self.list_roles
+        duplicate_roles = {
+            role for role in roles_of_llms if roles_of_llms.count(role) > 1
+        }
+        if duplicate_roles:
+            raise ValueError(
+                f"{_NON_UNIQUE_MODEL_ROLES_MSG} "
+                f"Roles assigned to several LLMs: {format_roles(duplicate_roles)}."
+            )
+
+        group_roles = set(roles_of_llms)
+        missing_model_roles = model_roles.difference(group_roles)
+        if missing_model_roles:
+            raise ValueError(
+                f"Some aspects/concepts cannot be routed to an LLM in the group, "
+                f"as no LLM in the group has the role: {format_roles(missing_model_roles)}. "
+                f"Roles of the LLMs in the group: {format_roles(group_roles)}. "
+                f"An aspect/concept is extracted by the LLM with the `role` equal to "
+                f"the `model_role` of the aspect/concept. An aspect/concept without `model_role` "
+                f"is extracted by the LLM without `role`."
+            )
+
+    def _check_vision_support_for_concepts(
+        self,
+        document: _Document,
+        concepts: Sequence[_Concept],
+    ) -> None:
+        """
+        Checks, before any requests are sent, that each LLM that is to extract the given
+        document-level concepts from the images of the document supports vision.
+        The same is required of the fallback LLMs of such LLM, as a fallback LLM is sent
+        the same content as the LLM it replaces. Otherwise, a fallback LLM that does not
+        support vision would fail only when it is needed, i.e. after the requests
+        to the primary LLM are sent.
+
+        If the document has images, the concepts with the "image" and "multimodal"
+        modalities are extracted from them. In a model group, each concept is extracted
+        by the LLM that the concept is routed to by the role, i.e. the roles must be
+        checked to be routable before this check.
+
+        :param document: The document that the concepts are extracted from.
+        :type document: _Document
+        :param concepts: The document-level concepts to be extracted.
+        :type concepts: Sequence[_Concept]
+        :return: None
+        :rtype: None
+        :raises ValueError: If an LLM that is to extract concepts from images, or any
+            of its fallback LLMs, does not support vision.
+        """
+
+        if not document.images:
+            # No images are sent to the LLMs. Extraction of the concepts with the "image"
+            # modality from such document fails for the lack of images.
+            return
+
+        image_concepts = [i for i in concepts if i.modality != "text"]
+        if not image_concepts:
+            return
+
+        if self.is_group:
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
+            llms = cast("_DocumentModelGroup", self).models
+        else:
+            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            llms = [cast("_DocumentLLM", self)]
+
+        for llm in llms:
+            # In a model group, a concept is extracted by the LLM with the same role.
+            # A standalone LLM extracts all the concepts, regardless of their roles.
+            llm_image_concepts = [
+                i
+                for i in image_concepts
+                if not self.is_group or i.model_role == llm.role
+            ]
+            if not llm_image_concepts:
+                continue
+            concept_names = ", ".join(f"`{i.name}`" for i in llm_image_concepts)
+            for llm_instance in [llm, *llm.fallback_models]:
+                if llm_instance._supports_vision:
+                    continue
+                if llm_instance.is_fallback:
+                    subject = "Fallback model"
+                    condition = ", if the LLM it is a fallback for fails"
+                else:
+                    subject = "Model"
+                    condition = ""
+                raise ValueError(
+                    f"{subject} `{llm_instance.model}` does not support vision "
+                    f"according to litellm.supports_vision(), but it is to extract "
+                    f"the following concepts from images{condition}: {concept_names}. "
+                    f"To override this detection, manually set `_supports_vision=True` "
+                    f"on the LLM instance."
+                )
+
+    def _check_instances_and_llm_params(
+        self,
+        target: _Document | _Aspect,
+        llm_or_group: _DocumentLLM | _DocumentModelGroup,
+        instances_to_process: Sequence[_Aspect]
+        | Sequence[_Concept]
+        | None,  # using Sequence type with list validator for type checking
+        instance_type: ExtractedInstanceType,
+        overwrite_existing: bool = False,
+    ) -> None:
+        """
+        Validates instances and LLM parameters, ensuring compatibility with the target
+        and configurations provided. For a model group, validates the roles of all
+        descendants that this extraction will process before any requests are sent.
+        Aspect extraction checks aspect roles only; concept extraction from an aspect
+        checks concept roles in the selected aspect and its non-empty descendants.
+
+        :param target: The target object, which should have an attribute corresponding
+            to `instance_type` (e.g., 'aspects' for 'aspect', etc.). Expected to be an
+            instance of either _Document or _Aspect.
+        :type target: _Document | _Aspect
+        :param llm_or_group: The LLM or a model group to be validated. This may either
+            be a standalone DocumentLLM or a DocumentModelGroup to ensure compatibility.
+        :type llm_or_group: _DocumentLLM | _DocumentModelGroup
+        :param instances_to_process: A list of instances to process, which must match
+            the specified instance-type (`aspect` or `concept`). If not provided,
+            defaults to instances present in the target attribute.
+        :type instances_to_process: Sequence[_Aspect] | Sequence[_Concept] | None
+        :param instance_type: Specifies the type of instances to validate ('aspect' or
+            'concept'). This determines the expected type for validation.
+        :type instance_type: ExtractedInstanceType
+        :param overwrite_existing: A flag indicating whether to overwrite the states of
+            the existing processed instances. Defaults to False.
+        :type overwrite_existing: bool
+        :return: None. The function performs validation and raises errors in case of
+            mismatches or invalid configurations.
+        :rtype: None
+        """
+
+        if instances_to_process is not None:
+            instances_to_process = _validate_sequence_is_list(instances_to_process)
+
+        # Check instances
+        instance_class_map = {
+            "aspect": _Aspect,
+            "concept": _Concept,
+        }
+        # Retrieve class or raise error
+        instance_class = instance_class_map.get(instance_type)
+        if not instance_class:
+            raise ValueError(f"Unsupported instance_type '{instance_type}'.")
+        # Check the target attribute
+        if not hasattr(target, f"{instance_type}s"):
+            raise AttributeError(
+                f"Target object must have an attribute named '{instance_type}s'."
+            )
+        # Get instances to process, defaulting to target
+        check_instances = (
+            instances_to_process
+            if instances_to_process is not None
+            else getattr(target, f"{instance_type}s")
+        )
+        # Validate retrieved instances
+        if not all(isinstance(i, instance_class) for i in check_instances):
+            raise ValueError(
+                f"All instances must be of type {instance_class.__name__}."
+            )
+        if not all(i in getattr(target, f"{instance_type}s") for i in check_instances):
+            raise ValueError(
+                f"All instances must be present in the target attribute "
+                f"'{instance_type}s'."
+            )
+        self._check_instances_already_processed(
+            instance_type=instance_type,
+            instances=check_instances,
+            overwrite_existing=overwrite_existing,
+        )
+
+        # Check DocumentModelGroup. A standalone DocumentLLM extracts all the instances,
+        # regardless of their model roles, i.e. requires no check of the model roles.
+        if llm_or_group.is_group:
+            # Safe cast: llm_or_group is a _DocumentModelGroup because `is_group` is True
+            model_group = cast("_DocumentModelGroup", llm_or_group)
+            if not model_group.models:
+                raise ValueError(
+                    "The provided DocumentModelGroup does not contain any defined LLMs."
+                )
+            # Include the descendants that the public extraction method processes
+            # recursively, respecting the selection of top-level instances.
+            required_roles = {i.model_role for i in check_instances}
+            if instance_type == "aspect":
+                pending_aspects = list(cast(Sequence[_Aspect], check_instances))
+            elif isinstance(target, _Aspect):
+                pending_aspects = list(target.aspects)
+            else:
+                pending_aspects = []
+            while pending_aspects:
+                aspect = pending_aspects.pop()
+                if instance_type == "aspect":
+                    required_roles.add(aspect.model_role)
+                else:
+                    # Concept extraction skips this whole subtree when the aspect
+                    # has no extracted paragraphs to provide as context.
+                    if not aspect.reference_paragraphs:
+                        continue
+                    required_roles.update(i.model_role for i in aspect.concepts)
+                pending_aspects.extend(aspect.aspects)
+            model_group._check_model_roles_are_routable(required_roles)
+
+        # Concepts can be extracted from images only at the document level
+        if instance_type == "concept" and isinstance(target, _Document):
+            llm_or_group._check_vision_support_for_concepts(
+                document=target,
+                # Safe cast: check_instances contains only _Concept instances
+                # because `instance_type` is "concept"
+                concepts=cast(Sequence[_Concept], check_instances),
+            )
+
+    @staticmethod
+    def _check_instances_already_processed(
+        instance_type: ExtractedInstanceType,
+        instances: list[_Aspect] | list[_Concept],
+        overwrite_existing: bool,
+    ) -> None:
+        """
+        Checks whether the given instances of a specified type have already been processed.
+
+        :param instance_type: The type of instances being checked.
+        :type instance_type: ExtractedInstanceType
+        :param instances: A list of instances to be evaluated for processing status.
+        :type instances: list[_Aspect] | list[_Concept]
+        :param overwrite_existing: Specifies whether to overwrite already processed instances.
+        :type overwrite_existing: bool
+        :return: None
+        :raises ValueError: If `overwrite_existing` is False and one or more instances
+            have already been processed.
+        """
+        if not overwrite_existing:
+            already_processed_names = []
+            for i in instances:
+                if i._is_processed:
+                    already_processed_names.append(i.name)
+            if already_processed_names:
+                raise ValueError(
+                    f"Some {instance_type}s have already been processed: {already_processed_names}."
+                    "Set `overwrite_existing=True` to overwrite them."
+                )
+
+    @staticmethod
+    def _prepare_message_kwargs_list(
+        extracted_instance_type: ExtractedInstanceType,
+        source: _Document | _Aspect,
+        llm: _DocumentLLM,
+        instances_to_process: list[_Aspect] | list[_Concept],
+        document: _Document,
+        add_justifications: bool = False,
+        justification_depth: JustificationDepth = "brief",
+        justification_max_sents: int = 2,
+        add_references: bool = False,
+        reference_depth: ReferenceDepth = "paragraphs",
+        modality: Modality = "text",
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+    ) -> list[dict[str, dict | list[_Paragraph] | list[_Image]]]:
+        """
+        Prepares the list of the message kwargs required for querying a LLM to extract aspects or concepts
+        from a document or its associated entities like aspects.
+
+        Each item on the list is a kwargs dict for each extraction, based on specific context chunks.
+        E.g. if the text has 60 paragraphs, and `max_paragraphs_to_analyze_per_call` is set to 15, then
+        each extraction type that uses all document paragraphs as context will have 4 items of kwargs
+        dicts in the list, and the context of each message will include 15 paragraphs.
+
+        :param extracted_instance_type: A string literal indicating the type of extracted instance.
+            Accepted values are "aspect" and "concept".
+        :type extracted_instance_type: ExtractedInstanceType
+        :param source: The input source, which can either be a `_Document` or an `_Aspect`
+            instance, from which aspects or concepts are extracted.
+        :type source: _Document | _Aspect
+        :param llm: The LLM instance used for extraction.
+        :type llm: _DocumentLLM
+        :param instances_to_process: A list of instances (either `_Aspect` or `_Concept` instances)
+            to process for extraction tasks.
+        :type instances_to_process: list[_Aspect] | list[_Concept]
+        :param document: An instance of `_Document` containing paragraphs or text or images,
+            which is used to provide additional context for the extraction process.
+        :type document: _Document
+        :param add_justifications: A boolean flag. When set to `True`,
+            justification for the extracted items is included in extraction result.
+        :type add_justifications: bool
+        :param justification_depth: The level of detail of justifications. Defaults to "brief".
+        :type justification_depth: JustificationDepth
+        :param justification_max_sents: The maximum number of sentences in a justification.
+            Defaults to 2.
+        :type justification_max_sents: int
+        :param add_references: A boolean flag. When `True`, and if applicable,
+            references aiding the extraction task are included in the extraction result.
+        :type add_references: bool
+        :param reference_depth: The structural depth of the references, i.e. whether to provide
+            paragraphs as references or sentences as references. Defaults to "paragraphs".
+            ``extracted_items`` will have values based on this parameter.
+        :type reference_depth: ReferenceDepth
+        :param modality: The document content the concepts are extracted from: "text", "image",
+            or "multimodal" (text and/or images, whichever the document has). Relevant only for
+            document-level concepts, as aspects and aspect-level concepts are always extracted
+            from text. Defaults to "text".
+        :type modality: Modality
+        :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
+            LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
+        :type max_paragraphs_to_analyze_per_call: int
+        :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
+            LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
+        :type max_images_to_analyze_per_call: int
+        :return: A list of dictionaries containing prompt kwargs and context chunks for LLM queries.
+        :rtype: list[dict[str, dict | list[_Paragraph] | list[_Image]]]
+        """
+
+        # Validate source data for extraction and set the extraction level
+        def validate_source_and_get_extraction_level() -> str:
+            """
+            Validates the source based on the extracted instance type.
+
+            :return: A string indicating the extraction level or type.
+            :rtype: str
+
+            :raises ValueError: If the source is invalid for the given extraction type or
+                required content (text, paragraphs, images) is missing.
+            """
+
+            # Aspect (document-level)
+            if extracted_instance_type == "aspect":
+                if not isinstance(source, _Document):
+                    raise ValueError(
+                        "Aspect extraction is only supported for Document sources."
+                    )
+                if not (source.raw_text or source.paragraphs):
+                    raise ValueError(
+                        "Document lacks text or paragraphs for aspect extraction."
+                    )
+                return "aspect_document_text"
+
+            # Concept (document- and aspect-levels)
+            if extracted_instance_type == "concept":
+                # Concept (document-level)
+                if isinstance(source, _Document):
+                    has_text = bool(source.raw_text or source.paragraphs)
+                    has_images = bool(source.images)
+
+                    # Multimodal concepts can be extracted from text or images or both
+                    if modality == "multimodal":
+                        if not has_text and not has_images:
+                            raise ValueError(
+                                "Document lacks text/paragraphs or images for multimodal concept extraction."
+                            )
+                        # Multimodal concepts are flexible - they are extracted from whatever
+                        # content is available, leveraging the existing text/vision paths
+                        return "concept_document_multimodal"
+
+                    # Concepts extracted from text
+                    elif modality == "text":
+                        if not has_text:
+                            raise ValueError(
+                                "Document lacks text or paragraphs for concept extraction."
+                            )
+                        return "concept_document_text"
+
+                    # Concepts extracted from images
+                    elif modality == "image":
+                        if not has_images:
+                            raise ValueError(
+                                "Document lacks images to extract vision concepts from."
+                            )
+                        if add_references:
+                            raise ValueError(
+                                "References are not supported for vision concepts."
+                            )
+                        return "concept_document_vision"
+
+                    raise ValueError(f"Unsupported modality: `{modality}`")
+
+                # Concept (aspect-level)
+                if isinstance(source, _Aspect):
+                    return "concept_aspect_text"
+
+            raise ValueError(
+                f"Unsupported extracted item type: `{extracted_instance_type}`"
+            )
+
+        extraction_level = validate_source_and_get_extraction_level()
+        message_kwargs_list = []
+
+        # Text-based or multimodal extraction
+        if extraction_level.endswith("_text") or (
+            extraction_level.endswith("_multimodal")
+            and isinstance(source, _Document)
+            and bool(source.raw_text or source.paragraphs)
+        ):
+            # Safe cast: source for the other extraction level is Aspect
+            paragraphs = (
+                document.paragraphs
+                if extraction_level
+                in {
+                    "aspect_document_text",
+                    "concept_document_text",
+                    "concept_document_multimodal",
+                }
+                else cast(_Aspect, source).reference_paragraphs
+            )
+            if not paragraphs:
+                raise ValueError("Context lacks paragraphs for text-based extraction.")
+            max_paras_per_call = (
+                min(len(paragraphs), max_paragraphs_to_analyze_per_call)
+                if max_paragraphs_to_analyze_per_call
+                else len(paragraphs)
+            )
+            paragraphs_chunks: list[list[_Paragraph]] = _chunk_list(
+                paragraphs, max_paras_per_call
+            )
+            logger.debug(f"Processing {max_paras_per_call} paragraphs per LLM call.")
+
+            for paragraphs_chunk in paragraphs_chunks:
+                if not paragraphs_chunk:
+                    raise RuntimeError("Paragraphs chunk cannot be empty.")
+
+                # Aspect (document-level)
+                if extraction_level == "aspect_document_text":
+                    prompt_kwargs = {
+                        "paragraphs": paragraphs_chunk,
+                        "aspects": instances_to_process,
+                        "add_justifications": add_justifications,
+                        "justification_depth": justification_depth,
+                        "justification_max_sents": justification_max_sents,
+                        # For aspects, references will be populated from extracted items automatically
+                        "reference_depth": reference_depth,
+                        "output_language": llm.output_language,
+                        "supports_reasoning": llm._supports_reasoning,
+                    }
+                    if any(p.additional_context for p in paragraphs_chunk) or any(
+                        s.additional_context
+                        for p in paragraphs_chunk
+                        for s in p.sentences
+                    ):
+                        # Add guidance that the paragraphs or sentences have additional context,
+                        # such as formatting, list context, or table position.
+                        prompt_kwargs["additional_context_for_paras_or_sents"] = True
+
+                # Concept (document- and aspect-levels)
+                elif extraction_level in {
+                    "concept_document_text",
+                    "concept_aspect_text",
+                    "concept_document_multimodal",
+                }:
+                    prompt_kwargs = {
+                        "concepts": instances_to_process,
+                        "add_justifications": add_justifications,
+                        "justification_depth": justification_depth,
+                        "justification_max_sents": justification_max_sents,
+                        "data_type": "text",
+                        "add_references": add_references,
+                        "reference_depth": reference_depth,
+                        "output_language": llm.output_language,
+                        "supports_reasoning": llm._supports_reasoning,
+                    }
+                    if add_references:
+                        # List of document/aspect paragraphs used for concept extraction with references
+                        prompt_kwargs["paragraphs"] = paragraphs_chunk  # ty: ignore[invalid-assignment]
+                        if any(p.additional_context for p in paragraphs_chunk) or any(
+                            s.additional_context
+                            for p in paragraphs_chunk
+                            for s in p.sentences
+                        ):
+                            # Add guidance that the paragraphs or sentences have additional context,
+                            # such as formatting, list context, or table position.
+                            prompt_kwargs["additional_context_for_paras_or_sents"] = (
+                                True
+                            )
+                    else:
+                        # Raw text of document/aspect used for concept extraction
+                        if isinstance(source, _Document) and len(
+                            paragraphs_chunk
+                        ) == len(source.paragraphs):
+                            # If the document is being processed as a whole,
+                            # use raw_text of the document.
+                            text = source.raw_text
+                            if text is None:
+                                raise ValueError(
+                                    "Document lacks text for concept extraction."
+                                )
+                            prompt_kwargs["text"] = _clean_text_for_llm_prompt(
+                                text,
+                                preserve_linebreaks=True,
+                                strip_text=True,
+                            )  # raw text of the document
+                        else:
+                            # If an aspect is being processed, or if the document is being
+                            # processed in chunks, use raw_text of the paragraphs.
+                            prompt_kwargs["text"] = "\n\n".join(
+                                [
+                                    _clean_text_for_llm_prompt(
+                                        p.raw_text,
+                                        preserve_linebreaks=False,
+                                        strip_text=True,
+                                    )
+                                    for p in paragraphs_chunk
+                                ]
+                            )
+
+                else:
+                    raise ValueError(
+                        f"Unsupported extraction level for text-based extraction: `{extraction_level}`"
+                    )
+
+                message_kwargs = {
+                    "prompt_kwargs": prompt_kwargs,
+                    "paragraphs_chunk": paragraphs_chunk,
+                    "references_apply": add_references,
+                }
+                message_kwargs_list.append(message_kwargs)
+
+        # Images-based or multimodal extraction
+        if extraction_level.endswith("_vision") or (
+            extraction_level.endswith("_multimodal")
+            and isinstance(source, _Document)
+            and bool(source.images)
+        ):
+            # Safe cast: source for extracting data from images is always a _Document
+            source = cast(_Document, source)
+            max_images_per_call = (
+                min(len(source.images), max_images_to_analyze_per_call)
+                if max_images_to_analyze_per_call
+                else len(source.images)
+            )
+            images_chunks = _chunk_list(source.images, max_images_per_call)
+            logger.debug(f"Processing {max_images_per_call} images per LLM call.")
+
+            for images_chunk in images_chunks:
+                if not images_chunk:
+                    raise RuntimeError("Images chunk cannot be empty.")
+
+                # Concept (from images)
+                if extraction_level == "concept_document_vision" or (
+                    extraction_level == "concept_document_multimodal"
+                ):
+                    prompt_kwargs = {
+                        "concepts": instances_to_process,
+                        "add_justifications": add_justifications,
+                        "justification_depth": justification_depth,
+                        "justification_max_sents": justification_max_sents,
+                        "data_type": "image",
+                        "output_language": llm.output_language,
+                        "supports_reasoning": llm._supports_reasoning,
+                    }
+                    message_kwargs = {
+                        "prompt_kwargs": prompt_kwargs,
+                        "images": images_chunk,
+                        "references_apply": False,
+                        # references are not supported for vision concepts,
+                        # and will not be added for multimodal concepts when extracting
+                        # from images only
+                    }
+
+                else:
+                    raise ValueError(
+                        f"Unsupported extraction level for vision/multimodal extraction: "
+                        f"`{extraction_level}`"
+                    )
+
+                message_kwargs_list.append(message_kwargs)
+
+        return message_kwargs_list
+
+    async def _extract_items_from_instances(
+        self,
+        extracted_item_type: ExtractedInstanceType,
+        source: _Document | _Aspect,
+        llm: _DocumentLLM,
+        instances_to_process: list[_Aspect] | list[_Concept],
+        document: _Document,
+        overwrite_existing: bool = False,
+        add_justifications: bool = False,
+        justification_depth: JustificationDepth = "brief",
+        justification_max_sents: int = 2,
+        add_references: bool = False,
+        reference_depth: ReferenceDepth = "paragraphs",
+        modality: Modality = "text",
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+        num_retries_failed_request: int = 3,
+        max_retries_failed_request: int = 0,
+        async_limiter: AsyncLimiter | None = None,
+        raise_exception_on_extraction_error: bool = True,
+        has_fallback_pending: bool = False,
+    ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
+        """
+        Extracts items from either aspects or concepts using a specified LLM.
+        This unified method handles extraction from both documents and aspects,
+        supporting both text and images as the content to extract from.
+
+        :param extracted_item_type: Type of the item(s) being extracted ("aspect" or "concept")
+        :type extracted_item_type: ExtractedInstanceType
+        :param source: The source to extract from (_Document or _Aspect)
+        :type source: _Document | _Aspect
+        :param llm: The LLM used for extraction
+        :type llm: DocumentLLM
+        :param instances_to_process: List of aspects or concepts to process
+        :type instances_to_process: list[_Aspect] | list[_Concept]
+        :param document: The document containing the source.
+        :type document: _Document | None
+        :param add_justifications: Whether to include justification for extracted items.
+            Defaults to False.
+        :type add_justifications: bool
+        :param justification_depth: The level of detail of justifications. Details to "brief".
+        :type justification_depth: JustificationDepth
+        :param justification_max_sents: The maximum number of sentences in a justification.
+            Defaults to 2.
+        :type justification_max_sents: int
+        :param add_references: Whether to include references for extracted items.
+            Defaults to False.
+        :type add_references: bool
+        :param reference_depth: The structural depth of the references, i.e. whether to provide
+            paragraphs as references or sentences as references. Defaults to "paragraphs".
+            ``extracted_items`` will have values based on this parameter.
+        :type reference_depth: ReferenceDepth
+        :param modality: The document content the concepts are extracted from: "text", "image",
+            or "multimodal" (text and/or images, whichever the document has). Relevant only for
+            document-level concepts, as aspects and aspect-level concepts are always extracted
+            from text. Defaults to "text".
+        :type modality: Modality
+        :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
+            LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
+        :type max_paragraphs_to_analyze_per_call: int
+        :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
+            LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
+        :type max_images_to_analyze_per_call: int
+        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
+        :type num_retries_failed_request: int
+        :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
+            retries when LLM request fails. Defaults to 0.
+        :type max_retries_failed_request: int
+        :param async_limiter: An optional aiolimiter.AsyncLimiter instance that controls the frequency of
+            async LLM API requests, when concurrency is enabled for certain tasks. If not provided,
+            such requests will be sent synchronously.
+        :type async_limiter: AsyncLimiter | None
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :param has_fallback_pending: Whether a fallback LLM will be tried if the call to the
+            specified LLM fails. If True, a model API error is logged without being raised or
+            warned about, as it is not final. The same applies to a response cut off at
+            the max output tokens. Defaults to False.
+        :type has_fallback_pending: bool
+
+        :return: A tuple containing:
+            (0) List of processed instances with extracted items, or None if LLM processing fails
+            (1) _ModelUsage instance with the model usage information that the usage and
+                cost of the LLM are yet to be updated with, i.e. with the usage of
+                the last LLM call made. If the context is processed in several LLM calls,
+                the usage and cost of the LLM are updated with each of the previous calls
+                before the next one is made.
+        :rtype: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+        """
+
+        def validate_source_in_document(
+            source: _Document | _Aspect,
+            document: _Document,
+        ) -> None:
+            """
+            Raises ValueError if an Aspect is not assigned to the given Document.
+
+            :param source: The source to validate (_Document or _Aspect)
+            :type source: _Document | _Aspect
+            :param document: The document containing the source.
+            :type document: _Document
+            :return: None
+            :rtype: None
+            """
+            if isinstance(source, _Aspect) and source not in document.aspects:
+                raise ValueError(
+                    f"Aspect `{source.name}` must be assigned to the document"
+                )
+
+        def validate_image_or_multimodal_extraction(
+            extracted_item_type: ExtractedInstanceType,
+            modality: Modality,
+            source: _Document | _Aspect,
+            add_references: bool,
+        ) -> None:
+            """
+            Validates usage constraints for the extraction from images, i.e. for
+            the "image" and "multimodal" modalities.
+
+            - For the "image" and "multimodal" modalities, only document-level concept
+              extraction is allowed.
+            - Raises ValueError when attempting aspect extraction, or concept extraction
+              from an Aspect, with the "image" or "multimodal" modality.
+            - For concept extraction with ``add_references=True``:
+              - "multimodal": references are permitted only when the Document has text.
+                Emits warnings when both text and images are present (references will be
+                added only for text) or when text is absent (no references will be added).
+              - "image": references are not supported and a ValueError is raised.
+
+            :param extracted_item_type: Target extraction type ("aspect" or "concept").
+            :type extracted_item_type: ExtractedInstanceType
+            :param modality: The document content to extract from.
+            :type modality: Modality
+            :param source: The extraction source (Document or Aspect).
+            :type source: _Document | _Aspect
+            :param add_references: Whether to add references for extracted concepts.
+            :type add_references: bool
+            :return: None
+            :rtype: None
+            """
+
+            if modality != "text":
+                # Image/multimodal extraction: only document-level concept extraction is valid
+                if extracted_item_type == "aspect" or (
+                    extracted_item_type == "concept" and isinstance(source, _Aspect)
+                ):
+                    raise ValueError(
+                        "Extraction from images is supported only for document-level "
+                        "concepts, i.e. the `image` and `multimodal` modalities cannot be "
+                        "used for aspects and aspect-level concepts."
+                    )
+                if extracted_item_type == "concept" and add_references:
+                    # Allow references for multimodal only when text is present
+                    if modality == "multimodal":
+                        has_text = isinstance(source, _Document) and bool(
+                            source.raw_text or source.paragraphs
+                        )
+                        has_images = isinstance(source, _Document) and bool(
+                            source.images
+                        )
+                        if has_text and has_images:
+                            warnings.warn(
+                                "For multimodal concepts, references will only be added "
+                                "when extracting from text. When extracting from images, "
+                                "references will not be added, as there is no text content "
+                                "to reference.",
+                                stacklevel=2,
+                            )
+                        elif has_images and not has_text:
+                            warnings.warn(
+                                "References will not be added for multimodal concepts "
+                                "when extracting from images only, as there is no text "
+                                "content to reference.",
+                                stacklevel=2,
+                            )
+                    else:
+                        # Vision-only concepts never support references
+                        raise ValueError(
+                            "References are not supported for vision concepts."
+                        )
+
+        def validate_aspect_for_concept_extraction(
+            extracted_item_type: ExtractedInstanceType,
+            source: _Document | _Aspect,
+        ) -> None:
+            """
+            If extracting concepts from an Aspect, validates that the aspect's extracted items have
+            references.
+
+            :param extracted_item_type: Target extraction type ("aspect" or "concept").
+            :type extracted_item_type: ExtractedInstanceType
+            :param source: The extraction source (Document or Aspect).
+            :type source: _Document | _Aspect
+            :return: None
+            :rtype: None
+            :raises ValueError: If the aspect has extracted items but no references.
+            """
+
+            if (
+                extracted_item_type == "concept"
+                and isinstance(source, _Aspect)
+                and (
+                    source.extracted_items
+                    and (
+                        not source.reference_paragraphs
+                        or (
+                            source.reference_depth
+                            == "sentences"  # aspects do not have "add_references" attr
+                            and not all(
+                                p.sentences for p in source.reference_paragraphs
+                            )
+                        )
+                    )
+                )
+            ):
+                raise ValueError(
+                    f"Aspect `{source.name}` has extracted items but no references"
+                )
+
+        # Perform validations
+        validate_source_in_document(source=source, document=document)
+        validate_image_or_multimodal_extraction(
+            extracted_item_type=extracted_item_type,
+            modality=modality,
+            source=source,
+            add_references=add_references,
+        )
+        validate_aspect_for_concept_extraction(
+            extracted_item_type=extracted_item_type, source=source
+        )
+
+        # Skip processing if the aspect context is empty for aspect concept extraction
+        if (
+            extracted_item_type == "concept"
+            and isinstance(source, _Aspect)
+            and not source.extracted_items
+        ):
+            logger.info(
+                f"Aspect `{source.name}` does not have any extracted items to extract concepts from"
+            )
+            return [], _ModelUsage()
+
+        # Handle empty instances list
+        if not instances_to_process:
+            logger.info(f"No {extracted_item_type}s to process with LLM `{llm.model}`")
+            return [], _ModelUsage()
+
+        # Prepare message kwargs list based on extraction params
+        message_kwargs_list = self._prepare_message_kwargs_list(
+            extracted_instance_type=extracted_item_type,
+            source=source,
+            llm=llm,
+            instances_to_process=instances_to_process,
+            document=document,
+            add_justifications=add_justifications,
+            justification_depth=justification_depth,
+            justification_max_sents=justification_max_sents,
+            add_references=add_references,
+            reference_depth=reference_depth,
+            modality=modality,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+            max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+        )
+
+        def merge_usage_data(
+            existing: _ModelUsage | None, new: _ModelUsage
+        ) -> _ModelUsage:
+            """
+            Aggregates usage data from all LLM calls.
+
+            :param existing: The existing usage data to merge with the new usage data.
+            :type existing: _ModelUsage | None
+            :param new: The new usage data to merge with the existing usage data.
+            :type new: _ModelUsage
+            :return: The latest aggregated usage data from all LLM calls.
+            :rtype: _ModelUsage
+            """
+
+            if existing is None:
+                return new
+            existing.input += new.input
+            existing.output += new.output
+            existing.cache_read += new.cache_read
+            existing.cache_write += new.cache_write
+            existing.calls += new.calls
+            return existing
+
+        all_usage_data: _ModelUsage | None = None
+        sources_mapper: dict[
+            str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
+        ] = {}
+        instances_enumerated = dict(enumerate(instances_to_process))
+
+        # Each item on the list is a message kwargs dict for each extraction, based on specific context chunks.
+        for idx, message_kwargs in enumerate(message_kwargs_list):
+            logger.debug(
+                f"Processing messages chunk {idx + 1}/{len(message_kwargs_list)}"
+            )
+
+            # Safe cast: message_kwargs is always a dict
+            message_kwargs = cast(dict, message_kwargs)
+
+            # Extract prompt_kwargs and remove it from message_kwargs
+            # Safe cast: prompt_kwargs key always contains a dict
+            prompt_kwargs = cast(dict, message_kwargs.pop("prompt_kwargs"))
+
+            # Extract paragraphs and remove them from message_kwargs
+            # Safe cast: "paragraphs_chunk" key, when present, always contains list[_Paragraph]
+            paragraphs_chunk = cast(
+                list["_Paragraph"] | None, message_kwargs.pop("paragraphs_chunk", None)
+            )
+            if paragraphs_chunk is not None:
+                paragraphs_enumerated = dict(enumerate(paragraphs_chunk))
+            else:
+                paragraphs_enumerated = {}
+
+            # Safe cast: references_apply key always contains a bool
+            # Use `references_apply` instead of `add_references` since we may have the
+            # `add_references` param set to True but for multimodal data extraction
+            # such references only apply when text is present.
+            references_apply = cast(bool, message_kwargs.pop("references_apply"))
+
+            # Skip instances that have a single occurrence and already have extracted items
+            discarded_instances = []
+            if extracted_item_type == "concept":
+                filtered_instances_to_process = []
+                for i in instances_to_process:
+                    i_in_source_mapper = sources_mapper.get(i.unique_id)
+                    if (
+                        i_in_source_mapper
+                        # Safe cast: i is always a Concept because extracted_item_type is "concept"
+                        and cast(_Concept, i).singular_occurrence
+                        and i_in_source_mapper["extracted_items"]
+                    ):
+                        discarded_instances.append(i)
+                        logger.debug(
+                            f"Skipping {extracted_item_type} `{i.name}` because it has "
+                            "singular occurrence enforced and already has extracted items"
+                        )
+                        continue
+                    filtered_instances_to_process.append(i)
+                if not filtered_instances_to_process:
+                    logger.debug(
+                        f"No {extracted_item_type}s left to process with LLM `{llm.model}`"
+                    )
+                    continue
+                # Do not include instances with a single occurrence that already have extracted items
+                # in the prompt kwargs
+                prompt_kwargs["concepts"] = filtered_instances_to_process
+                if any(i in filtered_instances_to_process for i in discarded_instances):
+                    raise RuntimeError(
+                        "Discarded instances found in filtered instances list."
+                    )
+                logger.debug(
+                    f"Total {extracted_item_type}s discarded: {len(discarded_instances)}"
+                )
+                # Re-enumerate the new instances to process, to match them against the indices in LLM responses
+                instances_enumerated = dict(enumerate(filtered_instances_to_process))
+                # Do not overwrite instances_to_process as we need to return all of the originally passed instances
+                # even if they are discarded during one of the loop iterations
+
+            # Construct a prompt from the message kwargs
+            if extracted_item_type == "aspect":
+                rendered_prompt = llm._extract_aspect_items_prompt.render(
+                    **prompt_kwargs
+                )
+            elif extracted_item_type == "concept":
+                rendered_prompt = llm._extract_concept_items_prompt.render(
+                    **prompt_kwargs
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported extracted item type: `{extracted_item_type}`"
+                )
+
+            # Build messages to send (system + user, with optional images)
+            images: list[_Image] | None = message_kwargs.pop("images", None)
+            messages: list[_Message] = []
+            system_msg = llm._check_and_build_system_message()
+            if system_msg is not None:
+                messages.append(system_msg)
+            messages.append(
+                llm._build_user_message(message_text=rendered_prompt, images=images)
+            )
+
+            # Initialize the model call object to pass to the LLM query method
+            model_call_obj = _ModelCall(
+                prompt_kwargs=prompt_kwargs,
+                prompt=rendered_prompt,
+            )
+
+            # Update the usage and cost of the LLM with the calls made for the previous
+            # chunks before the next call. No usage data is returned if an exception is
+            # raised later on, i.e. the usage of these calls would be lost otherwise.
+            if all_usage_data is not None:
+                await llm._update_usage_and_cost((None, all_usage_data))
+                all_usage_data = None
+
+            # Query LLM, process and validate results
+            extracted_data, usage_data = await llm._query_llm(
+                messages=messages,
+                model_call_obj=model_call_obj,
+                num_retries_failed_request=num_retries_failed_request,
+                max_retries_failed_request=max_retries_failed_request,
+                async_limiter=async_limiter,
+                raise_exception_on_model_api_error=raise_exception_on_extraction_error,
+                has_fallback_pending=has_fallback_pending,
+            )
+            all_usage_data = merge_usage_data(all_usage_data, usage_data)
+            extracted_data = _validate_parsed_llm_output(
+                parsed_json=_parse_llm_output_as_json(
+                    _remove_thinking_content_from_llm_output(extracted_data)
+                ),
+                extracted_item_type=extracted_item_type,
+                justification_provided=add_justifications,
+                references_provided=references_apply,
+                reference_depth=reference_depth,
+            )
+            if extracted_data is None:
+                if model_call_obj._output_truncated:
+                    # The response was cut off at the max output tokens, i.e. the same
+                    # request to the same LLM would be cut off again. As a failed LLM
+                    # API request, it is not requested again, and is not final while
+                    # a fallback LLM, which may have a higher limit, is yet to be tried.
+                    error_msg = (
+                        f"{llm._get_output_truncated_msg()} "
+                        f"To get less output per LLM call, consider setting "
+                        f"`max_items_per_call`, `max_paragraphs_to_analyze_per_call` "
+                        f"(for text) or `max_images_to_analyze_per_call` (for images). "
+                        f"See the optimization guide for long documents: "
+                        f"https://contextgem.dev/optimizations/optimization_long_docs/"
+                    )
+                    logger.error(error_msg)
+                    if has_fallback_pending:
+                        logger.info("The call will be retried with a fallback LLM.")
+                    elif raise_exception_on_extraction_error:
+                        await llm._update_usage_and_cost((None, all_usage_data))
+                        raise ModelAPIError(error_msg)
+                    else:
+                        warnings.warn(error_msg, stacklevel=2)
+                else:
+                    logger.error(
+                        f"LLM did not return valid JSON for {extracted_item_type}s"
+                    )
+                return None, all_usage_data
+
+            # Aspect (document-level)
+            if extracted_item_type == "aspect":
+                for aspect_dict in extracted_data:
+                    try:
+                        relevant_aspect = instances_enumerated[
+                            int(aspect_dict["aspect_id"].lstrip("A"))
+                        ]
+                    except (KeyError, ValueError):
+                        logger.error("Aspect ID returned by LLM is invalid")
+                        return None, all_usage_data
+                    self._check_instances_already_processed(
+                        instance_type=extracted_item_type,
+                        # Safe cast: relevant_aspect is always an _Aspect instance
+                        # because extracted_item_type is "aspect"
+                        instances=[cast(_Aspect, relevant_aspect)],
+                        overwrite_existing=overwrite_existing,
+                    )
+                    if relevant_aspect.unique_id not in sources_mapper:
+                        sources_mapper[relevant_aspect.unique_id] = {
+                            "source": relevant_aspect,
+                            "extracted_items": [],
+                        }
+                    if add_justifications or reference_depth == "sentences":
+                        # References are automatically included for aspects, as paragraphs/sents'
+                        # texts are the values of extracted items for the aspects
+                        try:
+                            for para_dict in aspect_dict["paragraphs"]:
+                                para_dict["paragraph_id"] = int(
+                                    para_dict["paragraph_id"].lstrip("P")
+                                )
+                        except ValueError:
+                            logger.error("Paragraph ID returned by LLM is invalid")
+                            return None, all_usage_data
+                        for para_dict in sorted(
+                            aspect_dict["paragraphs"],
+                            key=lambda x: x["paragraph_id"],
+                        ):
+                            para_id = para_dict["paragraph_id"]
+                            try:
+                                ref_para = paragraphs_enumerated[para_id]
+                            except KeyError:
+                                logger.error("Paragraph ID returned by LLM is invalid")
+                                return None, all_usage_data
+                            # Reference depth - sentence
+                            # Each extracted item will have the reference sentence text as value,
+                            # reference paragraph in the list of reference paragraphs, and reference sentence
+                            # in the list of reference sentences
+                            if reference_depth == "sentences":
+                                para_sents_enumerated = dict(
+                                    enumerate(ref_para.sentences)
+                                )
+                                for sent_dict in para_dict["sentences"]:
+                                    sent_dict["sentence_id"] = int(
+                                        sent_dict["sentence_id"].split("-S")[-1]
+                                    )
+                                for sent_dict in sorted(
+                                    para_dict["sentences"],
+                                    key=lambda x: x["sentence_id"],
+                                ):
+                                    sent_id = sent_dict["sentence_id"]
+                                    try:
+                                        ref_sent = para_sents_enumerated[sent_id]
+                                    except KeyError:
+                                        logger.error(
+                                            f"Sentence ID returned by LLM "
+                                            f"for paragraph ID {para_id} is invalid"
+                                        )
+                                        return None, all_usage_data
+                                    extracted_item_kwargs = {
+                                        "value": ref_sent.raw_text,
+                                        "custom_data": ref_sent.custom_data,
+                                        # inherit custom data from sentence object
+                                    }
+                                    if add_justifications:
+                                        extracted_item_kwargs["justification"] = (
+                                            sent_dict["justification"]
+                                        )
+                                    extracted_item = _StringItem(
+                                        **extracted_item_kwargs  # ty: ignore[invalid-argument-type]
+                                    )
+                                    extracted_item.reference_paragraphs = [ref_para]
+                                    extracted_item.reference_sentences = [ref_sent]
+                                    # Safe cast: "extracted_items" key always contains a list
+                                    cast(
+                                        list,
+                                        sources_mapper[relevant_aspect.unique_id][
+                                            "extracted_items"
+                                        ],
+                                    ).append(extracted_item)
+                            # Reference depth - paragraph
+                            # Each extracted item will have the reference paragraph text as value,
+                            # reference paragraph in the list of reference paragraphs, and no reference sentences
+                            else:
+                                extracted_item = _StringItem(
+                                    value=ref_para.raw_text,
+                                    justification=para_dict["justification"],
+                                    custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
+                                )
+                                extracted_item.reference_paragraphs = [ref_para]
+                                # Safe cast: "extracted_items" key always contains a list
+                                cast(
+                                    list,
+                                    sources_mapper[relevant_aspect.unique_id][
+                                        "extracted_items"
+                                    ],
+                                ).append(extracted_item)
+                    else:
+                        # Reference depth - paragraph
+                        # Each extracted item will have the reference paragraph text as value,
+                        # reference paragraph in the list of reference paragraphs, and no reference sentences
+                        try:
+                            aspect_dict["paragraph_ids"] = [
+                                int(para_id.lstrip("P"))
+                                for para_id in aspect_dict["paragraph_ids"]
+                            ]
+                        except ValueError:
+                            logger.error("Paragraph ID returned by LLM is invalid")
+                            return None, all_usage_data
+                        for para_id in sorted(aspect_dict["paragraph_ids"]):
+                            try:
+                                ref_para = paragraphs_enumerated[para_id]
+                            except KeyError:
+                                logger.error("Paragraph ID returned by LLM is invalid")
+                                return None, all_usage_data
+                            extracted_item = _StringItem(
+                                value=ref_para.raw_text,
+                                custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
+                            )
+                            extracted_item.reference_paragraphs = [ref_para]
+                            # Safe cast: "extracted_items" key always contains a list
+                            cast(
+                                list,
+                                sources_mapper[relevant_aspect.unique_id][
+                                    "extracted_items"
+                                ],
+                            ).append(extracted_item)
+
+            # Concept (document- and aspect-levels)
+            elif extracted_item_type == "concept":
+                for concept_dict in extracted_data:
+                    try:
+                        relevant_concept = instances_enumerated[
+                            int(concept_dict["concept_id"].lstrip("C"))
+                        ]
+                    except (KeyError, ValueError):
+                        logger.error("Concept ID returned by LLM is invalid")
+                        return None, all_usage_data
+                    self._check_instances_already_processed(
+                        instance_type=extracted_item_type,
+                        # Safe cast: relevant_concept is always a _Concept
+                        # because extracted_item_type is "concept"
+                        instances=[cast(_Concept, relevant_concept)],
+                        overwrite_existing=overwrite_existing,
+                    )
+                    if relevant_concept.unique_id not in sources_mapper:
+                        sources_mapper[relevant_concept.unique_id] = {
+                            "source": relevant_concept,
+                            "extracted_items": [],
+                        }
+
+                    if add_justifications or references_apply:
+                        for i in concept_dict["extracted_items"]:
+                            # Process the item value with a custom function on the concept
+                            try:
+                                # Safe cast: relevant_concept is always a _Concept
+                                # because extracted_item_type is "concept"
+                                i["value"] = cast(
+                                    _Concept, relevant_concept
+                                )._process_item_value(i["value"])
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error processing extracted item value: {e}"
+                                )
+                                return None, all_usage_data
+                            concept_extracted_item_kwargs = {"value": i["value"]}
+                            if add_justifications:
+                                concept_extracted_item_kwargs["justification"] = i[
+                                    "justification"
+                                ]
+                            if references_apply:
+                                concept_extracted_item_kwargs[
+                                    "reference_paragraphs"
+                                ] = []
+                                concept_extracted_item_kwargs[
+                                    "reference_sentences"
+                                ] = []
+                                # Reference depth - sentence
+                                # Each extracted item will have reference paragraph in the list of
+                                # reference paragraphs, and reference sentence in the list of reference sentences
+                                if reference_depth == "sentences":
+                                    reference_paragraphs_list = i[
+                                        "reference_paragraphs"
+                                    ]
+                                    for para_dict in reference_paragraphs_list:
+                                        try:
+                                            para_dict["reference_paragraph_id"] = int(
+                                                para_dict[
+                                                    "reference_paragraph_id"
+                                                ].lstrip("P")
+                                            )
+                                        except ValueError:
+                                            logger.error(
+                                                "Reference paragraph ID returned by LLM is invalid"
+                                            )
+                                            return None, all_usage_data
+                                        try:
+                                            para_dict["reference_sentence_ids"] = [
+                                                int(i.split("-S")[-1])
+                                                for i in para_dict[
+                                                    "reference_sentence_ids"
+                                                ]
+                                            ]
+                                        except ValueError:
+                                            logger.error(
+                                                "Reference sentence ID returned by LLM is invalid"
+                                            )
+                                            return None, all_usage_data
+                                    reference_paragraphs_list = sorted(
+                                        reference_paragraphs_list,
+                                        key=lambda x: x["reference_paragraph_id"],
+                                    )
+                                # Reference depth - paragraph
+                                # Each extracted item will have reference paragraph in the list of
+                                # reference paragraphs, and no reference sentences
+                                else:
+                                    try:
+                                        reference_paragraphs_list = sorted(
+                                            [
+                                                int(para_id.lstrip("P"))
+                                                for para_id in i[
+                                                    "reference_paragraph_ids"
+                                                ]
+                                            ]
+                                        )
+                                    except ValueError:
+                                        logger.error(
+                                            "Reference paragraph ID returned by LLM is invalid"
+                                        )
+                                        return None, all_usage_data
+                                # Reference depth - paragraph or sentence
+                                for para_obj_or_id in reference_paragraphs_list:
+                                    try:
+                                        if reference_depth == "sentences":
+                                            # Safe cast: para_obj_or_id is always a dict
+                                            # when reference_depth is "sentences"
+                                            para_id = cast(dict, para_obj_or_id)[
+                                                "reference_paragraph_id"
+                                            ]
+                                        else:
+                                            para_id = para_obj_or_id
+                                        ref_para = paragraphs_enumerated[para_id]
+                                    except KeyError:
+                                        logger.error(
+                                            "Reference paragraph ID returned by LLM is invalid"
+                                        )
+                                        return None, all_usage_data
+                                    concept_extracted_item_kwargs[
+                                        "reference_paragraphs"
+                                    ].append(ref_para)
+                                    # Reference depth - sentence
+                                    if reference_depth == "sentences":
+                                        para_sents_enumerated = dict(
+                                            enumerate(ref_para.sentences)
+                                        )
+                                        # Safe cast: para_obj_or_id is always a dict
+                                        # when reference_depth is "sentences"
+                                        reference_sentence_ids = sorted(
+                                            cast(dict, para_obj_or_id)[
+                                                "reference_sentence_ids"
+                                            ]
+                                        )
+                                        for sent_id in reference_sentence_ids:
+                                            try:
+                                                ref_sent = para_sents_enumerated[
+                                                    sent_id
+                                                ]
+                                            except KeyError:
+                                                logger.error(
+                                                    f"Sentence ID returned by LLM "
+                                                    f"for paragraph ID {para_id} is invalid"
+                                                )
+                                                return None, all_usage_data
+                                            concept_extracted_item_kwargs[
+                                                "reference_sentences"
+                                            ].append(ref_sent)
+
+                            reference_paragraphs = concept_extracted_item_kwargs.pop(
+                                "reference_paragraphs", []
+                            )
+                            reference_sentences = concept_extracted_item_kwargs.pop(
+                                "reference_sentences", []
+                            )
+                            try:
+                                extracted_item = relevant_concept._item_class(
+                                    **concept_extracted_item_kwargs
+                                )
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error creating {relevant_concept._item_class.__name__}: {e}"
+                                )
+                                return None, all_usage_data
+                            extracted_item.reference_paragraphs = reference_paragraphs
+                            extracted_item.reference_sentences = reference_sentences
+                            # Safe cast: "extracted_items" key always contains a list
+                            cast(
+                                list,
+                                sources_mapper[relevant_concept.unique_id][
+                                    "extracted_items"
+                                ],
+                            ).append(extracted_item)
+                    else:
+                        for i in concept_dict["extracted_items"]:
+                            # Process the item value with a custom function on the concept
+                            try:
+                                # Safe cast: relevant_concept is always a _Concept
+                                # because extracted_item_type is "concept"
+                                i = cast(
+                                    _Concept, relevant_concept
+                                )._process_item_value(i)
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error processing extracted item value: {e}"
+                                )
+                                return None, all_usage_data
+                            try:
+                                extracted_item = relevant_concept._item_class(value=i)
+                            except ValueError as e:
+                                logger.error(
+                                    f"Error creating {relevant_concept._item_class.__name__}: {e}"
+                                )
+                                return None, all_usage_data
+                            # Safe cast: "extracted_items" key always contains a list
+                            cast(
+                                list,
+                                sources_mapper[relevant_concept.unique_id][
+                                    "extracted_items"
+                                ],
+                            ).append(extracted_item)
+
+            else:
+                raise ValueError(
+                    f"Unsupported extracted item type: `{extracted_item_type}`"
+                )
+
+        # Process all gathered results for all processed instances
+        async with (
+            llm._async_lock
+        ):  # ensure atomicity of the instances' state check and modification
+            for _source_id, source_data in sources_mapper.items():
+                # Safe cast: "source" key always contains _Aspect or _Concept
+                source_instance = cast(_Aspect | _Concept, source_data["source"])
+                self._check_instances_already_processed(
+                    instance_type=extracted_item_type,
+                    instances=[source_instance],  # type: ignore
+                    overwrite_existing=overwrite_existing,
+                )
+                # Safe cast: "extracted_items" key always contains a list
+                # of _ExtractedItem instances
+                source_instance.extracted_items = cast(
+                    list["_ExtractedItem"], source_data["extracted_items"]
+                )
+                if extracted_item_type == "aspect":
+                    # References are automatically included for aspects, as paragraphs/sents'
+                    # texts are the values of extracted items for the aspects
+                    for ei in source_instance.extracted_items:
+                        # Safe cast: source_instance is always an _Aspect instance
+                        # because extracted_item_type is "aspect"
+                        source_instance = cast(_Aspect, source_instance)
+                        # Extracted items might have overlapping references
+                        ref_paras = ei.reference_paragraphs
+                        for ref_para in ref_paras:
+                            if ref_para not in source_instance.reference_paragraphs:
+                                source_instance.reference_paragraphs += [ref_para]
+                                if source_instance.reference_depth == "sentences":
+                                    for ref_sent in ref_para.sentences:
+                                        if (
+                                            ref_sent
+                                            not in source_instance.reference_sentences
+                                        ):
+                                            source_instance.reference_sentences += [
+                                                ref_sent
+                                            ]
+                source_instance._is_processed = True
+
+        return instances_to_process, all_usage_data or _ModelUsage()
+
+    async def _extract_instances(
+        self,
+        context: _Document | _Aspect,
+        llm: _DocumentLLM,
+        instance_type: ExtractedInstanceType,
+        document: _Document,
+        from_instances: list[_Aspect] | list[_Concept] | None = None,
+        overwrite_existing: bool = False,
+        max_items_per_call: int = 0,
+        use_concurrency: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+        raise_exception_on_extraction_error: bool = True,
+    ) -> None:
+        """
+        Extracts aspects or concepts from a context (document or aspect) using a specified LLM.
+
+        :param context: The context (document or aspect) from which to extract instances
+        :type context: _Document | _Aspect
+        :param llm: The LLM used for extraction
+        :type llm: DocumentLLM
+        :param instance_type: Type of instance to extract ("aspect" or "concept")
+        :type instance_type: ExtractedInstanceType
+        :param document: The document object associated with the context.
+        :type document: _Document
+        :param from_instances: List of specific instances to process. If None, all instances are processed
+        :type from_instances: list[_Aspect] | list[_Concept] | None
+        :param overwrite_existing: If True, overwrites existing instances with newly extracted information
+        :type overwrite_existing: bool
+        :param max_items_per_call: Maximum number of items with the same extraction params to process per
+            LLM call. Defaults to 0, in which case all the items are processed in a single call.
+            (If concurrency is enabled, defaults to 1, i.e. each item is processed in a separate call.)
+            For complex tasks, you should not set a high value, in order to avoid prompt overloading.
+        :type max_items_per_call: int
+        :param use_concurrency: If True, enables concurrent processing of multiple items.
+            Concurrency can considerably reduce processing time, but may cause rate limit errors
+            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            requests. Defaults to False.
+        :type use_concurrency: bool
+        :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
+            LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
+        :type max_paragraphs_to_analyze_per_call: int
+        :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
+            LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
+        :type max_images_to_analyze_per_call: int
+        :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
+            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            be issued instead, and no extracted items will be returned. Defaults to True.
+        :type raise_exception_on_extraction_error: bool, optional
+        :return: None
+        """
+
+        # If concurrency is enabled, recreate the async limiter of the LLM, as well as
+        # of each of its fallback LLMs, as a new instance for the current event loop,
+        # presuming that we do not have intersecting event loops, i.e. all event loops
+        # in the framework are run sequentially. The limiters are keyed by the ID of
+        # the LLM instance, so that the requests to each LLM are paced by its own limiter.
+        async_limiters: dict[int, AsyncLimiter] = (
+            {
+                id(llm_instance): AsyncLimiter(
+                    max_rate=llm_instance.async_limiter.max_rate,
+                    time_period=llm_instance.async_limiter.time_period,
+                )
+                for llm_instance in [llm, *llm.fallback_models]
+            }
+            if use_concurrency
+            else {}
+        )
+
+        async def run_extraction(
+            instances_to_process: list[_Aspect] | list[_Concept],
+            add_justifications: bool = False,
+            justification_depth: JustificationDepth = "brief",
+            justification_max_sents: int = 2,
+            add_references: bool = False,
+            reference_depth: ReferenceDepth = "paragraphs",
+            modality: Modality = "text",
+        ) -> None:
+            """
+            Utility function for extracting instances using the provided LLM.
+
+            :param instances_to_process: List of instances to extract
+            :type instances_to_process: list[_Aspect] | list[_Concept]
+            :param add_justifications: Whether to provide justification for extracted items
+            :type add_justifications: bool
+            :param add_references: Whether to provide references for extracted items
+            :type add_references: bool
+            :param justification_depth: The level of detail of justifications. Details to "brief".
+            :type justification_depth: JustificationDepth
+            :param justification_max_sents: The maximum number of sentences in a justification.
+                Defaults to 2.
+            :type justification_max_sents: int
+            :param reference_depth: The structural depth of the references, i.e. whether to provide
+                paragraphs as references or sentences as references. Defaults to "paragraphs".
+                ``extracted_items`` will have values based on this parameter.
+            :type reference_depth: ReferenceDepth
+            :param modality: The document content the concepts are extracted from.
+                Defaults to "text".
+            :type modality: Modality
+            :return: None
+            :rtype: None
+            """
+
+            if not instances_to_process:
+                return None
+
+            if llm is None:
+                raise ValueError(
+                    f"No LLM with role `{instances_to_process[0].model_role}` is defined in the group, "
+                    f"while some {instance_type}s rely on such LLM."
+                )
+
+            async def retry_processing_for_result(
+                llm_instance: _DocumentLLM,
+                res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
+                instances: list[_Aspect] | list[_Concept],
+                n_retries: int = 0,
+                retry_is_final: bool = False,
+            ) -> bool:
+                """
+                Checks the processed result for validity and retries it if invalid.
+
+                The retries stop as soon as an LLM API request fails, as such request
+                is already retried (if the error is transient) when it is sent, or as
+                soon as a response is cut off at the max output tokens, as the same
+                request would be cut off again.
+
+                :param llm_instance: The LLM instance to process the data.
+                :type llm_instance: _DocumentLLM
+                :param res: Result to check and retry if invalid.
+                :type res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+                :param instances: List of processed instances associated with the result.
+                :type instances: list[_Aspect] | list[_Concept]
+                :param n_retries: Number of retries to perform.
+                :type n_retries: int
+                :param retry_is_final: Whether the retry is final and will not be repeated by
+                    a (next) fallback LLM.
+                :type retry_is_final: bool
+                :return: True if retry was successful, False otherwise.
+                :rtype: bool
+                """
+
+                if n_retries <= 0:
+                    return False
+                if not _model_call_result_is_valid(res):
+                    for i in range(n_retries):
+                        logger.info(
+                            f"Retrying {instance_type}s with invalid JSON "
+                            f"({i + 1}/{n_retries})"
+                        )
+                        res = await self._extract_items_from_instances(
+                            extracted_item_type=instance_type,
+                            source=context,
+                            llm=llm_instance,
+                            instances_to_process=instances,
+                            document=document,
+                            overwrite_existing=overwrite_existing,
+                            add_justifications=add_justifications,
+                            justification_depth=justification_depth,
+                            justification_max_sents=justification_max_sents,
+                            add_references=add_references,
+                            reference_depth=reference_depth,
+                            modality=modality,
+                            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                            max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+                            num_retries_failed_request=llm_instance.num_retries_failed_request,
+                            max_retries_failed_request=llm_instance.max_retries_failed_request,
+                            async_limiter=async_limiters.get(id(llm_instance)),
+                            raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+                            has_fallback_pending=not retry_is_final,
+                        )
+                        # Update usage stats and cost
+                        await llm_instance._update_usage_and_cost(res)
+                        if res[0] is not None:
+                            break
+                        if _model_call_result_is_api_failure(
+                            res
+                        ) or _model_call_result_is_output_truncated(res):
+                            # The retries of the failed request are already performed,
+                            # or the response was cut off at the max output tokens,
+                            # i.e. sending it to the same LLM again is pointless
+                            break
+                    if _model_call_result_is_valid(res):
+                        return True
+                    else:
+                        # A failed LLM API request, as well as a response cut off
+                        # at the max output tokens, is already reported at this point
+                        if retry_is_final and not (
+                            _model_call_result_is_api_failure(res)
+                            or _model_call_result_is_output_truncated(res)
+                        ):
+                            instance_names = [instance.name for instance in instances]
+                            error_msg = (
+                                f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
+                                f"Failed {instance_type}s: {instance_names}"
+                            )
+                            if raise_exception_on_extraction_error:
+                                logger.error(error_msg)
+                                raise ModelExtractionError(
+                                    error_msg, retry_count=n_retries
+                                )
+                            else:
+                                warning_msg = (
+                                    error_msg
+                                    + f" ({n_retries} retries). "
+                                    + " If you want to raise an exception instead, "
+                                    "set `raise_exception_on_extraction_error` to True."
+                                )
+                                logger.warning(warning_msg)
+                                warnings.warn(
+                                    warning_msg,
+                                    stacklevel=2,
+                                )
+                        return False
+                return True
+
+            async def retry_chunk_with_fallbacks(
+                chunk: list[_Aspect] | list[_Concept],
+                result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
+            ) -> bool:
+                """
+                Retries a single failed chunk on the primary LLM and then on each
+                fallback LLM in order (if configured), returning whether any
+                retry path produced a valid result.
+
+                :param chunk: The chunk of instances to retry.
+                :type chunk: list[_Aspect] | list[_Concept]
+                :param result: The original failed extraction result.
+                :type result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+                :return: True if any retry succeeded, False otherwise.
+                :rtype: bool
+                """
+                retry_successful = False
+                # Retry on the primary LLM only if it returned invalid data. If its API
+                # request failed, the retries of that request are already performed.
+                # If its response was cut off at the max output tokens, the same
+                # request would be cut off again.
+                if (
+                    llm.max_retries_invalid_data > 0
+                    and not _model_call_result_is_api_failure(result)
+                    and not _model_call_result_is_output_truncated(result)
+                ):
+                    retry_successful = await retry_processing_for_result(
+                        llm_instance=llm,
+                        res=result,
+                        instances=chunk,
+                        n_retries=llm.max_retries_invalid_data,
+                        retry_is_final=not llm.fallback_models,
+                    )
+                n_fallbacks = len(llm.fallback_models)
+                for i, fallback_llm in enumerate(llm.fallback_models):
+                    if retry_successful:
+                        break
+                    logger.info(
+                        f"Trying with fallback LLM {fallback_llm.model} "
+                        f"({i + 1}/{n_fallbacks})"
+                    )
+                    retry_successful = await retry_processing_for_result(
+                        llm_instance=fallback_llm,
+                        res=result,
+                        instances=chunk,
+                        n_retries=max(
+                            fallback_llm.max_retries_invalid_data, 1
+                        ),  # retry with each fallback LLM at least once
+                        retry_is_final=i == n_fallbacks - 1,
+                    )
+                return retry_successful
+
+            if use_concurrency:
+                # default - each item in a separate call
+                max_items_per_call_inner = max(1, max_items_per_call)
+            else:
+                # default - all items in a single call
+                max_items_per_call_inner = max(0, max_items_per_call)
+                max_items_per_call_inner = (
+                    len(instances_to_process)
+                    if max_items_per_call_inner == 0
+                    else max_items_per_call_inner
+                )
+
+            # Prepare data for processing
+            data_chunks = _chunk_list(instances_to_process, max_items_per_call_inner)
+            base_params = {
+                "extracted_item_type": instance_type,
+                "source": context,
+                "llm": llm,
+                "document": document,
+                "overwrite_existing": overwrite_existing,
+                "add_justifications": add_justifications,
+                "justification_depth": justification_depth,
+                "justification_max_sents": justification_max_sents,
+                "add_references": add_references,
+                "reference_depth": reference_depth,
+                "modality": modality,
+                "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
+                "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
+                "num_retries_failed_request": llm.num_retries_failed_request,
+                "max_retries_failed_request": llm.max_retries_failed_request,
+                "async_limiter": async_limiters.get(id(llm)),
+                "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
+                "has_fallback_pending": bool(llm.fallback_models),
+            }
+            data_list = [
+                {**base_params, "instances_to_process": chunk} for chunk in data_chunks
+            ]
+
+            if (
+                use_concurrency and len(data_list) > 1
+            ):  # Disable overhead if a single call
+
+                async def extract_items_or_api_error(**kwargs: Any) -> Any:
+                    """
+                    Extracts items from a single chunk, returning a model API error
+                    instead of raising it, so that the error is not suppressed by
+                    the concurrent executor.
+
+                    :param kwargs: Keyword arguments of `_extract_items_from_instances`.
+                    :type kwargs: Any
+                    :return: The extraction result, or the model API error raised
+                        during the extraction.
+                    :rtype: Any
+                    """
+                    try:
+                        return await self._extract_items_from_instances(**kwargs)
+                    except ModelAPIError as e:
+                        return e
+
+                # Process chunks concurrently
+                results = await _async_multi_executor(
+                    func=extract_items_or_api_error,
+                    data_list=data_list,
+                )
+                if len(results) != len(data_chunks):
+                    raise RuntimeError(
+                        f"Number of results ({len(results)}) does not match "
+                        f"number of data chunks ({len(data_chunks)})."
+                    )
+
+                # Update usage stats and cost
+                for result in results:
+                    if not isinstance(result, ModelAPIError):
+                        await llm._update_usage_and_cost(result)
+
+                # A model API error is raised only when it is final, i.e. the retries
+                # of the failed request are already performed and there is no fallback
+                # LLM to try. Re-raise the first such error by chunk index, instead of
+                # sending the failed request again.
+                for result in results:
+                    if isinstance(result, ModelAPIError):
+                        raise result
+
+                # Retry failed chunks concurrently. Original chunk order is preserved
+                # in `failed_pairs` so post-gather handling raises the first failure
+                # by chunk index, matching prior sequential semantics.
+                failed_pairs = [
+                    (chunk, result)
+                    for chunk, result in zip(data_chunks, results, strict=True)
+                    if not _model_call_result_is_valid(result)
+                ]
+                if failed_pairs:
+                    retry_outcomes = await asyncio.gather(
+                        *(
+                            retry_chunk_with_fallbacks(chunk, result)
+                            for chunk, result in failed_pairs
+                        ),
+                        return_exceptions=True,
+                    )
+                    for (chunk, _), outcome in zip(
+                        failed_pairs, retry_outcomes, strict=True
+                    ):
+                        if isinstance(outcome, BaseException):
+                            raise outcome
+                        if not outcome:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_models:
+                                if raise_exception_on_extraction_error:
+                                    # Final retry was already performed, therefore an exception should have
+                                    # been raised in case of extraction error such as invalid JSON.
+                                    raise RuntimeError(
+                                        "Extraction failed after all retries with "
+                                        "`raise_exception_on_extraction_error` set to True, "
+                                        "yet no exception was raised."
+                                    )
+                            else:
+                                instance_names = [instance.name for instance in chunk]
+                                error_msg = (
+                                    f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
+                                    f"Failed {instance_type}s: {instance_names}"
+                                )
+                                if raise_exception_on_extraction_error:
+                                    raise ModelExtractionError(error_msg, retry_count=0)
+                                else:
+                                    warning_msg = (
+                                        error_msg
+                                        + " (0 retries). "
+                                        + " If you want to raise an exception instead, "
+                                        "set `raise_exception_on_extraction_error` to True."
+                                    )
+                                    logger.warning(warning_msg)
+                                    warnings.warn(
+                                        warning_msg,
+                                        stacklevel=2,
+                                    )
+            else:
+                # Process sequentially
+                for i, data in enumerate(data_list):
+                    result = await self._extract_items_from_instances(**data)  # ty: ignore[invalid-argument-type]
+                    logger.debug(
+                        f"Result for chunk ({i + 1}/{len(data_list)}) processed."
+                    )
+
+                    # Update usage stats and cost
+                    await llm._update_usage_and_cost(result)
+
+                    # Retry if needed, including with fallback LLMs if they are provided
+                    if not _model_call_result_is_valid(result):
+                        retry_successful = await retry_chunk_with_fallbacks(
+                            chunk=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
+                            result=result,
+                        )
+                        if not retry_successful:
+                            if llm.max_retries_invalid_data > 0 or llm.fallback_models:
+                                if raise_exception_on_extraction_error:
+                                    # Final retry was already performed, therefore an exception should have
+                                    # been raised in case of extraction error such as invalid JSON.
+                                    raise RuntimeError(
+                                        "Extraction failed after all retries with "
+                                        "`raise_exception_on_extraction_error` set to True, "
+                                        "yet no exception was raised."
+                                    )
+                            else:
+                                instance_names = [
+                                    instance.name  # ty: ignore[unresolved-attribute]
+                                    for instance in data["instances_to_process"]  # ty: ignore[not-iterable]
+                                ]
+                                error_msg = (
+                                    f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
+                                    f"Failed {instance_type}s: {instance_names}"
+                                )
+                                if raise_exception_on_extraction_error:
+                                    raise ModelExtractionError(error_msg, retry_count=0)
+                                else:
+                                    warning_msg = (
+                                        error_msg
+                                        + " (0 retries). "
+                                        + " If you want to raise an exception instead, "
+                                        "set `raise_exception_on_extraction_error` to True."
+                                    )
+                                    logger.warning(warning_msg)
+                                    warnings.warn(
+                                        warning_msg,
+                                        stacklevel=2,
+                                    )
+
+        # Group instances for processing, based on the relevant params, with the relevant prompts.
+        if instance_type == "aspect":
+            instance_class = _Aspect
+            attribute_name = "aspects"
+        elif instance_type == "concept":
+            instance_class = _Concept
+            attribute_name = "concepts"
+        else:
+            raise NotImplementedError(f"Unknown instance_type: {instance_type}")
+
+        all_instances = getattr(context, attribute_name)
+
+        # If `from_instances` is specified, make sure they are valid.
+        if from_instances is not None:
+            if (
+                not isinstance(from_instances, list)
+                or not from_instances
+                or not all(isinstance(i, instance_class) for i in from_instances)
+                or not all(i in all_instances for i in from_instances)
+            ):
+                raise ValueError(
+                    f"`from_instances` must be a list of {instance_class.__name__} instances "
+                    f"assigned to {context.__class__.__name__}. Use get_*() methods to retrieve such "
+                    f"assigned instances from the object, e.g. document.get_aspect_by_name(name), etc."
+                )
+            instances_to_process = from_instances
+        else:
+            instances_to_process = all_instances
+
+        # First, select the instances to be extracted by the current LLM. In a model group,
+        # an instance is routed to the LLM with the same role. A standalone LLM extracts
+        # all the instances, regardless of their model roles.
+        if self.is_group:
+            filtered_instances = [
+                i for i in instances_to_process if i.model_role == llm.role
+            ]
+        else:
+            filtered_instances = list(instances_to_process)
+
+        # If we are not overwriting, check that none of the instances is already processed.
+        self._check_instances_already_processed(
+            instance_type=instance_type,
+            # Safe cast: filtered_instances contains only _Aspect or _Concept instances
+            # based on instance_type
+            instances=cast(list[_Aspect] | list[_Concept], filtered_instances),
+            overwrite_existing=overwrite_existing,
+        )
+
+        # Next, group instances with the same values for extraction params.
+        fields_to_group_by = [
+            "add_justifications",
+            "justification_depth",
+            "justification_max_sents",
+            "add_references",  # references are always added to aspects automatically
+            "reference_depth",
+        ]
+        if instance_type == "concept":
+            # Concepts with different modalities are extracted from different content
+            # (aspects are always extracted from text)
+            fields_to_group_by.append("modality")
+        # Safe cast: filtered_instances contains only _Aspect or _Concept instances
+        # based on instance_type
+        typed_instances = (
+            cast(list[_Aspect], filtered_instances)
+            if instance_type == "aspect"
+            else cast(list[_Concept], filtered_instances)
+        )
+        instance_groups = _group_instances_by_fields(
+            fields=fields_to_group_by, instances=typed_instances
+        )
+
+        # Run extraction for each group separately, as prompts will be rendered differently and
+        # the expected JSON structures will be different based on the group's extraction params.
+        cals_and_kwargs = []
+        for group in instance_groups:
+            if not group:
+                continue
+            # Build a dictionary of "params" from the group's first instance
+            # because they all share the same values for these fields.
+            params_combination = {
+                field: getattr(group[0], field, False) for field in fields_to_group_by
+            }
+            logger.debug(
+                f"Processing group of {instance_class.__name__}s ({len(group)}) "
+                f"with LLM `{llm.model}` with params: {params_combination}"
+            )
+            cals_and_kwargs.append(
+                (
+                    run_extraction,
+                    {
+                        **params_combination,
+                        "instances_to_process": group,
+                    },
+                )
+            )
+        await _run_async_calls(
+            cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
+        )
+
+    @staticmethod
+    def _validate_sub_aspects_nesting_level(
+        parent_aspect: _Aspect,
+    ) -> None:
+        """
+        Validates that all sub-aspects have the correct nesting level relative
+        to their parent aspect.
+
+        :param parent_aspect: The parent aspect
+        :type parent_aspect: _Aspect
+        :return: None
+        :rtype: None
+        :raises ValueError: If any sub-aspect of the parent aspect has
+            an incorrect nesting level.
+        """
+
+        expected_level = parent_aspect._nesting_level + 1
+        if not all(
+            sub_aspect._nesting_level == expected_level
+            for sub_aspect in parent_aspect.aspects
+        ):
+            raise ValueError(
+                f"Sub-aspects must have a nesting level of `{expected_level}`. "
+                f"Current nesting levels: "
+                f"{[sub_aspect._nesting_level for sub_aspect in parent_aspect.aspects]}"
+            )
+
+    def _get_usage_or_cost(
+        self,
+        retrieval_type: Literal["usage", "cost"],
+        model_role: str | None = None,
+    ) -> list[_ModelUsageOutputContainer | _ModelCostOutputContainer]:
+        """
+        Retrieves specified information (usage or cost) for either a single LLM or LLMs in a group.
+        For groups, optionally filters the results by the specified model role.
+        Iterates through primary LLMs and their fallback counterparts, collecting
+        details about their usage or cost based on the specified retrieval type.
+
+        :param retrieval_type: Determines the type of information to retrieve. Must be either
+            "usage" to collect model usage statistics or "cost" to collect cost details.
+        :type retrieval_type: Literal["usage", "cost"]
+        :param model_role: The optional role of the LLM to filter the results. If provided,
+            only results associated with LLMs matching this role are returned. If no LLM with
+            the specified role exists, an exception is raised. If the matching LLM has
+            fallback LLMs, their usage or cost details are also collected. The role is
+            validated in the same way as the roles assigned to LLMs. Defaults to None.
+        :type model_role: str | None
+        :return: A list of containers, each representing usage or cost information for
+            a primary LLM and its fallback LLMs, if any, in the order they are tried.
+            The specific container type depends on the retrieval type.
+        :rtype: list[_ModelUsageOutputContainer | _ModelCostOutputContainer]
+        """
+
+        info_containers = []
+        # For individual LLM, use self and its fallbacks
+        # For group, iterate through all LLMs in self.models
+        llms_to_process = self.models if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        # Safe cast: llms_to_process contains only _DocumentLLM instances
+        llms_to_process = cast(list["_DocumentLLM"], llms_to_process)
+
+        for primary_llm in llms_to_process:
+            for llm in [primary_llm, *primary_llm.fallback_models]:
+                if retrieval_type == "usage":
+                    info_container = _ModelUsageOutputContainer(
+                        model=llm.model,
+                        role=llm.role,
+                        is_fallback=llm.is_fallback,
+                        usage=llm._get_raw_usage(),
+                    )
+                elif retrieval_type == "cost":
+                    info_container = _ModelCostOutputContainer(
+                        model=llm.model,
+                        role=llm.role,
+                        is_fallback=llm.is_fallback,
+                        cost=llm._get_raw_cost(),
+                    )
+                else:
+                    raise ValueError(f"Invalid retrieval type `{retrieval_type}`")
+                info_containers.append(info_container)
+
+        if model_role is not None:
+            # Validate the role in the same way as the roles assigned to LLMs,
+            # e.g. remove the surrounding whitespace
+            model_role = _validate_model_role(model_role)
+            info_containers = [
+                i for i in info_containers if i.role == model_role
+            ]  # for both main and fallback LLMs
+            if not info_containers:
+                raise ValueError(
+                    f"No LLM with the given role `{model_role}` was found in group."
+                )
+        return info_containers
+
+
+@_disable_direct_initialization
+class _DocumentModelGroup(_GenericModelProcessor):
+    """
+    Internal implementation of the ``DocumentModelGroup`` class.
+    """
+
+    models: list[_DocumentLLM] = Field(
+        ...,
+        min_length=2,
+        description=(
+            "List of DocumentLLM instances with unique roles, i.e. at most one LLM "
+            "without a role; minimum 2. An aspect/concept is routed to the LLM with "
+            "the `role` equal to the `model_role` of the aspect/concept."
+        ),
+    )
+    output_language: LanguageRequirement = Field(
+        default="en",
+        description=(
+            "Language for generated textual output (justifications, explanations). "
+            "'en' forces English; 'adapt' matches document/image language. "
+            "Must be consistent across all LLMs in the group. "
+            "Applies only when DocumentLLMs' default system messages are used."
+        ),
+    )
+
+    def _set_private_attrs(self) -> None:
+        """
+        Initialize and configure private attributes for the model group.
+        The model group has no private attributes to set.
+
+        :return: None
+        :rtype: None
+        """
+        return None
+
+    @property
+    def is_group(self) -> bool:
+        """
+        Returns True indicating this is a group of LLMs.
+
+        :return: Always True for DocumentModelGroup instances.
+        :rtype: bool
+        """
+        return True
+
+    @property
+    def list_roles(self) -> list[str | None]:
+        """
+        Returns a list of all roles assigned to the LLMs in this group.
+
+        :return: A list of model roles, with None standing for the LLM without a role
+        :rtype: list[str | None]
+        """
+        return [i.role for i in self.models]
+
+    def group_update_output_language(
+        self, output_language: LanguageRequirement
+    ) -> None:
+        """
+        Updates the output language for all LLMs in the group.
+
+        :param output_language: The new output language to set for all LLMs
+        :type output_language: LanguageRequirement
+        :return: None
+        :rtype: None
+        """
+        for llm in self.models:
+            llm.output_language = output_language
+        self.output_language = output_language
+        logger.info(
+            f"Updated output language for all LLMs in the group to `{output_language}`"
+        )
+
+    def _eq_deserialized_llm_config(
+        self,
+        other: _DocumentModelGroup,
+    ) -> bool:
+        """
+        Custom config equality method to compare this _DocumentModelGroup with a deserialized instance.
+
+        Uses the `_eq_deserialized_llm_config` method of the _DocumentLLM class to compare each LLM
+        in the group, including fallbacks, if any.
+
+        :param other: Another _DocumentModelGroup instance to compare with
+        :type other: _DocumentModelGroup
+        :return: True if the instances are equal, False otherwise
+        :rtype: bool
+        """
+        for self_llm, other_llm in zip(self.models, other.models, strict=True):
+            if not self_llm._eq_deserialized_llm_config(other_llm):
+                return False
+        return True
+
+    def _warn_tools_ignored_if_enabled(self) -> None:
+        """
+        Warns if any LLM in the group has tools configured, since tools are ignored
+        during extraction workflows. Tools are only supported in ``llm.chat(...)``.
+
+        :return: None
+        :rtype: None
+        """
+        models_with_tools = [llm.model for llm in self.models if llm.tools]
+        if models_with_tools:
+            models_with_tools_list = ", ".join(models_with_tools)
+            warnings.warn(
+                "Tool calling is ignored during extraction workflows. "
+                f"Models with tools configured: {models_with_tools_list}. "
+                "Tools are only supported in `llm.chat(...)`.",
+                stacklevel=2,
+            )
+
+    @field_validator("models")
+    @classmethod
+    def _validate_models(cls, models: list[_DocumentLLM]) -> list[_DocumentLLM]:
+        """
+        Validates the provided list of _DocumentLLMs ensuring that each
+        LLM has a unique role within the group, so that each aspect/concept
+        is routed to a single LLM. No role (None) also counts as a role,
+        i.e. only one LLM in the group can have no role.
+
+        :param models: A list of `_DocumentLLM` instances to be validated.
+        :type models: list[_DocumentLLM]
+        :return: A validated list of `_DocumentLLM` instances.
+        :rtype: list[_DocumentLLM]
+        :raises ValueError: If not all model roles are unique.
+        """
+        seen_roles = set()
+        for llm in models:
+            if llm.role in seen_roles:
+                raise ValueError(_NON_UNIQUE_MODEL_ROLES_MSG)
+            seen_roles.add(llm.role)
+        return models
+
+    def get_usage(
+        self, model_role: str | None = None
+    ) -> list[_ModelUsageOutputContainer]:
+        """
+        Retrieves the usage information of the LLMs in the group, filtered by the specified
+        model role if provided.
+
+        :param model_role: Optional; A string representing the role of the LLM to filter
+            the usage data, validated in the same way as the roles assigned to LLMs.
+            If None, returns usage for all LLMs in the group, including the LLM
+            without a role.
+        :type model_role: str | None
+        :return: A list of usage statistics containers for the specified LLMs and their fallbacks.
+        :rtype: list[_ModelUsageOutputContainer]
+        :raises ValueError: If the specified role is invalid, or if no LLM with
+            the specified role exists in the group.
+        """
+        # Safe cast: _get_usage_or_cost with retrieval_type="usage"
+        # returns only list of _ModelUsageOutputContainer
+        return cast(
+            list["_ModelUsageOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="usage", model_role=model_role),
+        )
+
+    def get_cost(
+        self, model_role: str | None = None
+    ) -> list[_ModelCostOutputContainer]:
+        """
+        Retrieves the accumulated cost information of the LLMs in the group, filtered by the specified
+        model role if provided.
+
+        :param model_role: Optional; A string representing the role of the LLM to filter
+            the cost data, validated in the same way as the roles assigned to LLMs.
+            If None, returns cost for all LLMs in the group, including the LLM
+            without a role.
+        :type model_role: str | None
+        :return: A list of cost statistics containers for the specified LLMs and their fallbacks.
+        :rtype: list[_ModelCostOutputContainer]
+        :raises ValueError: If the specified role is invalid, or if no LLM with
+            the specified role exists in the group.
+        """
+        # Safe cast: _get_usage_or_cost with retrieval_type="cost"
+        # returns only list of _ModelCostOutputContainer
+        return cast(
+            list["_ModelCostOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="cost", model_role=model_role),
+        )
+
+    def reset_usage_and_cost(self, model_role: str | None = None) -> None:
+        """
+        Resets the usage and cost statistics for LLMs in the group.
+
+        This method clears accumulated usage and cost data, which is useful when processing
+        multiple documents sequentially and tracking metrics for each document separately.
+
+        :param model_role: Optional; A string representing the role of the LLM to reset statistics for,
+            validated in the same way as the roles assigned to LLMs. If None, resets statistics
+            for all LLMs in the group, including the LLM without a role.
+        :type model_role: str | None
+        :return: None
+        :rtype: None
+        :raises ValueError: If the specified role is invalid, or if no LLM with
+            the specified role exists in the group.
+        """
+
+        if model_role is not None:
+            # Validate the role in the same way as the roles assigned to LLMs,
+            # e.g. remove the surrounding whitespace
+            model_role = _validate_model_role(model_role)
+            try:
+                llm = next(i for i in self.models if i.role == model_role)
+                llm.reset_usage_and_cost()
+            except StopIteration:
+                raise ValueError(
+                    f"No LLM with the given role `{model_role}` was found in group."
+                ) from None
+        else:
+            for llm in self.models:
+                llm.reset_usage_and_cost()
+
+    @model_validator(mode="after")
+    def _validate_document_model_group_post(self) -> Self:
+        """
+        Validates the model group to ensure consistency of the `output_language`
+        attribute across all LLMs within the group.
+
+        :return: The model group instance after successful validation.
+        :rtype: Self
+        :raises ValueError: Raised if any LLM's `output_language` differs from the
+            group's `output_language`.
+        """
+
+        if any(i.output_language != self.output_language for i in self.models):
+            raise ValueError(
+                "All LLMs in the group must have the same value of "
+                "`output_language` attribute as the group."
+            )
+        return self

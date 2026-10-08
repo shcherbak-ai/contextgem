@@ -36,8 +36,8 @@ from contextgem.internal.base.llms import (
     _LOCAL_MODEL_PROVIDERS,
     _ChatSession,
     _DocumentLLM,
-    _DocumentModelGroup,
 )
+from contextgem.internal.base.models import _DocumentModelGroup
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct

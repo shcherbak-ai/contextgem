@@ -150,7 +150,8 @@ class _InstanceSerializer(BaseModel):
         :rtype: dict[str, Any]
         """
 
-        from contextgem.internal.base.llms import _DocumentLLM, _DocumentModelGroup
+        from contextgem.internal.base.llms import _DocumentLLM
+        from contextgem.internal.base.models import _DocumentModelGroup
         from contextgem.internal.data_models import _ModelCost, _ModelUsage
 
         if isinstance(self, _DocumentLLM | _DocumentModelGroup):

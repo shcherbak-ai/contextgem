@@ -21,7 +21,7 @@
 Extraction Methods
 ==================
 
-This guide documents the extraction methods provided by the :class:`~contextgem.public.llms.DocumentLLM` and :class:`~contextgem.public.llms.DocumentModelGroup` classes for extracting aspects and concepts from documents using large language models.
+This guide documents the extraction methods provided by the :class:`~contextgem.public.llms.DocumentLLM` and :class:`~contextgem.public.models.DocumentModelGroup` classes for extracting aspects and concepts from documents using large language models.
 
 |
 

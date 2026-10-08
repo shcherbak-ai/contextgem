@@ -132,7 +132,7 @@ The ``role`` of an LLM is a free-form label used to route aspects/concepts to th
 
 Each LLM can have its own backend and configuration, and one or more fallback LLMs with the same role.
 
-See :class:`~contextgem.public.llms.DocumentModelGroup` and :ref:`model-roles-label` for more details.
+See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-label` for more details.
 
 .. list-table:: Model Group Workflow Example
    :header-rows: 1

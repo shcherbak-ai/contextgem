@@ -339,6 +339,7 @@ Indices and tables
    api/concepts
    api/examples
    api/llms
+   api/models
    api/data_models
    api/utils
    api/images

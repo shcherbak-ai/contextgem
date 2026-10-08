@@ -31,7 +31,8 @@ from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.images import Image
-from contextgem.public.llms import ChatSession, DocumentLLM, DocumentModelGroup
+from contextgem.public.llms import ChatSession, DocumentLLM
+from contextgem.public.models import DocumentModelGroup
 from contextgem.public.paragraphs import Paragraph
 from contextgem.public.pipelines import ExtractionPipeline
 from contextgem.public.sentences import Sentence

@@ -33,7 +33,7 @@ ContextGem follows a simple extraction process:
 1. Create a :class:`~contextgem.public.documents.Document` instance with your content
 2. Define :class:`~contextgem.public.aspects.Aspect` instances for sections of interest
 3. Define concept instances (:class:`~contextgem.public.concepts.StringConcept`, :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.NumericalConcept`, :class:`~contextgem.public.concepts.DateConcept`, :class:`~contextgem.public.concepts.JsonObjectConcept`, :class:`~contextgem.public.concepts.RatingConcept`) for specific data points to extract, and attach them to :class:`~contextgem.public.aspects.Aspect` (for aspect context) or :class:`~contextgem.public.documents.Document` (for document context).
-4. Use :class:`~contextgem.public.llms.DocumentLLM` or :class:`~contextgem.public.llms.DocumentModelGroup` to perform the extraction
+4. Use :class:`~contextgem.public.llms.DocumentLLM` or :class:`~contextgem.public.models.DocumentModelGroup` to perform the extraction
 5. Access the extracted data in the document object
 
 

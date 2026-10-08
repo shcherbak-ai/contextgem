@@ -97,6 +97,7 @@ contextgem/
 │   │   │   ├── aspects.py        #     - Internal aspect implementations  
 │   │   │   ├── documents.py      #     - Internal document processing
 │   │   │   ├── llms.py           #     - Internal LLM functionality
+│   │   │   ├── models.py         #     - Internal model processing logic & model groups
 │   │   │   └── ...               #     - More internal implementations
 │   │   ├── prompts/              #   - LLM prompt templates
 │   │   ├── typings/              #   - Type definitions
@@ -108,6 +109,7 @@ contextgem/
 │       ├── documents.py          #   - Public document facades
 │       ├── pipelines.py          #   - Public pipeline facades
 │       ├── llms.py               #   - Public LLM facades
+│       ├── models.py             #   - Public model group facade
 │       └── ...                   #   - More public modules
 │
 ├── tests/

@@ -31,6 +31,7 @@ import pytest
 from aiolimiter import AsyncLimiter
 
 from contextgem.internal.base import llms as llms_module
+from contextgem.internal.base import models as models_module
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import (
@@ -1233,7 +1234,7 @@ class TestLLMs(BaseTest):
 
         with (
             patch.object(litellm, "acompletion", new=acompletion_stub),
-            patch.object(llms_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+            patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
         ):
             # With concurrency, each concept is processed in a separate request:
             # first to the primary LLM, then to the fallback LLM

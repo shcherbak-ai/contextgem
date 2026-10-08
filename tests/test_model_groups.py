@@ -64,7 +64,7 @@ class TestModelGroups(BaseTest):
         with pytest.raises(ValueError):
             DocumentModelGroup(models=[self.llm_reasoner])
         with pytest.raises(ValueError):
-            DocumentModelGroup(models=[1, True])
+            DocumentModelGroup(models=[1, True])  # ty: ignore[invalid-argument-type]
         # Duplicate roles
         with pytest.raises(ValueError):
             DocumentModelGroup(
