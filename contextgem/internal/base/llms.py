@@ -92,7 +92,6 @@ from contextgem.internal.typings.types import (
     AsyncCalsAndKwargs,
     DefaultPromptType,
     ExtractedInstanceType,
-    JSONDict,
     JSONDictField,
     JustificationDepth,
     LanguageRequirement,
@@ -107,7 +106,6 @@ from contextgem.internal.typings.types import (
 from contextgem.internal.typings.validators import (
     _validate_model_role,
     _validate_sequence_is_list,
-    _validate_tool_parameters_schema,
 )
 from contextgem.internal.utils import (
     _MODEL_API_RETRIES_ATTEMPTED_ATTR,
@@ -3374,10 +3372,14 @@ class _DocumentLLM(_GenericModelProcessor):
         description="Random seed for sampling (provider support dependent).",
     )
     # Tool calling params (to be used only in chat() calls)
-    tools: list[JSONDictField] | None = Field(
+    # Sequence type for type checking: a list or a tuple of functions is accepted.
+    # The value is validated to a list of the functions.
+    tools: Sequence[ToolHandler] | None = Field(
         default=None,
         description=(
-            "Tool definitions in OpenAI-compatible schema. "
+            "Tools available to the model: functions decorated with `@register_tool`. "
+            "The name, the description and the parameters of each tool are taken "
+            "from the function. "
             "Passed to litellm during chat() calls only. "
             "Ignored when using .extract_*() methods."
         ),
@@ -3465,25 +3467,6 @@ class _DocumentLLM(_GenericModelProcessor):
     def __init__(self, **data: Any):
         # Pop the async_limiter if provided; otherwise use a default.
         limiter = data.pop("async_limiter", None)
-
-        # Convert @register_tool-decorated functions to OpenAI tool schemas
-        raw_tools = data.get("tools")
-        if raw_tools is not None:
-            from contextgem.internal.tools import (
-                _generate_tool_schema,
-                _parse_docstring,
-            )
-
-            converted: list[dict[str, Any]] = []
-            for item in raw_tools:
-                if _is_registered_tool(item):
-                    schema = _generate_tool_schema(
-                        item, _parse_docstring(item.__doc__ or "")
-                    )
-                    converted.append(schema)
-                else:
-                    converted.append(item)
-            data["tools"] = converted
 
         super().__init__(**data)
         if limiter is not None:
@@ -3861,88 +3844,69 @@ class _DocumentLLM(_GenericModelProcessor):
         return _Message(role="user", content=content)
 
     @staticmethod
-    def _resolve_and_validate_tools(
-        tools: list[dict[str, Any]] | None,
-    ) -> list[tuple[str, JSONDict, ToolHandler]]:
+    def _find_registered_tool_in_scope(name: str) -> ToolHandler:
         """
-        Resolves and validates tools by ensuring proper schema and locating registered handlers.
-        Returns a list of tuples: (tool_name, parameters_schema, handler).
+        Finds a function decorated with ``@register_tool`` by its name in the scope
+        of the code that calls the framework.
 
-        :param tools: A list of tool dictionaries to resolve and validate.
-        :type tools: list[dict[str, Any]] | None
-        :return: A list of tuples: (tool_name, parameters_schema, handler).
-        :rtype: list[tuple[str, JSONDict, ToolHandler]]
-        :raises ValueError: If the tool function is not a non-empty dictionary,
-            the tool name is not a non-empty string, or the tool parameters schema is invalid.
-        :raises ValueError: If no registered handler is found for the tool.
+        Used only when an LLM is deserialized: the serialized data stores the tool
+        definitions, while the functions themselves cannot be stored. The functions
+        have to be defined or imported under their own names where the LLM is loaded.
+
+        :param name: The name of the tool, i.e. the name of the function.
+        :type name: str
+        :return: The registered function.
+        :rtype: ToolHandler
+        :raises ValueError: If no registered function with this name is found.
         """
-
-        resolved: list[tuple[str, JSONDict, ToolHandler]] = []
-        if not tools:
-            return resolved
-
-        for tool in tools:
-            fn_obj = tool.get("function")
-            if not isinstance(fn_obj, dict):
-                raise ValueError("Tool function must be a non-empty dictionary")
-
-            name = fn_obj.get("name")
-            if not isinstance(name, str) or not name.strip():
-                raise ValueError("Tool name must be a non-empty string")
-
-            parameters = fn_obj.get("parameters")
-            _validate_tool_parameters_schema(parameters)
-
-            # Verify a registered handler exists in non-contextgem frames
-            resolved_handler: ToolHandler | None = None
-            for frame_info in inspect.stack():
-                frame = frame_info.frame
-                mod = frame.f_globals.get("__name__", "")
-                if isinstance(mod, str) and mod.startswith("contextgem"):
-                    continue
-                candidate = frame.f_locals.get(name)
+        # Look up the frames of the calling code, i.e. the frames outside the framework
+        for frame_info in inspect.stack():
+            frame = frame_info.frame
+            mod = frame.f_globals.get("__name__", "")
+            if isinstance(mod, str) and mod.startswith("contextgem"):
+                continue
+            for candidate in (frame.f_locals.get(name), frame.f_globals.get(name)):
                 if (
                     _is_registered_tool(candidate)
                     and getattr(candidate, "__contextgem_tool_name__", None) == name
                 ):
-                    resolved_handler = candidate  # type: ignore[assignment]
-                    break
-                candidate = frame.f_globals.get(name)
-                if (
-                    _is_registered_tool(candidate)
-                    and getattr(candidate, "__contextgem_tool_name__", None) == name
-                ):
-                    resolved_handler = candidate  # type: ignore[assignment]
-                    break
+                    return cast(ToolHandler, candidate)
 
-            if resolved_handler is None:
-                raise ValueError(
-                    f"No registered handler found for tool '{name}'. "
-                    "Ensure the function is decorated with @register_tool(...) and is in scope "
-                    "(imported/defined) before creating or configuring the LLM."
-                )
-
-            # Safe cast to the expected types
-            resolved.append(
-                (
-                    cast(str, name),
-                    cast(JSONDict, parameters),
-                    cast(ToolHandler, resolved_handler),
-                )
-            )
-
-        return resolved
+        raise ValueError(
+            f"No registered function found for tool '{name}'. "
+            "To load an LLM with tools, the functions of the tools have to be decorated "
+            "with @register_tool and be in scope (imported/defined) under their names "
+            "where the LLM is loaded."
+        )
 
     def _sync_tool_registry_from_tools(self) -> None:
         """
-        Rebuilds internal tool registry from validated `self.tools`.
+        Rebuilds the internal tool registry from the validated `self.tools`.
+
+        For each tool, the registry holds the function, the tool definition generated
+        from it (as sent to the LLM), and the JSON schema of the tool parameters
+        (used to validate the arguments of a tool call).
 
         :return: None
         :rtype: None
+        :raises TypeError: If the definition of a tool cannot be generated, e.g. for
+            an unsupported type hint.
         """
+        from contextgem.internal.tools import (
+            _generate_tool_schema,
+            _parse_docstring,
+        )
+
         new_registry: dict[str, ToolRegistration] = {}
-        for name, parameters, handler in self._resolve_and_validate_tools(self.tools):
-            new_registry[name] = {"handler": handler, "schema": parameters}
+        for handler in self.tools or []:
+            definition = _generate_tool_schema(
+                handler, _parse_docstring(inspect.getdoc(handler))
+            )
+            new_registry[definition["function"]["name"]] = {
+                "handler": handler,
+                "definition": definition,
+                "schema": definition["function"]["parameters"],
+            }
         self._tool_registry = new_registry
 
     def _check_and_build_system_message(self) -> _Message | None:
@@ -4182,30 +4146,81 @@ class _DocumentLLM(_GenericModelProcessor):
             )
         return fallback_models
 
+    @field_validator("tools", mode="before")
+    @classmethod
+    def _resolve_tools(cls, tools: Any) -> Any:
+        """
+        Validates that the tools are functions decorated with ``@register_tool``.
+
+        When an LLM is deserialized, the serialized tool definitions are replaced
+        with the registered functions of the same names, found in the calling scope.
+
+        :param tools: The value passed for `tools`.
+        :type tools: Any
+        :return: A list of the registered functions. A value that is not a sequence
+            is returned unchanged, to be rejected by the validation of the field.
+        :rtype: Any
+        :raises ValueError: If a tool is not a function decorated with
+            ``@register_tool``, or if the function of a deserialized tool is not found.
+        """
+        if not isinstance(tools, Sequence) or isinstance(tools, str | bytes):
+            return tools
+
+        resolved: list[Any] = []
+        for tool in tools:
+            if _is_registered_tool(tool):
+                resolved.append(tool)
+            elif isinstance(tool, dict) and _is_deserialization_in_progress():
+                function_data = tool.get("function")
+                name = (
+                    function_data.get("name")
+                    if isinstance(function_data, dict)
+                    else None
+                )
+                if not isinstance(name, str) or not name.strip():
+                    raise ValueError(
+                        "A serialized tool definition must have the name of the tool."
+                    )
+                resolved.append(cls._find_registered_tool_in_scope(name))
+            elif isinstance(tool, dict):
+                raise ValueError(
+                    "Tool definitions are not accepted as dictionaries. Define each tool "
+                    "as a function decorated with `@register_tool`, and pass the function."
+                )
+            elif callable(tool):
+                raise ValueError(
+                    "A function passed as a tool must be decorated with `@register_tool`."
+                )
+            else:
+                raise ValueError(
+                    "Each tool must be a function decorated with `@register_tool`."
+                )
+        return resolved
+
     @field_validator("tools")
     @classmethod
     def _validate_tools(
         cls,
-        tools: list[dict[str, Any]] | None,
-    ) -> list[dict[str, Any]] | None:
+        tools: Sequence[ToolHandler] | None,
+    ) -> Sequence[ToolHandler] | None:
         """
-        Validates `tools` on assignment to prevent persisting invalid configs.
+        Validates that the names of the tools are unique.
 
-        If tools are provided, ensures each entry is a dict with a non-empty function
-        definition, validates the `parameters` schema, and verifies that a registered
-        handler with a matching name is resolvable from user frames.
-
-        :param tools: A list of tool dictionaries to validate, or None if no tools
-            are provided.
-        :type tools: list[dict[str, Any]] | None
+        :param tools: The functions passed as tools, or None if no tools are provided.
+        :type tools: Sequence[ToolHandler] | None
         :return: The validated tools, or None if no tools are provided.
-        :rtype: list[dict[str, Any]] | None
+        :rtype: Sequence[ToolHandler] | None
+        :raises ValueError: If two or more tools have the same name.
         """
         if tools is None:
             return None
 
-        # Reuse shared helper for validation and resolution
-        _ = cls._resolve_and_validate_tools(tools)
+        names = [getattr(tool, "__contextgem_tool_name__", "") for tool in tools]
+        duplicates = sorted({name for name in names if names.count(name) > 1})
+        if duplicates:
+            raise ValueError(
+                f"Tool names must be unique. Duplicate tool names: {', '.join(duplicates)}"
+            )
         return tools
 
     @model_validator(mode="after")
@@ -4606,7 +4621,11 @@ class _DocumentLLM(_GenericModelProcessor):
             request_config["seed"] = self.seed
 
         if self.tools is not None:
-            request_config["tools"] = self.tools
+            # The tool definitions generated from the functions passed as tools
+            request_config["tools"] = [
+                registration["definition"]
+                for registration in self._tool_registry.values()
+            ]
         if self.tool_choice is not None:
             request_config["tool_choice"] = self.tool_choice
         if self.parallel_tool_calls is not None:

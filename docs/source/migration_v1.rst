@@ -466,6 +466,72 @@ Serialized documents are not affected by the removal of ``DocumentPipeline``: a 
 The same function can be used for a serialized pipeline or aspect. For a concept that was serialized separately, replace the value of its ``rating_scale`` key in the same way. The rating scales that were defined as tuples are not affected.
 
 
+.. _migration-v1-tools-label:
+
+🛠️ Tools
+----------
+
+In v1.0, a tool for chat is defined in a single way: as a function decorated with ``@register_tool``, which is passed to ``tools`` of the LLM. The tool schema sent to the LLM (the name, the description and the parameters of the tool) is generated from the function. See :doc:`llms/chat_with_tools`.
+
+**Tool schemas as dictionaries.** ``tools`` no longer accepts tool definitions as dictionaries in the OpenAI-compatible schema. Pass the functions instead, and move the details of each schema to the function: the description of the tool to the docstring, and the descriptions and constraints of the parameters to the docstring or to ``Annotated`` type hints.
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   @register_tool
+   def search_database(query: str, limit: int = 10) -> str:
+       return f"Results for '{query}'"
+
+
+   llm = DocumentLLM(
+       model="openai/gpt-6-luna",
+       tools=[
+           {
+               "type": "function",
+               "function": {
+                   "name": "search_database",
+                   "description": "Search the product database",
+                   "parameters": {
+                       "type": "object",
+                       "properties": {
+                           "query": {"type": "string", "description": "Search query"},
+                           "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+                       },
+                       "required": ["query"],
+                   },
+               },
+           }
+       ],
+   )
+
+.. code-block:: python
+   :caption: In v1.0
+
+   from typing import Annotated
+
+   from pydantic import Field
+
+
+   @register_tool
+   def search_database(
+       query: Annotated[str, "Search query"],
+       limit: Annotated[int, Field(ge=1, le=50)] = 10,
+   ) -> str:
+       """
+       Search the product database.
+       """
+       return f"Results for '{query}'"
+
+
+   llm = DocumentLLM(model="openai/gpt-6-luna", tools=[search_database])
+
+Accordingly, ``llm.tools`` now returns the functions, not the tool schemas.
+
+**Requirements for tool functions.** ``@register_tool`` now raises an error for a function that has no docstring, or that accepts ``*args`` or ``**kwargs``. Before v1.0, such a function was accepted: a tool without a docstring was sent to the LLM without a description, and ``*args`` and ``**kwargs`` were ignored. A parameter without a type hint is reported when the function is decorated, rather than when the LLM is created.
+
+**Serialized data.** LLMs with tools serialized with the earlier versions can be deserialized in v1.0, subject to the other sections of this guide. As before, the functions of the tools have to be decorated with ``@register_tool`` and be defined or imported, under their names, in the code that loads the LLM. The tool schemas stored in the serialized data are no longer used: the schemas are generated from the functions.
+
+
 .. _migration-v1-docx-converter-label:
 
 📄 DOCX Converter

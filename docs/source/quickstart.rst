@@ -174,4 +174,4 @@ Use the ``@register_tool`` decorator to enable LLM tool calling. Schemas are aut
    :language: python
 
 .. seealso::
-   For advanced usage including ``TypedDict`` for complex parameters, custom schema overrides, and supported type hints, see :doc:`llms/chat_with_tools`.
+   For advanced usage including ``TypedDict`` for complex parameters, parameter descriptions and constraints with ``Annotated``, and supported type hints, see :doc:`llms/chat_with_tools`.

@@ -67,6 +67,7 @@ KEY_API_BASE_PUBLIC = "api_base"  # always redacted
 KEY_FALLBACK_MODELS_PUBLIC = "fallback_models"
 KEY_MODEL_PRICING_PUBLIC = "pricing_details"
 KEY_MODELS_PUBLIC = "models"
+KEY_TOOLS_PUBLIC = "tools"
 
 # Private attrs
 KEY_UNIQUE_ID_PRIVATE = "_unique_id"
@@ -191,6 +192,19 @@ class _InstanceSerializer(BaseModel):
             elif key in [KEY_API_KEY_PUBLIC, KEY_API_BASE_PUBLIC]:
                 # Reset API credentials when LLM is serialized
                 base_dict[key] = None
+
+            elif key == KEY_TOOLS_PUBLIC and isinstance(self, _DocumentLLM):
+                # The functions passed as tools cannot be serialized: the tool
+                # definitions generated from them are stored instead. When the LLM
+                # is deserialized, the functions are found by the names of the tools.
+                base_dict[key] = (
+                    [
+                        registration["definition"]
+                        for registration in self._tool_registry.values()
+                    ]
+                    if val is not None
+                    else None
+                )
 
         # Include relevant private attributes
         for key in self.__private_attributes__:

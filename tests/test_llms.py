@@ -185,7 +185,7 @@ class TestLLMs(BaseTest):
                 api_base="http://localhost:1234/v1",
                 api_key="random-key",  # required for LM Studio API
                 system_message="",
-                tools=[get_order_total, get_discount_amount, compute_final_amount],  # ty: ignore[invalid-argument-type]
+                tools=[get_order_total, get_discount_amount, compute_final_amount],
                 seed=123,
             )
         llm_lm_studio._supports_tools = True

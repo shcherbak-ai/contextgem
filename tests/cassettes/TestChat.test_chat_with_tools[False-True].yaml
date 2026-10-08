@@ -7,11 +7,13 @@ interactions:
       order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
       returned by the previous tools as invoice_total, discount, surcharge. Reply
       only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
+      guess any values; you must call the tools."}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
     headers:
       accept:
       - '*/*'
@@ -22,7 +24,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '1835'
+      - '1938'
       content-type:
       - application/json
       host:
@@ -34,26 +36,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -76,7 +79,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1171'
+      - '1146'
       openai-project:
       - DUMMY
       openai-version:
@@ -116,11 +119,13 @@ interactions:
       order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
       returned by the previous tools as invoice_total, discount, surcharge. Reply
       only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_gnEjq2uqmvigkvXCwmT5V5jy","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_gnEjq2uqmvigkvXCwmT5V5jy","output":[{"type":"input_text","text":"9"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
+      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_GfsPpKHfZJTAZYFqhseKtJ9Z","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_GfsPpKHfZJTAZYFqhseKtJ9Z","output":[{"type":"input_text","text":"9"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
     headers:
       accept:
       - '*/*'
@@ -131,7 +136,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '2127'
+      - '2230'
       content-type:
       - application/json
       host:
@@ -143,26 +148,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
+        NU8Som0/PBxmh38B79ujUR4RAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -185,7 +191,119 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1026'
+      - '1476'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Use
+      the available tools to compute a final amount. First call `compute_invoice_total`
+      with exactly items=[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]. Then call
+      `get_discount_amount` with order_id=''ORD-123''. Then call `get_surcharge` with
+      order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
+      returned by the previous tools as invoice_total, discount, surcharge. Reply
+      only with the number returned by `compute_final_amount`, nothing else. Do not
+      guess any values; you must call the tools."}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '1938'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.104.0
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/+1XS3PbOAy++1dodGp3nY7kyHbS4+6h0566e9qZJqOhKEhmI5EKH27djP/7gtRb
+        ltMmk24ve0lkgABBfPgA8mHheT5L/beeL0FVcZCRZEO3EKySLEwiEgQbQrfXG7Jeo/Bqm65IsIpC
+        uo6ug2QbrbYrf2ldiOQzUN26EVxBLacSiIY0JlYXbq/DaLMOV2unU5poo6wNFWVVAK6rjQiloFRc
+        SZFLUtoV3BSFUyWE3uVSGG5DzkihoBazomA8R9kD/kRBRQ4gresU9lCICn+g4ljH1O42iWrjtCCl
+        kMMtMwn3Bjg9xBVwUugDKoM3gdMx3jqLU9CEFaNgGVdaGqoZ5mMoL8nXWBhdGR1rcQdOGW6CIOi0
+        WogipqQY+ytFCoU9VF7pi81FYTjxO4Ukdp/h8noLlHxyOakz08Gd0fNgb4IojCzYyVV0eXVN6OoK
+        v9dh5LZzTvShAufGcHdAF22vPoetUxKZmxK4dvqHG59pKNWN//YTft/rA36tljd+JRkF/L48Ljt5
+        OJLfHnufdvu4Ppn7LNcf38ui+Lb5sOL/0HfZ5/Bw/4fefustOCmhDdAggIzvBXrG3GtS+G7VEf/e
+        ulxWRKJXKMbI9AVYYdljjcBMjaBqz4RRccuMOswOJizzstLok+4gvoPDWZ3ELPIGZH8V7WrskWBK
+        8FHxU8E1fHVstKnQRmKJ1ef2IcuEdKoSUmbKVm5LyEoROJ4S2aLlK1OWRLZBdRxSJAN9wJPYiDIG
+        I8YokHuXSdZyMCOm0H7DeiHtTsiMOnUIfmWr1zhx2GStOUBzIoy5JP3vQf25dTVYTcR7kIlQzGHQ
+        HrKLu4ZvZ4F26TFa+L3CKJJDvysr8WecAx9uzPiIt8FyTjHoBq1h5+/UtDnuQNMojp3zabsI5jUv
+        vq8jw3RBm+kvkMQKiKS7YYK4KWPXMpUemIwQUKdNadpPep6moKhkVVv4f9Z0VV7DV8+F6BHlYam+
+        wjbxm2sQrz2BheC51vLmR0k/TapC2pVkUNrNbMGphFyUkzS3R2hm4SDLSGMscaTD2MJCY+ObCAeu
+        iJTkMPD0iM1jAXwvjEZ/7zhzqhi4ZthZcmT1cm7RBKm/DMHmoA+eyDy9A4fFvGHJOCuRpkj/E/Xx
+        1KIeAS8Z6kfr8ClxBqdxLr4Tt29JwSSkXfHPnGk5j8pEert4ZCcb5fumRIbp7AMcGJwLqimyxXTH
+        42DCY8C6HYLDvvB0Tv8NbkZ5KVMU73baI6X7h23fI17O9sA9IVPL53SGzDnouDWNa9NfQGUXYD3b
+        z7DZpgzn9LMx6Xb4j2FRBls8XtrgGbh0tv8j8gKIdMMvY9wOvRoOnH2vRoPMu+io9Nr7vcfvkUHo
+        HP468ozn8FPwGjY/vz318z309frTimb+zjGO/0xMTyyz7vmiRRUXIsf8J90N0Akr91C5vqoFEuuv
+        fUbaWEhStG/y6dV4fAu+3G6Wix+5Bfv1U+aLxPkyd5t16vTchXN6C75czynmtu1eSedcTy66URh2
+        N1ajxs8brHmSEm358HBcHP8FZ9OXN0MRAAA=
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1009'
       openai-project:
       - DUMMY
       openai-version:
@@ -225,11 +343,13 @@ interactions:
       order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
       returned by the previous tools as invoice_total, discount, surcharge. Reply
       only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
+      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","output":[{"type":"input_text","text":"9"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
     headers:
       accept:
       - '*/*'
@@ -240,7 +360,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '1835'
+      - '2230'
       content-type:
       - application/json
       host:
@@ -252,26 +372,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
+        3N1YtRw+b7DmSUaU6YfH/Wz/D/xH9OAeEQAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -294,7 +415,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1246'
+      - '1019'
       openai-project:
       - DUMMY
       openai-version:
@@ -334,11 +455,13 @@ interactions:
       order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
       returned by the previous tools as invoice_total, discount, surcharge. Reply
       only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","output":[{"type":"input_text","text":"9"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
+      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","output":[{"type":"input_text","text":"9"}]},{"type":"function_call","call_id":"call_imIVOx71NUGyDIDKWNx7dYdo","name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_imIVOx71NUGyDIDKWNx7dYdo","output":[{"type":"input_text","text":"4"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
     headers:
       accept:
       - '*/*'
@@ -349,7 +472,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '2127'
+      - '2485'
       content-type:
       - application/json
       host:
@@ -361,26 +484,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
+        SUK0rYen8+L8Fwni7PkYEQAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -403,7 +527,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1927'
+      - '1654'
       openai-project:
       - DUMMY
       openai-version:
@@ -443,11 +567,13 @@ interactions:
       order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
       returned by the previous tools as invoice_total, discount, surcharge. Reply
       only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","output":[{"type":"input_text","text":"9"}]},{"type":"function_call","call_id":"call_hWgEA6E7Zq5MtPO4RTMkAhDf","name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_hWgEA6E7Zq5MtPO4RTMkAhDf","output":[{"type":"input_text","text":"4"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
+      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","output":[{"type":"input_text","text":"9"}]},{"type":"function_call","call_id":"call_imIVOx71NUGyDIDKWNx7dYdo","name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_imIVOx71NUGyDIDKWNx7dYdo","output":[{"type":"input_text","text":"4"}]},{"type":"function_call","call_id":"call_Df0ibdoyoIfLkg084fib9nBy","name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_Df0ibdoyoIfLkg084fib9nBy","output":[{"type":"input_text","text":"2"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
     headers:
       accept:
       - '*/*'
@@ -458,7 +584,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '2382'
+      - '2734'
       content-type:
       - application/json
       host:
@@ -470,26 +596,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -512,7 +639,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '827'
+      - '1116'
       openai-project:
       - DUMMY
       openai-version:
@@ -552,11 +679,13 @@ interactions:
       order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
       returned by the previous tools as invoice_total, discount, surcharge. Reply
       only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","output":[{"type":"input_text","text":"9"}]},{"type":"function_call","call_id":"call_hWgEA6E7Zq5MtPO4RTMkAhDf","name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_hWgEA6E7Zq5MtPO4RTMkAhDf","output":[{"type":"input_text","text":"4"}]},{"type":"function_call","call_id":"call_BJEoYaUS8huPZcyce0DimmMu","name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_BJEoYaUS8huPZcyce0DimmMu","output":[{"type":"input_text","text":"2"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
+      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_m5PIrllz6J2nXcGfj1yqBt7z","output":[{"type":"input_text","text":"9"}]},{"type":"function_call","call_id":"call_imIVOx71NUGyDIDKWNx7dYdo","name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_imIVOx71NUGyDIDKWNx7dYdo","output":[{"type":"input_text","text":"4"}]},{"type":"function_call","call_id":"call_Df0ibdoyoIfLkg084fib9nBy","name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_Df0ibdoyoIfLkg084fib9nBy","output":[{"type":"input_text","text":"2"}]},{"type":"function_call","call_id":"call_YSUf6y9UVwPI4Ky6J5bPxr7X","name":"compute_final_amount","arguments":"{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}"},{"type":"function_call_output","call_id":"call_YSUf6y9UVwPI4Ky6J5bPxr7X","output":[{"type":"input_text","text":"7"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer","description":"Quantity
+      of the item","minimum":1},"price":{"type":"integer","description":"Price of
+      the item","minimum":0}},"required":["price","qty"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Computes
+      invoice total as sum(qty*price) over items."},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      discount amount for a given order id."},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Returns
+      surcharge amount for a given order id."},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Computes
+      final amount as (invoice_total - discount) + surcharge."}]}'
     headers:
       accept:
       - '*/*'
@@ -567,7 +696,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '2631'
+      - '3028'
       content-type:
       - application/json
       host:
@@ -579,26 +708,27 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        H4sIAAAAAAAA/+1XyXLjNhC96ytYPM0k9hQla801p9ySXKemUCDZpJAhARqLPCqX/j0NkAAXUZ7Y
+        5WQuOUnsBrof+vXD8ryIopjl8S9RLEE1JIHDisI2AUgfVpsNJMmWZrvDlqZZetjvd/nqkKxXq026
+        Q9Nu+fCQxnc2hEj/gkz7MIIraO2ZBKohJ9T6lrvDcr3dLB+Wzqc01UbZOZmomwpwXDuJZhkoRRop
+        SklrO4KbqnKulGZfSykMt5ALWilozayqGC/R9oyfaGjoGaQNncMJKtHgBzouLSafbYJq5bwgpZDD
+        lIWERwM8O5MGOK30GZ3Jp8T5GPfBSA6asmoElnGlpck0w3oM7TX9RoTRjdFEi6/gnMttkiTBq4Wo
+        SEarcbxa5FDZRZWNvt/eV4bTODgktXmGw9sUaPnsatJWJtBdq/I229mmSBLLNoX1fp9lyXpN99sc
+        1i6fi6LPDbg4SBUtoXfcotU5M8E18B7UENgorK8PfNNhthtAORea+pp+/jJyVqLErklnPC4Qxt3F
+        wXrp/oWBcXOkymUvGDJNKFdP2DjBLUXlvFQphqvEZSx8HBcDu04iZ1CN+evbtEFxYCfBTCeh68SE
+        UcTrhziaApm4rLrRGDM7AvkK55s+CbbAbSvEq/Wx7RCUoRJ8JBFHRVsUBEq0kVjRdq0xFIWQuqU3
+        Z6b2dtto1mpXn1PpiY2VqWsqPaigNEUL0GdciUVUMBjpSoE8MayFZl6pBTVVyzYmENJmQv20pdNQ
+        N7bHjTMvu6p1C+hWhJhr2n8PusmNa8nqEJ9ApkIxx4FfZMDd0ncUCM+Vx2gR9w7j+j1kZTV+khL4
+        MDHjI3Und3OOwZ7Ra6CLdz21W+7A0zkuIfh0U0nmPe+eV6Miq+kAX+knSIkCKrPjsEDc1MRtrEoP
+        powYUNdbl+ezMNxtq702c1CZZI1v/F9REUaDihg/WRojBzGiKsJW/fCozz81Es0fI4GNEDHsLvWp
+        D8ZpDX4DwyikC0JckHhaVIWyq+mgtbsTCM8u1KKclDlscO2JOagyyhhbHOUwnmGpsfgmxkEoKiU9
+        j3bJm3NeAvA9GJ3/0Wnm2jEIzXBnKQc752jQhKk/DG6kqMNIFJE+guNifmLNOKtRpij/K/flekbs
+        GH5PqL/bgK/BmVzjXHwHd2xFwSTkoyNysqa7eVYm1i+LFzJZlL91LTIsZw9wMOEWqK7JFtOMl8Fl
+        AAFrfwgO94XXa/pPcGdUlDOV4Q1QR7R2P7jtRzQq2Ql4JGRu9ZzPiLkETfxU0k79AVJ2ANuz/Yaa
+        bcnwnH4zJyHDf0yLMrjFU1nCG3gJc/9n5B0YCYefu8Z6OvDs+zA6yKL7IKWP0c89fy8chN29+EeJ
+        Z3wOv4av0VvAr/rtEfp+/deaZv7OMcZ/A9Mr2yw8X7RoyOAFlQRj4x4qh31rkNh//rFpsdC08i/3
+        6dV4fAvePGzvFv/kFhy3T5kniefL3G3WufNbF87pLXgzZ5/LGh5JtyJP7rmb9TJcWI0av26w5WlO
+        tZXD82Vx+Ru3pGX5aBEAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -621,7 +751,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '864'
+      - '786'
       openai-project:
       - DUMMY
       openai-version:
@@ -646,115 +776,6 @@ interactions:
       - DUMMY
       x-ratelimit-reset-requests:
       - 24ms
-      x-ratelimit-reset-tokens:
-      - 0s
-      x-request-id:
-      - DUMMY
-    status:
-      code: 200
-      message: OK
-- request:
-    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Use
-      the available tools to compute a final amount. First call `compute_invoice_total`
-      with exactly items=[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]. Then call
-      `get_discount_amount` with order_id=''ORD-123''. Then call `get_surcharge` with
-      order_id=''ORD-123''. Then call `compute_final_amount` using the exact outputs
-      returned by the previous tools as invoice_total, discount, surcharge. Reply
-      only with the number returned by `compute_final_amount`, nothing else. Do not
-      guess any values; you must call the tools."}]},{"type":"function_call","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3},{\"qty\":1,\"price\":3}]}"},{"type":"function_call_output","call_id":"call_bj0T4LRaJCDgOzmf4o6IsC3o","output":[{"type":"input_text","text":"9"}]},{"type":"function_call","call_id":"call_hWgEA6E7Zq5MtPO4RTMkAhDf","name":"get_discount_amount","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_hWgEA6E7Zq5MtPO4RTMkAhDf","output":[{"type":"input_text","text":"4"}]},{"type":"function_call","call_id":"call_BJEoYaUS8huPZcyce0DimmMu","name":"get_surcharge","arguments":"{\"order_id\":\"ORD-123\"}"},{"type":"function_call_output","call_id":"call_BJEoYaUS8huPZcyce0DimmMu","output":[{"type":"input_text","text":"2"}]},{"type":"function_call","call_id":"call_J1eHfxjgTEzF8Mc8txT1RZQg","name":"compute_final_amount","arguments":"{\"invoice_total\":\"9\",\"discount\":\"4\",\"surcharge\":\"2\"}"},{"type":"function_call_output","call_id":"call_J1eHfxjgTEzF8Mc8txT1RZQg","output":[{"type":"input_text","text":"7"}]}],"max_output_tokens":16000,"parallel_tool_calls":false,"stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"integer"},"price":{"type":"integer"}},"required":["qty","price"]},"minItems":1}},"required":["items"]},"strict":null,"type":"function","description":"Compute
-      invoice total as sum(qty*price) over items"},{"name":"get_discount_amount","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      discount amount for a given order id"},{"name":"get_surcharge","parameters":{"type":"object","properties":{"order_id":{"type":"string"}},"required":["order_id"]},"strict":null,"type":"function","description":"Return
-      surcharge amount for a given order id"},{"name":"compute_final_amount","parameters":{"type":"object","properties":{"invoice_total":{"type":"string"},"discount":{"type":"string"},"surcharge":{"type":"string"}},"required":["invoice_total","discount","surcharge"]},"strict":null,"type":"function","description":"Compute
-      final amount as (invoice_total - discount) + surcharge"}]}'
-    headers:
-      accept:
-      - '*/*'
-      accept-encoding:
-      - gzip, deflate
-      authorization:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-length:
-      - '2925'
-      content-type:
-      - application/json
-      host:
-      - DUMMY
-      user-agent:
-      - litellm/1.104.0
-    method: POST
-    uri: https://api.openai.com/v1/responses
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAA/+1XS3PjNgy++1dodNptk46U+NlrT732urPDoSRYZiORCh/OejL+7wVJURZla3eT
-        2XYvzSUWQAIgPnwE+LpIkpRV6e9JKkF1JNsU+bLclKsiX1WrZZ5la1pusvX6sciqcrupHmi+fFwv
-        YZfj76KkWXpnTYjibyh1MCO4Ai8vJVANFaFWl292+fJhm+9WTqc01UbZPaVouwZwnd9EyxKUIp0U
-        taStXcFN0zhVQcunWgrDbch72ijwYtY0jNcoe8VPFHT0BNKaruAIjejwAxVnH1PwNolq7bQgpZBj
-        l3sJzwZ4eSIdcNroEyqz3zKnYzwYIxVoypooWMaVlqbUDPMxlrf0CxFGd0YTLZ7AKfN1lmWDVgvR
-        kJI2sb1WVNDYQ9Wdvl/fN4bTdFBIav2Ml3sXKPnkcuIzM8Ddqnoe7eWmzJYO7aLabWG3zXaPdAnb
-        wvlzVvSpA2cHoaI1XBRzsDplKbgGfglqHFhkNuQHvuhht1tAOReahpx++hwpG1Fj1RQ3NM4Q2t2k
-        g/Tc/xoWpt2BKud9zxBpQrl6wcIZ1FI0TkuVYnhKPMYi2HE2sOokYgZNjN+lTDskB1YS3KgkVB2Z
-        MIoE/hAH0wAmHqvtNNosD0Ce4DSrk2AT7EshfVgefIUgDZXgEUUcFD4pGCjRRmJG/VlT2O+F1B7e
-        ipk2yG2hWak9fUVlADZVpm2pDEENTFN0D/qEJ7ER7RlEvFIgjwxzoVlg6p6axqONDoS0npA/PnUa
-        2s7WuHHivM9af4D+RBhzSy/fo2py6zxYfcRHkIVQzGEQDjnE7eE7CAzPpcdokV4UxtX74JW1+Elq
-        4GPHjEfszu5uKUZ3xoUDvb3rrf1xR5pecR6MTy+V7Lbmh/vVyMhmuiBk+gUKooDK8jBOEDctcRer
-        0qMtEQLq+uoKeO4Nd9fqhZsVqFKyLhT+H8gIoyFh/GhRTFyECVUJVuqHZ336pZMo/pgIrIOEYXGp
-        iylOWwjXF9ogvQ3ibKTTlCokXUtHhd33H+xcyEQ5SfJwvfl+OcoxkhgLHMkQ77DAuPBi4cgUlZKe
-        ojtyds/XAvhWGL3+2THmWjEyzfBeqX3Djf/Od9f2HA7vt7j4hofU1hiTUEUdJzrNbFAT+efFVzyl
-        LeN/9jnPF7cCHG2YC6pHbTH1eB71VoxMh54yptnbKfIX2Cs/qZgqcZ7SCW3dP7xEE5rU7Ag8EbKy
-        9KiuuVGDJmEn8Tt/AjNcfL5RzpDDJgyb3rsRGTz8t6Aog9cllTW8HZVh6/94/AA8Qh9xA2EAA9vI
-        h6gpJPcDjT4mvyY3IJj2lH7A/FnEiVvaW9CKhupw6PdbuKTqXyuZ2+07jn8mpjcW2fAO0KIjo6dI
-        Ngg7N/Hvtl4gsfrCq83GQosmPIGnM2Y8Tq7y/G7xPeNk6t8ELxI7y62x0KmrucltOk6ubslveR1e
-        G3OWJwPjKl8Pk59R8TMBS55WVFs6vJ4X538AZ3hR6LEQAAA=
-    headers:
-      access-control-expose-headers:
-      - X-Request-ID
-      - CF-Ray
-      - CF-Ray
-      alt-svc:
-      - h3=":443"; ma=86400
-      cf-cache-status:
-      - DYNAMIC
-      cf-ray:
-      - DUMMY
-      connection:
-      - keep-alive
-      content-encoding:
-      - gzip
-      content-type:
-      - application/json
-      date:
-      - DUMMY
-      openai-organization:
-      - DUMMY
-      openai-processing-ms:
-      - '2194'
-      openai-project:
-      - DUMMY
-      openai-version:
-      - '2020-10-01'
-      server:
-      - cloudflare
-      set-cookie:
-      - DUMMY
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
-      transfer-encoding:
-      - chunked
-      x-content-type-options:
-      - nosniff
-      x-ratelimit-limit-requests:
-      - DUMMY
-      x-ratelimit-limit-tokens:
-      - DUMMY
-      x-ratelimit-remaining-requests:
-      - DUMMY
-      x-ratelimit-remaining-tokens:
-      - DUMMY
-      x-ratelimit-reset-requests:
-      - 12ms
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:

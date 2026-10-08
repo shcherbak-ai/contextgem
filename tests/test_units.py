@@ -30,9 +30,11 @@ type-hint serialization/normalization.
 
 from __future__ import annotations
 
+import re
 import warnings
 from dataclasses import dataclass
 from typing import (  # noqa: UP035
+    Annotated,
     Any,
     Dict,
     List,
@@ -44,6 +46,8 @@ from typing import (  # noqa: UP035
 )
 
 import pytest
+from pydantic import Field, StringConstraints
+from typing_extensions import NotRequired
 
 from contextgem import Aspect, Document, StringConcept
 from contextgem.internal.tools.docstring_parser import _ParsedDocstring
@@ -410,6 +414,257 @@ def test_generate_tool_schema_skips_var_args_and_kwargs() -> None:
     properties = schema["function"]["parameters"]["properties"]
     assert "name" in properties
     assert "args" not in properties and "kwargs" not in properties
+
+
+# ---------------------------------------------------------------------------
+# schema_generator: Annotated descriptions and constraints
+# ---------------------------------------------------------------------------
+
+
+class _AnnotatedItemTD(TypedDict):
+    """TypedDict whose fields have descriptions and constraints."""
+
+    qty: Annotated[int, Field(description="Quantity of the item", ge=1)]
+    price: Annotated[float, "Unit price"]
+    note: NotRequired[Annotated[str, Field(max_length=20)]]
+
+
+def test_json_schema_annotated_string_is_description() -> None:
+    """A string in the metadata of ``Annotated`` becomes the description."""
+    assert _python_type_to_json_schema(Annotated[str, "Text to search for"]) == {
+        "type": "string",
+        "description": "Text to search for",
+    }
+
+
+def test_json_schema_annotated_description_takes_precedence() -> None:
+    """A description in the metadata of ``Annotated`` overrides the passed one."""
+    schema = _python_type_to_json_schema(
+        Annotated[int, Field(description="From the annotation")],
+        "From the docstring",
+    )
+    assert schema == {"type": "integer", "description": "From the annotation"}
+
+    # Without a description in the metadata, the passed description is used
+    schema = _python_type_to_json_schema(
+        Annotated[int, Field(ge=1)], "From the docstring"
+    )
+    assert schema == {
+        "type": "integer",
+        "description": "From the docstring",
+        "minimum": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    "type_hint, expected",
+    [
+        (
+            Annotated[int, Field(ge=1, le=10)],
+            {"type": "integer", "minimum": 1, "maximum": 10},
+        ),
+        (
+            Annotated[float, Field(gt=0, lt=1, multiple_of=0.25)],
+            {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "exclusiveMaximum": 1,
+                "multipleOf": 0.25,
+            },
+        ),
+        (
+            Annotated[str, Field(min_length=1, max_length=5, pattern="^[a-z]+$")],
+            {"type": "string", "minLength": 1, "maxLength": 5, "pattern": "^[a-z]+$"},
+        ),
+        (
+            Annotated[str, Field(pattern=re.compile("^a"))],
+            {"type": "string", "pattern": "^a"},
+        ),
+        (
+            Annotated[str, StringConstraints(min_length=2, pattern="^a")],
+            {"type": "string", "minLength": 2, "pattern": "^a"},
+        ),
+        (
+            Annotated[list[str], Field(min_length=1, max_length=3)],
+            {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1,
+                "maxItems": 3,
+            },
+        ),
+        (
+            Annotated[dict[str, int], Field(max_length=2)],
+            {
+                "type": "object",
+                "additionalProperties": {"type": "integer"},
+                "maxProperties": 2,
+            },
+        ),
+        # The constraints of an optional value apply to the value
+        (
+            Annotated[Optional[int], Field(ge=0)],  # noqa: UP045
+            {"type": "integer", "minimum": 0},
+        ),
+        (
+            Optional[Annotated[int, Field(ge=0)]],  # noqa: UP045
+            {"type": "integer", "minimum": 0},
+        ),
+        # Annotated can be nested in a collection
+        (
+            list[Annotated[int, Field(ge=0)]],
+            {"type": "array", "items": {"type": "integer", "minimum": 0}},
+        ),
+        (
+            Annotated[Literal["a", "b"], "Choice"],
+            {"type": "string", "enum": ["a", "b"], "description": "Choice"},
+        ),
+        # Metadata that is not a description or a constraint is ignored
+        (Annotated[int, object()], {"type": "integer"}),
+    ],
+)
+def test_json_schema_annotated_constraints(
+    type_hint: Any, expected: dict[str, Any]
+) -> None:
+    """The constraints in the metadata of ``Annotated`` become JSON Schema keywords
+    of the annotated type."""
+    assert _python_type_to_json_schema(type_hint) == expected
+
+
+@pytest.mark.parametrize(
+    "type_hint, constraint",
+    [
+        (Annotated[str, Field(ge=1)], "ge"),
+        (Annotated[int, Field(pattern="a")], "pattern"),
+        (Annotated[int, Field(min_length=1)], "min_length"),
+        (Annotated[Union[int, str], Field(ge=1)], "ge"),  # noqa: UP007
+        (Annotated[bool, Field(le=1)], "le"),
+    ],
+)
+def test_json_schema_annotated_constraint_on_wrong_type_raises(
+    type_hint: Any, constraint: str
+) -> None:
+    """A constraint that does not apply to the annotated type raises ``TypeError``."""
+    with pytest.raises(TypeError, match=f"Constraint `{constraint}` cannot be applied"):
+        _python_type_to_json_schema(type_hint)
+
+
+def test_json_schema_annotated_invalid_pattern_raises() -> None:
+    """A pattern that is not a valid regular expression raises ``TypeError``."""
+    with pytest.raises(TypeError, match="Invalid `pattern` constraint"):
+        _python_type_to_json_schema(Annotated[str, Field(pattern="(")])
+
+
+def test_typeddict_fields_with_annotated_and_not_required() -> None:
+    """The fields of a TypedDict can have descriptions and constraints, and a field
+    marked with ``NotRequired`` is not listed as required."""
+    assert _typeddict_to_json_schema(_AnnotatedItemTD) == {
+        "type": "object",
+        "properties": {
+            "qty": {
+                "type": "integer",
+                "description": "Quantity of the item",
+                "minimum": 1,
+            },
+            "price": {"type": "number", "description": "Unit price"},
+            "note": {"type": "string", "maxLength": 20},
+        },
+        "required": ["price", "qty"],
+    }
+
+
+def test_generate_tool_schema_annotated_parameters() -> None:
+    """The parameters of a tool can be described and constrained with ``Annotated``.
+    A description in ``Annotated`` takes precedence over the docstring."""
+
+    def search(
+        query: Annotated[str, Field(description="Text to search for", min_length=1)],
+        items: Annotated[list[_AnnotatedItemTD], Field(min_length=1)],
+        limit: Annotated[int, "Maximum number of results", Field(ge=1, le=100)] = 10,
+        ratio: Annotated[Optional[float], Field(gt=0)] = None,  # noqa: UP045
+        plain: int = 0,
+    ) -> str:
+        """Sample tool with annotated parameters."""
+        return query
+
+    schema = _generate_tool_schema(
+        search,
+        _ParsedDocstring(
+            summary="Search the catalog.",
+            params={
+                "query": "Overridden by the annotation",
+                "plain": "From the docstring",
+            },
+        ),
+    )
+    parameters = schema["function"]["parameters"]
+    assert parameters["required"] == ["query", "items"]
+    assert parameters["properties"]["query"] == {
+        "type": "string",
+        "description": "Text to search for",
+        "minLength": 1,
+    }
+    assert parameters["properties"]["items"]["minItems"] == 1
+    assert parameters["properties"]["items"]["items"]["required"] == ["price", "qty"]
+    assert parameters["properties"]["limit"] == {
+        "type": "integer",
+        "description": "Maximum number of results",
+        "minimum": 1,
+        "maximum": 100,
+    }
+    assert parameters["properties"]["ratio"] == {
+        "type": "number",
+        "exclusiveMinimum": 0,
+    }
+    assert parameters["properties"]["plain"] == {
+        "type": "integer",
+        "description": "From the docstring",
+    }
+
+
+# ---------------------------------------------------------------------------
+# schema_generator: type hints that cannot be resolved
+# ---------------------------------------------------------------------------
+
+
+def test_generate_tool_schema_unresolvable_type_hint_raises_typeerror() -> None:
+    """With lazily evaluated annotations (as in this module), a type defined inside
+    a function cannot be found, which is reported as such."""
+
+    class _LocalItemTD(TypedDict):
+        """TypedDict defined inside a function."""
+
+        qty: int
+
+    def f(items: list[_LocalItemTD]) -> str:
+        """Sample tool whose type hints use a type defined inside a function."""
+        return str(items)
+
+    with pytest.raises(
+        TypeError,
+        match="Cannot resolve the type hints of the tool `f`: "
+        "name '_LocalItemTD' is not defined.*defined at module level",
+    ):
+        _generate_tool_schema(f, _ParsedDocstring(summary="…"))
+
+
+def test_typeddict_unresolvable_type_hint_raises_typeerror() -> None:
+    """The same applies to the type hints of the fields of a TypedDict."""
+
+    class _LocalInnerTD(TypedDict):
+        """TypedDict defined inside a function."""
+
+        value: int
+
+    class _LocalOuterTD(TypedDict):
+        """TypedDict whose field uses a type defined inside a function."""
+
+        inner: _LocalInnerTD
+
+    with pytest.raises(
+        TypeError, match="Cannot resolve the type hints of `_LocalOuterTD`"
+    ):
+        _typeddict_to_json_schema(_LocalOuterTD)
 
 
 # ---------------------------------------------------------------------------

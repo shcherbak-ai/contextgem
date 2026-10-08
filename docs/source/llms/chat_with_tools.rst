@@ -31,15 +31,16 @@ Tools allow the LLM to invoke Python functions during a conversation to perform 
 Basic Usage
 ------------
 
-Use the ``@register_tool`` decorator to register a function as a tool. The tool schema is auto-generated from the function signature, type hints, and docstring.
+A tool is a Python function decorated with ``@register_tool``. The function defines the tool: its name is the name of the tool, its docstring describes the tool to the LLM, and its parameters, with their type hints and default values, define the parameters of the tool.
 
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/chat_with_tools.py
    :language: python
 
 **Key points:**
 
-* Decorate functions with ``@register_tool`` to make them available as tools
-* Pass decorated functions directly to ``tools=[...]`` when creating the LLM
+* Decorate a function with ``@register_tool``, and pass the function itself to ``tools=[...]`` when creating the LLM, or assign the functions to ``llm.tools`` later. This is the only way to define and assign tools
+* A tool function must have a docstring and type hints for all its parameters, and must not have positional-only parameters, ``*args`` or ``**kwargs``
+* A parameter that has a default value, or is typed as ``Optional``, is optional for the LLM
 * Tool handlers must return a string (serialize structured data with ``json.dumps`` if needed)
 * Use :class:`~contextgem.public.llms.ChatSession` to maintain conversation history across turns
 
@@ -92,6 +93,12 @@ The schema generator extracts parameter descriptions from docstrings. Multiple f
        return "results"
 
 
+.. note::
+   A docstring in any other format works as well: the whole docstring describes the tool,
+   and the parameters are sent to the LLM without descriptions, unless they are described
+   with ``Annotated`` (see :ref:`llm-tools-annotated-label`).
+
+
 Schema Generation Best Practices
 ---------------------------------
 
@@ -137,6 +144,11 @@ This generates a proper schema with typed properties:
      }
    }
 
+.. note::
+   If a module uses ``from __future__ import annotations``, define the types used in the type
+   hints of a tool (e.g. a ``TypedDict``) at module level, not inside a function. Otherwise,
+   they cannot be found when the tool schema is generated, and ``TypeError`` is raised.
+
 Supported Type Hints
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -148,6 +160,7 @@ The schema generator supports the following Python type hints:
 * **Unions:** ``Union[X, Y, ...]``, ``X | Y``
 * **Literals:** ``Literal["a", "b", "c"]``
 * **Structured:** ``TypedDict``
+* **Annotated:** ``Annotated[T, ...]`` with a description and/or constraints (see :ref:`llm-tools-annotated-label`)
 
 .. note::
    **JSON serialization of collections:** Since tool arguments are transmitted as JSON,
@@ -183,43 +196,59 @@ The schema generator supports the following Python type hints:
        return "results"
 
 
-Custom Schema Override
------------------------
+.. _llm-tools-annotated-label:
 
-For full control over the tool schema, pass an explicit OpenAI-compatible schema to ``@register_tool``:
+Parameter Descriptions and Constraints
+---------------------------------------
+
+Besides the docstring, a parameter can be described with ``Annotated``, next to its type. ``Annotated`` can also set constraints on the values of the parameter, with pydantic's ``Field``:
 
 .. code-block:: python
 
-   @register_tool(schema={
-       "type": "function",
-       "function": {
-           "name": "search_database",
-           "description": "Search the product database",
-           "parameters": {
-               "type": "object",
-               "properties": {
-                   "query": {
-                       "type": "string",
-                       "description": "Search query"
-                   },
-                   "category": {
-                       "type": "string",
-                       "enum": ["electronics", "clothing", "books"],
-                       "description": "Product category filter"
-                   }
-               },
-               "required": ["query"]
-           }
-       }
-   })
-   def search_database(query: str, category: str = None) -> str:
-       return f"Results for '{query}' in {category or 'all categories'}"
+   from typing import Annotated, Literal
 
-This is useful when you need:
+   from pydantic import Field
 
-* Custom parameter descriptions beyond what docstrings provide
-* Specific enum values or constraints
-* Complex nested schemas
+   @register_tool
+   def search_database(
+       query: Annotated[str, Field(description="Search query", min_length=1)],
+       category: Annotated[
+           Literal["electronics", "clothing", "books"], "Product category filter"
+       ] = "books",
+       limit: Annotated[int, Field(description="Maximum results", ge=1, le=50)] = 10,
+   ) -> str:
+       """
+       Search the product database.
+       """
+       return f"Results for '{query}' in {category}"
+
+* A string in ``Annotated``, or ``Field(description=...)``, is the description of the parameter. It takes precedence over the description of the parameter in the docstring
+* The constraints are added to the tool schema sent to the LLM, and the arguments of each tool call are validated against them. If the LLM passes an invalid value, the tool is not called: the LLM receives the validation error and can correct the call
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Constraints
+     - Apply to
+   * - ``gt``, ``ge``, ``lt``, ``le``, ``multiple_of``
+     - ``int``, ``float``
+   * - ``min_length``, ``max_length``
+     - ``str``, ``list``, ``tuple``, ``set``, ``dict``
+   * - ``pattern``
+     - ``str``
+
+``Annotated`` can also be used for the items of a collection (e.g. ``list[Annotated[int, Field(ge=0)]]``) and for the fields of a ``TypedDict``. A constraint that does not apply to the type of the parameter raises ``TypeError`` when the tools are set.
+
+.. note::
+   There is no way to pass a hand-written tool schema: the schema is always generated from
+   the function, so that the two cannot go out of sync.
+
+
+Serializing an LLM with Tools
+------------------------------
+
+An LLM with tools is serialized as usual (``to_dict()``, ``to_json()``, ``to_disk()``). The functions themselves are not stored: the serialized data holds the tool schemas generated from them. When the LLM is loaded, each tool is matched by its name to a function decorated with ``@register_tool``, so the functions of the tools have to be defined or imported, under their own names, in the code that loads the LLM.
 
 
 Tool Configuration Options
@@ -236,7 +265,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts several tool-rela
      - Description
    * - ``tools``
      - ``None``
-     - List of tool functions decorated with ``@register_tool``.
+     - Functions decorated with ``@register_tool``, as a list or a tuple.
    * - ``tool_choice``
      - ``None``
      - Controls how the model uses tools. Options: ``"none"`` (model will not call tools),

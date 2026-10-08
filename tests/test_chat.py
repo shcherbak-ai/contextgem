@@ -27,10 +27,11 @@ import types
 import warnings
 from copy import deepcopy
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any, TypedDict
 from unittest.mock import patch
 
 import pytest
+from pydantic import Field
 
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.data_models import _Message
@@ -38,6 +39,18 @@ from contextgem.internal.exceptions import LLMToolLoopLimitError, ModelAPIError
 from contextgem.internal.loggers import logger
 from contextgem.public import ChatSession, Document, DocumentLLM, register_tool
 from tests.base import BaseTest
+
+
+class _InvoiceItem(TypedDict):
+    """
+    Item of an invoice, used as the type of a tool parameter.
+
+    Defined at module level, so that the type hints of the tool that uses it
+    can be resolved.
+    """
+
+    qty: Annotated[int, Field(description="Quantity of the item", ge=1)]
+    price: Annotated[int, Field(description="Price of the item", ge=0)]
 
 
 class TestChat(BaseTest):
@@ -730,7 +743,9 @@ class TestChat(BaseTest):
 
         # Tool 1: compute invoice total from structured list of items
         @register_tool
-        def compute_invoice_total(items: list[dict]) -> str:
+        def compute_invoice_total(
+            items: Annotated[list[_InvoiceItem], Field(min_length=1)],
+        ) -> str:
             """
             Computes invoice total as sum(qty*price) over items.
             """
@@ -780,76 +795,13 @@ class TestChat(BaseTest):
                 )
             return str(res)
 
+        # The tools are the functions themselves: the tool definitions are generated
+        # from their names, docstrings and type hints
         tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "compute_invoice_total",
-                    "description": "Compute invoice total as sum(qty*price) over items",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "qty": {"type": "integer"},
-                                        "price": {"type": "integer"},
-                                    },
-                                    "required": ["qty", "price"],
-                                },
-                                "minItems": 1,
-                            }
-                        },
-                        "required": ["items"],
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_discount_amount",
-                    "description": "Return discount amount for a given order id",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {"type": "string"},
-                        },
-                        "required": ["order_id"],
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_surcharge",
-                    "description": "Return surcharge amount for a given order id",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {"type": "string"},
-                        },
-                        "required": ["order_id"],
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "compute_final_amount",
-                    "description": "Compute final amount as (invoice_total - discount) + surcharge",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "invoice_total": {"type": "string"},
-                            "discount": {"type": "string"},
-                            "surcharge": {"type": "string"},
-                        },
-                        "required": ["invoice_total", "discount", "surcharge"],
-                    },
-                },
-            },
+            compute_invoice_total,
+            get_discount_amount,
+            get_surcharge,
+            compute_final_amount,
         ]
 
         # Configure LLM for tools; leave tool_choice to auto so it can call both
@@ -1048,20 +1000,7 @@ class TestChat(BaseTest):
             model="openai/gpt-6-luna",
             api_key="test_api_key",
             system_message="",
-            tools=[
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "get_order_status",
-                        "description": "Return the status of the order",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {"order_id": {"type": "string"}},
-                            "required": ["order_id"],
-                        },
-                    },
-                }
-            ],
+            tools=[get_order_status],
         )
 
         chat_session = ChatSession()
@@ -1092,9 +1031,226 @@ class TestChat(BaseTest):
             ("tool", "shipped"),
         ]
 
+    def test_chat_tool_call_arguments_are_validated(self):
+        """
+        Tests that the arguments of a tool call are validated against the constraints
+        set for the parameters of the tool: for an invalid argument, the tool is not
+        called, and the LLM receives the validation error and can correct the call.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(
+            order_id: Annotated[
+                str, Field(description="Order ID", pattern=r"^ORD-[0-9]+$")
+            ],
+        ) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        def create_completion(
+            content: str | None, tool_call_arguments: str | None = None
+        ) -> Any:
+            """
+            Creates a completion that has a text, or a call of the tool with
+            the given arguments.
+            """
+            tool_calls = None
+            if tool_call_arguments is not None:
+                tool_calls = [
+                    {
+                        "id": f"call_{len(tool_call_arguments)}",
+                        "type": "function",
+                        "function": {
+                            "name": "get_order_status",
+                            "arguments": tool_call_arguments,
+                        },
+                    }
+                ]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(
+                            content=content, tool_calls=tool_calls
+                        )
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        completions = [
+            # A tool call with an argument that does not match the pattern
+            create_completion(None, '{"order_id": "123"}'),
+            # The corrected tool call
+            create_completion(None, '{"order_id": "ORD-123"}'),
+            # The final answer
+            create_completion("The order is shipped."),
+        ]
+        requests: list[list[dict[str, Any]]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, returning the prepared completions one by one.
+            """
+            requests.append(list(kwargs["messages"]))
+            return completions[len(requests) - 1]
+
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key="test_api_key",
+            system_message="",
+            tools=[get_order_status],
+        )
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            answer = llm.chat("What is the status of the order 123?")
+
+        assert answer == "The order is shipped."
+        assert len(requests) == 3
+
+        # The tool is called only with the valid argument
+        assert tool_runs == ["ORD-123"]
+
+        # For the invalid tool call, the LLM receives the validation error...
+        validation_error_message = requests[1][-1]
+        assert validation_error_message["role"] == "tool"
+        assert "SchemaValidationError" in validation_error_message["content"]
+        # ...and for the valid one, the result of the tool
+        assert requests[2][-1]["role"] == "tool"
+        assert requests[2][-1]["content"] == "shipped"
+
+    def test_tools_are_registered_functions(self):
+        """
+        Tests that the tools of an LLM are functions decorated with ``@register_tool``:
+        the tool definitions are generated from the functions, the functions passed
+        are the ones that are called, and an LLM with tools can be serialized.
+        """
+
+        @register_tool
+        def get_order_status(
+            order_id: Annotated[
+                str, Field(description="The identifier of the order.", min_length=3)
+            ],
+        ) -> str:
+            """
+            Returns the status of the order.
+            """
+            return "shipped"
+
+        @register_tool
+        def get_order_total(order_id: str) -> str:
+            """
+            Returns the total of the order.
+
+            :param order_id: The identifier of the order.
+            """
+            return "9"
+
+        def create_tool_out_of_scope() -> Any:
+            """
+            Creates a tool that is not in scope, under its name, where the LLM is created.
+            """
+
+            @register_tool
+            def get_order_date(order_id: str) -> str:
+                """
+                Returns the date of the order.
+                """
+                return "2025-01-01"
+
+            return get_order_date
+
+        def create_llm(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with the given params.
+            """
+            return DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key="test_api_key",
+                system_message="",
+                **kwargs,
+            )
+
+        status_tool_definition = {
+            "type": "function",
+            "function": {
+                "name": "get_order_status",
+                "description": "Returns the status of the order.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {
+                            "type": "string",
+                            "description": "The identifier of the order.",
+                            "minLength": 3,
+                        }
+                    },
+                    "required": ["order_id"],
+                },
+            },
+        }
+
+        # The tools are the functions, and the tool definitions are generated from them
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key="test_api_key",
+            system_message="",
+            tools=[get_order_status],
+        )
+        assert llm.tools == [get_order_status]
+        registration = llm._tool_registry["get_order_status"]
+        assert registration["handler"] is get_order_status
+        assert registration["definition"] == status_tool_definition
+        assert (
+            registration["schema"] == status_tool_definition["function"]["parameters"]
+        )
+
+        # The tools can be reassigned: a list or a tuple of functions, or None
+        llm.tools = [get_order_total]
+        assert list(llm._tool_registry) == ["get_order_total"]
+        llm.tools = (get_order_total, get_order_status)
+        assert llm.tools == [get_order_total, get_order_status]
+        assert list(llm._tool_registry) == ["get_order_total", "get_order_status"]
+
+        # The function passed is the one that is called, i.e. it does not
+        # have to be in scope under its name where the LLM is created
+        order_date_tool = create_tool_out_of_scope()
+        llm_out_of_scope = create_llm(tools=[order_date_tool])
+        assert (
+            llm_out_of_scope._tool_registry["get_order_date"]["handler"]
+            is order_date_tool
+        )
+
+        # An LLM with tools is serialized with the tool definitions. When it is
+        # deserialized, the functions are found by the names of the tools...
+        assert llm.to_dict()["tools"] == [
+            llm._tool_registry["get_order_total"]["definition"],
+            status_tool_definition,
+        ]
+        assert DocumentLLM.from_dict(llm.to_dict()).tools == llm.tools
+        self._check_deserialized_llm_config_eq(llm)
+        # ...so they have to be in scope under their names where the LLM is loaded
+        with pytest.raises(
+            ValueError, match="No registered function found for tool 'get_order_date'"
+        ):
+            DocumentLLM.from_dict(llm_out_of_scope.to_dict())
+
+        llm.tools = None
+        assert llm.tools is None
+        assert llm._tool_registry == {}
+        assert llm.to_dict()["tools"] is None
+
     def test_invalid_tool_registrations(self):
         """
-        Validate errors for invalid LLM tool registrations and tool configs.
+        Validate errors for the functions that cannot be registered as tools,
+        and for invalid tools of an LLM.
         """
 
         llm = DocumentLLM(
@@ -1103,11 +1259,7 @@ class TestChat(BaseTest):
             system_message="",
         )
 
-        valid_schema = {
-            "type": "object",
-            "properties": {"x": {"type": "string"}},
-            "required": ["x"],
-        }
+        # === Functions that cannot be registered as tools ===
 
         # 1) register_tool with non-callable
         with pytest.raises(TypeError, match="Tool handler must be callable"):
@@ -1129,112 +1281,112 @@ class TestChat(BaseTest):
         with pytest.raises(ValueError, match="keyword arguments"):
             define_bad_handler()
 
-        # 3) LLM.tools missing `function` dict
+        # 3) register_tool with `*args` or `**kwargs`
+        def with_var_args(a: int, *args: int) -> str:
+            """
+            Invalid handler that accepts any positional arguments.
+            """
+            return str(a)
+
+        def with_var_kwargs(a: int, **kwargs: int) -> str:
+            """
+            Invalid handler that accepts any keyword arguments.
+            """
+            return str(a)
+
+        for invalid_handler in [with_var_args, with_var_kwargs]:
+            with pytest.raises(ValueError, match="must not accept"):
+                register_tool(invalid_handler)
+
+        # 4) register_tool with a parameter that has no type hint
+        def without_type_hint(a, b: int) -> str:
+            """
+            Invalid handler with a parameter that has no type hint.
+            """
+            return str(b)
+
         with pytest.raises(
-            ValueError, match="Tool function must be a non-empty dictionary"
+            TypeError, match="Tool parameter 'a' has no type annotation"
         ):
-            llm.tools = [{"type": "function"}]
-        assert llm.tools is None
+            register_tool(without_type_hint)
 
-        # 4) Empty tool name
-        with pytest.raises(ValueError, match="Tool name must be a non-empty string"):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {"name": " ", "parameters": valid_schema},
-                }
-            ]
-        assert llm.tools is None
+        # 5) register_tool with a function that has no docstring
+        def without_docstring(a: int) -> str:
+            """
+            Docstring that is removed below.
+            """
+            return str(a)
 
-        # 5) Parameters not a dict
-        with pytest.raises(ValueError, match="Expected a JSON object"):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {"name": "foo", "parameters": "not a dict"},
-                }
-            ]
-        assert llm.tools is None
+        without_docstring.__doc__ = None
+        with pytest.raises(ValueError, match="must have a docstring"):
+            register_tool(without_docstring)
 
-        # 6) Parameters with wrong `type`
-        with pytest.raises(ValueError, match="type == 'object'"):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "foo",
-                        "parameters": {
-                            "type": "array",
-                            "properties": {},
-                            "required": [],
-                        },
-                    },
-                }
-            ]
-        assert llm.tools is None
+        # 6) register_tool does not accept arguments, e.g. a custom tool definition
+        with pytest.raises(TypeError):
+            register_tool(schema={})  # type: ignore[call-arg]  # ty: ignore[missing-argument, unknown-argument]
 
-        # 7) Parameters with non-dict properties
-        with pytest.raises(ValueError, match="must include a 'properties' object"):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "foo",
-                        "parameters": {
-                            "type": "object",
-                            "properties": [],
-                            "required": [],
-                        },
-                    },
-                }
-            ]
-        assert llm.tools is None
+        # === Invalid tools of an LLM ===
 
-        # 8) Parameters with invalid `required`
-        with pytest.raises(ValueError, match="'required' must be a list of strings"):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "foo",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {},
-                            "required": "x",
-                        },
-                    },
-                }
-            ]
-        assert llm.tools is None
+        @register_tool
+        def valid_tool(x: str) -> str:
+            """
+            Valid tool.
+            """
+            return x
 
-        # 9) Parameters with missing required keys in properties
-        with pytest.raises(ValueError, match="missing in properties: x"):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "foo",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {},
-                            "required": ["x"],
-                        },
-                    },
-                }
-            ]
-        assert llm.tools is None
+        def not_registered(x: str) -> str:
+            """
+            Function that is not decorated with ``@register_tool``.
+            """
+            return x
 
-        # 10) Name does not match any registered handler
-        with pytest.raises(
-            ValueError, match="No registered handler found for tool 'unknown_tool'"
-        ):
-            llm.tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "unknown_tool",
-                        "parameters": valid_schema,
-                    },
-                }
-            ]
+        tool_definition = {
+            "type": "function",
+            "function": {
+                "name": "valid_tool",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"x": {"type": "string"}},
+                    "required": ["x"],
+                },
+            },
+        }
+
+        invalid_tools_and_errors: list[tuple[Any, str]] = [
+            # A tool definition instead of the function
+            ([tool_definition], "Tool definitions are not accepted as dictionaries"),
+            # Functions that are not decorated
+            ([not_registered], "must be decorated with `@register_tool`"),
+            ([lambda x: str(x)], "must be decorated with `@register_tool`"),
+            # Not functions
+            ([123], "Each tool must be a function decorated with `@register_tool`"),
+            (["valid_tool"], "Each tool must be a function decorated"),
+            # Tools with the same name
+            ([valid_tool, valid_tool], "Tool names must be unique"),
+            # Not a list or a tuple
+            (valid_tool, "valid"),
+            ("valid_tool", "valid"),
+        ]
+        for invalid_tools, error in invalid_tools_and_errors:
+            with pytest.raises(ValueError, match=error):
+                llm.tools = invalid_tools
+            assert llm.tools is None
+            with pytest.raises(ValueError, match=error):
+                DocumentLLM(
+                    model="openai/gpt-6-luna",
+                    api_key="test_api_key",
+                    tools=invalid_tools,
+                )
+
+        # A constraint that cannot be applied to the type of the parameter
+        @register_tool
+        def with_invalid_constraint(x: Annotated[str, Field(ge=1)]) -> str:
+            """
+            Tool with a numeric constraint on a string parameter.
+            """
+            return x
+
+        with pytest.raises(TypeError, match="Constraint `ge` cannot be applied"):
+            llm.tools = [with_invalid_constraint]
         assert llm.tools is None
+        assert llm._tool_registry == {}

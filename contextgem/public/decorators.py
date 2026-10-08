@@ -32,19 +32,26 @@ from contextgem.internal.typings.types import ToolHandler
 
 def register_tool(func: ToolHandler, /) -> ToolHandler:
     """
-    Registers a function as a tool handler for LLM chat with tools.
+    Registers a function as a tool for LLM chat with tools.
 
-    Validates that the function has an inspectable signature and accepts keyword
-    arguments (no positional-only parameters). Marks the function so the runtime
-    can recognize and call it by name.
+    The function defines the tool: its name is the name of the tool, its docstring
+    describes the tool to the LLM, and its parameters, with their type hints and
+    default values, define the parameters of the tool. The descriptions of the
+    parameters are taken from the docstring, or from ``Annotated`` type hints, which
+    can also set constraints, e.g. ``Annotated[int, Field(description="...", ge=1)]``.
 
-    :param func: A callable to be used as a tool handler.
+    Pass the decorated function to ``tools`` of the LLM.
+
+    :param func: A function to be used as a tool. Can be sync or async, and must
+        return a string.
     :type func: ToolHandler
     :return: The same function, marked as a registered tool.
     :rtype: ToolHandler
-    :raises TypeError: If the provided object is not callable.
-    :raises ValueError: If the signature cannot be inspected or has
-        positional-only parameters, or if the function name is empty.
+    :raises TypeError: If the provided object is not callable, or if a parameter
+        of the function has no type hint.
+    :raises ValueError: If the signature cannot be inspected, if the function has
+        positional-only parameters or accepts ``*args`` or ``**kwargs``, if it has
+        no docstring, or if the function name is empty.
     """
 
     if not callable(func):
@@ -60,10 +67,26 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
             raise ValueError(
                 "Tool handler must accept keyword arguments (no positional-only params)"
             )
+        if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
+            raise ValueError(
+                "Tool handler must not accept `*args` or `**kwargs`: each parameter "
+                "of a tool has to be declared, as the parameters are described to the LLM."
+            )
+        if param.annotation is param.empty:
+            raise TypeError(
+                f"Tool parameter '{param.name}' has no type annotation. "
+                "All tool parameters must have type hints."
+            )
 
     tool_name = getattr(func, "__name__", None) or ""
     if not isinstance(tool_name, str) or not tool_name.strip():
         raise ValueError("Tool name must be a non-empty string")
+
+    if not (inspect.getdoc(func) or "").strip():
+        raise ValueError(
+            f"Tool handler `{tool_name}` must have a docstring: "
+            "the docstring describes the tool to the LLM."
+        )
 
     func.__contextgem_tool__ = True  # ty: ignore[invalid-assignment]
     func.__contextgem_tool_name__ = tool_name  # ty: ignore[invalid-assignment]

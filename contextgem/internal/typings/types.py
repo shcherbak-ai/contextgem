@@ -122,16 +122,14 @@ class ToolRegistration(TypedDict):
 
     :param handler: Sync or async callable that must return a string.
     :type handler: ToolHandler
-    :param schema: JSON schema (object) from `function.parameters` describing tool arguments.
+    :param definition: Tool definition in OpenAI-compatible schema, generated from
+        the handler and sent to the LLM.
+    :type definition: JSONDict
+    :param schema: JSON schema (object) from `function.parameters` of the tool
+        definition, describing tool arguments.
     :type schema: JSONDict
     """
 
     handler: ToolHandler
+    definition: JSONDict
     schema: JSONDict
-
-
-# Tool definition can be either an OpenAI-compatible schema dict or a decorated function
-# This allows users to pass either explicit schemas or functions decorated with @register_tool
-# Use dict[str, Any] instead of JSONDict to avoid Pydantic forward reference issues
-# (JSONValue contains recursive forward refs that Pydantic can't resolve in model fields)
-ToolDefinition = dict[str, Any] | ToolHandler
