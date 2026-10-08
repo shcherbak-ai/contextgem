@@ -43,6 +43,7 @@ from dotenv import load_dotenv
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.documents import _POSITION_CACHE_KEYS
 from contextgem.internal.base.instances import _InstanceBase
+from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.data_models import (
     _ModelCost,
     _ModelCostOutputContainer,
@@ -596,6 +597,38 @@ class TestUtils:
                         x.reference_paragraphs or x.reference_sentences
                         for x in i.extracted_items
                     )
+
+    @staticmethod
+    def check_item_probabilities(
+        item: _ExtractedItem,
+        expected_probabilities: dict[bool | int | str, float] | None,
+    ) -> None:
+        """
+        Checks that the probabilities of the extracted item are exactly the expected
+        ones, including the types and the order of the options, and that each
+        probability is a float.
+
+        The comparison of dicts alone does not cover that: it ignores the order
+        of the keys and does not tell ``True`` from ``1``, or ``1`` from ``1.0``.
+
+        :param item: The extracted item to check.
+        :type item: _ExtractedItem
+        :param expected_probabilities: The expected options mapped to their
+            probabilities, or None if the item is expected to have no probabilities.
+        :type expected_probabilities: dict[bool | int | str, float] | None
+        :return: None
+        """
+        if expected_probabilities is None:
+            assert item.probabilities is None
+            return
+        assert isinstance(item.probabilities, dict)
+        assert [
+            (type(option), option, type(probability), probability)
+            for option, probability in item.probabilities.items()
+        ] == [
+            (type(option), option, float, probability)
+            for option, probability in expected_probabilities.items()
+        ]
 
     def check_instance_container_states(
         self,

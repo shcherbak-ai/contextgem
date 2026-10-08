@@ -22,9 +22,26 @@ Module defining tests for serialization.
 
 from __future__ import annotations
 
+import json
+from copy import deepcopy
+from datetime import date
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.base.items import _ExtractedItem
+from contextgem.internal.items import (
+    _BooleanItem,
+    _DateItem,
+    _FloatItem,
+    _IntegerItem,
+    _IntegerOrFloatItem,
+    _JsonObjectItem,
+    _LabelItem,
+    _StringItem,
+)
 from contextgem.public import (
     Aspect,
     BooleanConcept,
@@ -391,3 +408,568 @@ class TestSerialization(BaseTest):
         self.check_usage(llm)
         # Check cost
         self.check_cost(llm)
+
+    def test_item_probabilities_serialization(self, tmp_path: Path):
+        """
+        Tests the serialization, deserialization and cloning of the extracted items
+        that have the probabilities of the options: the probabilities are serialized
+        as a list of [option, probability] pairs, and are restored exactly, including
+        the types and the order of the options.
+        """
+        # Item class, item value, probabilities, probabilities as serialized to JSON
+        test_cases: list[
+            tuple[type[_ExtractedItem], Any, dict[bool | int | str, float], str]
+        ] = [
+            # Yes/no question
+            (
+                _BooleanItem,
+                True,
+                {True: 0.83, False: 0.17},
+                "[[true, 0.83], [false, 0.17]]",
+            ),
+            # Item of an aspect, with the options in another order
+            (
+                _StringItem,
+                "Any notice shall be given in writing.",
+                {False: 0.09, True: 0.91},
+                "[[false, 0.09], [true, 0.91]]",
+            ),
+            # One label out of several
+            (
+                _LabelItem,
+                ["written"],
+                {"written": 0.71, "email": 0.20, "any": 0.06, "not specified": 0.03},
+                '[["written", 0.71], ["email", 0.2], ["any", 0.06], '
+                '["not specified", 0.03]]',
+            ),
+            # Several labels, with the probabilities that do not sum to 1
+            (
+                _LabelItem,
+                ["NDA", "Confidential"],
+                {"NDA": 0.97, "Confidential": 0.62, "Employment": 0.08},
+                '[["NDA", 0.97], ["Confidential", 0.62], ["Employment", 0.08]]',
+            ),
+            # Labels in other languages
+            (
+                _LabelItem,
+                ["Конфіденційно"],
+                {"Конфіденційно": 0.9, "保密": 0.1},
+                '[["Конфіденційно", 0.9], ["保密", 0.1]]',
+            ),
+            # Rating
+            (
+                _IntegerItem,
+                4,
+                {1: 0.0, 2: 0.0, 3: 0.15, 4: 0.55, 5: 0.30},
+                "[[1, 0.0], [2, 0.0], [3, 0.15], [4, 0.55], [5, 0.3]]",
+            ),
+            # Rating, with the options in the descending order
+            (
+                _IntegerItem,
+                4,
+                {5: 0.30, 4: 0.55, 3: 0.15, 2: 0.0, 1: 0.0},
+                "[[5, 0.3], [4, 0.55], [3, 0.15], [2, 0.0], [1, 0.0]]",
+            ),
+            # Integers that are equal to booleans as dict keys
+            (
+                _IntegerItem,
+                1,
+                {0: 0.25, 1: 0.75},
+                "[[0, 0.25], [1, 0.75]]",
+            ),
+            # Options of all types, including the strings that read as other options
+            (
+                _StringItem,
+                "Random string",
+                {True: 0.5, "True": 0.3, 2: 0.2, "2": 0.0, 0: 0.0, "false": 0.0},
+                '[[true, 0.5], ["True", 0.3], [2, 0.2], ["2", 0.0], [0, 0.0], '
+                '["false", 0.0]]',
+            ),
+            # Probabilities given as integers
+            (
+                _BooleanItem,
+                False,
+                {True: 0, False: 1},
+                "[[true, 0.0], [false, 1.0]]",
+            ),
+            # Probabilities that need all the digits of a float
+            (
+                _LabelItem,
+                ["a"],
+                {"a": 1 / 3, "b": 0.1 + 0.2, "c": 1e-17, "d": 5e-324},
+                '[["a", 0.3333333333333333], ["b", 0.30000000000000004], '
+                '["c", 1e-17], ["d", 5e-324]]',
+            ),
+            # Other item classes, including the one with own serialization
+            (
+                _FloatItem,
+                1.5,
+                {True: 0.83, False: 0.17},
+                "[[true, 0.83], [false, 0.17]]",
+            ),
+            (
+                _IntegerOrFloatItem,
+                1,
+                {1: 0.6, 2: 0.4},
+                "[[1, 0.6], [2, 0.4]]",
+            ),
+            (
+                _JsonObjectItem,
+                {"hello": "world"},
+                {"hello": 0.6, "world": 0.4},
+                '[["hello", 0.6], ["world", 0.4]]',
+            ),
+            (
+                _DateItem,
+                date(2025, 3, 2),
+                {True: 0.83, False: 0.17},
+                "[[true, 0.83], [false, 0.17]]",
+            ),
+        ]
+
+        for index, (item_class, value, probabilities, probabilities_json) in enumerate(
+            test_cases
+        ):
+            item = item_class(value=value, probabilities=probabilities)
+            self.check_item_probabilities(item, probabilities)
+
+            # To dict: a list of [option, probability] lists, in which the options
+            # keep their types and order when converted to JSON
+            item_dict = item.to_dict()
+            serialized_probabilities = item_dict["probabilities"]
+            assert isinstance(serialized_probabilities, list)
+            assert len(serialized_probabilities) == len(probabilities)
+            assert all(
+                type(pair) is list and len(pair) == 2
+                for pair in serialized_probabilities
+            )
+            assert (
+                json.dumps(serialized_probabilities, ensure_ascii=False)
+                == probabilities_json
+            )
+
+            # To JSON
+            item_json = item.to_json()
+            assert f'"probabilities": {probabilities_json}' in item_json
+            assert json.loads(item_json) == item_dict
+
+            # To disk
+            disk_path = tmp_path / f"item_{index}.json"
+            item.to_disk(disk_path)
+            with open(disk_path, encoding="utf-8") as file:
+                item_dict_on_disk = json.load(file)
+            assert item_dict_on_disk == item_dict
+            assert (
+                json.dumps(item_dict_on_disk["probabilities"], ensure_ascii=False)
+                == probabilities_json
+            )
+
+            # From dict, from JSON, from disk, and cloning
+            item_dict_before = deepcopy(item_dict)
+            for restored_item in (
+                item_class.from_dict(item_dict),
+                item_class.from_dict(json.loads(item_json)),
+                item_class.from_json(item_json),
+                item_class.from_disk(disk_path),
+                item.clone(),
+                item_class.from_json(item_json).clone(),
+                item_class.from_json(item_class.from_disk(disk_path).to_json()),
+            ):
+                assert type(restored_item) is item_class
+                assert restored_item is not item
+                assert restored_item.probabilities is not item.probabilities
+                self.check_item_probabilities(restored_item, probabilities)
+                assert restored_item == item
+                assert restored_item.value == item.value
+                assert restored_item.unique_id == item.unique_id
+                # Serialized again, the restored item gives the same data
+                assert restored_item.to_json() == item_json
+
+            # The serialized data is not changed when the item is created from it,
+            # and is not shared with the item
+            assert item_dict == item_dict_before
+            assert (
+                json.dumps(item_dict["probabilities"], ensure_ascii=False)
+                == probabilities_json
+            )
+            item_dict["probabilities"][0][1] = 0.5
+            item_dict["probabilities"].append(["other", 0.0])
+            self.check_item_probabilities(item, probabilities)
+            assert item.to_json() == item_json
+
+            # Shared checks of the serialization and cloning of an instance
+            self.check_instance_serialization_and_cloning(item)
+
+        # No probabilities
+        for index, item in enumerate(
+            [
+                _BooleanItem(value=True),
+                _LabelItem(value=["NDA"], probabilities=None),
+                _DateItem(value=date(2025, 3, 2)),
+            ]
+        ):
+            item_dict = item.to_dict()
+            assert "probabilities" in item_dict
+            assert item_dict["probabilities"] is None
+            item_json = item.to_json()
+            assert '"probabilities": null' in item_json
+            disk_path = tmp_path / f"item_without_probabilities_{index}.json"
+            item.to_disk(disk_path)
+            for restored_item in (
+                type(item).from_dict(item_dict),
+                type(item).from_json(item_json),
+                type(item).from_disk(disk_path),
+                item.clone(),
+            ):
+                assert restored_item.probabilities is None
+                assert restored_item == item
+                assert restored_item.to_json() == item_json
+            self.check_instance_serialization_and_cloning(item)
+
+    @pytest.mark.parametrize(
+        "invalid_serialized_probabilities",
+        [
+            # Not a list of pairs
+            {"True": 0.83, "False": 0.17},  # JSON object, which loses the option types
+            [True, 0.83],
+            "[[true, 0.83], [false, 0.17]]",
+            0.83,
+            True,
+            # Not a pair
+            [[True, 0.83, 0.17]],
+            [[True]],
+            [[]],
+            [{"option": True, "probability": 0.83}],
+            ["ab"],
+            [[True, 0.83], None],
+            # Option of an invalid type
+            [[1.0, 0.5]],
+            [[None, 0.5]],
+            [[[True], 0.5]],
+            [[{"option": True}, 0.5]],
+            # Repeated option, including the options that are equal as dict keys
+            [[True, 0.5], [True, 0.5]],
+            [["NDA", 0.5], ["NDA", 0.4]],
+            [[True, 0.5], [1, 0.5]],
+            [[0, 0.5], [False, 0.5]],
+            # Probabilities that are invalid for an item
+            [],
+            [[True, 1.5]],
+            [[True, -0.5]],
+            [[True, "0.83"]],
+            [[True, True]],
+            [[True, None]],
+            [[True, [0.83]]],
+            [[True, float("nan")]],
+            [[True, 0.83], [False, float("inf")]],
+        ],
+    )
+    def test_deserialize_item_with_invalid_probabilities(
+        self, invalid_serialized_probabilities: Any, tmp_path: Path
+    ):
+        """
+        Tests that an extracted item is not created from the serialized data
+        in which the probabilities are invalid.
+        """
+        item = _BooleanItem(value=True, probabilities={True: 0.83, False: 0.17})
+        item_dict = item.to_dict()
+        item_dict["probabilities"] = invalid_serialized_probabilities
+
+        # From dict
+        with pytest.raises(ValueError, match="probabilities"):
+            _BooleanItem.from_dict(item_dict)
+
+        # From JSON (the `json` module writes and reads a NaN and an infinity)
+        item_json = json.dumps(item_dict)
+        with pytest.raises(ValueError, match="probabilities"):
+            _BooleanItem.from_json(item_json)
+
+        # From disk
+        disk_path = tmp_path / "item.json"
+        disk_path.write_text(item_json, encoding="utf-8")
+        with pytest.raises(RuntimeError, match="probabilities"):
+            _BooleanItem.from_disk(disk_path)
+
+    def test_deserialize_item_without_probabilities(self, tmp_path: Path):
+        """
+        Tests that the data serialized before the probabilities were added to
+        the extracted items, i.e. the data without the `probabilities` key, is loaded,
+        and gives the items without probabilities.
+        """
+        # Item class, value as serialized, value
+        legacy_items: list[tuple[type[_ExtractedItem], Any, Any]] = [
+            (_StringItem, "Random string", "Random string"),
+            (_BooleanItem, True, True),
+            (_IntegerItem, 4, 4),
+            (_FloatItem, 1.5, 1.5),
+            (_IntegerOrFloatItem, 1, 1),
+            (_JsonObjectItem, {"hello": "world"}, {"hello": "world"}),
+            (_DateItem, "2025-03-02", date(2025, 3, 2)),
+            (_LabelItem, ["NDA"], ["NDA"]),
+        ]
+        for index, (item_class, serialized_value, value) in enumerate(legacy_items):
+            # The data of an item as it was serialized before
+            legacy_item_dict = {
+                "custom_data": {"source": "legacy"},
+                "value": serialized_value,
+                "justification": "Random justification",
+                "_unique_id": f"01K7ABCDEFGHJKMNPQRSTVWXY{index}",
+                "_reference_paragraphs": [],
+                "_reference_sentences": [],
+                "__class__": item_class.__name__,
+            }
+            legacy_item_json = json.dumps(legacy_item_dict)
+            assert "probabilities" not in legacy_item_json
+            disk_path = tmp_path / f"legacy_item_{index}.json"
+            disk_path.write_text(legacy_item_json, encoding="utf-8")
+
+            for item in (
+                item_class.from_dict(legacy_item_dict),
+                item_class.from_json(legacy_item_json),
+                item_class.from_disk(disk_path),
+            ):
+                assert type(item) is item_class
+                assert item.probabilities is None
+                assert item.value == value
+                assert item.justification == "Random justification"
+                assert item.custom_data == {"source": "legacy"}
+                assert item.unique_id == legacy_item_dict["_unique_id"]
+                # Serialized now, the item has the key
+                assert item.to_dict() == {**legacy_item_dict, "probabilities": None}
+                self.check_instance_serialization_and_cloning(item)
+            assert "probabilities" not in legacy_item_dict
+
+        # A document with the extracted items, as it was serialized before
+        document = self._get_document_with_extracted_items(with_probabilities=False)
+        legacy_document_dict = document.to_dict()
+        removed_keys_count = self._remove_probabilities_keys(legacy_document_dict)
+        assert removed_keys_count == len(self._get_extracted_items(document)) == 6
+        legacy_document_json = json.dumps(legacy_document_dict)
+        assert "probabilities" not in legacy_document_json
+        disk_path = tmp_path / "legacy_document.json"
+        disk_path.write_text(legacy_document_json, encoding="utf-8")
+        for restored_document in (
+            Document.from_dict(legacy_document_dict),
+            Document.from_json(legacy_document_json),
+            Document.from_disk(disk_path),
+        ):
+            assert restored_document == document
+            restored_items = self._get_extracted_items(restored_document)
+            assert len(restored_items) == 6
+            assert all(item.probabilities is None for item in restored_items.values())
+
+    def test_document_serialization_with_item_probabilities(self, tmp_path: Path):
+        """
+        Tests that the probabilities of the extracted items of the aspects and
+        concepts of a document are kept when the document is serialized,
+        deserialized and cloned.
+        """
+        document = self._get_document_with_extracted_items(with_probabilities=True)
+        expected_probabilities = self._document_item_probabilities
+        items = self._get_extracted_items(document)
+        assert set(items) == set(expected_probabilities)
+        for name, item in items.items():
+            self.check_item_probabilities(item, expected_probabilities[name])
+
+        # Serialized document
+        document_json = document.to_json()
+        for probabilities_json in (
+            "[[true, 0.91], [false, 0.09]]",
+            '[["written", 0.71], ["email", 0.2], ["any", 0.06], '
+            '["not specified", 0.03]]',
+            "[[true, 0.83], [false, 0.17]]",
+            '[["NDA", 0.97], ["Confidential", 0.62], ["Employment", 0.08]]',
+            "[[1, 0.0], [2, 0.0], [3, 0.15], [4, 0.55], [5, 0.3]]",
+            "null",
+        ):
+            assert document_json.count(f'"probabilities": {probabilities_json}') == 1
+        assert document_json.count('"probabilities": ') == 6
+
+        # Deserialized and cloned document
+        disk_path = tmp_path / "document.json"
+        document.to_disk(disk_path)
+        for restored_document in (
+            Document.from_json(document_json),
+            Document.from_dict(document.to_dict()),
+            Document.from_dict(json.loads(document_json)),
+            Document.from_disk(disk_path),
+            document.clone(),
+            Document.from_json(Document.from_json(document_json).to_json()),
+        ):
+            assert restored_document is not document
+            assert restored_document == document
+            restored_items = self._get_extracted_items(restored_document)
+            assert set(restored_items) == set(expected_probabilities)
+            for name, restored_item in restored_items.items():
+                self.check_item_probabilities(
+                    restored_item, expected_probabilities[name]
+                )
+                assert restored_item == items[name]
+                assert restored_item is not items[name]
+            # Serialized again, the restored document gives the same data
+            assert restored_document.to_json() == document_json
+
+        # A document that differs only in the probabilities of an item is not equal
+        document_dict = document.to_dict()
+        boolean_item_dict = document_dict["concepts"][0]["_extracted_items"][0]
+        assert boolean_item_dict["probabilities"] == [[True, 0.83], [False, 0.17]]
+        boolean_item_dict["probabilities"] = [[True, 0.84], [False, 0.16]]
+        assert Document.from_dict(document_dict) != document
+        boolean_item_dict["probabilities"] = [[True, 0.83], [False, 0.17]]
+        assert Document.from_dict(document_dict) == document
+
+        # Shared checks of the serialization and cloning of an instance
+        self.check_instance_serialization_and_cloning(document)
+        for aspect in document.aspects:
+            self.check_instance_serialization_and_cloning(aspect)
+            for concept in aspect.concepts:
+                self.check_instance_serialization_and_cloning(concept)
+        for concept in document.concepts:
+            self.check_instance_serialization_and_cloning(concept)
+
+    # Probabilities of the extracted items of the document created by the method
+    # below, by the name of the aspect or concept that an item belongs to
+    _document_item_probabilities: dict[str, dict[bool | int | str, float] | None] = {
+        # Aspect: whether the paragraph belongs to the aspect
+        "Notices": {True: 0.91, False: 0.09},
+        # Concept of the aspect: one label out of several
+        "Notice form": {
+            "written": 0.71,
+            "email": 0.20,
+            "any": 0.06,
+            "not specified": 0.03,
+        },
+        # Concepts of the document: yes/no question, several labels, rating
+        "NDA check": {True: 0.83, False: 0.17},
+        "Document types": {"NDA": 0.97, "Confidential": 0.62, "Employment": 0.08},
+        "Clarity": {1: 0.0, 2: 0.0, 3: 0.15, 4: 0.55, 5: 0.30},
+        # Concept of the document with an item that has no probabilities
+        "Title": None,
+    }
+
+    def _get_document_with_extracted_items(self, with_probabilities: bool) -> Document:
+        """
+        Returns a copy of the test document with an aspect and concepts that have
+        extracted items assigned, as after the extraction.
+
+        :param with_probabilities: Whether the items have the probabilities of
+            the options. If False, no item has them, as when extracted by an LLM.
+        :type with_probabilities: bool
+        :return: The document with the extracted items.
+        :rtype: Document
+        """
+        probabilities: dict[str, dict[bool | int | str, float] | None] = (
+            self._document_item_probabilities
+            if with_probabilities
+            else dict.fromkeys(self._document_item_probabilities)
+        )
+
+        document = self.document.clone()
+        document.aspects = [
+            Aspect(
+                name="Notices",
+                description="Clauses on the notices under the agreement",
+                concepts=[
+                    LabelConcept(
+                        name="Notice form",
+                        description="Form in which a notice is to be given",
+                        labels=["written", "email", "any", "not specified"],
+                        classification_type="multi_class",
+                    )
+                ],
+            )
+        ]
+        document.concepts = [
+            BooleanConcept(name="NDA check", description="Document is an NDA"),
+            LabelConcept(
+                name="Document types",
+                description="Types of the document",
+                labels=["NDA", "Confidential", "Employment"],
+                classification_type="multi_label",
+            ),
+            RatingConcept(
+                name="Clarity",
+                description="Clarity of the text of the document",
+                rating_scale=(1, 5),
+            ),
+            StringConcept(name="Title", description="Title of the document"),
+        ]
+
+        # Item of the aspect: a paragraph of the document
+        aspect = document.get_aspect_by_name("Notices")
+        paragraph = document.paragraphs[0]
+        aspect_item = _StringItem(
+            value=paragraph.raw_text, probabilities=probabilities["Notices"]
+        )
+        aspect_item.reference_paragraphs = [paragraph]
+        aspect.extracted_items = [aspect_item]  # ty: ignore[invalid-assignment]
+        aspect.reference_paragraphs = [paragraph]
+
+        # Items of the concepts
+        aspect.get_concept_by_name("Notice form").extracted_items = [  # ty: ignore[invalid-assignment]
+            _LabelItem(value=["written"], probabilities=probabilities["Notice form"])
+        ]
+        document.get_concept_by_name("NDA check").extracted_items = [  # ty: ignore[invalid-assignment]
+            _BooleanItem(value=True, probabilities=probabilities["NDA check"])
+        ]
+        document.get_concept_by_name("Document types").extracted_items = [  # ty: ignore[invalid-assignment]
+            _LabelItem(
+                value=["NDA", "Confidential"],
+                probabilities=probabilities["Document types"],
+            )
+        ]
+        document.get_concept_by_name("Clarity").extracted_items = [  # ty: ignore[invalid-assignment]
+            _IntegerItem(value=4, probabilities=probabilities["Clarity"])
+        ]
+        document.get_concept_by_name("Title").extracted_items = [  # ty: ignore[invalid-assignment]
+            _StringItem(value="Non-disclosure agreement", probabilities=None)
+        ]
+
+        return document
+
+    @staticmethod
+    def _get_extracted_items(document: Document) -> dict[str, _ExtractedItem]:
+        """
+        Returns the extracted items of the document created by
+        ``_get_document_with_extracted_items()``, i.e. the single item of each of
+        its aspects and concepts.
+
+        :param document: The document with the extracted items.
+        :type document: Document
+        :return: The extracted items by the name of the aspect or concept that
+            an item belongs to.
+        :rtype: dict[str, _ExtractedItem]
+        """
+        instances = [*document.aspects, *document.concepts]
+        for aspect in document.aspects:
+            instances.extend(aspect.concepts)
+        items: dict[str, _ExtractedItem] = {}
+        for instance in instances:
+            assert len(instance.extracted_items) == 1
+            items[instance.name] = instance.extracted_items[0]
+        return items
+
+    @classmethod
+    def _remove_probabilities_keys(cls, serialized_data: Any) -> int:
+        """
+        Removes the `probabilities` key from the serialized data of each extracted
+        item, in place, which gives the data as it was serialized before
+        the probabilities were added to the items.
+
+        :param serialized_data: The serialized data of an instance, or a part of it.
+        :type serialized_data: Any
+        :return: The number of the keys removed.
+        :rtype: int
+        """
+        removed_keys_count = 0
+        if isinstance(serialized_data, dict):
+            if "probabilities" in serialized_data:
+                assert serialized_data["__class__"].endswith("Item")
+                del serialized_data["probabilities"]
+                removed_keys_count += 1
+            for value in serialized_data.values():
+                removed_keys_count += cls._remove_probabilities_keys(value)
+        elif isinstance(serialized_data, list):
+            for value in serialized_data:
+                removed_keys_count += cls._remove_probabilities_keys(value)
+        return removed_keys_count

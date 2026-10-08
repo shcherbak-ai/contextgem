@@ -44,6 +44,14 @@ class _StringItem(_ExtractedItem):
 
     :ivar value: The string value extracted and validated as non-empty string.
     :vartype value: str
+    :ivar probabilities: Probabilities of the options of the closed question that
+        the item answers, keyed by the options as they appear as item values.
+        For an item of an aspect, whose value is the text of a paragraph, ``True``
+        is mapped to the probability that the paragraph belongs to the aspect,
+        and ``False`` to the probability that it does not, e.g.
+        ``{True: 0.83, False: 0.17}``. None (default) if the item has
+        no probabilities, which is the case for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: NonEmptyStr = Field(..., frozen=True)
@@ -56,6 +64,11 @@ class _BooleanItem(_ExtractedItem):
 
     :ivar value: The strict boolean value associated with this item.
     :vartype value: StrictBool
+    :ivar probabilities: Probabilities of the options of the yes/no question that
+        the item answers, keyed by ``True`` and ``False``, e.g.
+        ``{True: 0.83, False: 0.17}``. None (default) if the item has
+        no probabilities, which is the case for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: StrictBool = Field(..., frozen=True)
@@ -68,6 +81,13 @@ class _IntegerItem(_ExtractedItem):
 
     :ivar value: Represents the int value of the item.
     :vartype value: StrictInt
+    :ivar probabilities: Probabilities of the options of the closed question that
+        the item answers, keyed by the options as they appear as item values.
+        For a rating, these are the integers of the rating scale, e.g.
+        ``{1: 0.0, 2: 0.0, 3: 0.15, 4: 0.55, 5: 0.3}``. None (default) if
+        the item has no probabilities, which is the case for every item
+        extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: StrictInt = Field(..., frozen=True)
@@ -80,6 +100,11 @@ class _FloatItem(_ExtractedItem):
 
     :ivar value: Represents the float value of the item.
     :vartype value: StrictFloat
+    :ivar probabilities: Probabilities of the options of the closed question that
+        the item answers, keyed by the options as they appear as item values.
+        None (default) if the item has no probabilities, which is the case
+        for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: StrictFloat = Field(..., frozen=True)
@@ -93,6 +118,11 @@ class _IntegerOrFloatItem(_ExtractedItem):
     :ivar value: Represents the numerical value of the item. It
         can be either an integer or a float value.
     :vartype value: StrictInt | StrictFloat
+    :ivar probabilities: Probabilities of the options of the closed question that
+        the item answers, keyed by the options as they appear as item values.
+        None (default) if the item has no probabilities, which is the case
+        for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: StrictInt | StrictFloat = Field(..., frozen=True)
@@ -105,6 +135,11 @@ class _JsonObjectItem(_ExtractedItem):
 
     :ivar value: The JSON object of the item, i.e. a dict with minimum length of 1.
     :vartype value: dict[Any, Any]
+    :ivar probabilities: Probabilities of the options of the closed question that
+        the item answers, keyed by the options as they appear as item values.
+        None (default) if the item has no probabilities, which is the case
+        for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: dict[Any, Any] = Field(..., min_length=1, frozen=True)
@@ -159,6 +194,11 @@ class _DateItem(_ExtractedItem):
 
     :ivar value: The date value extracted and validated as a Python date object.
     :vartype value: date
+    :ivar probabilities: Probabilities of the options of the closed question that
+        the item answers, keyed by the options as they appear as item values.
+        None (default) if the item has no probabilities, which is the case
+        for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: date = Field(..., frozen=True)
@@ -227,6 +267,15 @@ class _LabelItem(_ExtractedItem):
     :ivar value: A list of label strings. Always returns a list for API consistency,
         containing one or more labels depending on the classification type.
     :vartype value: list[str]
+    :ivar probabilities: Probabilities of the labels that the item could be
+        classified with, keyed by the labels. Where only one label can apply,
+        these are the probabilities of the alternatives, e.g. ``{"written": 0.71,
+        "email": 0.2, "any": 0.06, "not specified": 0.03}``. Where several labels
+        can apply, each label has its own probability, i.e. the probabilities
+        do not sum to 1, e.g. ``{"NDA": 0.97, "Confidential": 0.62,
+        "Employment": 0.08}``. None (default) if the item has no probabilities,
+        which is the case for every item extracted by an LLM.
+    :vartype probabilities: dict[bool | int | str, float] | None
     """
 
     value: list[NonEmptyStr] = Field(..., min_length=1, frozen=True)

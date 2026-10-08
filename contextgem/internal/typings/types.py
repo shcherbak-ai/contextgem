@@ -36,6 +36,9 @@ from pydantic import (
     AfterValidator,
     BeforeValidator,
     Field,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
     StrictStr,
     StringConstraints,
 )
@@ -97,6 +100,19 @@ DefaultDecimalField = Field(
 ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 
 MessageRole = Literal["system", "user", "assistant", "tool"]
+
+# Probability of an option of a closed question (yes/no, one of the labels,
+# a level of a rating scale). An integer is converted to a float. A boolean,
+# a string and a NaN are rejected.
+Probability = Annotated[StrictFloat, Field(ge=0.0, le=1.0, allow_inf_nan=False)]
+
+# Probabilities of the options of the closed question answered by an extracted item,
+# keyed by the options as they appear as item values. The types of the options are
+# strict, as `True`, `1` and `"1"` are different options: without that, `1.0` would
+# be validated as `True`.
+ItemProbabilities = Annotated[
+    dict[StrictBool | StrictInt | StrictStr, Probability], Field(min_length=1)
+]
 
 # JSON-serializable types
 # A JSON value can be a primitive, a list of JSON values, or a dict of str->JSON value

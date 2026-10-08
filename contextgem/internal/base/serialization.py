@@ -61,6 +61,7 @@ KEY_EXAMPLES_PUBLIC = "examples"
 KEY_IMAGES_PUBLIC = "images"
 KEY_PARAGRAPHS_PUBLIC = "paragraphs"
 KEY_SENTENCES_PUBLIC = "sentences"
+KEY_PROBABILITIES_PUBLIC = "probabilities"
 # LLM attrs
 KEY_API_KEY_PUBLIC = "api_key"  # always redacted
 KEY_API_BASE_PUBLIC = "api_base"  # always redacted
@@ -186,6 +187,13 @@ class _InstanceSerializer(BaseModel):
                 # Convert the tuple to a list for JSON serialization
                 base_dict[key] = list(val)
 
+            elif key == KEY_PROBABILITIES_PUBLIC:
+                # Convert the dict of an extracted item to a list of pairs for
+                # JSON serialization, only when provided
+                base_dict[key] = (
+                    self._serialize_probabilities(val) if val is not None else val
+                )
+
             elif key == KEY_MODEL_PRICING_PUBLIC:
                 # Serialize only when provided
                 base_dict[key] = val.to_dict() if val is not None else val
@@ -308,6 +316,65 @@ class _InstanceSerializer(BaseModel):
                 result[key] = _serialize_type_hint(value)
 
         return result
+
+    @staticmethod
+    def _serialize_probabilities(
+        probabilities: dict[bool | int | str, float],
+    ) -> list[list[bool | int | str | float]]:
+        """
+        Relevant for the serialization of the probabilities of an extracted item.
+
+        Converts the probabilities of the options to a list of [option, probability]
+        pairs, in the order of the options. The keys of a JSON object can only be
+        strings, i.e. as such keys the options ``True``, ``1`` and ``"1"`` could not
+        be told apart, while as the elements of a list they keep their types.
+
+        :param probabilities: Options mapped to their probabilities.
+        :type probabilities: dict[bool | int | str, float]
+        :return: List of [option, probability] pairs.
+        :rtype: list[list[bool | int | str | float]]
+        """
+        return [[option, probability] for option, probability in probabilities.items()]
+
+    @staticmethod
+    def _deserialize_probabilities(pairs: Any) -> dict[bool | int | str, float]:
+        """
+        Relevant for the deserialization of the probabilities of an extracted item.
+
+        Converts a list of [option, probability] pairs back to the options mapped
+        to their probabilities, with the types and the order of the options kept.
+        The probabilities are validated by the item that is created from them.
+
+        :param pairs: List of [option, probability] pairs.
+        :type pairs: Any
+        :return: Options mapped to their probabilities.
+        :rtype: dict[bool | int | str, float]
+        :raises ValueError: If the data is not a list of [option, probability] pairs,
+            if an option is not a boolean, an integer or a string, or if an option
+            is repeated.
+        """
+        if not isinstance(pairs, list) or not all(
+            isinstance(pair, list) and len(pair) == 2 for pair in pairs
+        ):
+            raise ValueError(
+                "Serialized probabilities must be a list of [option, probability] "
+                f"pairs. Got: {pairs!r}"
+            )
+        probabilities: dict[bool | int | str, float] = {}
+        for option, probability in pairs:
+            if not isinstance(option, bool | int | str):
+                raise ValueError(
+                    "An option in serialized probabilities must be a boolean, "
+                    f"an integer or a string. Got: {option!r}"
+                )
+            # The options that are equal as dict keys, e.g. `True` and `1`,
+            # cannot be restored as separate options
+            if option in probabilities:
+                raise ValueError(
+                    f"Serialized probabilities repeat the option {option!r}."
+                )
+            probabilities[option] = probability
+        return probabilities
 
     def _convert_decimal_to_float(self, obj: Any) -> Any:
         """
@@ -515,6 +582,9 @@ class _InstanceSerializer(BaseModel):
                 _deserialize_structure_dict(val)
             ),
             KEY_RATING_SCALE_PUBLIC: lambda val: tuple(val),
+            KEY_PROBABILITIES_PUBLIC: lambda val: (
+                cls._deserialize_probabilities(val) if val is not None else val
+            ),
             # LLM attrs
             KEY_MODEL_PRICING_PUBLIC: lambda val: (
                 _resolve_public_type(_ModelPricing).from_dict(val)

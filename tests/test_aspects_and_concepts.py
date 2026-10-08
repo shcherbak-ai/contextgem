@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
 
 import pytest
@@ -42,6 +43,7 @@ from contextgem.internal.items import (
     _StringItem,
 )
 from contextgem.internal.loggers import logger
+from contextgem.internal.typings.types import ItemProbabilities
 from contextgem.public import (
     Aspect,
     BooleanConcept,
@@ -2174,3 +2176,407 @@ class TestAspectsAndConcepts(BaseTest):
 
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(item)
+
+    def test_init_item_with_probabilities(self):
+        """
+        Tests the initialization of the extracted item classes with the probabilities
+        of the options of the closed question that an item answers.
+        """
+        # No probabilities by default, which is the case for the items
+        # extracted by an LLM
+        for item in [
+            _StringItem(value="Random string"),
+            _BooleanItem(value=True),
+            _IntegerItem(value=1),
+            _FloatItem(value=1.0),
+            _IntegerOrFloatItem(value=1),
+            _JsonObjectItem(value={"hello": "world"}),
+            _DateItem(value=date(2025, 3, 2)),
+            _LabelItem(value=["NDA"]),
+            _BooleanItem(value=True, justification="Random justification"),
+        ]:
+            assert item.probabilities is None
+            assert "probabilities" not in item.model_fields_set
+        assert _BooleanItem(value=True, probabilities=None).probabilities is None
+
+        # Yes/no question: `True` and `False` are the options
+        boolean_probabilities: ItemProbabilities = {True: 0.83, False: 0.17}
+        source_probabilities = dict(boolean_probabilities)
+        boolean_item = _BooleanItem(value=True, probabilities=source_probabilities)
+        self.check_item_probabilities(boolean_item, boolean_probabilities)
+        # The item does not share the dict it was created with
+        source_probabilities[True] = 0.5
+        del source_probabilities[False]
+        self.check_item_probabilities(boolean_item, boolean_probabilities)
+
+        # Item of an aspect: whether the paragraph belongs to the aspect
+        string_item = _StringItem(
+            value="Any notice shall be given in writing.",
+            probabilities={True: 0.6, False: 0.4},
+        )
+        self.check_item_probabilities(string_item, {True: 0.6, False: 0.4})
+
+        # One label out of several: the labels are the options
+        multi_class_probabilities: ItemProbabilities = {
+            "written": 0.71,
+            "email": 0.20,
+            "any": 0.06,
+            "not specified": 0.03,
+        }
+        multi_class_item = _LabelItem(
+            value=["written"], probabilities=multi_class_probabilities
+        )
+        self.check_item_probabilities(multi_class_item, multi_class_probabilities)
+
+        # Several labels: each label has its own probability, i.e. the probabilities
+        # are not required to sum to 1
+        multi_label_probabilities: ItemProbabilities = {
+            "NDA": 0.97,
+            "Confidential": 0.62,
+            "Other": 0.08,
+        }
+        assert sum(multi_label_probabilities.values()) > 1
+        multi_label_item = _LabelItem(
+            value=["NDA", "Confidential"], probabilities=multi_label_probabilities
+        )
+        self.check_item_probabilities(multi_label_item, multi_label_probabilities)
+        probabilities_with_other_sums: list[ItemProbabilities] = [
+            {"NDA": 0.1, "Confidential": 0.2, "Other": 0.3},
+            {"NDA": 0.0, "Confidential": 0.0, "Other": 0.0},
+            {"NDA": 1.0, "Confidential": 1.0, "Other": 1.0},
+        ]
+        for probabilities in probabilities_with_other_sums:
+            self.check_item_probabilities(
+                _LabelItem(value=["NDA"], probabilities=probabilities), probabilities
+            )
+
+        # Rating: the integers of the rating scale are the options
+        rating_probabilities: ItemProbabilities = {
+            1: 0.0,
+            2: 0.0,
+            3: 0.15,
+            4: 0.55,
+            5: 0.30,
+        }
+        rating_item = _IntegerItem(value=4, probabilities=rating_probabilities)
+        self.check_item_probabilities(rating_item, rating_probabilities)
+
+        # The other item classes accept the probabilities in the same way
+        other_item_classes_and_values: list[tuple[type[_ExtractedItem], Any]] = [
+            (_FloatItem, 1.5),
+            (_IntegerOrFloatItem, 1),
+            (_IntegerOrFloatItem, 1.5),
+            (_JsonObjectItem, {"hello": "world"}),
+            (_DateItem, date(2025, 3, 2)),
+        ]
+        for item_class, value in other_item_classes_and_values:
+            for probabilities in (
+                boolean_probabilities,
+                multi_class_probabilities,
+                rating_probabilities,
+            ):
+                item = item_class(value=value, probabilities=probabilities)
+                assert type(item) is item_class
+                assert item.value == value
+                self.check_item_probabilities(item, probabilities)
+
+        # The limits of the range are valid probabilities, and an integer
+        # is converted to a float
+        self.check_item_probabilities(
+            _BooleanItem(value=True, probabilities={True: 1.0, False: 0.0}),
+            {True: 1.0, False: 0.0},
+        )
+        item = _BooleanItem(value=False, probabilities={True: 0, False: 1})
+        assert item.probabilities is not None
+        assert [type(probability) for probability in item.probabilities.values()] == [
+            float,
+            float,
+        ]
+        self.check_item_probabilities(item, {True: 0.0, False: 1.0})
+
+        # A single option
+        self.check_item_probabilities(
+            _LabelItem(value=["NDA"], probabilities={"NDA": 0.97}), {"NDA": 0.97}
+        )
+
+        # The order of the options is kept as given
+        probabilities_in_other_orders: list[ItemProbabilities] = [
+            {False: 0.17, True: 0.83},
+            {5: 0.30, 1: 0.0, 4: 0.55, 3: 0.15, 2: 0.0},
+            {"not specified": 0.03, "written": 0.71, "any": 0.06, "email": 0.20},
+        ]
+        for probabilities in probabilities_in_other_orders:
+            self.check_item_probabilities(
+                _StringItem(value="Random string", probabilities=probabilities),
+                probabilities,
+            )
+
+        # The probabilities are kept with the other data of the item
+        item = _BooleanItem(
+            value=True,
+            justification="Random justification",
+            probabilities={True: 0.83, False: 0.17},
+            custom_data={"source": "test"},
+        )
+        assert item.value is True
+        assert item.justification == "Random justification"
+        assert item.custom_data == {"source": "test"}
+        self.check_item_probabilities(item, {True: 0.83, False: 0.17})
+
+        # Frozen state
+        with pytest.raises(ValueError):
+            boolean_item.probabilities = {True: 0.5, False: 0.5}
+        with pytest.raises(ValueError):
+            boolean_item.probabilities = None
+        self.check_item_probabilities(boolean_item, {True: 0.83, False: 0.17})
+        item_without_probabilities = _BooleanItem(value=True)
+        with pytest.raises(ValueError):
+            item_without_probabilities.probabilities = {True: 0.5, False: 0.5}
+        assert item_without_probabilities.probabilities is None
+
+        # The items with probabilities are attached to the concepts and to the aspect
+        # as the items without them
+        boolean_concept = BooleanConcept(name="NDA check", description="Is an NDA")
+        boolean_concept.extracted_items = [boolean_item]
+        multi_class_concept = LabelConcept(
+            name="Notice form",
+            description="Form in which a notice is to be given",
+            labels=["written", "email", "any", "not specified"],
+            classification_type="multi_class",
+        )
+        multi_class_concept.extracted_items = [multi_class_item]
+        multi_label_concept = LabelConcept(
+            name="Document types",
+            description="Types of the document",
+            labels=["NDA", "Confidential", "Other"],
+            classification_type="multi_label",
+        )
+        multi_label_concept.extracted_items = [multi_label_item]
+        rating_concept = RatingConcept(
+            name="Clarity", description="Clarity of the text", rating_scale=(1, 5)
+        )
+        rating_concept.extracted_items = [rating_item]
+        aspect = Aspect(name="Notices", description="Clauses on notices")
+        aspect.extracted_items = [string_item]
+        instances_and_probabilities: list[
+            tuple[Aspect | _Concept, ItemProbabilities]
+        ] = [
+            (boolean_concept, boolean_probabilities),
+            (multi_class_concept, multi_class_probabilities),
+            (multi_label_concept, multi_label_probabilities),
+            (rating_concept, rating_probabilities),
+            (aspect, {True: 0.6, False: 0.4}),
+        ]
+        for instance, expected_probabilities in instances_and_probabilities:
+            assert len(instance.extracted_items) == 1
+            self.check_item_probabilities(
+                instance.extracted_items[0], expected_probabilities
+            )
+
+    def test_item_probabilities_option_types(self):
+        """
+        Tests that the options in the probabilities of an extracted item keep their
+        exact types, i.e. that an option is never converted to an option of another
+        type that is equal to it as a dict key (``True == 1``).
+        """
+        # Booleans are kept as booleans
+        boolean_item = _BooleanItem(value=True, probabilities={True: 0.83, False: 0.17})
+        assert boolean_item.probabilities is not None
+        assert [type(option) for option in boolean_item.probabilities] == [bool, bool]
+        assert list(boolean_item.probabilities) == [True, False]
+        assert all(
+            option is True or option is False for option in boolean_item.probabilities
+        )
+
+        # Integers are kept as integers, including the ones that are equal
+        # to booleans, e.g. on a rating scale that starts at 0
+        integer_item = _IntegerItem(value=1, probabilities={0: 0.25, 1: 0.75})
+        assert integer_item.probabilities is not None
+        assert [type(option) for option in integer_item.probabilities] == [int, int]
+        self.check_item_probabilities(integer_item, {0: 0.25, 1: 0.75})
+        # The dicts are equal, which is why the types are checked separately
+        assert integer_item.probabilities == {False: 0.25, True: 0.75}
+        with pytest.raises(AssertionError):
+            self.check_item_probabilities(integer_item, {False: 0.25, True: 0.75})
+
+        # Strings are kept as strings, including the ones that read as other options
+        string_options: ItemProbabilities = {
+            "1": 0.4,
+            "0": 0.3,
+            "True": 0.2,
+            "false": 0.1,
+            " a ": 0.0,
+        }
+        label_item = _LabelItem(value=["1"], probabilities=string_options)
+        assert label_item.probabilities is not None
+        assert [type(option) for option in label_item.probabilities] == [str] * 5
+        self.check_item_probabilities(label_item, string_options)
+
+        # Options of different types are kept apart in the same dict
+        mixed_options: ItemProbabilities = {
+            True: 0.5,
+            "True": 0.3,
+            2: 0.2,
+            "2": 0.0,
+            0: 0.0,
+        }
+        mixed_item = _StringItem(value="Random string", probabilities=mixed_options)
+        assert mixed_item.probabilities is not None
+        assert [type(option) for option in mixed_item.probabilities] == [
+            bool,
+            str,
+            int,
+            str,
+            int,
+        ]
+        self.check_item_probabilities(mixed_item, mixed_options)
+
+        # Large and negative integers are valid options
+        integer_options: ItemProbabilities = {-1: 0.5, 10**30: 0.5}
+        self.check_item_probabilities(
+            _IntegerItem(value=1, probabilities=integer_options), integer_options
+        )
+
+        # A value of another type is rejected and not converted to an option:
+        # with a non-strict validation, `1.0` would become `True`
+        for invalid_option in (1.0, 0.0, 2.5, None, b"written", ("NDA", "Other")):
+            with pytest.raises(ValueError, match="probabilities"):
+                _BooleanItem(value=True, probabilities={invalid_option: 0.5})  # type: ignore
+
+    @pytest.mark.parametrize(
+        "invalid_probabilities",
+        [
+            # Empty
+            {},
+            # Not a dict
+            [[True, 0.83], [False, 0.17]],  # serialized form
+            [(True, 0.83), (False, 0.17)],
+            ((True, 0.83), (False, 0.17)),
+            [True, False],
+            "0.83",
+            0.83,
+            True,
+            # Probability is not a number
+            {True: True, False: False},
+            {True: False},
+            {True: "0.83", False: "0.17"},
+            {True: None},
+            {True: [0.83]},
+            {True: {True: 0.83}},
+            # Probability is not a finite number
+            {True: float("nan")},
+            {True: float("inf")},
+            {True: float("-inf")},
+            # Probability is outside of the range
+            {True: -0.01},
+            {True: 1.01},
+            {True: -1},
+            {True: 2},
+            {True: 83.0, False: 17.0},  # percentages
+            # One invalid probability among the valid ones
+            {1: 0.0, 2: 0.0, 3: 0.15, 4: 0.55, 5: 3},
+            {"written": 0.71, "email": float("nan"), "any": 0.06},
+            # Option of an invalid type
+            {1.0: 0.5},
+            {0.5: 0.5},
+            {None: 0.5},
+            {b"written": 0.5},
+            {("NDA", "Other"): 0.5},
+            {True: 0.5, 1.5: 0.5},
+        ],
+    )
+    def test_validate_item_probabilities(self, invalid_probabilities: Any):
+        """
+        Tests that invalid probabilities of an extracted item are rejected.
+        """
+        item_classes_and_values: list[tuple[type[_ExtractedItem], Any]] = [
+            (_BooleanItem, True),
+            (_StringItem, "Random string"),
+            (_IntegerItem, 1),
+            (_LabelItem, ["NDA"]),
+        ]
+        for item_class, value in item_classes_and_values:
+            with pytest.raises(ValueError, match="probabilities"):
+                item_class(value=value, probabilities=invalid_probabilities)
+
+    def test_item_probabilities_equality(self):
+        """
+        Tests that the probabilities of an extracted item take part in the comparison
+        of the items, i.e. that two items that differ only in probabilities
+        are not equal.
+        """
+        item = _BooleanItem(value=True, probabilities={True: 0.83, False: 0.17})
+
+        def item_with_probabilities(
+            serialized_probabilities: list[list[Any]] | None,
+        ) -> _BooleanItem:
+            """
+            Returns a copy of the item that differs from it only in probabilities.
+
+            Two items that are created separately are never equal, as they have
+            different unique IDs, i.e. such a copy is created from the serialized
+            item, which keeps the unique ID.
+
+            :param serialized_probabilities: The probabilities of the copy, as the
+                list of [option, probability] pairs that they are serialized to.
+            :type serialized_probabilities: list[list[Any]] | None
+            :return: The copy of the item with the given probabilities.
+            :rtype: _BooleanItem
+            """
+            item_dict = item.to_dict()
+            item_dict["probabilities"] = serialized_probabilities
+            return _BooleanItem.from_dict(item_dict)
+
+        # Same probabilities
+        assert item.clone() == item
+        assert item_with_probabilities([[True, 0.83], [False, 0.17]]) == item
+        assert item == item_with_probabilities([[True, 0.83], [False, 0.17]])
+
+        # Another probability of an option
+        assert item_with_probabilities([[True, 0.82], [False, 0.17]]) != item
+        assert item != item_with_probabilities([[True, 0.82], [False, 0.17]])
+
+        # Other options
+        assert item_with_probabilities([[True, 0.83]]) != item
+        assert (
+            item_with_probabilities([[True, 0.83], [False, 0.17], ["a", 0.0]]) != item
+        )
+        assert item_with_probabilities([["True", 0.83], ["False", 0.17]]) != item
+
+        # No probabilities
+        item_without_probabilities = item_with_probabilities(None)
+        assert item_without_probabilities.probabilities is None
+        assert item_without_probabilities != item
+        assert item != item_without_probabilities
+        assert item_without_probabilities == item_with_probabilities(None)
+        assert item_without_probabilities.clone() == item_without_probabilities
+
+        # Options of another type that are equal as dict keys (`True == 1`)
+        item_with_integer_options = item_with_probabilities([[1, 0.83], [0, 0.17]])
+        assert item_with_integer_options.probabilities == item.probabilities
+        assert item_with_integer_options != item
+        assert item != item_with_integer_options
+        assert item_with_integer_options == item_with_probabilities(
+            [[1, 0.83], [0, 0.17]]
+        )
+        assert item_with_probabilities([[True, 0.83], [0, 0.17]]) != item
+
+        # The same options with the same probabilities in another order: the items
+        # are equal, as the dicts are
+        item_with_other_order = item_with_probabilities([[False, 0.17], [True, 0.83]])
+        assert item_with_other_order.probabilities is not None
+        assert list(item_with_other_order.probabilities) == [False, True]
+        assert item_with_other_order == item
+
+        # Separately created items are not equal with or without probabilities,
+        # as they have different unique IDs
+        assert _BooleanItem(value=True, probabilities={True: 0.83, False: 0.17}) != item
+        assert _BooleanItem(value=True) != _BooleanItem(value=True)
+
+        # Objects of other types
+        assert item != {True: 0.83, False: 0.17}
+        assert item != [[True, 0.83], [False, 0.17]]
+        assert item != {True: 0.83, False: 0.17}
+        assert (
+            _StringItem(value="True", probabilities={True: 0.83, False: 0.17}) != item
+        )
