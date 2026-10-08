@@ -43,7 +43,7 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
     Pass the decorated function to ``tools`` of the LLM.
 
     :param func: A function to be used as a tool. Can be sync or async, and must
-        return a string.
+        return a non-empty string.
     :type func: ToolHandler
     :return: The same function, marked as a registered tool.
     :rtype: ToolHandler

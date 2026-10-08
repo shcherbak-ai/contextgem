@@ -25,7 +25,7 @@ This guide explains how to use LLM tool calling (function calling) with ContextG
 Tools allow the LLM to invoke Python functions during a conversation to perform actions or retrieve information.
 
 .. note::
-   Tool support is only available in ``chat(...)`` and ``chat_async(...)`` methods. It is not used by extraction methods.
+   Tool support is only available in ``chat(...)`` and ``chat_async(...)`` methods. It is not used by extraction methods: the tools of an LLM are not sent with the requests of an extraction.
 
 
 Basic Usage
@@ -41,7 +41,7 @@ A tool is a Python function decorated with ``@register_tool``. The function defi
 * Decorate a function with ``@register_tool``, and pass the function itself to ``tools=[...]`` when creating the LLM, or assign the functions to ``llm.tools`` later. This is the only way to define and assign tools
 * A tool function must have a docstring and type hints for all its parameters, and must not have positional-only parameters, ``*args`` or ``**kwargs``
 * A parameter that has a default value, or is typed as ``Optional``, is optional for the LLM
-* Tool handlers must return a string (serialize structured data with ``json.dumps`` if needed)
+* Tool handlers must return a non-empty string (serialize structured data with ``json.dumps`` if needed)
 * Use :class:`~contextgem.public.llms.ChatSession` to maintain conversation history across turns
 
 
@@ -306,7 +306,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts several tool-rela
 Return Value Requirements
 --------------------------
 
-Tool handlers must return a string. For structured data, serialize it before returning:
+Tool handlers must return a non-empty string. For structured data, serialize it before returning:
 
 .. code-block:: python
 
@@ -323,3 +323,52 @@ Tool handlers must return a string. For structured data, serialize it before ret
        return json.dumps(data)
 
 The LLM will interpret the returned string and incorporate it into its response.
+
+If a tool returns a value of another type, ``TypeError`` is raised from ``chat(...)``, and if it returns an empty string, ``ValueError`` is raised. No further requests are sent in such cases.
+
+
+.. _llm-tools-errors-label:
+
+Errors in Tool Calls
+---------------------
+
+When the LLM can correct a failed tool call, the chat is not stopped: the error is sent to the LLM as the result of the tool call, and the LLM can call the tool again in the next round.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 50 50
+
+   * - What happens
+     - How it is handled
+   * - The LLM calls a tool that does not exist
+     - The LLM receives an error with the names of the available tools
+   * - The LLM passes arguments that are not valid JSON, or that do not match the parameters of the tool or their constraints
+     - The tool is not called, and the LLM receives the validation error
+   * - The tool function raises an exception
+     - The LLM receives the message of the exception
+   * - The LLM returns a tool call that cannot be processed, e.g. without the name of the tool or the ID of the call
+     - No tool is called. This is handled as a failed request: a fallback LLM is tried, or ``ModelAPIError`` is raised
+   * - The tool function returns a value other than a non-empty string
+     - ``TypeError`` or ``ValueError`` is raised from ``chat(...)``
+   * - The LLM still calls tools after ``tool_max_rounds`` rounds of tool calls
+     - ``LLMToolLoopLimitError`` is raised from ``chat(...)``
+
+When ``chat(...)`` raises an error, or is cancelled (e.g. on a timeout set by the calling code), the requests completed before that are still counted in the usage and cost of the LLM.
+
+.. note::
+   The message of an exception raised by a tool function is sent to the LLM. Make sure that it does not contain anything that the LLM should not receive.
+
+
+.. _llm-tools-fallback-label:
+
+Tools and Fallback LLMs
+------------------------
+
+An LLM with tools can have fallback LLMs (see :ref:`llm-fallback-llms-label`). Each fallback LLM must have the same tools as the primary LLM, in any order, and the same ``tool_choice`` and ``parallel_tool_calls``, which is checked when the fallback LLMs are set. Before any request of a chat is sent, it is also checked that each fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls.
+
+A fallback LLM takes over when a request to the current LLM fails, at any point of the chat, or when the current LLM returns an empty response. The fallback LLM starts the chat over: it is sent the prompt, without the tool calls made by the LLM that failed and without their results.
+
+.. warning::
+   If an LLM fails after it has called tools, the fallback LLM may call the same tools again, i.e. a tool can be called more than once in a single ``chat(...)`` call. Make sure that the tools that change something (e.g. send a message or create a record) can be safely called again with the same arguments.
+
+A fallback LLM is not tried when the chat is stopped for a reason other than a failure of the LLM, i.e. when a tool function returns an invalid value, or when ``tool_max_rounds`` is reached (see :ref:`llm-tools-errors-label`).

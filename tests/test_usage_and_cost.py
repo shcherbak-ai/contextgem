@@ -32,6 +32,7 @@ import pytest
 
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.data_models import _ModelCost, _ModelUsage
+from contextgem.internal.exceptions import ModelAPIError
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import _get_llm_cache_token_counts
 from contextgem.public import (
@@ -138,6 +139,74 @@ class TestUsageAndCost(BaseTest):
         group.reset_usage_and_cost()
         assert all(i.usage.input == 0 for i in group.get_usage())
         assert all(i.cost.total == 0 for i in group.get_cost())
+
+    @pytest.mark.parametrize("raise_exception_on_extraction_error", [True, False])
+    def test_usage_recorded_when_extraction_fails(
+        self, raise_exception_on_extraction_error: bool
+    ):
+        """
+        Tests that the usage of the requests sent in an extraction is recorded when
+        the extraction fails after some of them, whether or not the error is raised.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        class StubbedLLMAPIError(Exception):
+            """
+            Non-transient error of the stubbed LLM API, i.e. an error that is not retried.
+            """
+
+            status_code = 401
+
+        requests: list[str] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, with the second request failing.
+            """
+            requests.append(kwargs["model"])
+            if len(requests) == 2:
+                raise StubbedLLMAPIError("Authentication failed")
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(
+                            content='[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+                        )
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        # Three paragraphs processed one per call, i.e. in three requests
+        document = Document(
+            raw_text="First paragraph.\n\nSecond paragraph.\n\nThird paragraph."
+        )
+        document.concepts = [
+            StringConcept(name="Topic", description="Topic of the text")
+        ]
+
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            if raise_exception_on_extraction_error:
+                with pytest.raises(ModelAPIError, match="Authentication failed"):
+                    llm.extract_concepts_from_document(
+                        document, max_paragraphs_to_analyze_per_call=1
+                    )
+            else:
+                with pytest.warns(UserWarning, match="Authentication failed"):
+                    llm.extract_concepts_from_document(
+                        document,
+                        max_paragraphs_to_analyze_per_call=1,
+                        raise_exception_on_extraction_error=False,
+                    )
+        assert len(requests) == 2
+
+        # The usage has the request that succeeded, and the request that failed
+        # as an unfinished call
+        usage = llm.get_usage()[0].usage
+        assert (usage.input, usage.output) == (10, 5)
+        assert [bool(call.timestamp_received) for call in usage.calls] == [True, False]
 
     def test_cached_tokens_usage_and_cost(self):
         """

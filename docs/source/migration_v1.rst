@@ -325,7 +325,28 @@ The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.
 
 Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the ``fallback_llm`` attribute, raises an error in v1.0.
 
-**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
+**System message.** In v1.0, a fallback LLM must have the same ``system_message`` as the primary LLM, otherwise an error is raised when the fallback LLMs are set. An LLM created without ``system_message`` has the default system message, so if the primary LLM is created with ``system_message``, e.g. with an empty string to disable it for a chat, pass the same value to each of its fallback LLMs:
+
+.. code-block:: python
+   :caption: In v1.0
+
+   llm = DocumentLLM(
+       model="openai/gpt-6-luna",
+       api_key="<your-openai-api-key>",
+       system_message="You are a helpful assistant.",
+       fallback_models=[
+           DocumentLLM(
+               model="anthropic/claude-haiku-4-5",
+               api_key="<your-anthropic-api-key>",
+               system_message="You are a helpful assistant.",  # same as of the primary LLM
+               is_fallback=True,
+           )
+       ],
+   )
+
+Before v1.0, a fallback LLM could have another system message. A fallback LLM created without ``system_message`` then used the default system message, which is written for extraction, also in a chat for which the primary LLM had another system message or none.
+
+**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. A serialized LLM whose fallback LLM has another system message cannot be deserialized either: set the ``system_message`` key of the fallback LLM to the one of the primary LLM. As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
 
 .. code-block:: python
    :caption: Updating an LLM serialized before v1.0

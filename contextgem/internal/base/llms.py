@@ -83,6 +83,7 @@ from contextgem.internal.exceptions import (
     LLMToolLoopLimitError,
     ModelAPIError,
     ModelExtractionError,
+    _ToolReturnValueError,
 )
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
@@ -1658,7 +1659,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if LLM processing fails
-            (1) _ModelUsage instance with model usage information
+            (1) _ModelUsage instance with the model usage information that the usage and
+                cost of the LLM are yet to be updated with, i.e. with the usage of
+                the last LLM call made. If the context is processed in several LLM calls,
+                the usage and cost of the LLM are updated with each of the previous calls
+                before the next one is made.
         :rtype: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
         """
 
@@ -1962,6 +1967,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 prompt_kwargs=prompt_kwargs,
                 prompt=rendered_prompt,
             )
+
+            # Update the usage and cost of the LLM with the calls made for the previous
+            # chunks before the next call. No usage data is returned if an exception is
+            # raised later on, i.e. the usage of these calls would be lost otherwise.
+            if all_usage_data is not None:
+                await llm._update_usage_and_cost((None, all_usage_data))
+                all_usage_data = None
 
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
@@ -3611,7 +3623,14 @@ class _DocumentLLM(_GenericModelProcessor):
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
         :raises ValueError: If images are provided but the model doesn't support vision
-        :raises RuntimeError: If the LLM call fails and no fallback is available
+        :raises ValueError: If the request params of a fallback LLM are invalid, e.g.
+            parallel tool calls are set for a fallback LLM that does not support them
+        :raises ValueError: If the prompt exceeds the context window of the LLM, and
+            no fallback LLM is left to try
+        :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
+            an empty response, and no fallback LLM is left to try
+        :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
+            ``tool_max_rounds`` rounds of tool calls
         """
         return _run_sync(
             self.chat_async(prompt=prompt, images=images, chat_session=chat_session)
@@ -3641,8 +3660,23 @@ class _DocumentLLM(_GenericModelProcessor):
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
         :raises ValueError: If images are provided but the model doesn't support vision
-        :raises RuntimeError: If the LLM call fails and no fallback is available
+        :raises ValueError: If the request params of a fallback LLM are invalid, e.g.
+            parallel tool calls are set for a fallback LLM that does not support them
+        :raises ValueError: If the prompt exceeds the context window of the LLM, and
+            no fallback LLM is left to try
+        :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
+            an empty response, and no fallback LLM is left to try
+        :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
+            ``tool_max_rounds`` rounds of tool calls
         """
+
+        # Check the request params of the fallback LLMs before any request is sent.
+        # A fallback LLM is used only if the LLM it is a fallback for fails, i.e. an invalid
+        # param of a fallback LLM would otherwise go unnoticed until then. The request
+        # params of this LLM are checked when its request is built.
+        for fallback_llm in self.fallback_models:
+            fallback_llm._validate_output_tokens()
+            fallback_llm._build_request_config(use_tools=True)
 
         # Try this LLM first, then each fallback LLM in the given order
         llms_to_try = [self, *self.fallback_models]
@@ -3660,10 +3694,9 @@ class _DocumentLLM(_GenericModelProcessor):
                 break
 
         if response is None:
-            # This should never happen, as we have `raise_exception_on_model_api_error=True`
-            # for chat, and such errors are skipped while a fallback LLM is yet to be tried,
-            # but raised when no fallback LLM is available or when the last fallback LLM
-            # also fails.
+            # This should never happen: a failed request or an empty response of an LLM
+            # is skipped while a fallback LLM is yet to be tried, but an exception
+            # is raised for it when no fallback LLM is left to try.
             raise RuntimeError(
                 f"Failed to get response from LLM {self.model} and no fallback is available"
             )
@@ -3689,15 +3722,21 @@ class _DocumentLLM(_GenericModelProcessor):
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
         :param has_fallback_pending: Whether a fallback LLM will be tried if the call to
-            this LLM fails. If True, a model API error is logged without being raised,
-            and None is returned. Defaults to False.
+            this LLM fails. If True, a model API error or an empty response is logged
+            without an exception being raised, and None is returned. Defaults to False.
         :type has_fallback_pending: bool
-        :return: The LLM's response, or None if the LLM call fails while a fallback LLM
-            is yet to be tried
+        :return: The LLM's response, or None if the LLM call fails, or the LLM returns
+            an empty response, while a fallback LLM is yet to be tried
         :rtype: str | None
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
         :raises ValueError: If images are provided but the model doesn't support vision
+        :raises ValueError: If the prompt exceeds the context window of the LLM, and
+            no fallback LLM is yet to be tried
+        :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
+            an empty response, and no fallback LLM is yet to be tried
+        :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
+            ``tool_max_rounds`` rounds of tool calls
         """
 
         # Validate prompt
@@ -3782,12 +3821,29 @@ class _DocumentLLM(_GenericModelProcessor):
             raise_exception_on_model_api_error=True,  # always True for chat
             chat_session=chat_session,
             has_fallback_pending=has_fallback_pending,
+            use_tools=True,  # tools are used only in chat
         )
 
         # Update usage and cost statistics
         await self._update_usage_and_cost(result)
 
         response, _ = result
+
+        # An empty response is handled as a failed one. It is told apart from a failed
+        # request, which is already reported at this point.
+        if response is not None and not response.strip():
+            response = None
+        if response is None and not _model_call_result_is_api_failure(result):
+            error_msg = f"LLM {self.model} returned an empty response."
+            if self._supports_reasoning:
+                error_msg += (
+                    " The tokens allowed by `max_completion_tokens` may have been "
+                    "used up by the reasoning of the model."
+                )
+            logger.error(error_msg)
+            if not has_fallback_pending:
+                raise ModelAPIError(error_msg)
+            logger.info("The call will be retried with a fallback LLM.")
 
         # If response is None, the caller will try with the next fallback LLM
         if response is not None and chat_session is not None:
@@ -4289,13 +4345,28 @@ class _DocumentLLM(_GenericModelProcessor):
             fallback_models_are_set and not _is_deserialization_in_progress()
         )
 
-        # Config params of the main LLM and of the fallback LLMs validated so far,
-        # without the `is_fallback` and `fallback_models` params
-        main_llm_dict = {
-            k: v
-            for k, v in self.__dict__.items()
-            if k not in ["is_fallback", "fallback_models"]
-        }
+        def get_config_params(llm: _DocumentLLM) -> dict[str, Any]:
+            """
+            Returns the config params of the LLM to compare it with another LLM:
+            without the `is_fallback` and `fallback_models` params, and with the tools
+            as a set, as the order of the tools makes no difference.
+
+            :param llm: The LLM to get the config params of.
+            :type llm: _DocumentLLM
+            :return: The config params by name.
+            :rtype: dict[str, Any]
+            """
+            config_params = {
+                k: v
+                for k, v in llm.__dict__.items()
+                if k not in ["is_fallback", "fallback_models"]
+            }
+            if config_params.get("tools") is not None:
+                config_params["tools"] = set(config_params["tools"])
+            return config_params
+
+        # Config params of the main LLM and of the fallback LLMs validated so far
+        main_llm_dict = get_config_params(self)
         fallback_llm_dicts: list[dict[str, Any]] = []
 
         for fallback_llm in self.fallback_models:
@@ -4308,9 +4379,21 @@ class _DocumentLLM(_GenericModelProcessor):
                 raise ValueError(
                     f"The fallback LLM must have the same output language `{self.output_language}` as the main one."
                 )
+            # A fallback LLM is given the same instructions as the LLM it replaces.
+            # With another system message, e.g. the default one of a fallback LLM
+            # created without it, the fallback LLM would follow other instructions,
+            # while in a chat session, which keeps a single system message,
+            # it would be sent the system message of the main LLM anyway.
+            elif fallback_llm.system_message != self.system_message:
+                raise ValueError(
+                    "The fallback LLM must have the same `system_message` as the main one."
+                )
 
-            # Validate tool-calling configuration parity
-            if self.tools != fallback_llm.tools:
+            # Validate tool-calling configuration parity. The tools have to be
+            # the same functions, in any order.
+            if (self.tools is None) != (fallback_llm.tools is None) or set(
+                self.tools or []
+            ) != set(fallback_llm.tools or []):
                 raise ValueError(
                     "Fallback LLM must have the same `tools` configuration as the main LLM"
                 )
@@ -4329,11 +4412,7 @@ class _DocumentLLM(_GenericModelProcessor):
 
             # Check that the fallback LLM is not the replica of the main LLM or of another
             # fallback LLM, just with different `is_fallback` and `fallback_models` params
-            fallback_llm_dict = {
-                k: v
-                for k, v in fallback_llm.__dict__.items()
-                if k not in ["is_fallback", "fallback_models"]
-            }
+            fallback_llm_dict = get_config_params(fallback_llm)
             if check_same_config:
                 if main_llm_dict == fallback_llm_dict:
                     raise ValueError(
@@ -4576,14 +4655,20 @@ class _DocumentLLM(_GenericModelProcessor):
         """
         return [m._to_message_dict() for m in messages]
 
-    def _build_request_config(self) -> dict[str, Any]:
+    def _build_request_config(self, *, use_tools: bool = False) -> dict[str, Any]:
         """
         Builds the common request configuration for a non-streaming completion call,
         including model-specific parameters. Messages are supplied separately per call.
 
+        :param use_tools: Whether to include the tools of the LLM and the related params
+            (tool choice, parallel tool calls). Tools are used only in chat, i.e. they
+            are not sent with the requests of extraction workflows. Defaults to False.
+        :type use_tools: bool
         :return: Base request configuration
         :rtype: dict[str, Any]
         :raises ValueError: If required params for reasoning models are missing
+        :raises ValueError: If parallel tool calls are set for the LLM that does not
+            support them
         """
 
         request_config: dict[str, Any] = {
@@ -4620,6 +4705,9 @@ class _DocumentLLM(_GenericModelProcessor):
         if self.seed:
             request_config["seed"] = self.seed
 
+        if not use_tools:
+            return request_config
+
         if self.tools is not None:
             # The tool definitions generated from the functions passed as tools
             request_config["tools"] = [
@@ -4631,7 +4719,8 @@ class _DocumentLLM(_GenericModelProcessor):
         if self.parallel_tool_calls is not None:
             if not self._supports_parallel_tool_calls:
                 raise ValueError(
-                    f"Model `{self.model}` does not support parallel tool calls according to "
+                    f"{'Fallback model' if self.is_fallback else 'Model'} "
+                    f"`{self.model}` does not support parallel tool calls according to "
                     f"litellm.supports_parallel_function_calling(). To override this detection, "
                     f"manually set `_supports_parallel_tool_calls=True` on the LLM instance."
                 )
@@ -4762,6 +4851,10 @@ class _DocumentLLM(_GenericModelProcessor):
         :type tc_obj: Any
         :return: The tool message object.
         :rtype: _Message
+        :raises _ToolReturnValueError: If the tool returns a value other than
+            a non-empty string. It carries the error to be raised to the calling code:
+            ``TypeError`` for a value other than a string, or ``ValueError`` for
+            an empty string.
         """
 
         fn = tc_obj.get("function")
@@ -4786,8 +4879,18 @@ class _DocumentLLM(_GenericModelProcessor):
         # Lookup tool registration
         reg = self._tool_registry.get(name)
         if not reg:
-            # This should never happen as we sync/validate the tool registry during the LLM init
-            raise RuntimeError(f"Tool '{name}' is not registered")
+            # The model requested a tool that it was not given, e.g. made up its name.
+            # Return a tool message with the error for the model to retry in another round
+            content_text = json.dumps(
+                {
+                    "error": "UnknownTool",
+                    "message": f"Tool '{name}' does not exist. "
+                    f"Available tools: {', '.join(self._tool_registry)}",
+                }
+            )
+            return _Message(
+                role="tool", content=content_text, tool_call_id=call_id, name=name
+            )
 
         schema = reg.get("schema")
         if not schema:
@@ -4817,10 +4920,19 @@ class _DocumentLLM(_GenericModelProcessor):
                 role="tool", content=content_text, tool_call_id=call_id, name=name
             )
 
+        # Abort immediately for developer error to prevent extra LLM roundtrips.
+        # Such an error is told apart from an error of the LLM API, e.g. tool calls
+        # of the LLM that cannot be processed, i.e. is not a reason to try a fallback LLM.
         if not isinstance(res, str):
-            # Abort immediately for developer error to prevent extra LLM roundtrips
-            raise TypeError(
-                f"Tool handler {name} must return a string. Use `json.dumps` for objects."
+            raise _ToolReturnValueError(
+                TypeError(
+                    f"Tool handler {name} must return a string. "
+                    "Use `json.dumps` for objects."
+                )
+            )
+        if not res.strip():
+            raise _ToolReturnValueError(
+                ValueError(f"Tool handler {name} must return a non-empty string.")
             )
 
         content_text = res
@@ -4897,11 +5009,15 @@ class _DocumentLLM(_GenericModelProcessor):
         async_limiter: AsyncLimiter | None = None,
         drop_params: bool = False,
         chat_session: _ChatSession | None = None,
+        use_tools: bool = False,
     ) -> tuple[str | None, bool]:
         """
         Sends the initial request, processes any tool-calling loops up to the
         configured max rounds, and returns the final answer along with a flag
         indicating whether tool calls were still requested after the loop ended.
+
+        Each request is recorded in the usage object: with the tokens used and
+        the response if it succeeds, or as an unfinished call if it fails.
 
         :param request_config: The request configuration.
         :type request_config: dict[str, Any]
@@ -4925,34 +5041,60 @@ class _DocumentLLM(_GenericModelProcessor):
         :param chat_session: Optional chat session object used to persist tool messages during the
             tool-calling loop. If provided, assistant and tool messages are recorded on the session.
         :type chat_session: _ChatSession | None
+        :param use_tools: Whether the tools of the LLM are sent with the requests, i.e.
+            whether the tool calls requested by the LLM are executed. Defaults to False.
+        :type use_tools: bool
         :return: The tuple containing the answer and whether tool calls were still requested.
         :rtype: tuple[str | None, bool]
+        :raises _ToolReturnValueError: If a tool returns a value other than a non-empty
+            string. It carries the error to be raised to the calling code.
         """
 
+        async def send_and_record(
+            call_obj: _ModelCall, drop_tool_choice: bool = False
+        ) -> tuple[str | None, list[Any] | None]:
+            """
+            Sends a request with the current messages and records the call
+            in the usage object.
+
+            :param call_obj: The model call object of the request.
+            :type call_obj: _ModelCall
+            :param drop_tool_choice: Whether to remove tool_choice in this request.
+            :type drop_tool_choice: bool
+            :return: The tuple containing the answer text and the tool calls.
+            :rtype: tuple[str | None, list[Any] | None]
+            """
+            send_completion_coro = self._send_non_streaming_completion(
+                request_config=request_config,
+                messages_payload=request_messages,
+                num_retries_failed_request=num_retries_failed_request,
+                max_retries_failed_request=max_retries_failed_request,
+                drop_params=drop_params,
+                drop_tool_choice=drop_tool_choice,
+            )
+            try:
+                if async_limiter:
+                    async with async_limiter:
+                        chat_completion = await send_completion_coro
+                else:
+                    chat_completion = await send_completion_coro
+                answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
+                self._record_usage_call(
+                    usage=usage,
+                    answer_text=answer,
+                    call_obj=call_obj,
+                    completion_obj=chat_completion,
+                )
+            except Exception:
+                # Record the call details (call unfinished)
+                usage.calls.append(call_obj)
+                raise
+            return answer, tool_calls
+
         # Initial send
-        initial_send_coro = self._send_non_streaming_completion(
-            request_config=request_config,
-            messages_payload=request_messages,
-            num_retries_failed_request=num_retries_failed_request,
-            max_retries_failed_request=max_retries_failed_request,
-            drop_params=drop_params,
-        )
-        if async_limiter:
-            async with async_limiter:
-                chat_completion = await initial_send_coro
-        else:
-            chat_completion = await initial_send_coro
-
-        answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
-        if not self.tools:
+        answer, tool_calls = await send_and_record(model_call_obj)
+        if not (use_tools and self.tools):
             tool_calls = None
-
-        self._record_usage_call(
-            usage=usage,
-            answer_text=answer,
-            call_obj=model_call_obj,
-            completion_obj=chat_completion,
-        )
 
         # Tools loop
         rounds = 0
@@ -4965,6 +5107,13 @@ class _DocumentLLM(_GenericModelProcessor):
                 name = fn.get("name")
                 arguments = fn.get("arguments", "{}")
                 call_id = tc.get("id")
+                # A tool call that cannot be answered is an invalid response of the LLM.
+                # This is checked for all the tool calls before any tool is executed.
+                if not all(isinstance(i, str) and i.strip() for i in (name, call_id)):
+                    raise ValueError(
+                        "The LLM returned a tool call without the name of the tool "
+                        "or without the ID of the call."
+                    )
                 tool_calls_serialized.append(
                     {
                         "id": call_id,
@@ -4996,26 +5145,8 @@ class _DocumentLLM(_GenericModelProcessor):
                 chat_session._extend_tool_messages(tool_messages)
 
             followup_call = _ModelCall(prompt_kwargs={}, prompt="<tools_round_trip>")
-            send_completion_coro = self._send_non_streaming_completion(
-                request_config=request_config,
-                messages_payload=request_messages,
-                num_retries_failed_request=num_retries_failed_request,
-                max_retries_failed_request=max_retries_failed_request,
-                drop_params=drop_params,
-                drop_tool_choice=True,
-            )
-            if async_limiter:
-                async with async_limiter:
-                    chat_completion = await send_completion_coro
-            else:
-                chat_completion = await send_completion_coro
-
-            answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
-            self._record_usage_call(
-                usage=usage,
-                answer_text=answer,
-                call_obj=followup_call,
-                completion_obj=chat_completion,
+            answer, tool_calls = await send_and_record(
+                followup_call, drop_tool_choice=True
             )
 
         return answer, bool(tool_calls)
@@ -5032,10 +5163,15 @@ class _DocumentLLM(_GenericModelProcessor):
         raise_exception_on_model_api_error: bool = True,
         chat_session: _ChatSession | None = None,
         has_fallback_pending: bool = False,
+        use_tools: bool = False,
     ) -> tuple[str | None, _ModelUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
         configuration.
+
+        If an exception is raised after a request was sent, the usage and cost of the LLM
+        are updated before that with the requests already made, as no usage statistics
+        are returned in such case.
 
         :param messages: Full chat messages to send to the LLM. Must be a list
             of `_Message` objects including any applicable system message and the user turn.
@@ -5064,26 +5200,70 @@ class _DocumentLLM(_GenericModelProcessor):
         :type chat_session: _ChatSession | None
         :param has_fallback_pending: Whether a fallback LLM will be tried if this call fails.
             If True, an error in the LLM API is logged without being raised or warned about,
-            as it is not final. Defaults to False.
+            as it is not final. The same applies to the messages that exceed the context
+            window of the model. Defaults to False.
         :type has_fallback_pending: bool
+        :param use_tools: Whether to send the tools of the LLM with the request and to execute
+            the tool calls requested by the LLM. Tools are used only in chat, i.e. they are
+            ignored in extraction workflows. Defaults to False.
+        :type use_tools: bool
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _ModelUsage]
+        :raises ValueError: If the messages exceed the context window of the model,
+            and no fallback LLM is yet to be tried.
+        :raises ModelAPIError: If the LLM call fails due to an error in the LLM API,
+            no fallback LLM is yet to be tried, and exceptions are to be raised.
+        :raises LLMToolLoopLimitError: If the LLM keeps requesting tool calls after
+            the configured max rounds.
         """
 
         # Validate vision support and convert messages
         self._ensure_vision_support_for_messages(messages)
         request_messages = self._messages_to_request(messages)
 
+        # Create an empty usage dict in case the call fails without the possibility to retrieve usage tokens
+        usage = _ModelUsage()
+
         # Validate max input / output tokens before making the API call
-        self._validate_input_tokens(request_messages)
+        try:
+            self._validate_input_tokens(request_messages)
+        except ValueError as e:
+            # The messages exceed the context window of the model, i.e. the request
+            # would fail with a non-transient error. As any such error, it is not final
+            # while a fallback LLM, which may have a larger context window, is yet to be tried.
+            # The call is recorded as unfinished, although no request is sent.
+            usage.calls.append(model_call_obj)
+            if not has_fallback_pending:
+                await self._update_usage_and_cost((None, usage))
+                raise
+            logger.error(f"The request is not sent to the LLM: {e}")
+            logger.info("The call will be retried with a fallback LLM.")
+            return None, usage
         self._validate_output_tokens()
 
         # Prepare request configuration with common parameters
-        request_config = self._build_request_config()
+        request_config = self._build_request_config(use_tools=use_tools)
 
-        # Create an empty usage dict in case the call fails without the possibility to retrieve usage tokens
-        usage = _ModelUsage()
+        def record_failed_call() -> None:
+            """
+            Makes sure that the failed call is the last call recorded (call unfinished).
+            A request that fails is recorded when it is sent. A call that fails
+            otherwise, e.g. when the tool calls returned by the LLM cannot be
+            processed, is recorded here.
+
+            :return: None
+            :rtype: None
+            """
+            if usage.calls and usage.calls[-1].timestamp_received is None:
+                return
+            if any(call is model_call_obj for call in usage.calls):
+                # The call failed in a round of tool calls, after the initial request
+                usage.calls.append(
+                    _ModelCall(prompt_kwargs={}, prompt="<tools_round_trip>")
+                )
+            else:
+                usage.calls.append(model_call_obj)
 
         # Make API call and process response (with tool loop if enabled)
         try:
@@ -5097,6 +5277,7 @@ class _DocumentLLM(_GenericModelProcessor):
                 async_limiter=async_limiter,
                 drop_params=drop_params,
                 chat_session=chat_session,
+                use_tools=use_tools,
             )
 
             if tool_calls_remaining:
@@ -5131,10 +5312,12 @@ class _DocumentLLM(_GenericModelProcessor):
                     raise_exception_on_model_api_error=raise_exception_on_model_api_error,
                     chat_session=chat_session,
                     has_fallback_pending=has_fallback_pending,
+                    use_tools=use_tools,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
                 # fall through to regular error handling
+                record_failed_call()
                 warnings.warn(
                     f"Exception occurred while calling LLM API with drop_params=True: {e}",
                     stacklevel=2,
@@ -5144,6 +5327,7 @@ class _DocumentLLM(_GenericModelProcessor):
                 else:
                     n_retries = getattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, 0)
                     if raise_exception_on_model_api_error:
+                        await self._update_usage_and_cost((None, usage))
                         raise ModelAPIError(
                             "Exception occurred while calling LLM API",
                             retry_count=n_retries,
@@ -5161,16 +5345,28 @@ class _DocumentLLM(_GenericModelProcessor):
                         )
         except LLMToolLoopLimitError:
             # Propagate tool loop limit errors without wrapping
+            await self._update_usage_and_cost((None, usage))
+            raise
+        except _ToolReturnValueError as e:
+            # Raise the error for the invalid value returned by a tool as it is:
+            # it is not an error of the LLM API, i.e. no fallback LLM is to be tried
+            await self._update_usage_and_cost((None, usage))
+            raise e.error from None
+        except asyncio.CancelledError:
+            # The call is cancelled, e.g. on a timeout set by the calling code
+            await self._update_usage_and_cost((None, usage))
             raise
         except Exception as e:
             # e.g. rate limit error, after the retries of the request are exhausted,
             # or a non-transient error such as failed authentication
+            record_failed_call()
             logger.error(f"Exception occurred while calling LLM API: {e}")
             if has_fallback_pending:
                 logger.info("The call will be retried with a fallback LLM.")
             else:
                 n_retries = getattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, 0)
                 if raise_exception_on_model_api_error:
+                    await self._update_usage_and_cost((None, usage))
                     raise ModelAPIError(
                         "Exception occurred while calling LLM API",
                         retry_count=n_retries,
@@ -5187,7 +5383,7 @@ class _DocumentLLM(_GenericModelProcessor):
                         stacklevel=2,
                     )
 
-        usage.calls.append(model_call_obj)  # record the call details (call unfinished)
+        # The failed call is recorded in the usage as unfinished at this point
         return None, usage
 
     def _set_prompts(self) -> None:

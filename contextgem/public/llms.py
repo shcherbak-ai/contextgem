@@ -152,9 +152,10 @@ class DocumentLLM(_DocumentLLM):
     :vartype is_fallback: bool
     :ivar fallback_models: DocumentLLMs to use as fallbacks if the current one fails, tried
         in the given order until one of them succeeds. Each must have ``is_fallback=True``
-        and the same role as the current LLM, must differ from the current LLM and from
-        each other in at least one config param, and must support vision if the current
-        LLM is used to extract concepts from images. Defaults to an empty list.
+        and the same role, output language, system message, tools, ``tool_choice`` and
+        ``parallel_tool_calls`` as the current LLM, must differ from the current LLM and
+        from each other in at least one config param, and must support vision if
+        the current LLM is used to extract concepts from images. Defaults to an empty list.
     :vartype fallback_models: list[DocumentLLM]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
@@ -212,6 +213,13 @@ class ChatSession(_ChatSession):
 
     To be used as ``chat_session=...`` parameter for ``DocumentLLM.chat(...)``
     or ``DocumentLLM.chat_async(...)``.
+
+    Note:
+        A chat session keeps the first system message it is given: the system message
+        of an LLM is added to the session only if the session has none yet. The system
+        message of the session is sent with each request of the session, also by any
+        other LLM that the session is used with, instead of the system message
+        of that LLM.
     """
 
     pass

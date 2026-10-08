@@ -18,7 +18,7 @@ fallback_model = DocumentLLM(
     model="openai/gpt-5.6-luna",  # or another provider/model
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),  # your API key for the LLM provider
     is_fallback=True,
-    system_message="",  # also disable default system message for fallback, or provide your own
+    system_message="",  # must be the same as the system message of the main LLM
 )
 main_model.fallback_models = [fallback_model]  # tried in the given order
 

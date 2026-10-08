@@ -138,7 +138,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``fallback_models``
      - ``list[DocumentLLM]``
      - ``[]``
-     - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role as the primary LLM.
+     - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role, output language, system message, tools, ``tool_choice`` and ``parallel_tool_calls`` as the primary LLM.
    * - ``output_language``
      - ``str``
      - ``"en"``
@@ -158,7 +158,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``tools``
      - ``list[Callable] | None``
      - ``None``
-     - Tools for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``: functions decorated with ``@register_tool``. The tool schemas sent to the LLM are generated from the names, docstrings and type hints of the functions. Handlers must return a string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :ref:`llm-chat-with-tools-label`.
+     - Tools for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``: functions decorated with ``@register_tool``. The tool schemas sent to the LLM are generated from the names, docstrings and type hints of the functions. Handlers must return a non-empty string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :ref:`llm-chat-with-tools-label`.
    * - ``tool_choice``
      - ``str | dict | None``
      - ``None``
@@ -184,6 +184,8 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
 💡 Advanced Configuration Examples
 ------------------------------------
 
+.. _llm-fallback-llms-label:
+
 🔄 Configuring Fallback LLMs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -193,9 +195,11 @@ You can set up one or more fallback LLMs that will be used if the primary LLM fa
    :language: python
    :caption: Configuring fallback LLMs
 
-Each fallback LLM must be created with ``is_fallback=True``, have the same ``role`` and ``output_language`` as the primary LLM, and cannot have fallback LLMs of its own. A fallback LLM must also differ from the primary LLM, and from the other fallback LLMs, in at least one configuration parameter, e.g. the model, the API key or the API base, as an exact copy would only repeat the same request. This is checked when the fallback LLMs are set, i.e. when the primary LLM is created with them or when ``fallback_models`` is assigned. If the primary LLM is used to extract concepts from images, or is passed images in a chat, each of its fallback LLMs must support vision as well, which is checked before any requests are sent. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
+Each fallback LLM must be created with ``is_fallback=True``, have the same ``role``, ``output_language`` and ``system_message`` as the primary LLM, and cannot have fallback LLMs of its own. An LLM created without ``system_message`` has the default system message, so if you set ``system_message`` for the primary LLM, e.g. to an empty string to disable it for a chat, set the same value for each fallback LLM. Each fallback LLM must also have the same tools as the primary LLM, in any order, and the same ``tool_choice`` and ``parallel_tool_calls`` (see :ref:`llm-tools-fallback-label`). Finally, a fallback LLM must differ from the primary LLM, and from the other fallback LLMs, in at least one configuration parameter, e.g. the model, the API key or the API base, as an exact copy would only repeat the same request. This is checked when the fallback LLMs are set, i.e. when the primary LLM is created with them or when ``fallback_models`` is assigned. If the primary LLM is used to extract concepts from images, or is passed images in a chat, each of its fallback LLMs must support vision as well, which is checked before any requests are sent. In a chat, the request parameters of the fallback LLMs are checked before any requests are sent as well, e.g. that a fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
 
-The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, or, during extraction, when it keeps returning invalid data. See :ref:`llm-retries-label` for details.
+The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, when the prompt exceeds its context window, when it keeps returning invalid data during extraction, or when it returns an empty response in a chat. See :ref:`llm-retries-label` for details.
+
+To change the ``system_message`` of an LLM that already has fallback LLMs, change it for the fallback LLMs first, and then for the primary LLM.
 
 .. note::
    Each LLM applies its own retry settings and timeout before the next fallback LLM is tried, so the more fallback LLMs you configure, the longer a request can take to fail when all of the LLMs are unavailable.
@@ -209,10 +213,10 @@ The next fallback LLM is tried when the current LLM fails for good, i.e. when it
 Retries are configured per LLM, which also applies to each fallback LLM, and depend on why the request failed:
 
 - **Transient API errors** (request timeout, rate limit, server or connection error) are retried up to ``num_retries_failed_request`` times. The delay between the retries grows exponentially (about 1, 2, 4, 8 seconds, capped at 10 seconds) and is randomly shortened by up to a half (jitter), so that concurrent requests that failed together are not all retried at the same moment.
-- **Non-transient API errors** (e.g. invalid request, failed authentication, exceeded context window, content policy violation) are not retried, as the same request would fail again in the same way.
+- **Non-transient API errors** (e.g. invalid request, failed authentication, exceeded context window, content policy violation) are not retried, as the same request would fail again in the same way. A prompt that is found to exceed the context window of the model before the request is sent is handled in the same way: the request is not sent.
 - **Invalid data** returned by the LLM during extraction (the response cannot be parsed or validated) is requested again up to ``max_retries_invalid_data`` times, without a delay.
 
-When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method.
+When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request or for an empty response in a chat, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method. A prompt that exceeds the context window of the last LLM to try raises ``ValueError``.
 
 .. note::
    ``max_retries_failed_request`` sets the number of retries performed by the LLM provider's SDK, where supported (e.g. for OpenAI), in addition to the retries described above. It applies to the first attempt of a request only.

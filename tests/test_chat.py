@@ -22,9 +22,11 @@ Module defining tests for chat and tools.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import types
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 from datetime import datetime
 from typing import Annotated, Any, TypedDict
@@ -37,7 +39,13 @@ from contextgem.internal.base import llms as llms_module
 from contextgem.internal.data_models import _Message
 from contextgem.internal.exceptions import LLMToolLoopLimitError, ModelAPIError
 from contextgem.internal.loggers import logger
-from contextgem.public import ChatSession, Document, DocumentLLM, register_tool
+from contextgem.public import (
+    ChatSession,
+    Document,
+    DocumentLLM,
+    StringConcept,
+    register_tool,
+)
 from tests.base import BaseTest
 
 
@@ -51,6 +59,93 @@ class _InvoiceItem(TypedDict):
 
     qty: Annotated[int, Field(description="Quantity of the item", ge=1)]
     price: Annotated[int, Field(description="Price of the item", ge=0)]
+
+
+# Models of the LLMs used in the tests with the stubbed LLM API
+_MAIN_MODEL = "openai/gpt-6-luna"
+_FALLBACK_MODEL = "openai/gpt-5.6-luna"
+
+
+class _StubbedLLMAPIError(Exception):
+    """
+    Non-transient error of the stubbed LLM API, i.e. an error that is not retried.
+    """
+
+    status_code = 401
+
+
+def _create_completion(content: str | None, *tool_calls: tuple[str, str]) -> Any:
+    """
+    Creates a completion, as returned by the LLM API, that has the given text
+    and the calls of the tools given as (name, arguments in JSON).
+    """
+    return types.SimpleNamespace(
+        choices=[
+            types.SimpleNamespace(
+                message=types.SimpleNamespace(
+                    content=content,
+                    tool_calls=[
+                        {
+                            "id": f"call_{i}",
+                            "type": "function",
+                            "function": {"name": name, "arguments": arguments},
+                        }
+                        for i, (name, arguments) in enumerate(tool_calls)
+                    ]
+                    or None,
+                )
+            )
+        ],
+        usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+    )
+
+
+def _stub_llm_api(
+    responses: dict[str, list[Any]],
+) -> tuple[Callable[..., Any], list[dict[str, Any]]]:
+    """
+    Creates a stub of the LLM API that returns the responses prepared for each model
+    one by one. A response that is an exception is raised.
+
+    Returns the stub, and the list that the params of the sent requests are added to.
+    """
+    requests: list[dict[str, Any]] = []
+
+    async def acompletion_stub(**kwargs: Any) -> Any:
+        """
+        Simulates the LLM API.
+        """
+        model = kwargs["model"]
+        response = responses[model][
+            sum(request["model"] == model for request in requests)
+        ]
+        requests.append({**kwargs, "messages": list(kwargs["messages"])})
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    return acompletion_stub, requests
+
+
+def _create_llm_for_stubbed_chat(
+    *, with_fallback: bool = True, **kwargs: Any
+) -> DocumentLLM:
+    """
+    Creates an LLM for a chat with the stubbed LLM API, by default with a fallback LLM
+    that has the same params and another model. Failed requests are not retried.
+    """
+    params: dict[str, Any] = {
+        "api_key": "test_api_key",
+        "system_message": "",
+        "num_retries_failed_request": 0,
+        **kwargs,
+    }
+    llm = DocumentLLM(model=_MAIN_MODEL, **params)
+    if with_fallback:
+        llm.fallback_models = [
+            DocumentLLM(model=_FALLBACK_MODEL, is_fallback=True, **params)
+        ]
+    return llm
 
 
 class TestChat(BaseTest):
@@ -828,11 +923,6 @@ class TestChat(BaseTest):
         llm._supports_tools = True
         llm.fallback_models = [llm_fallback]
 
-        # Mark support exolicitly due to litellm bug where litellm.supports_parallel_function_calling()
-        # returns False for all models: https://github.com/BerriAI/litellm/issues/13980
-        # TODO: remove this once litellm bug is fixed
-        llm._supports_parallel_tool_calls = True
-
         # Optional chat session to preserve history
         cs = ChatSession() if use_session else None
         if parallel_tool_calls:
@@ -863,7 +953,10 @@ class TestChat(BaseTest):
         )
         if parallel_tool_calls:
             llm._supports_parallel_tool_calls = False  # set to False to test error
-            with pytest.raises(ValueError, match="parallel tool calls"):
+            with pytest.raises(
+                ValueError,
+                match=f"^Model `{llm.model}` does not support parallel tool calls",
+            ):
                 llm.chat(prompt, chat_session=cs)
             llm._supports_parallel_tool_calls = True
         else:
@@ -901,10 +994,12 @@ class TestChat(BaseTest):
         assert calls["final"] == 1
 
         # Usage must include a provider call for each tool round and for the final answer:
-        # with parallel tool calls, the first three tools are called in a single round
+        # with parallel tool calls, the first three tools are called in a single round.
+        # Without them, it also includes the two provider calls of the chat that reached
+        # the limit of the tool rounds above.
         usage_calls = llm.get_usage()[0].usage.calls
         logger.info(f"Usage calls: {len(usage_calls)}")
-        assert len(usage_calls) == (3 if parallel_tool_calls else 5)
+        assert len(usage_calls) == (3 if parallel_tool_calls else 7)
 
         # Tool messages are stored separately when session is used
         if use_session:
@@ -1125,6 +1220,924 @@ class TestChat(BaseTest):
         # ...and for the valid one, the result of the tool
         assert requests[2][-1]["role"] == "tool"
         assert requests[2][-1]["content"] == "shipped"
+
+    @pytest.mark.parametrize("use_session", [False, True])
+    def test_chat_with_tools_fallback(self, use_session: bool):
+        """
+        Tests that a fallback LLM takes over a chat with tools when the main LLM fails,
+        before or after it calls the tools.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        tool_call = ("get_order_status", '{"order_id": "ORD-123"}')
+        prompt = "What is the status of the order ORD-123?"
+
+        # === The main LLM fails on its first request ===
+
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
+        fallback_llm = llm.fallback_models[0]
+        chat_session = ChatSession() if use_session else None
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [_StubbedLLMAPIError("Authentication failed")],
+                _FALLBACK_MODEL: [
+                    _create_completion(None, tool_call),
+                    _create_completion("The order is shipped."),
+                ],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            answer = llm.chat(prompt, chat_session=chat_session)
+
+        # The fallback LLM is sent the same tools, calls the tool and answers
+        assert answer == "The order is shipped."
+        assert [request["model"] for request in requests] == [
+            _MAIN_MODEL,
+            _FALLBACK_MODEL,
+            _FALLBACK_MODEL,
+        ]
+        assert requests[1]["tools"] and requests[1]["tools"] == requests[0]["tools"]
+        assert tool_runs == ["ORD-123"]
+
+        # Usage is tracked for each LLM: the failed request of the main LLM
+        # is recorded as an unfinished call
+        main_usage = llm.get_usage()[0].usage
+        assert (main_usage.input, main_usage.output) == (0, 0)
+        assert [call.timestamp_received for call in main_usage.calls] == [None]
+        fallback_usage = fallback_llm.get_usage()[0].usage
+        assert (fallback_usage.input, fallback_usage.output) == (20, 10)
+        assert len(fallback_usage.calls) == 2
+        assert all(call.timestamp_received for call in fallback_usage.calls)
+
+        # The chat session has the prompt and the answer, once
+        if chat_session is not None:
+            assert [m.role for m in chat_session.messages] == ["user", "assistant"]
+            assert chat_session.messages[0]._response_succeeded is True
+            assert chat_session.messages[1].content == "The order is shipped."
+
+        # === The main LLM fails after a round of tool calls ===
+
+        tool_runs.clear()
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
+        fallback_llm = llm.fallback_models[0]
+        chat_session = ChatSession() if use_session else None
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(None, tool_call),
+                    _StubbedLLMAPIError("Authentication failed"),
+                ],
+                _FALLBACK_MODEL: [
+                    _create_completion(None, tool_call),
+                    _create_completion("The order is shipped."),
+                ],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            answer = llm.chat(prompt, chat_session=chat_session)
+
+        assert answer == "The order is shipped."
+        assert [request["model"] for request in requests] == [
+            _MAIN_MODEL,
+            _MAIN_MODEL,
+            _FALLBACK_MODEL,
+            _FALLBACK_MODEL,
+        ]
+
+        # The fallback LLM starts the chat over: it is not sent the tool calls
+        # of the main LLM and their results, i.e. it calls the tool again
+        assert [m["role"] for m in requests[2]["messages"]] == ["user"]
+        assert tool_runs == ["ORD-123", "ORD-123"]
+
+        # The usage of the main LLM has its successful request, and its failed
+        # request as an unfinished call
+        main_usage = llm.get_usage()[0].usage
+        assert (main_usage.input, main_usage.output) == (10, 5)
+        assert [bool(call.timestamp_received) for call in main_usage.calls] == [
+            True,
+            False,
+        ]
+        assert main_usage.calls[0] is not main_usage.calls[1]
+        fallback_usage = fallback_llm.get_usage()[0].usage
+        assert (fallback_usage.input, fallback_usage.output) == (20, 10)
+        assert len(fallback_usage.calls) == 2
+
+        # The chat session has the prompt and the answer once, and the tool calls
+        # of both LLMs with their results
+        if chat_session is not None:
+            assert [m.role for m in chat_session.messages] == ["user", "assistant"]
+            assert [m.role for m in chat_session._tool_messages] == [
+                "assistant",
+                "tool",
+                "assistant",
+                "tool",
+            ]
+
+    @pytest.mark.parametrize(
+        "tool_result, error_type, error_message",
+        [
+            (5, TypeError, "must return a string"),
+            ({"status": "shipped"}, TypeError, "must return a string"),
+            ("", ValueError, "must return a non-empty string"),
+            (" ", ValueError, "must return a non-empty string"),
+        ],
+    )
+    def test_chat_with_invalid_tool_result(
+        self, tool_result: Any, error_type: type[Exception], error_message: str
+    ):
+        """
+        Tests that a tool that returns a value other than a non-empty string is reported
+        as such. It is an error in the calling code, not an error of the LLM API: it is
+        raised as it is, and no fallback LLM is tried, i.e. the tool is not called again.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return tool_result
+
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(
+                        None, ("get_order_status", '{"order_id": "ORD-123"}')
+                    )
+                ],
+                _FALLBACK_MODEL: [_create_completion("The order is shipped.")],
+            }
+        )
+        with (
+            patch.object(llms_module.litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(error_type, match=error_message),
+        ):
+            llm.chat("What is the status of the order ORD-123?")
+
+        assert [request["model"] for request in requests] == [_MAIN_MODEL]
+        assert tool_runs == ["ORD-123"]
+
+        # The usage of the request sent before the error is recorded
+        main_usage = llm.get_usage()[0].usage
+        assert (main_usage.input, main_usage.output) == (10, 5)
+        assert len(main_usage.calls) == 1
+
+    def test_chat_tool_call_errors_are_returned_to_llm(self):
+        """
+        Tests that the LLM receives an error, and can correct the call, when it calls
+        a tool that does not exist, or when a tool raises an exception. Such errors
+        are not a reason to try a fallback LLM.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            if order_id != "ORD-123":
+                raise LookupError("Order not found")
+            return "shipped"
+
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    # A call of a tool that does not exist
+                    _create_completion(None, ("get_status", '{"order_id": "ORD-123"}')),
+                    # A call for which the tool raises an exception
+                    _create_completion(
+                        None, ("get_order_status", '{"order_id": "123"}')
+                    ),
+                    # The corrected call
+                    _create_completion(
+                        None, ("get_order_status", '{"order_id": "ORD-123"}')
+                    ),
+                    # The final answer
+                    _create_completion("The order is shipped."),
+                ],
+                _FALLBACK_MODEL: [],
+            }
+        )
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            answer = llm.chat("What is the status of the order 123?")
+
+        assert answer == "The order is shipped."
+        assert [request["model"] for request in requests] == [_MAIN_MODEL] * 4
+        assert tool_runs == ["123", "ORD-123"]
+
+        # For the tool that does not exist, the LLM receives the error
+        # with the names of the tools it can call...
+        unknown_tool_message = requests[1]["messages"][-1]
+        assert unknown_tool_message["role"] == "tool"
+        assert "UnknownTool" in unknown_tool_message["content"]
+        assert "get_order_status" in unknown_tool_message["content"]
+        # ...and for the exception raised by the tool, the message of the exception
+        tool_error_message = requests[2]["messages"][-1]
+        assert tool_error_message["role"] == "tool"
+        assert "ToolExecutionError" in tool_error_message["content"]
+        assert "Order not found" in tool_error_message["content"]
+
+    @pytest.mark.parametrize(
+        "malformed_tool_call",
+        [
+            {"id": "", "function": {"name": "get_order_status", "arguments": "{}"}},
+            {"id": None, "function": {"name": "get_order_status", "arguments": "{}"}},
+            {"id": "call_0", "function": {"name": "", "arguments": "{}"}},
+            {"id": "call_0", "function": None},
+        ],
+    )
+    def test_chat_with_malformed_tool_call(self, malformed_tool_call: dict[str, Any]):
+        """
+        Tests that a tool call of the LLM that cannot be processed, e.g. a tool call
+        without an ID, is handled as a failure of that LLM: no tool is called for it,
+        a fallback LLM is tried, and ``ModelAPIError`` is raised when there is no
+        fallback LLM left to try.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str = "ORD-123") -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        def create_malformed_completion() -> Any:
+            """
+            Creates a completion with a valid tool call followed by the malformed one.
+            """
+            completion = _create_completion(None, ("get_order_status", "{}"))
+            completion.choices[0].message.tool_calls.append(malformed_tool_call)
+            return completion
+
+        prompt = "What is the status of the order ORD-123?"
+
+        # With a fallback LLM
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [create_malformed_completion()],
+                _FALLBACK_MODEL: [_create_completion("The order is shipped.")],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat(prompt) == "The order is shipped."
+        assert [request["model"] for request in requests] == [
+            _MAIN_MODEL,
+            _FALLBACK_MODEL,
+        ]
+        # No tool is called, including for the valid tool call of the same response
+        assert tool_runs == []
+        # The usage of the main LLM has its request, and the failed round
+        # of tool calls as an unfinished call
+        main_usage = llm.get_usage()[0].usage
+        assert (main_usage.input, main_usage.output) == (10, 5)
+        assert [bool(call.timestamp_received) for call in main_usage.calls] == [
+            True,
+            False,
+        ]
+
+        # Without a fallback LLM
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[get_order_status]
+        )
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [create_malformed_completion()]}
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(ModelAPIError),
+        ):
+            llm.chat(prompt)
+        assert len(requests) == 1
+        assert tool_runs == []
+
+    def test_chat_fallback_params_checked_before_requests(self):
+        """
+        Tests that the request params of a fallback LLM are checked before any request
+        is sent, i.e. not only when the fallback LLM is to be used.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            return "shipped"
+
+        # Parallel tool calls set for a fallback LLM that does not support them
+        llm = _create_llm_for_stubbed_chat(
+            tools=[get_order_status], parallel_tool_calls=False
+        )
+        fallback_llm = llm.fallback_models[0]
+        fallback_llm._supports_parallel_tool_calls = False
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [_create_completion("The order is shipped.")]}
+        )
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            with pytest.raises(
+                ValueError,
+                match=f"Fallback model `{_FALLBACK_MODEL}` does not support "
+                "parallel tool calls",
+            ):
+                llm.chat("What is the status of the order ORD-123?")
+            assert requests == []
+
+            fallback_llm._supports_parallel_tool_calls = True
+            assert llm.chat("What is the status of the order ORD-123?")
+            assert [request["model"] for request in requests] == [_MAIN_MODEL]
+
+        # Max output tokens of a fallback LLM that exceed the limit of its model
+        llm = _create_llm_for_stubbed_chat(with_fallback=False)
+        llm.fallback_models = [
+            DocumentLLM(
+                model=_FALLBACK_MODEL,
+                api_key="test_api_key",
+                system_message="",
+                max_completion_tokens=999999,
+                is_fallback=True,
+            )
+        ]
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [_create_completion("4")]}
+        )
+        with (
+            patch.object(llms_module.litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(
+                ValueError,
+                match=f"exceeds the model's maximum output tokens .* `{_FALLBACK_MODEL}`",
+            ),
+        ):
+            llm.chat("What is the result of 2+2?")
+        assert requests == []
+
+    def test_prompt_exceeding_context_window(self):
+        """
+        Tests that a prompt that exceeds the context window of an LLM is handled as
+        a failure of that LLM, in chat and in extraction: a fallback LLM is tried,
+        and the error is raised only when there is no fallback LLM left to try.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        get_model_info = litellm.get_model_info
+        prompt = "What is the result of 2+2?"
+
+        def with_small_context_window(model_with_small_context_window: str) -> Any:
+            """
+            Creates a replacement for `litellm.get_model_info()` that returns
+            a context window of a single token for the given model.
+            """
+
+            def get_model_info_stub(model: str, *args: Any, **kwargs: Any) -> Any:
+                """
+                Returns the info of the model.
+                """
+                model_info = dict(get_model_info(model, *args, **kwargs))
+                if model == model_with_small_context_window:
+                    model_info["max_input_tokens"] = 1
+                return model_info
+
+            return get_model_info_stub
+
+        # The prompt exceeds the context window of the main LLM: no request is sent
+        # to it, and the fallback LLM is tried
+        llm = _create_llm_for_stubbed_chat()
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [], _FALLBACK_MODEL: [_create_completion("4")]}
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                litellm, "get_model_info", new=with_small_context_window(_MAIN_MODEL)
+            ),
+        ):
+            assert llm.chat(prompt) == "4"
+        assert [request["model"] for request in requests] == [_FALLBACK_MODEL]
+        main_usage = llm.get_usage()[0].usage
+        assert [call.timestamp_received for call in main_usage.calls] == [None]
+
+        # The same without a fallback LLM: the error is raised
+        llm = _create_llm_for_stubbed_chat(with_fallback=False)
+        acompletion_stub, requests = _stub_llm_api({_MAIN_MODEL: []})
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                litellm, "get_model_info", new=with_small_context_window(_MAIN_MODEL)
+            ),
+            pytest.raises(
+                ValueError,
+                match=f"exceeds the model's maximum input tokens .* `{_MAIN_MODEL}`",
+            ),
+        ):
+            llm.chat(prompt)
+        assert requests == []
+        # The call is recorded as unfinished
+        usage = llm.get_usage()[0].usage
+        assert [call.timestamp_received for call in usage.calls] == [None]
+
+        # The request to the main LLM fails, and the prompt exceeds the context window
+        # of the fallback LLM, which is the last one to try: the error is raised
+        llm = _create_llm_for_stubbed_chat()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [_StubbedLLMAPIError("Authentication failed")],
+                _FALLBACK_MODEL: [],
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                litellm,
+                "get_model_info",
+                new=with_small_context_window(_FALLBACK_MODEL),
+            ),
+            pytest.raises(
+                ValueError,
+                match=f"exceeds the model's maximum input tokens .* `{_FALLBACK_MODEL}`",
+            ),
+        ):
+            llm.chat(prompt)
+        assert [request["model"] for request in requests] == [_MAIN_MODEL]
+
+        # The same applies to extraction: the fallback LLM is tried...
+        def create_document() -> Document:
+            """
+            Creates a document with a concept to extract.
+            """
+            document = Document(raw_text="The order ORD-123 was placed on Monday.")
+            document.concepts = [
+                StringConcept(name="Order ID", description="Identifier of the order")
+            ]
+            return document
+
+        llm = _create_llm_for_stubbed_chat()
+        document = create_document()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [],
+                _FALLBACK_MODEL: [
+                    _create_completion(
+                        '[{"concept_id": "C0", "extracted_items": ["ORD-123"]}]'
+                    )
+                ],
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                litellm, "get_model_info", new=with_small_context_window(_MAIN_MODEL)
+            ),
+        ):
+            llm.extract_concepts_from_document(document)
+        assert [request["model"] for request in requests] == [_FALLBACK_MODEL]
+        assert [i.value for i in document.concepts[0].extracted_items] == ["ORD-123"]
+
+        # ...and the error is raised when there is no fallback LLM to try
+        llm = _create_llm_for_stubbed_chat(with_fallback=False)
+        acompletion_stub, requests = _stub_llm_api({_MAIN_MODEL: []})
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                litellm, "get_model_info", new=with_small_context_window(_MAIN_MODEL)
+            ),
+            pytest.raises(ValueError, match="exceeds the model's maximum input tokens"),
+        ):
+            llm.extract_concepts_from_document(create_document())
+        assert requests == []
+
+    def test_chat_usage_recorded_on_errors(self):
+        """
+        Tests that the usage of the requests sent in a chat with tools is recorded
+        when the chat ends with an error.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        tool_call_completion = _create_completion(
+            None, ("get_order_status", '{"order_id": "ORD-123"}')
+        )
+        prompt = "What is the status of the order ORD-123?"
+
+        # The LLM keeps calling the tool after the max rounds of tool calls.
+        # No fallback LLM is tried in such case.
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status], tool_max_rounds=2)
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [tool_call_completion] * 3,
+                _FALLBACK_MODEL: [_create_completion("The order is shipped.")],
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(LLMToolLoopLimitError),
+        ):
+            llm.chat(prompt)
+        assert [request["model"] for request in requests] == [_MAIN_MODEL] * 3
+        assert len(tool_runs) == 2
+        usage = llm.get_usage()[0].usage
+        assert (usage.input, usage.output) == (30, 15)
+        assert len(usage.calls) == 3
+        assert all(call.timestamp_received for call in usage.calls)
+
+        # The request fails after a round of tool calls, with no fallback LLM to try
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[get_order_status]
+        )
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    tool_call_completion,
+                    _StubbedLLMAPIError("Authentication failed"),
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(ModelAPIError, match="Authentication failed"),
+        ):
+            llm.chat(prompt)
+        assert len(requests) == 2
+        usage = llm.get_usage()[0].usage
+        assert (usage.input, usage.output) == (10, 5)
+        assert [bool(call.timestamp_received) for call in usage.calls] == [True, False]
+
+        # The chat is cancelled during the request that follows a round of tool calls,
+        # as it is e.g. on a timeout set by the calling code
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[get_order_status]
+        )
+        n_requests = 0
+
+        async def chat_and_cancel() -> None:
+            """
+            Starts a chat, and cancels it when its second request is being processed.
+            """
+            second_request_started = asyncio.Event()
+
+            async def acompletion_stub(**kwargs: Any) -> Any:
+                """
+                Simulates the LLM API, with the second request never completed.
+                """
+                nonlocal n_requests
+                n_requests += 1
+                if n_requests == 2:
+                    second_request_started.set()
+                    await asyncio.sleep(60)
+                return tool_call_completion
+
+            with patch.object(litellm, "acompletion", new=acompletion_stub):
+                chat_task = asyncio.create_task(llm.chat_async(prompt))
+                await second_request_started.wait()
+                chat_task.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await chat_task
+
+        asyncio.run(chat_and_cancel())
+        assert n_requests == 2
+        usage = llm.get_usage()[0].usage
+        assert (usage.input, usage.output) == (10, 5)
+        assert len(usage.calls) == 1
+
+    @pytest.mark.parametrize("empty_response", [None, "", " \n"])
+    def test_chat_with_empty_response(self, empty_response: str | None):
+        """
+        Tests that an empty response of an LLM is handled as a failure of that LLM:
+        a fallback LLM is tried, and an error is raised when there is no fallback LLM
+        left to try.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        prompt = "What is the result of 2+2?"
+
+        # With a fallback LLM
+        llm = _create_llm_for_stubbed_chat()
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [_create_completion(empty_response)],
+                _FALLBACK_MODEL: [_create_completion("4")],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat(prompt, chat_session=chat_session) == "4"
+        assert [request["model"] for request in requests] == [
+            _MAIN_MODEL,
+            _FALLBACK_MODEL,
+        ]
+        assert [(m.role, m.content) for m in chat_session.messages] == [
+            ("user", prompt),
+            ("assistant", "4"),
+        ]
+        # The usage of the request with the empty response is recorded
+        main_usage = llm.get_usage()[0].usage
+        assert (main_usage.input, main_usage.output) == (10, 5)
+
+        # Without a fallback LLM
+        llm = _create_llm_for_stubbed_chat(with_fallback=False)
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [_create_completion(empty_response)]}
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(ModelAPIError, match="returned an empty response"),
+        ):
+            llm.chat(prompt, chat_session=chat_session)
+        # The prompt remains in the chat session as not answered
+        assert [m.role for m in chat_session.messages] == ["user"]
+        assert chat_session.messages[0]._response_succeeded is False
+
+        # The same applies to an empty response after a round of tool calls
+        @register_tool
+        def add(a: int, b: int) -> str:
+            """
+            Adds two numbers.
+            """
+            return str(a + b)
+
+        llm = _create_llm_for_stubbed_chat(tools=[add])
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(None, ("add", '{"a": 2, "b": 2}')),
+                    _create_completion(empty_response),
+                ],
+                _FALLBACK_MODEL: [_create_completion("4")],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat(prompt) == "4"
+        assert [request["model"] for request in requests] == [
+            _MAIN_MODEL,
+            _MAIN_MODEL,
+            _FALLBACK_MODEL,
+        ]
+
+    def test_chat_system_message_with_fallback(self):
+        """
+        Tests that a fallback LLM must have the same system message as the main LLM,
+        and that it is sent this system message in a chat, with or without a chat
+        session.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        def create_llm(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates the main LLM with the given params.
+            """
+            return DocumentLLM(
+                model=_MAIN_MODEL,
+                api_key="test_api_key",
+                num_retries_failed_request=0,
+                **kwargs,
+            )
+
+        def create_fallback_llm(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates a fallback LLM with the given params.
+            """
+            return DocumentLLM(
+                model=_FALLBACK_MODEL,
+                api_key="test_api_key",
+                is_fallback=True,
+                **kwargs,
+            )
+
+        # A fallback LLM with another system message is rejected. This includes
+        # the default system message, which an LLM created without one has.
+        for main_system_message, fallback_system_message in [
+            ("You are a lawyer.", "You are a paralegal."),
+            ("You are a lawyer.", None),
+            ("", None),
+            (None, ""),
+        ]:
+            llm = create_llm(system_message=main_system_message)
+            with pytest.raises(ValueError, match="same `system_message`"):
+                llm.fallback_models = [
+                    create_fallback_llm(system_message=fallback_system_message)
+                ]
+            assert llm.fallback_models == []
+            with pytest.raises(ValueError, match="same `system_message`"):
+                create_llm(
+                    system_message=main_system_message,
+                    fallback_models=[
+                        create_fallback_llm(system_message=fallback_system_message)
+                    ],
+                )
+
+        # The same system message, including the default one
+        for system_message in ["You are a lawyer.", "", None]:
+            create_llm(
+                system_message=system_message,
+                fallback_models=[create_fallback_llm(system_message=system_message)],
+            )
+
+        # The system message of an LLM that has fallback LLMs is changed
+        # for the fallback LLMs first
+        llm = create_llm(
+            system_message="You are a lawyer.",
+            fallback_models=[create_fallback_llm(system_message="You are a lawyer.")],
+        )
+        with pytest.raises(ValueError, match="same `system_message`"):
+            llm.system_message = "You are a paralegal."
+        assert llm.system_message == "You are a lawyer."
+        llm.fallback_models[0].system_message = "You are a paralegal."
+        llm.system_message = "You are a paralegal."
+
+        # The fallback LLM is sent the same system message as the main LLM
+        for chat_session in [None, ChatSession()]:
+            acompletion_stub, requests = _stub_llm_api(
+                {
+                    _MAIN_MODEL: [_StubbedLLMAPIError("Authentication failed")],
+                    _FALLBACK_MODEL: [_create_completion("4")],
+                }
+            )
+            with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+                llm.chat("What is the result of 2+2?", chat_session=chat_session)
+            assert [
+                (request["model"], request["messages"][0]["content"])
+                for request in requests
+            ] == [
+                (_MAIN_MODEL, "You are a paralegal."),
+                (_FALLBACK_MODEL, "You are a paralegal."),
+            ]
+
+    def test_fallback_llm_tools_parity(self):
+        """
+        Tests that a fallback LLM must have the same tools and tool-calling params
+        as the main LLM.
+        """
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            return "shipped"
+
+        @register_tool
+        def get_order_total(order_id: str) -> str:
+            """
+            Returns the total of the order.
+            """
+            return "9"
+
+        def create_llm(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates the main LLM with the given params.
+            """
+            return DocumentLLM(model=_MAIN_MODEL, api_key="test_api_key", **kwargs)
+
+        def create_fallback_llm(**kwargs: Any) -> DocumentLLM:
+            """
+            Creates a fallback LLM with the given params.
+            """
+            return DocumentLLM(
+                model=_FALLBACK_MODEL,
+                api_key="test_api_key",
+                is_fallback=True,
+                **kwargs,
+            )
+
+        # The same tools, in any order
+        tools = [get_order_status, get_order_total]
+        for fallback_tools in [tools, tuple(tools), tools[::-1]]:
+            llm = create_llm(tools=tools)
+            llm.fallback_models = [create_fallback_llm(tools=fallback_tools)]
+            assert llm.fallback_models[0].tools == list(fallback_tools)
+
+        # Different tools, or tools of only one of the LLMs
+        for main_tools, fallback_tools in [
+            (tools, [get_order_status]),
+            (tools, None),
+            (None, tools),
+        ]:
+            llm = create_llm(tools=main_tools)
+            with pytest.raises(ValueError, match="same `tools` configuration"):
+                llm.fallback_models = [create_fallback_llm(tools=fallback_tools)]
+            assert llm.fallback_models == []
+
+        # A fallback LLM that differs from the main LLM only in the order of the tools
+        # is its replica
+        llm = create_llm(tools=tools)
+        with pytest.raises(ValueError, match="same config params as the main LLM"):
+            llm.fallback_models = [
+                DocumentLLM(
+                    model=_MAIN_MODEL,
+                    api_key="test_api_key",
+                    tools=tools[::-1],
+                    is_fallback=True,
+                )
+            ]
+
+        # Different tool-calling params
+        for param, main_value, fallback_value in [
+            ("tool_choice", "required", "auto"),
+            ("parallel_tool_calls", True, False),
+        ]:
+            llm = create_llm(tools=tools, **{param: main_value})
+            with pytest.raises(ValueError, match=f"same `{param}` configuration"):
+                llm.fallback_models = [
+                    create_fallback_llm(tools=tools, **{param: fallback_value})
+                ]
+            llm.fallback_models = [
+                create_fallback_llm(tools=tools, **{param: main_value})
+            ]
+
+    def test_tools_ignored_in_extraction(self):
+        """
+        Tests that the tools of an LLM are used only in chat: they are not sent with
+        the requests of an extraction, and the tool calls returned by the LLM during
+        an extraction are not executed.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False,
+            tools=[get_order_status],
+            tool_choice="required",
+            parallel_tool_calls=False,
+        )
+        document = Document(raw_text="The order ORD-123 was placed on Monday.")
+        document.concepts = [
+            StringConcept(name="Order ID", description="Identifier of the order")
+        ]
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(
+                        "[]", ("get_order_status", '{"order_id": "ORD-123"}')
+                    )
+                ]
+            }
+        )
+        with (
+            patch.object(llms_module.litellm, "acompletion", new=acompletion_stub),
+            pytest.warns(UserWarning, match="ignored during extraction workflows"),
+        ):
+            llm.extract_concepts_from_document(document)
+
+        assert len(requests) == 1
+        for tool_param in ["tools", "tool_choice", "parallel_tool_calls"]:
+            assert tool_param not in requests[0]
+        assert tool_runs == []
 
     def test_tools_are_registered_functions(self):
         """

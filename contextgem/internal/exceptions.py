@@ -133,3 +133,26 @@ class LLMToolLoopLimitError(_BaseModelError):
     """
 
     pass
+
+
+class _ToolReturnValueError(Exception):
+    """
+    Internal exception that carries the error for an invalid value returned by
+    a tool function (a value other than a non-empty string) out of the tool-calling
+    loop, so that it is not handled as an error of the LLM API: it is an error
+    in the calling code. It is never raised to the calling code: the error
+    it carries is raised instead.
+
+    :ivar error: The error for the invalid value returned by the tool function
+    :vartype error: Exception
+    """
+
+    def __init__(self, error: Exception):
+        """
+        Initialize the exception.
+
+        :param error: The error for the invalid value returned by the tool function
+        :type error: Exception
+        """
+        super().__init__(str(error))
+        self.error = error

@@ -742,6 +742,19 @@ class TestModelGroups(BaseTest):
                     ),
                 ],
             )
+        with pytest.raises(ValueError, match="same `system_message`"):
+            create_llm(
+                "openai/gpt-6-luna",
+                fallback_models=[
+                    fallback_1,
+                    # The default system message, while the main LLM has none
+                    DocumentLLM(
+                        model="openai/gpt-5.6-terra",
+                        api_key="test_api_key",
+                        is_fallback=True,
+                    ),
+                ],
+            )
         with pytest.raises(ValueError, match="same config params as the main LLM"):
             create_llm(
                 "openai/gpt-6-luna",
