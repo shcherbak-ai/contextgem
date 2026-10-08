@@ -141,7 +141,7 @@ jobs:
 
       - name: Pre-download SaT model (cache-hit safety net)
         # Normally a no-op cache hit: the `prefetch-models` job already populated
-        # the cache, and tests/test_all.py loads the SaT model at class-body
+        # the cache, and tests/base.py loads the SaT model at class-body
         # evaluation time (during pytest collection). This step only does real
         # work in the rare case the cache restore missed, where the retry/backoff
         # rides out HuggingFace rate limiting before collection runs.

@@ -112,7 +112,8 @@ contextgem/
 │
 ├── tests/
 │   ├── cassettes/                # 📼 VCR recordings (auto-generated)
-│   ├── test_all.py               # ✅ Feature/integration tests
+│   ├── base.py                   # 🧱 Base class of feature/integration tests (shared test objects)
+│   ├── test_<area>.py            # ✅ Feature/integration tests, one module per feature area
 │   ├── test_properties.py        # 🎲 Hypothesis property tests for pure helpers
 │   ├── test_units.py             # 🔬 Example-based unit tests for pure helpers
 │   ├── utils.py                  # 🛠️ Test utilities & dummy env vars
@@ -135,7 +136,7 @@ contextgem/
 **🎯 Quick Start for Your Contribution:**
 
 - **Adding new functionality?** → Implement in `contextgem/internal/` (core logic). Then expose via a thin public facade in `contextgem/public/` using the registry.
-- **Writing tests?** → Feature/integration tests go to `tests/test_all.py::TestAll`. Property tests for pure helpers go to `tests/test_properties.py`. Example-based unit tests for pure helpers go to `tests/test_units.py`.
+- **Writing tests?** → Feature/integration tests go to the module of the relevant feature area (`tests/test_<area>.py`, e.g. `tests/test_extraction.py::TestExtraction`). Property tests for pure helpers go to `tests/test_properties.py`. Example-based unit tests for pure helpers go to `tests/test_units.py`.
 - **Updating docs?** → Edit files in `docs/source/` or `dev/`
 - **Fixing README?** → Edit `dev/readme.template.md`
 
@@ -274,13 +275,29 @@ By submitting issues or feature requests to this project, you acknowledge that t
 
 ### 🏗️ Current Test Structure
 
-Tests are split across three files:
+Tests are split across the feature/integration test modules and two files for pure helpers:
 
-- **`tests/test_all.py`** (the `TestAll` class) — feature and integration tests, including all LLM-backed extraction tests that replay through VCR cassettes. Most contributions belong here.
+- **`tests/test_<area>.py`** (one `Test<Area>` class per module) — feature and integration tests, including all LLM-backed extraction tests that replay through VCR cassettes. Most contributions belong here, in the module of the relevant feature area:
+
+  | Module | Feature area |
+  |--------|--------------|
+  | `test_aspects_and_concepts.py` | Aspects, concepts, examples and extracted items; extraction of concepts of specific types |
+  | `test_chat.py` | Messages, chat sessions, chat with LLMs and tool calling |
+  | `test_documents.py` | Documents, paragraphs, sentences and extraction pipelines; text segmentation with SaT models |
+  | `test_extraction.py` | Extraction of aspects and concepts from documents; extraction errors |
+  | `test_images.py` | Images; extraction from images and multimodal documents |
+  | `test_internals.py` | Prompt templates, registry of public types, base classes; rejection of invalid names and assignments |
+  | `test_llms.py` | LLM configuration, local LLMs, prompts, token limits, retries of API requests and rate limiting |
+  | `test_logging.py` | Logger settings and log levels |
+  | `test_model_groups.py` | Model groups, model roles and fallback models |
+  | `test_performance.py` | Memory usage baseline and extraction benchmarks |
+  | `test_serialization.py` | Serialization, deserialization and cloning of instances |
+  | `test_usage_and_cost.py` | Usage and cost tracking, model pricing |
+  | `test_usage_examples.py` | Usage examples in the documentation, README and docstrings |
+
+  All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. The state that a test leaves in a shared object is seen by the tests that are run after it, including the tests in the other modules. The test modules are run in alphabetical order, with two exceptions set in `tests/conftest.py`: the memory baseline test is run first, and `test_logging.py`, `test_usage_examples.py` and `test_performance.py` are run last, as their tests leave a state (logger settings, system message of a shared LLM) that affects the tests run after them.
 - **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no fixtures, no cassettes.
 - **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no fixtures, no cassettes.
-
-> **Note:** We plan to refactor `test_all.py` into multiple files for better maintainability in the future, but for now feature/integration tests should be added there.
 
 ### 📏 Testing Guidelines
 
@@ -312,7 +329,7 @@ Reach for a property test when:
 - You need to assert a specific error message or exception type.
 - The behavior is contract-shaped rather than invariant-shaped.
 
-Stick with `test_all.py` for feature/integration scenarios where correctness depends on full document/aspect/concept extraction flows — most LLM-backed tests fall into this category.
+Stick with the feature/integration test modules (`tests/test_<area>.py`) for feature/integration scenarios where correctness depends on full document/aspect/concept extraction flows — most LLM-backed tests fall into this category.
 
 ---
 
@@ -427,7 +444,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 4. **Run the affected tests** to re-record only the necessary cassettes:
 
    ```bash
-   uv run pytest tests/test_all.py::TestAll::test_specific_method
+   uv run pytest tests/test_extraction.py::TestExtraction::test_specific_method
    ```
 
 ---
@@ -479,7 +496,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 #### Local LLM Testing
 
-For local LLM testing, install the following tools and download the relevant models identified under `ollama` and `lm_studio` prefixes in `tests/test_all.py`:
+For local LLM testing, install the following tools and download the relevant models identified under `ollama` and `lm_studio` prefixes in `tests/test_llms.py`:
 
 - [Ollama](https://ollama.ai/)
 - [LM Studio](https://lmstudio.ai/)
@@ -493,6 +510,8 @@ For local LLM testing, install the following tools and download the relevant mod
 > **🔒 Security:** Environment variables such as API keys are automatically stripped from cassettes, but always verify new cassette content.
 >
 > **🧪 Testing:** After recording, delete your `.env` file and run tests again to ensure LLM API tests pass by replaying from cassettes with dummy variables.
+>
+> **📼 Cassette names:** Cassette files are named `<TestClass>.<test name>.yaml`. If you move a test that calls LLM APIs to another test class, rename its cassette files accordingly (with `git mv`) in the same change. Otherwise, the test will not find its cassette and will record a new one.
 
 #### Network Egress Control
 
@@ -530,7 +549,7 @@ Run specific tests:
 
 ```bash
 # Run a specific test method
-uv run pytest tests/test_all.py::TestAll::test_extract_all
+uv run pytest tests/test_extraction.py::TestExtraction::test_extract_all
 ```
 
 **🪟 Windows only**: The first test run after `litellm` is installed or reinstalled in your virtual environment (e.g. after upgrading the dependencies) needs network access, to download the token encodings before the tests start. This happens automatically. If the download fails (e.g. you are offline or behind a proxy), a warning is logged at the start of the test run, and several unrelated-looking tests fail, such as the local LLM tests, `test_input_output_token_validation`, and `test_very_long_doc_extraction`. In that case, run the following command once, with network access, and run the tests again:

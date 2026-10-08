@@ -78,10 +78,55 @@ httpx_stubs._deserialize_response = _patched_deserialize_response  # ty: ignore[
 # Memory profiling behavior
 _ENABLE_MEMORY_PROFILING_FLAG = "--mem-profile"
 _MEMORY_PROFILING_ENABLED = False
+# Name of the test that establishes the memory usage baseline, against which
+# the memory usage of the other tests is measured (see `tests/memory_profiling.py`)
+_MEMORY_BASELINE_TEST_NAME = "test_establish_memory_baseline"
+
+# Test modules that are run after the other test modules, in this order.
+# Their tests leave a state that affects the tests run after them: the logger
+# tests leave the logger with a closed output stream, the docstring examples
+# disable the logger, and the benchmarks unset the system message of the reasoner
+# LLM shared by the tests.
+_TEST_MODULES_RUN_LAST = (
+    "test_logging.py",
+    "test_usage_examples.py",
+    "test_performance.py",
+)
 
 # VCR redaction of API keys, private endpoints, etc.
 VCR_REDACTION_MARKER = "DUMMY"
 VCR_DUMMY_ENDPOINT_PREFIX = "https://dummy-endpoint.local/"
+
+
+@pytest.fixture(scope="module")
+def vcr_config():
+    """
+    Pytest fixture providing VCR configuration for recording and replaying HTTP interactions.
+
+    This fixture configures VCR to record HTTP requests and responses during test execution,
+    allowing tests to replay recorded interactions without making actual network calls.
+
+    :return: Dictionary containing VCR configuration options including header filtering,
+             request/response processing hooks, matching criteria, and cassette settings.
+    :rtype: dict
+    """
+    # Imported here, as `tests.utils` imports from this module
+    from tests.utils import (
+        VCR_FILTER_HEADERS,
+        vcr_before_record_request,
+        vcr_before_record_response,
+    )
+
+    return {
+        "filter_headers": [(i, VCR_REDACTION_MARKER) for i in VCR_FILTER_HEADERS],
+        "before_record_request": vcr_before_record_request,
+        "before_record_response": vcr_before_record_response,
+        "match_on": ["method", "host", "path", "body"],
+        "record_mode": "once",
+        "cassette_library_dir": "tests/cassettes",
+        "ignore_localhost": False,
+        "ignore_hosts": ["huggingface.co", "hf.co"],
+    }
 
 
 def pytest_addoption(parser):
@@ -108,6 +153,36 @@ def pytest_configure(config):
 
     # Set the global memory profiling flag
     _MEMORY_PROFILING_ENABLED = config.getoption(_ENABLE_MEMORY_PROFILING_FLAG)
+
+
+def pytest_collection_modifyitems(items):
+    """
+    Orders the tests that have to be run at the start or at the end of the test run.
+
+    The test modules are run in alphabetical order, with two exceptions.
+    The memory baseline test is run first, as the memory usage of the other tests
+    is measured against it. The modules listed in ``_TEST_MODULES_RUN_LAST`` are run
+    last, as their tests leave a state that affects the tests run after them.
+    The order of the other tests, and of the tests within a module, is not changed.
+    """
+
+    def run_order(item) -> int:
+        """
+        Returns the position of the test relative to the other tests.
+
+        :param item: The collected test.
+        :return: A negative value for the test to run first, a positive value
+            for the tests to run last, zero for the other tests.
+        :rtype: int
+        """
+        if item.name == _MEMORY_BASELINE_TEST_NAME:
+            return -1
+        module_name = item.path.name
+        if module_name in _TEST_MODULES_RUN_LAST:
+            return _TEST_MODULES_RUN_LAST.index(module_name) + 1
+        return 0
+
+    items.sort(key=run_order)
 
 
 def is_memory_profiling_enabled() -> bool:

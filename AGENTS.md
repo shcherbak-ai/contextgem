@@ -80,7 +80,7 @@ class StringConcept(_StringConcept):
 uv run pre-commit run --all-files
 
 # 2. Run targeted tests for the code you modified
-uv run pytest tests/test_all.py::TestAll::test_relevant_method
+uv run pytest tests/test_extraction.py::TestExtraction::test_relevant_method
 
 # 3. Run full test suite to check for regressions
 uv run pytest
@@ -90,13 +90,13 @@ uv run pytest
 
 When adding new functionality:
 
-1. **Add test methods** to `tests/test_all.py::TestAll` following existing patterns
+1. **Add test methods** to the test class of the relevant feature area (`tests/test_<area>.py::Test<Area>`, e.g. `tests/test_extraction.py::TestExtraction`) following existing patterns. The test classes inherit the shared test objects (documents, LLMs, images) from `tests/base.py::BaseTest`
 2. **For tests that do NOT call LLM APIs**: Run them to verify they pass
 3. **For tests that call LLM APIs**: Add `@pytest.mark.vcr` decorator, **do NOT run them**, and inform the user that cassettes need recording before these tests can be executed
 
 ```python
-# Example: Adding a test in tests/test_all.py
-class TestAll:
+# Example: Adding a test in tests/test_extraction.py
+class TestExtraction(BaseTest):
     def test_non_llm_feature(self):
         # Safe to run - no LLM calls
         pass
@@ -125,6 +125,7 @@ When adding or modifying functionality:
 
 - **Never run tests in "live" mode** without existing cassettes
 - Tests replay recorded LLM API responses from `tests/cassettes/`
+- Cassette files are named `<TestClass>.<test name>.yaml`: when moving a VCR test to another test class, rename its cassettes with `git mv` in the same change (a test whose cassette is missing records live)
 - If tests fail due to cassette mismatches, **inform the user** that cassettes need re-recording
 - The user will handle cassette re-recording themselves (requires API keys and may incur costs)
 - See [CONTRIBUTING.md - VCR Cassette Management](CONTRIBUTING.md#-vcr-cassette-management) for scenarios
@@ -156,7 +157,7 @@ uv sync --all-groups                    # Install dependencies
 uv run pre-commit run --all-files       # Run all linters/formatters
 uv run pytest                           # Run tests (uses recorded cassettes)
 uv run pytest --cov=contextgem          # Run tests with coverage
-uv run pytest tests/test_all.py::TestAll::test_specific  # Run specific test
+uv run pytest tests/test_extraction.py::TestExtraction::test_specific  # Run specific test
 ```
 
 ## Key Gotchas
