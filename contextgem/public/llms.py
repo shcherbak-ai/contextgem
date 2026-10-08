@@ -104,13 +104,16 @@ class DocumentLLM(_DocumentLLM):
     :vartype system_message: str | None
     :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
         Lower values produce more predictable outputs, higher values generate more varied responses.
-        Defaults to 0.3.
+        Defaults to None, in which case the parameter is not sent, and the default of the model
+        applies. A value is sent to any model; if ``litellm`` reports it as not supported
+        for the model, it is dropped from the request, with a warning logged.
     :vartype temperature: float | None
-    :ivar max_tokens: Maximum tokens allowed in the generated response. Defaults to 4096.
-    :vartype max_tokens: int
-    :ivar max_completion_tokens: Maximum token size for output completions in reasoning
-        (CoT-capable) models. Defaults to 16000.
-    :vartype max_completion_tokens: int
+    :ivar max_tokens: Maximum output tokens allowed per request. For reasoning (CoT-capable)
+        models, the reasoning tokens count towards this limit. Defaults to None, in which case
+        no limit is sent with the requests, and the default of the model applies (for most
+        providers, the maximum output of the model). A response cut off at the limit
+        fails the extraction, and is returned with a warning in a chat.
+    :vartype max_tokens: int | None
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
         ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, or
         ``"max"``. Support for specific values varies by model and provider; unsupported
@@ -121,7 +124,7 @@ class DocumentLLM(_DocumentLLM):
     :vartype reasoning_effort: ReasoningEffort | None
     :ivar top_p: Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness.
         Lower values make output more deterministic, higher values produce more diverse outputs.
-        Defaults to ``None`` (only ``temperature`` is sent). Some providers (e.g. Claude 4.x)
+        Defaults to ``None`` (the parameter is not sent). Some providers (e.g. Claude 4.x)
         reject requests that set both ``temperature`` and ``top_p``.
     :vartype top_p: float | None
     :ivar num_retries_failed_request: Number of retries when LLM request fails with a transient
@@ -136,7 +139,8 @@ class DocumentLLM(_DocumentLLM):
     :ivar max_retries_invalid_data: Number of retries when LLM request succeeds but LLM returns
         invalid data. Each retry is a new request. Defaults to 3.
     :vartype max_retries_invalid_data: int
-    :ivar timeout: Timeout in seconds for LLM API calls. Defaults to 120 seconds.
+    :ivar timeout: Timeout in seconds for LLM API calls. As responses are not streamed,
+        the whole response has to be received within the timeout. Defaults to 600 seconds.
     :vartype timeout: int
     :ivar pricing_details: ModelPricing object with pricing details for cost calculation.
         Defaults to None.
@@ -162,7 +166,7 @@ class DocumentLLM(_DocumentLLM):
         Applies only when DocumentLLM's default system message is used.
     :vartype output_language: LanguageRequirement
     :ivar async_limiter: Controls frequency of async LLM API requests for concurrent tasks.
-        Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues.
+        Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues.
         Requests to a fallback LLM are controlled by the limiter of that fallback LLM.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
@@ -170,7 +174,10 @@ class DocumentLLM(_DocumentLLM):
         across multiple runs. When set to a specific integer value, the LLM will attempt
         to use this seed for sampling operations. However, deterministic output is still
         not guaranteed even with the same seed, as other factors may influence the model's
-        response. Defaults to None.
+        response. Support depends on the model provider: a seed is mostly of use with local
+        and open-weight models, while some providers (e.g. Anthropic) do not support it.
+        If ``litellm`` reports the seed as not supported for the model, it is dropped from
+        the request, with a warning logged. Defaults to None (the parameter is not sent).
     :vartype seed: int | None
 
     Note:

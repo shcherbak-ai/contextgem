@@ -4,6 +4,6 @@ from contextgem import DocumentLLM
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key="<your-openai-api-key>",
-    max_completion_tokens=8000,  # Specific to reasoning (CoT-capable) models
-    reasoning_effort="medium",  # Optional
+    reasoning_effort="medium",  # Specific to reasoning (CoT-capable) models
+    max_tokens=16000,  # Optional; the reasoning tokens count towards this limit
 )

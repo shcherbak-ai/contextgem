@@ -145,12 +145,45 @@ def vcr_before_record_request(request):
     return request
 
 
+def redact_home_dir(text: str) -> str:
+    """
+    Redacts the name of the home directory of the current user in the file paths
+    found in a text, e.g. in the paths of the model files that a local LLM server
+    returns with the details of a model.
+
+    A path is matched with slashes or backslashes as separators, the latter
+    escaped any number of times, as in a JSON string.
+
+    :param text: The text to redact.
+    :type text: str
+    :return: The text with the name of the home directory replaced
+        by the redaction marker.
+    :rtype: str
+    """
+    home_dir = Path.home()
+    dir_names = [part.strip("\\/") for part in home_dir.parts if part.strip("\\/")]
+    if not dir_names:
+        return text
+    *parent_dir_names, home_dir_name = dir_names
+    separator = r"[\\/]+"
+    # A Windows path starts with a drive, any other path with a separator
+    parents = ("" if home_dir.drive else separator) + "".join(
+        re.escape(name) + separator for name in parent_dir_names
+    )
+    # The name of the home directory is followed by a separator, or ends the path
+    pattern = rf"(?P<parents>{parents}){re.escape(home_dir_name)}(?=[\\/\"'\s]|$)"
+    return re.sub(
+        pattern, rf"\g<parents>{VCR_REDACTION_MARKER}", text, flags=re.IGNORECASE
+    )
+
+
 def vcr_before_record_response(response):
     """
     Processes VCR responses before recording to redact sensitive information.
 
     Redacts headers and response body content that might contain sensitive
-    information like API keys, request IDs, and other identifiable data.
+    information like API keys, request IDs, and other identifiable data, including
+    the name of the home directory of the current user in local file paths.
 
     :param response: The VCR response object to process.
     :return: The modified response object with redacted sensitive data.
@@ -167,7 +200,9 @@ def vcr_before_record_response(response):
             body = json.loads(response["body"]["string"])
             if "id" in body:
                 body["id"] = f"chatcmpl-{VCR_REDACTION_MARKER}"
-            response["body"]["string"] = json.dumps(body, ensure_ascii=False)
+            response["body"]["string"] = redact_home_dir(
+                json.dumps(body, ensure_ascii=False)
+            )
         except (json.JSONDecodeError, TypeError, UnicodeDecodeError):
             # Skip redaction if response body is not valid JSON or lacks expected structure
             logger.debug(

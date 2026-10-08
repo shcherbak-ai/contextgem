@@ -142,6 +142,20 @@ Instead of:
         add_references=True
     )
 
+**5. Lower the Sampling Temperature**
+
+ContextGem does not set a sampling temperature by default, so the default of the model applies, which for local models is often set for conversational use. A low temperature makes the output more consistent, which helps a small model to follow the required JSON structure:
+
+.. code-block:: python
+
+    from contextgem import DocumentLLM
+
+    llm = DocumentLLM(
+        model="ollama_chat/<model_name>",
+        api_base="http://localhost:11434",
+        temperature=0.2,  # the default of the model applies if not set
+    )
+
 
 🔍 Debugging LLM Responses
 ----------------------------

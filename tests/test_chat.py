@@ -74,10 +74,13 @@ class _StubbedLLMAPIError(Exception):
     status_code = 401
 
 
-def _create_completion(content: str | None, *tool_calls: tuple[str, str]) -> Any:
+def _create_completion(
+    content: str | None, *tool_calls: tuple[str, str], finish_reason: str = "stop"
+) -> Any:
     """
     Creates a completion, as returned by the LLM API, that has the given text
-    and the calls of the tools given as (name, arguments in JSON).
+    and the calls of the tools given as (name, arguments in JSON). The finish reason
+    is "length" for a response cut off at the max output tokens.
     """
     return types.SimpleNamespace(
         choices=[
@@ -93,7 +96,8 @@ def _create_completion(content: str | None, *tool_calls: tuple[str, str]) -> Any
                         for i, (name, arguments) in enumerate(tool_calls)
                     ]
                     or None,
-                )
+                ),
+                finish_reason=finish_reason,
             )
         ],
         usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
@@ -1584,7 +1588,7 @@ class TestChat(BaseTest):
                 model=_FALLBACK_MODEL,
                 api_key="test_api_key",
                 system_message="",
-                max_completion_tokens=999999,
+                max_tokens=999999,
                 is_fallback=True,
             )
         ]
@@ -1917,6 +1921,92 @@ class TestChat(BaseTest):
             _MAIN_MODEL,
             _FALLBACK_MODEL,
         ]
+
+    def test_chat_response_cut_off_at_max_output_tokens(self):
+        """
+        Tests that a response cut off at the max output tokens is returned with
+        a warning if it has a text, and is handled as an empty response otherwise,
+        with the error telling that the response was cut off.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        prompt = "Tell me about ContextGem."
+
+        # A cut-off response with a text is returned as it is, with a warning,
+        # and no fallback LLM is tried
+        llm = _create_llm_for_stubbed_chat(max_tokens=5)
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion("ContextGem is a", finish_reason="length")
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            pytest.warns(
+                UserWarning,
+                match=r"cut off at the max output tokens set by `max_tokens` \(5\)"
+                r".*returned incomplete",
+            ),
+        ):
+            assert llm.chat(prompt, chat_session=chat_session) == "ContextGem is a"
+        assert [request["model"] for request in requests] == [_MAIN_MODEL]
+        assert [(m.role, m.content) for m in chat_session.messages] == [
+            ("user", prompt),
+            ("assistant", "ContextGem is a"),
+        ]
+
+        # No warning is issued for a complete response
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [_create_completion("ContextGem is an LLM framework.")]}
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            warnings.catch_warnings(),
+        ):
+            warnings.simplefilter("error")
+            assert llm.chat(prompt) == "ContextGem is an LLM framework."
+
+        # A cut-off response without a text, e.g. when all the tokens are used up
+        # by the reasoning of the model, is handled as an empty response
+        for empty_response in [None, ""]:
+            llm = _create_llm_for_stubbed_chat()
+            acompletion_stub, requests = _stub_llm_api(
+                {
+                    _MAIN_MODEL: [
+                        _create_completion(empty_response, finish_reason="length")
+                    ],
+                    _FALLBACK_MODEL: [_create_completion("ContextGem is a framework.")],
+                }
+            )
+            with patch.object(litellm, "acompletion", new=acompletion_stub):
+                assert llm.chat(prompt) == "ContextGem is a framework."
+            assert [request["model"] for request in requests] == [
+                _MAIN_MODEL,
+                _FALLBACK_MODEL,
+            ]
+
+            llm = _create_llm_for_stubbed_chat(with_fallback=False)
+            acompletion_stub, requests = _stub_llm_api(
+                {
+                    _MAIN_MODEL: [
+                        _create_completion(empty_response, finish_reason="length")
+                    ]
+                }
+            )
+            with (
+                patch.object(litellm, "acompletion", new=acompletion_stub),
+                pytest.raises(
+                    ModelAPIError,
+                    match="returned an empty response.*cut off at the max output "
+                    "tokens of the model.*reasoning_effort",
+                ),
+            ):
+                llm.chat(prompt)
 
     def test_chat_system_message_with_fallback(self):
         """

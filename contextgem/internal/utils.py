@@ -603,6 +603,32 @@ def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bo
     return bool(calls) and calls[-1].timestamp_received is None
 
 
+def _model_call_result_is_output_truncated(
+    res: tuple[Any, _ModelUsage] | None,
+) -> bool:
+    """
+    Determines whether the result from a LLM call is invalid because the response
+    of the LLM was cut off at the max output tokens, as opposed to the LLM returning
+    invalid data in a complete response.
+
+    Such a response is recorded as the last call in the usage stats, with the tokens
+    it used. The same request to the same LLM would be cut off again, so that sending
+    it to that LLM again is pointless.
+
+    :param res: The result to check, represented as a tuple where the first element is the relevant
+        result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
+        or None if the result is not received (in which case the reason of the failure is unknown).
+    :type res: tuple[Any, _ModelUsage] | None
+    :return: A boolean indicating whether the result is invalid due to a response
+        cut off at the max output tokens.
+    :rtype: bool
+    """
+    if res is None or res[0] is not None:
+        return False
+    calls = res[1].calls
+    return bool(calls) and calls[-1]._output_truncated
+
+
 def _is_retryable_model_api_error(error: Exception) -> bool:
     """
     Determines whether a failed LLM API request is worth retrying, i.e. whether

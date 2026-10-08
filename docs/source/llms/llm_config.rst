@@ -92,21 +92,17 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``None``
      - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
    * - ``max_tokens``
-     - ``int``
-     - ``4096``
-     - Maximum tokens in the generated response (applicable to most models).
-   * - ``max_completion_tokens``
-     - ``int``
-     - ``16000``
-     - Maximum tokens for output completions in reasoning (CoT-capable) models.
+     - ``int | None``
+     - ``None``
+     - Maximum output tokens allowed per request. For reasoning (CoT-capable) models, the reasoning tokens count towards this limit. If not set (default), no limit is sent with the requests, and the default of the model applies, which for most providers is the maximum output of the model. A value above the maximum output of the model, as known to ``litellm``, raises an error before any requests are sent. See :ref:`llm-max-output-tokens-label` for how a response cut off at the limit is handled.
    * - ``reasoning_effort``
      - ``str | None``
      - ``None``
      - Reasoning effort for reasoning (CoT-capable) models. Values: ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, ``"max"``. Support for specific values varies by model and provider; unsupported combinations are rejected by litellm or the provider API at request time. ``"none"`` explicitly disables reasoning on models that support this value, which differs from the default ``None`` (parameter not sent, provider default applies).
    * - ``timeout``
      - ``int``
-     - ``120``
-     - Timeout in seconds for LLM API calls.
+     - ``600``
+     - Timeout in seconds for LLM API calls. Responses are not streamed, so the whole response, including the reasoning of the model, has to be received within the timeout. A request that times out is retried as a transient error (see :ref:`llm-retries-label`).
    * - ``num_retries_failed_request``
      - ``int``
      - ``3``
@@ -145,16 +141,16 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - Language for output text. Values: ``"en"`` or ``"adapt"`` (adapts to document language). Setting value to ``"adapt"`` ensures that the text output (e.g. justifications, conclusions, explanations) is in the same language as the document. This is particularly useful when working with non-English documents. For example, if you're extracting anomalies from a contract in Spanish, setting ``output_language="adapt"`` ensures that anomaly justifications are also in Spanish, making them immediately understandable by local end users reviewing the document. This parameter applies only when the default system message is used.
    * - ``temperature``
      - ``float | None``
-     - ``0.3``
-     - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses.
+     - ``None``
+     - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses. If not set (default), the parameter is not sent, and the default of the model applies. See :ref:`llm-sampling-params-label` for when to set it.
    * - ``top_p``
      - ``float | None``
      - ``None``
-     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs. Defaults to ``None`` so only ``temperature`` is sent by default. Some providers (e.g. Claude 4.x) reject requests that set both ``temperature`` and ``top_p``; set one of them to ``None`` when using those models.
+     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs. If not set (default), the parameter is not sent. Some providers (e.g. Claude 4.x) reject requests that set both ``temperature`` and ``top_p``; set only one of them when using those models.
    * - ``seed``
      - ``int | None``
      - ``None``
-     - Seed for random number generation to help produce more consistent outputs across multiple runs. When set to a specific integer value, the LLM will attempt to use this seed for sampling operations. However, deterministic output is still not guaranteed even with the same seed, as other factors may influence the model's response.
+     - Seed for random number generation to help produce more consistent outputs across multiple runs. When set to a specific integer value, the LLM will attempt to use this seed for sampling operations. However, deterministic output is still not guaranteed even with the same seed, as other factors may influence the model's response. If not set (default), the parameter is not sent. Support depends on the LLM provider: a seed is mostly of use with local and open-weight models, while some providers (e.g. Anthropic) do not support it (see :ref:`llm-sampling-params-label`).
    * - ``tools``
      - ``list[Callable] | None``
      - ``None``
@@ -173,8 +169,8 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - Safety limit on the number of tool-execution rounds per chat request to prevent infinite loops.
    * - ``async_limiter``
      - ``AsyncLimiter``
-     - ``AsyncLimiter(3, 10)``
-     - Relevant when concurrency is enabled for extraction tasks. Controls frequency of async LLM API requests for concurrent tasks. Defaults to allowing 3 acquisitions per 10-second period to prevent rate limit issues. Requests to a fallback LLM are controlled by the ``async_limiter`` of that fallback LLM. See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details. See :doc:`../optimizations/optimization_speed` for an example of how to easily set up concurrency for extraction.
+     - ``AsyncLimiter(10, 10)``
+     - Relevant when concurrency is enabled for extraction tasks. Controls frequency of async LLM API requests for concurrent tasks. Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues. Adjust it to the rate limits of your LLM provider account, e.g. lower it if you send long documents on a low usage tier. Requests to a fallback LLM are controlled by the ``async_limiter`` of that fallback LLM. See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details. See :doc:`../optimizations/optimization_speed` for an example of how to easily set up concurrency for extraction.
 
 .. warning::
    **Auto-pricing accuracy**
@@ -197,7 +193,7 @@ You can set up one or more fallback LLMs that will be used if the primary LLM fa
 
 Each fallback LLM must be created with ``is_fallback=True``, have the same ``role``, ``output_language`` and ``system_message`` as the primary LLM, and cannot have fallback LLMs of its own. An LLM created without ``system_message`` has the default system message, so if you set ``system_message`` for the primary LLM, e.g. to an empty string to disable it for a chat, set the same value for each fallback LLM. Each fallback LLM must also have the same tools as the primary LLM, in any order, and the same ``tool_choice`` and ``parallel_tool_calls`` (see :ref:`llm-tools-fallback-label`). Finally, a fallback LLM must differ from the primary LLM, and from the other fallback LLMs, in at least one configuration parameter, e.g. the model, the API key or the API base, as an exact copy would only repeat the same request. This is checked when the fallback LLMs are set, i.e. when the primary LLM is created with them or when ``fallback_models`` is assigned. If the primary LLM is used to extract concepts from images, or is passed images in a chat, each of its fallback LLMs must support vision as well, which is checked before any requests are sent. In a chat, the request parameters of the fallback LLMs are checked before any requests are sent as well, e.g. that a fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls. Usage and cost are tracked separately for the primary LLM and for each of its fallback LLMs.
 
-The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, when the prompt exceeds its context window, when it keeps returning invalid data during extraction, or when it returns an empty response in a chat. See :ref:`llm-retries-label` for details.
+The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, when the prompt exceeds its context window, when it keeps returning invalid data during extraction, when its response is cut off at the max output tokens during extraction, or when it returns an empty response in a chat. See :ref:`llm-retries-label` for details.
 
 To change the ``system_message`` of an LLM that already has fallback LLMs, change it for the fallback LLMs first, and then for the primary LLM.
 
@@ -215,11 +211,64 @@ Retries are configured per LLM, which also applies to each fallback LLM, and dep
 - **Transient API errors** (request timeout, rate limit, server or connection error) are retried up to ``num_retries_failed_request`` times. The delay between the retries grows exponentially (about 1, 2, 4, 8 seconds, capped at 10 seconds) and is randomly shortened by up to a half (jitter), so that concurrent requests that failed together are not all retried at the same moment.
 - **Non-transient API errors** (e.g. invalid request, failed authentication, exceeded context window, content policy violation) are not retried, as the same request would fail again in the same way. A prompt that is found to exceed the context window of the model before the request is sent is handled in the same way: the request is not sent.
 - **Invalid data** returned by the LLM during extraction (the response cannot be parsed or validated) is requested again up to ``max_retries_invalid_data`` times, without a delay.
+- **A response cut off at the max output tokens** during extraction is not requested again, as the same request would be cut off in the same way (see :ref:`llm-max-output-tokens-label`).
 
-When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request or for an empty response in a chat, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method. A prompt that exceeds the context window of the last LLM to try raises ``ValueError``.
+When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request, for a response cut off at the max output tokens during extraction, or for an empty response in a chat, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method. A prompt that exceeds the context window of the last LLM to try raises ``ValueError``.
 
 .. note::
    ``max_retries_failed_request`` sets the number of retries performed by the LLM provider's SDK, where supported (e.g. for OpenAI), in addition to the retries described above. It applies to the first attempt of a request only.
+
+
+.. _llm-max-output-tokens-label:
+
+📏 Limiting the Output Tokens
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the output tokens of a response are not limited by ContextGem: ``max_tokens`` is not set, no limit is sent with the requests, and the default of the model applies, which for most providers is the maximum output of the model. Set ``max_tokens`` to limit the output of each request, e.g. to cap the cost of a single request:
+
+.. code-block:: python
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM(
+       model="openai/gpt-6-luna",
+       api_key="<your-openai-api-key>",
+       max_tokens=16000,  # for reasoning models, includes the reasoning tokens
+   )
+
+The same parameter applies to all models. For reasoning (CoT-capable) models, the reasoning tokens count towards the limit, so a limit that is too low for the reasoning effort of the model can leave no tokens for the response itself.
+
+A response that reaches the limit is cut off by the LLM provider, whether the limit is set with ``max_tokens`` or is the one of the model:
+
+- **During extraction**, a cut-off response cannot be used, and is not requested again, as the same request would be cut off in the same way. The next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised, or a warning is issued if ``raise_exception_on_extraction_error=False`` is passed to the extraction method. To get a complete response, increase ``max_tokens`` or leave it unset, lower ``reasoning_effort``, or get less output per request by setting ``max_items_per_call`` or ``max_paragraphs_to_analyze_per_call`` (see :doc:`../optimizations/optimization_long_docs`).
+- **In a chat**, a cut-off response is returned as it is, with a warning, as the limit can be set on purpose to get a short answer. A cut-off response without a text, e.g. when all the tokens are used up by the reasoning of the model, is handled as an empty response.
+
+.. note::
+   Some providers (e.g. Anthropic) require a limit in each request. If ``max_tokens`` is not set, ``litellm`` sends the maximum output of the model for such a provider. For a model that ``litellm`` has no data on, e.g. a model released after the pinned ``litellm`` version, it sends a limit of 4096 tokens instead, so set ``max_tokens`` explicitly for such a model.
+
+
+.. _llm-sampling-params-label:
+
+🎲 Setting the Sampling Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, ``temperature`` and ``top_p`` are not set: they are not sent with the requests, and the defaults of the model apply. If you set them, they are sent to any model:
+
+.. code-block:: python
+
+   from contextgem import DocumentLLM
+
+   llm = DocumentLLM(
+       model="ollama_chat/llama3.3:70b",
+       api_base="http://localhost:11434",
+       temperature=0.2,  # more consistent output for structured extraction
+   )
+
+A low temperature (e.g. ``0.0`` to ``0.3``) usually makes the output of structured extraction more consistent. This matters most for small and local models, whose default temperature is often set for conversational use (see :doc:`../optimizations/optimization_small_llm_troubleshooting`).
+
+To make the output of such a model more reproducible across runs, you can also set ``seed``. As with the sampling parameters, it is sent only if set, and to any model.
+
+Whether a value is supported depends on the model, which is left to ``litellm`` and the LLM provider. Some reasoning (CoT-capable) models accept only their default sampling parameters, e.g. OpenAI's GPT-5 and GPT-6 models. If ``litellm`` reports a parameter as not supported for the model, the request is sent without it, and a warning is logged for each such request, so it is better to leave the parameter unset for such a model. A value that is rejected only by the API of the provider fails the request as any other invalid request.
 
 
 💰 Setting Up Cost Tracking
@@ -249,7 +298,7 @@ Some LLM providers cache the beginning of a prompt and reuse it across requests 
 🧠 Using Model-Specific Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For reasoning (CoT-capable) models (such as OpenAI's GPT-5 and GPT-6 models), you can set reasoning-specific parameters:
+For reasoning (CoT-capable) models (such as OpenAI's GPT-5 and GPT-6 models), you can set the reasoning effort. The reasoning tokens count towards ``max_tokens``, if set (see :ref:`llm-max-output-tokens-label`):
 
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/reasoning_params.py
    :language: python

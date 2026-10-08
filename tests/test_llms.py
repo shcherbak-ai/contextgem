@@ -230,39 +230,90 @@ class TestLLMs(BaseTest):
             temperature=None,
         )
 
-        # Default: temperature is set, top_p is not (Claude 4.x rejects both)
+        # Default: the sampling params and the seed are not set, and the output
+        # tokens are not limited, i.e. the defaults of the model apply
         llm_defaults = DocumentLLM(
             model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         )
-        assert llm_defaults.temperature == 0.3
+        assert llm_defaults.temperature is None
         assert llm_defaults.top_p is None
+        assert llm_defaults.seed is None
+        assert llm_defaults.max_tokens is None
+        assert llm_defaults.timeout == 600
+        assert (
+            llm_defaults.async_limiter.max_rate,
+            llm_defaults.async_limiter.time_period,
+        ) == (10, 10)
 
-        # Reasoning (CoT-capable) model: the sampling params are not sent,
-        # and the output is limited by `max_completion_tokens`
+        # Reasoning (CoT-capable) model: the sampling params, the seed and the output
+        # token limit are not sent unless set
+        optional_params = [
+            "temperature",
+            "top_p",
+            "seed",
+            "max_tokens",
+            "max_completion_tokens",
+        ]
         assert llm_defaults._supports_reasoning
         default_request_config = llm_defaults._build_request_config()
-        assert default_request_config["max_completion_tokens"] == 16000
-        for param in ["temperature", "top_p", "max_tokens"]:
+        for param in optional_params:
             assert param not in default_request_config
 
-        # Model without reasoning support: temperature is sent, top_p is omitted
-        # unless set, and the output is limited by `max_tokens`
+        # ...in which case the sampling params and the seed are sent as they are,
+        # as for any other model, and the limit is sent as `max_completion_tokens`
+        llm_with_max_tokens = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            temperature=0.2,
+            top_p=0.9,
+            seed=123,
+            max_tokens=8000,
+        )
+        request_config_with_max_tokens = llm_with_max_tokens._build_request_config()
+        assert request_config_with_max_tokens["temperature"] == 0.2
+        assert request_config_with_max_tokens["top_p"] == 0.9
+        assert request_config_with_max_tokens["seed"] == 123
+        assert request_config_with_max_tokens["max_completion_tokens"] == 8000
+        assert "max_tokens" not in request_config_with_max_tokens
+        # ...or as `max_tokens`, if `max_completion_tokens` is not supported for the model
+        for supported_params in [["max_tokens", "reasoning_effort"], None]:
+            with patch.object(
+                llms_module.litellm,
+                "get_supported_openai_params",
+                return_value=supported_params,
+            ):
+                request_config_with_max_tokens = (
+                    llm_with_max_tokens._build_request_config()
+                )
+            assert request_config_with_max_tokens["max_tokens"] == 8000
+            assert "max_completion_tokens" not in request_config_with_max_tokens
+
+        # Model without reasoning support: same, with the limit sent as `max_tokens`
         non_reasoning_model = "cerebras/llama-3.3-70b"
         llm_non_reasoning = DocumentLLM(
             model=non_reasoning_model, api_key="test_api_key"
         )
         assert not llm_non_reasoning._supports_reasoning
         non_reasoning_request_config = llm_non_reasoning._build_request_config()
-        assert non_reasoning_request_config["temperature"] == 0.3
-        assert non_reasoning_request_config["max_tokens"] == 4096
-        for param in ["top_p", "max_completion_tokens"]:
+        for param in optional_params:
             assert param not in non_reasoning_request_config
 
+        # A zero value is a value that is set, i.e. it is sent
         llm_with_top_p = DocumentLLM(
-            model=non_reasoning_model, api_key="test_api_key", top_p=0.3
+            model=non_reasoning_model,
+            api_key="test_api_key",
+            temperature=0.0,
+            top_p=0.3,
+            seed=0,
+            max_tokens=2000,
         )
-        assert llm_with_top_p._build_request_config()["top_p"] == 0.3
+        request_config_with_top_p = llm_with_top_p._build_request_config()
+        assert request_config_with_top_p["temperature"] == 0.0
+        assert request_config_with_top_p["top_p"] == 0.3
+        assert request_config_with_top_p["seed"] == 0
+        assert request_config_with_top_p["max_tokens"] == 2000
+        assert "max_completion_tokens" not in request_config_with_top_p
 
         # Unsupported methods
         with pytest.raises(NotImplementedError):
@@ -358,6 +409,13 @@ class TestLLMs(BaseTest):
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 max_tokens=-4000,  # negative value
+            )
+        with pytest.raises(ValueError):
+            DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                # removed param: `max_tokens` applies to all models
+                max_completion_tokens=8000,  # ty: ignore[unknown-argument]
             )
         with pytest.raises(ValueError):
             DocumentLLM(
@@ -493,13 +551,35 @@ class TestLLMs(BaseTest):
         llm_excessive_output = DocumentLLM(
             model="openai/gpt-6-luna",
             api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            max_completion_tokens=999999,  # excessive output tokens
+            max_tokens=999999,  # excessive output tokens
         )
 
         with pytest.raises(
-            ValueError, match="exceeds the model's maximum output tokens"
+            ValueError,
+            match=r"max_tokens \(999999\) exceeds the model's maximum output tokens",
         ):
             llm_excessive_output._validate_output_tokens()
+
+        # The same applies to a model without reasoning support
+        with pytest.raises(
+            ValueError, match="exceeds the model's maximum output tokens"
+        ):
+            DocumentLLM(
+                model="cerebras/llama-3.3-70b",
+                api_key="...",
+                max_tokens=999999,
+            )._validate_output_tokens()
+
+        # Max output tokens within the limit of the model
+        llm_excessive_output.max_tokens = 8000
+        llm_excessive_output._validate_output_tokens()
+
+        # Max output tokens not set (default): there is nothing to validate,
+        # as no limit is sent, and the default of the model applies
+        llm_excessive_output.max_tokens = None
+        with patch.object(llms_module.litellm, "get_model_info") as get_model_info:
+            llm_excessive_output._validate_output_tokens()
+        get_model_info.assert_not_called()
 
     @pytest.mark.vcr
     def test_system_messages(self):
@@ -839,6 +919,249 @@ class TestLLMs(BaseTest):
                 )
             assert requested_models() == [primary_model] * 4
             assert not document.concepts[0].extracted_items
+
+    def test_extraction_response_cut_off_at_max_output_tokens(self):
+        """
+        Tests that a response cut off at the max output tokens fails the extraction
+        with a dedicated error, without being requested from the same LLM again,
+        and that a fallback LLM is tried for it.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
+        concepts_answer = '[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+        cut_off_answer = '[{"concept_id": "C0", "extracted_items": ["It'
+        invalid_answer = "<<<not-json>>>"
+
+        requests: list[str] = []
+        outcomes: dict[str, list[tuple[str | None, str]]] = {}
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, with the outcomes of the requests to each model,
+            as (text, finish reason), taken from the queue of that model. The last
+            outcome on the queue is repeated.
+            """
+            model = kwargs["model"]
+            requests.append(model)
+            queue = outcomes[model]
+            content, finish_reason = queue.pop(0) if len(queue) > 1 else queue[0]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content),
+                        finish_reason=finish_reason,
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        def set_outcomes(
+            model_outcomes: dict[str, list[tuple[str | None, str]]],
+        ) -> None:
+            """
+            Sets the outcomes of the requests to each model and resets the records.
+            """
+            outcomes.clear()
+            outcomes.update(model_outcomes)
+            requests.clear()
+
+        def create_llm(*, with_fallback: bool = False, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with the default retry params, optionally with a fallback LLM.
+            """
+            llm = DocumentLLM(model=primary_model, api_key="test_api_key", **kwargs)
+            if with_fallback:
+                llm.fallback_models = [
+                    DocumentLLM(
+                        model=fallback_model, api_key="test_api_key", is_fallback=True
+                    )
+                ]
+            return llm
+
+        def create_document(n_concepts: int = 1) -> Document:
+            """
+            Creates a document with the specified number of concepts to extract.
+            """
+            document = Document(
+                raw_text="Non-disclosure agreement\n\nThe parties agree as follows."
+            )
+            document.concepts = [
+                StringConcept(name=f"Concept {i}", description=f"Description {i}")
+                for i in range(n_concepts)
+            ]
+            return document
+
+        # The message names the limit that applies, and the reasoning tokens
+        # only for a model that supports reasoning
+        msg = create_llm()._get_output_truncated_msg()
+        assert "max output tokens of the model" in msg
+        assert "reasoning_effort" in msg
+        msg = create_llm(max_tokens=100)._get_output_truncated_msg()
+        assert "set by `max_tokens` (100)" in msg
+        msg = DocumentLLM(
+            model="cerebras/llama-3.3-70b", api_key="test_api_key"
+        )._get_output_truncated_msg()
+        assert "reasoning_effort" not in msg
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # The cut-off response is not requested again, although the retries
+            # for invalid data are enabled, and its tokens are counted
+            set_outcomes({primary_model: [(cut_off_answer, "length")]})
+            llm = create_llm(max_tokens=100)
+            assert llm.max_retries_invalid_data == 3
+            with pytest.raises(
+                ModelAPIError,
+                match=r"cut off at the max output tokens set by `max_tokens` \(100\)"
+                r".*max_items_per_call",
+            ):
+                llm.extract_concepts_from_document(create_document())
+            assert requests == [primary_model]
+            usage = llm.get_usage()[0].usage
+            assert (usage.input, usage.output) == (10, 5)
+            assert [call.response for call in usage.calls] == [cut_off_answer]
+
+            # The same applies when all the tokens are used up before any text is returned
+            set_outcomes({primary_model: [(None, "length")]})
+            with pytest.raises(ModelAPIError, match="cut off at the max output tokens"):
+                create_llm().extract_concepts_from_document(create_document())
+            assert requests == [primary_model]
+
+            # A fallback LLM is tried for the cut-off response
+            set_outcomes(
+                {
+                    primary_model: [(cut_off_answer, "length")],
+                    fallback_model: [(concepts_answer, "stop")],
+                }
+            )
+            document = create_document()
+            create_llm(with_fallback=True).extract_concepts_from_document(document)
+            assert requests == [primary_model, fallback_model]
+            assert document.concepts[0].extracted_items[0].value == "Item"
+
+            # ...and the error is raised if the response of the last fallback LLM
+            # is cut off as well
+            set_outcomes(
+                {
+                    primary_model: [(cut_off_answer, "length")],
+                    fallback_model: [(cut_off_answer, "length")],
+                }
+            )
+            with pytest.raises(
+                ModelAPIError, match=f"response of LLM `{fallback_model}` was cut off"
+            ):
+                create_llm(with_fallback=True).extract_concepts_from_document(
+                    create_document()
+                )
+            assert requests == [primary_model, fallback_model]
+
+            # A response cut off when invalid data is requested again stops the retries
+            set_outcomes(
+                {primary_model: [(invalid_answer, "stop"), (cut_off_answer, "length")]}
+            )
+            with pytest.raises(ModelAPIError, match="cut off at the max output tokens"):
+                create_llm().extract_concepts_from_document(create_document())
+            assert requests == [primary_model] * 2
+
+            # Invalid data in a complete response is still requested again
+            set_outcomes({primary_model: [(invalid_answer, "stop")]})
+            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*3 retries"):
+                create_llm().extract_concepts_from_document(create_document())
+            assert requests == [primary_model] * 4
+
+            # With concurrency, the error is raised as is, without sending
+            # the requests again
+            set_outcomes({primary_model: [(cut_off_answer, "length")]})
+            with pytest.raises(ModelAPIError, match="cut off at the max output tokens"):
+                create_llm().extract_concepts_from_document(
+                    create_document(n_concepts=2), use_concurrency=True
+                )
+            assert requests == [primary_model] * 2  # one per concept
+
+            # A warning is issued if `raise_exception_on_extraction_error` is False,
+            # without sending the request again
+            set_outcomes({primary_model: [(cut_off_answer, "length")]})
+            document = create_document()
+            with pytest.warns(UserWarning, match="cut off at the max output tokens"):
+                create_llm().extract_concepts_from_document(
+                    document, raise_exception_on_extraction_error=False
+                )
+            assert requests == [primary_model]
+            assert not document.concepts[0].extracted_items
+
+            # A response that is valid is used, whatever its finish reason
+            set_outcomes({primary_model: [(concepts_answer, "length")]})
+            document = create_document()
+            create_llm().extract_concepts_from_document(document)
+            assert requests == [primary_model]
+            assert document.concepts[0].extracted_items[0].value == "Item"
+
+    def test_unsupported_request_params_dropped(self):
+        """
+        Tests that a request with a param that litellm reports as not supported
+        for the model, e.g. a temperature set for a model that accepts only its
+        default one, is sent again without such params.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        model = "openai/gpt-6-luna"
+
+        # litellm reports the temperature as not supported for the model
+        # before any request is sent
+        with pytest.raises(litellm.UnsupportedParamsError):
+            litellm.utils.get_optional_params(
+                model="gpt-6-luna", custom_llm_provider="openai", temperature=0.2
+            )
+
+        requests: list[dict[str, Any]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates litellm, which raises an error for the unsupported temperature,
+            unless it is told to drop the unsupported params.
+            """
+            requests.append(kwargs)
+            if "temperature" in kwargs and not kwargs["drop_params"]:
+                raise litellm.UnsupportedParamsError(
+                    message="Simulated error: temperature is not supported",
+                    model=model,
+                    llm_provider="openai",
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(message=types.SimpleNamespace(content="4"))
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        def sent_params() -> list[tuple[float | None, bool]]:
+            """
+            Returns the temperature and the `drop_params` flag of each request.
+            """
+            return [(r.get("temperature"), r["drop_params"]) for r in requests]
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # The request is sent again, with the unsupported params to be dropped
+            llm = DocumentLLM(
+                model=model, api_key="test_api_key", system_message="", temperature=0.2
+            )
+            assert llm.chat("What's 2+2?") == "4"
+            assert sent_params() == [(0.2, False), (0.2, True)]
+            # Only the request that got a response is recorded
+            usage = llm.get_usage()[0].usage
+            assert (usage.input, usage.output) == (10, 5)
+            assert len(usage.calls) == 1
+
+            # No temperature is sent unless set
+            requests.clear()
+            llm = DocumentLLM(model=model, api_key="test_api_key", system_message="")
+            assert llm.chat("What's 2+2?") == "4"
+            assert sent_params() == [(None, False)]
 
     def test_async_limiter_per_llm(self):
         """

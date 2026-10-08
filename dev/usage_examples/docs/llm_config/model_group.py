@@ -15,7 +15,6 @@ reasoner = DocumentLLM(
     model="openai/gpt-6.1-sol",
     api_key="<your-openai-api-key>",
     role="reasoner",  # a label of your choice
-    max_completion_tokens=16000,
     reasoning_effort="high",
     output_language="adapt",
 )

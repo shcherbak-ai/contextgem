@@ -487,6 +487,8 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 - `CONTEXTGEM_OPENAI_API_KEY`
 
+The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
+
 **Adding New Variables:**
 
 - Use the `CONTEXTGEM_` prefix for new API keys

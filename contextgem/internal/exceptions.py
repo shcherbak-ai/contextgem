@@ -107,6 +107,8 @@ class ModelAPIError(_BaseModelError):
     - Rate limits are exceeded
     - API service is unavailable or returns unexpected responses
     - Request timeouts occur
+    - The response of the model is cut off at the max output tokens during extraction,
+      or is empty in a chat
 
     :ivar message: Human-readable error description
     :vartype message: str

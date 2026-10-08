@@ -119,6 +119,7 @@ from contextgem.internal.utils import (
     _group_instances_by_fields,
     _is_retryable_model_api_error,
     _model_call_result_is_api_failure,
+    _model_call_result_is_output_truncated,
     _model_call_result_is_valid,
     _parse_llm_output_as_json,
     _remove_thinking_content_from_llm_output,
@@ -1654,7 +1655,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :type raise_exception_on_extraction_error: bool, optional
         :param has_fallback_pending: Whether a fallback LLM will be tried if the call to the
             specified LLM fails. If True, a model API error is logged without being raised or
-            warned about, as it is not final. Defaults to False.
+            warned about, as it is not final. The same applies to a response cut off at
+            the max output tokens. Defaults to False.
         :type has_fallback_pending: bool
 
         :return: A tuple containing:
@@ -1996,9 +1998,31 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 reference_depth=reference_depth,
             )
             if extracted_data is None:
-                logger.error(
-                    f"LLM did not return valid JSON for {extracted_item_type}s"
-                )
+                if model_call_obj._output_truncated:
+                    # The response was cut off at the max output tokens, i.e. the same
+                    # request to the same LLM would be cut off again. As a failed LLM
+                    # API request, it is not requested again, and is not final while
+                    # a fallback LLM, which may have a higher limit, is yet to be tried.
+                    error_msg = (
+                        f"{llm._get_output_truncated_msg()} "
+                        f"To get less output per LLM call, consider setting "
+                        f"`max_items_per_call`, `max_paragraphs_to_analyze_per_call` "
+                        f"(for text) or `max_images_to_analyze_per_call` (for images). "
+                        f"See the optimization guide for long documents: "
+                        f"https://contextgem.dev/optimizations/optimization_long_docs/"
+                    )
+                    logger.error(error_msg)
+                    if has_fallback_pending:
+                        logger.info("The call will be retried with a fallback LLM.")
+                    elif raise_exception_on_extraction_error:
+                        await llm._update_usage_and_cost((None, all_usage_data))
+                        raise ModelAPIError(error_msg)
+                    else:
+                        warnings.warn(error_msg, stacklevel=2)
+                else:
+                    logger.error(
+                        f"LLM did not return valid JSON for {extracted_item_type}s"
+                    )
                 return None, all_usage_data
 
             # Aspect (document-level)
@@ -2510,7 +2534,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 Checks the processed result for validity and retries it if invalid.
 
                 The retries stop as soon as an LLM API request fails, as such request
-                is already retried (if the error is transient) when it is sent.
+                is already retried (if the error is transient) when it is sent, or as
+                soon as a response is cut off at the max output tokens, as the same
+                request would be cut off again.
 
                 :param llm_instance: The LLM instance to process the data.
                 :type llm_instance: _DocumentLLM
@@ -2560,16 +2586,21 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         await llm_instance._update_usage_and_cost(res)
                         if res[0] is not None:
                             break
-                        if _model_call_result_is_api_failure(res):
+                        if _model_call_result_is_api_failure(
+                            res
+                        ) or _model_call_result_is_output_truncated(res):
                             # The retries of the failed request are already performed,
+                            # or the response was cut off at the max output tokens,
                             # i.e. sending it to the same LLM again is pointless
                             break
                     if _model_call_result_is_valid(res):
                         return True
                     else:
-                        # A failed LLM API request is already reported at this point
-                        if retry_is_final and not _model_call_result_is_api_failure(
-                            res
+                        # A failed LLM API request, as well as a response cut off
+                        # at the max output tokens, is already reported at this point
+                        if retry_is_final and not (
+                            _model_call_result_is_api_failure(res)
+                            or _model_call_result_is_output_truncated(res)
                         ):
                             instance_names = [instance.name for instance in instances]
                             error_msg = (
@@ -2615,9 +2646,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 retry_successful = False
                 # Retry on the primary LLM only if it returned invalid data. If its API
                 # request failed, the retries of that request are already performed.
+                # If its response was cut off at the max output tokens, the same
+                # request would be cut off again.
                 if (
                     llm.max_retries_invalid_data > 0
                     and not _model_call_result_is_api_failure(result)
+                    and not _model_call_result_is_output_truncated(result)
                 ):
                     retry_successful = await retry_processing_for_result(
                         llm_instance=llm,
@@ -3297,16 +3331,15 @@ class _DocumentLLM(_GenericModelProcessor):
         default=None,
         description="System prompt to prime the model; defaults to framework message if unset.",
     )
-    max_tokens: StrictInt = Field(
-        default=4096,
+    max_tokens: StrictInt | None = Field(
+        default=None,
         gt=0,
-        description="Maximum output tokens for non-reasoning models.",
+        description=(
+            "Maximum output tokens per request, including the reasoning tokens "
+            "of reasoning (CoT-capable) models. Defaults to None, i.e. no limit "
+            "is sent, and the default of the model applies."
+        ),
     )
-    max_completion_tokens: StrictInt = Field(
-        default=16000,
-        gt=0,
-        description="Maximum completion tokens for reasoning (CoT-capable) models.",
-    )  # for reasoning (CoT-capable) models
     reasoning_effort: ReasoningEffort | None = Field(
         default=None,
         description=(
@@ -3338,7 +3371,7 @@ class _DocumentLLM(_GenericModelProcessor):
         description="Retries when the model returns invalid or unparsable data.",
     )
     timeout: StrictInt = Field(
-        default=120,
+        default=600,
         ge=0,
         description="Request timeout in seconds.",
     )
@@ -3366,22 +3399,29 @@ class _DocumentLLM(_GenericModelProcessor):
         ),
     )
     temperature: StrictFloat | None = Field(
-        default=0.3,
+        default=None,
         ge=0,
-        description="Sampling temperature [0..1]; higher values increase randomness.",
+        description=(
+            "Sampling temperature [0..1]; higher values increase randomness. "
+            "Defaults to None, i.e. the param is not sent, and the default "
+            "of the model applies."
+        ),
     )
     top_p: StrictFloat | None = Field(
         default=None,
         ge=0,
         description=(
             "Nucleus sampling [0..1]; alternative to temperature. "
-            "Defaults to None so only temperature is sent — some providers "
+            "Defaults to None, i.e. the param is not sent. Some providers "
             "(e.g. Claude 4.x) reject requests that set both."
         ),
     )
     seed: StrictInt | None = Field(
         default=None,
-        description="Random seed for sampling (provider support dependent).",
+        description=(
+            "Random seed for sampling. Support depends on the model provider. "
+            "Defaults to None, i.e. the param is not sent."
+        ),
     )
     # Tool calling params (to be used only in chat() calls)
     # Sequence type for type checking: a list or a tuple of functions is accepted.
@@ -3484,7 +3524,7 @@ class _DocumentLLM(_GenericModelProcessor):
         if limiter is not None:
             self.async_limiter = limiter
         else:
-            self.async_limiter = AsyncLimiter(3, 10)
+            self.async_limiter = AsyncLimiter(10, 10)
 
     @_post_init_method
     def _post_init(self, __context: Any):
@@ -3618,7 +3658,8 @@ class _DocumentLLM(_GenericModelProcessor):
         :type images: list[Image] | None
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
-        :return: The LLM's response
+        :return: The LLM's response. A response cut off at the max output tokens
+            is returned incomplete, with a warning.
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
@@ -3655,7 +3696,8 @@ class _DocumentLLM(_GenericModelProcessor):
         :type images: list[Image] | None
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
-        :return: The LLM's response
+        :return: The LLM's response. A response cut off at the max output tokens
+            is returned incomplete, with a warning.
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
@@ -3827,7 +3869,10 @@ class _DocumentLLM(_GenericModelProcessor):
         # Update usage and cost statistics
         await self._update_usage_and_cost(result)
 
-        response, _ = result
+        response, usage = result
+
+        # Whether the response was cut off at the max output tokens
+        output_truncated = bool(usage.calls) and usage.calls[-1]._output_truncated
 
         # An empty response is handled as a failed one. It is told apart from a failed
         # request, which is already reported at this point.
@@ -3835,15 +3880,22 @@ class _DocumentLLM(_GenericModelProcessor):
             response = None
         if response is None and not _model_call_result_is_api_failure(result):
             error_msg = f"LLM {self.model} returned an empty response."
-            if self._supports_reasoning:
-                error_msg += (
-                    " The tokens allowed by `max_completion_tokens` may have been "
-                    "used up by the reasoning of the model."
-                )
+            if output_truncated:
+                # e.g. all the tokens were used up by the reasoning of the model
+                error_msg += f" {self._get_output_truncated_msg()}"
             logger.error(error_msg)
             if not has_fallback_pending:
                 raise ModelAPIError(error_msg)
             logger.info("The call will be retried with a fallback LLM.")
+        elif response is not None and output_truncated:
+            # A response with a text is returned as it is: it can be cut off
+            # on purpose, e.g. by a low `max_tokens` set to get a short answer
+            warning_msg = (
+                f"{self._get_output_truncated_msg()} "
+                f"The response is returned incomplete."
+            )
+            logger.warning(warning_msg)
+            warnings.warn(warning_msg, stacklevel=2)
 
         # If response is None, the caller will try with the next fallback LLM
         if response is not None and chat_session is not None:
@@ -4539,13 +4591,17 @@ class _DocumentLLM(_GenericModelProcessor):
 
     def _validate_output_tokens(self) -> None:
         """
-        Validates that the configured max_tokens or max_completion_tokens do not exceed
-        the model's maximum output tokens.
+        Validates that the configured max_tokens do not exceed the model's maximum
+        output tokens. Skipped if max_tokens is not set, as no limit is then sent
+        with the requests, and the default of the model applies.
 
         :raises ValueError: If the configured tokens exceed the model's maximum output tokens
         :return: None
         :rtype: None
         """
+
+        if self.max_tokens is None:
+            return
 
         output_exceeded = False
         try:
@@ -4565,20 +4621,13 @@ class _DocumentLLM(_GenericModelProcessor):
                 )
                 return
 
-            # Determine which token limit to check based on model type
-            if self._supports_reasoning:
-                configured_tokens = self.max_completion_tokens
-                token_type = "max_completion_tokens"  # nosec B105 - not a password
-            else:
-                configured_tokens = self.max_tokens
-                token_type = "max_tokens"  # nosec B105 - not a password
-
             # Check if configured tokens exceed the model's limit
-            if configured_tokens > max_output_tokens:
+            if self.max_tokens > max_output_tokens:
                 output_exceeded = True
                 raise ValueError(
-                    f"Configured {token_type} ({configured_tokens}) exceeds the model's "
+                    f"Configured max_tokens ({self.max_tokens}) exceeds the model's "
                     f"maximum output tokens of {max_output_tokens} for model `{self.model}`. "
+                    f"Lower `max_tokens`, or leave it unset to use the default of the model. "
                     f"For long documents, consider setting `max_paragraphs_to_analyze_per_call` "
                     f"(for text) or `max_images_to_analyze_per_call` (for images) to process the "
                     f"document in smaller chunks. "
@@ -4587,8 +4636,8 @@ class _DocumentLLM(_GenericModelProcessor):
                 )
 
             logger.debug(
-                f"Output token validation passed: {configured_tokens}/{max_output_tokens} "
-                f"{token_type} configured"
+                f"Output token validation passed: {self.max_tokens}/{max_output_tokens} "
+                f"max_tokens configured"
             )
 
         except ValueError as e:
@@ -4604,6 +4653,30 @@ class _DocumentLLM(_GenericModelProcessor):
             logger.warning(
                 f"Could not validate max output tokens for model `{self.model}`: {e}"
             )
+
+    def _get_output_truncated_msg(self) -> str:
+        """
+        Builds the message for a response of the LLM that was cut off at the max
+        output tokens, with the ways to get a complete response that apply to
+        the configuration of the LLM.
+
+        :return: The message describing the cut-off response.
+        :rtype: str
+        """
+        msg = f"The response of LLM `{self.model}` was cut off at the max output tokens"
+        if self.max_tokens is not None:
+            msg += (
+                f" set by `max_tokens` ({self.max_tokens}). Increase `max_tokens`, "
+                f"or leave it unset to use the default of the model."
+            )
+        else:
+            msg += " of the model."
+        if self._supports_reasoning:
+            msg += (
+                " The reasoning tokens of the model count towards this limit, "
+                "i.e. a lower `reasoning_effort` leaves more tokens for the response."
+            )
+        return msg
 
     def _ensure_vision_support_for_messages(self, messages: list[_Message]) -> None:
         """
@@ -4666,7 +4739,6 @@ class _DocumentLLM(_GenericModelProcessor):
         :type use_tools: bool
         :return: Base request configuration
         :rtype: dict[str, Any]
-        :raises ValueError: If required params for reasoning models are missing
         :raises ValueError: If parallel tool calls are set for the LLM that does not
             support them
         """
@@ -4675,35 +4747,35 @@ class _DocumentLLM(_GenericModelProcessor):
             "model": self.model,
         }
 
+        # Name of the request param that limits the output tokens. Reasoning
+        # (CoT-capable) models take the limit as `max_completion_tokens`, where supported.
+        max_tokens_param = "max_tokens"  # nosec B105 - not a password
+
         if self._supports_reasoning:
             model_params: list[str] | None = litellm.get_supported_openai_params(  # type: ignore[attr-defined]
                 self.model
             )
             if model_params is not None:
                 if "max_completion_tokens" in model_params:
-                    if not (self.max_completion_tokens):
-                        raise ValueError(
-                            "`max_completion_tokens` must be set for reasoning (CoT-capable) models"
-                        )
-                    request_config["max_completion_tokens"] = self.max_completion_tokens
+                    max_tokens_param = "max_completion_tokens"  # nosec B105 - not a password
                 if "reasoning_effort" in model_params and self.reasoning_effort:
                     request_config["reasoning_effort"] = self.reasoning_effort
-            if self.temperature is not None or self.top_p is not None:
-                logger.info(
-                    "`temperature` and `top_p` parameters are ignored for reasoning (CoT-capable) models"
-                )
-        else:
-            request_config["max_tokens"] = self.max_tokens
-            if self.temperature is not None:
-                request_config["temperature"] = self.temperature
-            if self.top_p is not None:
-                request_config["top_p"] = self.top_p
+
+        # The sampling params, the seed and the output token limit are sent only
+        # if set, i.e. the defaults of the model apply otherwise. Whether a value
+        # is supported for the model is left to litellm and the model provider: a param
+        # reported by litellm as unsupported is dropped when the request is sent.
+        if self.temperature is not None:
+            request_config["temperature"] = self.temperature
+        if self.top_p is not None:
+            request_config["top_p"] = self.top_p
+        if self.seed is not None:
+            request_config["seed"] = self.seed
+        if self.max_tokens is not None:
+            request_config[max_tokens_param] = self.max_tokens
 
         if self.deployment_id:
             request_config["deployment_id"] = self.deployment_id
-
-        if self.seed:
-            request_config["seed"] = self.seed
 
         if not use_tools:
             return request_config
@@ -4839,6 +4911,12 @@ class _DocumentLLM(_GenericModelProcessor):
         usage.output += call_obj._output_tokens
         usage.cache_read += call_obj._cache_read_tokens
         usage.cache_write += call_obj._cache_write_tokens
+        # litellm reports a response cut off at the max output tokens with
+        # the "length" finish reason for all LLM providers
+        call_obj._output_truncated = any(
+            getattr(choice, "finish_reason", None) == "length"
+            for choice in completion_obj.choices
+        )
         call_obj._record_response_timestamp()
         call_obj.response = answer_text
         usage.calls.append(call_obj)
@@ -5298,8 +5376,12 @@ class _DocumentLLM(_GenericModelProcessor):
             if (
                 not drop_params
             ):  # only retry if we haven't already tried with drop_params
-                logger.error(f"Exception occurred while calling LLM API: {e}")
-                logger.info("Retrying the call with unsupported parameters dropped...")
+                # litellm raises this error before the request is sent, e.g. for
+                # a temperature set for a model that accepts only its default one
+                logger.warning(
+                    f"The request to LLM `{self.model}` has params that are not "
+                    f"supported for the model, and is sent without them: {e}"
+                )
 
                 # Recursively call with drop_params=True
                 return await self._query_llm(

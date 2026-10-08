@@ -33,6 +33,7 @@ from __future__ import annotations
 import re
 import warnings
 from dataclasses import dataclass
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import (  # noqa: UP035
     Annotated,
     Any,
@@ -65,6 +66,7 @@ from contextgem.internal.typings.types_to_strings import (
     _raise_json_serializable_type_error,
     _serialize_type_hint,
 )
+from tests.utils import redact_home_dir
 
 
 # ---------------------------------------------------------------------------
@@ -1141,3 +1143,71 @@ def test_from_dict_rejects_duplicate_extracted_item_ids() -> None:
     )
     with pytest.raises(ValueError, match="duplicates"):
         StringConcept.from_dict(tampered)
+
+
+# ---------------------------------------------------------------------------
+# Test utils: redaction of the home directory in recorded responses
+# ---------------------------------------------------------------------------
+
+
+_WINDOWS_HOME_DIR = PureWindowsPath(r"C:\Users\jane.doe")
+_POSIX_HOME_DIR = PurePosixPath("/home/jane")
+
+
+@pytest.mark.parametrize(
+    "home_dir,text,expected",
+    [
+        # Windows path as in a JSON string, i.e. with escaped backslashes
+        (
+            _WINDOWS_HOME_DIR,
+            r'{"modelfile": "FROM C:\Users\jane.doe\.ollama\blobs\sha256-1"}',
+            r'{"modelfile": "FROM C:\Users\DUMMY\.ollama\blobs\sha256-1"}',
+        ),
+        # ...with single backslashes, and with slashes in another letter case
+        (
+            _WINDOWS_HOME_DIR,
+            r"C:\Users\jane.doe\file.txt",
+            r"C:\Users\DUMMY\file.txt",
+        ),
+        (
+            _WINDOWS_HOME_DIR,
+            "c:/users/Jane.Doe/file.txt",
+            "c:/users/DUMMY/file.txt",
+        ),
+        # The home directory itself, i.e. at the end of a path
+        (_WINDOWS_HOME_DIR, r'"C:\Users\jane.doe"', r'"C:\Users\DUMMY"'),
+        (_WINDOWS_HOME_DIR, r"C:\Users\jane.doe", r"C:\Users\DUMMY"),
+        # POSIX paths
+        (
+            _POSIX_HOME_DIR,
+            "FROM /home/jane/.ollama/models/blobs/sha256-1",
+            "FROM /home/DUMMY/.ollama/models/blobs/sha256-1",
+        ),
+        (PurePosixPath("/Users/jane"), '"/Users/jane"', '"/Users/DUMMY"'),
+        # Each occurrence is redacted
+        (
+            _POSIX_HOME_DIR,
+            "/home/jane/a.txt /home/jane/b.txt",
+            "/home/DUMMY/a.txt /home/DUMMY/b.txt",
+        ),
+        # Other users, other locations and other drives are left as they are
+        (
+            _POSIX_HOME_DIR,
+            "/home/janet/file.txt /srv/jane/file.txt jane",
+            "/home/janet/file.txt /srv/jane/file.txt jane",
+        ),
+        (
+            _WINDOWS_HOME_DIR,
+            r"C:\Users\jane.doe2\file.txt D:\Users\jane.doe\file.txt",
+            r"C:\Users\jane.doe2\file.txt D:\Users\jane.doe\file.txt",
+        ),
+    ],
+)
+def test_redact_home_dir(
+    monkeypatch: pytest.MonkeyPatch, home_dir: PurePath, text: str, expected: str
+) -> None:
+    """The name of the home directory of the current user is redacted in the file
+    paths found in a response recorded to a cassette, whatever the path separators
+    and their escaping are, while other paths are left as they are."""
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: home_dir))
+    assert redact_home_dir(text) == expected

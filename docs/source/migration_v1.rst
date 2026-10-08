@@ -346,7 +346,7 @@ Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the
 
 Before v1.0, a fallback LLM could have another system message. A fallback LLM created without ``system_message`` then used the default system message, which is written for extraction, also in a chat for which the primary LLM had another system message or none.
 
-**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. A serialized LLM whose fallback LLM has another system message cannot be deserialized either: set the ``system_message`` key of the fallback LLM to the one of the primary LLM. As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
+**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. A serialized LLM whose fallback LLM has another system message cannot be deserialized either: set the ``system_message`` key of the fallback LLM to the one of the primary LLM. A serialized LLM also has the ``max_completion_tokens`` key, which is removed in v1.0, and stores the output token limits used before v1.0 (see :ref:`migration-v1-llm-defaults-label`). As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
 
 .. code-block:: python
    :caption: Updating an LLM serialized before v1.0
@@ -369,6 +369,10 @@ Before v1.0, a fallback LLM could have another system message. A fallback LLM cr
            )
        if llm_dict.get("pricing_details"):
            llm_dict["pricing_details"]["__class__"] = "ModelPricing"
+       # Output token limits used before v1.0: with `max_tokens` not set, the default
+       # of the model applies. To keep a limit, set `max_tokens` to it instead.
+       llm_dict.pop("max_completion_tokens", None)
+       llm_dict["max_tokens"] = None
        # Empty usage and cost containers, created anew when the LLM is deserialized
        llm_dict.pop("_usage", None)
        llm_dict.pop("_cost", None)
@@ -380,6 +384,59 @@ Before v1.0, a fallback LLM could have another system message. A fallback LLM cr
    llm_json = llm.to_json()
 
 For a serialized model group, use ``DocumentModelGroup.from_dict()`` with the same function.
+
+
+.. _migration-v1-llm-defaults-label:
+
+📏 Output Token Limit and LLM Defaults
+----------------------------------------
+
+The ``max_completion_tokens`` parameter and attribute of :class:`~contextgem.public.llms.DocumentLLM` are removed. Before v1.0, the output tokens of a response were limited by ``max_tokens`` (4096 by default) for the models without reasoning support, and by ``max_completion_tokens`` (16000 by default) for reasoning (CoT-capable) models, while the other of the two parameters was ignored. In v1.0, ``max_tokens`` applies to all models and is not set by default: no limit is sent with the requests, and the default of the model applies, which for most providers is the maximum output of the model. See :ref:`llm-max-output-tokens-label`.
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   llm = DocumentLLM(
+       model="openai/gpt-6-luna",  # a reasoning model
+       api_key="<your-openai-api-key>",
+       max_completion_tokens=32000,
+   )
+
+.. code-block:: python
+   :caption: In v1.0
+
+   llm = DocumentLLM(
+       model="openai/gpt-6-luna",
+       api_key="<your-openai-api-key>",
+       max_tokens=32000,  # or omit it to use the default of the model
+   )
+
+Passing ``max_completion_tokens`` to ``DocumentLLM``, as well as reading or assigning the ``max_completion_tokens`` attribute, raises an error in v1.0.
+
+Changes in behavior:
+
+- **No output token limit by default.** If you relied on the previous default limits, e.g. to cap the cost of a single request, set the limit explicitly: ``max_tokens=16000`` for a reasoning model, or ``max_tokens=4096`` for a model without reasoning support.
+- **``max_tokens`` limits the output of reasoning models.** Before v1.0, ``max_tokens`` was ignored for reasoning models. If your code sets ``max_tokens`` for such a model, the value now limits the output of the model, including its reasoning tokens. Remove the value, or make sure that it leaves enough tokens for both the reasoning and the response.
+- **A cut-off response is not requested again during extraction.** Before v1.0, a response cut off at the output token limit was handled as invalid data: it was requested again up to ``max_retries_invalid_data`` times, and the extraction then failed with an error about invalid JSON. In v1.0, such a response is not requested again: the next fallback LLM is tried, if configured, and ``ModelAPIError`` is raised otherwise, with a message telling that the response was cut off. In a chat, a cut-off response is still returned, now with a warning.
+- **No default temperature.** Before v1.0, ``temperature`` defaulted to 0.3. In v1.0, it is not set by default: the parameter is not sent, and the default of the model applies. This changes the default behavior only for the models without reasoning support, as the temperature was not sent to reasoning models before v1.0. To keep the previous behavior for such a model, e.g. a local model, set ``temperature=0.3``. See :ref:`llm-sampling-params-label`.
+- **Sampling parameters are sent to reasoning models.** Before v1.0, ``temperature`` and ``top_p`` were ignored for reasoning models. In v1.0, a value that is set is sent to any model. If ``litellm`` reports it as not supported for the model, e.g. for OpenAI's GPT-5 and GPT-6 models, the request is sent without it, with a warning logged for each such request. If your code sets ``temperature`` or ``top_p`` for a reasoning model, remove the value unless you intend it to be applied.
+- **Longer request timeout.** The default ``timeout`` is raised from 120 to 600 seconds, as a response has to be received in full within the timeout, and a long response of a reasoning model may take more than 120 seconds. A request that times out is retried as a transient error, so a request to an unresponsive endpoint takes longer to fail. Set ``timeout=120`` to keep the previous behavior.
+- **Higher default rate of concurrent requests.** With ``use_concurrency=True``, the default ``async_limiter`` of an LLM allows 10 requests per 10 seconds instead of 3. If you run into the rate limits of your LLM provider, set the limiter explicitly, e.g. ``llm.async_limiter = AsyncLimiter(3, 10)`` for the previous rate.
+
+**Serialized data.** An LLM serialized with the earlier versions has the ``max_completion_tokens`` key, for which a validation error is raised in v1.0, and the ``max_tokens`` key with the value used before v1.0, i.e. 4096 unless it was changed, which would now limit the output of a reasoning model as well. The ``migrate_llm_dict()`` function in :ref:`migration-v1-fallback-llms-label` removes both limits, so that the default of the model applies. The ``temperature``, the ``timeout`` and the ``async_limiter`` of a deserialized LLM keep the values the LLM was serialized with, i.e. the defaults used before v1.0 unless they were changed. This means that the temperature of 0.3 is now sent to a reasoning model as well. Set them anew to use the defaults of v1.0:
+
+.. code-block:: python
+   :caption: Applying the defaults of v1.0 to an LLM serialized before v1.0
+
+   from aiolimiter import AsyncLimiter
+
+   # migrate_llm_dict() is defined in "Fallback LLMs"
+   llm = DocumentLLM.from_dict(migrate_llm_dict(llm_dict))
+   llm.temperature = None
+   llm.timeout = 600
+   llm.async_limiter = AsyncLimiter(10, 10)
+
+The same applies to each fallback LLM, and to each LLM of a deserialized model group.
 
 
 .. _migration-v1-pipelines-label:

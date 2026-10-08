@@ -83,6 +83,10 @@ class _ModelCall(BaseModel):
     _cache_read_tokens: int = PrivateAttr(default=0)
     _cache_write_tokens: int = PrivateAttr(default=0)
 
+    # Whether the response was cut off at the max output tokens,
+    # as reported by the model provider (finish reason "length")
+    _output_truncated: bool = PrivateAttr(default=False)
+
     def _record_response_timestamp(self) -> None:
         """
         Records the timestamp (in ms) when the response is received.
