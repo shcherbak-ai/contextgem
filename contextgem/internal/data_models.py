@@ -236,8 +236,10 @@ class _Message(_AbstractInstanceBase):
     :ivar role: The role of the message, which must be one of "system", "user", "assistant", "tool".
     :vartype role: Literal["system", "user", "assistant", "tool"]
     :ivar content: The content of the message, which can be either a plain string or
-        a multimodal list containing text and image_url parts.
-    :vartype content: str | list[dict[str, Any]]
+        a multimodal list containing text and image_url parts. Can be ``None`` only for
+        an ``assistant`` message that has ``tool_calls``, i.e. when the model requested
+        tool calls without returning a text.
+    :vartype content: str | list[dict[str, Any]] | None
     :ivar tool_call_id: Identifier of the tool call this tool reply corresponds to. Must be set
         when ``role == 'tool'``; otherwise must be ``None``. Tool messages must have string content.
     :vartype tool_call_id: str | None
@@ -251,7 +253,8 @@ class _Message(_AbstractInstanceBase):
     """
 
     role: MessageRole = Field(..., frozen=True)
-    content: NonEmptyStr | list[dict[NonEmptyStr, Any]] = Field(..., frozen=True)
+    # None is allowed only for assistant messages that have tool calls
+    content: NonEmptyStr | list[dict[NonEmptyStr, Any]] | None = Field(..., frozen=True)
 
     # Optional for tool messages: must be set when role == "tool"
     tool_call_id: NonEmptyStr | None = Field(default=None, frozen=True)
@@ -297,16 +300,16 @@ class _Message(_AbstractInstanceBase):
     @field_validator("content")
     @classmethod
     def _validate_content(
-        cls, content: str | list[dict[str, Any]]
-    ) -> str | list[dict[str, Any]]:
+        cls, content: str | list[dict[str, Any]] | None
+    ) -> str | list[dict[str, Any]] | None:
         """
         Validates that list-based content follows the multimodal schema.
 
-        :param content: The content to validate. Must be a non-empty string or
-            a list of dicts with a 'type' field.
-        :type content: str | list[dict[str, Any]]
+        :param content: The content to validate. Must be a non-empty string,
+            a list of dicts with a 'type' field, or None.
+        :type content: str | list[dict[str, Any]] | None
         :return: The validated content.
-        :rtype: str | list[dict[str, Any]]
+        :rtype: str | list[dict[str, Any]] | None
         :raises ValueError: If the content does not follow the multimodal schema.
         """
         if isinstance(content, list):
@@ -350,7 +353,13 @@ class _Message(_AbstractInstanceBase):
         - When role == "tool", name should be provided.
         - When role != "tool", tool_call_id must be None.
         - When role == "assistant", tool_calls may be provided; otherwise, it must be None.
+        - Content may be None only when role == "assistant" and tool_calls are provided.
         """
+        if self.content is None and not (self.role == "assistant" and self.tool_calls):
+            raise ValueError(
+                "`content` can be None only for messages with role 'assistant' "
+                "that have `tool_calls`."
+            )
         if self.role == "tool":
             if self.tool_call_id is None:
                 raise ValueError(
@@ -380,12 +389,13 @@ class _Message(_AbstractInstanceBase):
         Render this message to an OpenAI-compatible dictionary.
 
         :return: A dict with keys 'role' and 'content' suitable for chat APIs.
+            The content is None for an assistant message that has tool calls and no text.
         :rtype: dict[str, Any]
         """
         data = {"role": self.role, "content": self.content}
         if self.role == "tool":
-            data["tool_call_id"] = self.tool_call_id  # ty: ignore[invalid-assignment]
-            data["name"] = self.name  # ty: ignore[invalid-assignment]
+            data["tool_call_id"] = self.tool_call_id
+            data["name"] = self.name
         if self.role == "assistant" and self.tool_calls is not None:
             data["tool_calls"] = self.tool_calls
         return data

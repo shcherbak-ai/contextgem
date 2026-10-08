@@ -96,7 +96,21 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph, generate candidate matches to aspects.\\n
+      \   - Collect minimal sufficient textual evidence privately and note negation,
+      hypothetical, or conditional forms.\\n    - Prefer precision over recall; include
+      only high-confidence matches and omit weak or ambiguous ones.\\n\\n3. Consistency
+      pass\\n   - Deduplicate paragraph IDs within each aspect and preserve the original
+      order.\\n\\nNever disclose any plan, evidence, or internal notes - only the
+      JSON array defined within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
       by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
       <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
@@ -115,21 +129,34 @@ interactions:
       none of the aspects.\\n    - If a paragraph clearly relates to an aspect (based
       on the aspect's name and description), include that paragraph's ID under the
       aspect's list of paragraph IDs.\\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect's list.\\n\\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\\n
-      \   - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\\n    - For each aspect (in the order they are provided),
-      include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
-      \       -- paragraph_ids: An array of the paragraph IDs that address or relate
-      to the aspect, e.g., [\\\"P0\\\", \\\"P2\\\"].\\n        -- If an aspect has
-      no related paragraphs, still include it with an empty paragraph_ids array ([]).\\n-
-      Do not add extra commentary, code block markers, or any other formatting beyond
-      the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n- No additional
-      text:\\n    -- Do not include any headers, explanations, or text outside of
-      the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
-      other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids\\\":
-      [\\n            str,\\n            ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
+      aspect, do not include it under that aspect's list.\\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \\\"above\\\",
+      \\\"this section\\\"): use surrounding context to disambiguate; if unresolved,
+      omit.\\n    - Treat negations, exceptions, and conditionals carefully: relevance
+      can be present in prohibitions or restrictions.\\n    - Prefer minimal sufficient
+      evidence:\\n        -- base the mapping on the most relevant paragraphs; avoid
+      tangential mentions.\\n    - Favor precision over recall; when uncertain, exclude
+      rather than speculate.\\n\\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\\n    - For
+      each aspect (in the order they are provided), include:\\n        -- aspect_id:
+      The aspect's unique identifier, e.g., \\\"A0\\\".\\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\\\"P0\\\",
+      \\\"P2\\\"].\\n        -- If an aspect has no related paragraphs, still include
+      it with an empty paragraph_ids array ([]).\\n- Do not add extra commentary,
+      code block markers, or any other formatting beyond the JSON array.\\n- Internally
+      verify before finalizing:\\n    -- Each provided aspect appears once, in order,
+      with the correct \\\"aspect_id\\\".\\n    -- \\\"paragraph_ids\\\" contains
+      only valid paragraph IDs.\\n    -- The structure exactly matches the format
+      specified within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraph_ids\\\": [\\n
+      \           str,\\n            ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Limitation of Liability</aspect_name>\\n        \\n
       \       <aspect_description>\\n        Clauses that limit or cap liability,
@@ -1094,7 +1121,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -1105,7 +1132,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '88764'
+      - '90968'
       content-type:
       - application/json
       cookie:
@@ -1113,7 +1140,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1123,7 +1150,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1139,16 +1166,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLCDb2igQAAAD//6xVTY+bMBS851esfIYV
-        5iOQY5WeetlW1fYSIuSYF+Iu2K5tqlZV/nttSAJpvWqyag4kmXkzvPcshm8f1s9PO/K8bt9/+rJM
-        iV6/qKfPKHAKsfsK1JxVj1RYHRgm+EhTBcSAc8V5kcXLLI+SgehEDa2TNdKE6SMOO8ZZGEdxFkZp
-        iNOT/CAYBW3rNvbvw8Ov4eoa5TX8sHAUnJEOtCYNWOxcZEElWocgojXThnCDgomkghvgQ++bkg/2
-        45f7lFYj7WQVq0tbUaJ3UYmCOS+JIo0i8mBLtKvZTOxY8RHja9EFxn449sNJiSZ0O/48Bje0jO9v
-        OV/6eshzL1p40ZUPLbybKLyLKLx7KBIvmr51OfH9yyn855P64cwPL/1w7odfueXqrVMn/5z6Hrf0
-        v7plN7uVfDt/khXse01cnPC+bWcE4VwY4uJoyJDtiTleUqMVjVRip/+Qor1NI32obHppG2U2IbQR
-        Eg3s0V63Qzr1V4GDrFEnTWXECwy3w0W6SkZHNOXixMdxfGKNbbKdC3OcBR7TqgZDWKtnIYcooQeo
-        J/GUiKSvmZgRi9nofzfk8x7HZ7y5xX4iKAVpQ7+SCmpGr4eeyhS4N8drZZdVDw0jDeq7fRNUhoFy
-        x1HDnvTtGOdI/9QGusqeWQNKKjZm+l5WJIqyBGOy2qHFcfEbAAD//wMAuvz/FOIGAAA=
+        H4sIAAAAAAAA/6VUy66bMBDd5yuQ16TCvOmuiz4WVVu1V+qVQoR8YQJuwaa26UNX+ffaJDZEvY9I
+        3aATn5njM+PM3G88D9EGvfRQ3RFVD2O/ff319v0b/LYtbvjdFzwEHf4xfJYJvLv5cPsR+SaD332D
+        WtmsFzXXeaAoZye6FkAUGFWcFTgOoygtZmLgDfQmrR3VNt32EyPnjI7TGqSmdvqn593PX+ONNfBb
+        Hwe+PRlAStKCPrNB+lDw3pwgIiWVijCF/IWsOVPAZru7kmlx8/G8UkePuoyKNqXmSvQqKJFvuZEI
+        0goydpqWht+V6BMOQh3izShxKHWosAhjh1wGjiyKbG4YBg7pjL25/Og/6RE/69GKp9ZNZg1mmQW5
+        BTYmt0Zy6zy3dvPYAhtc2JjCFVcEDrnSV6wrvbAaYeBKD7BDoUORQ/F1jQmfa4ytObGXZM6z6xnG
+        7jFx5lDukHMfX/lc0ZOurlGI/1shuUKhZPv1yAg4TJKYUWVT368IwhhXxIz6PKz7M3N043mgjMqu
+        0htA6nWgR04qPqKZPervfh736WKC0Sj0AlGV4t9hlsV5EcYnRbTslhVf4PBMK+2mX5gwyKPUf0C1
+        akAR2svV2kA1qTtoVrJRmvkXZPVLUAWriCxJYhdCpobyhQw2q0786/shB6cuUdaurkiD9NEbFqKu
+        YdQrthoFNLS+bM8SJsDs6cfC3KPMnpEE8VMv4UpREObhGjiQqT9tUiT/SAVDpV+3BTEKOq9T89/Y
+        HDd/AYOAER5FBgAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1171,7 +1199,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2916'
+      - '18950'
       openai-project:
       - DUMMY
       openai-version:
@@ -1197,7 +1225,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 641ms
+      - 775ms
       x-request-id:
       - DUMMY
     status:
@@ -1300,11 +1328,28 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph, generate candidate matches to aspects.\\n
+      \   - Collect minimal sufficient textual evidence privately and note negation,
+      hypothetical, or conditional forms.\\n    - Prefer precision over recall; include
+      only high-confidence matches and omit weak or ambiguous ones.\\n\\n3. Consistency
+      pass\\n   - Deduplicate paragraph IDs within each aspect and preserve the original
+      order.\\n   - Align stance in justifications (permission, prohibition, requirement,
+      exception) with the actual semantics.\\n   - Ensure justifications comply with
+      length and language constraints.\\n\\nNever disclose any plan, evidence, or
+      internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph\\n    - Each paragraph is
       identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.) specified
@@ -1320,15 +1365,23 @@ interactions:
       on the aspect's name and description), include the paragraph's ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect's
-      list.\\n\\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\\n    - For each aspect (in the order they are provided),
-      include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
-      \       -- paragraphs: An array of objects for each paragraph that addresses
-      or relates to the aspect. Each object should include:\\n            --- paragraph_id:
-      The provided paragraph ID, e.g., \\\"P0\\\", \\\"P2\\\".\\n            --- justification:
-      A justification of why the paragraph is relevant to the aspect. Ensure the justification
-      is specific and directly ties the content of the paragraph to the aspect's defining
+      list.\\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \\\"above\\\", \\\"this section\\\"): use surrounding context
+      to disambiguate; if unresolved, omit.\\n    - Treat negations, exceptions, and
+      conditionals carefully: relevance can be present in prohibitions or restrictions;
+      reflect the stance succinctly in the justification.\\n    - Prefer minimal sufficient
+      evidence:\\n        -- base the mapping on the most relevant paragraphs; avoid
+      tangential mentions.\\n    - Favor precision over recall; when uncertain, exclude
+      rather than speculate.\\n\\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\\n    - For
+      each aspect (in the order they are provided), include:\\n        -- aspect_id:
+      The aspect's unique identifier, e.g., \\\"A0\\\".\\n        -- paragraphs: An
+      array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\\n            --- paragraph_id: The provided paragraph
+      ID, e.g., \\\"P0\\\", \\\"P2\\\".\\n            --- justification: A justification
+      of why the paragraph is relevant to the aspect. Ensure the justification is
+      specific and directly ties the content of the paragraph to the aspect's defining
       features. Never reference any of the structural IDs provided in this prompt
       (such as aspect IDs like \\\"A0\\\", or paragraph IDs like \\\"P0\\\") in the
       justification.\\n                ---- Justification should be brief, i.e. highlight
@@ -1336,12 +1389,21 @@ interactions:
       longer than 2 sentences.\\n                ---- Justification should be in English.\\n
       \       -- If an aspect has no related paragraphs, still include it with an
       empty paragraphs array ([]).\\n- Do not add extra commentary, code block markers,
-      or any other formatting beyond the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n-
+      or any other formatting beyond the JSON array.\\n- Internally verify before
+      finalizing:\\n    -- Each provided aspect appears once, in order, with the correct
+      \\\"aspect_id\\\".\\n    -- \\\"paragraph_ids\\\" contains only valid paragraph
+      IDs.\\n    -- No structural IDs (aspect/paragraph IDs) appear inside justifications.\\n
+      \   -- Justifications meet length and language constraints.\\n    -- The structure
+      exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Governing Law Inconsistencies</aspect_name>\\n
@@ -2296,7 +2358,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -2307,7 +2369,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '88652'
+      - '91235'
       content-type:
       - application/json
       cookie:
@@ -2315,7 +2377,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2325,7 +2387,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2341,25 +2403,25 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        H4sIAAAAAAAA/6VWTW/bOBC951cQOsuBv+LEewvaYg+bIgGy2O4iDgxGHFlsaFIlKTtGkf/eN/qw
+        nGwDuOkhjs0Zjua9eTOa7ydCJFolf4gkK2TM1qUZfPry79V/0+l88214FZ7cP5+vb85uVpmZT0eP
+        fyUp33APXymL3a3TzOEeRe1sY848yUgcdXQ+H03Hk8nFRW1YO0WGr63KOJgNTGVle6NwOqMA0x1+
+        CvG9/uTcrKInHA/T7mRNIcgV4axzwqF3hk8SGYIOUdqYpL0xczaSrdO9W1gE5w8hFvAuAWOp1QK2
+        RXI5XCRpZyullysvyyKw8a453t995bMPcTPuYzQ+X6sQda4zyfQ0Tn8XJJxX5AcuH5SeMlJkMxKZ
+        kVUgIY1x2yA4N74obq+/iEh+HUR0IlQl+YALAqhyo7Oo7UpcrjzRGhgbx1SUjhFrhNoJmefUuG0L
+        nRVi5TbkLX4PjNyK0ruNDsiNA0bwGE4XSQfgOT0W92gyPwa4Dh3KIHehT0VwKtIqsSFbgQKPvz0F
+        pIS2IoI1UJG2KDr4QWx1LGprIE4skvhICIcYNUB+hNeK3gfrbPJrsOgJBQ0BtHfPDXVuJL3R5N8k
+        n7EHMsSAuvSZlFTUzcQUyT3mOjZ4IET2HTGQ1IubP61n8+We/zUkvNkLo9/vhdnFcb3QUgcyCv2g
+        QUDmyp2hPIrr21vAk1FsXWWU8PSt0kCndMiMCxW+ulx8ALFQPq6XXlOUfocAaBDWhasi8xDgkIoH
+        /Gib68+bq80EBxpRwVukEIWikix3oqbw+vK7xDOeHdETn2+uxPh0KCAhiMXGRu8Q/5bkY88E6wMu
+        aP61jpitGAT1DOaZ4GmjCUph5XGEWiv7CdDHgDYb0hoea78QoNb1uxGeHzHuwHUqrupPRnGJb3WD
+        7/OCpAksh4O8UEmUZesZK5qj5EaRJkXlMS4jDzWluM/Ydx/H6/D4ThijI7ucnjIq+aytRKekHNla
+        ZwdQZvQaQkOFXqorOmfqGdwKq0HYIXtfj45/v0en41/qUYXXTIC6MGg0ZpB8MBjUGXPCQ3rfi8qh
+        mtahJBRKh6Iz6naGN2pl/rRT3TQHtaMhGENBUVWh+OXwsMPjclmZRv3OouyxwIvulR9z/wFKQc7m
+        MLE3B9/C3h+uB57yKkheS2xlzIFBWkCoeagXk/uTTlfdKpJrq0OxxIAOWH2wXoToyqS2PuPzvl5t
+        qhfbSoJ6r8u4jO6R6rCji/l03kRM+j2qt8/mo9YakYw5uDifTdut6GXQpcIQ1CYcbEhJJrOC1MHl
+        yew8fWFccrPRgcf52fl87yIrpV1vHJ4cEPH/tH+WQUMSOqCPMj47e/MBvaFV1xLTTfG6c0hO7+aJ
+        p+FbbvuS1CkngfwGM2cZ8UbmsrUya1bRsAuR1kvUdkUeXVovjqyMk+eTH9a/TysvCwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2382,7 +2444,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '4841'
+      - '6394'
       openai-project:
       - DUMMY
       openai-version:
@@ -2408,7 +2470,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 640ms
+      - 659ms
       x-request-id:
       - DUMMY
     status:
@@ -2510,16 +2572,45 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document text provided.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\\n
-      \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -2596,8 +2687,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Party
       Details</concept_name>\\n\\n    <concept_description>\\n    Party name and role.\\n
@@ -3047,7 +3141,7 @@ interactions:
       Copyleft: GPL/LGPL/AGPL (requires prior written approval)\\n- Exception: GPLv3
       permitted for non-distributed build or test tooling without prior approval\\n\\nEXHIBIT
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
-      Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -3058,7 +3152,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '50947'
+      - '53512'
       content-type:
       - application/json
       cookie:
@@ -3066,7 +3160,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3076,7 +3170,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3092,18 +3186,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLCHayyAEAAAD//6xVXW+bMBR9z6+weOok
-        EgGBtnlO97CpyqRtbyVCjrkhXo3NbJP1Q/nvu4ZRaJZuLNqLAZ9zD8f21XGyLD/eP7z//HX1uHyK
-        nuz31RNcBp7vKtTmGzDbVc2YwjqwXMkWZhqoBacaXl0n0WVyFYYNUKochCsrKjuNZ+G05JJPoyBK
-        pkE8DeNf5TvFGRjk3eEnIc/N6IzKHB5wOvC7mRKMoQXgXEfCSa2Em/GoMdxYKq3n9yBT0oJsvN+l
-        EsXdQEjqAAaVzXieIph6yyD1/A6EB6spwzVl3EJpHOOuxRz6SePSyVKVJWgGPvkg2YxcLAXHH717
-        UXHMldpTcsMLbqkgX5So3aYZcnu7JBc3sAehKtBY0las3ePg/9lmONLmc/fiiHRPuaAbLrh9zCzV
-        BVhHXixmC3/IM+hJO45w5l4LHom2BQ3P0UL/GNJgKlwsZDtV60YqmCVD0sEfJx2NkI5mwTnS8zHS
-        8Xna8Qjt+PpIu/9Yd6+Hf2iO6JzmwMY4ddap9wM2hFaV4Iy6viV527EltnnXsmc7nf/F6SiR+H+I
-        JKNEUrkexoqGbW2oyzZZCzEAqJTKNtvVBNp60jVNF2FCFZVWG3NU6m0xGs0uwyg1mKsYV8aqymvQ
-        A47rJirrV+nnoVCJS7HqHprfhcE8CltFrw/pHo+uOtSiSTEsTBaRf0I0y8FidJhB4nqMsh3uUF+8
-        iPqEpnXOVY8Fk8Hqf/d0Sr7dAS6Lgcqb8j3A3KmirUpDztnrdfc0De4me4v2stuNYUxDvcebKbMc
-        tDuRHLa0Fu314plHgy2S4bEVoCvN2ztmW2U0CJJ5GNLFxpscJj8BAAD//wMAJ947pHIHAAA=
+        H4sIAAAAAAAA/61VXW/TMBR976+w/DSkrEra7KO8QYcAaQIhHoa2VJHr3LYejp3ZTrep6n/nOlmW
+        tGwQKl6cxOfck2P76ngzIISKjL4llK+Y43khjz9c/bhcfDJXfHH9/tsi0ld3F+zd+vbu+uN5HNLA
+        V+j5LXDXVA25xjpwQqsa5gaYA68anU2ieDQeT04qINcZSF+2LNzx6bEsFXuqWGnBwSJ0g5+EbKrR
+        e1MZPOB0GDQzOVjLloBzDQknjZZ+hjJrhXVMORq0INfKgars3iQKxf1ASOIBDoVLRZYgmNBpmNCg
+        AeHBGcZxGalwkFvPuKkxj341uFoy1XkOhkNAPis+JEdTKfBHb55VPPOLXjNyIZbCMUm+a1n6fbLk
+        8nJKji5gDVIXYLCkrpj5xzb4s82op81N8+KJbM2EZHMhhXtMHTNLcJ48mQwnQZdn0ZPxHOnN7Qru
+        idYFFc/TomAfMmALXCykK12aSiocnnRJ26Cf9KiH9GgYHiI97iMdH6Yd99COz/e0249Z87r9h+YY
+        HdIc2BgvnXVC72FOWFFIwZnvW5LVHZtjmzcte7DT8V+c9hKJ/4fISS+RRM26sWJgUVrm40yVUnYA
+        ppR21XZVgTYbNE3TRNhCKGFXKaakxcjEWLJOF7RCtzjOqkgsd1KOFgZD1qVO/4RKNgrPo6dQpG3+
+        tngcnT6hDs3ITmE0GjXQjmiagcOIsJ1kpZzxFe5EWzw+PQt2wPQewwJaxiSO26xmZSZ0i4WDzj78
+        7volA/UeCbXc8fDqD1qA+xNG64WBTPDdvWlpBvxF9hrt+UQqy5iMZo23VOoEGH9qGSxYKeurhtpH
+        i+2S4tEuwRRGVPeNb4zBdvALLTW7VWYHAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3126,7 +3220,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '4189'
+      - '2953'
       openai-project:
       - DUMMY
       openai-version:
@@ -3150,9 +3244,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 374ms
+      - 445ms
       x-request-id:
       - DUMMY
     status:
@@ -3254,7 +3348,28 @@ interactions:
       you will find a list of document paragraphs and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content at paragraph level; derive
+      candidate extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Deduplicate referenced paragraph
+      IDs and preserve their original order.\\n    - Ensure justifications align with
+      the item's evidence and stance, and comply with length and language constraints.\\n\\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document paragraphs provided.\\n    - Each
       paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
       etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full
@@ -3269,9 +3384,27 @@ interactions:
       is described by a concept name specified within <concept_name></concept_name>
       tags and a concept description specified within <concept_description></concept_description>
       tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
-      a concept is not addressed in the document paragraphs, you must still include
+      to that concept. The item format and structure are specified for each concept.\\n
+      \   - Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
+      like \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance may involve permissions, prohibitions, requirements, exceptions, thresholds,
+      or ranges; reflect the stance  in the justification.\\n    - Prefer minimal
+      sufficient evidence and value derivation:\\n        -- include only the paragraphs
+      necessary to support the item or derived value; avoid tangential mentions.\\n
+      \   - Favor precision over recall; when uncertain, avoid speculative extractions
+      or derivations.\\n4. Produce a JSON array containing your extracted data, in
+      the provided format.\\n    - Internally verify before finalizing:\\n        --
+      Each provided concept appears once, in order, with the correct \\\"concept_id\\\".\\n
+      \       -- The top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- When present, \\\"reference_paragraph_ids\\\" contain only
+      valid paragraph IDs.\\n        -- No structural IDs (concept/paragraph IDs)
+      appear inside justifications.\\n        -- Justifications meet length and language
+      constraints.\\n        -- Item values strictly satisfy type and any specified
+      structure/scale/labels constraints.\\n        -- The structure exactly matches
+      the format specified within <answer_format></answer_format> tags (no extra keys
+      or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf a
+      concept is not addressed in the document paragraphs, you must still include
       an entry in the final JSON output but with an empty \\\"extracted_items\\\"
       list. However, for boolean concepts (with extracted item type \\\"bool\\\"),
       distinguish carefully:\\n    - Extract True if the concept is confirmed or strongly
@@ -3363,8 +3496,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str,\\n                \\\"reference_paragraph_ids\\\": [\\n                    str,\\n
       \                   ...\\n                ]\\n            },\\n            ...\\n
@@ -4341,7 +4477,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        - Fees (if any)\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P277\\\">\\n        <paragraph_id>P277</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        - Data processed (if any)\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -4352,7 +4488,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '96011'
+      - '99339'
       content-type:
       - application/json
       cookie:
@@ -4360,7 +4496,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4370,7 +4506,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4386,34 +4522,42 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
-        AAAA//8DAA95QbUEEwAA
+        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
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4436,7 +4580,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '9510'
+      - '20619'
       openai-project:
       - DUMMY
       openai-version:
@@ -4460,9 +4604,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 36ms
       x-ratelimit-reset-tokens:
-      - 694ms
+      - 938ms
       x-request-id:
       - DUMMY
     status:
@@ -4878,8 +5022,36 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>aspect</target_type>\\n<target_name>Limitation
       of Liability</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"22. LIMITATION OF LIABILITY\\\", \\\"justification\\\":
-      null, \\\"reference_paragraphs\\\": [\\\"22. LIMITATION OF LIABILITY\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"20.5 Remedies. Developer\u2019s sole
+      obligation and Client\u2019s exclusive remedy for breach of warranty is repair
+      or replacement of the nonconforming Deliverable, or if not feasible, refund
+      of the fees paid for the affected Deliverable.\\\", \\\"justification\\\": null,
+      \\\"reference_paragraphs\\\": [\\\"20.5 Remedies. Developer\u2019s sole obligation
+      and Client\u2019s exclusive remedy for breach of warranty is repair or replacement
+      of the nonconforming Deliverable, or if not feasible, refund of the fees paid
+      for the affected Deliverable.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"21.2 Exclusions. Developer has no obligation
+      for claims arising from (a) Client content or specifications, (b) combinations
+      with items not provided by Developer, (c) modifications not made by Developer,
+      or (d) use after Developer provides a non-infringing alternative.\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"21.2 Exclusions. Developer has no obligation
+      for claims arising from (a) Client content or specifications, (b) combinations
+      with items not provided by Developer, (c) modifications not made by Developer,
+      or (d) use after Developer provides a non-infringing alternative.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"21.3 Mitigation. If a Deliverable is
+      or is likely to be enjoined, Developer may procure a license, modify to be non-infringing,
+      or replace with equivalent functionality. If none are commercially reasonable,
+      Developer may terminate the affected SOW and refund prepaid fees for the unused
+      portion.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"21.3
+      Mitigation. If a Deliverable is or is likely to be enjoined, Developer may procure
+      a license, modify to be non-infringing, or replace with equivalent functionality.
+      If none are commercially reasonable, Developer may terminate the affected SOW
+      and refund prepaid fees for the unused portion.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"21.6 Aggregate Cap for IP Claims. Notwithstanding
+      Section 22.2, Developer\u2019s liability for IP infringement claims shall be
+      uncapped.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"21.6
+      Aggregate Cap for IP Claims. Notwithstanding Section 22.2, Developer\u2019s
+      liability for IP infringement claims shall be uncapped.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"22.1 Exclusion of Damages. Except for
       Excluded Claims, neither Party will be liable for indirect, incidental, special,
       consequential, punitive, or exemplary damages, or for lost profits, revenues,
@@ -4905,7 +5077,25 @@ interactions:
       [\\\"22.3 Excluded Claims. \\\\\\\"Excluded Claims\\\\\\\" means (a) a Party\u2019s
       indemnification obligations, (b) a Party\u2019s breach of confidentiality obligations,
       (c) infringement or misappropriation of the other Party\u2019s IPR, and (d)
-      a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"28.1 Neither Party is liable for delays
+      or failures caused by events beyond its reasonable control (e.g., acts of God,
+      war, terrorism, labor disputes, government actions, failures of suppliers, or
+      widespread outages) provided it uses commercially reasonable efforts to mitigate
+      and resumes performance promptly.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"28.1 Neither Party is liable for delays or failures caused by events beyond
+      its reasonable control (e.g., acts of God, war, terrorism, labor disputes, government
+      actions, failures of suppliers, or widespread outages) provided it uses commercially
+      reasonable efforts to mitigate and resumes performance promptly.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Credits for failing to meet uptime
+      or response targets, capped at [x]% of monthly fees\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"- Credits for failing to meet uptime
+      or response targets, capped at [x]% of monthly fees\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- For outages exceeding four (4) hours
+      in a calendar month, credit equal to 25% of monthly fees for the affected Service\\\",
+      \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"- For outages
+      exceeding four (4) hours in a calendar month, credit equal to 25% of monthly
+      fees for the affected Service\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -4916,7 +5106,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34735'
+      - '38429'
       content-type:
       - application/json
       cookie:
@@ -4924,7 +5114,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4934,7 +5124,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4950,14 +5140,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSy07DMBC89ysinxOUBEIKV8StPAQXHkGRcbaJS2IHe4NAVf+dtduSIOjFknd2
-        1jPjXc+CgMmKnQdMNBxF17fR5Wlzf/v2mcer98fFAu31xe3Tg6qfkrurmxMWOoZ+XYHAPetIaOIB
-        Sq22sDDAEdzUJJ9n6WmWp5kHOl1B62h1j1EWdVLJKI3TLIrnUZzvyI2WAix1PdM1CNb+dDJVBZ9U
-        jsN9pQNreQ1U2zdR0ejWVRi3VlrkClk4gkIrBOWVrwtmOEpVF3TLwqBgq8GiXErBnRNXLVjBNlO6
-        geVguXOghradAFwpjZ7nhb/skM2P1CVZtU1JwVhKiZ63qHvm0Q2dL9768MsN6w3liiXqN/Bj8+Rs
-        vh3IxsRHOE2OdyiSlnbCO0mS8J+RZQXIZWsn+THBRQPVyB3D5kMl9QSYTQz+1fPf7K15Snyckpyl
-        Bx8YASGgp30qewOVFL9dj20G3FIeavuJ2ktmFswHrVmJEoz7jgqWfGi3u8Lsl0XoSvqzGkxvpF8Y
-        9+OzzewbSYO4ODIDAAA=
+        H4sIAAAAAAAA/3VUyW7bMBC9+ysGPMtGvDSxc+uhQAOkQIAUaIs6EBhyZDOlSGVIOTECA/2H/mG/
+        pEN6kYImFy3zONt7T3oZAAijxSUItZZR1Y0dfvr2/cv0lq4e7+XZzUypufaN/mGuq82jrkWRMvz9
+        A6p4zBopz3kYjXd7WBHKiKnq+GIxnk2ms/EiA7XXaFPaqonDD6PzoW2dPOSsvVEYGPzJrwAv+Zqm
+        cxqfOXxWHCM1hiBXyLHjIQ6StykiZAgmROmiKDpQeRfR5YFfloJkNG61FJfTYike2hBNZZRM43Ns
+        Kb6uEZQnBGtqE3N86KuhNfLeWBO30JDfmMDhAMbBLTORnyeT0fjv7z98m4J0GiLXaZ2STYMarm7g
+        jQK9fJiMR+cgKfcmjtkt4HMkqZjJXG9FvmUu9Ag++yfcIBUQ0k3a3kETsQ5cwikkB0+SiKnYAmGN
+        2mAoINFZu9PGnKpsu18mNeGNzSojBVSeFEItH7AlLMAT3F5/5J60YaWARdYmBmA210i8rXR55esT
+        a+ArfjsuLUPDWxU8im4V888soMosjJZi11eLsGqDTD5xrbU9QDrn96WzT+4OyO7kjMo4E9Yl2y+w
+        F1ntEH0jMrrj6112WvvKPILFqJtYRv8Lc9mLxfxiX1B0vu7gyWJ2QCPPYjtgPpmPizdKlhqjNDb0
+        7CqUVGvUXW7n7YyUT8Q6vhppdjohW218L3XQo+D/id/qvqeHJehtdXb+boMOUAobNlnZJOnVa166
+        Y4Tp5/DesZMYeWRxcFMZDVISTGMlW7v/eEXYBrZzyaqukBoy+QtOnhjsBv8Au8uiH7oEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4980,7 +5173,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3223'
+      - '3429'
       openai-project:
       - DUMMY
       openai-version:
@@ -5006,7 +5199,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 256ms
+      - 283ms
       x-request-id:
       - DUMMY
     status:
@@ -5422,6 +5615,20 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>aspect</target_type>\\n<target_name>Payment
       Terms</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"1.13 \\\\\\\"Statement of Work\\\\\\\"
+      or \\\\\\\"SOW\\\\\\\" means an ordering document executed by both Parties that
+      references this Agreement and describes the specific Services, Deliverables,
+      Acceptance Criteria, timeline, and fees.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"1.13 \\\\\\\"Statement of Work\\\\\\\" or \\\\\\\"SOW\\\\\\\" means an
+      ordering document executed by both Parties that references this Agreement and
+      describes the specific Services, Deliverables, Acceptance Criteria, timeline,
+      and fees.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
+      \\\"value\\\": \\\"13.2 Third-Party Services. Any required Third-Party Materials
+      or services will be identified in the SOW or Exhibit I. Client is responsible
+      for related fees unless otherwise stated.\\\", \\\"justification\\\": null,
+      \\\"reference_paragraphs\\\": [\\\"13.2 Third-Party Services. Any required Third-Party
+      Materials or services will be identified in the SOW or Exhibit I. Client is
+      responsible for related fees unless otherwise stated.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"15. FEES, INVOICING, AND PAYMENT\\\",
       \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"15. FEES, INVOICING,
       AND PAYMENT\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
@@ -5455,8 +5662,6 @@ interactions:
       18.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"15.5
       Expenses. Pre-approved, reasonable out-of-pocket travel and related expenses
       will be reimbursed at cost per Section 18.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"16. TAXES\\\", \\\"justification\\\":
-      null, \\\"reference_paragraphs\\\": [\\\"16. TAXES\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"16.1 Taxes. Fees are exclusive of taxes.
       Client is responsible for all applicable sales, use, VAT, GST, and similar taxes,
       excluding taxes based on Developer\u2019s income.\\\", \\\"justification\\\":
@@ -5468,7 +5673,46 @@ interactions:
       amount invoiced, unless a valid exemption applies.\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"16.2 Withholding. If withholding is
       required by law, Client shall gross up payments so Developer receives the full
-      amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"17.4 Out-of-Scope Support. Work outside
+      defined support scope will be billed at rates in Exhibit B unless otherwise
+      stated.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"17.4
+      Out-of-Scope Support. Work outside defined support scope will be billed at rates
+      in Exhibit B unless otherwise stated.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"18.1 Pre-Approval. Expenses must be
+      pre-approved in writing by Client.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"18.1 Pre-Approval. Expenses must be pre-approved in writing by Client.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"18.2 Receipts. Developer will provide
+      reasonable documentation for reimbursable expenses.\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"18.2 Receipts. Developer will provide
+      reasonable documentation for reimbursable expenses.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"7. Commercials\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"7. Commercials\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Pricing model (fixed, T&M), rate card
+      reference\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"-
+      Pricing model (fixed, T&M), rate card reference\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Payment schedule and invoicing milestones\\\",
+      \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"- Payment schedule
+      and invoicing milestones\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Expenses and approvals\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"- Expenses and approvals\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"EXHIBIT B: RATE CARD\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"EXHIBIT B: RATE CARD\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Role: [e.g., Senior Engineer] \u2014
+      Rate: $[amount]/hour\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"- Role: [e.g., Senior Engineer] \u2014 Rate: $[amount]/hour\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Role: [e.g., UX Designer] \u2014 Rate:
+      $[amount]/hour\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"- Role: [e.g., UX Designer] \u2014 Rate: $[amount]/hour\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Role: [e.g., QA Engineer] \u2014 Rate:
+      $[amount]/hour\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"- Role: [e.g., QA Engineer] \u2014 Rate: $[amount]/hour\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Overtime, weekend, or holiday rates
+      (if any)\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"-
+      Overtime, weekend, or holiday rates (if any)\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Annual rate review/adjustment terms
+      (if any)\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"-
+      Annual rate review/adjustment terms (if any)\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -5479,7 +5723,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '36285'
+      - '40427'
       content-type:
       - application/json
       cookie:
@@ -5487,7 +5731,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5497,7 +5741,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5513,14 +5757,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSTU/jMBC991dEPicoDUoTuO2hWg6sVgJxQBsUGWfSuDh2sCfsoqr/fcfuR4KA
-        iyXPmzd+73l2iyhismHXERMdR9EPKlmvuvv7u/bhkf8Yf9/+1Y/Pq9XNr9cHdVf8XLPYM8zzFgSe
-        WBfCEA9QGn2AhQWO4KcuizLPVnmRlQHoTQPK0zYDJnnSSy2TLM3yJC2TtDiSOyMFOOr6Q9co2oXT
-        y9QN/KNyGp8qPTjHN0C1UxMVrVG+wrhz0iHXyOIJFEYj6KB8VzHLUepNRbc8jiq2HR3KVgrunfhq
-        xSq2n9MttKPj3oEelZoBXGuDgReEPx2R/VlqS1ZdV1MwjlKi5x2agQV0T+dTsD5+cMMGS7lijeYF
-        wtgiL7PDQDYlPsHZ8vKIImlRM15xlcdfjKwbQC6Vm+XHBBcdNBM3L8vybIKPjTQTli5mHj9L+mr8
-        wT+FPk1ZXmXfPjABQsBAK1UPFhopPhqf2iz4vfyu7Zx2kMwc2DfatBolWP8jDbR8VId1Ye7dIfQ1
-        fdsG7GBl2Bn/6Yv94j/oNB9LNQMAAA==
+        H4sIAAAAAAAA/3VU204bMRB9z1dYft5EhUJSeEeqSmmRCKJSgyLXO8kavLY7HucilH/v2FmyQQUp
+        2o3nzOXMzPG+DISQppaXQupGkW6DHV49/LqZfLu5uru+fr7F6ZeH+/vv21s9HV+vf1zJKkf4P0+g
+        6TVqpD3HARnv9rBGUAQ568nk4uTs9DP/CtD6GmwOWwYano/GQ5uc6mIabzREBn/zUYiX8szsXA0b
+        Nn+qXi0txKiWwLZXJzait9kiVYwmknIkqx7U3hG4QvhlJlGRccuZvDyrZvIpRTILo1Wmz7aZnDYg
+        YEOoNPcgDEEbhdI6cRjYrfibPIEgdlJLBGg5r1CuFloFSrhHtOc/QW0LGNCvTOTssRLGaZtqri4W
+        AOW84rb5XIk6gai5BFstvxgiQIjEiIkhZS6q9ckRO8AmgIvZldQmv9aGmsbbumTKbBAsrHgK4u7n
+        A9NpW0BtlBU1kDI2jsRXv4YVYCVifjHSNcrEveM2eYRLZs8xfOBseaHCozB4SE1e3HY9TgFbphGT
+        boSKZQa5cA0L40yeLDNtDNbDoJC2XBNXeduV8ImGfjGM2gfg8BA80r4Drg5otMhjH2qFtQhWachd
+        AsbRTO6ON4ywSFFlbblk7RGgnPNUllu09dghu4OaMsPYzFmykfXLConkgyzojp+PRZ3pjeAkr7QN
+        NCf/DCXtl/PxZJ9Q9nehh08uzjuUmIs9ipuMT6t3Us67NR1JXGqlG6j72P4+FGS+Rt7gG0pnBw/F
+        mvNHoYOjEfzP+L3q+/GwvPosF+MP8/eA1hBYOfOAUBv9diy9G0L+nnzkdthFYSw78czJAOZ9schU
+        svv7LuM2so7nvNQlYEBTLn2WxGA3+Afb7Yap7QQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5543,7 +5791,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3308'
+      - '2776'
       openai-project:
       - DUMMY
       openai-version:
@@ -5569,7 +5817,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 267ms
+      - 296ms
       x-request-id:
       - DUMMY
     status:
@@ -5989,8 +6237,21 @@ interactions:
       has the meaning set forth in Section 23.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
       [\\\"1.6 \\\\\\\"Confidential Information\\\\\\\" has the meaning set forth
       in Section 23.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"23. CONFIDENTIALITY\\\", \\\"justification\\\":
-      null, \\\"reference_paragraphs\\\": [\\\"23. CONFIDENTIALITY\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"9.2 Subcontractors. Developer may use
+      subcontractors but remains responsible for their performance. Developer will
+      ensure subcontractors are bound by confidentiality and IP assignment obligations
+      consistent with this Agreement.\\\", \\\"justification\\\": null, \\\"reference_paragraphs\\\":
+      [\\\"9.2 Subcontractors. Developer may use subcontractors but remains responsible
+      for their performance. Developer will ensure subcontractors are bound by confidentiality
+      and IP assignment obligations consistent with this Agreement.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"13.3 AI/ML and Generative AI. If AI-assisted
+      tools are used, Developer will ensure outputs are reviewed for quality, originality,
+      and license compliance. Developer shall not submit Client Confidential Information
+      to public AI services without written approval.\\\", \\\"justification\\\":
+      null, \\\"reference_paragraphs\\\": [\\\"13.3 AI/ML and Generative AI. If AI-assisted
+      tools are used, Developer will ensure outputs are reviewed for quality, originality,
+      and license compliance. Developer shall not submit Client Confidential Information
+      to public AI services without written approval.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"23.1 Definition. \\\\\\\"Confidential
       Information\\\\\\\" means non-public information disclosed by a Party (\\\\\\\"Discloser\\\\\\\")
       to the other Party (\\\\\\\"Recipient\\\\\\\") that is marked confidential or
@@ -6032,7 +6293,10 @@ interactions:
       that one archival copy may be retained for legal compliance.\\\", \\\"justification\\\":
       null, \\\"reference_paragraphs\\\": [\\\"23.5 Return/Destruction. Upon request
       or termination, Recipient will return or destroy Confidential Information, except
-      that one archival copy may be retained for legal compliance.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      that one archival copy may be retained for legal compliance.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Confidentiality commitments for personnel\\\",
+      \\\"justification\\\": null, \\\"reference_paragraphs\\\": [\\\"- Confidentiality
+      commitments for personnel\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -6043,7 +6307,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '36456'
+      - '37764'
       content-type:
       - application/json
       cookie:
@@ -6051,7 +6315,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6061,7 +6325,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6077,14 +6341,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSTU+EMBC9768gPYNhWVnQm4l61ahREzGklmGpQkvaYaPZ7H932v0Ao16adN68
-        6Xuvs5kFAZMVOw+YaDiKrm+jq2Vz/5SiuP1Yr29qc7d4vFhcKni+rvHxgYWOod/eQeCBdSI08QCl
-        VjtYGOAIbuo8y9NkmWaLxAOdrqB1tFWPURp1UskoiZM0ivMozvbkRksBlrpe6BoEG386maqCTyrH
-        4aHSgbV8BVQ7NFHR6NZVGLdWWuQKWTiCQisE5ZVvCmY4SrUq6JaGQcHeB4uyloI7J65asIJtp3QD
-        9WC5c6CGtp0AXCmNnueFv+6R7VFqTVZtU1IwllKi5y3qnnl0S+ertz78cMN6Q7liifoD/Ngsnee7
-        gWxMfITnp2d7FElLO+Etl1n4x8iyAuSytZP8mOCigWrkpnmeH03woZJ6xOLZxONvSX+N3/mn0Cey
-        k/8fGAEhoKeVKnsDlRQ/jY9tBtxe/td2TNtLZhbMmjatRAnG/UgFNR/a3bow+2URupK+bQWmN9Lv
-        jPv02Xb2DVjyAHA1AwAA
+        H4sIAAAAAAAA/3VSXU/jMBB876+I9jlFl36Qg7e700kICYSQ0J1Eqsg429bUtYO9gdKq/521+5FU
+        wIsl7+ysx7Oz6SUJqAouE5BzQXJZ6/7ff/9vfq2G68XD79u7+4VZm5V6af7cr6+uJUIaGPbpGSUd
+        WGfSMg9JWbODpUNBGKZm+UU2GgxHg/MILG2FOtBmNfXHZ+d93Rix58ytkugZfORrkmziGdSZCldc
+        /pEeKkv0XsyQa4cmLjqrQwWE98qTMARpC0prCE0UvCnACVJmVsDlOC3gufGkpkqKIJ9rBRSw7XId
+        ThsvgmrTaN0BhDGWIi2qnuyR7VHnVBnl5yWb4dkZftuTrSGiWz4n8d/NyVegduwllWQXGMfm+Tjf
+        DYTW5RbOstEeJdaiO7yfeZZ+MbKskITSvmMeSCHnWLXc1umIlG9OEZ5IGh07RFMp26H2OhZ8VvzV
+        6zt7eCHtlIvxt/NbQEqsOWRl7bBS8tSWts1hSOp3bcddRMXg0b1yCEtS6MK+KpyKRu+SBP7dEy5L
+        XuoMXe1UjFOIRG/b+wC9baQJRwMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6107,7 +6371,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2651'
+      - '1659'
       openai-project:
       - DUMMY
       openai-version:
@@ -6133,7 +6397,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 268ms
+      - 503ms
       x-request-id:
       - DUMMY
     status:
@@ -6549,24 +6813,35 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>aspect</target_type>\\n<target_name>Governing
       Law Inconsistencies</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"2.2 Order of Precedence. In the event
+      of conflict among documents, the following order governs: (1) Change Requests
+      executed after the relevant SOW, (2) the SOW, (3) this Agreement, (4) Exhibits,
+      and (5) any other referenced documents. Specific terms in a SOW expressly supersede
+      conflicting terms in this Agreement but only for that SOW.\\\", \\\"justification\\\":
+      \\\"The order-of-precedence clause allows specific SOW terms to supersede conflicting
+      Agreement terms, potentially affecting which governing-law provision controls.\\\",
+      \\\"reference_paragraphs\\\": [\\\"2.2 Order of Precedence. In the event of
+      conflict among documents, the following order governs: (1) Change Requests executed
+      after the relevant SOW, (2) the SOW, (3) this Agreement, (4) Exhibits, and (5)
+      any other referenced documents. Specific terms in a SOW expressly supersede
+      conflicting terms in this Agreement but only for that SOW.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"29.3 Governing Law and Venue. The governing
       law and venue shall be as specified in the SOW, without regard to conflict of
       laws principles and excluding the U.N. Convention on Contracts for the International
-      Sale of Goods.\\\", \\\"justification\\\": \\\"This paragraph specifies that
-      the governing law and venue shall be as specified in the SOW, indicating a governing
-      law provision subject to variation by SOW.\\\", \\\"reference_paragraphs\\\":
-      [\\\"29.3 Governing Law and Venue. The governing law and venue shall be as specified
-      in the SOW, without regard to conflict of laws principles and excluding the
-      U.N. Convention on Contracts for the International Sale of Goods.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      Sale of Goods.\\\", \\\"justification\\\": \\\"This clause says governing law
+      and venue are as specified in the SOW, which conflicts with the separate Delaware-law
+      override.\\\", \\\"reference_paragraphs\\\": [\\\"29.3 Governing Law and Venue.
+      The governing law and venue shall be as specified in the SOW, without regard
+      to conflict of laws principles and excluding the U.N. Convention on Contracts
+      for the International Sale of Goods.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"32.6 Governing Law Override. Notwithstanding
       Section 29.3, this Agreement shall be governed by the laws of the State of Delaware,
       without regard to its conflicts of laws rules.\\\", \\\"justification\\\": \\\"This
-      paragraph states an override that the Agreement shall be governed by Delaware
-      law regardless of Section 29.3, creating a potential conflict with the prior
-      governing law provision.\\\", \\\"reference_paragraphs\\\": [\\\"32.6 Governing
-      Law Override. Notwithstanding Section 29.3, this Agreement shall be governed
-      by the laws of the State of Delaware, without regard to its conflicts of laws
-      rules.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      clause expressly overrides the earlier governing-law provision and selects Delaware
+      law, creating a conflict over whether the SOW or Delaware law controls.\\\",
+      \\\"reference_paragraphs\\\": [\\\"32.6 Governing Law Override. Notwithstanding
+      Section 29.3, this Agreement shall be governed by the laws of the State of Delaware,
+      without regard to its conflicts of laws rules.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -6577,7 +6852,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '33942'
+      - '34867'
       content-type:
       - application/json
       cookie:
@@ -6585,7 +6860,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6595,7 +6870,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6611,14 +6886,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSTY+bMBC951cgn6EiaR3Y3qLV3vZSVVXTlBVyzAScBRvZQz8U5b937HxA1ORi
-        yfPmjd97nsMsipiq2OeIyUag7Po2eVk2Xzdf6uffQ77Z/lhv5Xb1Xa34Zv2qvq1Y7BlmuweJF9YH
-        aYgHqIw+wdKCQPBT51nOF0uefeQB6EwFrafVPSY86ZRWySJd8CTNkzQ7kxujJDjq+knXKDqE08vU
-        FfyhchpfKh04J2qg2qWJita0vsKEc8qh0MjiEZRGI+ig/FAwK1DpuqAbj6OC7QeHaqek8E58tWAF
-        O07pFnaDE96BHtp2AgitDQZeEP52Ro5XqTuy6pqSgnGUEj3v0PQsoEc634L14cYN6y3liiWadwhj
-        szTNTwPZmPgIzz89nVEkLe2EN+dZfGdkWQEK1bpJfkwK2UA1cnme51cTYqiUGbF0NvH4v6R740/+
-        KfSJ7MXjB0ZASuhppcreQqXkrfGxzYLfy0dt17SDZObA/qJNK1GB9T9SwU4M7WldmPvrELqSvq0G
-        21sVdsZ/+uw4+we/b8nqNQMAAA==
+        H4sIAAAAAAAA/3VSTU/DMAy971dUPm+Ilo2N3RBw4DCugCiqQuptgSypEncDTfvvOFm3lo9dIsXP
+        z35+9raXJKBKmCYgl4LkqtKDu8en2Y0YXlg3ulmnz7ez26fN5fODdtebew/9wLBv7yjpwDqTlnlI
+        ypo9LB0KwlA1HV+lw+ximE0isLIl6kBbVDQYnV0OdG1Ew1laJdEz+MLfJNnGN6gzJX5y+Lx/iKzQ
+        e7FAjh2SOOisDhEQ3itPwhD0W1BaQ2ii4G0OTpAyixymo34O77UnNVdSBPkcyyGHXZfrcF57EVSb
+        WusOIIyxFGlR9WuD7I4658oovyzYDM/OcG9PtoKI7vh9jXPXP0aByrGXVJD9wFh2nGXN4NC63MLZ
+        +aRBibXoDq+x/HfJokQSSvuOeSCFXGLZclunI1JsnCLsSkrHxwxRl8p2qL2OBX8V/9d9bw8vpK2S
+        Tq5ONmgBKbHiKysqh6WSP31p0xyGUz2VdlxGlAwe3ZqvsCCFLiysxLmo9f6UwH95wlXBW12gq5yK
+        9xRuorfrfQNfIJmpSAMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6641,7 +6916,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2760'
+      - '2303'
       openai-project:
       - DUMMY
       openai-version:
@@ -6665,9 +6940,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 250ms
+      - 493ms
       x-request-id:
       - DUMMY
     status:
@@ -7088,25 +7363,28 @@ interactions:
       would require disclosure of Client proprietary code without Client\u2019s prior
       written consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
       build or test dependencies without prior written consent.\\\", \\\"justification\\\":
-      \\\"This paragraph addresses open source software usage, prohibiting copyleft
-      OSS that would require disclosure of Client proprietary code without consent,
-      but allowing GPLv3 build or test dependencies, indicating unusual exceptions.\\\",
-      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
-      consistent with Exhibit H. Developer shall not include copyleft OSS that would
-      require disclosure of Client proprietary code without Client\u2019s prior written
-      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
-      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\",
-      \\\"justification\\\": \\\"This paragraph lists approved open source licenses
-      including permissive, weak copyleft, and copyleft licenses with conditions,
-      highlighting OSS provisions and copyleft exposure.\\\", \\\"reference_paragraphs\\\":
-      [\\\"EXHIBIT H: APPROVED OPEN SOURCE LICENSES\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"The clause prohibits copyleft OSS that would require disclosure of Client
+      proprietary code without consent, but allows GPLv3 build or test dependencies
+      without consent.\\\", \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management.
+      Developer may use OSS consistent with Exhibit H. Developer shall not include
+      copyleft OSS that would require disclosure of Client proprietary code without
+      Client\u2019s prior written consent. Notwithstanding the foregoing, Developer
+      may include GPLv3-licensed build or test dependencies without prior written
+      consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
+      \\\"value\\\": \\\"- Weak Copyleft: MPL 2.0 (subject to review)\\\", \\\"justification\\\":
+      \\\"MPL 2.0 is identified as weak copyleft and is permitted subject to review,
+      presenting a potential copyleft exposure requiring assessment.\\\", \\\"reference_paragraphs\\\":
+      [\\\"- Weak Copyleft: MPL 2.0 (subject to review)\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"- Copyleft: GPL/LGPL/AGPL (requires
+      prior written approval)\\\", \\\"justification\\\": \\\"GPL, LGPL, and AGPL
+      are copyleft licenses requiring prior written approval, directly addressing
+      copyleft risk.\\\", \\\"reference_paragraphs\\\": [\\\"- Copyleft: GPL/LGPL/AGPL
+      (requires prior written approval)\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_StringItem\\\", \\\"value\\\": \\\"- Exception: GPLv3 permitted for non-distributed
       build or test tooling without prior approval\\\", \\\"justification\\\": \\\"This
-      paragraph explicitly permits GPLv3 for non-distributed build or test tooling
-      without prior approval, an unusual exception to typical copyleft restrictions.\\\",
-      \\\"reference_paragraphs\\\": [\\\"- Exception: GPLv3 permitted for non-distributed
-      build or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      exception permits GPLv3 for non-distributed build or test tooling without prior
+      approval.\\\", \\\"reference_paragraphs\\\": [\\\"- Exception: GPLv3 permitted
+      for non-distributed build or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -7117,7 +7395,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34451'
+      - '34664'
       content-type:
       - application/json
       cookie:
@@ -7125,7 +7403,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7135,7 +7413,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7151,19 +7429,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VU204bMRB9z1eM/NRKm7AkJFn61gdUhKBCLUK0DYoc7yRr8Npb25sLKFJ/o7/X
-        L+nYuWxo4cVaz83nzJzZ5xYAkzn7AEwU3IuyUu2zQfFV3D3Jyc333um3L927i8/Lh4mYXN/eXl2w
-        JGSYyQMKv8vqCEN56KXRG7ewyD2GqsfDrN8d9Ie9LDpKk6MKabPKt/vtUmrZ7qbdfjvN2ulwm1wY
-        KdBR1A+6AjzHM8DUOS7JnCY7S4nO8RmSbRdERmtUsDDunHSea8+SximM9qgj8ucRs9xLPRvR7SSB
-        EXuonZdTKXhgEqwjdlMg4NJbLogPSI+lA24RpmSouVIrEMZa6gVwnUMuwycZXV1VxoaUyQo81RAy
-        XCpr5tJRcQfvjnud45h0tizkRHo4f5/EO4WvgAtREzoMD/DK1/RkKPOI4cFqpXDqQ7WYSfV2ifDp
-        +nLeg0ktVX7k0XkCL7AKIR04Nwuco01ioENqRf4PNzCaHiQOxuYuhu3BQYE8R7uhadCBNv4FNNxE
-        /vn124GrUIRGgqJJaoeQo+dSEWvszDoJVGhLSeOZ4y7C0YcjGAlcXV9Ct5MCd7BA/tjQdXUUHXhD
-        COcSF7t2cR9oH12G4yMd5P5Z0ySoQdJYWFjpaebAq9B+rqjNzmwhR/Khf5JAKzkrwvCk3uqZxkz5
-        01opCq2MC1S55mpFwuqM2PpQWBanteNB25riDxxcU6eioqKk77ee9V7EU1oCV4xpZRztDwnTeVOx
-        6F3TeR+Xon6hc0ZMysqPvXnEWHaYDk83BVmziwfuwc7rCYs6cGQnWfJKyfF2YAebxQQXBeZNbj/L
-        sj0JXufSNL60dcDxf0ivld/wp3VsqgxO0jcfaBwiCJyAVRZzKV4Sb8IsBvG8FbbvdoTMHNo56XLs
-        JdowkRynvFabHwlzKxJqOaaxzdCSxOLfJAy9tW79BbTSXJRPBQAA
+        H4sIAAAAAAAA/3VSTU/DMAy971dUPm8T3VYGuyEBQhOcEAKJoiqk3hZIk5K4fGjaf8fJ2NoJuESK
+        n5/9/Ox1L0lAlTBLQK4EyarWg4v7h5uL7O3hq6LJ5fz83t5+vs+v765OpvbuDPqBYZ9fUNKONZSW
+        eUjKmi0sHQrCUDWdnqaT0XgyPopAZUvUgbasaZANjwe6MeKHs7JKomfwkb9Jso5vUGdK/ORwrBAj
+        FXovlsixXRIHndUhAsJ75UkYgn4LSmsITRS8zsEJUmaZwyzr5/DSeFILJUWQz7Eccth0uQ4XjRdB
+        tWm07gDCGEuRFlU//SCbvc6FMsqvCjbDszPc25OtIaIbfp/i3M3BKFA79pIKsq8Yy07TLN0WhNbl
+        Fk6nO5RYi+7wxqNR/4+SRYkklPYd80AKucKy5bZOR6T4cIqwK2lyss8QTalsh9rrWPBb8V/dt/bw
+        QjpTZaN/G7SAlFjzlRW1w1LJQ1/aNIfhVP9L2y8jSgaP7p2vsCCFLiysxIVo9PaUwH95wqrgrS7R
+        1U7Fewo30dv0vgG90Au0SAMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -7186,7 +7459,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '9143'
+      - '2201'
       openai-project:
       - DUMMY
       openai-version:
@@ -7212,7 +7485,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 254ms
+      - 255ms
       x-request-id:
       - DUMMY
     status:
@@ -7634,15 +7907,14 @@ interactions:
       If Client does not respond within the Review Period, the Deliverable is deemed
       Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\" in the SOW,
       the Review Period shall be three (3) business days.\\\", \\\"justification\\\":
-      \\\"This paragraph defines short client review periods for acceptance testing,
-      including a deemed acceptance if no response is received within 10 business
-      days or 3 business days for critical deliverables, reflecting aggressive deemed
-      acceptance constructs.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period.
-      Unless otherwise stated in the SOW, Client will have [10] business days to test
-      and either (a) provide written Acceptance or (b) provide a written list of material
-      non-conformities. If Client does not respond within the Review Period, the Deliverable
-      is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
-      in the SOW, the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      \\\"The clause deems a Deliverable accepted if Client does not respond within
+      the review period, which is 10 business days by default and only three business
+      days for Critical Deliverables.\\\", \\\"reference_paragraphs\\\": [\\\"7.2
+      Review Period. Unless otherwise stated in the SOW, Client will have [10] business
+      days to test and either (a) provide written Acceptance or (b) provide a written
+      list of material non-conformities. If Client does not respond within the Review
+      Period, the Deliverable is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
+      in the SOW, the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -7653,7 +7925,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '33719'
+      - '33653'
       content-type:
       - application/json
       cookie:
@@ -7661,7 +7933,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -7671,7 +7943,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -7687,14 +7959,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSy07kMBC8z1dEPierTCCP2dtK7AGJE6y4EBQZp5MYHDuyO4jVaP59255HghYu
-        ltzV1a4q934TRUy27GfExMBRjJNKfhfDg+JFdnfz8Xj1R+/S7vZm+/brSuJtf89izzAvryDwzPoh
-        DPEApdFHWFjgCH7qtqzyrMjL6zIAo2lBeVo/YZIno9QyydIsT9IqScsTeTBSgKOuJ7pG0T6cXqZu
-        4YPKaXyujOAc74Fq5yYqWqN8hXHnpEOukcULKIxG0EH5vmaWo9R9Tbc8jmr2OjuUnRTcO/HVmtXs
-        sKZb6GbHvQM9K7UCuNYGAy8Ifz4hh4vUjqy6oaFgHKVEzzs0Ewvogc7nYH3+5IZNlnLFBs0bhLHF
-        Li+PA9mS+AJvr3cnFEmLWoBymxbxFyObFpBL5Vb5McHFAO3CzauqupjgcyvNgqWblcf/JX01/uif
-        Ql/Jzr5/YAGEgIlWqpkstFJ8Nr60WfB7+V3bJe0gmTmw77RpDUqw/kda6PisjuvC3F+HMDb0bT3Y
-        ycqwM/7TN4fNP8T5nOk1AwAA
+        H4sIAAAAAAAA/3VSTU/jMBC991dEc04RNG2h3JBAIMFeVkiL2KDIOJPUxbEje8LHVv3vO3Y/EgRc
+        LPm9eePnN7MeJQmoEs4TkEtBsmn1+OrPw68bq+vb5u06m/xevTdnjx/VfXWR3f27hDQo7PMKJe1V
+        R9KyDklZs6WlQ0EYup6cLk6mk2yaZZFobIk6yOqWxrOj+Vh3Ruw0S6skeib/8jVJ1vEM7kyJ7wwf
+        p3ukQe9FjYztixh0VgcEhPfKkzAEaU9KawhNNLzOwQlSps7hfJbmsOo8qUpJEewzlkMOm6HWYdV5
+        EVybTusBIYyxFGXR9dOO2Rx8Vsoovyw4DM/J8NuebAuR3fD5FP/dffoKtI6zpILsC8a288Vssm0I
+        fco9fTbdkcRWdI+fHmfz9JuORYkklPaD7EAKucSy1/ZBR6Z4c4pw6Gi6OFSIrlR2IB0NEvhq+LvX
+        t+nwPAYvzH7s3xNSYss7VrQOSyU/p9KXOQyL+lPZYRTRMXh0r7yDBSl0YVwlVqLT20UC/+EJm4Jn
+        WqNrnYrbFDZitBn9B5fSiWJGAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -7717,7 +7989,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2142'
+      - '1336'
       openai-project:
       - DUMMY
       openai-version:
@@ -8162,7 +8434,7 @@ interactions:
       \\\"_StringItem\\\", \\\"value\\\": \\\"Orion Commerce, Inc. (Client)\\\", \\\"justification\\\":
       null}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_StringItem\\\",
       \\\"value\\\": \\\"Nova Digital Solutions LLC (Developer)\\\", \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -8173,7 +8445,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '32791'
+      - '32793'
       content-type:
       - application/json
       cookie:
@@ -8181,7 +8453,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8191,7 +8463,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8207,14 +8479,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSy07DMBC89ysinxuUVuQhzuWKKnokKDLOtjEkduTdIKqq/87afSQV9GLJOzvr
-        mfEeZlEkdC2eIqEaSarr2/g5azZ21awlDj39bPamWL++7BcrHLKvTMw9w358gqIL60FZ5gFpa06w
-        ciAJ/NRFXqTLLM3TJACdraH1tF1PcRp32uh4mSzTOCniJD+TG6sVIHe98TWKDuH0Mk0NP1wOo0Kl
-        A0S5A65dmrjobOsrQiJqJGlIzEdQWUNggvJDKZwkbXYl39J5VIrPAUlvtZLeia+WohTHKd3BdkDp
-        HZihbSeANMZS4AXh72fkeJW6ZavYVBwMckr8PJLtRUCPfL4H68ONG9E7zpUqsl8QxmZ5vjgNFGPi
-        I7zM8zNKrKUdgTx5LOb/jKxqIKlbnOQnlFQN1CM3LYriakIOtbYjlswmHv9K+m/8yT+HPpGdZncf
-        GAGloOeVqnoHtVa3xsc2B34v77Vd0w6SBYL75k2rSIPzP1LDVg7taV0E7pGgq/jbduB6p8PO+E+f
-        HWe/C10kYTUDAAA=
+        H4sIAAAAAAAA/3VSTU/DMAy971dUPneIsW5j3DiAhAAJIaQhUVSF1Nsy0qQkLh+a9t9xso8WAZdI
+        8fOzn5+97iUJqBLOEpBLQbKqdf9i9nh7NZtpLd5uyE9Xsno7vb8+v7x7v36YQRoY9mWFkvasI2mZ
+        h6Ss2cLSoSAMVQeT6SA7GWbDLAKVLVEH2qKm/uho3NeNETvO0iqJnsEn/ibJOr5BnSnxk8PH6T5S
+        ofdigRzbJ3HQWR0iILxXnoQhSFtQWkNoouB1Dk6QMosczkZpDqvGk5orKYJ8juWQw6bLdThvvAiq
+        TaN1BxDGWIq0qPp5h2wOOufKKL8s2AzPznBvT7aGiG74fY5zNz9Ggdqxl1SQfcVYdjyZDLYFoXW5
+        hQfjbIcSa9Ed3nQ4Sv8oWZRIQmnfMQ+kkEssW27rdESKD6cIu5LGp4cM0ZTKdqi9jgW/Ff/VfWsP
+        L6QzVTb6t0ELSIk1X1lROyyV/OlLm+YwnOp/aYdlRMng0b3zFRak0IWFlTgXjd6eEvgvT1gVvNUF
+        utqpeE/hJnqb3jcTYHGuSAMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -8237,7 +8509,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '4197'
+      - '2263'
       openai-project:
       - DUMMY
       openai-version:
@@ -8261,9 +8533,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 241ms
+      - 417ms
       x-request-id:
       - DUMMY
     status:
@@ -8683,7 +8955,7 @@ interactions:
       \\\"severity_levels\\\": [{\\\"level\\\": 1, \\\"response_hours\\\": 0.5}, {\\\"level\\\":
       2, \\\"response_hours\\\": 2.0}, {\\\"level\\\": 3, \\\"response_hours\\\":
       24.0}, {\\\"level\\\": 4, \\\"response_hours\\\": 48.0}]}, \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -8694,7 +8966,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '32841'
+      - '32843'
       content-type:
       - application/json
       cookie:
@@ -8702,7 +8974,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -8712,7 +8984,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -8728,18 +9000,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUwW7bMAy95ysInVogCdwkTpzttq3Ddtqhu81FoMhMzM6RPElOGhT591FyErto
-        ezEgPvLpkXzyywBAUCE+gVCl9GpXV6P7efngrPo+L5b3NPv5r5wvj6mlb1/Mk5mIYagw6ydU/lI1
-        Vobr0JPRLawsSo+B9W6RpZN5ukhnEdiZAqtQtq39KB3tSNNokkzSUZKNksW5uDSk0HHWHz4CvMRv
-        kKkLfOZwMrxEduic3CLHLkkctKYKESGdI+el9mLYgcpojzoqf8mFlZ70NufTbAi5eGqcpw0pGToJ
-        0Vz8LhHw2VupuB+Qe0mVXFNF/ghe2i16uFkux8tbkLoAz8kO92gDfBdDE7DoaqMdgieWCzfJOG2R
-        cQKlaay7hYIsT7M6wo43UEaaNpnlh2tJw/1zSWvy8HUMP8wh3DGMeYVRzY4bAlejYu1cdL3wwAMz
-        BwcbY+HhImsaL58FznXjSPMEoZBH9xl4NJwTBsLMJgg2MJm16VkrFXimTRAmGRmFEOR5LvpE4Qw8
-        1xIt00jNqf5Y80wryNqKfvYQDiVxy8SUGhp9bjheU4ctjOFXoDpQ0MP9kscd51ruDqsKttY07Io4
-        ogDX1uwpnD0vbZyLU3/3FjeNk8F+uqmqHiC1Nj4uPbru8Yycrj7bsE9duWJXO7Y4e8d5U4uInvj7
-        GH3bvLKiYCncwsqbvxhp51kybQlF91x68HR+Rj1rqTpgMZsuh+9Qrgr07EbXM79QUpVYdLVplmXX
-        JmRTkOmwZNDr8a2k9+jb/tkgvRvuJh9e0AFKYc17XdUWC1KvG+/SLIafykdp12lHycKh3fNvYuUJ
-        bdhIgRvZVO1bF+7o2CcrXtsWbW0pPviw9MFp8B+3fyOe8gQAAA==
+        H4sIAAAAAAAA/31T227bMAx9z1cIAvbmBM1lbdL3ARvWDtgN67oUhiLRiVJbMiQqlwUB+g/7w33J
+        KCWpHazbiwHz8FCHPOSuwxjXil8zLhcCZVWX3Tff7m5vvrqf75ffi+rT3UfY3sgPphjcvpP39zyL
+        DDtbgsQTqyct8QC1NQdYOhAIsWr/atIfDYaj4VUCKqugjLR5jd3XvctuGYw4chZWS/AE/qBfxnbp
+        G9UZBRsKX2SnSAXeizlQ7JREQWfLGOHCe+1RGORZA0prEEwSvJtyJ1Cb+ZRfD7MpXwaPutBSRPkU
+        m/IvC2CTSW/yiomV0KWY6VLjlqFwc0AmjGKfYQUuxvq/n34NmANfW+OBoSZpTDhg0jpHEyq3zIe6
+        to6m0WNv7ToSs4Y/TOVGieJrkCQEFBOeWQMJwrVls+C1oZaZElufMWORFXpDeYNR98Afdxc2OFZT
+        UasoJTGpC9igEzI2xmyl0aegsjJUNAwqsLbuUTgbKD1SqA9bhpR+aNb3pnzfnqODIngRHTShLFuA
+        MCQrjTA5+HBE9s+eFdpov8hpMTxtCfng0dY8oXv6PqQdCGe28trRXmGO9hFS2cvxxfBQkDcb18D9
+        q/ERRdJStniTcT97oWSuAMlg31okLoVcgGq4zdYlJF+Tb3AmqckQQWnbonZaI/hb8UuvH8ZDy9nq
+        6j8PNICUUJOjee1AaXk+lybNQTzbf6U9m5Ekcw9uRReZowYXDVNQiFAezor7rUeocnJ1Dq52Ot1W
+        3InOvvMHLDN5YVQEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -8762,7 +9033,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '8811'
+      - '2152'
       openai-project:
       - DUMMY
       openai-version:
@@ -9205,7 +9476,7 @@ interactions:
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Primary
       Agreement Type</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_LabelItem\\\", \\\"value\\\": [\\\"web application development\\\"], \\\"justification\\\":
-      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      null}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -9216,7 +9487,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '32653'
+      - '32655'
       content-type:
       - application/json
       cookie:
@@ -9224,7 +9495,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -9234,7 +9505,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -9250,14 +9521,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSy07DMBC89ysinxOUPtIG7oUbSAghIVJFxtk0hsSO7A1QVf131u4jqWgvlryz
-        s54Z73YUBEwW7C5gouIomraOlvPqZfz7+rb8uX++ny4fyxczUw8Ps6cN3L6y0DH0xycIPLJuhCYe
-        oNRqDwsDHMFNHS/SZDJPFvOpBxpdQO1o6xajJGqkktEkniRRnEbx4kCutBRgqeudrkGw9aeTqQr4
-        pXIcHisNWMvXQLVjExWNrl2FcWulRa6QhT0otEJQXvk2Y4ajVOuMbkkYZOyzsyhLKbhz4qoZy9hu
-        SDdQdpY7B6qr6wHAldLoeV746oDsTlJLsmqrnIKxlBI9b1G3zKM7OlfeenfmhrWGcsUc9Rf4sfPF
-        dLofyPrEezhNDiCSlHpAS8dpeGFiXgByWdtBfExwUUHRc5M0TU8eeFdI3WPxaGDxv6JL4/f2KfOB
-        utnV+T0gBLS0UHlroJDi3HbfZsBt5bW2U9ZeMbNgvmnPcpRg3H8UUPKu3i8LsxuL0OT0aWswrZF+
-        Y9yXj3ajPyUmE5IzAwAA
+        H4sIAAAAAAAA/3VSTU8CMRC98ys2c16MunwE78aDwYuJGl2zKd0BqqVd21nUEP670wJ2iXhp0nnz
+        pq9v3qaXZaBquMpALgXJVaP7149P0zu6ff6YToeFnd2PPm6v1/65UMOHmy/IA8PO3lDSgXUmLfOQ
+        lDU7WDoUhGHqxXhyMbgsBsUkAitbow60RUP94dmor1sj9pylVRI9gy98zbJNPIM6U+MXl8/zQ2WF
+        3osFcu3QxEVndaiA8F55EoYgT6C0htBEwZsSnCBlFiVcDfMS3lpPaq6kCPK5VkIJ2y7X4bz1Iqg2
+        rdYdQBhjKdKi6tc9sv3VOVdG+WXFZnh2ht/2ZBuI6JbP1/jv9ugr0Dj2kiqy7xjHjsZFsRsIyeUE
+        Dw4gsRTdpY1H+YmJVY0klPYd70AKucQ6cZPREak+nSI8UpQ6RFsr26H2Og78FXzq9Z07vI805XLw
+        7/wESIkNZ6xqHNZKHruS2hyGoP7X9ruKqBg8ujVnsCKFLqyrxrlo9S5I4L894arinS7QNU7FNIVE
+        9La9H1TeV6ZGAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -9280,7 +9551,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2907'
+      - '928'
       openai-project:
       - DUMMY
       openai-version:
@@ -9722,35 +9993,61 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Anomalous
       Provisions</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"For SOWs with a total value under $50,000,
-      either Party may terminate for convenience upon five (5) days\u2019 prior written
-      notice\\\", \\\"justification\\\": \\\"This termination notice period for lower-value
-      SOWs is shorter than the standard 30 days, which is an uncommon provision.\\\",
-      \\\"reference_paragraphs\\\": [\\\"27.2 Termination for Convenience. Either
-      Party may terminate this Agreement or any SOW for convenience upon [30] days\u2019
-      prior written notice. In such case, Client will pay for Services performed and
-      non-cancellable commitments incurred through the effective termination date.
-      For SOWs with a total value under $50,000, either Party may terminate for convenience
-      upon five (5) days\u2019 prior written notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"Developer may include GPLv3-licensed
-      build or test dependencies without prior written consent\\\", \\\"justification\\\":
-      \\\"Allowing GPLv3 build or test dependencies without prior consent is a specific
-      exception that deviates from typical open source license restrictions.\\\",
-      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
-      consistent with Exhibit H. Developer shall not include copyleft OSS that would
-      require disclosure of Client proprietary code without Client\u2019s prior written
-      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
-      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_StringItem\\\", \\\"value\\\": \\\"If Client does not respond within the
-      Review Period, the Deliverable is deemed Accepted\\\", \\\"justification\\\":
-      \\\"Automatic acceptance of deliverables upon client non-response within the
-      review period is a notable acceptance provision.\\\", \\\"reference_paragraphs\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"The governing-law provisions conflict:
+      one leaves the law to the SOW, while another overrides that provision and selects
+      Delaware law.\\\", \\\"justification\\\": \\\"The agreement gives incompatible
+      directions on governing law, which may create uncertainty about which law controls.\\\",
+      \\\"reference_paragraphs\\\": [\\\"29.3 Governing Law and Venue. The governing
+      law and venue shall be as specified in the SOW, without regard to conflict of
+      laws principles and excluding the U.N. Convention on Contracts for the International
+      Sale of Goods.\\\", \\\"32.6 Governing Law Override. Notwithstanding Section
+      29.3, this Agreement shall be governed by the laws of the State of Delaware,
+      without regard to its conflicts of laws rules.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"The GPLv3 build/test dependency exception
+      is broader in the main clause than in the open-source exhibit: the main clause
+      permits such dependencies without prior consent, while the exhibit limits the
+      exception to non-distributed tooling.\\\", \\\"justification\\\": \\\"The exception
+      differs across provisions and could leave uncertainty about whether distributed
+      GPLv3 dependencies require consent.\\\", \\\"reference_paragraphs\\\": [\\\"13.1
+      OSS Management. Developer may use OSS consistent with Exhibit H. Developer shall
+      not include copyleft OSS that would require disclosure of Client proprietary
+      code without Client\u2019s prior written consent. Notwithstanding the foregoing,
+      Developer may include GPLv3-licensed build or test dependencies without prior
+      written consent.\\\", \\\"- Exception: GPLv3 permitted for non-distributed build
+      or test tooling without prior approval\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"Silence results in deemed acceptance,
+      and deliverables classified as Critical have only a three-business-day review
+      period.\\\", \\\"justification\\\": \\\"Deemed acceptance based on no response,
+      coupled with an especially short review window for Critical deliverables, may
+      materially limit the Client\u2019s opportunity to identify defects.\\\", \\\"reference_paragraphs\\\":
       [\\\"7.2 Review Period. Unless otherwise stated in the SOW, Client will have
       [10] business days to test and either (a) provide written Acceptance or (b)
       provide a written list of material non-conformities. If Client does not respond
       within the Review Period, the Deliverable is deemed Accepted. For Deliverables
       classified as \\\\\\\"Critical\\\\\\\" in the SOW, the Review Period shall be
-      three (3) business days.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      three (3) business days.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"Payments for fixed-price milestones
+      are due within ten days, unlike the general thirty-day payment term.\\\", \\\"justification\\\":
+      \\\"The substantially shorter payment period for fixed-price milestones is a
+      notable departure from the agreement\u2019s general payment deadline.\\\", \\\"reference_paragraphs\\\":
+      [\\\"15.3 Payment Terms. Payments are due within [30] days of invoice date.
+      Late amounts accrue interest at the lesser of 1.5% per month or the maximum
+      allowed by law. Notwithstanding the foregoing, invoices for fixed-price milestones
+      are due within ten (10) days of receipt.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"The Client must gross up payments when
+      withholding is legally required so the Developer receives the full invoiced
+      amount, absent a valid exemption.\\\", \\\"justification\\\": \\\"This shifts
+      withholding-tax costs to the Client rather than reducing the amount received
+      by the Developer.\\\", \\\"reference_paragraphs\\\": [\\\"16.2 Withholding.
+      If withholding is required by law, Client shall gross up payments so Developer
+      receives the full amount invoiced, unless a valid exemption applies.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_StringItem\\\", \\\"value\\\": \\\"The SLA includes an uncompleted service-credit
+      cap placeholder while also specifying a 25% monthly-fee credit for outages exceeding
+      four hours.\\\", \\\"justification\\\": \\\"The unspecified cap leaves the maximum
+      service-credit remedy unclear.\\\", \\\"reference_paragraphs\\\": [\\\"- Credits
+      for failing to meet uptime or response targets, capped at [x]% of monthly fees\\\",
+      \\\"- For outages exceeding four (4) hours in a calendar month, credit equal
+      to 25% of monthly fees for the affected Service\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -9761,7 +10058,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34781'
+      - '36885'
       content-type:
       - application/json
       cookie:
@@ -9769,7 +10066,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -9779,7 +10076,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -9795,14 +10092,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSy2rDMBC85yuMznZxQvyg19JroaHQ0joYRd7Eam3JkdahJeTfu1Iedmh6EWhn
-        ZzUz2v0kCJis2H3ARM1RtF0TPab1y3zxtn193to+V7uH9yTuHlZfT3nLFyx0DL36BIFn1p3QxAOU
-        Wh1hYYAjuKnTLE9maZKlqQdaXUHjaJsOoyRqpZLRLJ4lUZxHcXYi11oKsNT1Qdcg2PvTyVQVfFM5
-        Ds+VFqzlG6DauYmKRjeuwri10iJXyMIBFFohKK98XzDDUapNQbckDAr22VuUaym4c+KqBSvYYUw3
-        sO4tdw5U3zQjgCul0fO88OUJOVykrsmqrUsKxlJK9LxF3TGPHuhceuv9lRvWGcoVS9Rf4Mdm02x6
-        HMiGxAd4lmUnFElLM+LN53l4Y2RZAXLZ2FF+THBRQzVwkzzPLyZ4X0k9YPFk5PGvpFvjj/4p9JHs
-        JP33gQEQAjpaqbIzUElxbXxoM+D28r+2S9peMrNgdrRpJUow7kcqWPO+Oa4Lsz8WoS3p2zZgOiP9
-        zrhPnxwmv7YXtfU1AwAA
+        H4sIAAAAAAAA/3VUTW/bMAy951cIOjtB06ZN19uA7gMDhh166IClCBiJsdXJkitKSb0i/32UksYp
+        tl4Mm498fKSe/DISQhotb4RUDUTVdnb86f7n9x/9l291M4U76p6epmjP6PbP5/t5v5JVrvCrR1Tx
+        tWqiPNdhNN7tYRUQImbW6fzDdHZ+MZudFaD1Gm0uq7s4vpxcjW1ycKhpvFFIDP7iTyFeyjOrcxqf
+        OVwYSqRFIqiRY69JHAze5ogEIkMRXJTVACrvIroi+GUhA0Tj6oW8mVUL+ZgomrVRkOVzbCE/WivI
+        PAt8jgEUzyG64DeGGCcBAcWaowms7QWlrvMhp6x6ERsU2qvUcicBTgtQKnEv5ESjOWjWvXA+wsqi
+        MI41ZaXolEGqRHKJmFREDC1/+sCRgOTtJguwoLDxVmOgifjqt7jBUJWOtedXx/OMLWwFk66tUVEY
+        Yv0dExB3B63z2yDzFjmZRyk1mSCwQNYk7vhYeU5xcT65qgT5ks21yeaVsSSFIYJxsc8dyLe4ZQMU
+        Cl46L6Iqk+eqw/oym/ZIefJhDZ4zwnEZJ+ONV5B1gvMtWF4MUwWf6sanWFihDoh5w5OF3J0eccB1
+        IsjmcsnaEwBcbpN1FHM9HJDd0U5r4ww1S/YssYHZIhR9Jwu64+dDsWd64zjJjmi7uIz+Nxba+eX1
+        wZ9yuAwDfHX2ikbWYgfgenqse0O51MhrtnTicalANaiH2uFCFGS5DSbiqaT5/JgBSRt/Ujo6WcG/
+        iv/Xfb8eNsHAcjk9f7fBACiFHRtjyWbURr3dy5AWMP9R3ks7HkaRLAnDhn8Wy2gw5APTuAZ26P5H
+        Qj1fqnbJp1pj6IIp1z57YrQb/QVskURv7wQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -9825,7 +10126,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '4677'
+      - '7626'
       openai-project:
       - DUMMY
       openai-version:
@@ -9849,9 +10150,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 256ms
+      - 442ms
       x-request-id:
       - DUMMY
     status:
@@ -10267,47 +10568,58 @@ interactions:
       I: THIRD-PARTY MATERIALS INVENTORY\\n- Name and version\\n- License/Terms\\n-
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Risk
       Assessment Summary (Developer)</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"27.2\\\",
-      \\\"risk_description\\\": \\\"Shorter termination notice period of 5 days for
-      SOWs under $50,000 may risk abrupt project termination and insufficient transition
-      time\\\", \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"The provision
-      allows termination with only 5 days' notice for smaller SOWs, which may disrupt
-      project continuity and planning.\\\", \\\"reference_paragraphs\\\": [\\\"27.2
-      Termination for Convenience. Either Party may terminate this Agreement or any
-      SOW for convenience upon [30] days\u2019 prior written notice. In such case,
-      Client will pay for Services performed and non-cancellable commitments incurred
-      through the effective termination date. For SOWs with a total value under $50,000,
-      either Party may terminate for convenience upon five (5) days\u2019 prior written
-      notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\": \\\"_JsonObjectItem\\\",
-      \\\"value\\\": {\\\"provision_reference\\\": \\\"7.2\\\", \\\"risk_description\\\":
-      \\\"Automatic acceptance of deliverables if Client does not respond within the
-      review period may result in unintended acceptance of non-conforming work\\\",
-      \\\"risk_severity\\\": 4}, \\\"justification\\\": \\\"Deeming deliverables accepted
-      by default if Client fails to respond could expose Developer to risks of unaddressed
-      defects.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period. Unless otherwise
-      stated in the SOW, Client will have [10] business days to test and either (a)
-      provide written Acceptance or (b) provide a written list of material non-conformities.
-      If Client does not respond within the Review Period, the Deliverable is deemed
-      Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\" in the SOW,
-      the Review Period shall be three (3) business days.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"13.1\\\",
-      \\\"risk_description\\\": \\\"Use of GPLv3-licensed build or test dependencies
-      without prior written consent may expose Developer to license compliance risks\\\",
-      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"Allowing certain GPLv3
-      dependencies without consent could create IP or compliance risks for Developer.\\\",
-      \\\"reference_paragraphs\\\": [\\\"13.1 OSS Management. Developer may use OSS
-      consistent with Exhibit H. Developer shall not include copyleft OSS that would
-      require disclosure of Client proprietary code without Client\u2019s prior written
-      consent. Notwithstanding the foregoing, Developer may include GPLv3-licensed
-      build or test dependencies without prior written consent.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
-      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"27.4\\\",
-      \\\"risk_description\\\": \\\"Developer may suspend work if undisputed invoices
-      are over 30 days overdue and not cured within 10 days, risking project delays\\\",
-      \\\"risk_severity\\\": 3}, \\\"justification\\\": \\\"Suspension rights due
-      to payment delays could interrupt project progress and affect timelines.\\\",
-      \\\"reference_paragraphs\\\": [\\\"27.4 Suspension. Developer may suspend work
-      upon written notice if undisputed invoices are more than [30] days overdue and
-      not cured within ten (10) days after notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"Sections
+      21.1, 21.6, and 22.3\\\", \\\"risk_description\\\": \\\"Developer\u2019s IP
+      infringement indemnity is uncapped, and the liability exclusions also leave
+      several categories\u2014including confidentiality breaches and gross negligence
+      or willful misconduct\u2014outside the general cap.\\\", \\\"risk_severity\\\":
+      5}, \\\"justification\\\": \\\"The agreement exposes the Developer to potentially
+      unlimited liability for IP claims and other excluded claims.\\\", \\\"reference_paragraphs\\\":
+      [\\\"21.1 By Developer. Developer will defend, indemnify, and hold harmless
+      Client against third-party claims alleging that the Work Product infringes or
+      misappropriates such third party\u2019s Intellectual Property Rights, and pay
+      resulting damages, costs, and reasonable attorneys\u2019 fees finally awarded
+      by a court or agreed in settlement.\\\", \\\"21.6 Aggregate Cap for IP Claims.
+      Notwithstanding Section 22.2, Developer\u2019s liability for IP infringement
+      claims shall be uncapped.\\\", \\\"22.3 Excluded Claims. \\\\\\\"Excluded Claims\\\\\\\"
+      means (a) a Party\u2019s indemnification obligations, (b) a Party\u2019s breach
+      of confidentiality obligations, (c) infringement or misappropriation of the
+      other Party\u2019s IPR, and (d) a Party\u2019s gross negligence or willful misconduct.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"Sections
+      29.3 and 32.6\\\", \\\"risk_description\\\": \\\"Conflicting governing-law provisions
+      may create disputes over which law applies.\\\", \\\"risk_severity\\\": 3},
+      \\\"justification\\\": \\\"One provision assigns governing law to the SOW, while
+      another selects Delaware law notwithstanding that provision.\\\", \\\"reference_paragraphs\\\":
+      [\\\"29.3 Governing Law and Venue. The governing law and venue shall be as specified
+      in the SOW, without regard to conflict of laws principles and excluding the
+      U.N. Convention on Contracts for the International Sale of Goods.\\\", \\\"32.6
+      Governing Law Override. Notwithstanding Section 29.3, this Agreement shall be
+      governed by the laws of the State of Delaware, without regard to its conflicts
+      of laws rules.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"Section
+      27.2\\\", \\\"risk_description\\\": \\\"The Client can terminate for convenience
+      on five days\u2019 notice for SOWs under $50,000, potentially leaving the Developer
+      with limited time to adjust staffing and resources.\\\", \\\"risk_severity\\\":
+      3}, \\\"justification\\\": \\\"The short notice period for smaller SOWs may
+      disrupt planned work, even though payment is provided for work performed and
+      non-cancellable commitments.\\\", \\\"reference_paragraphs\\\": [\\\"27.2 Termination
+      for Convenience. Either Party may terminate this Agreement or any SOW for convenience
+      upon [30] days\u2019 prior written notice. In such case, Client will pay for
+      Services performed and non-cancellable commitments incurred through the effective
+      termination date. For SOWs with a total value under $50,000, either Party may
+      terminate for convenience upon five (5) days\u2019 prior written notice.\\\"]}\\n</extracted_item>\\n<extracted_item>\\n{\\\"type\\\":
+      \\\"_JsonObjectItem\\\", \\\"value\\\": {\\\"provision_reference\\\": \\\"Sections
+      13.1 and Exhibit H\\\", \\\"risk_description\\\": \\\"The differing GPLv3 build/test
+      dependency exceptions create uncertainty about whether prior approval is needed
+      for distributed dependencies.\\\", \\\"risk_severity\\\": 3}, \\\"justification\\\":
+      \\\"The main clause permits GPLv3 build or test dependencies without consent,
+      while the exhibit limits the exception to non-distributed tooling.\\\", \\\"reference_paragraphs\\\":
+      [\\\"13.1 OSS Management. Developer may use OSS consistent with Exhibit H. Developer
+      shall not include copyleft OSS that would require disclosure of Client proprietary
+      code without Client\u2019s prior written consent. Notwithstanding the foregoing,
+      Developer may include GPLv3-licensed build or test dependencies without prior
+      written consent.\\\", \\\"- Exception: GPLv3 permitted for non-distributed build
+      or test tooling without prior approval\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -10318,7 +10630,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '35727'
+      - '36638'
       content-type:
       - application/json
       cookie:
@@ -10326,7 +10638,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -10336,7 +10648,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -10352,19 +10664,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        H4sIAAAAAAAA/3VU204bMRB9z1dYft5EDSSB8l4V1FZFSimVGrRy7MnugNde2d5dIhSJ30Bqf44v
+        6dgBdlHhYW9zZs4cj4/3bsQYR8VPGJelCLKq9fjT5a9vl+IMikZ8+dqewfmFBnFa/Ow+z5cXPIsV
+        dn0NMjxXTaSlOghozR6WDkSAyDo9+jidHRzOZscJqKwCHcuKOoznk8VYN0Y81ZQWJXgCf9MnY3fp
+        HtUZBbcU/pA9RyrwXhRAseckCjqrY4QL79EHYQLPelBaE8AkwXcr7kRAU6z4ySxb8evGB9ygFFE+
+        xVb8RwkMboMTktbAHPobz4QDVoABJ7Tesg60HhfONiRNMWHokrIhWiBQYgAWiMOBhpaEsNrZFj3R
+        +4yhkbpR1D6lNEaKuiaOs3OmUaxRY9hmLICr0CRFzNhAc2E1OLQqS82+L5eRh/hopWDkdsJObQct
+        uCyxFpZeDfUYa9ENuqdVwG3taH4klB5Wt9R8vWVL2s7Y7fBgsni8f/Ds8f4Pde4wlHGYUfDj/V8W
+        iR0qyJi3qRWBcUikZaNRhjQthp7gCjqyRqrYJ+21x6Lh8lKBAi8d1ilgKwye0qg25m6whbESpBaL
+        MjCalkYg3LK1DSWrhQv0PVnx3XC/HWwaL6LTTKP1ABCGVpU6J6ddPSG7F29t0KAvczKwJzeTX3yw
+        NU/oju5XyavNK/txmnBVhzzYG0i0R/P5bE/I+5PRw/PF4RMaSIvugePp9Ch7gzJXEARqPzA8l0KW
+        oPra/nQkJO8c2fCVpOlLhiAD2kHpaDCC/xW/1X0/HjJFzzJbzN9t0ANSQk1eyMmDCuXrufRpDuLv
+        5b20l81IkrkH19IJyckHLm6Ygo1o9P74c7+lE1LltKsFuNph+gdET4x2o3+McL7M/AQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -10387,7 +10698,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '15295'
+      - '6720'
       openai-project:
       - DUMMY
       openai-version:
@@ -10413,7 +10724,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 263ms
+      - 270ms
       x-request-id:
       - DUMMY
     status:
@@ -10830,34 +11141,23 @@ interactions:
       Purpose/Usage\\n- Fees (if any)\\n- Data processed (if any)\\n</document_text>\\n\\n<target_type>concept</target_type>\\n<target_name>Agreement
       Risk Category (Client)</target_name>\\n<extracted_items>\\n<extracted_item>\\n{\\\"type\\\":
       \\\"_LabelItem\\\", \\\"value\\\": [\\\"medium\\\"], \\\"justification\\\":
-      \\\"The agreement contains standard professional warranties, clear payment terms
-      with late fees, and reasonable termination rights, but includes some provisions
-      that may pose moderate risks such as automatic acceptance and short termination
-      notice for small SOWs.\\\", \\\"reference_paragraphs\\\": [\\\"7.2 Review Period.
-      Unless otherwise stated in the SOW, Client will have [10] business days to test
-      and either (a) provide written Acceptance or (b) provide a written list of material
-      non-conformities. If Client does not respond within the Review Period, the Deliverable
-      is deemed Accepted. For Deliverables classified as \\\\\\\"Critical\\\\\\\"
-      in the SOW, the Review Period shall be three (3) business days.\\\", \\\"15.3
-      Payment Terms. Payments are due within [30] days of invoice date. Late amounts
-      accrue interest at the lesser of 1.5% per month or the maximum allowed by law.
-      Notwithstanding the foregoing, invoices for fixed-price milestones are due within
-      ten (10) days of receipt.\\\", \\\"20.1 Performance Warranty. For ninety (90)
-      days after Acceptance, Developer warrants that the Work Product will materially
-      conform to the SOW and Documentation. For time-and-materials engagements, the
-      warranty period shall be sixty (60) days after Acceptance.\\\", \\\"20.2 Services
-      Warranty. Developer warrants it will perform Services in a professional and
-      workmanlike manner.\\\", \\\"20.3 Virus-Free. Developer warrants that, to its
-      knowledge using commercially reasonable scanning tools, Deliverables are free
-      from known malicious code at the time of delivery.\\\", \\\"27.2 Termination
-      for Convenience. Either Party may terminate this Agreement or any SOW for convenience
-      upon [30] days\u2019 prior written notice. In such case, Client will pay for
-      Services performed and non-cancellable commitments incurred through the effective
-      termination date. For SOWs with a total value under $50,000, either Party may
-      terminate for convenience upon five (5) days\u2019 prior written notice.\\\",
-      \\\"27.4 Suspension. Developer may suspend work upon written notice if undisputed
-      invoices are more than [30] days overdue and not cured within ten (10) days
-      after notice.\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5-mini\",\"max_completion_tokens\":16000}"
+      \\\"The agreement contains substantial protections and mutual obligations, but
+      conflicting governing-law terms, uncapped categories of liability, and incomplete
+      service-credit terms create meaningful residual risk for the Client.\\\", \\\"reference_paragraphs\\\":
+      [\\\"21.6 Aggregate Cap for IP Claims. Notwithstanding Section 22.2, Developer\u2019s
+      liability for IP infringement claims shall be uncapped.\\\", \\\"22.3 Excluded
+      Claims. \\\\\\\"Excluded Claims\\\\\\\" means (a) a Party\u2019s indemnification
+      obligations, (b) a Party\u2019s breach of confidentiality obligations, (c) infringement
+      or misappropriation of the other Party\u2019s IPR, and (d) a Party\u2019s gross
+      negligence or willful misconduct.\\\", \\\"29.3 Governing Law and Venue. The
+      governing law and venue shall be as specified in the SOW, without regard to
+      conflict of laws principles and excluding the U.N. Convention on Contracts for
+      the International Sale of Goods.\\\", \\\"32.6 Governing Law Override. Notwithstanding
+      Section 29.3, this Agreement shall be governed by the laws of the State of Delaware,
+      without regard to its conflicts of laws rules.\\\", \\\"- Credits for failing
+      to meet uptime or response targets, capped at [x]% of monthly fees\\\", \\\"-
+      For outages exceeding four (4) hours in a calendar month, credit equal to 25%
+      of monthly fees for the affected Service\\\"]}\\n</extracted_item>\\n</extracted_items>\"}],\"model\":\"gpt-5.6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -10868,7 +11168,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34760'
+      - '33947'
       content-type:
       - application/json
       cookie:
@@ -10876,7 +11176,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -10886,7 +11186,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -10902,14 +11202,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSy26kMBC8z1cgn2HFkOWhHPO6RdnDaqNViJDX9IATYyO7yUOj+fe0PQ+INrlY
-        cldXu6rc21UUMdmy84iJnqMYRpVcF/3vX/ri5s998fc1La76d1V22Z17u3m5vWSxZ5h/TyDwyPoh
-        DPEApdF7WFjgCH7quqzyrMjLqgzAYFpQntaNmOTJILVMsjTLk7RK0vJA7o0U4Kjrga5RtA2nl6lb
-        eKNyGh8rAzjHO6DasYmK1ihfYdw56ZBrZPEMCqMRdFC+rZnlKHVX0y2Po5o9TQ7lRgrunfhqzWq2
-        W9ItbCbHvQM9KbUAuNYGAy8Ifzwgu5PUDVl1fUPBOEqJnndoRhbQHZ2Pwfr0yQ0bLeWKDZpnCGPL
-        dZHtB7I58RkuivUBRdKiFrwqO4u/GNm0gFwqt8iPCS56aGduXlXVyQSfWmlmLF0tPP4v6avxe/8U
-        +kL2z/TbB2ZACBhppZrRQivFZ+NzmwW/l9+1ndIOkpkD+0Kb1qAE63+khQ2f1H5dmHt3CEND39aB
-        Ha0MO+M/fbVbfQDfU9bfNQMAAA==
+        H4sIAAAAAAAA/3VU207bQBB9z1eM9tmOCCRAeOtDpbZShSoqUalB1mY9cRbWu6ud3UBAkfob/b1+
+        SWdtgoOAF0ueM+fM7dhPIwCha3EBQq1lVK035efrX99rc948NPMfl9tPDuuv28frVqVvG3oURWa4
+        5S2quGeNlWMeRu1sD6uAMmJWnZzNJ9Pjk+ls1gGtq9FkWuNjORufliZZ+cxZO62QGPzNrwBP3TN3
+        Z2t84PBRsY+0SCQb5Ng+iYPBmRwRkkhTlDaKYgCVsxFt1/DTQgQZtW0W4mJaLMRtoqhXWsncPscW
+        4ucaocVap7YMmu5Amay5TwFN0KDFII3ZAiXvXeBZYbmFyETZBMSWa/3785egTTFJA25pdNOxCaSt
+        ISDpOgOaKCEVoK0yqeamIFklvWc9o+VSGx23wHWxcUFjT+bcft0ILoDzWZalCMOGF1jy7msdwQe3
+        0ZQrjuGLu8cNhgKu+Gh5hJPj8Sngg+c+iIdwDAZds36e4OryulxK4haaDFjuqjTyflAsgFyXqXR8
+        kxUxtAS9AcCwPsh2qZuUB4lraYFvw6zxQuwODxRwlUhma9hkzAEgrXWxX122xs0zsnsxw0pbTeuK
+        CxLbjw9M0XnRoTt+3nTmSq/8IniU1scqujvsZM+Ojia9oBisPMDT2R6N3Is54E1nx8U7klWNUWpD
+        Bw4VSqo11gN3sHOHVPeBtznAp/P5+UuGZG+4A+roYAVvO36ver8ePtKgcnI2/bDAACiFnu9V+Wwr
+        9XovQ1rA/D/4KO3lGF3L4tmpVdQY8sFqXMlk+u9V0JYithVftcHgg+4+2uyJ0W70HzgVqfetBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -10932,7 +11235,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '8760'
+      - '6418'
       openai-project:
       - DUMMY
       openai-version:
@@ -10958,7 +11261,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 256ms
+      - 250ms
       x-request-id:
       - DUMMY
     status:

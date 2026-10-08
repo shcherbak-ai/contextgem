@@ -95,16 +95,45 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document text provided.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\\n
-      \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -181,8 +210,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Effective
       Date</concept_name>\\n\\n    <concept_description>\\n    Contract start date\\n
@@ -193,7 +225,12 @@ interactions:
       \   <concept_description>\\n    Contract title\\n    </concept_description>\\n\\n
       \   <amount_of_extracted_items>This concept may have zero, one, or multiple
       extracted items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>str
-      (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_text>\\nNon-Disclosure
+      (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n<concept
+      id=\\\"C2\\\">\\n    <concept_id>C2</concept_id>\\n    \\n    <concept_name>Duration
+      in years</concept_name>\\n\\n    <concept_description>\\n    Contract duration
+      in years\\n    </concept_description>\\n\\n    <amount_of_extracted_items>This
+      concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\\n\\n
+      \   <extracted_item_type>int (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_text>\\nNon-Disclosure
       Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
       made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
       _____\\nPhone: _____\\nEmail: _____\\n\\nParty B:\\n\\nExample.Com LLC\\n5678
@@ -288,7 +325,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -299,7 +336,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23494'
+      - '26483'
       content-type:
       - application/json
       cookie:
@@ -307,7 +344,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -317,7 +354,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -333,16 +370,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLrwh09QUAAAD//5xTwW7bMAy95ysCnTbA
-        LmxHTppjtrToqdhlpzgwFJlxtMqSIclDuyH/PspOIrdNgWI+yDYfH0Xykd8e7v9oumwXP+qnn+Yu
-        W73c5fmaRJ6hd7+AuzPrhmvkgRNaDTA3wBz4qOniNs/ms9uE9kCjK5CeVrcupjdp3Agl4izJ8jih
-        cUpP9IMWHCz6bfB3Ov3bnz5RVcEzmpPobGnAWlYD2s5OaDRaegth1grrmHIkCiDXyoHqc98Uqg8/
-        vPxTeJhD60pRFehSkO9JQaKxAzw7wzhWVwoHjfVem4APPuk8Tha+LFqQgG2Hz2P0mWvT/7j2Uat4
-        LSyX2nYGpqvaADRY6/TL43r19VoqhdqOe2Ng31nmBVKdlCOAKaUd8wL3qmxPyPGig9R1a/TOvqGS
-        PeprDyXOg8XhwJ5bp1vSo0c8t73e3SsJCQZqsBVOP0F/HaXL5RCQhEEL8Dw/gQ5TlCNaPqfRlYhl
-        BY4JaUczQzjjB2xt4M7y7FID6yqhA5ZMRqW/z+ha+KF8oepRlA/DB4D7kcC0WgOV4K+rDm4G/C5+
-        5HZpdZ8wsWB+426VToDxclSwZ50cFoTYF4uzVaJmNZjWiGFL9m3JkiSfpSlb7sjkOPkHAAD//wMA
-        1N4suTQEAAA=
+        H4sIAAAAAAAA/41T72vbMBD9nr9C6NMGdvGPNGn2rVtHYbBCt44N4mA0+eJolSUjyV3Xkv99JzuJ
+        HNqu+yLQvbunp3t3jxNCqKjoO0L5hjnetDL++P3H58uFvmxmX6/ff/l2d/Ppxjycwb27ZuaWRr5C
+        //wF3O2rTrjGOnBCqwHmBpgDz5rOF+k0y6d51gONrkD6srp18SyWnWK7io0WHCxCS7wS8tifXpuq
+        4B7DSbSPNGAtqwFj+yQMGi19hDJrhXVMORoFkGvlQPVyl4VCcn8QUniAQ+tKURUIFvRDUtBoD+KH
+        DeP4jVI4aKzPWBY0ncXJPM6SbFrQlU/dRv+mTF+lvNIqvhCWS207A+S8NgAN6iVvri7O3/7nM9kr
+        z5wOLIVajTtjYN1Z5h1RnZQjgCmlHfOO9p6sdsj24MJaKGE3JRpt0XXsrHW6pT26xXPVu9odGUVb
+        g3PiSqdvoac9Tc7ygZCGCQpwmi12qEMtclSXpVn0DGVZgWNC2tFoUM74BhsRSPPZPDoCy98G2xQy
+        8nmaHzJYVwkdsGQy6sJT0c8JGDokVB1YpsmL/AHg3l9U3hqoBD/uTEgz4BfxpbSDHb1iasHc4ZaV
+        ToDxllWwZp0cVoXaPxaHpURfazCtEf2++KmYbCd/Aaim6VAmBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -365,7 +401,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1807'
+      - '1601'
       openai-project:
       - DUMMY
       openai-version:
@@ -391,7 +427,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 172ms
+      - 194ms
       x-request-id:
       - DUMMY
     status:
@@ -493,7 +529,27 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Ensure justifications align with
+      the item's evidence and stance, and comply with length and language constraints.\\n\\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document text provided.\\n2. Identify whether
       each concept in the concepts list is addressed within the document text.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
@@ -501,8 +557,21 @@ interactions:
       is described by a concept name specified within <concept_name></concept_name>
       tags and a concept description specified within <concept_description></concept_description>
       tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      to that concept. The item format and structure are specified for each concept.\\n
+      \   - Treat negations, exceptions, and conditionals carefully: relevance may
+      involve permissions, prohibitions, requirements, exceptions, thresholds, or
+      ranges; reflect the stance  in the justification.\\n    - Prefer minimal sufficient
+      evidence and value derivation:\\n    - Favor precision over recall; when uncertain,
+      avoid speculative extractions or derivations.\\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\\n    - Internally verify before
+      finalizing:\\n        -- Each provided concept appears once, in order, with
+      the correct \\\"concept_id\\\".\\n        -- The top-level structure matches
+      the format specified within <answer_format></answer_format> tags.\\n        --
+      No structural IDs (concept/paragraph IDs) appear inside justifications.\\n        --
+      Justifications meet length and language constraints.\\n        -- Item values
+      strictly satisfy type and any specified structure/scale/labels constraints.\\n
+      \       -- The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -590,8 +659,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Is
@@ -698,7 +770,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -709,7 +781,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '24431'
+      - '27287'
       content-type:
       - application/json
       cookie:
@@ -717,7 +789,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -727,7 +799,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -743,19 +815,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLrwj2CQQAAAD//6xUPW/bMBDd8ysILm4B
-        OZBix3XHNB7aJSiKDi0iQ6Cpk0SXIlUelcQp/N9zlGJLSRMgKOqBFu/dPd631P7n6tJ+/bb68fvL
-        vfj0+dbfb+c8ChZ2swXpD1an0pIdeGVND0sHwkNgTT4sz88Ws2W86IDa5qCDWdn46fw0mdbKqOlZ
-        fHY+jefT5JFdVlZJQNK7pitjf7ozOGpyuCNxHB0kNSCKEkh2UCKhszpIuEBU6IXxPBpAaY0H0/l+
-        nZqOvv8LvzTAEhqfqTwllZRfximPxgpw552QFF2mPNQYtK4H/BnfYHYjdAtB2bsWopc0ti16VSgp
-        Qh77x79XwHIr25ocZgoZ3DVaSeX1jnk6IWeTK2umK4VSW2wdsIvSAXTq765WF+8nTJichZCFMsj8
-        riF+3QlCEExq0SIgw1ZWTCBrWtdYhIjZjVZl5wlGTCuxUVr5XcRKewPOKFMyLW6jjh1VaYSnx0mT
-        iAvl6oCrzmNxfOs05U+j3g/Xdf+5j95SkOQ/F6QQGv+5IoK9WoCQm9xSco31LEiIhFnHqIkDJRwz
-        hJVwUFmdg5vQ/UDwloSlZj3ubQdFiyIMmGm1HgHCkBN9OUN61o/I/jhH2paNsxt8ZsoLmk+sMppn
-        pOGmmUFvG96hezrX3by2T0aQE1FNBfP2F3TPzReLWU/Ih0UxwMls+Yh68lGP7JZxEr1AmeVA7axx
-        NPRcCllRBwy2ZHwMQrS5sgMWn4xi/9ull+j7+KmtRyyv0g+ADJ1LbjUOqOZPwx7UHIRl+praMded
-        wxzB3dByzLwCF+qRQyFa3W84jjukEcioaCW4xql+zRVNJuL4fJYk4uOGn+xPHgAAAP//AwCOuo9C
-        9QUAAA==
+        H4sIAAAAAAAA/6VUTW/bMAy951cIOjtF0rQNttu29jBs62EbsA1NYMgSbbOVJUOi+7Ei/72U3dQu
+        1g4YdlFiPvKJevy4nwkh0ci3QupakW5aOz/78fPLx89w9vXbp8VxOL+C018Nvte/qSnWRmYpwheX
+        oGkfdaA9xwGhdwOsAyiCxLpcv1keHa6OVkc90HgDNoVVLc1P5rZz6jGi9qghMnTBn0Lc92fKzRm4
+        ZfMi21saiFFVwLa9ExuDt8kiVYwYSTmS2Qhq7whcn+7FxjF5OoTYJEBDSzmaDYMb+WGxkdkehFsK
+        SvMzciRoYvK4GLAnhsHxWtkOEkyhg2yKXHaRsEStkjTDFd9rEMbrruGEBEZBSBaMUOLcu/kpRm19
+        7AKId1UA6J2UMyICReE7EgXrga4SvrBY9bQxExZVgRbpThCEhg2Vv4bgkp9VN1nPALegu+QvCnbj
+        JFoVCCEebOQ+493wZ5t+dtnfhVr+l1ClsvGflVLCsURmlEiNEhVJmzZ44q5Mz+Z8SzQMobICXelD
+        0zNnzJEUncSOWsVaBai9NRBY7JBUwiACVjW9KtPGbaedFqDsokod7jprJ4ByfPFQryTP9hHZPXV1
+        iQ5jnfPgRJ4i7tRIvpU9uuNz209J96zxJT+44aKQv4Ke9vhwsRoI5TiRI7xcHz6ixLnYSdxqfZy9
+        QJkbIIU2TkZNaqVrrvT0znE0ezC/CdwHo8cIq86gnwCziQR/ZvzS7YM8XKyRZXXyKv8I6NS9nHYb
+        wKB+LsvoFiBttdfcnmrRZywjhGteWTkPUUj1MlCqzg57R8a7yKOQc1ErCG3AfvmklpjtZg9AUj0H
+        cwUAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -778,7 +849,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1724'
+      - '1764'
       openai-project:
       - DUMMY
       openai-version:
@@ -802,9 +873,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 179ms
+      - 329ms
       x-request-id:
       - DUMMY
     status:
@@ -906,23 +977,59 @@ interactions:
       you will find a list of document paragraphs and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document paragraphs provided.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full
-      text of the paragraph specified within <paragraph_text></paragraph_text> tags.\\n
-      \   - Note that paragraphs are listed in the same order they appear in the original
-      document.\\n    - You may be working with document fragments rather than complete
-      documents. Focus on extracting information from the available content without
-      making assumptions about missing parts.\\n2. Identify whether each concept in
-      the concepts list is addressed within the document paragraphs.\\n    - Each
-      concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content at paragraph level; derive
+      candidate extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Deduplicate referenced paragraph
+      IDs and preserve their original order.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document paragraphs provided.\\n    - Each paragraph is identified
+      by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.) specified within
+      <paragraph_id></paragraph_id> tags, followed by the full text of the paragraph
+      specified within <paragraph_text></paragraph_text> tags.\\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\\n    - You
+      may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\\n    - Each concept is identified
+      by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified within
+      <concept_id></concept_id> tags.\\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\\n3. For
+      each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Apply
+      cross-paragraph reasoning when helpful (e.g., headings, lists, references like
+      \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance may involve permissions, prohibitions, requirements, exceptions, thresholds,
+      or ranges; reflect the stance .\\n    - Prefer minimal sufficient evidence and
+      value derivation:\\n        -- include only the paragraphs necessary to support
+      the item or derived value; avoid tangential mentions.\\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- When present, \\\"reference_paragraph_ids\\\" contain only
+      valid paragraph IDs.\\n        -- Item values strictly satisfy type and any
+      specified structure/scale/labels constraints.\\n        -- The structure exactly
+      matches the format specified within <answer_format></answer_format> tags (no
+      extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document paragraphs, you must still include
       an entry in the final JSON output but with an empty \\\"extracted_items\\\"
       list. However, for boolean concepts (with extracted item type \\\"bool\\\"),
@@ -1007,8 +1114,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraph_ids\\\":
       [\\n                    str,\\n                    ...\\n                ]\\n
       \           },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
@@ -1237,7 +1347,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        Title: Managing Partner\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n        <paragraph_id>P61</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -1248,7 +1358,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34707'
+      - '37744'
       content-type:
       - application/json
       cookie:
@@ -1256,7 +1366,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1266,7 +1376,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1282,17 +1392,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLrwjNCQUAAAD//6xUwYrbMBC95yuMTi04
-        wU5sx3tO91AIpVBYKHEwijx21NqSkeQ025J/78hOImc3C6WsDzKaN+9pZjSjsP7dfXlM4+Lp069v
-        B/35qfq+Pi6Ibxly9wOYubBmTCIPDJdigJkCasCqhss0nieLNEh7oJEF1JZWtWYazcJpwwWfzoN5
-        PA2iaRid6XvJGWj02+DW8/70qw1UFHBEc+BfLA1oTStA28UJjUrW1kKo1lwbKgzxHcikMCD62DeZ
-        6OWHn/0yCzNoTc6LDF0ysgoy4o8d4GgUZZhdzg002nptHP5Cz9EOtO5gkHw8Uluu2Uo23nq9utF3
-        BAUlKMBg8pYqWina7jGoe+c5ztcwuKt2RuNlRl6D21vTyW3PyMn/lzqF716nkh/A+xB/9J6BKu2V
-        Cutl9uAV2FueLD3NK8FFhTauPawQQIMX+57ljOL/K1gmtuOWw7M7TW3fi66uRwAVQhpq56Zv9u0Z
-        OV3bu5ZVq+ROv6BiaQTX+xzHTOPMYStrI1vSoydct/0YdTeTQVCowQsz8if0xyVptBwEiZtfB4dh
-        ckYNxliPeA/Jwr8jmRdgKK/1aBYJo2yPHeC4SZxck6BdwaXDgsko99ch3ZMf8sceGKm8Ke8AZjsX
-        w2oVFJzdpu3cFNg37i23a637gIkGdcA3KzcclL2PAkra1cPDQ/SzxhHI8dIqUK3iw+tTtjkNgngR
-        hvRhRyanyV8AAAD//wMAHX6rv4wFAAA=
+        H4sIAAAAAAAA/6VUUW/aMBB+51dYfg4VIYyKviL2slaqNk0dJSjynEvizbEt22FUFf995wRI0Eql
+        ai8Wue/uu/N9n3kdEUJFTu8I5RXzvDZyvHr68fBF1oVfPDRm9c1Wz8I8Pn9dr9dPxXcahQr98xdw
+        f6q64RrrwAutOphbYB4Ca3y7iGfTZJbMW6DWOchQVho/no9lo9ixotKCg0Nog5+EvLZnmE3lsMfw
+        JDpFanCOlYCxUxIGrZYhQplzwnmmPI16kGvlQbXjblKF5OEgJA0AB+MzkacIpnQ5SWl0AmHvLeN4
+        jUx4qF3I2HTYmaFL3DHZQEew2rOwiZulrsn9/fLM1iVaKMACtswMs6y0zFTY+shMH2Psvj3lH7of
+        7fchen/q+D+n/ix2QF6AWUcKi5P7CkiOAhJdECdKJVT5sZvMPl27Saq2Q2WQp3EsOEI1Ug4AppT2
+        LDiq9cT2iBzOLiiEEq7K0GgOXYfKOq8NbdEDntvWVc2FUajBy+HevP4NLe3tbDrvCGnv4B6exskR
+        9TiLHNTNk0X0BmWWg2dCuoE1KWe8QjGGPZPoAsz+WJSqz+idzppc6AEwGqzg34nf6t6tB/XrWeLJ
+        /GqDHuDBYTi3sZALfrmXPs1C+Bu4lnYWox2ZOrA7fOOZF2CDYDkUrJHdQ6XuxaFdM1S1BGusaF9r
+        8MToMPoL0yLRoKQEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1315,7 +1424,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1634'
+      - '2516'
       openai-project:
       - DUMMY
       openai-version:
@@ -1341,7 +1450,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 252ms
+      - 274ms
       x-request-id:
       - DUMMY
     status:
@@ -1443,7 +1552,27 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Ensure justifications align with
+      the item's evidence and stance, and comply with length and language constraints.\\n\\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document text provided.\\n2. Identify whether
       each concept in the concepts list is addressed within the document text.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
@@ -1451,8 +1580,21 @@ interactions:
       is described by a concept name specified within <concept_name></concept_name>
       tags and a concept description specified within <concept_description></concept_description>
       tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      to that concept. The item format and structure are specified for each concept.\\n
+      \   - Treat negations, exceptions, and conditionals carefully: relevance may
+      involve permissions, prohibitions, requirements, exceptions, thresholds, or
+      ranges; reflect the stance  in the justification.\\n    - Prefer minimal sufficient
+      evidence and value derivation:\\n    - Favor precision over recall; when uncertain,
+      avoid speculative extractions or derivations.\\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\\n    - Internally verify before
+      finalizing:\\n        -- Each provided concept appears once, in order, with
+      the correct \\\"concept_id\\\".\\n        -- The top-level structure matches
+      the format specified within <answer_format></answer_format> tags.\\n        --
+      No structural IDs (concept/paragraph IDs) appear inside justifications.\\n        --
+      Justifications meet length and language constraints.\\n        -- Item values
+      strictly satisfy type and any specified structure/scale/labels constraints.\\n
+      \       -- The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -1540,8 +1682,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Contract
@@ -1645,7 +1790,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -1656,7 +1801,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '24236'
+      - '27092'
       content-type:
       - application/json
       cookie:
@@ -1664,7 +1809,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1674,7 +1819,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1690,20 +1835,20 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/4xUS28aMRC+51dYPi8oSyBNe+tTag8cqko5BISMPey69dpbPygoyn/vZy/JkjaV
-        ygHwfDPfvOf+gjGuFX/DuGxFlF1vJh+vm8Pt5+1xufyU9PHLx+XX21p1X9/NjJ9ZXmULt/1OMj5a
-        TaWDHUXtTrD0JCJl1vrVzWJ2fXVTXxagc4pMNmv6OJlP60mnrZ7MLmeLyeV8Us9P5q3TkgL07vBk
-        7L5850CtogPEhaxIOgpBNATZoxKE3pks4SIEHaKwkVcjKJ2NZEvsdytb6Ief/FllWFIfN1qtoLLi
-        7y9XvDpXoEP0QiK7jY7Uhax1N+J/8I1me2ESZeWb6iX4ewpR77QUuYiD528tseWHt0xbaZKiwHKV
-        PbVkg94TU7RD7bJ6YG4H0O60QmJaGJjsnO8KV8WkIeGZ2xrdiEEdIItg9yRJ77VtWC98PFaMDnAV
-        sk7FjBZbbXQ8gkCkAP+/dGyZYNFFuDiDRc+EVZD8TFrlvjMlOjQFJJ5i8jbHh2jIIzYIG7cnb7Nb
-        I35VxVbp0KeYIwrOpBzllH2ODOoOmUE9lIBzep6YaDxRh8cptEIhIFBF6AmB+KIQpgxlhAaZ4Q1w
-        ZzC6LETvEIFQLXlCy5FWqfaWQmR97nAewQpuXWpaFlxHDMOKyp2KixII2yTkWdyjS8MS0FBM9CcK
-        bQILqHsbzRGeVcp+kEfOSBjDBqJcxEzxSGAx09MVfz4mD+NzPfyFZH0+2MgsBZG3yyZjzgBhLVpW
-        Wp+HdX1CHp6WyLim924b/jDlecBCu8EyB2w2FiZE1/OCPuB7XZY1Pds/DqIO6xPdDyru5tf1fCDk
-        45UY4XpWn9AyVmd2r64W1QuUm1NdzzaeSyFb7OOT7XgeRFLanQEXZ4n/Hc9L3EPyGNb/oR8BmY8I
-        YsLCKi2f5zyqecpn9F9qT4UuAfNAfo+Z3ERNPjcDB0AkM9w2Ho4B12iDjjXke6+HA7frN7vX9dX8
-        9Xa2WPCLh4vfAAAA//8DANodd8TvBQAA
+        H4sIAAAAAAAA/3VU207bQBB9z1eM/OxEBEJb+oZ6ES+lgFoVRFC0Xo+ThfWuu5dAiiL1N/p7/ZKe
+        tRNiVHjxZc/MmTO3fRwQZarM3lMmFyLIutHDTz8uv5yefT+4+LV3Xh2d8Pzrlf18fnlVlBfFKsuT
+        hy1uWYat10ha+HFQ1nSwdCwCJ9bx26PxZP9gcnDUArUtWSe3eROGb4Y6GrHxWFgl2QO6xi/RY/tM
+        2kzJDzjey7cnNXsv5oyzrREOndXpJBPeKx+ECVm+A6U1gU0r93pqQJ4eRNMESG7CTJVTgNPsw940
+        y7cgPwQnJNKYqcC1TxbXHfbE0BkuhY6c4EneP76NPqhKSZHq0vF/WzCdfjwmZaSOJXuS1jE1zgZU
+        E1Y+30DKzElQ4awoqeRKGZVgshU8TKVKZKOEhnFlXd0GyKmJrrGeh1rVEFxS9JyTsaZUXmrrIyLZ
+        Qqu52ERyHKIDp0MEH1yU2xAgZAd62AhTIshtNACXDBetuBrRib3nJTuoDUlQEMqkXIxvlIw2elIO
+        prxEHxJ/NEixQtsQAKq1MPOIDuakWSxRhTPhwoqO//7+A882N/ym0C23DBCIENpTAde7nBbCpzoh
+        HnoNc/Jd+cjEuoD0VDx4W0jUomnSPz+grL5LPGGlRVxjIR8anF4RhiYwLew9aQv7fpmTml7lWlXK
+        RB5R6qdWolCtjRRNy92wG/aKrtXPqMq0D1SKGnl7Qm0tdUtCjQ2bboq6UPMIptE02w7Suvu4SS98
+        3/TH2nEVvUjrZKLWPUAYZNaJTUN7s0HWTyuUBsovZhDgsbJYCx9sk7XoGs+bdiXjsy3L0MIaqxLs
+        Hbe0h+PDSUeY7dZ/B+8/oQFadM9vsvcuf4Fytmlyb68zKeQC+9ePOc6fgbN7h2HfWeyuCYEtsj1g
+        0CvB/4pfit6VB9OzYxmP918NsANkulSgu3FcKvm8Ljszx+kOfc3sqRmt5MyzW+KCnAXFLjUMl4KI
+        urvlMr/CGtQzdHXOrsH8h81MDNaDfwSOdBvhBQAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1726,7 +1871,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1740'
+      - '2895'
       openai-project:
       - DUMMY
       openai-version:
@@ -1752,7 +1897,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 177ms
+      - 199ms
       x-request-id:
       - DUMMY
     status:
@@ -1854,7 +1999,27 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Ensure justifications align with
+      the item's evidence and stance, and comply with length and language constraints.\\n\\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document text provided.\\n2. Identify whether
       each concept in the concepts list is addressed within the document text.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
@@ -1862,8 +2027,21 @@ interactions:
       is described by a concept name specified within <concept_name></concept_name>
       tags and a concept description specified within <concept_description></concept_description>
       tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      to that concept. The item format and structure are specified for each concept.\\n
+      \   - Treat negations, exceptions, and conditionals carefully: relevance may
+      involve permissions, prohibitions, requirements, exceptions, thresholds, or
+      ranges; reflect the stance  in the justification.\\n    - Prefer minimal sufficient
+      evidence and value derivation:\\n    - Favor precision over recall; when uncertain,
+      avoid speculative extractions or derivations.\\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\\n    - Internally verify before
+      finalizing:\\n        -- Each provided concept appears once, in order, with
+      the correct \\\"concept_id\\\".\\n        -- The top-level structure matches
+      the format specified within <answer_format></answer_format> tags.\\n        --
+      No structural IDs (concept/paragraph IDs) appear inside justifications.\\n        --
+      Justifications meet length and language constraints.\\n        -- Item values
+      strictly satisfy type and any specified structure/scale/labels constraints.\\n
+      \       -- The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -1951,8 +2129,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Contract
@@ -2056,7 +2237,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -2067,7 +2248,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '24236'
+      - '27092'
       content-type:
       - application/json
       cookie:
@@ -2075,7 +2256,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2085,7 +2266,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2101,21 +2282,20 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3RUTU8bMRC98yssnzdRNiwQeqtKC71UbVW1agmKHHt2Y/DaW38EEOK/d8a7sAkF
-        DiHxvHkz8+bj4YAxrhV/x7jciCjbzkw+Hjd3v9fXp+cX1Un8evZlIU8/ff/152d1dl5+4wV5uPU1
-        yPjkNZUO/SBqZ3uz9CAiEGt5sjiaHx8uynk2tE6BIbemi5NqWk5abfVkPpsfTWbVpKwG943TEgLi
-        LvEnYw/5kxK1Cu7weVY8vbQQgmgA355A+OidoRcuQtAhCht5MRqlsxFszv1yaTN9/4/+lmSW0MWV
-        VkuELPmH2ZIXuwC4i15IrG6lI7SBUJej/QXf6LYVJgGBF8Vr5usUoq61FCRiH/nHBtiXs/dMW2mS
-        gsBIZQ8bsEFvgSmoUTuCB+ZqNNpaKyxMC4MutfNt5iqYNCA8c2ujG9HD0cgisnuQoLfaNqwTPt4X
-        zGix1kbHeyZFFwrWgRUmauhd1thVuSnQLSZvKSiGAI8BEdq4LXhLXEbcFkxYxZQOXYoUJjiTKPSU
-        fY4M4Y6FDiTWi8yUiEo+p0ac9Fs0HqDFYjLPswDUSyW8wpJECviAHgJhiqAhY4EqlzCUMWUkYvYP
-        A73Rf5NWNJ1MiRZHJwwxrpOVkYT1YDTUrPNuq0PWC8eOOkNQzME7Esy7iBtApLXHHG6dv5myC3cL
-        KEPBgmuB4WyjakMvDOpim4QBc7zOCAkbZxT4XtzcAWxqFNpgpdisTTT3mIxKErIoJLAwhkLXOPUY
-        Whgd2kw3LCBYNEyXfH/CHsefV/1XfLna3QkPdQqCFtMmY3YMwloX+6mhOb8aLI/P+2dcg/mswwtX
-        TrMZNiucmIBHAXctRNfxbH3Ez6u852lvdTkStbh50d1ADlcdl1VPyMcDM5rLw+EM8Ig5mh2/k+rJ
-        b49yNai7cyy4xInGVR59q8V4XERS2o222cFO7f+n9Bp9Xz9uxQ7Lm/SjQdIJwrRw3XHy9sseYR7o
-        CL8Fe9Y6J8wD+C0e1RVus6d+4PkQyfSXkYf7gLdshU1rwHde9+ex7lZiNjs6LEtxuuYHjwf/AAAA
-        //8DAJxFLx8tBgAA
+        H4sIAAAAAAAA/3VUy04bMRTd5yuuZj1EBAIIdohStQuqtqrUViSKHM/NxOCxBz9CIsS/99iTx6DC
+        Zgg+93HuuT5+GRAVqiquqJBLEWTT6qPb33/ufhz/fVqPbu7859vbcFHf2Xotflah5qJMGXb+wDLs
+        sobSIo+DsqaDpWMROFUdXVyOxien4/FJBhpbsU5pdRuOzo90NGKbsbRKsgd0j3+JXvI3cTMVr3F8
+        XO5OGvZegMjVPgiHzup0UgjvlQ/ChKI8gNKawCbTvZ8YFE8fokkCJLdhpqoJwElxczwpyh3I6+CE
+        xBgzFbjxKeK+w/YVusCV0JETfFr2jx+iD2qhpEi6dPV/LZlE7Zgb0CFlpI4Ve/K8Yic0SeuYvn26
+        ptbZAH2R58ttmDI1CZo7KyrEmYWqUEIJrcKGKl4oo1J4SdEzOfbBqV2+Fwuuo3C5RBWDYhzyGkV9
+        F+A4RGfIOhRCYsyJZBfUYIkOPRAjTAUiD9EAXKUOWvFiSF/sc+IOksHTU+zoKEwU53kLSNYbitih
+        a5ThiuYbmmthHum7cAi9RssgVOpQxVYnsRDUNcOUaZdJqT7bNDx+YxbfSUQmNnPwNDVoODDjFTqn
+        cQwSGEUktEVTiFBzN0prA+/YpYI6qYWSWom5ykNgBSuVWw7payCIYEmzWGFdqmmtC7lHi70lDmiw
+        HQTDSsRBEh/lkoSnkMyQFw5Jk1NYawxZKS+19RHLypQC7oaXqJjCHLc4R47IcgsJb/jhpNjdr9fu
+        xzT9we9p/7Y7hj4iucxErXuAMMaGTDf7bLpFXvfOSrfIL2fg6+FkuMUH2xYZfcV3mp0a35ivgE4N
+        HBTsI+eyZ6OzcVewOLwKB/jkfGvkIoCL7uWNR7u8NyVnW117di+kkEvYst9zVL4BZ88Opj1EHF4P
+        ASvZHjDoSfA/4/e6d/LgthyqjEaXHzY4ADK9NeCN1VadO98Lc5ye1o/C9svIlAvPboV3cwZTu7Qw
+        vAQi6u7xK/wG7mlm2GrNroVBwvZODF4H/wDkN+Ol+AUAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2138,7 +2318,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2081'
+      - '2801'
       openai-project:
       - DUMMY
       openai-version:
@@ -2164,7 +2344,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 177ms
+      - 199ms
       x-request-id:
       - DUMMY
     status:
@@ -2266,16 +2446,45 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document text provided.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\\n
-      \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -2352,8 +2561,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Effective
       Date</concept_name>\\n\\n    <concept_description>\\n    Contract start date\\n
@@ -2454,7 +2666,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -2465,7 +2677,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23094'
+      - '25659'
       content-type:
       - application/json
       cookie:
@@ -2473,7 +2685,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2483,7 +2695,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2499,15 +2711,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr0hMMgYAAAD//3RTTW+jMBC951dUPkPF
-        h2mTc1vtHvdS7UohQo4ZiLvGRrapWq3y33dskpj0g4OBefOGeW+Gn/JdmF/PT1X74/H59c/6tykP
-        rCKJZ+j9C3B3Zt1yjTxwQqsZ5gaYA181v19XxV25zmkABt2C9LR+dCm9zdNBKJEWWVGlGU1zeqIf
-        tOBgMW+Lrzc3/8LpG1UtvGE4S86RAaxlPWDsnIRBo6WPEGatsI4pR5IIcq0cqND7tlah/HzzV+1h
-        DqNrRFtjSk0espokywR4c4ZxVNcIB4P1WduIzzn5XZrde1m0JhHbzY/HWu2WDRnoJsu8K2qScgEw
-        pbRj3tVgxe6EHC/ipe5Ho/f2A5V0aKo9NDgEixNBodbpkQT0iOcumDxd+Uaw0ICynf4L4XOUZuu5
-        IInTjXBZnkCHLcoljebJFxWbFhwT0i4GRTjjB7Txws03RRwsm1qhI5atFtI/d/RV+Vm+UP2iyrfl
-        I8D9+LGt0UAr+LXqmGbA/wDfpV2sDg0TC+YVF7pxAowfRwsdm+S8lcS+W9yjBmfWgxmNmFezG5tu
-        k5d0sy+qiqyOq/8AAAD//wMAuBniX6kDAAA=
+        H4sIAAAAAAAA/3WSTU/DMAyG7/sVVc4t2krpGFcEByRuSIDWqQqp1wWyJCQuMND+O0620U7AJVL8
+        +PO1v0ZJwmTDLhImVhzF2qrs6v7h9u7e3ny+n74K1eavG3N9fvWweXyeXlqWhgjz9AwCD1EnwlAc
+        oDR6h4UDjhCyTqazSZGfFsVZBGvTgAphrcWszFSn+T5iZaQAT2hO3yT5im/oTTfwQeZxerCswXve
+        AtkOTmR0RgUL495Lj1wjS3sojEbQsd15pSl5eJKkCkCAxVo2FcGKXY4rlh4gfKDjgsaoJcLaB495
+        xSZlNp5m+TgvKrYIrttKL4bFHCw7z8OQulNqALjWBnkQKY652JPtz2BLqaVf1aSdJyGpWY/Gski3
+        9C6iUN3R7Mw6kh5rNC8Q0xbns+kuIeuX0uOy2EOkVtQgbFZO0j8y1g0gl8oPxGaCixWJMixZpEew
+        fnckWe/R7453jTQDMBoo8Lvhv6rv1JG67bPk5b/5eyDCoqlt66CR4liV3s1BuOv/3H5WETtmHtwb
+        HW2NElxYVwNL3qnd5TG/8XQ1Ne20BWedjOcXLmK0HX0DXfsgGnUDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2530,7 +2741,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '643'
+      - '1083'
       openai-project:
       - DUMMY
       openai-version:
@@ -2556,7 +2767,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 169ms
+      - 188ms
       x-request-id:
       - DUMMY
     status:
@@ -2658,16 +2869,45 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document text provided.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\\n
-      \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -2744,8 +2984,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Title</concept_name>\\n\\n
       \   <concept_description>\\n    Contract title\\n    </concept_description>\\n\\n
@@ -2846,7 +3089,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -2857,7 +3100,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23055'
+      - '25620'
       content-type:
       - application/json
       cookie:
@@ -2865,7 +3108,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2875,7 +3118,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2891,15 +3134,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr0hK8QQAAAD//3RSTW/iMBC98ysin1qJ
-        VPmilGMFvXSlrtRbRVBknCF417GzHmfbasV/33ECJPTjYsS8eS/z3syPpHx5MI/Pr6/Vn8XiQcBy
-        /rN6YVPPMNtfINyJdSMM8cBJo3tYWOAOvGo8v5slt+ldPOuA2pSgPK1qXJjdxGEttQyTKJmFURbG
-        2ZG+N1IAUt+a/gbBv+71g+oS3qgcTU+VGhB5BVQ7NVHRGuUrjCNKdFw7Nh1AYbQD3c2+zjWJ+ycI
-        cg8IaFwhy5zAnC2jnE1PILw5ywV5KqSDGn3Husc8+mR0uJIolMHWQnBfWYCaPhJcPa3ur3PWd278
-        zyHXm/E4FnYtcp+JbpUaAVxr47jPtAtic0QOZ+vKVI01W/xAZTuKFPcFrQBpH2QTnWlYhx7o3XQR
-        txepMRKqybozv6H7XJYubntBNux2gNPsCDoaUY1oWXpczaViUYLjUuFoTUxwsac4B26SZGcPvC2l
-        GbBoMrL+eaKv5Hv7UlcjlW/lB0D4E6CxGgulFJeuhzYL/vy/aztH3Q3MEOxfOufCSbB+HSXseKv6
-        m2T4jnRPBe2sAttY2R/mril4FM3SOOaLLZscJv8BAAD//wMAYztGmqcDAAA=
+        H4sIAAAAAAAA/3WSwW7bMAyG73kKQacOcIq6TdK0t2Bdb+2pwwLEgaFKjKNFlgxR3jIUefdRclI7
+        W3uRYX4kRf0/30aMca34PeNyK4KsGzP+9mP59B2Xj/JlJxb5dKl2+HIrNrvpdK9veBYr3OtPkOFU
+        dSkd1UHQznZYehABYtf89i6fXN9MJrMEaqfAxLKqCePZ2LRWHCu2TktAQiv6ZewtnXE2q2BP4avs
+        FKkBUVRAsVMSBb0zMcIFosYgbOBZD6WzAWwad1VYah4PxooIJDSh1KogWPCvVwXPThD2wQtJzyh1
+        gBpjxqpjkT47O37QKI3D1gNbVB6gpkvYxfPD4kvBu8x1/BwKux6O42HToogy2NaYARDWuiCijEmI
+        9ZEc3p++0VbjtiR1kaSm52BwDU/0QOc6SdmeqcMbT+aEMrgdpLaT+XzaNeS9bT2e5UcYaBQzKLvr
+        LPy3Y6kgCG1wYAeXQm5JtuGV19kZLH97ErXP6N0VrdJuAEYDBf4f+KPbO3W0rfou+fzT/j2QcRVo
+        7MaD0vJclT7NQ9z8z9LerUgTcwT/i9a6DBp8tEvBRrSm202Of5D2qiRPK/CN12lB40aMDqO/psxl
+        EJcDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2922,7 +3165,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '707'
+      - '860'
       openai-project:
       - DUMMY
       openai-version:
@@ -2946,9 +3189,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 169ms
+      - 300ms
       x-request-id:
       - DUMMY
     status:
@@ -3050,7 +3293,450 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      a concept is not addressed in the document text, you must still include an entry
+      in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
+      for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
+      \   - Extract True if the concept is confirmed or strongly supported by the
+      document content (either explicitly stated or reasonably inferred)\\n    - Extract
+      False if the concept is contradicted, denied, or if the document content allows
+      you to determine that the concept is not true (e.g., absence of expected content
+      that should be present if the concept were true)\\n    - Only leave \\\"extracted_items\\\"
+      empty if the concept is impossible to determine because either: (1) the document
+      is completely irrelevant to the concept, or (2) the document does not contain
+      enough information to make a conclusion about the concept\\n\\nFollow these
+      additional rules:\\n\\n- Output format:\\n    -- Provide your answer in the
+      JSON format specified within <answer_format></answer_format> tags (do not include
+      backticks, code fences, or any introductory/explanatory text). Follow this format
+      exactly.\\n\\n- Consistency:\\n    -- Each JSON object in the list must have
+      two keys: \\\"concept_id\\\" and \\\"extracted_items\\\".\\n    -- The value
+      of \\\"concept_id\\\" must match exactly the ID of the concept (for example,
+      \\\"C0\\\", \\\"C1\\\", etc.).\\n    -- The value of \\\"extracted_items\\\"
+      must be an array. If the concept is not addressed or there are no items to extract,
+      leave the array empty ([]). For boolean concepts, only leave empty if the concept
+      is impossible to determine.\\n        --- Extracted items may be found directly
+      (explicitly mentioned) or inferred from the content (implied or derivable from
+      the information present).\\n        --- Guidance regarding the possible amount
+      of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items>
+      tags. Each extracted item, even if there is only one, must be part of the \\\"extracted_items\\\"
+      array.\\n</concept_extraction_rules>\\n\\n<extracted_item_structure>\\n- Item
+      structure:\\n    -- All extracted items must match the exact type specified
+      for the concept.\\n    -- If a specific structure is provided for a concept
+      within <expected_structure></expected_structure> tags, you must follow that
+      structure for all extracted items corresponding to that concept.\\n    -- If
+      a rating scale is provided for a concept within <rating_scale></rating_scale>
+      tags, the extracted item value must be within that scale.\\n    -- If available
+      labels are provided for a concept within <available_labels></available_labels>
+      tags, the extracted item value must be a list containing only labels from the
+      predefined set. The classification type is explicitly stated within <classification_type></classification_type>
+      tags for each concept: for multi-class concepts, you must always select exactly
+      one label (the most appropriate one even if not perfect); for multi-label concepts,
+      leave the \\\"extracted_items\\\" array empty if none of the labels apply to
+      the content.\\n    -- If there are example items within <extracted_item_examples></extracted_item_examples>
+      tags, try to follow the same style and formatting for your extracted items.\\n
+      \       --- Each example is provided within separate <extracted_item_example></extracted_item_example>
+      tags.\\n    -- When extracting string values, translate them in English if the
+      original language of the document is not English.\\n</extracted_item_structure>\\n\\n<type_validation_rules>\\n-
+      Types of extracted items:\\n    -- Each concept specifies an \\\"extracted item
+      type\\\" within <extracted_item_type></extracted_item_type> tags. Ensure your
+      extracted items strictly match that type. Python types are provided (e.g., str
+      for string, int for integer, float for floating-point number, dict for object,
+      etc.). Type compliance is mandatory - any deviation will result in invalid output.\\n
+      \   -- Do not introduce any extra fields or modify the specified structure.\\n</type_validation_rules>\\n\\n<extracted_item_handling_rules>\\n-
+      Handling missing or multiple items:\\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \\\"extracted_items\\\" array.\\n    -- For boolean concepts (with extracted
+      item type \\\"bool\\\"): Distinguish carefully between these cases:\\n        ---
+      Extract True if the concept is confirmed or strongly supported by the provided
+      content (either explicitly stated or reasonably inferred)\\n        --- Extract
+      False if the concept is contradicted, denied, or if the provided content allows
+      you to determine that the concept is not true (e.g., absence of expected content
+      that should be present if the concept were true)\\n        --- Only leave \\\"extracted_items\\\"
+      empty if the concept is impossible to determine because either: (1) the provided
+      content is completely irrelevant to the concept, or (2) the provided content
+      does not contain enough information to make a conclusion about the concept\\n
+      \   -- For concepts that have <available_labels></available_labels> tags: behavior
+      depends on the classification type explicitly stated within <classification_type></classification_type>
+      tags. For multi-class concepts, you must always select exactly one label (the
+      most appropriate one even if not perfect). For multi-label concepts, leave the
+      \\\"extracted_items\\\" array empty if none of the labels apply to the content.\\n
+      \   -- For concepts that have <available_labels></available_labels> tags: if
+      multiple labels apply to the same instance or context, include them all in a
+      single extracted item with multiple labels in the \\\"labels\\\" array (e.g.,
+      {\\\"labels\\\": [\\\"label1\\\", \\\"label2\\\"]}). Only create multiple extracted
+      items if there are genuinely distinct instances or contexts that warrant separate
+      classification.\\n    -- For concepts that do not have <available_labels></available_labels>
+      tags: if multiple items are found for a concept, include each as a separate
+      entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
+      id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Duration
+      in years</concept_name>\\n\\n    <concept_description>\\n    Contract duration
+      in years\\n    </concept_description>\\n\\n    <amount_of_extracted_items>This
+      concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\\n\\n
+      \   <extracted_item_type>int (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_text>\\nNon-Disclosure
+      Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
+      made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
+      _____\\nPhone: _____\\nEmail: _____\\n\\nParty B:\\n\\nExample.Com LLC\\n5678
+      Random Drive\\nNew York, NY 00000\\nContact: Jane Doe, Managing Partner\\nPhone:
+      (012) 345-6789\\nEmail: jane.doe@example.com\\n\\n1. Purpose:\\n\\nThe purpose
+      of this Agreement is to protect the confidential information that may be disclosed
+      between the parties during discussions and engagements regarding potential business
+      collaborations and partnerships.\\n\\n2. Definition of Confidential Information:\\n\\nFor
+      purposes of this Agreement, \\\"Confidential Information\\\" means any and all
+      non-public information, conveyed in all forms, whether in oral, written, electronic,
+      or other form or media, whether or not marked, designated, or otherwise identified
+      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
+      or observed by Receiving Party, which (i) has actual or potential economic value
+      by virtue of not being generally known to, and not being readily ascertainable
+      by proper means by, other persons who can obtain economic value from its disclosure
+      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
+      its secrecy and confidentiality.\\n\\nConfidential Information includes, but
+      is not limited to, the following categories: (1) business information (business
+      plans, strategies, and models), (2) technical information (technical specifications
+      and documentation, research and development activities), (3) customer and market
+      information (customer lists and contact information, sales histories and patterns),
+      (4) personnel and internal information (employee lists and contact information,
+      employment agreements and personnel files), (5) intellectual property (trade
+      secrets and know-how, patents and patent applications, copyrights and copyright
+      applications, trademarks and trademark applications), (6) strategic information
+      (merger and acquisition plans, competitive analyses and strategies). Software
+      code shall also be included into the confidential information.\\n\\nConfidential
+      Information shall not include information that: (a) is or becomes generally
+      available to the public other than as a result of disclosure by Receiving Party
+      or its Representatives; (b) was available to Receiving Party on a non-confidential
+      basis prior to its disclosure by Disclosing Party; (c) becomes available to
+      Receiving Party on a non-confidential basis from a person other than Disclosing
+      Party who is not otherwise bound by a confidentiality obligation to Disclosing
+      Party; or (d) was independently developed by Receiving Party without reference
+      to or use of any Confidential Information. The name of the dog of the Receiving
+      Party is Bob.\\nThe designation of information as Confidential Information shall
+      not be determinative of whether such information constitutes a trade secret
+      under applicable law. All Confidential Information shall remain the exclusive
+      property of Disclosing Party, and Receiving Party shall have no rights, by license
+      or otherwise, to use the Confidential Information except as expressly provided
+      herein.\\n\\n3. Obligations of Receiving Party:\\n\\nThe party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:\\n\\na. Maintain the confidentiality
+      of the Confidential Information and not disclose it to any third party without
+      the prior written consent of the Disclosing Party.\\n\\nb. Use the Confidential
+      Information solely for the purpose of evaluating or engaging in the potential
+      business collaboration.\\n\\nc. Take all necessary precautions to protect the
+      confidentiality of the Confidential Information, which shall be no less than
+      the precautions it takes to protect its own confidential information.\\n\\n4.
+      Exclusions from Confidential Information:\\n\\nConfidential Information does
+      not include information that:\\n\\na. Is or becomes publicly known through no
+      wrongful act of the Receiving Party.\\n\\nb. Is already known to the Receiving
+      Party at the time of disclosure.\\n\\nc. Is lawfully received from a third party
+      without breach of this Agreement.\\n\\nd. Is independently developed by the
+      Receiving Party without use of or reference to the Disclosing Party's Confidential
+      Information.\\n\\n6. Return of Materials:\\n\\nUpon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.\\n\\n5. Liability:\\n\\na. Total Liability Cap:\\n The total liability
+      of either party for any and all claims arising out of or related to this Agreement,
+      whether in contract, tort, or otherwise, shall not exceed the greater of (i)
+      $100,000 or (ii) the total amount paid by the Receiving Party to the Disclosing
+      Party under any separate business agreement between the parties during the twelve
+      (12) months preceding the event giving rise to the claim. This limitation of
+      liability is cumulative and not per incident.\\n\\nb. Penalties for Breach:\\n
+      In the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.\\n\\n7. No License:\\n\\nNothing
+      in this Agreement shall be construed as granting any rights to the Receiving
+      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
+      Information, except as expressly set forth in this Agreement.\\n\\n8. Governing
+      Law and Disputes:\\n\\nThis Agreement shall be governed by and construed in
+      accordance with the laws of the State of California, without regard to its conflict
+      of law principles.\\n\\nAll disputes shall be resolved by the courts of the
+      State of California. This Agreement shall remain in effect for a period of five
+      (5) years from the date of signing this agreement.\\n\\n9. Miscellaneous:\\n\\na.
+      This Agreement constitutes the entire agreement between the parties with respect
+      to the subject matter hereof and supersedes all prior or contemporaneous oral
+      or written agreements concerning such subject matter.\\n\\nb. Any amendments
+      or modifications to this Agreement must be made in writing and signed by both
+      parties.\\n\\nc. If any provision of this Agreement is found to be unenforceable,
+      the remainder shall be enforced as fully as possible and the unenforceable provision
+      shall be deemed modified to the limited extent required to permit its enforcement
+      in a manner most closely representing the intention of the parties.\\n\\nd.
+      The Disclosing Party shall be a good person to execute this contract.\\n\\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
+      _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
+      ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '25644'
+      content-type:
+      - application/json
+      cookie:
+      - DUMMY
+      host:
+      - DUMMY
+      user-agent:
+      - OpenAI/Python 2.54.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 2.54.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '120.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs5OETdOnew67BKg6KlbhzgwVIlOlCqSINFthyL/vZTyYQdr
+        LwLEhyRevuTHKMuYkuxHxsSWo9g7Pf715+n+999u6cuwfGgrd//4KNtq7nb4hoLlscI+70DguepG
+        WKoDVNYcsfDAEWLXoloU5e20LKsE9laCjmUbh+O7se4MP1VsrRIQCK3om2Uf6Y3ajIR3Ck/yc2QP
+        IfANUOycREFvdYwwHoIKyA2yvIfCGgST5K5qQ83jk2V1BAIcNkrWBGv2c1Kz/AzhHT0XNEajEPYh
+        Zqxm60gPtVkP+3tou8DjXKbTegC4MRZ59CVNtj6Rw2WWVhkVtg3ZFcg70hfQOpbogd518qa7Gpc5
+        T25jg/YFUttyPl8cG7J+Dz2e3Z4gkhQ9KFuURf5Fx0YCcqXDwF8muNiSD5faYnpX5VewefPkUp8x
+        nRWLSwbvpLI9m4wGJvyv+SsBR4OU2Qw0fN+/ByKul5Q7D1KJa2P6NA/xmr9Lu2wjKWYB/CudaoMK
+        fNyYhJZ3+nhvLPwLdCsNrXUD3nmVji4exegw+gR8Q4L2awMAAA==
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '878'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 188ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"<introduction>\\nYou
+      will be assigned tasks involving the extraction, analysis, and interpretation
+      of data within various types of documents. Your role is to carefully process
+      the information and provide accurate, relevant outputs based on the specific
+      instructions provided.\\n</introduction>\\n\\n<guidance_on_instruction_structure>\\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\\n</guidance_on_instruction_structure>\\n\\n<key_terminology>\\nKEY
+      TERMINOLOGY TO UNDERSTAND:\\n\\n  <document_definition>\\n  1. Document: A structured
+      or unstructured file containing written or visual content. Documents can vary
+      in type and purpose, including but not limited to:\\n    <document_types>\\n
+      \   - Contracts: Legal agreements defining terms and obligations.\\n    - Invoices:
+      Financial documents detailing transactions and payments.\\n    - Curricula Vitae
+      (CVs): Resumes outlining an individual's professional experience and qualifications.\\n
+      \   - Visual Documents: Images, scanned documents, blueprints, photographs,
+      charts, diagrams, or screenshots that contain relevant information.\\n    -
+      General Documents: Any other types of files that may contain text, tables, images,
+      or mixed formats.\\n    </document_types>\\n  \\n  Note that occasionally you
+      may be working with document fragments rather than complete documents. These
+      fragments represent portions of a larger document and should be analyzed within
+      their limited context. When working with fragments, focus on extracting information
+      from the available content without making assumptions about missing parts.\\n\\n
+      \   <content_types>\\n    Documents may contain textual or visual content:\\n
+      \   - Text-based content: Written information that can be directly read and
+      processed.\\n    - Visual content: Images, charts, diagrams, blueprints, tables,
+      handwritten text, or other visual elements that require visual interpretation.\\n
+      \   </content_types>\\n  </document_definition>\\n\\n  <aspect_definition>\\n
+      \ 2. Aspect: A defined area or topic within a document that requires focused
+      attention. Each aspect corresponds to a specific subject or theme described
+      in the task. For example:\\n    <aspect_examples>\\n    - Contract Aspects:
+      Payment terms, parties involved, or termination clauses.\\n    - Invoice Aspects:
+      Due dates, line-item breakdowns, or tax details.\\n    - CV Aspects: Work experience,
+      education, or skills.\\n    </aspect_examples>\\n  You will analyze aspects
+      as instructed, considering their relevance and context within the document.\\n
+      \ </aspect_definition>\\n\\n  <concept_definition>\\n  3. Concept: A unit of
+      information or an entity relevant to the task. Concepts may be derived from
+      an aspect or the broader document context. They represent a wide range of data
+      points and insights, from simple entities (names, dates, monetary values) to
+      complex evaluations, conclusions, and answers to specific questions. Concepts
+      can be:\\n    <concept_types>\\n    - Factual extractions: Such as a penalty
+      clause in a contract, a total amount due in an invoice, or a certification in
+      a CV.\\n    - Analytical insights: Such as risk assessments, compliance evaluations,
+      or pattern identifications.\\n    - Reasoned conclusions: Such as determining
+      whether a document meets specific criteria or answers particular questions.\\n
+      \   - Interpretative judgments: Such as ratings, classifications, or qualitative
+      assessments based on document content.\\n    - Label classifications: Content
+      categorization using predefined labels.\\n    </concept_types>\\n  </concept_definition>\\n\\n</key_terminology>\\n\\n<critical_guidelines>\\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\\n\\n  <precision_and_accuracy>\\n  - Precision and
+      accuracy: Extract only information that is explicitly stated or can be directly
+      inferred from the document content. Avoid speculation or assumptions beyond
+      what the document content clearly supports.\\n  </precision_and_accuracy>\\n\\n
+      \ <visual_content_analysis>\\n  - Visual content analysis: When processing visual
+      content (images):\\n    -- Examine all visual elements carefully, including
+      text within images, charts, diagrams, logos, layout structures, etc.\\n    --
+      Identify and analyze visual patterns, relationships, and structural information
+      that may not be explicitly stated in text.\\n    -- Consider the visual context
+      and layout as it may provide important semantic information.\\n    -- Analyze
+      information in tables, forms, charts, and diagrams with attention to their visual
+      structure and relationships.\\n  </visual_content_analysis>\\n\\n  <contextual_understanding>\\n
+      \ - Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\\n  </contextual_understanding>\\n\\n
+      \ <systematic_analysis>\\n  - Systematic analysis: Before extracting, thoroughly
+      understand:\\n    -- The nature and type of the document\\n    -- The specific
+      aspects or concepts you need to focus on\\n    -- The expected output format
+      and structure requirements\\n    -- Any constraints or special handling instructions\\n
+      \ </systematic_analysis>\\n\\n  <quality_control>\\n  - Quality control: After
+      extraction, verify that:\\n    -- All extracted information directly relates
+      to the specified aspects/concepts\\n    -- The output format matches the required
+      schema exactly\\n    -- No extraneous information has been included\\n    --
+      All mandatory fields are present and correctly populated\\n  </quality_control>\\n\\n
+      \ <conservative_approach>\\n  - Conservative approach: When in doubt about whether
+      information qualifies for extraction:\\n    -- If the relevance is unclear,
+      err on the side of exclusion\\n    -- If multiple interpretations are possible,
+      choose the most conservative one\\n    -- If information is ambiguous, do not
+      force an extraction\\n  </conservative_approach>\\n\\n  <structured_output_compliance>\\n
+      \ - Structured output compliance: Adhere strictly to the specified JSON format
+      requirements. Do not:\\n    -- Add extra fields beyond what is requested\\n
+      \   -- Modify the structure or field names\\n    -- Include explanatory text
+      outside the JSON structure\\n    -- Use code blocks or formatting markers unless
+      explicitly required\\n  </structured_output_compliance>\\n\\n</critical_guidelines>\\n\\n<expected_deliverables>\\nEXPECTED
+      DELIVERABLES:\\n  <deliverable_types>\\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\\n  </deliverable_types>\\n</expected_deliverables>\\n\\n\\n<conclusion>\\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\\n</conclusion>\"},{\"role\":\"user\",\"content\":\"<introduction>\\nBelow
+      you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
+      structured information in these instructions is provided using semantic XML
+      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Ensure justifications align with
+      the item's evidence and stance, and comply with length and language constraints.\\n\\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document text provided.\\n2. Identify whether
       each concept in the concepts list is addressed within the document text.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
@@ -3058,8 +3744,21 @@ interactions:
       is described by a concept name specified within <concept_name></concept_name>
       tags and a concept description specified within <concept_description></concept_description>
       tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      to that concept. The item format and structure are specified for each concept.\\n
+      \   - Treat negations, exceptions, and conditionals carefully: relevance may
+      involve permissions, prohibitions, requirements, exceptions, thresholds, or
+      ranges; reflect the stance  in the justification.\\n    - Prefer minimal sufficient
+      evidence and value derivation:\\n    - Favor precision over recall; when uncertain,
+      avoid speculative extractions or derivations.\\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\\n    - Internally verify before
+      finalizing:\\n        -- Each provided concept appears once, in order, with
+      the correct \\\"concept_id\\\".\\n        -- The top-level structure matches
+      the format specified within <answer_format></answer_format> tags.\\n        --
+      No structural IDs (concept/paragraph IDs) appear inside justifications.\\n        --
+      Justifications meet length and language constraints.\\n        -- Item values
+      strictly satisfy type and any specified structure/scale/labels constraints.\\n
+      \       -- The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -3147,8 +3846,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Is
@@ -3250,7 +3952,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -3261,7 +3963,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23993'
+      - '26849'
       content-type:
       - application/json
       cookie:
@@ -3269,7 +3971,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3279,7 +3981,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3295,17 +3997,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUTW/bMAy951cIunQD7MJOk7TbrWt2KbAehp2WBIYiM7YyWTJEuWtW5L+PktPa
-        /crBifn4qEfxMY8Txrgq+VfGZS28bFqdfl9UD9Iefnzb3+5n9tbc/fw3Xd78rq9Q7DVPAsNu9yD9
-        E+tcWuKBV9b0sHQgPISq+eXVfLq4uMoXEWhsCTrQqtans/M8bZRR6TSbztNsluazE722SgJS3ope
-        GXuMzyDUlPBA4Sx5ijSAKCqg2FMSBZ3VIcIFokIvjOfJAEprPJiofbU2sXz/FT7rAEtofaHKNaWs
-        +U225sk4AR68E5K6K5SHBkPWasBf1Rto90J3EJK96yB5L2PfoVc7JUW4x/7wXzWw0squIcFMIfPK
-        ayjZ2Z016VKh1BY7B+y6cgAx59Pd8vrzGROmZKFPoQyRDi0V1TEQlDPQMRkZdrJmAlkrnFeACWs7
-        11qEhNmtVlUUQlGtxFZp5Q8Jq+w9OKNMxbT4m8RzUFVG+CADyRKBcb7mL/s7Dq+b/idFNuOhONh1
-        KIIzTKf1CBDGWN8LCRe9OSHHZwNoW7XObvEVle/IWFgXZEQkV9Kw0duWR/RIz000WvfCO5wKNTR6
-        b/9APG42Xyz6gnxw+ABfzk+gJ4l6RFvM8uSdikUJNBGNI7NyKWRNVhq4F/Ppcw+iK5UdsGwyav2t
-        ovfK9+3TvEZVPiw/ADKsAMlqHZRKvux6SHMQ/gQ+Snu+6iiYI7h7WuqCjObCOErYiU73m8nxgLRL
-        Bc2sAtc61a/nri1Els0v8lx82fLJcfIfKtzEQa0EAAA=
+        H4sIAAAAAAAA/3VTTW/bMAy951cIOjtFsmRts9u+gO6wosOGLVscGIrEOGplyZOoNEWR/z7KTmIH
+        ay+yzUc+PZOPzwPGuFb8HeNyI1BWtRl+/jX/Op/fqQ/zCu33v19ufn670r9vH+5utn8Ez1KFW92D
+        xGPVhXRUB6idbWHpQSAk1vHVbDx9M5lOZw1QOQUmlZU1Di+HJtoDodw4LSEQtKBPxp6bM2mzCnYU
+        HmXHSAUhiBIodkyioHcmRbgIQQcUFnnWgdJZBNvIXeSWyNPBWJ4ACTUWWuUE5vzjKOfZEYQdeiHp
+        NwqNUIWUsWixE0ObuBUmQoLRR8j6yH0MqNdaitSa9oofG2DKyViRIKYDE+zW2eEnHaRxIXpg70sP
+        0KBIrWUBMDAXka2oE9qWzK2MLhvCkDGjxUobjU8MwVcUKN0WvE15RjxmTFjFYAcypny2ojS6vhYe
+        NYSLnB+17tuXZXrQ+7LfPA/rGEQamo3G9ABhrcNWSGrN8oDsT4Naa6vDpiAvBDIGNT+gq3mD7ulc
+        NoOPZ7PktScrYYHuARrat+PRZUvIO5N18PX1AUSSYvpls2n2AmOhAIU2oWceLoXc0JD7V06yM7B4
+        9GSBLqPzoohKux4w6HXgf8Ev3d52hwbWsYwnr/J3gEzGJdm1B6XleVe6NA9pT19LO42iUcwD+C0t
+        YUHm8GlcCtYimnaTeHgKtAUFzbQEX3vdrFNyxGA/+AckCP58RQQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3328,7 +4029,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1250'
+      - '1348'
       openai-project:
       - DUMMY
       openai-version:
@@ -3352,9 +4053,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 176ms
+      - 305ms
       x-request-id:
       - DUMMY
     status:
@@ -3456,7 +4157,27 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Ensure justifications align with
+      the item's evidence and stance, and comply with length and language constraints.\\n\\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document text provided.\\n2. Identify whether
       each concept in the concepts list is addressed within the document text.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
@@ -3464,8 +4185,21 @@ interactions:
       is described by a concept name specified within <concept_name></concept_name>
       tags and a concept description specified within <concept_description></concept_description>
       tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      to that concept. The item format and structure are specified for each concept.\\n
+      \   - Treat negations, exceptions, and conditionals carefully: relevance may
+      involve permissions, prohibitions, requirements, exceptions, thresholds, or
+      ranges; reflect the stance  in the justification.\\n    - Prefer minimal sufficient
+      evidence and value derivation:\\n    - Favor precision over recall; when uncertain,
+      avoid speculative extractions or derivations.\\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\\n    - Internally verify before
+      finalizing:\\n        -- Each provided concept appears once, in order, with
+      the correct \\\"concept_id\\\".\\n        -- The top-level structure matches
+      the format specified within <answer_format></answer_format> tags.\\n        --
+      No structural IDs (concept/paragraph IDs) appear inside justifications.\\n        --
+      Justifications meet length and language constraints.\\n        -- Item values
+      strictly satisfy type and any specified structure/scale/labels constraints.\\n
+      \       -- The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -3553,8 +4287,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Contract
@@ -3656,7 +4393,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -3667,7 +4404,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '24014'
+      - '26870'
       content-type:
       - application/json
       cookie:
@@ -3675,7 +4412,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3685,7 +4422,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3701,17 +4438,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr0hz8gEAAAD//3RTTY+bMBC951dYvvQC
-        K8hXs8dqK/XWQ7VVt00i5JgBnBobeUyUbZX/3jEkgWyzHAzMe/M8nz9/LA97/Wf/9Ov58OX76iX9
-        lr+A5lHwsLs9SH/xepCW/MAra3pYOhAegmr6cbWYLmer9LEDapuTBLmVjY/nD2lcK6PiaTJdxMk8
-        Tudn98oqCUi8Nf0y9rc7Q6AmhyOZk+hiqQFRlEC2C4mMzupg4QJRoRfG82gApTUeTBf7emM6+f4V
-        nk2AJTQ+U/mGKBv+lGx4NCbA0TshKbtMeagxsNYD/kZvcDsI3UIgF0IjRPco+xa9KpQUoZD97c8V
-        sNzKtqaImUIm2Fdr4s8KpbbYOmCfSgcQ0IgZ6wnHSjiorM7BfSD+AAtkcGy0ksrrV0ZloRSYMszT
-        FZ5swITJ2bk6Dxt+G+Fp+N32n2TZjuvqoGhRhOaaVusRIAxF1uXUdXR7Rk7XHmpbNs7u8I0rL2g2
-        sMpolpAGi/qF3ja8Q090brtZaW/az0mopu55+xu66+aL5aoX5MOQDvByfgY9hahHbsvZNLqjmOXg
-        hdI4mjcuhaxoGgbf2WJ6zUG0ubIDlkxGqf8f0T35Pn1lypHKu/IDIMMUU1iNg1zJ26wHmoOwx+/R
-        rqXuAuYI7kB7mXkFLrQjh0K0ul8ujq9I65BRz0pwjVP9hhVNJpJkMUtT8bjjk9PkHwAAAP//AwCX
-        EAXScAQAAA==
+        H4sIAAAAAAAA/3VTTW/bMAy951cIOjtFPpe1t20tsGHoTgPaIQ4MTaJjdbJkiHLXoMh/HyXHsYO1
+        F1nmI5+e+KjXCWNcK37DuKxEkHVjpncPj/e/HurPd5vDrbMel99nK/ft8V7g182BZ7HC/X4CGfqq
+        K+moDoJ2toOlBxEgss431/PVYrlazxJQOwUmlu2bMP0wNa0Vp4rKaQlI0JZ+GXtNa9RmFbxQONWn
+        SA2IYg8U65Mo6J2JES4QNQZhA88GUDobwCa529wSeVwYyyMgoQmFVjmBOf8yy3nWg/ASvJB0jUIH
+        qDFmbDvszNAlPgvTQoRLYRCyMfTUYtClliL2pjvjZwVMOdnWpIhpRSslADIdEEzJBDLBfjg7vdUo
+        jcPWA/u09wApX1jFkmhvMW7KjkAYHQ4Zs44yGFbCQ+WMAs9EX3mV817Xsdvs4of2u3GnPJQtiuiQ
+        bY0ZAcISebpF8mh3Qo5nV0ptNVYFGY80BdRpDK7hCT3SuksutxfG8cbT3IQiuD+QaNfz2ceOkA8T
+        NcDXyxMYSIoZlS1m8+wNxkJBENrgaFK4FLIiR8dHrrMLsPjrye8hYxg80SrtRsBk1IH/Bb91etcd
+        bfcDy2L9Lv8AyDilJLvxoLS87MqQ5iE+yvfSzlYkxRzBP9OLK4IGH+1SUIrWdM+G4wFp5AvydA++
+        8Tq9nTgRk+PkHxemaooyBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3734,7 +4470,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1123'
+      - '1247'
       openai-project:
       - DUMMY
       openai-version:
@@ -3760,7 +4496,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 176ms
+      - 197ms
       x-request-id:
       - DUMMY
     status:
@@ -3862,23 +4598,59 @@ interactions:
       you will find a list of document paragraphs and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document paragraphs provided.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full
-      text of the paragraph specified within <paragraph_text></paragraph_text> tags.\\n
-      \   - Note that paragraphs are listed in the same order they appear in the original
-      document.\\n    - You may be working with document fragments rather than complete
-      documents. Focus on extracting information from the available content without
-      making assumptions about missing parts.\\n2. Identify whether each concept in
-      the concepts list is addressed within the document paragraphs.\\n    - Each
-      concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content at paragraph level; derive
+      candidate extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Deduplicate referenced paragraph
+      IDs and preserve their original order.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document paragraphs provided.\\n    - Each paragraph is identified
+      by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.) specified within
+      <paragraph_id></paragraph_id> tags, followed by the full text of the paragraph
+      specified within <paragraph_text></paragraph_text> tags.\\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\\n    - You
+      may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\\n    - Each concept is identified
+      by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified within
+      <concept_id></concept_id> tags.\\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\\n3. For
+      each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Apply
+      cross-paragraph reasoning when helpful (e.g., headings, lists, references like
+      \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance may involve permissions, prohibitions, requirements, exceptions, thresholds,
+      or ranges; reflect the stance .\\n    - Prefer minimal sufficient evidence and
+      value derivation:\\n        -- include only the paragraphs necessary to support
+      the item or derived value; avoid tangential mentions.\\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- When present, \\\"reference_paragraph_ids\\\" contain only
+      valid paragraph IDs.\\n        -- Item values strictly satisfy type and any
+      specified structure/scale/labels constraints.\\n        -- The structure exactly
+      matches the format specified within <answer_format></answer_format> tags (no
+      extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document paragraphs, you must still include
       an entry in the final JSON output but with an empty \\\"extracted_items\\\"
       list. However, for boolean concepts (with extracted item type \\\"bool\\\"),
@@ -3963,8 +4735,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraph_ids\\\":
       [\\n                    str,\\n                    ...\\n                ]\\n
       \           },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
@@ -4188,7 +4963,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        Title: Managing Partner\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n        <paragraph_id>P61</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -4199,7 +4974,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34301'
+      - '37338'
       content-type:
       - application/json
       cookie:
@@ -4207,7 +4982,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4217,7 +4992,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4233,16 +5008,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr0h38wYAAAD//3RTwW6jMBC95ysin0ME
-        JIT0WKU9dFVpd9VqtVKIkGMm4C7YyDZVtqv8+44NjUmb5kDEvHmPGb/n24df1eJbET/Jn7/fvnd3
-        4fPN0yolM8uQ+xdg5p01ZxJ5YLgUPcwUUANWNUrXSbxarOPQAY0soLa0sjXBch4FDRc8iMM4CcJl
-        EC0HeiU5A419W3ydTv+5px1UFHDEshNzlQa0piVg7b0Ji0rWtkKo1lwbKgyZeZBJYUC42beZcPL9
-        n/1lFmbQmpwXGbZkZBNmZDZugKNRlOF2OTfQaNu19fgHPU97pXUHveT9kdrjmm9kM3183Fzoe4KC
-        AyjAYfKWKloq2lY41LXvec6PKLyqNqBJmpHP4O6ydPKvA4KV3fgEcbJOU2uj6Op6BFAhpKE2Bs67
-        3YCczm7VsmyV3OsPVHLAFOgqx9RojBA6o41siUNP+Ny5VHQXRhMUatAnI/+A+9wqTVa9IPFx9HCS
-        DqDBEesRbR0tZlcU8wIM5bUeJYswyir03XOTeH3egXYFlx4LJ6PVP090Tb5fn4typPKlvAeYzSuO
-        1SooOLvc2rcpsDf2q7bzUbuBiQb1ijcwNxyUtaOAA+3q/hoR/Vdj8HP0rATVKt7fpUOb0zBMFlFE
-        b/Zkcpr8BwAA//8DAPARjs1aBAAA
+        H4sIAAAAAAAA/3VT0Y7aMBB85ysiP4cTIcCJe6VIlXqtUHvSVSIoWpwlcevYke1QqhP/3rUDJKh3
+        L1ayMzvezGzeRlHERMGeIsYrcLxu5Hj9+vMrbGAt968vqViI4+TH5NP+83f3Jfn2wmLfofe/kLtr
+        1wPX1IdOaNXB3CA49KrJ4zKZTdPZfBqAWhcofVvZuPFiLFsFl45KC46WoC29RtFbOP1sqsATlSfx
+        tVKjtVAi1a4kKhotfYWBtcI6UI7FPci1cqjCuNtMkbg/oijzAMfG5aLICMzYapKx+AriyRng9Bm5
+        cFhbz9h22E2hIx5BttgJrE/gnXhY6Tp6fl7d1DqiwQMapCvzBgyUBpqKrr4os82S6MTaJDTF7tp3
+        7h7COz3vht9Feq0F76dqpRwAoJR24PMIju4uyPnm4UEoYaucYrKUGflinW5YQM907kIm7Z3NrDGU
+        ssud/o1B9jFN550g6/Pv4WQ6u6COZpGDvtl8Gb8jmRfoQEg7CJZx4BUFMLxzGt+B+R9D8fSMfk+g
+        LYQeAKOBBf9P/N7tnT1Clb3KIv1Qvwe4XyoauzFYCH5vS08z6P+hj2i3LMLEzKI50g+SO4HG51Xg
+        AVrZbTmzfy1taE6hlmgaI8Kq+5UYnUf/AD7V8rzhAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4265,7 +5039,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '983'
+      - '2513'
       openai-project:
       - DUMMY
       openai-version:
@@ -4289,9 +5063,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 249ms
+      - 386ms
       x-request-id:
       - DUMMY
     status:
@@ -4393,23 +5167,59 @@ interactions:
       you will find a list of document paragraphs and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document paragraphs provided.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full
-      text of the paragraph specified within <paragraph_text></paragraph_text> tags.\\n
-      \   - Note that paragraphs are listed in the same order they appear in the original
-      document.\\n    - You may be working with document fragments rather than complete
-      documents. Focus on extracting information from the available content without
-      making assumptions about missing parts.\\n2. Identify whether each concept in
-      the concepts list is addressed within the document paragraphs.\\n    - Each
-      concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content at paragraph level; derive
+      candidate extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n    - Deduplicate referenced paragraph
+      IDs and preserve their original order.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document paragraphs provided.\\n    - Each paragraph is identified
+      by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.) specified within
+      <paragraph_id></paragraph_id> tags, followed by the full text of the paragraph
+      specified within <paragraph_text></paragraph_text> tags.\\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\\n    - You
+      may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\\n    - Each concept is identified
+      by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified within
+      <concept_id></concept_id> tags.\\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\\n3. For
+      each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Apply
+      cross-paragraph reasoning when helpful (e.g., headings, lists, references like
+      \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance may involve permissions, prohibitions, requirements, exceptions, thresholds,
+      or ranges; reflect the stance .\\n    - Prefer minimal sufficient evidence and
+      value derivation:\\n        -- include only the paragraphs necessary to support
+      the item or derived value; avoid tangential mentions.\\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- When present, \\\"reference_paragraph_ids\\\" contain only
+      valid paragraph IDs.\\n        -- Item values strictly satisfy type and any
+      specified structure/scale/labels constraints.\\n        -- The structure exactly
+      matches the format specified within <answer_format></answer_format> tags (no
+      extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document paragraphs, you must still include
       an entry in the final JSON output but with an empty \\\"extracted_items\\\"
       list. However, for boolean concepts (with extracted item type \\\"bool\\\"),
@@ -4494,8 +5304,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            {\\n                \\\"value\\\": ...,\\n                \\\"reference_paragraph_ids\\\":
       [\\n                    str,\\n                    ...\\n                ]\\n
       \           },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
@@ -4719,7 +5532,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        Title: Managing Partner\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n        <paragraph_id>P61</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -4730,7 +5543,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '34294'
+      - '37331'
       content-type:
       - application/json
       cookie:
@@ -4738,7 +5551,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4748,7 +5561,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4764,16 +5577,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3RTUWvbMBB+z68QeuogLnYSp1nfyloGzWAdjMGIg1Hks63NlowkZwkl/30nO4mc
-        NvWDje67+/yd7rvXESFUZPSeUF4yy+umCp7mxa78/lQ+Lx9/CP4ofv/89+3rw3K5f3749ULHrkJt
-        /gC3p6pbrrAOrFCyh7kGZsGxRneLeDKfLiZRB9Qqg8qVFY0NZrdRUAspgkk4iYNwFkSzY3mpBAeD
-        eSs8EvLavZ1QmcEOw+H4FKnBGFYAxk5JGNSqchHKjBHGMmnp2INcSQuy075KZEfff9yTOJhDY1OR
-        JZiS0C9hQsfDBNhZzTh2lwoLtXFZK4+/4fNlW1a10FPmYgvkJv5E9sC0IblWNbElkAzvjKicGFFI
-        IQuMCUNYoQFqFHwhw/NqyEEDak4bpjGZNSVqvybL17zM4oS+B9eXoYM/HhGMrIdXif9uDXPzlG1V
-        DQAmpbLM+aEb4vqIHM5jq1TRaLUxb0rxaqQwZYr2MeglHJGxqqEdesD3urNHezFxikQ1Dsyqv9D9
-        bn4XT3tC6n05gKMjaFFiNYgvotn4CmOagWWiMgOLUc54iQbwtfFkce6BtZlQHgtHg9bfK7pG37eP
-        FhiwfEjvAe6Mi7IaDZngl137NA1udT9KO191J5ga0FtcxdQK0G4cGeSsrfp9omZvcANSnFkButGi
-        X6q8SVkYxtMoYp83dHQY/QcAAP//AwDgGfhnYwQAAA==
+        H4sIAAAAAAAA/3VTTW/bMAy951cIOnWAU+TDadoeN7TADsG60wbEgaHJtK1VlgRJTlIU+e+j5Dh2
+        sPYiyHzkI/Ue/T4hhIqCPhLKa+Z5Y+T06dfvDf+xuX+pjt9fn1qTbtxP/fWwdAf5XNEkVOg/f4H7
+        vuqWa6wDL7TqYG6BeQis8/XDPF0s01UagUYXIENZZfz0bipbxc4VtRYcHEJb/CTkPZ5hNlXAEcOz
+        pI804ByrAGN9EgatliFCmXPCeaY8TQaQa+VBxXG3mULycBCSBYCD8bkoMgQz+m2W0aQH4egt4/iM
+        XHhoXMjYdtiFoUvcM9lCR/As9kBuVl/IGzDrSGl1Q3wNpEA5iC6JE5USqrp06QgslGABR8kNs6yy
+        zNQ40rkjfUlXGd31+afuEr/xvhu/E3lax4K+qpVyBDCltGfBn6jw7oycLpqWQglX52ibQw9RJ+e1
+        oRE94bmLHrVXslODj0PtvH6FSLteLhcdIR32YYDn67sz6nEWOapbze6TDyjzAjwT0o2MppzxGg0Z
+        9Vw8JFdgfrBo15Ax7A1rC6FHwGQkwf8Tf9S9kwf9G71qvvi0wQDwsGU4t7FQCH6ty5BmIfxUn6Vd
+        zIgjUwd2j39M7gXYYFgBJWtlt/bUvTlc2RxdrcAaK+Luh52YnCb/AAjbKhXyAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4796,7 +5608,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1186'
+      - '1844'
       openai-project:
       - DUMMY
       openai-version:
@@ -4822,7 +5634,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 249ms
+      - 271ms
       x-request-id:
       - DUMMY
     status:
@@ -4924,16 +5736,45 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document text provided.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\\n
-      \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -5010,8 +5851,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Effective
       Date</concept_name>\\n\\n    <concept_description>\\n    Contract start date\\n
@@ -5112,7 +5956,7 @@ interactions:
       as of the date first above written.\\n\\n_____\\nBy: ___________________________\\nName:
       _____\\nTitle: _____\\nDate: ___________________________\\n\\nExample.Com LLC\\nBy:
       ___________________________\\nName: Jane Doe\\nTitle: Managing Partner\\nDate:
-      ___________________________\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      ___________________________\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -5123,7 +5967,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23094'
+      - '25659'
       content-type:
       - application/json
       cookie:
@@ -5131,7 +5975,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5141,7 +5985,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5157,15 +6001,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr8gqKQIAAAD//3RTy26DMBC85ysqn6Ey
-        jzx6rHqJ2lOl9tIQIcdsiBuwkW2qVFX+vWuTxKQPDgZ2dpad2WW5PDx9vN3R+07NX583ez59eZxl
-        JHIMtXkHbs+sW66QB1YoOcBcA7PgqibzxTSdZYs080CrKmgcre5snN8mcSukiFOaTmOax0l+ou+U
-        4GAwb4WvNzdf/nSNygoOGKbROdKCMawGjJ2TMKhV4yKEGSOMZdKSKIBcSQvS974qpC8/3NxVOJhD
-        Z0tRFZhSkAdakGicAAerGUd1pbDQGpe1CviQk8xiOney8oIEbD08Hgu5HjekYdsb5lyRfdOMACal
-        ssy56q1Yn5DjRXyj6k6rjflBJVs01exKHILBiaBQY1VHPHrEc+1N7q98I1ioRdlW7cF/Ls/pYihI
-        wnQDnGUn0GKLzZiWJ9EfFcsKLBONGQ2KcMZ3aGPgpml+0cD6SqiA0clI+u+O/io/yBeyHlX5t3wA
-        uBs/ttVpqAS/Vh3SNLgf4L+0i9W+YWJAf+BCl1aAduOoYMv6ZthKYj4N7lGJM6tBd1oMq7ntSkbp
-        NEsSdrchk+PkGwAA//8DAIF/J72pAwAA
+        H4sIAAAAAAAA/3WS30/CMBDH3/krlj5vBsYA8VFDYjC+6ANGRpbaHaxa2qW9Kcbwv3st4EbUlya9
+        z/383n31oojJkl1FTFQcxbZWyWzxdL++VnJRDXd8lqrRw6O+vRvNn62Yz1nsI8zLKwg8RV0IQ3GA
+        0ugDFhY4gs86mEwHWTrMRpMAtqYE5cM2NSbjRDWaHyMqIwU4Qkv6RtFXeH1vuoQdmfvxybIF5/gG
+        yHZyIqM1ylsYd0465BpZ3EJhNIIO7S5zTcn9E0W5BwJqLGSZE8zZTT9n8QnCDi0XNEYhEbbOeyxz
+        Nhgn/UmS9tMsZyvvus/1qlvMwrpx3A+pG6U6gGttkHuRwpirI9n/DLaWWrqqIO0cCUnNOjQ1C3RP
+        7yoI1ZzNzmpL0mOB5g1C2uxyOjkkZO1SWjweHiFSK6oTNh0fBT7PWJSAXCrXEZsJLioSpVsyi89g
+        8WFJstaj3R1vSmk6oNdR4HfDf1U/qCP1ps2Sjv7N3wLhF01t1xZKKc5Vad0s+Lv+z+1nFaFj5sC+
+        09EWKMH6dZWw5o06XB5zn46upqCdbsDWVobz8xfR2/e+AR3gLcJ1AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5188,7 +6031,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '701'
+      - '1123'
       openai-project:
       - DUMMY
       openai-version:
@@ -5214,7 +6057,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 169ms
+      - 188ms
       x-request-id:
       - DUMMY
     status:
@@ -5309,16 +6152,45 @@ interactions:
       you will find document text and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n1. Read through the document text provided.\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
-      tags.\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\n</task_description>\n\n<concept_extraction_rules>\nIf
+      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\n\nFollow
+      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
+      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\n    - If a
+      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\n\n2.
+      Evidence triage\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n\nNever disclose any plan, evidence, or
+      internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the document text provided.\n2. Identify whether each concept in the
+      concepts list is addressed within the document text.\n    - Each concept is
+      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
+      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\n3. For each
+      concept that appears, extract zero or more items relevant to that concept. The
+      item format and structure are specified for each concept.\n    - Treat negations,
+      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
+      requirements, exceptions, thresholds, or ranges; reflect the stance .\n    -
+      Prefer minimal sufficient evidence and value derivation:\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\n    -
+      Internally verify before finalizing:\n        -- Each provided concept appears
+      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
+      matches the format specified within <answer_format></answer_format> tags.\n        --
+      Item values strictly satisfy type and any specified structure/scale/labels constraints.\n        --
+      The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
       for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n    -
@@ -5393,9 +6265,11 @@ interactions:
       array.\n</extracted_item_handling_rules>\n\n<output_constraints>\n- No additional
       text:\n    -- Do not include any headers, explanations, or text outside of the
       JSON array.\n    -- Do not wrap your JSON response in backticks or any other
-      formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT
-      (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items\":
-      [\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
+      str,\n        \"extracted_items\": [\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
       id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Effective
       Date</concept_name>\n\n    <concept_description>\n    Contract start date\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
@@ -5416,7 +6290,7 @@ interactions:
       of not being generally known to, and not being readily ascertainable by proper
       means by, other persons who can obtain economic value from its disclosure or
       use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
-      its secrecy and confidentiality.\n</document_text>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      its secrecy and confidentiality.\n</document_text>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -5427,7 +6301,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16963'
+      - '19528'
       content-type:
       - application/json
       cookie:
@@ -5435,7 +6309,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5445,7 +6319,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5461,15 +6335,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTy26rMBDd5yuQ11CZV9Le5a2y6aq6my5ChBwzELfGRra5Iqry7x1DEuiLhYE5
-        Z4Y5Z4b3VRAQUZE/AeFH5njbyWi7bobXRObD09+Xk83+GdM/PW+3J16/DTkJfYY+vAJ316w7rjEP
-        nNBqgrkB5sBXjTf3ebJO75N0BFpdgfRpTeei7C6OWqFElNAkj2gWxdkl/agFB4u8Hb4Gwft4+kZV
-        BQOGaXiNtGAtawBjVxIGjZY+Qpi1wjqmHAlnkGvlQI297wo1lp9u/io8zKFzpagKpBTkkRYkXBJg
-        cIZxVFcKB631rN2MT5x4HdGNl5UVZMb20+O5UPtlQwbq3jLviuqlXABMKe2Yd3W0Yn9BzjfxUjed
-        0Qf7JZXUaKo9ljgEixNBodbpjozoGc/9aHL/yTeChVqU7fQbjJ9Lk4d4Kkjm6S7g9AI6bFEu40kW
-        /lCxrMAxIe1iUIQzfkQb51y6SW4aWF8JPWN0tZD+vaOfyk/yhWoWVX4tPwPcjx/b6gxUgn9WPdMM
-        +B/gN9rN6rFhYsH8x4UunQDjx1FBzXo5bSWxJ4t7VOLMGjCdEdNq1l3JKM3TOGYPB7I6rz4A7Kxh
-        7KkDAAA=
+        H4sIAAAAAAAA/3WSTU/jMBCG7/0Vkc/JKgmh6XJFnFiOqy7bVJFxpqnBtbP2hIJQ/ztjk5BUCxdL
+        nmc+35m3RRQx2bCriIk9R3HoVHKz/nPXprf3d8ed/fv8r1/DOrv+9TvLjyurWewjzMMjCByjfghD
+        cYDSDFhY4Ag+a1b+zIr8orhcBXAwDSgf1naYLBPVaz5E7I0U4Aht6BtFb+H1vekGXsicxqPlAM7x
+        Fsg2OpHRGuUtjDsnHXKNLJ6gMBpBh3Y3labk/omiygMBHdayqQhW7DqtWDxCeEHLBY1RS4SD8x6b
+        imXLJC2TPM2Lim2966nS23kxC7vecT+k7pWaAa61Qe5FCmNuB3L6HGwntXT7mrRzJCQ169B0LNAT
+        vdsgVH82O+ssSY81micIaS/K1aAUm5Yy4WUxQKRW1CxsVYzkLGPdAHKp3ExsJrjYkyizkmUZn8H6
+        aEmyyWPaHe8baWZgMVPg/4a/qv6hjtTtlCVffpt/AsIvmtruLDRSnKsyuVnwd/2d2+cqQsfMgX2m
+        o61RgvXramDHe/Vxecy9Orqamnbagu2sDOfnL2JxWrwDLo+k+HUDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5492,7 +6365,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '684'
+      - '960'
       openai-project:
       - DUMMY
       openai-version:
@@ -5516,9 +6389,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 123ms
+      - 245ms
       x-request-id:
       - DUMMY
     status:
@@ -5613,16 +6486,45 @@ interactions:
       you will find document text and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n1. Read through the document text provided.\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
-      tags.\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\n</task_description>\n\n<concept_extraction_rules>\nIf
+      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\n\nFollow
+      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
+      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\n    - If a
+      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\n\n2.
+      Evidence triage\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n\nNever disclose any plan, evidence, or
+      internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the document text provided.\n2. Identify whether each concept in the
+      concepts list is addressed within the document text.\n    - Each concept is
+      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
+      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\n3. For each
+      concept that appears, extract zero or more items relevant to that concept. The
+      item format and structure are specified for each concept.\n    - Treat negations,
+      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
+      requirements, exceptions, thresholds, or ranges; reflect the stance .\n    -
+      Prefer minimal sufficient evidence and value derivation:\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\n    -
+      Internally verify before finalizing:\n        -- Each provided concept appears
+      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
+      matches the format specified within <answer_format></answer_format> tags.\n        --
+      Item values strictly satisfy type and any specified structure/scale/labels constraints.\n        --
+      The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
       for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n    -
@@ -5697,9 +6599,11 @@ interactions:
       array.\n</extracted_item_handling_rules>\n\n<output_constraints>\n- No additional
       text:\n    -- Do not include any headers, explanations, or text outside of the
       JSON array.\n    -- Do not wrap your JSON response in backticks or any other
-      formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT
-      (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items\":
-      [\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
+      str,\n        \"extracted_items\": [\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
       id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Effective
       Date</concept_name>\n\n    <concept_description>\n    Contract start date\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
@@ -5750,7 +6654,7 @@ interactions:
       or (ii) the total amount paid by the Receiving Party to the Disclosing Party
       under any separate business agreement between the parties during the twelve
       (12) months preceding the event giving rise to the claim. This limitation of
-      liability is cumulative and not per incident.\n\nb. Penalties for Breach:\n</document_text>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      liability is cumulative and not per incident.\n\nb. Penalties for Breach:\n</document_text>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -5761,7 +6665,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19360'
+      - '21925'
       content-type:
       - application/json
       cookie:
@@ -5769,7 +6673,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5779,7 +6683,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5795,14 +6699,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3RSTY+bMBC951cgn2EFBEjS66pSpUq9VT2ECDlmIG7AZu2hymqV/96xSQLb7uZA
-        xLwP5s3M2yoImKzZl4CJE0fRD130tWgv5+PPl/OP/EWab0Wxxe/PSZP9ei2kZaFT6ONvEHhXPQlN
-        OkCp1QQLAxzBuSabbZ4W622aeaDXNXRO1g4YZU9J1EslozRO8yjOoiS7yU9aCrDE29NrELz5p2tU
-        1XChchzeKz1Yy1ug2p1ERaM7V2HcWmmRK2ThDAqtEJTvfV8qbz/9uV/pYAEDVrIuiVKy57hk4ZIA
-        FzRcULpKIvTWsfaHiXAt1WH5KQPNaLnLq8auWwBcKY3czcuHPNyQ6yNWp9vB6KP9R8oaGpc9VTRe
-        S7OmCBb1wDx6pefBj298NxFGRj0FQn0G/7l1sdlMhmze2wyn6Q1EarFbyna78APHqgbksrOLFTDB
-        xYkGNGuzvHhk4GMt9YzFq0X0/zv6yH6KL1W7cPnUfgaEWyy1NRiopXifeqYZcKf9Ge0xat8ws2D+
-        0KlWKMG4ddTQ8LGb7o3ZV0sXUtHOWjCDkdPRNUPF4zhfJwnfHdnquvoLAAD//wMATxjMHoMDAAA=
+        H4sIAAAAAAAA/3WSwU7DMAyG73uKKucOURhD44YQt+2AAIG0TlVIvdWQJVXiwgDt3XGyde0EXCLV
+        n/3X/u3vQZIILMVVIlQlSa1rPbx9ep5V+npjHxHk7B7vL6dS43SU3T24L5GGCvvyCoraqhNluQ4I
+        rdlh5UASBNXscpKNzs5HF5MI1rYEHcpWNQ3HQ90Yua+oLCrwjOb8mSTf8Q29mRI2HD5N28gavJcr
+        4FibxEFndYgI6T16koZE2kFlDYGJ7c5zw+LhSZI8AAU1FVjmDHNxc5qLtIWwIScVj1EgwdqHjPki
+        wG1uFn15B8vGyzCWabTuAWmMJRlsiYMt9mR7GGWJBn1VsFuereP2PNlaRLrldxGtaY6mFbVjs6kg
+        +wZRdpSNxztB0a2hwxd74wRxK7pXdpa1ZUeKRQkkUfuevUJJVbEN/V+ep0ew+HBsUpfRbUs2Jdoe
+        GPQc+N3wX3/fuYNm1alkk3/1O6DCarnt2kGJ6tiVLs1BuOT/0g6riB0LD+6dz7QgBBfWVcJSNnp3
+        a8J/er6Tgne6Alc7jAcXLmKwHfwA+NJmWGcDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5825,7 +6729,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '766'
+      - '916'
       openai-project:
       - DUMMY
       openai-version:
@@ -5851,7 +6755,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 141ms
+      - 160ms
       x-request-id:
       - DUMMY
     status:
@@ -5953,16 +6857,45 @@ interactions:
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n1. Read through the document text provided.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\\n
-      \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
-      etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
-      is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
+      concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\\n    - If
+      a concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\\n\\n2.
+      Evidence triage\\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\\n
+      \   - Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\\n\\n3. Consistency pass\\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\\n\\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
+      Read through the document text provided.\\n2. Identify whether each concept
+      in the concepts list is addressed within the document text.\\n    - Each concept
+      is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\", etc.) specified
+      within <concept_id></concept_id> tags.\\n    - Each concept is described by
+      a concept name specified within <concept_name></concept_name> tags and a concept
+      description specified within <concept_description></concept_description> tags.\\n3.
+      For each concept that appears, extract zero or more items relevant to that concept.
+      The item format and structure are specified for each concept.\\n    - Treat
+      negations, exceptions, and conditionals carefully: relevance may involve permissions,
+      prohibitions, requirements, exceptions, thresholds, or ranges; reflect the stance
+      .\\n    - Prefer minimal sufficient evidence and value derivation:\\n    - Favor
+      precision over recall; when uncertain, avoid speculative extractions or derivations.\\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\\n
+      \   - Internally verify before finalizing:\\n        -- Each provided concept
+      appears once, in order, with the correct \\\"concept_id\\\".\\n        -- The
+      top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<concept_extraction_rules>\\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \\\"extracted_items\\\" list. However,
       for boolean concepts (with extracted item type \\\"bool\\\"), distinguish carefully:\\n
@@ -6039,8 +6972,11 @@ interactions:
       entry within the \\\"extracted_items\\\" array.\\n</extracted_item_handling_rules>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"concept_id\\\": str,\\n        \\\"extracted_items\\\":
       [\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<concepts>\\nCONCEPTS:\\n<concept
       id=\\\"C0\\\">\\n    <concept_id>C0</concept_id>\\n    \\n    <concept_name>Effective
       Date</concept_name>\\n\\n    <concept_description>\\n    Contract start date\\n
@@ -6076,7 +7012,7 @@ interactions:
       WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
       as of the date first above written.\\n\\n_____\\n\\nBy: ___________________________\\n\\nName:
       _____\\n\\nTitle: _____\\n\\nDate: ___________________________\\n\\nExample.Com
-      LLC\\n\\nBy: ___________________________\\n\\nName: Jane Doe\\n</document_text>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      LLC\\n\\nBy: ___________________________\\n\\nName: Jane Doe\\n</document_text>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -6087,7 +7023,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '17947'
+      - '20512'
       content-type:
       - application/json
       cookie:
@@ -6095,7 +7031,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6105,7 +7041,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6121,15 +7057,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr8gJdAMAAAD//3RSyW7CMBC98xXI5wRl
-        ZTnTHlFvVVuCIuMMwW1iR7bTUlX8e8cOkNACh6DMWzJvZtrFfLVaPj69vr2U5VdcPs8W6YMgnlXI
-        7Tswc1ZNmEQdGC5PMFNADVjXcDZPo2k8j1IH1LKAysrKxvjJJPRrLrgfBVHqB4kfJif5XnIGGnlr
-        fB2Pf9zTNioKOGA58M6VGrSmJWDtTMKikpWtEKo114YKQ7weZFIYEK73dSacffdnf5mFGTQm50WG
-        lIwsg4x4QwIcjKIM0+XcQK0ta73pCMdMbIafUrBrNbV5RVtVA4AKIQ2183IhNyfkeIlVybJRcqv/
-        SMkOx6X3OY5X46wxgjayIQ494nPjxtdeTYSgUY2BjPwA97k4SZPOkPR76+EoOoEGW6yGstnUu+GY
-        F2Aor/RgBYRRtscB9do4ml8y0LbgsseC0SD6/45u2XfxuSgHLnfte4DZxWJbjYKCs+vUPU2BPe17
-        tMuoXcNEg/rEU80NB2XXUcCOtlV3b0R/a7yQHHdWgmoU745u1+Q0CNI4DOliS0bH0S8AAAD//wMA
-        7/ofuoMDAAA=
+        H4sIAAAAAAAA/3WSTU8CMRCG7/yKTc9gQD50PWI4GeNRI0s2tR2gUtq1nQWM4b87LR9dIl6a7Dwz
+        7868Mz+tLGNKsoeMiSVHsa50Z/L69qzGT/JzO3bv41V3c/9ynz8OvxR+jyasHSrsxycIPFXdCEt1
+        gMqaAxYOOEJQ7d3lvcFtfzDqRrC2EnQoW1TYGXV0bfixYmmVAE9oSp9Z9hPf0JuRsKNwrI+RNXjP
+        F0CxUxIFndUhwrj3yiM3yNoJCmsQTGx3WhgSD0+WFQEIqLBUsiBYsMduwdonCDt0XNAYpUJY+5Ax
+        nQW4L8ysKe9gXnsexjK11g3AjbHIgy1xsNmR7M+jzJVRflmSW56so/Y82opFuqd3Fq2pL6ZllSOz
+        sUS7gijbzwf9gyBLa0h4ODpCpFZ0syzP21cUSwnIlfYNe5ngYkk2NH+Z1hFhuXVkUspImNdS2QZo
+        NRz42/C1vx/cUWaRVG6H/+onIMJqqe3KgVTi0pWU5iBc8n9p51XEjpkHt6EzLVGBC+uSMOe1Ptwa
+        89+e7qSknS7AVU7FgwsX0dq3fgHpieraZwMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6152,7 +7087,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '639'
+      - '1087'
       openai-project:
       - DUMMY
       openai-version:
@@ -6176,9 +7111,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 131ms
+      - 249ms
       x-request-id:
       - DUMMY
     status:
@@ -6273,16 +7208,45 @@ interactions:
       you will find document text and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n1. Read through the document text provided.\n2. Identify whether
-      each concept in the concepts list is addressed within the document text.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
-      tags.\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\n</task_description>\n\n<concept_extraction_rules>\nIf
+      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\n\nFollow
+      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
+      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\n    - If a
+      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\n\n2.
+      Evidence triage\n    - Evaluate the provided content holistically; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n\nNever disclose any plan, evidence, or
+      internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the document text provided.\n2. Identify whether each concept in the
+      concepts list is addressed within the document text.\n    - Each concept is
+      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
+      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\n3. For each
+      concept that appears, extract zero or more items relevant to that concept. The
+      item format and structure are specified for each concept.\n    - Treat negations,
+      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
+      requirements, exceptions, thresholds, or ranges; reflect the stance .\n    -
+      Prefer minimal sufficient evidence and value derivation:\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\n    -
+      Internally verify before finalizing:\n        -- Each provided concept appears
+      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
+      matches the format specified within <answer_format></answer_format> tags.\n        --
+      Item values strictly satisfy type and any specified structure/scale/labels constraints.\n        --
+      The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
       for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n    -
@@ -6357,14 +7321,16 @@ interactions:
       array.\n</extracted_item_handling_rules>\n\n<output_constraints>\n- No additional
       text:\n    -- Do not include any headers, explanations, or text outside of the
       JSON array.\n    -- Do not wrap your JSON response in backticks or any other
-      formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT
-      (MANDATORY):\n[\n    {\n        \"concept_id\": str,\n        \"extracted_items\":
-      [\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
+      str,\n        \"extracted_items\": [\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
       id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Effective
       Date</concept_name>\n\n    <concept_description>\n    Contract start date\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (in ''DD-MM-YYYY'' format) (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nTitle:
-      Managing Partner\n\nDate: ___________________________\n</document_text>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Managing Partner\n\nDate: ___________________________\n</document_text>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -6375,7 +7341,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15664'
+      - '18229'
       content-type:
       - application/json
       cookie:
@@ -6383,7 +7349,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6393,7 +7359,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6409,15 +7375,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTVLr8gtKgcAAAD//3RSy26DMBC85ysqn6EC
-        QtLk2FbqpeqtVQ8hQo7ZELfGRl7Tp/LvXZsmkD5yIGJndtiZXaXT5fLi8fJqd/9we9dpjjevNx8s
-        8h1m8wTCHbrOhaE+cNLoHhYWuAOvml4sZtl8usjmAWhMBcq31a2L8/M0bqSWcZZkszjJ4zT/bt8Z
-        KQCJt6LXs7PP8PSD6greqJxEh0oDiLwGqh1IVLRG+QrjiBId145FAyiMdqDD7KtCB/n+z/8KDwto
-        XSmrgigFu04KFo0J8OYsF+SulA4a9KzVuifsC70ef8rCtkPu/epOqRHAtTaO+7yCyfU3sj/aUqZu
-        rdngj1a2pbhwV1K8SFmTBXSmZQHd03Md4utOEmEk1JAhZ54hfG6aZFkvyIa9DfARdDSiGrflefSH
-        YlmB41LhaAVMcLGjgAbNRTo/euBdJc2AJZOR9d8T/SXf25e6Hqn8Kz8Awi+WxmotVFKcuh5oFvxp
-        /0c7Rh0GZgj2hU61dBKsX0cFW96p/t4YviNdSEk7q8G2VvZHt21LniSzaZry5YZN9pMvAAAA//8D
-        AGy30iiDAwAA
+        H4sIAAAAAAAA/3WSTU/DMAyG7/sVVc4dWlk3Pm4IIcGBI2xonaqQeltGmlSJCxuo/x0nW2kn4BKp
+        fuy39mt/DaKIyYJdR0xsOIqyUsO72fxx+7C/e3x3Ru9vrK2frp5f5p96dz9LWewrzOsWBLZVZ8JQ
+        HaA0+oCFBY7gVZOLqyQ9H6fTJIDSFKB82brC4XSoas2PFRsjBThCC/qMoq/w+t50ATsKj+I2UoJz
+        fA0Ua5MoaI3yEcadkw65RhZ3UBiNoEO7i0yTuH+iKPNAQIW5LDKCGbsdZSxuIezQckFj5BKhdD5j
+        sfSwyfSyL29hVTvux9K1Uj3AtTbIvS1hsOWRND+jrKSWbpOTW+S0b8+hqVigDb3LYE19Mi2rLJmN
+        OZo3CLLjSZIcBFm3hg6nkyNEakX1yybT+A/FvADkUrmevUxwsSEberWjy/gE5h+WTOoyum3xupCm
+        BwY9B343/NffD+5Ive5UkvRf/Q4Iv1pqu7JQSHHqSpdmwV/yf2k/qwgdMwf2nc40RwnWr6uAFa/V
+        4daY2zu6k5x2ugZbWRkOzl/EoBl8A6EllC9nAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6440,7 +7405,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '549'
+      - '776'
       openai-project:
       - DUMMY
       openai-version:
@@ -6464,9 +7429,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 36ms
       x-ratelimit-reset-tokens:
-      - 114ms
+      - 352ms
       x-request-id:
       - DUMMY
     status:

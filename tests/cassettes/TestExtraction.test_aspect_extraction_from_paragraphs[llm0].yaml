@@ -96,11 +96,28 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph, generate candidate matches to aspects.\\n
+      \   - Collect minimal sufficient textual evidence privately and note negation,
+      hypothetical, or conditional forms.\\n    - Prefer precision over recall; include
+      only high-confidence matches and omit weak or ambiguous ones.\\n\\n3. Consistency
+      pass\\n   - Deduplicate paragraph IDs within each aspect and preserve the original
+      order.\\n   - Align stance in justifications (permission, prohibition, requirement,
+      exception) with the actual semantics.\\n   - Ensure justifications comply with
+      length and language constraints.\\n\\nNever disclose any plan, evidence, or
+      internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph\\n    - Each paragraph is
       identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.) specified
@@ -116,15 +133,23 @@ interactions:
       on the aspect's name and description), include the paragraph's ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect's
-      list.\\n\\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\\n    - For each aspect (in the order they are provided),
-      include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
-      \       -- paragraphs: An array of objects for each paragraph that addresses
-      or relates to the aspect. Each object should include:\\n            --- paragraph_id:
-      The provided paragraph ID, e.g., \\\"P0\\\", \\\"P2\\\".\\n            --- justification:
-      A justification of why the paragraph is relevant to the aspect. Ensure the justification
-      is specific and directly ties the content of the paragraph to the aspect's defining
+      list.\\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \\\"above\\\", \\\"this section\\\"): use surrounding context
+      to disambiguate; if unresolved, omit.\\n    - Treat negations, exceptions, and
+      conditionals carefully: relevance can be present in prohibitions or restrictions;
+      reflect the stance succinctly in the justification.\\n    - Prefer minimal sufficient
+      evidence:\\n        -- base the mapping on the most relevant paragraphs; avoid
+      tangential mentions.\\n    - Favor precision over recall; when uncertain, exclude
+      rather than speculate.\\n\\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\\n    - For
+      each aspect (in the order they are provided), include:\\n        -- aspect_id:
+      The aspect's unique identifier, e.g., \\\"A0\\\".\\n        -- paragraphs: An
+      array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\\n            --- paragraph_id: The provided paragraph
+      ID, e.g., \\\"P0\\\", \\\"P2\\\".\\n            --- justification: A justification
+      of why the paragraph is relevant to the aspect. Ensure the justification is
+      specific and directly ties the content of the paragraph to the aspect's defining
       features. Never reference any of the structural IDs provided in this prompt
       (such as aspect IDs like \\\"A0\\\", or paragraph IDs like \\\"P0\\\") in the
       justification.\\n                ---- Justification should be brief, i.e. highlight
@@ -132,12 +157,21 @@ interactions:
       longer than 2 sentences.\\n                ---- Justification should be in English.\\n
       \       -- If an aspect has no related paragraphs, still include it with an
       empty paragraphs array ([]).\\n- Do not add extra commentary, code block markers,
-      or any other formatting beyond the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n-
+      or any other formatting beyond the JSON array.\\n- Internally verify before
+      finalizing:\\n    -- Each provided aspect appears once, in order, with the correct
+      \\\"aspect_id\\\".\\n    -- \\\"paragraph_ids\\\" contains only valid paragraph
+      IDs.\\n    -- No structural IDs (aspect/paragraph IDs) appear inside justifications.\\n
+      \   -- Justifications meet length and language constraints.\\n    -- The structure
+      exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Parties</aspect_name>\\n        \\n        <aspect_description>\\n
@@ -358,7 +392,7 @@ interactions:
       \       \\n        <paragraph_text>\\n        Title: Managing Partner\\n        </paragraph_text>\\n
       \   </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n        <paragraph_id>P61</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -369,7 +403,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '29038'
+      - '31621'
       content-type:
       - application/json
       cookie:
@@ -377,7 +411,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -387,7 +421,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -403,20 +437,21 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcEs3TgMAAAD//6yWS4+bMBDH7/kUFpde
-        yApIyOO4bVVVPa2qqmq1iZADA3gXbGSbtKja796xCY+kWalJ9sKynod/M0z8d/Xp8wdZ5vz7SsJz
-        fh98/flDNNxxTYTYPUGsu6i7WGAcaCYO5lgC1WCy+stVGCzm69nCGkqRQGHCskpP53f+tGScTQMv
-        CKfefOrPD+G5YDEo9HvEfwn5Y58GlCfwG5c9t1spQSmaAa51TrgoRWFWHKoUU5py7biDMRZcA7fs
-        jxuOyc2DkA16V1hTxJIN2jbOvbdx3M5WUUkzSatcGeNju9zHnvj0KR78PkXr8lQrzVIWU9Oq1udb
-        zhTpQwnialBE50BwBaBEVIIeJU2A7ED/AuDGXTNQLmFcS5HUMeOZDTG1SRrrmhad093G6Qhe3P/l
-        Di7mZgmCoguyP+DGDbk3dIkNQTjBgYjUMh640LoXxR4SfDlivwp4fTvw+yNgQyTwIS1v87a0vncx
-        biXFHpHbyeC0tO3swc3ksrTpOt0hvwHp7HpSszHuSxLQlBWKpEKOWt223yJTIqGSoHAF0+6PJqW5
-        Dju8rcFQInFfwBF4Wks7FuMCeth36qSUq+jD5cX0uCueuK9MB9aRMlmekrYVvNGghJf/Ag2nIl8o
-        DuxHAa5lOBkExTLeDjWefTkt0lFdV2EuvFtOZOxW0U/nAeMEGbtdUHlmLkwpVAvZEKNOY/j2ZWv+
-        4Pt2rFUS0lpRI5i8LoqRgXIutGW2KrmddI3odLEQGU70Tp2EOinqrcoj1GeFYo0aqLSoHGt9wefW
-        6m99JKkOJiorHWnxDHa7cNmquRXTTvgH82weHKwaGYvBsPCWK/dMyuhwQoxE3IlpnEMyxPrrYBB9
-        WidMDDZvMqr9X6Rz6dv68RuNsryafjDEMVR4r4nwi6NSHJc9uEkwl6PX3PpeW2BHgdzjZSdCTZTm
-        eySQ0rpobyyOapSGMsKPloGsJGuvLWkVUc8LZ75P1ztn8jL5CwAA//8DAP6958LFCQAA
+        H4sIAAAAAAAA/7VW21LbMBB9z1do/NIXwyTOlb5RSumFtjC0Uy5hPELaJAJb8kgyIcPw713JcZxQ
+        KIlbXhxHu9pzrL3o3DcICQQP3pKATahlaZZs7f86PTk7/nFwc87E4cfj6fcPUXv37PTLz+vd81kQ
+        uh3q6hqYLXdtM4X7wAolCzPTQC24qK3+TqsTtQdR5A2p4pC4bePMbvW2klzS+Y6JEgwMmi7wLyH3
+        /um4SQ53uNwMy5UUjKFjwLXSCRe1StxKQI0RxlJpg7AyMiUtSE/3YigxuHsQMkTvDD8jFnyItmGw
+        2xwGYWnLqKZjTbOJccaLYnmx95HPIsRRaxGicLnOjRUjwag7ncLnk7Ra8Rw/l9gJEIwAkCI/Qg1J
+        KQdyBXYKIImdKoIQVoDZHgZl1IdwXS7RGlw4AuPanMtIaGOJOy9NmRVy7PFnjtmRf9mtRaT3MpEj
+        rW4FRxrUwyM6koGEk5HSJXaIHFU+nhBhiTDkKqHyphaf/kZ8somS8IpsBpuwkQRSKpJXpLOzcdUY
+        wJTxv5XNu1pMWs2XqXyjOA9KFAe4f0fdMNreUyk5PNyrB9zaICVz7DeGGIudjG3MucYZVQ85qoXM
+        hJ2FiI9TN8Qa4eT80xHmg0M9Eu2NSuAzxfZ4rxD5K5V07NLvmEnQ4VIFOJZFY9fj1Kl1MEXvyjy9
+        Al0Pt1sLt2jSf6mE7ho1eOIS7nqQWt+I88uCwB2wHC/g1fulHo3+uj34qPGIkKvwrkHEWFKbaz8y
+        3P56lHbWpVRWpitDP6g8vtIzPzj/x6TorTGiDsTtEhc8Bits4jk97pdlCsXLpfvB98tlPaNhlBvq
+        dJTMk2TJQKVU1iN7JXXZKD+n1E4jIYWZxCjPDGo11EPGqizw1gd8Xnotlq/IqyDTqO5sbNUN+LC9
+        qN0tAgaV7qvMrWZnZ262SCapLP1o0AmfiBlzsNgtZknRBYyyCfClqO1eP1wxxlMtLFQenUGvu/Cg
+        OReqsjUbS8fwJ+unCBRHhLmponQ70bMAlYExyLD14kwDF2z1bCo3DU5AP+e2SIinHBjQt6iOY+xt
+        7ZLGYUTzpJC4gZkZC2mMmR2DzrTwOtfVReOh8RvPcWDN3gsAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -439,7 +474,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3822'
+      - '7991'
       openai-project:
       - DUMMY
       openai-version:
@@ -465,7 +500,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 210ms
+      - 603ms
       x-request-id:
       - DUMMY
     status:
@@ -568,11 +603,26 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph and sentence, generate candidate
+      matches to aspects.\\n    - Collect minimal sufficient textual evidence privately
+      and note negation, hypothetical, or conditional forms.\\n    - Prefer precision
+      over recall; include only high-confidence matches and omit weak or ambiguous
+      ones.\\n\\n3. Consistency pass\\n   - Deduplicate paragraph IDs and sentence
+      IDs within each aspect and preserve the original order.\\n\\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph and its sentences\\n    -
       Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
@@ -591,9 +641,16 @@ interactions:
       \   - If a paragraph clearly relates to an aspect (based on the aspect's name
       and description), include the paragraph's ID and the IDs of all the sentences
       within the paragraph that address or relate to the aspect.\\n    - If a paragraph
-      does not relate to an aspect, do not include it under that aspect's list.\\n\\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
+      does not relate to an aspect, do not include it under that aspect's list.\\n
+      \   - Apply cross-paragraph reasoning when needed (e.g., headings, lists, references
+      like \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions.\\n    - Prefer minimal
+      sufficient evidence:\\n        -- include only the sentences necessary to support
+      the mapping; avoid unrelated sentences.\\n    - Favor precision over recall;
+      when uncertain, exclude rather than speculate.\\n\\n4. Produce the final answer
+      in the JSON format specified within <answer_format></answer_format> tags\\n
+      \   - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\\n    - For each aspect (in the order they are provided),
       include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
       \       -- paragraphs: An array of objects for each paragraph that addresses
@@ -604,12 +661,19 @@ interactions:
       e.g., \\\"P0-S0\\\", \\\"P0-S2\\\".\\n        -- If an aspect has no related
       paragraphs, still include it with an empty paragraph_ids array ([]).\\n- Do
       not add extra commentary, code block markers, or any other formatting beyond
-      the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n- No additional
-      text:\\n    -- Do not include any headers, explanations, or text outside of
-      the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
-      other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
+      the JSON array.\\n- Internally verify before finalizing:\\n    -- Each provided
+      aspect appears once, in order, with the correct \\\"aspect_id\\\".\\n    --
+      Each object in \\\"paragraphs\\\" contains only valid \\\"paragraph_id\\\" with
+      valid \\\"sentences\\\".\\n    -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
       [\\n                    {\\n                        \\\"sentence_id\\\": str,\\n
       \                   },\\n                    ...\\n                ]\\n            },\\n
       \           ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
@@ -1011,7 +1075,7 @@ interactions:
       \           <sentence id=\\\"P61-S0\\\">\\n                <sentence_id>P61-S0</sentence_id>\\n
       \               \\n                <sentence_text>\\n                Date: ___________________________\\n
       \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -1022,7 +1086,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '44929'
+      - '47214'
       content-type:
       - application/json
       cookie:
@@ -1030,7 +1094,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1040,7 +1104,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1056,16 +1120,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcMuuygAAAAD//6xUwW6jMBC95ysin6EC
-        Cm045tZjq6qXhgg5ZiDugu3aptrtKv++Y1MCSVupWuVi2fNmnt8Y3uzWTw+Pub5r796fO3hPX2r9
-        KtckcBVy9wLMjlVXTGIdWC7FADMN1IJjjW9XWXKT5mnkgU5W0LqyRtkwvYrDjgseJlGShVEaxulH
-        +V5yBgbzNnhcLv/61QkVFfzGsCfzkQ6MoQ1gbEzCoJatixBqDDeWCkuCCWRSWBBe+6YQSO6W5bLA
-        bIU9lbwqECvIOipIMGKKatpoqvbGgZshfKw9yzlS3F9nR44hx4C7HHs7oTmjOk2ds4WPKGqeeJgO
-        23F7CH4qL72ovBTlxReVF11UXvT59YL/4IgvwJH84JmGjT/jfjv/hTXUvaHOR6Jv2xlAhZCWOh96
-        82wXo8bRLq1slJY7c1ZKarSh2ZdoW4MeRmsYKxXx6AHXrbdlf+I0gkSdsqWVv8Bft8ry1UBIpnkw
-        wfFN/IFa1NjO6m6zPPiCsqzAUt6ambcJo2wP1Yw0T6ZZQPuKywmLFrPeP0v6in7on4tmxvIt/QQw
-        BgrHXak0VJydtj2laXAz87u041t7wfjf6DecgaXloN33qKCmfTsMMmL+GAtdiR+tAa00H6ZZrUoa
-        Rdl1HNN8RxaHxT8AAAD//wMAw/1pOtwFAAA=
+        H4sIAAAAAAAA/61Uy27bMBC86ysEnuXCsmS77s2HNoAPQQAjaADLEFhqLbGVSIKkmgaB/71LKnql
+        CZBDLwS5MzsakkM9B2FIeEG+hIRV1LJG1Yuv3x+OpZW391V6KA/3h9W3G7g7PoLY79cNiVyH/PET
+        mO27PjGJfWC5FB3MNFALTjXe7uJ0lXxOlh5oZAG1ayuVXWwWdSvoS0clOQOD0AmXYfjsR+dNFPAH
+        y77fVxowhpaAtZ6ERS1rVyHUGG4sFZZEI8iksCC83VMmUNwNYZghW+E2cl5kiGVkv8xI1GOKalpq
+        qirjwFNXHnpfcQaJu2Q9aHQcA+7juLeZzCupOXWqtjiiqSnxOi7O/fQafdRe+l/tpWgv/oC9buLX
+        OD9P70bDpTXUZUK0dT0BqBDSUpcpn4pz0G+1z8GFC26qHKNmMHd4t8ZKRTx6xfHsc9XOokKUxqTa
+        3Mpf4GV3yzTtBMmY4RGOd+sX1KKXetK3SnbRG5J5AZby2kzCSRhlFRQT0WSzjWZg/qi5hZGx3WzT
+        gUHbgssRWwaTU/jX9FsGuhPiopz4j9/VHwHGQOErzpWGgrP5yYw0De5X8B5tuA7vGCOkf+M7zy0H
+        7a6sgAtt6+6xEvNkLDQ53msJWmnuX6xLRXAN/gIPJ0xRqAQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1088,7 +1151,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2087'
+      - '2013'
       openai-project:
       - DUMMY
       openai-version:
@@ -1114,7 +1177,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 325ms
+      - 463ms
       x-request-id:
       - DUMMY
     status:
@@ -1217,11 +1280,26 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph and sentence, generate candidate
+      matches to aspects.\\n    - Collect minimal sufficient textual evidence privately
+      and note negation, hypothetical, or conditional forms.\\n    - Prefer precision
+      over recall; include only high-confidence matches and omit weak or ambiguous
+      ones.\\n\\n3. Consistency pass\\n   - Deduplicate paragraph IDs and sentence
+      IDs within each aspect and preserve the original order.\\n\\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph and its sentences\\n    -
       Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
@@ -1240,9 +1318,16 @@ interactions:
       \   - If a paragraph clearly relates to an aspect (based on the aspect's name
       and description), include the paragraph's ID and the IDs of all the sentences
       within the paragraph that address or relate to the aspect.\\n    - If a paragraph
-      does not relate to an aspect, do not include it under that aspect's list.\\n\\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
+      does not relate to an aspect, do not include it under that aspect's list.\\n
+      \   - Apply cross-paragraph reasoning when needed (e.g., headings, lists, references
+      like \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions.\\n    - Prefer minimal
+      sufficient evidence:\\n        -- include only the sentences necessary to support
+      the mapping; avoid unrelated sentences.\\n    - Favor precision over recall;
+      when uncertain, exclude rather than speculate.\\n\\n4. Produce the final answer
+      in the JSON format specified within <answer_format></answer_format> tags\\n
+      \   - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\\n    - For each aspect (in the order they are provided),
       include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
       \       -- paragraphs: An array of objects for each paragraph that addresses
@@ -1253,12 +1338,19 @@ interactions:
       e.g., \\\"P0-S0\\\", \\\"P0-S2\\\".\\n        -- If an aspect has no related
       paragraphs, still include it with an empty paragraph_ids array ([]).\\n- Do
       not add extra commentary, code block markers, or any other formatting beyond
-      the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n- No additional
-      text:\\n    -- Do not include any headers, explanations, or text outside of
-      the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
-      other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
+      the JSON array.\\n- Internally verify before finalizing:\\n    -- Each provided
+      aspect appears once, in order, with the correct \\\"aspect_id\\\".\\n    --
+      Each object in \\\"paragraphs\\\" contains only valid \\\"paragraph_id\\\" with
+      valid \\\"sentences\\\".\\n    -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
       [\\n                    {\\n                        \\\"sentence_id\\\": str,\\n
       \                   },\\n                    ...\\n                ]\\n            },\\n
       \           ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
@@ -1663,7 +1755,7 @@ interactions:
       \           <sentence id=\\\"P61-S0\\\">\\n                <sentence_id>P61-S0</sentence_id>\\n
       \               \\n                <sentence_text>\\n                Date: ___________________________\\n
       \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -1674,7 +1766,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '45212'
+      - '47497'
       content-type:
       - application/json
       cookie:
@@ -1682,7 +1774,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1692,7 +1784,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1708,16 +1800,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcMst9AYAAAD//6xUS4/bIBC+51dEnO0V
-        9tq7yXGvlSpVWrXVKo4sjCcOLQYEeNWH8t874HXspFsph14QzPfwTPjIk/7y0vz6+FV96Dz3LyZ/
-        bWT/mSRBoZtvwP2kuuMadeCFViPMLTAPwTV73JT5Q7Et8gj0ugUZZJ3xaXGXpb1QIs1pXqa0SLPi
-        TX7UgoND3g6P6/XvuIZGVQs/sEyTqdKDc6wDrE0kLFotQ4Uw54TzTHmSzCDXyoOKve8qheZhWa8r
-        ZBucqRZthVhFnmhFkgkzzLLOMnN0AdyN5bP2inO2+JRnZ4+R4yB8HGe7sLmyuqQu3dLnoiJL4mk+
-        7KftKbm1vZL+z/ZKmj7TG9obN/GM+/3ybiwcBsdCQNQg5QJgSmnPQsBiKvaradQpB1J3xurGXUnJ
-        AfPljjXm0WE48c6d14ZE9ITrPuZtuIgQQaPe+Nrr7xA/t3koN6MhmYM+w9vyDfTYolzIHsv75B3H
-        ugXPhHSLzBLO+BHaWTsHnA2t0AtgtZj773be8x5nF6q7xX4GOAeDb7g2FlrBL0eeaRbCH8G/aOff
-        OTaMmbGv+LBrL8CGu2jhwAY5vk7ifjoPfY0X1oE1VoxP9GBqRml5n2Vs25DVafUHAAD//wMA1udY
-        KrEEAAA=
+        H4sIAAAAAAAA/62WTY+bMBCG7/kVyGdSASYh9Lar9l4ph0YKEfKaCfEuMdQ2baNV/nvHsATYD2lV
+        +WLZ884Mj21kvc8LzyOiIF89wk/M8HNTLb//3G1FEZ6jx+pidvFDEF9+faPl3XaX3gvi24r64RG4
+        Gaq+8BrrwIha9jJXwAzYrmGShnFENzTqhHNdQGXLysYs18uqleyl4lQLDhqlPS4977kbLZss4C+G
+        A3+InEFrVgLGhiQMqrqyEcK0FtowaYg/iryWBmSHu88kNreD52WY3eA2clFkqGXkLsiIP2gNU6xU
+        rDlpK+778K32Vc6txY8ovPXoczTYj+PeZm1etZqnTrstt3FGponXcXEYplf/03ipU7x0uQ1c4tHA
+        JR4NXOM5vVwausaLnOJFrvGoUzzqGi92ihe7xls5xVu5xls7xVu7xts4xdu8xfP/o0focoux07cz
+        xrczcom3coq3+uTT3k+6Nc4PU1eg4NhqZt2IbKtqIjApa8Osm+n8yGExbHVwIEchhT7laHI0Oh50
+        FdrUDenUK46HztG0M5NCGoUeyeSmfoKubRoGcd+QjO5plDfJi+EhBlmqSV2aDHWzlnkBholKT2wR
+        4YyfoBhrQ7pO/JmY/1HCwJiRJDS+ZbC2EPWoBYvJKbyFfg+gPyEhy7ELTcMPPzAKnEODBjJvFBSC
+        z49mTFNgXehHabf76JDxH1K/0WLmRoCyd1bAkbVV7xOJvmgD5xwvtgTVKNGZRftbLK6Lf0mhiTIj
+        CwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1740,7 +1833,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1865'
+      - '6673'
       openai-project:
       - DUMMY
       openai-version:
@@ -1764,9 +1857,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 327ms
+      - 477ms
       x-request-id:
       - DUMMY
     status:
@@ -1862,7 +1955,23 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
+      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
+      paragraph IDs within each aspect and preserve the original order.\n   - Align
+      stance in justifications (permission, prohibition, requirement, exception) with
+      the actual semantics.\n   - Ensure justifications comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
       task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
       by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
@@ -1881,7 +1990,14 @@ interactions:
       on the aspect''s name and description), include the paragraph''s ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
+      list.\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions; reflect the stance
+      succinctly in the justification.\n    - Prefer minimal sufficient evidence:\n        --
+      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
+      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
+      Produce the final answer in the JSON format specified within <answer_format></answer_format>
       tags\n    - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\n    - For each aspect (in the order they are provided),
       include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
@@ -1897,13 +2013,21 @@ interactions:
       longer than 2 sentences.\n                ---- Justification should be in English.\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraphs
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
-      No additional text:\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"justification\":
-      str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      \"paragraph_ids\" contains only valid paragraph IDs.\n    -- No structural IDs
+      (aspect/paragraph IDs) appear inside justifications.\n    -- Justifications
+      meet length and language constraints.\n    -- The structure exactly matches
+      the format specified within <answer_format></answer_format> tags (no extra keys
+      or commentary).\n</task_description>\n\n<output_constraints>\n- No additional
+      text:\n    -- Do not include any headers, explanations, or text outside of the
+      JSON array.\n    -- Do not wrap your JSON response in backticks or any other
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"justification\": str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Parties</aspect_name>\n        \n        <aspect_description>\n        Information
       on the parties in the contract\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
       PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Non-Disclosure
@@ -1927,7 +2051,7 @@ interactions:
       id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        Contact:
       Jane Doe, Managing Partner\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        Phone:
-      (012) 345-6789\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      (012) 345-6789\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -1938,7 +2062,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '14407'
+      - '16990'
       content-type:
       - application/json
       cookie:
@@ -1946,7 +2070,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -1956,7 +2080,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -1972,20 +2096,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcMtP9QEAAAD//7xWUW/aMBB+51dYfuEl
-        oATStTy21TRNqtZK28OkgiInvhC3iZ3aDm019b/v7BACHdsqysZDAH93l++7s3138fBdP4afZtf3
-        nx+u7x++2JPV19OUBs5DpXeQ2c5rnCn0AyuUbOFMA7PgokanZyeTD/Esjj1QKQ6lc1vWdhSPo1El
-        pBhNwsnJKIxHUbx2L5TIwKDdLf4l5Id/OqKSwxMuh0G3UoExbAm41hnholalW6HMGGEsk5YGPZgp
-        aUF67rdz6cO3X+4zR58alSWCz9FiTs/DOQ228ZppttSsLowzuO2hV5H2eGyC3kQ7QXvTu8ZYkYuM
-        uVS2tt8KYcgmBBHSasUbzA6xBRBcBahQDmGSE0cd3RETlqBbxTiQFOwjgHQxLEIBhuD+DXLpQ2CC
-        tCUq9wbPiOZKV57AeE53Sb4Eh8mdHC6Xo7ZWkuOaC23shqhfcuXULMMEGDK88cj58GjMZ8dibgCJ
-        8r9Svzge9Sg8mHut1Qr5t8wlq8BtjzXBgAw/PjF33MeXqiJXV5fDoFUi0qbdVMr7rffb8J/sqCg6
-        jjjGucYbZEffYyGywh0fDSWs8PZwitblfO5OzVrd8QQdfkZc8oVsXiniYJkoDcHc99IQ/G8Vmr6/
-        Qk6ZOx97tbSXnS8I21jWoI2S/jJ0TeB4auL3q2GkLpTEA9VUKeg3FaaT9ccC9X8X7U9cWWx3PA15
-        Y5hru7Ipyy2ASamsj+p77WLQJanrrqVaIv3UvHKlOXZtUyTY5THbrpMaq2rq0Rd8LnwXb3YaM8VA
-        VW0Tq+7Bv25yNp22AWk/PvTwNIrXqEWO5Q5wGuwJmax3ydYoQDOWFcB7335uYA0XagsYbAn/lc++
-        2K14rNpbwvdAlkGNo1FSa8A2vKu5N9Pg5qvfmW0S7QlTA3qF81KCe0a7YnDIWVO2Qw81z8ZClWDF
-        lqBrLdrJJ68TSCPOQoh4Tgcvg58AAAD//wMAkEZUHQgKAAA=
+        H4sIAAAAAAAA/81WTU/jMBC991dYvuwloKaBlu5tF6EVAiF2qcQKWkWuPW0MiR3ZDlAh/vuOnX6y
+        VEDgwCVN583H84ztvMcWIVQK+p1QnjHHizLfObr8e1GeuMnsYnA3GMOJ/aku/1y1z34NBvFvGvkI
+        Pb4B7hZRu1xjHDipVQ1zA8yBzxr3+vFeJzlI+gEotIDch01Lt9PdySvF5hGZlhwsQtf4l5DH8PTc
+        lIAHNLejhaUAa9kU0LZwQqPRubdQZq20jilHoxXItXKgAt3rocLk/kHIEL1LXEYqxRCxIf3RHtJo
+        gZXMsKlhZWY9eF2bl7HPfJYpzuNlitrlprJOTiRnvju1z7FyRosKl0tcBgQzABTIjzBLCiaAjMHd
+        A6iAYgknwe4O6SLrU/RWLp03cBFYGG1zLhNprCO+X4ZxJ9U01J81qp68Xv3c6DspsDYj45ypW6wP
+        uSATbdbYBAbfLBHgmMybdWLvC3HZ/0Jcuu/iUuaMQ6ZzAWYLF79zcOMQqRAvQpZGvHqfzKvMtAKi
+        qmIMphGhg08mBAXOjDAhDN5mjRj13324LeB4xCed7rj9ev0zVmyWDuX8NXf0wPwXY/dQF+T09LAZ
+        g/gdM3lOAkdgHd677kMziDsfo8Clm0VIBD+WEWEIXB2f43wENGOTNN0Sz49vCcZqFRg56fKGdPY+
+        1pxtZ7Z+GfkffB+tf+gNTCrLvMBQVZ6vAUwp7ULdIDFGrcViFqJiIpW0WYq6BRfuhYJ1uqQBfcLn
+        KIiUakN30NKg7HGp07cQ0iZJ0qkT0pUgWsH7vWSOOuSSr8X12/vRCynT+c2+pnQoZzwDsYqNk24v
+        2gDTeyMdrHn0u52lB6uE1Cus3Vrrwv+kXyJQdwjvjg0OWwusAM6hRE2YlgaE5JutWbkZ8MJym9ty
+        HoEytWDuUDWmKJCMn5mACavyWvpRO7MOihQHOwVTGhn0n98WrafWPzwyXCz2CgAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2008,7 +2131,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3625'
+      - '4088'
       openai-project:
       - DUMMY
       openai-version:
@@ -2032,9 +2155,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 104ms
+      - 194ms
       x-request-id:
       - DUMMY
     status:
@@ -2130,7 +2253,23 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
+      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
+      paragraph IDs within each aspect and preserve the original order.\n   - Align
+      stance in justifications (permission, prohibition, requirement, exception) with
+      the actual semantics.\n   - Ensure justifications comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
       task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
       by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
@@ -2149,7 +2288,14 @@ interactions:
       on the aspect''s name and description), include the paragraph''s ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
+      list.\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions; reflect the stance
+      succinctly in the justification.\n    - Prefer minimal sufficient evidence:\n        --
+      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
+      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
+      Produce the final answer in the JSON format specified within <answer_format></answer_format>
       tags\n    - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\n    - For each aspect (in the order they are provided),
       include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
@@ -2165,13 +2311,21 @@ interactions:
       longer than 2 sentences.\n                ---- Justification should be in English.\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraphs
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
-      No additional text:\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"justification\":
-      str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      \"paragraph_ids\" contains only valid paragraph IDs.\n    -- No structural IDs
+      (aspect/paragraph IDs) appear inside justifications.\n    -- Justifications
+      meet length and language constraints.\n    -- The structure exactly matches
+      the format specified within <answer_format></answer_format> tags (no extra keys
+      or commentary).\n</task_description>\n\n<output_constraints>\n- No additional
+      text:\n    -- Do not include any headers, explanations, or text outside of the
+      JSON array.\n    -- Do not wrap your JSON response in backticks or any other
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"justification\": str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Parties</aspect_name>\n        \n        <aspect_description>\n        Information
       on the parties in the contract\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
       PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Email:
@@ -2238,7 +2392,7 @@ interactions:
       id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        4.
       Exclusions from Confidential Information:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        Confidential
-      Information does not include information that:\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Information does not include information that:\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -2249,7 +2403,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '17621'
+      - '20204'
       content-type:
       - application/json
       cookie:
@@ -2257,7 +2411,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2267,7 +2421,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2283,16 +2437,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcCv2CgIAAAD//3RTS4/aMBC+8yssnwEl
-        EHaXYw/VaqVqVam9ERQZexLMJrZlO7S04r937AAO290c8pjvkXlZrn58fX79Vr+8Pp/cr8Mf82S6
-        xxc6DQq9OwD3V9Wca9SBl1oNMLfAPATX/PFptXgo1sVTBDotoA2yxvhZMc9nnVRytsgWq1lWzPLi
-        It9rycEhb4OfhPyN95CoEvAbw9n0GunAOdYAxq4kDFrdhghlzknnmfJ0mkCulQcVc9+UKtoPj3CV
-        qDFYWSVFiYySfslKOh3jhlnWWGb2LhA2CXrn9IHiZvr93jRRD73zspachVYO3J97IDcHYqw+SgGO
-        MEWgY7IlTAiLPSAe50Ba+QbtiSBDBR/kaQVE14hGFx9CUh11ewSBLzEeGmIZ9/OS3ud0Tp/b4RUj
-        23EvLdS9Y2Ggqm/bEcCU0j5WEae4vSDn29xa3WAtO/dOSmvcB7evcH8cLhPOyHltaETPeN/G/ejv
-        Rk7RqDO+8voN4u+Wy9V6MKRpMRP8cNke6jHFdiQr8qvszrES4LHTbrRjlDO+B5G0+XqRdpL1QuqE
-        ZZNR6f9n9JH9UL5UzcjlU/sEcA4Gj11lLAjJ76tONAvh7H5Gu7U6Jkwd2COexQo3x4ZxCKhZ3w4H
-        irqT89BVOLMGrLFyOFW1qViWrZZ5ztY7OjlP/gEAAP//AwBwoGhAZAQAAA==
+        H4sIAAAAAAAA/51UzU7cMBC+71NYPge0f8DSWxE9tByKKBVV2VXktSeboVk7sh0KQki8BlL7cjxJ
+        x87mBwoCcUmc+WbG3zeTmZsBYxwV/8C4zIWX67LY+nT245ufZObg9AyHV0ejL0cT//3rgf55eoS7
+        PAkRZnkB0jdR29JQHHg0uoalBeEhZB3t7Y+m48lsOonA2igoQtiq9Fu7W0WlxSYiNyjBEXROn4zd
+        xGfgphVckXmYNJY1OCdWQLbGiYzWFMHChXPovNCeJx0ojfagI93zuabk4cHYnLxLkpGimhM25x+H
+        c540WCmsWFlR5i6A57W5jX3i06Y4HrcpapeLynnMUIpQndrnsyIyZAPHfA6MMgCsyfRwd+8YpfQB
+        EZujxJLUOIaaKXSyIn1GE7w0lWelCbpQFGxZOdRUGCZNURBo433kp1XMo8G6HEu3PecNu9vkrZqm
+        r2s6gYxuYN5ESY0IIk2faFnogBXSV0Q1tCrqC54nIAEvUa/YMcVcR76HpLMwrjW+i/Pe65wPwUmL
+        y00bnt4aqTxHr1ZkIf47eAnM4ir3ofJagtXBmY4Zqk1rUGfGruO971Ky/xYlWeh+W/trotcQf4lL
+        04GHuz9PVG4/3P3tEa0Pi/Ci86I/WBayyokw0Loqih4gtDa+/gXD8CwGjehmiIkvujylPeFoadBg
+        Om9KHtFbei7iUqgezTkvLa0Zn3rzC2LayWxnVifk3QLqwfvTDeqJS9EB0/HOOHkmZarACyxcb7Nw
+        KWQOqosdTXb3kkdg+tuih85jPJ3NWg9RKTQdNhz0qvA/6ecI1BWi3vRuGI9evKADpISSdnBaWlAo
+        H5emc7MQFvlLbm0/ImXuwF7Slk5ptm3omYJMVEW9arm7dh7WKTV2Bba0GPdt+C0Gt4N/MU/eu2YG
+        AAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2315,7 +2472,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '877'
+      - '3742'
       openai-project:
       - DUMMY
       openai-version:
@@ -2341,7 +2498,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 128ms
+      - 147ms
       x-request-id:
       - DUMMY
     status:
@@ -2444,11 +2601,28 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph, generate candidate matches to aspects.\\n
+      \   - Collect minimal sufficient textual evidence privately and note negation,
+      hypothetical, or conditional forms.\\n    - Prefer precision over recall; include
+      only high-confidence matches and omit weak or ambiguous ones.\\n\\n3. Consistency
+      pass\\n   - Deduplicate paragraph IDs within each aspect and preserve the original
+      order.\\n   - Align stance in justifications (permission, prohibition, requirement,
+      exception) with the actual semantics.\\n   - Ensure justifications comply with
+      length and language constraints.\\n\\nNever disclose any plan, evidence, or
+      internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph\\n    - Each paragraph is
       identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.) specified
@@ -2464,15 +2638,23 @@ interactions:
       on the aspect's name and description), include the paragraph's ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect's
-      list.\\n\\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\\n    - For each aspect (in the order they are provided),
-      include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
-      \       -- paragraphs: An array of objects for each paragraph that addresses
-      or relates to the aspect. Each object should include:\\n            --- paragraph_id:
-      The provided paragraph ID, e.g., \\\"P0\\\", \\\"P2\\\".\\n            --- justification:
-      A justification of why the paragraph is relevant to the aspect. Ensure the justification
-      is specific and directly ties the content of the paragraph to the aspect's defining
+      list.\\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \\\"above\\\", \\\"this section\\\"): use surrounding context
+      to disambiguate; if unresolved, omit.\\n    - Treat negations, exceptions, and
+      conditionals carefully: relevance can be present in prohibitions or restrictions;
+      reflect the stance succinctly in the justification.\\n    - Prefer minimal sufficient
+      evidence:\\n        -- base the mapping on the most relevant paragraphs; avoid
+      tangential mentions.\\n    - Favor precision over recall; when uncertain, exclude
+      rather than speculate.\\n\\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\\n    - For
+      each aspect (in the order they are provided), include:\\n        -- aspect_id:
+      The aspect's unique identifier, e.g., \\\"A0\\\".\\n        -- paragraphs: An
+      array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\\n            --- paragraph_id: The provided paragraph
+      ID, e.g., \\\"P0\\\", \\\"P2\\\".\\n            --- justification: A justification
+      of why the paragraph is relevant to the aspect. Ensure the justification is
+      specific and directly ties the content of the paragraph to the aspect's defining
       features. Never reference any of the structural IDs provided in this prompt
       (such as aspect IDs like \\\"A0\\\", or paragraph IDs like \\\"P0\\\") in the
       justification.\\n                ---- Justification should be brief, i.e. highlight
@@ -2480,12 +2662,21 @@ interactions:
       longer than 2 sentences.\\n                ---- Justification should be in English.\\n
       \       -- If an aspect has no related paragraphs, still include it with an
       empty paragraphs array ([]).\\n- Do not add extra commentary, code block markers,
-      or any other formatting beyond the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n-
+      or any other formatting beyond the JSON array.\\n- Internally verify before
+      finalizing:\\n    -- Each provided aspect appears once, in order, with the correct
+      \\\"aspect_id\\\".\\n    -- \\\"paragraph_ids\\\" contains only valid paragraph
+      IDs.\\n    -- No structural IDs (aspect/paragraph IDs) appear inside justifications.\\n
+      \   -- Justifications meet length and language constraints.\\n    -- The structure
+      exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
       No additional text:\\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"justification\\\":
       str\\n            },\\n            ...\\n        ],\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
       ASPECTS:\\n    <aspect id=\\\"A0\\\">\\n        <aspect_id>A0</aspect_id>\\n
       \       \\n        <aspect_name>Parties</aspect_name>\\n        \\n        <aspect_description>\\n
@@ -2549,7 +2740,7 @@ interactions:
       \       <paragraph_id>P14</paragraph_id>\\n        \\n        <paragraph_text>\\n
       \       This Agreement shall be governed by and construed in accordance with
       the laws of the State of California, without regard to its conflict of law principles.\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -2560,7 +2751,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16313'
+      - '18896'
       content-type:
       - application/json
       cookie:
@@ -2568,7 +2759,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2578,7 +2769,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2594,15 +2785,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcCsJSwUAAAD//4xSwW7bMAy95ysKne0i
-        cu22PvbSXZrTDsMQB4Yi0Y42W9JEedgw5N9HyUntbh0wH2SIj++JfOQ3fOHPZnd8qT/uPvMd//Bo
-        PoFiWWTY4xeQ4cq6lZZ4ELQ1Myw9iABRlT88VsV9WZd1AkarYIi03oW8vOX5qI3Oi21R5dsy5+WF
-        frJaAlLenq43N7/SGQs1Cn5QeJtdIyMgih4odk2ioLdDjDCBqDEIE1i2gNKaACbVvm9Mkp9/8WuI
-        46izVquGMhr2tG1Ytsad8KL3wp0wJuwPM3ZuzGH9iIduQhE7NdMwrABhjA0iOpXaO1yQ82tDg+2d
-        t0f8g8o6MgpPLRmL5DIVj8E6ltAznYdk3PTGC0ZCowttsF8hPXfHH6pZkC0TW+CCX8BAJQ5rWn2f
-        vaPYKghCD7gyn0khT6AW7jIpMSltV8Bm1fff5bynPfeuTf8/8gsgJThaxtZ5UFq+bXlJ8xA3+l9p
-        rz6nghmC/04b2gYNPs5CQSemYV4zhj8xwNjSwHrwzut51zrXdjW/K+tjUVVsc978BgAA//8DAO7f
-        fUp6AwAA
+        H4sIAAAAAAAA/3WSXUsrMRCG7/srllxvZbddW/XOAwcOIoh4odAtS0ymuzmmSUiyWin9707Sj2xR
+        bwKZZ2byzpvZjrKMCE5uMsI66tnayPHf55enzeudbd/offHwfLd5vC7Nv2KmoXr/Q/JQoV//A/PH
+        qgumsQ680GqPmQXqIXQt59dlNZleVfMI1pqDDGWt8ePZWPaKHio6LRg4RAu8Ztk2nkGb4rDBcJEf
+        I2twjraAsWMSBq2WIUKoc8J5qjzJE2RaeVBR7mJbY45B8Y3gNbmpyW1Rk7wmhlraWmo6h9HFcrcc
+        NrCw6h0NwlUv5QBQpbSnYfAofXkgu5PYlVDCdQ364dAcFOC8NiTSHZ7LOHx/Ng8xFu30jddvENtO
+        Z/Nq35AkoxO+LCYH6lGLTKAq57P8h5YNB0+FdAMHCaOsA55qS3w0P4PNhxUeUsZkWlSnDNpzoRMr
+        RgMXvov+ScDeIaHagf6r8tcHEmAMDO5aYyxwwc6tSWkWwsL+lnb6jyiZOLDvuI2NF2DDn3FY0V7u
+        V4q4T+dh3eDHtmCNFXGvwlqMdqMv4omeLE4DAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2625,7 +2815,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '526'
+      - '5026'
       openai-project:
       - DUMMY
       openai-version:
@@ -2649,9 +2839,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 118ms
+      - 261ms
       x-request-id:
       - DUMMY
     status:
@@ -2747,7 +2937,23 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
+      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
+      paragraph IDs within each aspect and preserve the original order.\n   - Align
+      stance in justifications (permission, prohibition, requirement, exception) with
+      the actual semantics.\n   - Ensure justifications comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
       task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
       by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
@@ -2766,7 +2972,14 @@ interactions:
       on the aspect''s name and description), include the paragraph''s ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
+      list.\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions; reflect the stance
+      succinctly in the justification.\n    - Prefer minimal sufficient evidence:\n        --
+      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
+      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
+      Produce the final answer in the JSON format specified within <answer_format></answer_format>
       tags\n    - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\n    - For each aspect (in the order they are provided),
       include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
@@ -2782,13 +2995,21 @@ interactions:
       longer than 2 sentences.\n                ---- Justification should be in English.\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraphs
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
-      No additional text:\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"justification\":
-      str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      \"paragraph_ids\" contains only valid paragraph IDs.\n    -- No structural IDs
+      (aspect/paragraph IDs) appear inside justifications.\n    -- Justifications
+      meet length and language constraints.\n    -- The structure exactly matches
+      the format specified within <answer_format></answer_format> tags (no extra keys
+      or commentary).\n</task_description>\n\n<output_constraints>\n- No additional
+      text:\n    -- Do not include any headers, explanations, or text outside of the
+      JSON array.\n    -- Do not wrap your JSON response in backticks or any other
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"justification\": str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Parties</aspect_name>\n        \n        <aspect_description>\n        Information
       on the parties in the contract\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
       PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        All
@@ -2825,7 +3046,7 @@ interactions:
       LLC\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        By:
       ___________________________\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        Name:
-      Jane Doe\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Jane Doe\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -2836,7 +3057,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15253'
+      - '17836'
       content-type:
       - application/json
       cookie:
@@ -2844,7 +3065,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -2854,7 +3075,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -2870,19 +3091,20 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcCsNdQEAAAD//6RUUW/aMBB+51dYfuEl
-        oIQChceqnVRNVcWkSpsEKHKdS3CX2JntMNDEf9/ZISRlVBrbiwn3fff5O9t3P0DMZy/ya/T88/Gb
-        1o93+2z2ZUEDl6Fe34DbJmvIFeaBFUrWMNfALDjV6HY2GU3H80nogUIlkLu0rLSD8TAaFEKKwSgc
-        TQbheBCNj+kbJTgY5C3xLyG//OqMygR2GPZiPlKAMSwDjDUkDGqVuwhlxghjmbQ0aEGupAXpvS9X
-        EsXdQsgK2SXWFItkhdiK3oUrGjRYyTTLNCs3xoHLOnzKPeOcJBaTk0RNeauMFangzB1VzXnZCENO
-        qaRAa4gZYjdA+g/C8FwZITOyYNru+4QZwhzd7omQW5VvIcEPAjvglXU8l+dK1Izb4Yo2ux+Cv/U8
-        vdqzhhQ0OlZ+c2dOgDmz9Kzk4FhNpYHcZRrA1Rqg+8SLH4nHqhxGVNqo/VMl0ejqUiTDB0X6n3bM
-        PejhvSrI09N90CcicReT7p1NJcFZ6xaLV/DfBx+Nr7ZbarVFZ/Vrcd5J/zNDdw8Kzjwz6Q8a2RXL
-        Lzygj9zXH2v3g9/rbiPhtVeGuW6WVZ53ACalst60b+F1rzmJpmlzlaHzV3OWSlMcBmYT4/AwOEmw
-        QY1VJfXoAde1Hw7Vu36nKFSUNrbqO/jtRvPptBak7VRq4eg2OqIWPeYtcBPd3AYXJOMELBO56UwY
-        yhnfQNIRnY/aicSqRKgWC3ud2v+0dEm+rh9vraPyoXwLcA4lDt241IAd9b7slqbBTe6PaKez9oap
-        Ab3FSRzjG9fuPhJIWZXX45SavbFQxHhpGehSi3qmpmXMwnByE0Vs/kp7h95vAAAA//8DAMKBwW1i
-        BgAA
+        H4sIAAAAAAAA/7WV30/bMBDH3/tXWHlOUdv0B90bAiZtQqzTkLaJVpGxr4nBsSPbKUWI/52z0zSF
+        gYCivaSpv3f25+6cu/sOIZHg0RcSsZw6VpSye/r7z0XyY7L66ngy0Wsu+N8yyWe3/KL/8zqKvYe+
+        ugbmGq8DptEPnNCqlpkB6sDv2p9M+8NBcjhKglBoDtK7ZaXrjruyUnTjkWvBwKJ0iX8JuQ9Pz6Y4
+        rHG5FzcrBVhLM8C1xggXjZZ+JaLWCuuoclHcikwrByrgXs4Vbu4fhMzRusQwUsHnqM2jo948ihut
+        pIZmhpa59eJlvbz1fWaz3WI22m5Rm1xX1omlYNRnp7b5xhEG18ASlwM5EZZJbYXKyIwad0eoJZSU
+        4dXpYOIDMJS5GP/pKsuJcIRr9FfakdLoleCAPooWcDCPmuMf4vdCj9+G/uWwoh6YuoDk+XwEOV0B
+        gTWwCgselHOtupuYKgPkKDMABUa8F9nh22SzOn6fNCsyRZ0/VQoFZKkNoYpUyieGb1KKawZKAxaR
+        cJfVfhmbfojLn0+w4JL/T6Z+70NQTji5S+Vr12DVidTmLkYwif54Oeu7KBAVvzUiVDDyQgipjmQ/
+        7sHb3OeIZcnpmvpGc3CsC3J2dlx/Kc3H4VE+AZF85qZh29FM+J5HboXLn4PuRzR8b1q+U0Q40aEo
+        voot3JXU7OYjdPXLwv/g+2K3ixpYVpb67q0qKXcEqrANBajQvxedJtKmYy+FEjZPcShYnBDYha3T
+        ZRTUB3wuwgSonjT1CLtaUbrU6RsI2ybD8ajeMGqnTSuPDycb1SGLbIVhfzSIX9gy5eCokHZnjESM
+        shx469tPxpP4iZjeGuGgtRj0pqOtBa240K3W6+xk4V/olwDqDOFF3ol7On71gFZgDEosb4o9hAv2
+        NDWtmQE/tV8z29YjIEcWzApHcopd3viacVjSStZzNbJ31kGRYmEzMKURYbj6a9F56DwCLEDv5VMI
+        AAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2905,7 +3127,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2424'
+      - '6076'
       openai-project:
       - DUMMY
       openai-version:
@@ -2929,9 +3151,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 110ms
+      - 212ms
       x-request-id:
       - DUMMY
     status:
@@ -3027,7 +3249,23 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
+      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
+      paragraph IDs within each aspect and preserve the original order.\n   - Align
+      stance in justifications (permission, prohibition, requirement, exception) with
+      the actual semantics.\n   - Ensure justifications comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
       task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
       by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
@@ -3046,7 +3284,14 @@ interactions:
       on the aspect''s name and description), include the paragraph''s ID and provide
       a justification, detailing why the paragraph is relevant to the aspect.\n    -
       If a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n\n4. Produce the final answer in the JSON format specified within <answer_format></answer_format>
+      list.\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions; reflect the stance
+      succinctly in the justification.\n    - Prefer minimal sufficient evidence:\n        --
+      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
+      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
+      Produce the final answer in the JSON format specified within <answer_format></answer_format>
       tags\n    - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\n    - For each aspect (in the order they are provided),
       include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
@@ -3062,19 +3307,27 @@ interactions:
       longer than 2 sentences.\n                ---- Justification should be in English.\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraphs
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
-      No additional text:\n    -- Do not include any headers, explanations, or text
-      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"justification\":
-      str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      \"paragraph_ids\" contains only valid paragraph IDs.\n    -- No structural IDs
+      (aspect/paragraph IDs) appear inside justifications.\n    -- Justifications
+      meet length and language constraints.\n    -- The structure exactly matches
+      the format specified within <answer_format></answer_format> tags (no extra keys
+      or commentary).\n</task_description>\n\n<output_constraints>\n- No additional
+      text:\n    -- Do not include any headers, explanations, or text outside of the
+      JSON array.\n    -- Do not wrap your JSON response in backticks or any other
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"justification\": str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Parties</aspect_name>\n        \n        <aspect_description>\n        Information
       on the parties in the contract\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
       PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Title:
       Managing Partner\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
       id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        Date:
-      ___________________________\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      ___________________________\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -3085,7 +3338,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12044'
+      - '14627'
       content-type:
       - application/json
       cookie:
@@ -3093,7 +3346,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3103,7 +3356,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3119,15 +3372,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcKsoCQcAAAD//3RSy07DMBC89ysqn5Mq
-        SROgRwQcQQL11lSRa29TQ2JbXqcCof4767QlKY+LpezsTHZmd/9YLOVy6eqn5/sbeVcv8KF90SwK
-        DLN5BeHPrJkwxAOvzAkWDriHoJpe3xTZVb4o5j3QGglNoNXWx/ksjVulVZwlWREneZzmJ/rOKAFI
-        fSv6nE4/+zcMqiW8UzmJzpUWEHkNVDs3UdGZJlQYR1ToufYsGkBhtAfdz74qNYmHZzotqduSp0rJ
-        krCS3SYli86Y5Y7XjtsdBnC1DvVDqddjYQfbDnlwp7umGQFca+N5SKe3tD4hh28TjamtMxv8QWVb
-        Cgd3FYWJlCwNjN5Y1qMHetd9WN2Ff0ZCrfWVN2/Q/y6bJ/OjIBu2NILTE+hpxGZMy/LoD8VKgueq
-        wVHgTHCxAzlw00U2LIh3UpkBSyYj678n+kv+aF/peqTyr/wACAGWbrCyDqQSl66HNgfhkP9r+466
-        H5ghuD0dZuUVuLAOCVveNcfrYviBHtqKdlaDs04dT2xrK54kxTxN+WLDJofJFwAAAP//AwC04XcF
-        cQMAAA==
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OkK/W9m497FCg6IBtWAvEgaFJjK1WkQSJblcU+e+jlA87
+        WHsRID7kC/Il3ydZxpRkXzMmOo5i5/T028Pjr+rxd3F1ty274oHfmvIN73/c/rwpv5csjxX2zxMI
+        PFV9EZbqAJU1Byw8cISoOi+q+WqxLK+qBHZWgo5lrcPp9VT3hh8rOqsEBEJr+mbZe3pjb0bCXwrP
+        8lNkByHwFih2SqKgtzpGGA9BBeQGWT5AYQ2CSe2ua0Pi8cmymrIdjdEoWROr2c2sZvmJOe5567nr
+        QoTrTYzva7MZC3vY9oHHgUyv9QhwYyzyaEgaaXMk+/MQW2VU6BryKZBp1FhA61iie3o3yZT+Yk7m
+        PNmMDdpnSLKLcrY4CLJhAQMuqiNEakWPy8p5/oFiIwG50mFkLBNcdCCH2vnyusgvYPPqFcIoY7Vc
+        nDN4L5Ud2GwyMuH/nj9q4GCQMu2gsqo+1R+AEODoAhvnQSpxacyQ5iGe8Wdp522kjlkA/0I32qAC
+        HzcmYct7fTg0Ft4Cwq6htbbgnVfp2uJRTPaTf5xi0+5kAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3150,7 +3402,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1316'
+      - '1090'
       openai-project:
       - DUMMY
       openai-version:
@@ -3176,7 +3428,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 87ms
+      - 106ms
       x-request-id:
       - DUMMY
     status:
@@ -3272,9 +3524,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -3295,25 +3562,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
       and termination</aspect_name>\n        \n        <aspect_description>\n        Term
       and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
@@ -3359,7 +3640,7 @@ interactions:
       Jane Doe, Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Phone:
-      (012) 345-6789\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      (012) 345-6789\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -3370,7 +3651,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '17723'
+      - '20008'
       content-type:
       - application/json
       cookie:
@@ -3378,7 +3659,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3388,7 +3669,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3404,15 +3685,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcKsMywAAAAD//3RSQW6DMBC85xXIZ4iA
-        QNocc6hUtaoq9Roi5JgNcQO2ZZuoVcXfu4YQSJtcLHlnZ7wz3sVpbY/vp2cdhy+vu7eFeJLxR0l8
-        x5C7T2B2YM2ZRB5YLkUPMw3UglONHh7TeJms0qQDallA5WilskEyj4KaCx7EYZwGYRJEyZl+kJyB
-        wb4NXj3vpzvdoKKALyyH/lCpwRhaAtaGJixqWbkKocZwY6mwxB9BJoUF0c2+yQSKu8PzMuxW6Cnn
-        RYZYRtZhRvwBU1TTUlN1MA7cbF29zcR2Kqxh3xjq3ImmqiYAFUJa6tLpLG3PSHsxUclSabkzf6hk
-        j+GYQ45hGkwWBzZWKtKhLZ7bLqzmyj9BoVrZ3MojdM8tkiTpBcn4SyMcR2fQ4ojVlLZM/RuKeQGW
-        8spMAieMsgMUE83V8KQz3xRcjlg4m1j/P9Et+d4+F+VE5a78CDAGCncwVxoKzq5dj20a3CLfa7tE
-        3Q1MDOgTLmZuOWj3HQXsaVP120XMt7FQ5/hnJWileb9ie5XTMEwXUURXOzJrZ78AAAD//wMA18qI
-        mnEDAAA=
+        H4sIAAAAAAAA/3WSwY4aMQyG7zzFKGeoGKCw9IaqqlVPlYraAoNGaWJm0g1JlHjYVivevU6AzaB2
+        L5Hiz79l//bzoCiYkuxdwUTLURydHn34/mO9Kj+ftqftdrZ5/Iab95s1//r06eP6y4oNo8L+/AUC
+        b6o3wpIOUFlzwcIDR4hVy8WynE2mD/NxAkcrQUdZ43A0H+nO8KuitUpAILSjb1E8pzf2ZiT8pnDS
+        p8gRQuANUOyWREFvdYwwHoIKyA2yYYbCGgST2t1VhorHpygqynY0Rq1kRaxiq3HFhjfmuOeN564N
+        Ee72MX6uzL5f2MOhCzwOZDqte4AbY5FHQ9JI+ys5vwxxUEaFtiafAplGjQW0jiV6pnefTOnu5mTO
+        k81Yo32EVHb6sLy6wvICMl6UV4jUiu7JlvMbuatYS0CudOgZywQXLcisLafzxfAO1k9eIeSMydtJ
+        XhXvpLKZjQc9E/7t+X8NXAxSpslVZuWr9TMQAhxdYO08SCXujclpHuIZv5b2so3UMQvgT3SjNSrw
+        cWMSDrzTl0Nj4U9AONa01ga88ypdWzyKwXnwFy/1c1BkAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3435,7 +3715,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '568'
+      - '1211'
       openai-project:
       - DUMMY
       openai-version:
@@ -3459,9 +3739,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 36ms
       x-ratelimit-reset-tokens:
-      - 128ms
+      - 310ms
       x-request-id:
       - DUMMY
     status:
@@ -3557,9 +3837,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -3580,25 +3875,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
       and termination</aspect_name>\n        \n        <aspect_description>\n        Term
       and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
@@ -3689,7 +3998,7 @@ interactions:
       Exclusions from Confidential Information:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Confidential
-      Information does not include information that:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Information does not include information that:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -3700,7 +4009,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '22221'
+      - '24506'
       content-type:
       - application/json
       cookie:
@@ -3708,7 +4017,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -3718,7 +4027,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -3734,15 +4043,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcKtKSgQAAAD//3RSy3KjMBC8+ytcOkMK
-        sZCEY27ZUz7AuChZjLE2ICmaYStbW/73jMAO5HVRFdPTzXTPlL/vXmiQ/tVafHp8sI/Pnvwgkshw
-        hz+g6cq60Y55QMbZGdYBFEFUlXf3ZX5bVGU5AYNroY+0zlNa3Mh0MNakeZaXaVaksrjQT85oQO7b
-        8ed2+39646C2hVcuZ8m1MgCi6oBr1yYuBtfHilCIBklZEskCamcJ7DT7rrYsHp/ttuZuz54a09aM
-        1eIhq0VyxbwKqgvKnzCCu32sn2u7XwsHOI6oojs79v0KUNY6UjGdydL+gpzfTfSu88Ed8BNVHDkc
-        PDUcJnKyPDCS82JCz/zup7DGD/4FCw2eGnLPMP2ukNX9LCiWLS1wLi8g8Yj9ipbLKvlGsWmBlOlx
-        FbjQSp+gXbiyypcFqbE1bsGyzcr614m+k5/tG9utVH6UXwCtwfMNNj5Aa/RH10tbgHjIP7W9Rz0N
-        LBDCXz7MhgyEuI4Wjmrs5+sS+A8JhoZ31kHwwcwndvSNyrLyl5SqOojNefMGAAD//wMAGHZwG3ED
-        AAA=
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OkA8nWXbbggG7DujQAXFgqBJjq1UkQaLXdkX++yjlQw7W
+        XgSID/mCfMm3UVEwJdmXgomOozg4Pf5+//tucz/d/7wzq83L849f3zbh7xq68CBfN6yMFfbhEQRe
+        qj4JS3WAypoTFh44QlSdrtbTajb/vJwlcLASdCxrHY6XY90bfq7orBIQCG3pWxRv6Y29GQkvFJ6U
+        l8gBQuAtUOySREFvdYwwHoIKyA2yMkNhDYJJ7W5rQ+LxKYqash2N0ShZE6vZ10nNygtz3PPWc9eF
+        CLe7GD/WZjcU9rDvA48DmV7rAeDGWOTRkDTS7kyO1yH2yqjQNeRTINOosYDWsUSP9O6SKf3NnMx5
+        shkbtE+QZKtlVZ0EWV5AxovFGSK1oodl63X5jmIjAbnSYWAsE1x0IHPtdL5clTewefYKIWfMZ6vq
+        msF7qWxmk9HAhP97fq+Bk0HKtFlltvhQPwMhwNEFNs6DVOLWmJzmIZ7xR2nXbaSOWQD/h260QQU+
+        bkzCnvf6dGgsvAaEQ0NrbcE7r9K1xaMYHUf/AG0jl0xkAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3765,7 +4073,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '580'
+      - '1095'
       openai-project:
       - DUMMY
       openai-version:
@@ -3791,7 +4099,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 161ms
+      - 178ms
       x-request-id:
       - DUMMY
     status:
@@ -3894,11 +4202,26 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph and sentence, generate candidate
+      matches to aspects.\\n    - Collect minimal sufficient textual evidence privately
+      and note negation, hypothetical, or conditional forms.\\n    - Prefer precision
+      over recall; include only high-confidence matches and omit weak or ambiguous
+      ones.\\n\\n3. Consistency pass\\n   - Deduplicate paragraph IDs and sentence
+      IDs within each aspect and preserve the original order.\\n\\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph and its sentences\\n    -
       Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
@@ -3917,9 +4240,16 @@ interactions:
       \   - If a paragraph clearly relates to an aspect (based on the aspect's name
       and description), include the paragraph's ID and the IDs of all the sentences
       within the paragraph that address or relate to the aspect.\\n    - If a paragraph
-      does not relate to an aspect, do not include it under that aspect's list.\\n\\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
+      does not relate to an aspect, do not include it under that aspect's list.\\n
+      \   - Apply cross-paragraph reasoning when needed (e.g., headings, lists, references
+      like \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions.\\n    - Prefer minimal
+      sufficient evidence:\\n        -- include only the sentences necessary to support
+      the mapping; avoid unrelated sentences.\\n    - Favor precision over recall;
+      when uncertain, exclude rather than speculate.\\n\\n4. Produce the final answer
+      in the JSON format specified within <answer_format></answer_format> tags\\n
+      \   - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\\n    - For each aspect (in the order they are provided),
       include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
       \       -- paragraphs: An array of objects for each paragraph that addresses
@@ -3930,12 +4260,19 @@ interactions:
       e.g., \\\"P0-S0\\\", \\\"P0-S2\\\".\\n        -- If an aspect has no related
       paragraphs, still include it with an empty paragraph_ids array ([]).\\n- Do
       not add extra commentary, code block markers, or any other formatting beyond
-      the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n- No additional
-      text:\\n    -- Do not include any headers, explanations, or text outside of
-      the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
-      other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
+      the JSON array.\\n- Internally verify before finalizing:\\n    -- Each provided
+      aspect appears once, in order, with the correct \\\"aspect_id\\\".\\n    --
+      Each object in \\\"paragraphs\\\" contains only valid \\\"paragraph_id\\\" with
+      valid \\\"sentences\\\".\\n    -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
       [\\n                    {\\n                        \\\"sentence_id\\\": str,\\n
       \                   },\\n                    ...\\n                ]\\n            },\\n
       \           ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
@@ -4047,7 +4384,7 @@ interactions:
       \               This Agreement shall be governed by and construed in accordance
       with the laws of the State of California, without regard to its conflict of
       law principles.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -4058,7 +4395,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '20489'
+      - '22774'
       content-type:
       - application/json
       cookie:
@@ -4066,7 +4403,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4076,7 +4413,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4092,15 +4429,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6xU0W6bMBR9z1cgP0MFBNLSt0qttretmqppChFyzA14M7ZnO1u7Kv++ayiBZK3U
-        h71Y9j3nHs6Nj/O8CALCa3IdENZSxzotortV+yG+uRc/H+r4k7n/c/n4+9vDR3GbP2XpVxL6DrX9
-        DsyNXRdMYR84ruQAMwPUgVdNLq/ydJUV+aoHOlWD8G2NdlF2kUQdlzxK4zSP4ixKspf2VnEGFnlr
-        PAbBc796o7KGRyzH4VjpwFraANZGEhaNEr5CqLXcOiodCSeQKelA9t7XpURxvwRBiWyNM1W8LhEr
-        yU1cknDENDW0MVS31oProXzsPeMcJT5nR4mBYsF/G0c7UTlTOqXOxKIvaGnOO0yHzbg9hO81l/9P
-        c/n7zA2b/oz7zfxeDOz2lvpwyL0QM4BKqRz14eoTsVmMg44ZEKrRRm3tWSvZYbZsW2EWLQYT79s6
-        pUmPHnDd9Fnbn8SHoFCnXeXUD+g/tyyWV4MgmUI+wUX+Ajq0KKZ6Fi+X4SuKVQ2OcmFneSWMshbq
-        qTcp0infdF9zNWHxYjb6v45ekx/G57KZqbwpPwGMgcYnXGkDNWenU080A/5/4C3a8afuDWNqzC98
-        15XjYPx11LCjezE8TmKfrIOuwjtrwGjDhxe60xWN43yZJLTYksVh8RcAAP//AwDSH9mqsAQAAA==
+        H4sIAAAAAAAA/3VTTY/TMBC991dEPqeo2bTZLjckQOKGWCRAbRV5nWlicG3LnmyBVf87Y6f5WnYv
+        lj3vzfN4nudpkSRMVuxtwkTDUZysWn749v3r+8e7Ij+7+uOn7GZz/4A//qozui9YsDRkmIefILDP
+        eiMM5QFKoztYOOAIQTW7vcvWN/m2yCNwMhWokFZbXBZL1Wp+zWiMFOAJ2tExSZ7iGmrTFfym8Crt
+        IyfwntdAsZ5EQWdUiDDuvfTINbJ0BIXRCDqWu9trEg9LkuyJbekZpaz2hO3Zu9WepT1mueO147bx
+        Adx14SH3GWeQ+LwZJDqKh3A3PW2m8kxpTp2ILe+ppCnvMh4O/fYai2faH6ZPd3BsPQ8t161SE4Br
+        bZAHy2LTD1fkMrT5KLX0TUlOerKVWufRWBbRC62HaFs7c4JZRx8BSzS/IMqu8+26E2TjFxnhbECR
+        alGTvE2xTV+QLCtALpWfeM8EFw1UE9G8uE1nYHl2EmFk5KtsPTB4W0kzYqvFpAv/F/1SAV2HpK4n
+        NWTFqxeMgBBgaUpK66CSYt6akeYgjNprtMGPWDJ9IfdIc1SiBBc8q+DIW9UNA/N/PMKpJGNrcNbJ
+        OBHhWywui3+1WbT+CAQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4123,7 +4460,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1116'
+      - '2136'
       openai-project:
       - DUMMY
       openai-version:
@@ -4147,9 +4484,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 48ms
       x-ratelimit-reset-tokens:
-      - 148ms
+      - 485ms
       x-request-id:
       - DUMMY
     status:
@@ -4245,9 +4582,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -4268,25 +4620,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
       and termination</aspect_name>\n        \n        <aspect_description>\n        Term
       and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
@@ -4343,7 +4709,7 @@ interactions:
       ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Name:
-      Jane Doe\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Jane Doe\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -4354,7 +4720,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18783'
+      - '21068'
       content-type:
       - application/json
       cookie:
@@ -4362,7 +4728,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4372,7 +4738,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4388,15 +4754,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcDf0CQQAAAD//3RTS4+bMBC+51dEPsMK
-        WNg0x+6124dUVT2ECDlmAt4a27JN1W2V/96xCTHJ7l4sPN+Defnz49fhRzdQVTz9FI+fvrj+70tV
-        kMQr1OEZmJtVd0yhDhxXcoKZAerAu+abD1XxUG6rTQAG1YLwsk67tLzL04FLnhZZUaVZmeblWd4r
-        zsAib4fX9fpfOH2isoU/GM6SOTKAtbQDjM0kDBolfIRQa7l1VDqSRJAp6UCG3He1RHN/rNc1sjXW
-        1PC2RqwmH7OaJDOmqaGdobq3HtxN4Yv2hnOx+BYtJooF/28s7crlxumaujBLv+c1WfJO8bKfP8+x
-        cMfv/bJ0A8fRUt9/OQqxAKiUylE/v9D0/Rk5XdosVKeNOtgbKTni+Gzf4Lgtzh5bap3SJKAnPPdh
-        nOPVhAgaDdo1Tv2C8Lv7h7yaDEncowhX2zPoMEWxlG3K5A3HpgVHubCLlSCMsh7aqM23RVwhOrZc
-        RSxbLUp/ndFb9lP5XHYLl3ftI8AYaHwljTbQcnZddaQZ8E/tPdql1SFh3BrzG59O4zgYP44WjnQU
-        0/4T+2IdDA3OrAOjDZ8ewVE3NMuq+zyn2wNZnVb/AQAA//8DAGDHlhUTBAAA
+        H4sIAAAAAAAA/3VTTW/bMAy951cYOjuD3XROstsO7YD1MqwDOiAODE1ibHWypEny1qHIfx8lx19d
+        exEsvsdnkk98XiUJEZx8SAhrqGetkeubh+/fbu92d7df2/u9UZtP3fZJ7H7V8Hn7wEgaMvSPR2B+
+        yHrHNOaBF1r1MLNAPQTVfLvPr682u+J9BFrNQYa02vh1sZadopeMRgsGDqEDXpPkOZ6hNsXhCcNZ
+        OkRacI7WgLGBhEGrZYgQ6pxwnipP0glkWnlQsdxDqVA8HElSIttgG5XgJWIl+ZiVJB0wQy2tLTWN
+        C+ChD4+5LzijxJdJoqc4CP/G1hYqL5SW1JnY+j4vyZx3ni7H4fMSi3f8Ps5bt3DqHA0jV52UM4Aq
+        pT0NlsWhHy/IeRzzSSjhmgqddGgrjs55bUhEz3geo23dwgliLD4EX3n9E6LsdVbkvSCZnsgE59nu
+        gnqsRc7y8mKfviJZcfBUSDfznjDKGuAz0U2xTRdg9ccKDxPjqtjnI4N2XOgJy1azKfxf9GsF9BMS
+        qp73/ab+BDAGBpekMha4YMvJTDQLYdPeoo12xIrxBdnfuEaVF2CDZRxOtJP9LhD313loK/S1Bmus
+        iAsRXsXqvPoHfOaZZAcEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4419,7 +4785,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1375'
+      - '1312'
       openai-project:
       - DUMMY
       openai-version:
@@ -4443,9 +4809,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 136ms
+      - 246ms
       x-request-id:
       - DUMMY
     status:
@@ -4541,9 +4907,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -4564,25 +4945,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Term
       and termination</aspect_name>\n        \n        <aspect_description>\n        Term
       and termination clauses\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
@@ -4591,7 +4986,7 @@ interactions:
       Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Date:
-      ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -4602,7 +4997,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12555'
+      - '14840'
       content-type:
       - application/json
       cookie:
@@ -4610,7 +5005,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4620,7 +5015,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4636,15 +5031,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcDcO9wMAAAD//3RSwY6bMBC95ysin2EF
-        BJrkuNrLSlXUXiq1ChFyzEC8BdvymKpRlX/v2CQL2yYcjDxv3vPMm9npL6+fX9b4dShW528/iu9t
-        s9MbFnmGPr6BcDfWk9DEAye1GmFhgTvwqul6U2Sf8m2xDUCva+g8rTUuzp/SuJdKxlmSFXGSx2l+
-        pZ+0FICUt6frcvknnL5QVcNvCifRLdIDIm+BYrckClrd+QjjiBIdV45FEyi0cqBC7ftSBfnx57+S
-        OIY6q2RdUkbJnpOSRXPccMtby80JfcL+MGKXUh3mj1hoBuS+UzV03QzgSmnHvVOhvcMVubw31OnW
-        WH3Ef6isIaPwVJGxSC5T8ei0YQG90HkIxg0fvGAk1BtXOf0TwnNZnqxHQTZNbAanV9BRid2clm2i
-        O4pVDY7LDmfmM8HFCeqJm26zaVh8qKWesGQxa/3/iu7Jj+1L1c5UHspPgBBgaB8rY6GW4mPXU5oF
-        v9SP0t6tDgUzBPuLlrRyEqwfRw0NH7px0xie0UFf0cxasMbKcd0aU/EkKVZpyrdHtrgs/gIAAP//
-        AwBz4PeVfQMAAA==
+        H4sIAAAAAAAA/3VSwU7jMBC99ysin1PU0kJbbqtd0EoLJ1YCqamiWXuaGFzb2E4XVPXfGTttEwRc
+        LHnee6M3b2Y3yDImBbvKGK8h8I1Vw+uHx7+/F7NfzfbpTsLdPbzql+3F/Pbn8x91w/KoMP+ekIej
+        6owb0mGQRrcwdwgBY9fxbDGenk/ml7MEbIxAFWWVDcPLoWo0HBS1kRw9QUv6ZtkuvdGbFvhK5VF+
+        rGzQe6iQakcSFZ1RscLAe+kD6MDyDuRGB9TJ7nJXEMeS+VKKgl0V7MeoYHnBLDioHNjaU3W52q/6
+        DRyuGw/RuG6U6gGgtQkQB0/WVwdkfzK7llr6uqQ8PIVDBnwwliV0T+8qDd98mIdZR3GGMphnTG3P
+        5xeTtiHrgu7g6fgABrKi+rLFNP+iYykwgFS+FyDjwGsUnXY8aRfWgeV/JwP2GNP55MSARkjTYaNB
+        L4TPnr8y0AYkddXzP/q2fwdwjpYurbQOheQfg+loDuO5fkc7bSM5Zh7dlm6xDBJd3JjANTSqPSjm
+        33zATUlrrdBZJ9NVxaMY7Afv8DBLJkwDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4667,7 +5061,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '730'
+      - '841'
       openai-project:
       - DUMMY
       openai-version:
@@ -4693,7 +5087,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 91ms
+      - 171ms
       x-request-id:
       - DUMMY
     status:
@@ -4789,9 +5183,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -4812,25 +5221,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Anomalies</aspect_name>\n        \n        <aspect_description>\n        Anomalies
       in the contract. A contract anomaly is any deviation, inconsistency, or irregularity
       in a contract''s terms, structure, or execution - such as bizarre clauses about
@@ -4878,7 +5301,7 @@ interactions:
       Jane Doe, Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Phone:
-      (012) 345-6789\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      (012) 345-6789\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -4889,7 +5312,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18006'
+      - '20291'
       content-type:
       - application/json
       cookie:
@@ -4897,7 +5320,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -4907,7 +5330,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -4923,14 +5346,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSTY+bMBC951cgn2EFLKSb3qqqqtRe+nFYaUOEJvYEnIJt2abbdpX/3jEkgW13
-        LyMxb95j3vM8raKIScHeRoy34HlvuuTDuv1Yfrt/PL5/+POo7r58Vg+8+ATt13v+/cjiwND7I3J/
-        Yd1wTTz0UqsJ5hbBY1DN3tyV+brYrLMR6LXALtAa45PiJkt6qWSSp3mZpEWSFWd6qyVHR3Nb+oyi
-        p7GGRZXAX9RO40unR+egQepdhqhpdRc6DJyTzoPyLJ5BrpVHNe6+rRSJhxJFFU0b8lRLURFWsXdp
-        xeILZsBCY8G0LoDbXeifKrVbCls8DA6COzV03QIApbSHkM5oaXdGTlcTnW6M1Xv3D5UdKBzX1hSm
-        o2RpYee1YSN6orobwxqe+Wck1Btfe/0Dx9/dlmkxCbL5lWY4z86gpxW7JS0v4xcUa4EeZOcWgTMO
-        vEWx0NwUxdUDDELqGUtXC+v/b/SS/GRfqmah8qr8DHCOhm6wNhaF5M9dz2MWwyG/NnaNelyYObQ/
-        6TBrL9GG5xB4gKGbrou5385jX9ObNWiNldOJHUwNaVreZhls9mx1Wv0FALTB+3EDAAA=
+        H4sIAAAAAAAA/62WTY/bIBCG7/kVFmenipM4cXrr9kPaHqpKXWkrJZHF4olN6gACvP1Y5b93sONg
+        b7vSHrggmHdm/AAWM0+TKCK8IG8jwipq2UnV04/33+9ubx9u/tx8kurL/Hh8vP9M3+sP9m6+yEjs
+        IuTDEZjto94wiXFguRSdzDRQCy5rst4kSwxbZa1wkgXULqxUdrqa1o2gl4hKcgYGpS0uo+ipHR2b
+        KOAXmmdxbzmBMbQEtPVOaNSydhZCjeHGUmFJ7EUmhQXR4m53ApO7IYp26K1wGzkvdqjtyLvZjsS9
+        pqimpaaqMk7cduZr7DOfa4qvi2uKzsWA+zZubZTlWaax6yDZ9BsiDf3OfrHvp+f4tXDLkHDLwHBp
+        SLg0MNwqJNwqMNw6JNw6MFwWEi4LDJfMQtIls9B4SVC8JDTePCjePDRe0Lc4Cf0YJ0Ff4+SVz3E3
+        adc43w/LpIZDY6grz6Kp64FAhZCWuvLeFuj9pN9qX5IPXHBT5Vj1DbYAWGaNlYq06hnHfVvim1HV
+        Jkpj02BzK39Am3axSS81nvh2wsvpJruoFllqLyzTZa+MUuYFWMprM+gTCKOsgsLHJovVOh6J+U/N
+        LXiPeZr5zoM2BZdem00Gp/Av9P8AuhPiohwwrF/+gBcYA4UdVa40FJyNj8a7aXBt2Utu1/tokfEf
+        0o/Yc+WWg3Z3VsCBNnXXOBHz21g45XixJWileds9ud9icp78Be8cnvg0CgAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4953,7 +5378,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1520'
+      - '4638'
       openai-project:
       - DUMMY
       openai-version:
@@ -4977,9 +5402,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 130ms
+      - 234ms
       x-request-id:
       - DUMMY
     status:
@@ -5075,9 +5500,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -5098,25 +5538,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Anomalies</aspect_name>\n        \n        <aspect_description>\n        Anomalies
       in the contract. A contract anomaly is any deviation, inconsistency, or irregularity
       in a contract''s terms, structure, or execution - such as bizarre clauses about
@@ -5209,7 +5663,7 @@ interactions:
       Exclusions from Confidential Information:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Confidential
-      Information does not include information that:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Information does not include information that:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -5220,7 +5674,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '22504'
+      - '24789'
       content-type:
       - application/json
       cookie:
@@ -5228,7 +5682,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5238,7 +5692,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5254,15 +5708,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcDfzTgcAAAD//3xUTY+bMBC951esfA4r
-        YCG7ObYrVeqlXWkP2ypEyDET4hZs1zb9UJX/3rEhsbNhy8GIefOeZzzPFF8/f/j1qB6f3n/8BF9e
-        nqmiP14sWTqG3H0DZk+sWyaRB5ZLMcJMA7XgVLP7hzJfFetV7oFeNtA5WqtsUtxmSc8FT/I0L5O0
-        SLJioh8kZ2Awb4OfNzd//eoKFQ38xnC6PEV6MIa2gLFTEga17FyEUGO4sVSMRU8gk8KC8LVvKuHl
-        x5d7KuQo7KzmTYUZFXmXVmQZ44pq2mqqDsYlbAL0SmmGcRZ9Wl2IhlQDrjZsfUb7P3tcC0RbJc9F
-        ReY5x+vw9jIUZUwIRrbxcWrYD4a6mYqh6yKACiEtdZ7wg9xOyPE8uk62SsudeUUle7SEOdRoIYN+
-        wjEZKxXx6BHXrbfIcDF1gkK9srWV38FvV+TlwyhIgjcDXK4n0GKJXUS7y+6XM4p1A5byzkQ2I4yy
-        AzSBm63zYEs6NFwGLF1ErV9XNCc/ts9FG6m8KR8AxkDhzauVhoazy65DmgZ3fd9KOx+1Lxg9pX/i
-        dawtB+3G0cCeDt30IzB/jIW+xpm1oJXm48Xaq5qmaXmXZXS9I4vj4h8AAAD//wMAaqPFRGcEAAA=
+        H4sIAAAAAAAA/3VTy27bMBC8+ysEnuXCrhTZzc1Fi/aQFk3cogUsQ2DItcRWJgmS6gOB/z1L6p00
+        F0LcmR0td3YfFlFEBCfXEWEVdeys6+X77z++ft6bG/VtpT7e37295cnV3btP+5vdh90tiX2Guv8J
+        zPVZr5jCPHBCyRZmBqgDr7revFmnr5PtJgnAWXGofVqp3TJb1o2kXUalBAOL0AGvUfQQTl+b5PAX
+        w6u4j5zBWloCxnoSBo2qfYRQa4V1VDoSjyBT0oEM5R5yieL+iKIc2RqfUQieI5aT3SoncY9pamhp
+        qK6sBw9teMh9whkkvmSDREux4P+NT5upPFGaUydiy32akynvMl6O/WcXC3f8Pk6fbuDUWOpbLpu6
+        ngBUSuWotyw0/dghl6HNJyGFrQp00qKt2DrrlCYBveB5DLY1MyeINjgIrnDqFwTZdLNKW0EyjsgI
+        r6+yDnVYSz3J22ad33PJgoOjorYT7wmjrAI+EU2yTTwDiz9GOBgZSZKkA4M2XKgRWy0mXXhe9P8K
+        aDskZDmqbLcv6o8AY6BxSQptgAs278xIM+A37SXaYEeoGCfI/MY1KpwA4y3jcKJN3e4Csf+sg3OB
+        vpZgtBFhIfxULC6LRwV0xY8HBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5285,7 +5739,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1162'
+      - '2158'
       openai-project:
       - DUMMY
       openai-version:
@@ -5311,7 +5765,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 163ms
+      - 180ms
       x-request-id:
       - DUMMY
     status:
@@ -5414,11 +5868,26 @@ interactions:
       a list of aspects.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
       tags. Field names correspond directly to tag names (e.g., aspect_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<task_description>\\nYour
-      task is to:\\n\\n1. Read and understand the aspects\\n    - Each aspect is identified
-      by an Aspect ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within
-      <aspect_id></aspect_id> tags, includes a name specified within <aspect_name></aspect_name>
-      tags, and has a description specified within <aspect_description></aspect_description>
+      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\\n\\nFollow this internal three-stage
+      process:\\n\\n1. Plan\\n    - Internally restate each aspect in one sentence.\\n
+      \   - List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\\n\\n2.
+      Evidence triage\\n    - For each paragraph and sentence, generate candidate
+      matches to aspects.\\n    - Collect minimal sufficient textual evidence privately
+      and note negation, hypothetical, or conditional forms.\\n    - Prefer precision
+      over recall; include only high-confidence matches and omit weak or ambiguous
+      ones.\\n\\n3. Consistency pass\\n   - Deduplicate paragraph IDs and sentence
+      IDs within each aspect and preserve the original order.\\n\\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n\\n1.
+      Read and understand the aspects\\n    - Each aspect is identified by an Aspect
+      ID (for example, \\\"A0\\\", \\\"A1\\\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
       tags.\\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\\n\\n2. Examine each paragraph and its sentences\\n    -
       Each paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
@@ -5437,9 +5906,16 @@ interactions:
       \   - If a paragraph clearly relates to an aspect (based on the aspect's name
       and description), include the paragraph's ID and the IDs of all the sentences
       within the paragraph that address or relate to the aspect.\\n    - If a paragraph
-      does not relate to an aspect, do not include it under that aspect's list.\\n\\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\\n    - Your output must be a JSON array of objects, each object corresponding
+      does not relate to an aspect, do not include it under that aspect's list.\\n
+      \   - Apply cross-paragraph reasoning when needed (e.g., headings, lists, references
+      like \\\"above\\\", \\\"this section\\\"): use surrounding context to disambiguate;
+      if unresolved, omit.\\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions.\\n    - Prefer minimal
+      sufficient evidence:\\n        -- include only the sentences necessary to support
+      the mapping; avoid unrelated sentences.\\n    - Favor precision over recall;
+      when uncertain, exclude rather than speculate.\\n\\n4. Produce the final answer
+      in the JSON format specified within <answer_format></answer_format> tags\\n
+      \   - Your output must be a JSON array of objects, each object corresponding
       to a single aspect.\\n    - For each aspect (in the order they are provided),
       include:\\n        -- aspect_id: The aspect's unique identifier, e.g., \\\"A0\\\".\\n
       \       -- paragraphs: An array of objects for each paragraph that addresses
@@ -5450,12 +5926,19 @@ interactions:
       e.g., \\\"P0-S0\\\", \\\"P0-S2\\\".\\n        -- If an aspect has no related
       paragraphs, still include it with an empty paragraph_ids array ([]).\\n- Do
       not add extra commentary, code block markers, or any other formatting beyond
-      the JSON array.\\n</task_description>\\n\\n<output_constraints>\\n- No additional
-      text:\\n    -- Do not include any headers, explanations, or text outside of
-      the JSON array.\\n    -- Do not wrap your JSON response in backticks or any
-      other formatting characters.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER
-      FORMAT (MANDATORY):\\n[\\n    {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\":
-      [\\n            {\\n                \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
+      the JSON array.\\n- Internally verify before finalizing:\\n    -- Each provided
+      aspect appears once, in order, with the correct \\\"aspect_id\\\".\\n    --
+      Each object in \\\"paragraphs\\\" contains only valid \\\"paragraph_id\\\" with
+      valid \\\"sentences\\\".\\n    -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\\n</task_description>\\n\\n<output_constraints>\\n-
+      No additional text:\\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\\n- Private deliberation only:\\n    --
+      Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\\n
+      \   -- Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\\n</output_constraints>\\n\\n<answer_format>\\nANSWER FORMAT (MANDATORY):\\n[\\n
+      \   {\\n        \\\"aspect_id\\\": str,\\n        \\\"paragraphs\\\": [\\n            {\\n
+      \               \\\"paragraph_id\\\": str,\\n                \\\"sentences\\\":
       [\\n                    {\\n                        \\\"sentence_id\\\": str,\\n
       \                   },\\n                    ...\\n                ]\\n            },\\n
       \           ...\\n        ]\\n    },\\n    ...\\n]\\n</answer_format>\\n\\n<aspects>\\nDOCUMENT
@@ -5570,7 +6053,7 @@ interactions:
       \               This Agreement shall be governed by and construed in accordance
       with the laws of the State of California, without regard to its conflict of
       law principles.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-4.1-mini\",\"max_tokens\":4096,\"temperature\":0.3}"
+      \       </paragraph_sentences>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\",\"max_completion_tokens\":16000}"
     headers:
       accept:
       - application/json
@@ -5581,7 +6064,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '20772'
+      - '23057'
       content-type:
       - application/json
       cookie:
@@ -5589,7 +6072,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5599,7 +6082,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5615,14 +6098,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSQW7bMBC8+xUCz1JAybIT9eYCRYCcemsRyxBoai2xpUiCpIqkgf/epWSHSppc
-        CGhmZ7Szuy+rJCGiJV8Swnvm+WBk9m3b399uS7r+2o87gONf+eOxtz+/PzzxHSNpUOjjL+D+qrrh
-        GnXghVYzzS0wD8E1v73bFNuy2q4nYtAtyCDrjM/KmzwbhBJZQYtNRsssLy/yXgsODuv2+JkkL9Mb
-        GlUtPCFM0ysygHOsA8SuRQhaLQNCmHPCeaY8SSPJtfKgpt73tULz8CRJjdUGMzWirZGryY7WJL1y
-        hlnWWWZ6F8j9IeDnWh2WxhZOo2MhnRqlXBBMKe1ZmM4U6XBhzq8hpO6M1Uf3TkpOOBzXNzhMh5PF
-        hp3XhkzsGd/DNKzxTX6CRoPxjde/YfrduqruZkMStxTpIr+QHluUES9pXqUfODYteCakWwyccMZ7
-        aKM2r4q4IDa2QkeOrhbR/+/oI/s5vlDdwuVT+0hwDgZvsDEWWsHfpo5lFsIhf1b2OuqpYeLA/sHD
-        bLwAG9bRwomNcr4u4p6dh6HBnXVgjRXziZ1MwyjdrPOcVUeyOq/+AbboWdlxAwAA
+        H4sIAAAAAAAA/61UTW+cMBC98yuQz1BBll12c4ua5tpIaZRKuyvkmFlwwtqubdJW0f73jiF85UNK
+        JThYeN7M443Nm2fP9wnPyblPWEktO6oq/Hb388f15V0pN08Juy/pd/rV3qa3V4+/Lq4oCVyFvH8A
+        ZruqL0xiHVguRQszDdSCY43TTZycLdbpsgGOMofKlRXKhquwqsULISslZ2AQ2uLW95+b1WkTOfzB
+        cBR0kSMYQwvAWJeEQS0rFyHUGG4sFZYEA8iksCAaududQHK3+P4OsxW2kfF8h9iOXEQ7EnSYopoW
+        mqrSOHDbhvvaVzk9xXXSU7QpBty3sbUJyyumaeqILLxBSeO807DZd6+n4LPiVnOKW80sbj2nuPVb
+        ccH/U8Rz9hdHczYYR+HN2SfktS/NHt/3Y1toONSGOjuKuqpGABVCWurs3Bhy73WtdhY8cMFNmaHL
+        DVoebWWsVKRBT7juG0vXE5cSpXFI2MzKR2hoE3xaQjKMjwFebuIX1KKWagREi2XwDmWWg6W8MqO5
+        QBhlJeRDbbxYpcEEzH5rbmHIWERp0mfQOudywCJvdApvRb8noD0hLopR31H04QcGgDFQOEEzpSHn
+        bHo0Q5oGN4Y/Suvvo5GM/5B+whmbWQ7a3VkOB1pX7aAk5q+xcMzwYgvQSvNmWrrfwjt5/wBwyWFz
+        JAYAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5645,7 +6130,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '599'
+      - '5837'
       openai-project:
       - DUMMY
       openai-version:
@@ -5669,9 +6154,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 36ms
       x-ratelimit-reset-tokens:
-      - 150ms
+      - 451ms
       x-request-id:
       - DUMMY
     status:
@@ -5767,9 +6252,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -5790,25 +6290,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Anomalies</aspect_name>\n        \n        <aspect_description>\n        Anomalies
       in the contract. A contract anomaly is any deviation, inconsistency, or irregularity
       in a contract''s terms, structure, or execution - such as bizarre clauses about
@@ -5867,7 +6381,7 @@ interactions:
       ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                Name:
-      Jane Doe\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      Jane Doe\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -5878,7 +6392,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19066'
+      - '21351'
       content-type:
       - application/json
       cookie:
@@ -5886,7 +6400,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -5896,7 +6410,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -5912,15 +6426,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcLdI8gcAAAD//3RTzW+bMBS/56+IfIYK
-        EkjKsYceql1atVo0hQg55gXcge3ZZto05X/fMwRM0vZi4ff74H2Z/9jV33ffXnagHzMlnn893b+9
-        RSRwCnl8B2ZH1R2TqAPLpRhgpoFacK7x9j5dbZJsk/RAK0tonKxSNkzu4rDlgoeraJWGURLGyUVe
-        S87AIG+P1+XyX3+6REUJfzAcBWOkBWNoBRgbSRjUsnERQo3hxlJhSeBBJoUF0ee+zwWau2O5zJGt
-        sKaClzliOXmIchKMmKKaVpqq2jhwP4Qn7Q1nsnhOJ4uBYsD9G0u7crlxuqbOzMJXTGnOO/vLYfy8
-        xPo7fh/mpWs4dYa6/ouuaWYAFUJa6ubXN/1wQc5TmxtZKS2P5kZKTjg+Uxc4boOzx5YaKxXp0TOe
-        h36c3dWECBq1yhZW/oT+d+vNNh0Mid8jD6fZBbSYYjOTbddJ8IljUYKlvDGzlSCMshpKr42zlV8h
-        2pVceixazEr/mNFn9kP5XFQzly/tPcAYKHwlhdJQcnZdtadpcE/tK9rU6j5h3Br9G59OYTloN44S
-        TrRrhv0n5q+x0BY4swq00nx4BCdV0ChK13FMsyNZnBf/AQAA//8DAFDmxQwTBAAA
+        H4sIAAAAAAAA/3VTy27bMBC8+ysEnuXCkp/tLQdfiwAt4gKWIbDkWmJKkwRJOSkC/3uXlPVKkwsh
+        7syOlju7b7MkIYKTbwlhNfXsYuR8f/j18+l60Jt987q/8qfqBXaH+lrJx4x+J2nI0L+fgfku6wvT
+        mAdeaNXCzAL1EFSz7ddslS93uywCF81BhrTK+PlmLhtF7xm1FgwcQke8JslbPENtisMrhhdpF7mA
+        c7QCjHUkDFotQ4RQ54TzVHmSDiDTyoOK5R4LheLhSJIC2QafUQpeIFaQh0VB0g4z1NLKUlO7AB7b
+        cJ/7jtNLPK57iZbiIPwbnzZReac0pY7E5j+wpDHvNlxO3ec9Fu/4fRo/3cK5cTS0XDVSjgCqlPY0
+        WBabfrojt77NZ6GEq0t00qGt2DrntSERveF5irY1EyeIsTgIvvT6D0TZVZZnrSAZRmSAs2V+Rz3W
+        Ikd5+XqZfiBZcvBUSDfynjDKauBj0c02nYDlixUeBka+XWc9gzZc6AFbzEZd+L/ojwpoOyRUNahs
+        Vp/qDwBjYHBJSmOBCzbtzECzEDbtM1pvR6wYJ8hecY1KL8AGyzicaSPbXSDur/NwKdHXCqyxIi5E
+        mIrZbfYPZxPXygcEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5943,7 +6457,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '949'
+      - '1652'
       openai-project:
       - DUMMY
       openai-version:
@@ -5967,9 +6481,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 36ms
       x-ratelimit-reset-tokens:
-      - 138ms
+      - 320ms
       x-request-id:
       - DUMMY
     status:
@@ -6065,9 +6579,24 @@ interactions:
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
       names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<task_description>\nYour
-      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
-      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph and sentence, generate candidate matches to
+      aspects.\n    - Collect minimal sufficient textual evidence privately and note
+      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
+      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
+      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
+      and understand the aspects\n    - Each aspect is identified by an Aspect ID
+      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
@@ -6088,25 +6617,39 @@ interactions:
       relates to an aspect (based on the aspect''s name and description), include
       the paragraph''s ID and the IDs of all the sentences within the paragraph that
       address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n\n4. Produce the final
-      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
-      Your output must be a JSON array of objects, each object corresponding to a
-      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
-      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
-      An array of objects for each paragraph that addresses or relates to the aspect.
-      Each object should include:\n            --- paragraph_id: The provided paragraph
+      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
+      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
+      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance can be present
+      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
+      include only the sentences necessary to support the mapping; avoid unrelated
+      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
+      than speculate.\n\n4. Produce the final answer in the JSON format specified
+      within <answer_format></answer_format> tags\n    - Your output must be a JSON
+      array of objects, each object corresponding to a single aspect.\n    - For each
+      aspect (in the order they are provided), include:\n        -- aspect_id: The
+      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
+      of objects for each paragraph that addresses or relates to the aspect. Each
+      object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
       If an aspect has no related paragraphs, still include it with an empty paragraph_ids
       array ([]).\n- Do not add extra commentary, code block markers, or any other
-      formatting beyond the JSON array.\n</task_description>\n\n<output_constraints>\n-
+      formatting beyond the JSON array.\n- Internally verify before finalizing:\n    --
+      Each provided aspect appears once, in order, with the correct \"aspect_id\".\n    --
+      Each object in \"paragraphs\" contains only valid \"paragraph_id\" with valid
+      \"sentences\".\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
-      or any other formatting characters.\n</output_constraints>\n\n<answer_format>\nANSWER
-      FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\": str,\n        \"paragraphs\":
-      [\n            {\n                \"paragraph_id\": str,\n                \"sentences\":
-      [\n                    {\n                        \"sentence_id\": str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"sentences\": [\n                    {\n                        \"sentence_id\":
+      str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Anomalies</aspect_name>\n        \n        <aspect_description>\n        Anomalies
       in the contract. A contract anomaly is any deviation, inconsistency, or irregularity
       in a contract''s terms, structure, or execution - such as bizarre clauses about
@@ -6117,7 +6660,7 @@ interactions:
       Managing Partner\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
       id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Date:
-      ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-4.1-mini","max_tokens":4096,"temperature":0.3}'
+      ___________________________\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna","max_completion_tokens":16000}'
     headers:
       accept:
       - application/json
@@ -6128,7 +6671,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '12838'
+      - '15123'
       content-type:
       - application/json
       cookie:
@@ -6136,7 +6679,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - OpenAI/Python 2.49.0
+      - OpenAI/Python 2.54.0
       x-stainless-arch:
       - other:amd64
       x-stainless-async:
@@ -6146,7 +6689,7 @@ interactions:
       x-stainless-os:
       - DUMMY
       x-stainless-package-version:
-      - 2.49.0
+      - 2.54.0
       x-stainless-raw-response:
       - 'true'
       x-stainless-read-timeout:
@@ -6162,15 +6705,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdTXLcLfMLwEAAAD//3RSy07DMBC89ysqn5Mq
-        SdPXEY4ICSHggJoqcp1tanBsYzuIgvrvrJO2SaG9WMrOzmRndtnT7uN1DLu72e1CPL8+vtx/jx8E
-        CTxDrd+AuSNrxBTywHElW5gZoA68ajybT5JpuphOGqBSBQhPK7UL01EcVlzyMImSSRilYZwe6FvF
-        GVjsW+LncPjTvH5QWcAXlqPgWKnAWloC1o5NWDRK+Aqh1nLrqHQk6ECmpAPZzL7MJIr7ZzjMsFuj
-        p5wXGWIZuYkyEhwxTQ0tDdVb68Hlytf3mVz1hQ1saku9O1kL0QOolMpRn05jaXVA9icTQpXaqLX9
-        QyUbDMducwzTYrI4sHVKkwbd47tqwqrP/BMUqrTLnXqH5ndJOp21gqTbUg+OD6DDEUWfNp8HFxTz
-        AhzlwvYCJ4yyLRQdN14k3YJoXXDVYdGgZ/3/RJfkW/tclj2Vq/IdwBhovMFcGyg4O3fdtRnwh3yt
-        7RR1MzCxYD7xMHPHwfh1FLChtWivi9iddVDluLMSjDa8PbGNzmkUTcZxTBdrMtgPfgEAAP//AwDF
-        u6mKcQMAAA==
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs5OkcRN0u7Ww7BhGPqxtliBODBUibHVKZIq0euGIv+9lPJh
+        B20vAsSHfEG+5Osgy5iS7EvGRMNRrJ0efv39cPdwa65Gl9e2+XHz66f+Nv1+f39x9/QsgOWxwj4+
+        gcB91YmwVAeorNli4YEjRNXx/Hx8OinOzooE1laCjmW1w+FsqFvDdxWNVQICoQV9s+w1vbE3I+Ef
+        hUf5PrKGEHgNFNsnUdBbHSOMh6ACcoMs76CwBsGkdhelIfH4ZFlJ2Y7GqJQsiZXsYlSyfM8c97z2
+        3DUhwsUyxjelWfaFPazawONAptW6B7gxFnk0JI203JHNYYiVMio0FfkUyDRqLKB1LNENvctkSns0
+        J3OebMYK7R9IspPzcbEVZN0COjyb7CBSK7pfNp/mHyhWEpArHXrGMsFFA7KrHRezeX4EqxevEHoZ
+        09PikMFbqWzHRoOeCe97/qiBrUHK1J1KMflUvwNCgKMLrJwHqcSxMV2ah3jGn6UdtpE6ZgH8X7rR
+        ChX4uDEJK97q7aGx8D8grCtaaw3eeZWuLR7FYDN4A4EXVxtkAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6193,7 +6735,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '539'
+      - '1458'
       openai-project:
       - DUMMY
       openai-version:
@@ -6217,9 +6759,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 93ms
+      - 204ms
       x-request-id:
       - DUMMY
     status:

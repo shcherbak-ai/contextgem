@@ -4834,6 +4834,38 @@ class _DocumentLLM(_GenericModelProcessor):
         )
         return cast(list[_Message], messages)
 
+    @staticmethod
+    def _get_answer_and_tool_calls(
+        chat_completion: Any,
+    ) -> tuple[str | None, list[Any] | None]:
+        """
+        Returns the answer text and the tool calls of a completion.
+
+        A completion can have more than one choice, although a single completion
+        is requested. For the requests that litellm sends to the Responses API
+        (e.g. requests with function tools to OpenAI reasoning models), a text message
+        and the tool calls returned in the same response are converted into separate
+        choices: the text first, the tool calls last. Therefore, the tool calls are
+        collected from all choices, and the answer text is taken from the last choice
+        that has a text.
+
+        :param chat_completion: The raw completion object from the LLM.
+        :type chat_completion: Any
+        :return: The tuple containing the answer text and the tool calls. If no choice
+            has a text, the answer is the content of the first choice. If no choice
+            has tool calls, the tool calls are None.
+        :rtype: tuple[str | None, list[Any] | None]
+        """
+        choices = chat_completion.choices
+        answer = choices[0].message.content
+        tool_calls: list[Any] = []
+        for choice in choices:
+            content = getattr(choice.message, "content", None)
+            if isinstance(content, str) and content.strip():
+                answer = content
+            tool_calls.extend(getattr(choice.message, "tool_calls", None) or [])
+        return answer, tool_calls or None
+
     async def _send_messages_with_tools(
         self,
         *,
@@ -4892,12 +4924,9 @@ class _DocumentLLM(_GenericModelProcessor):
         else:
             chat_completion = await initial_send_coro
 
-        answer = chat_completion.choices[0].message.content
-        tool_calls = (
-            getattr(chat_completion.choices[0].message, "tool_calls", None)
-            if self.tools
-            else None
-        )
+        answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
+        if not self.tools:
+            tool_calls = None
 
         self._record_usage_call(
             usage=usage,
@@ -4925,11 +4954,15 @@ class _DocumentLLM(_GenericModelProcessor):
                     }
                 )
 
+            # The assistant message has no text if the LLM returned only tool calls.
+            # A placeholder text is not used: an LLM may repeat it in its responses,
+            # and with some chat templates a text replaces the tool calls
+            # in the conversation rendered for the LLM.
             assistant_msg_obj = _Message(
                 role="assistant",
                 content=answer
                 if (isinstance(answer, str) and answer.strip())
-                else "<tool_call_response>",
+                else None,
                 tool_calls=tool_calls_serialized,
             )
             request_messages.append(assistant_msg_obj._to_message_dict())
@@ -4958,14 +4991,13 @@ class _DocumentLLM(_GenericModelProcessor):
             else:
                 chat_completion = await send_completion_coro
 
-            answer = chat_completion.choices[0].message.content
+            answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
             self._record_usage_call(
                 usage=usage,
                 answer_text=answer,
                 call_obj=followup_call,
                 completion_obj=chat_completion,
             )
-            tool_calls = chat_completion.choices[0].message.tool_calls
 
         return answer, bool(tool_calls)
 

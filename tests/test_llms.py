@@ -37,7 +37,13 @@ from contextgem.internal.utils import (
     _get_model_api_retry_delay,
     _is_retryable_model_api_error,
 )
-from contextgem.public import Document, DocumentLLM, ModelPricing, StringConcept
+from contextgem.public import (
+    Document,
+    DocumentLLM,
+    ModelPricing,
+    StringConcept,
+    register_tool,
+)
 from tests.base import BaseTest
 from tests.utils import get_project_root_path
 
@@ -135,6 +141,77 @@ class TestLLMs(BaseTest):
 
         # Check serialization of LLM
         self._check_deserialized_llm_config_eq(llm_ollama)
+
+    @pytest.mark.vcr
+    def test_local_llms_tools(self):
+        """
+        Tests for chat with tools with a local LLM, e.g. a model run on LM Studio
+        local server. The LLM has to call the tools one after another, using
+        the results of the previous tool calls in the next one.
+        """
+
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_total(order_id: str) -> str:
+            """
+            Returns the total amount of the order.
+            """
+            tool_runs.append("total")
+            return {"ORD-123": "9"}.get(order_id, "0")
+
+        @register_tool
+        def get_discount_amount(order_id: str) -> str:
+            """
+            Returns the discount amount for the order.
+            """
+            tool_runs.append("discount")
+            return {"ORD-123": "4"}.get(order_id, "0")
+
+        @register_tool
+        def compute_final_amount(order_total: str, discount: str) -> str:
+            """
+            Computes the final amount as the order total minus the discount.
+            """
+            tool_runs.append("final")
+            return str(int(float(order_total)) - int(float(discount)))
+
+        # LM Studio
+        # The model is not detected as tools-capable, i.e. the capability
+        # has to be declared explicitly
+        with pytest.warns(UserWarning, match="does not detect it as tools-capable"):
+            llm_lm_studio = DocumentLLM(
+                model="lm_studio/openai/gpt-oss-20b",
+                api_base="http://localhost:1234/v1",
+                api_key="random-key",  # required for LM Studio API
+                system_message="",
+                tools=[get_order_total, get_discount_amount, compute_final_amount],  # ty: ignore[invalid-argument-type]
+                seed=123,
+            )
+        llm_lm_studio._supports_tools = True
+
+        answer = llm_lm_studio.chat(
+            "Use the available tools to compute a final amount. "
+            "First call `get_order_total` with order_id='ORD-123'. "
+            "Then call `get_discount_amount` with order_id='ORD-123'. "
+            "Then call `compute_final_amount` using the exact outputs returned by "
+            "the previous tools as order_total and discount. "
+            "Reply only with the number returned by `compute_final_amount`, nothing else. "
+            "Do not guess any values; you must call the tools."
+        )
+        logger.debug(f"Answer of the local LLM with tools: {answer}")
+
+        # Each tool is called once, the last one after the tools it depends on
+        assert sorted(tool_runs[:2]) == ["discount", "total"]
+        assert tool_runs[2:] == ["final"]
+        # Expected: 9 - 4 = 5
+        assert answer and "5" in answer
+
+        # The LLM is called at least for the two tool rounds and for the final answer
+        assert len(llm_lm_studio.get_usage()[0].usage.calls) >= 3
+
+        # Check serialization of LLM
+        self._check_deserialized_llm_config_eq(llm_lm_studio)
 
     def test_init_api_llm(self):
         """

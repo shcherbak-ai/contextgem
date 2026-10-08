@@ -23,12 +23,16 @@ Module defining tests for chat and tools.
 from __future__ import annotations
 
 import os
+import types
 import warnings
 from copy import deepcopy
 from datetime import datetime
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 
+from contextgem.internal.base import llms as llms_module
 from contextgem.internal.data_models import _Message
 from contextgem.internal.exceptions import LLMToolLoopLimitError, ModelAPIError
 from contextgem.internal.loggers import logger
@@ -219,6 +223,33 @@ class TestChat(BaseTest):
         assert asst_dict["content"] == "thinking..."
         assert asst_dict["tool_calls"] == tool_calls
         assert "tool_call_id" not in asst_dict
+
+        # An assistant message that has tool calls may have no text
+        asst_msg_no_text = _Message(
+            role="assistant", content=None, tool_calls=tool_calls
+        )
+        assert asst_msg_no_text.content is None
+        assert asst_msg_no_text._to_message_dict() == {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": tool_calls,
+        }
+        assert _Message.from_dict(asst_msg_no_text.to_dict()) == asst_msg_no_text
+        assert _Message.from_json(asst_msg_no_text.to_json()) == asst_msg_no_text
+        # ...while any other message must have content
+        for invalid_kwargs in [
+            {"role": "assistant"},
+            {"role": "assistant", "tool_calls": []},
+            {"role": "user"},
+            {"role": "system"},
+            {"role": "tool", "tool_call_id": "call_123", "name": "function_name"},
+        ]:
+            with pytest.raises(ValueError, match="`content` can be None only"):
+                _Message(content=None, **invalid_kwargs)
+        with pytest.raises(ValueError):
+            _Message(role="assistant", tool_calls=tool_calls)
+        with pytest.raises(ValueError):
+            _Message(role="assistant", content="", tool_calls=tool_calls)
 
         with pytest.raises(
             ValueError,
@@ -462,10 +493,15 @@ class TestChat(BaseTest):
         assert msgs[0].role == "system"
         assert (
             msgs[1].role == "user"
+            and isinstance(msgs[1].content, str)
             and "3+5" in msgs[1].content
             and msgs[1]._response_succeeded is True
         )
-        assert msgs[2].role == "assistant" and "8" in msgs[2].content
+        assert (
+            msgs[2].role == "assistant"
+            and isinstance(msgs[2].content, str)
+            and "8" in msgs[2].content
+        )
         # test serialization and cloning
         self.check_instance_serialization_and_cloning(cs)
 
@@ -481,10 +517,15 @@ class TestChat(BaseTest):
         assert len(msgs2) == len(msgs) + 2
         assert (
             msgs2[-2].role == "user"
+            and isinstance(msgs2[-2].content, str)
             and "10-3" in msgs2[-2].content
             and msgs2[-2]._response_succeeded is True
         )
-        assert msgs2[-1].role == "assistant" and "7" in msgs2[-1].content
+        assert (
+            msgs2[-1].role == "assistant"
+            and isinstance(msgs2[-1].content, str)
+            and "7" in msgs2[-1].content
+        )
         # Follow-up: ask about previous answer to ensure history is preserved
         with pytest.warns(UserWarning, match="default system message"):
             reply3 = self.llm_extractor.chat(
@@ -569,9 +610,11 @@ class TestChat(BaseTest):
         assert (
             len(cs_no_sys.messages) == 2
             and cs_no_sys.messages[0].role == "user"
+            and isinstance(cs_no_sys.messages[0].content, str)
             and "9+1" in cs_no_sys.messages[0].content
             and cs_no_sys.messages[0]._response_succeeded is True
             and cs_no_sys.messages[1].role == "assistant"
+            and isinstance(cs_no_sys.messages[1].content, str)
             and "10" in cs_no_sys.messages[1].content
         )
         # test serialization and cloning
@@ -599,6 +642,7 @@ class TestChat(BaseTest):
         )
         assert (
             cs_custom.messages[2].role == "assistant"
+            and isinstance(cs_custom.messages[2].content, str)
             and "John Doe" in cs_custom.messages[2].content
         )
         # test serialization and cloning
@@ -617,7 +661,9 @@ class TestChat(BaseTest):
         )
         assert cs_fb.messages[1]._response_succeeded is True
         assert (
-            cs_fb.messages[2].role == "assistant" and "4" in cs_fb.messages[2].content
+            cs_fb.messages[2].role == "assistant"
+            and isinstance(cs_fb.messages[2].content, str)
+            and "4" in cs_fb.messages[2].content
         )
 
         # If the LLM call fails with an API error, the pending user message in the
@@ -837,14 +883,30 @@ class TestChat(BaseTest):
 
         # Optional chat session to preserve history
         cs = ChatSession() if use_session else None
+        if parallel_tool_calls:
+            # The first three tools do not depend on each other, so the LLM is asked
+            # to call them in a single step, i.e. to return three tool calls at once.
+            # When asked to call the tools one after another, an LLM may return
+            # one tool call per response, even if parallel tool calls are enabled.
+            tool_steps = (
+                "In a single step, call these three tools in parallel: "
+                '`compute_invoice_total` with exactly items=[{"qty":2,"price":3},{"qty":1,"price":3}], '
+                "`get_discount_amount` with order_id='ORD-123', and `get_surcharge` with order_id='ORD-123'. "
+                "Then call `compute_final_amount` using the exact outputs returned by these tools as "
+                "invoice_total, discount, surcharge. "
+            )
+        else:
+            tool_steps = (
+                'First call `compute_invoice_total` with exactly items=[{"qty":2,"price":3},{"qty":1,"price":3}]. '
+                "Then call `get_discount_amount` with order_id='ORD-123'. "
+                "Then call `get_surcharge` with order_id='ORD-123'. "
+                "Then call `compute_final_amount` using the exact outputs returned by the previous tools as "
+                "invoice_total, discount, surcharge. "
+            )
         prompt = (
             "Use the available tools to compute a final amount. "
-            'First call `compute_invoice_total` with exactly items=[{"qty":2,"price":3},{"qty":1,"price":3}]. '
-            "Then call `get_discount_amount` with order_id='ORD-123'. "
-            "Then call `get_surcharge` with order_id='ORD-123'. "
-            "Then call `compute_final_amount` using the exact outputs returned by the previous tools as "
-            "invoice_total, discount, surcharge. "
-            "Reply only with the number returned by `compute_final_amount`, nothing else. "
+            + tool_steps
+            + "Reply only with the number returned by `compute_final_amount`, nothing else. "
             "Do not guess any values; you must call the tools."
         )
         if parallel_tool_calls:
@@ -880,16 +942,17 @@ class TestChat(BaseTest):
 
         # Each tool must be invoked exactly once
         assert (
-            calls["invoice"] == 1 if parallel_tool_calls else 2
+            calls["invoice"] == (1 if parallel_tool_calls else 2)
         )  # twice when parallel_tool_calls=False because of the caught LLMToolLoopLimitError above
         assert calls["discount"] == 1
         assert calls["surcharge"] == 1
         assert calls["final"] == 1
 
-        # Usage must include at least two provider calls (tool round-trip + follow-up)
+        # Usage must include a provider call for each tool round and for the final answer:
+        # with parallel tool calls, the first three tools are called in a single round
         usage_calls = llm.get_usage()[0].usage.calls
         logger.info(f"Usage calls: {len(usage_calls)}")
-        assert len(usage_calls) == 3 if parallel_tool_calls else 5
+        assert len(usage_calls) == (3 if parallel_tool_calls else 5)
 
         # Tool messages are stored separately when session is used
         if use_session:
@@ -906,6 +969,128 @@ class TestChat(BaseTest):
         # Warning should be emitted that tools are ignored during extraction workflows
         with pytest.warns(UserWarning, match="ignored during extraction workflows"):
             llm.extract_all(document=Document(raw_text="test"))
+
+    @pytest.mark.parametrize("text_with_tool_call", ["Checking the order.", None])
+    def test_chat_with_tool_call_turns(self, text_with_tool_call: str | None):
+        """
+        Tests for processing a response of the LLM that has a tool call, with and
+        without a text, and for the assistant message sent back to the LLM.
+
+        With a text: the completion has the tool call in a choice other than the first
+        one, i.e. the first choice has only the text. litellm returns such completions
+        for the requests it sends to the Responses API (e.g. requests with function tools
+        to OpenAI reasoning models). The tool call must be executed, and the text must be
+        sent back together with it.
+
+        Without a text: the assistant message must be sent back with the tool call and
+        no text. A placeholder text must not be added: an LLM may repeat it, and with some
+        chat templates a text replaces the tool calls in the conversation rendered
+        for the LLM, which then stops calling the tools.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        def create_completion(*messages: Any) -> Any:
+            """
+            Creates a completion that has a choice for each of the given messages.
+            """
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(message=message) for message in messages
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        tool_call = {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+                "name": "get_order_status",
+                "arguments": '{"order_id": "ORD-123"}',
+            },
+        }
+        tool_call_message = types.SimpleNamespace(content=None, tool_calls=[tool_call])
+        completions = [
+            # A text and a tool call returned in the same response, in separate choices
+            create_completion(
+                types.SimpleNamespace(content=text_with_tool_call, tool_calls=None),
+                tool_call_message,
+            )
+            if text_with_tool_call
+            # A tool call returned without a text
+            else create_completion(tool_call_message),
+            # The final answer
+            create_completion(
+                types.SimpleNamespace(content="The order is shipped.", tool_calls=None)
+            ),
+        ]
+        requests: list[list[dict[str, Any]]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, returning the prepared completions one by one.
+            """
+            requests.append(list(kwargs["messages"]))
+            return completions[len(requests) - 1]
+
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key="test_api_key",
+            system_message="",
+            tools=[
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_order_status",
+                        "description": "Return the status of the order",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"order_id": {"type": "string"}},
+                            "required": ["order_id"],
+                        },
+                    },
+                }
+            ],
+        )
+
+        chat_session = ChatSession()
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            answer = llm.chat(
+                "What is the status of the order ORD-123?", chat_session=chat_session
+            )
+
+        # The tool call is executed, and the answer is the one returned after it
+        assert tool_runs == ["ORD-123"]
+        assert answer == "The order is shipped."
+        assert len(requests) == 2
+
+        # The tool call is sent back with the text returned together with it,
+        # or with no text if there was none
+        assistant_message, tool_message = requests[1][-2:]
+        assert assistant_message["role"] == "assistant"
+        assert assistant_message["content"] == text_with_tool_call
+        assert (
+            assistant_message["tool_calls"][0]["function"]["name"] == "get_order_status"
+        )
+        assert tool_message["role"] == "tool"
+        assert tool_message["content"] == "shipped"
+
+        # The same messages are stored in the chat session
+        assert [(m.role, m.content) for m in chat_session._tool_messages] == [
+            ("assistant", text_with_tool_call),
+            ("tool", "shipped"),
+        ]
 
     def test_invalid_tool_registrations(self):
         """
