@@ -17,13 +17,13 @@
 #
 
 """
-Module defining the base classes for LLM subclasses.
+Module defining the base classes for models and the model group.
 
-This module provides foundational class structures for LLM implementations
-in the ContextGem framework. It includes base classes and utility functions
-that define the interface and common functionality for different types of LLMs,
-enabling document analysis, information extraction, and reasoning capabilities
-across the framework.
+This module provides the processing logic that single models and model groups share
+(``_GenericModelProcessor``), the base class of single models of any kind
+(``_DocumentModel``), on top of which a specific kind of model, such as an LLM,
+is defined in a module of its own, and the group of models with different roles
+(``_DocumentModelGroup``).
 """
 
 from __future__ import annotations
@@ -31,27 +31,43 @@ from __future__ import annotations
 import asyncio
 import warnings
 from collections.abc import Sequence
+from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+import tethered
 from aiolimiter import AsyncLimiter
-from pydantic import Field, field_validator, model_validator
+from genai_prices import UpdatePrices as _GPUpdatePrices
+from genai_prices import Usage as _GPUsage
+from genai_prices import calc_price as _calc_auto_price
+from pydantic import (
+    Field,
+    PrivateAttr,
+    StrictBool,
+    StrictInt,
+    field_validator,
+    model_validator,
+)
 from typing_extensions import Self
 
 from contextgem.internal.base.abstract import _AbstractGenericModelProcessor
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.concepts import _Concept
+from contextgem.internal.base.data_models import _ModelPricing
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.base.serialization import _is_deserialization_in_progress
 from contextgem.internal.data_models import (
     _Message,
     _ModelCall,
+    _ModelCost,
     _ModelCostOutputContainer,
     _ModelUsage,
     _ModelUsageOutputContainer,
 )
 from contextgem.internal.decorators import (
     _disable_direct_initialization,
+    _post_init_method,
     _timer_decorator,
 )
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
@@ -64,6 +80,8 @@ from contextgem.internal.typings.types import (
     JustificationDepth,
     LanguageRequirement,
     Modality,
+    ModelRole,
+    NonEmptyStr,
     ReferenceDepth,
 )
 from contextgem.internal.typings.validators import (
@@ -89,10 +107,7 @@ from contextgem.internal.utils import (
 if TYPE_CHECKING:
     # `_DocumentLLM` is defined in `llms.py`, which imports this module, so that
     # this module cannot import it at runtime. Here, it is used only in annotations
-    # and `cast(...)` calls, and as the item type of the `models` field
-    # of `_DocumentModelGroup`. Pydantic resolves the type of that field when
-    # the public `DocumentModelGroup` class is created, in the namespace of its
-    # module, which imports `_DocumentLLM` for this purpose.
+    # and `cast(...)` calls.
     from contextgem.internal.base.llms import _DocumentLLM
 
     # Self-import resolves the string forward references used by `cast(...)` calls
@@ -102,6 +117,21 @@ if TYPE_CHECKING:
         _DocumentModelGroup,  # ty: ignore[unresolved-import]
     )
 
+
+# Local model providers supported via liteLLM
+_LOCAL_MODEL_PROVIDERS = [
+    "ollama/",
+    "ollama_chat/",
+    "lm_studio/",
+]
+
+# Rounding precision for reporting model costs (quantize on access only)
+_COST_QUANT = Decimal("0.00001")
+
+# Network destinations required by genai-prices to refresh cached pricing data.
+# Used by `tethered.scope` to constrain egress in `_calculate_auto_pricing_costs`,
+# and imported by tests/conftest.py to keep the test allowlist in sync.
+_GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
 # Error message for the LLMs that have the same role in a model group
 _NON_UNIQUE_MODEL_ROLES_MSG = (
@@ -1031,7 +1061,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 continue
             concept_names = ", ".join(f"`{i.name}`" for i in llm_image_concepts)
             for llm_instance in [llm, *llm.fallback_models]:
-                if llm_instance._supports_vision:
+                if llm_instance._supports_vision:  # ty: ignore[unresolved-attribute]
                     continue
                 if llm_instance.is_fallback:
                     subject = "Fallback model"
@@ -2610,11 +2640,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         f"({i + 1}/{n_fallbacks})"
                     )
                     retry_successful = await retry_processing_for_result(
-                        llm_instance=fallback_llm,
+                        llm_instance=fallback_llm,  # ty: ignore[invalid-argument-type]
                         res=result,
                         instances=chunk,
                         n_retries=max(
-                            fallback_llm.max_retries_invalid_data, 1
+                            fallback_llm.max_retries_invalid_data,  # ty: ignore[unresolved-attribute]
+                            1,
                         ),  # retry with each fallback LLM at least once
                         retry_is_final=i == n_fallbacks - 1,
                     )
@@ -2999,12 +3030,821 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
 
 @_disable_direct_initialization
+class _DocumentModel(_GenericModelProcessor):
+    """
+    Base class of single models of any kind.
+
+    This class holds what every kind of single model has, whatever requests it sends
+    and whatever responses it gets: the model identifier and the API credentials,
+    the role used for routing in a model group, the timeout and the retries of failed
+    requests, the rate limiter of concurrent requests, the fallback models, and
+    the tracking of usage and cost, together with the validation of these params.
+
+    A kind of model, such as an LLM, is defined in a subclass, which adds the params
+    and the processing logic of its own.
+    """
+
+    # Model config
+    model: NonEmptyStr = Field(
+        ...,
+        description="Model identifier '<provider>/<model>' (e.g., 'openai/gpt-6-luna').",
+    )
+    api_key: NonEmptyStr | None = Field(
+        default=None,
+        description="API key for provider authentication; optional for local models.",
+    )
+    api_base: NonEmptyStr | None = Field(
+        default=None,
+        description="Base URL of the provider API endpoint.",
+    )
+    role: ModelRole | None = Field(
+        default=None,
+        description=(
+            "Free-form role label (up to 64 printable characters) used for routing "
+            "in a DocumentModelGroup: the LLM extracts the aspects/concepts with "
+            "the same `model_role`. Defaults to None, "
+            "i.e. the LLM extracts the aspects/concepts without `model_role`. Ignored "
+            "when the LLM is used on its own, as it then extracts all aspects/concepts."
+        ),
+    )
+    num_retries_failed_request: StrictInt = Field(
+        default=3,
+        ge=0,
+        description=(
+            "Retry count for requests that fail with a transient error "
+            "(timeout, rate limit, server or connection error); "
+            "retried with exponential backoff and jitter."
+        ),
+    )
+    timeout: StrictInt = Field(
+        default=600,
+        ge=0,
+        description="Request timeout in seconds.",
+    )
+    pricing_details: _ModelPricing | None = Field(
+        default=None,
+        description="Explicit pricing configuration for cost calculation.",
+    )
+    is_fallback: StrictBool = Field(
+        default=False,
+        description="Marks this LLM as a fallback model.",
+    )
+    fallback_models: list[_DocumentModel] = Field(
+        default_factory=list,
+        description=(
+            "Fallback LLMs to try, in the given order, if this one fails; "
+            "each must have the same role and output_language."
+        ),
+    )
+    # Auto-pricing via genai-prices (optional)
+    auto_pricing: StrictBool = Field(
+        default=False,
+        description=(
+            "Enable automatic price lookup via genai-prices when pricing_details is not set."
+        ),
+    )
+    auto_pricing_refresh: StrictBool = Field(
+        default=False,
+        description="Allow genai-prices to auto-refresh cached pricing data.",
+    )
+
+    # Derived automatically from `model`
+    _auto_pricing_provider_id: str | None = PrivateAttr(default=None)
+    _auto_pricing_model_ref: str | None = PrivateAttr(default=None)
+    _auto_pricing_refresh_attempted: bool = PrivateAttr(
+        default=False
+    )  # update pricing only once to avoid redundant updates during extraction
+
+    # Async
+    _async_limiter: AsyncLimiter = PrivateAttr()
+
+    # Token counting
+    _usage: _ModelUsage = PrivateAttr(default_factory=_ModelUsage)
+    # Processing cost
+    _cost: _ModelCost = PrivateAttr(default_factory=_ModelCost)
+
+    # Async lock to guard shared state during async updates
+    _async_lock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
+
+    # Fallback LLMs as of the last validation. The config params of the fallback LLMs
+    # are checked for redundancy when the fallback LLMs are set, not each time
+    # another param of the LLM is assigned.
+    _validated_fallback_models: tuple[_DocumentModel, ...] = PrivateAttr(default=())
+
+    # Private attributes must be set only once before model validation.
+    # We shouldn't set private attributes in post-init method because
+    # some model validators which run before post-init require access to
+    # such attributes. We also want to avoid re-setting private attributes
+    # in every call of a model validator that validates any new assignment.
+    _private_attrs_initialized: bool = PrivateAttr(default=False)
+
+    def __init__(self, **data: Any):
+        # Pop the async_limiter if provided; otherwise use a default.
+        limiter = data.pop("async_limiter", None)
+
+        super().__init__(**data)
+        if limiter is not None:
+            self.async_limiter = limiter
+        else:
+            self.async_limiter = AsyncLimiter(10, 10)
+
+    @_post_init_method
+    def _post_init(self, __context: Any):
+        """
+        Post-initialization method that logs model information and API configuration,
+        as well as emits warnings for specific LLM configurations.
+
+        :param __context: Pydantic context (unused).
+        :type __context: Any
+        """
+        logger.info(f"Using model {self.model}")
+        if self.api_key is None:
+            logger.info("API key was not provided. Set `api_key`, if applicable.")
+        if self.api_base is None:
+            logger.info("API base was not provided. Set `api_base`, if applicable.")
+
+        # Log the information that applies to the specific kind of the model
+        self._log_kind_specific_info()
+
+        # Warn about auto-pricing accuracy limitations
+        if self.auto_pricing:
+            warnings.warn(
+                "Auto-pricing: these prices will not be 100% accurate. "
+                "The price data cannot be exactly correct because model providers do not provide "
+                "exact price information for their APIs in a format which can be reliably processed. "
+                "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
+                stacklevel=2,
+            )
+
+    def _log_kind_specific_info(self) -> None:
+        """
+        Logs the information on the model that applies to its specific kind only,
+        when the model is created. Does nothing by default: to be overridden
+        in the subclasses that have such information.
+
+        :return: None
+        :rtype: None
+        """
+        return None
+
+    def _set_private_attrs(self) -> None:
+        """
+        Initializes and configures private attributes for the LLM instance.
+        Runs only once.
+
+        :return: None
+        :rtype: None
+        """
+
+        if self._private_attrs_initialized:
+            return
+
+        # Set the private attributes that only the specific kind of the model has
+        self._set_kind_specific_private_attrs()
+        if self.auto_pricing:
+            self._set_provider_and_model_for_auto_pricing()
+
+        self._private_attrs_initialized = True
+
+    def _set_kind_specific_private_attrs(self) -> None:
+        """
+        Initializes and configures the private attributes that only the specific
+        kind of the model has. Does nothing by default: to be overridden
+        in the subclasses that have such attributes.
+
+        :return: None
+        :rtype: None
+        """
+        return None
+
+    @property
+    def async_limiter(self) -> AsyncLimiter:
+        """
+        Gets the async rate limiter for this LLM.
+
+        :return: The AsyncLimiter instance controlling request rate limits.
+        :rtype: AsyncLimiter
+        """
+        return self._async_limiter
+
+    @async_limiter.setter
+    def async_limiter(self, value: AsyncLimiter) -> None:
+        """
+        Sets the async rate limiter for this LLM.
+
+        :param value: The AsyncLimiter instance to set.
+        :type value: AsyncLimiter
+        :return: None
+        :rtype: None
+        :raises TypeError: If value is not an AsyncLimiter instance.
+        """
+        if not isinstance(value, AsyncLimiter):
+            raise TypeError("async_limiter must be an AsyncLimiter instance")
+        self._async_limiter = value
+
+    @property
+    def is_group(self) -> bool:
+        """
+        Returns False indicating this is a single LLM, not a group.
+
+        :return: Always False for DocumentLLM instances.
+        :rtype: bool
+        """
+        return False
+
+    @property
+    def list_roles(self) -> list[str | None]:
+        """
+        Returns a list containing the role of this LLM.
+
+        (For a single LLM, this returns a list with just one element - the LLM's role,
+        or None if the LLM has no role. For model groups, the method implementation returns
+        roles of all LLMs in the group.)
+
+        :return: A list containing the role of this LLM.
+        :rtype: list[str | None]
+        """
+        return [self.role]
+
+    @field_validator("model")
+    @classmethod
+    def _validate_model(cls, model: str) -> str:
+        """
+        Validates the model identifier to ensure it conforms to the expected format.
+
+        :param model: Model identifier string to validate.
+        :type model: str
+        :return: The validated model string.
+        :rtype: str
+        :raises ValueError: If `model` does not contain a forward slash ('/') to indicate
+            the required format.
+        """
+        if "/" not in model:
+            raise ValueError(
+                "Model identifier must be in the form of `<model_provider>/<model_name>`. "
+                "See https://docs.litellm.ai/docs/providers for the list of supported providers."
+            )
+        return model
+
+    @field_validator("fallback_models")
+    @classmethod
+    def _validate_fallback_models(
+        cls,
+        fallback_models: list[_DocumentModel],
+    ) -> list[_DocumentModel]:
+        """
+        Validates the ``fallback_models`` input to ensure each LLM meets the expected
+        condition of being a fallback LLM model.
+
+        :param fallback_models: The list of _DocumentModel instances to be validated.
+        :type fallback_models: list[_DocumentModel]
+        :return: The valid fallback_models that meet the expected criteria.
+        :rtype: list[_DocumentModel]
+        :raises ValueError: If any of the ``fallback_models`` is not a fallback model, as
+            indicated by the ``is_fallback`` attribute set to ``False``.
+        """
+        if any(not fallback_llm.is_fallback for fallback_llm in fallback_models):
+            raise ValueError(
+                "Fallback LLM must be a fallback model. Use `is_fallback=True`."
+            )
+        return fallback_models
+
+    @model_validator(mode="after")
+    def _ensure_private_attrs(self) -> Self:
+        """
+        Ensures private attributes are available for any code in/after this validator.
+
+        :return: The instance of the current LLM model after setting private attributes.
+        :rtype: Self
+        """
+        self._set_private_attrs()
+        return self
+
+    @model_validator(mode="after")
+    def _validate_document_model_post(self) -> Self:
+        """
+        Validate the integrity of the model after initialization: its pricing params
+        and its fallback models.
+
+        :return: The instance of the current model after successful validation.
+        :rtype: Self
+        :raises ValueError: If the model is not properly configured.
+        """
+
+        # pricing_details and auto_pricing are mutually exclusive
+        if self.pricing_details is not None and self.auto_pricing:
+            raise ValueError(
+                "`pricing_details` cannot be set together with `auto_pricing=True`. "
+                "Provide manual ModelPricing or enable auto_pricing, not both."
+            )
+
+        if (
+            any(self.model.startswith(provider) for provider in _LOCAL_MODEL_PROVIDERS)
+            and self.auto_pricing
+        ):
+            raise ValueError(
+                "`auto_pricing=True` is not supported for local models. "
+                "Disable `auto_pricing` or provide explicit `pricing_details`."
+            )
+
+        # Fallback model validation
+        if self.is_fallback and self.fallback_models:
+            raise ValueError(
+                "Fallback LLM cannot have its own fallback LLMs "
+                "and must be attached to a non-fallback model."
+            )
+
+        # A fallback LLM with the same config params as the main LLM or as another
+        # fallback LLM is redundant. This is checked when the fallback LLMs are set,
+        # i.e. when the LLM is created with them or they are assigned, except when
+        # the LLM is deserialized: the API credentials are removed from the serialized
+        # data, i.e. the LLMs that differ only in `api_key` or `api_base` (e.g. the same
+        # model served from another endpoint) have the same config params in such data.
+        # For the same reason, this is not checked when another param is assigned:
+        # the API credentials of a deserialized LLM and of its fallback LLMs are set
+        # again one by one, i.e. some of these LLMs have the same config params
+        # until all the credentials are set.
+        fallback_models_are_set = len(self.fallback_models) != len(
+            self._validated_fallback_models
+        ) or any(
+            current is not validated
+            for current, validated in zip(
+                self.fallback_models, self._validated_fallback_models, strict=True
+            )
+        )
+        check_same_config = (
+            fallback_models_are_set and not _is_deserialization_in_progress()
+        )
+
+        def get_config_params(llm: _DocumentModel) -> dict[str, Any]:
+            """
+            Returns the config params of the LLM to compare it with another LLM:
+            without the `is_fallback` and `fallback_models` params, and with the tools
+            as a set, as the order of the tools makes no difference.
+
+            :param llm: The LLM to get the config params of.
+            :type llm: _DocumentModel
+            :return: The config params by name.
+            :rtype: dict[str, Any]
+            """
+            config_params = {
+                k: v
+                for k, v in llm.__dict__.items()
+                if k not in ["is_fallback", "fallback_models"]
+            }
+            if config_params.get("tools") is not None:
+                config_params["tools"] = set(config_params["tools"])
+            # Models of different classes are different, whatever their config params
+            config_params["__class__"] = type(llm)
+            return config_params
+
+        # Config params of the main LLM and of the fallback LLMs validated so far
+        main_llm_dict = get_config_params(self)
+        fallback_llm_dicts: list[dict[str, Any]] = []
+
+        for fallback_llm in self.fallback_models:
+            # Check for the consistency of the fallback LLM role
+            if fallback_llm.role != self.role:
+                raise ValueError(
+                    f"The fallback LLM must have the same role `{self.role}` as the main one."
+                )
+
+            # Check the params that the specific kind of the model requires its
+            # fallback models to share with it, e.g. the output language of an LLM
+            self._validate_kind_specific_fallback(fallback_llm)
+
+            # Check that the fallback LLM is not the replica of the main LLM or of another
+            # fallback LLM, just with different `is_fallback` and `fallback_models` params
+            fallback_llm_dict = get_config_params(fallback_llm)
+            if check_same_config:
+                if main_llm_dict == fallback_llm_dict:
+                    raise ValueError(
+                        "Fallback LLM must not have the exact same config params as the main LLM."
+                    )
+                if fallback_llm_dict in fallback_llm_dicts:
+                    raise ValueError(
+                        "Fallback LLMs must not have the exact same config params as each other."
+                    )
+            fallback_llm_dicts.append(fallback_llm_dict)
+
+        # The fallback LLMs are valid, i.e. are not to be checked for redundancy again
+        self._validated_fallback_models = tuple(self.fallback_models)
+
+        # Update the state derived from the params of the specific kind of the model,
+        # and emit the warnings on these params, now that all the checks have passed
+        self._finish_kind_specific_validation()
+
+        return self
+
+    def _validate_kind_specific_fallback(self, fallback_model: _DocumentModel) -> None:
+        """
+        Validates a fallback model against the params that the specific kind of
+        the current model requires its fallback models to share with it. Does nothing
+        by default: to be overridden in the subclasses that have such params.
+
+        Called for each fallback model after its role is validated, and before it is
+        checked for being a replica of the current model or of another fallback model.
+
+        :param fallback_model: The fallback model to validate.
+        :type fallback_model: _DocumentModel
+        :return: None
+        :rtype: None
+        :raises ValueError: If the fallback model does not share such a param
+            with the current model.
+        """
+        return None
+
+    def _finish_kind_specific_validation(self) -> None:
+        """
+        Updates the state derived from the params of the specific kind of the model,
+        and emits the warnings on these params, after all the params of the model
+        are validated. Does nothing by default: to be overridden in the subclasses
+        that have such state or warnings.
+
+        :return: None
+        :rtype: None
+        """
+        return None
+
+    def _get_raw_usage(self) -> _ModelUsage:
+        """
+        Retrieves the raw usage information of the LLM.
+
+        :return: _ModelUsage object containing usage data for the LLM.
+        :rtype: _ModelUsage
+        """
+        return self._usage
+
+    def _get_raw_cost(self) -> _ModelCost:
+        """
+        Retrieves the cost information of the LLM, quantized for reporting.
+
+        The internal accumulators keep full precision. Quantization is applied
+        only on access to ensure stable presentation while avoiding stepwise
+        rounding errors during accumulation.
+
+        :return: _ModelCost object containing quantized cost data for the LLM.
+        :rtype: _ModelCost
+        """
+
+        if self.pricing_details is None and not self.auto_pricing:
+            logger.info(
+                f"No pricing params provided for the LLM `{self.model}`"
+                f"{f' with role `{self.role}`' if self.role else ''}. "
+                f"Costs for this LLM were not calculated."
+            )
+
+        # Quantize for presentation without mutating internal state
+        input_q = self._cost.input.quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
+        output_q = self._cost.output.quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
+        total_q = (input_q + output_q).quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
+        return _ModelCost(input=input_q, output=output_q, total=total_q)
+
+    def get_usage(self) -> list[_ModelUsageOutputContainer]:
+        """
+        Retrieves the usage information of the LLM and its fallback LLM if configured.
+
+        This method collects token usage statistics for the current LLM instance and its
+        fallback LLM (if configured), providing insights into API consumption.
+
+        :return: A list of usage statistics containers for the LLM and its fallback.
+        :rtype: list[_ModelUsageOutputContainer]
+        """
+
+        # Safe cast: _get_usage_or_cost with retrieval_type="usage"
+        # returns only list of _ModelUsageOutputContainer
+        return cast(
+            list["_ModelUsageOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="usage"),
+        )
+
+    def get_cost(self) -> list[_ModelCostOutputContainer]:
+        """
+        Retrieves the accumulated cost information of the LLM and its fallback LLM if configured.
+
+        This method collects cost statistics for the current LLM instance and its
+        fallback LLM (if configured), providing insights into API usage expenses.
+
+        :return: A list of cost statistics containers for the LLM and its fallback.
+        :rtype: list[_ModelCostOutputContainer]
+        """
+
+        # Safe cast: _get_usage_or_cost with retrieval_type="cost"
+        # returns only list of _ModelCostOutputContainer
+        return cast(
+            list["_ModelCostOutputContainer"],
+            self._get_usage_or_cost(retrieval_type="cost"),
+        )
+
+    def reset_usage_and_cost(self) -> None:
+        """
+        Resets the usage and cost statistics for the LLM and its fallback LLMs (if configured).
+
+        This method clears accumulated usage and cost data, which is useful when processing
+        multiple documents sequentially and tracking metrics for each document separately.
+
+        :return: None
+        :rtype: None
+        """
+
+        for llm in [self, *self.fallback_models]:
+            llm._usage = _ModelUsage()
+            llm._cost = _ModelCost()
+
+    @tethered.scope(
+        allow=list(_GENAI_PRICES_REFRESH_HOSTS),
+        label="contextgem._calculate_auto_pricing_costs",
+        hint=(
+            "ContextGem refreshes model pricing data from raw.githubusercontent.com "
+            "via genai-prices when DocumentLLM(auto_pricing_refresh=True). "
+            "If your app uses tethered.activate(), allow raw.githubusercontent.com "
+            "— or set auto_pricing_refresh=False to use bundled pricing data, "
+            "or set pricing_details=ModelPricing(...) to bypass genai-prices entirely. "
+            "See https://contextgem.dev/llms/llm_config/"
+        ),
+    )
+    def _calculate_auto_pricing_costs(
+        self,
+        input_tokens: int,
+        output_tokens: int,
+        cache_read_tokens: int = 0,
+        cache_write_tokens: int = 0,
+    ) -> tuple[Decimal, Decimal]:
+        """
+        Utility method to calculate costs using genai-prices for the given
+        input/output token counts. Requires `_auto_pricing_provider_id` and
+        `_auto_pricing_model_ref` to be set.
+
+        The input tokens read from and written to the prompt cache are priced
+        at the cache prices of the model, where genai-prices has such prices,
+        and as regular input tokens otherwise.
+
+        :param input_tokens: Number of input tokens, including the tokens read from
+            and written to the prompt cache
+        :type input_tokens: int
+        :param output_tokens: Number of output tokens
+        :type output_tokens: int
+        :param cache_read_tokens: Number of input tokens read from the prompt cache.
+            Defaults to 0.
+        :type cache_read_tokens: int
+        :param cache_write_tokens: Number of input tokens written to the prompt cache.
+            Defaults to 0.
+        :type cache_write_tokens: int
+        :return: Tuple of (input_cost, output_cost) as Decimals, where the input cost
+            includes the cost of the tokens read from and written to the prompt cache
+        :rtype: tuple[Decimal, Decimal]
+        :raises LookupError: If auto-pricing provider/model are not set
+        :raises Exception: Propagates exceptions from genai-prices lookup/calculation
+        """
+
+        if (
+            self._auto_pricing_provider_id is None
+            or self._auto_pricing_model_ref is None
+        ):
+            raise LookupError(
+                "Auto-pricing provider/model are not set for this LLM instance"
+            )
+
+        # Cache tokens are a part of the input tokens, in genai-prices as well
+        usage = _GPUsage(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
+        )
+
+        if self.auto_pricing_refresh and not self._auto_pricing_refresh_attempted:
+            # Attempt price update only once, as it involves a network call
+            self._auto_pricing_refresh_attempted = True
+            with _GPUpdatePrices() as update_prices:
+                logger.info(
+                    f"Updating LLM API prices since `auto_pricing_refresh=True` for model `{self.model}`"
+                )
+                try:
+                    update_prices.wait()
+                    logger.info("Finished updating LLM API prices")
+                except Exception as e:
+                    logger.error(f"Error updating LLM API prices: {e}.")
+                price_data = _calc_auto_price(
+                    usage,
+                    model_ref=self._auto_pricing_model_ref,
+                    provider_id=self._auto_pricing_provider_id,
+                )
+        else:
+            price_data = _calc_auto_price(
+                usage,
+                model_ref=self._auto_pricing_model_ref,
+                provider_id=self._auto_pricing_provider_id,
+            )
+        input_cost = Decimal(str(price_data.input_price))
+        output_cost = Decimal(str(price_data.output_price))
+        return input_cost, output_cost
+
+    def _increment_cost(self, usage: _ModelUsage) -> None:
+        """
+        Calculates and increments the self._cost attribute values based on
+        the additional usage details provided. Relevant only if the user has
+        provided pricing details for the LLM or if auto-pricing is enabled.
+
+        :param usage: _ModelUsage instance containing usage information on
+                      additional number of input and output tokens processed,
+                      including the input tokens read from and written to
+                      the prompt cache, and on the calls that used these tokens.
+        :type usage: _ModelUsage
+
+        :return: None
+        :rtype: None
+        """
+
+        if self.pricing_details or self.auto_pricing:
+            mil_dec = Decimal("1000000")
+            cost_input: Decimal = Decimal("0")
+            cost_output: Decimal = Decimal("0")
+
+            if self.pricing_details:
+                pricing = self.pricing_details
+                input_price = Decimal(str(pricing.input_per_1m_tokens))
+                # Cache tokens are a part of the input tokens, and are priced
+                # as regular input tokens unless they have a price of their own
+                cache_read_price = (
+                    input_price
+                    if pricing.cache_read_per_1m_tokens is None
+                    else Decimal(str(pricing.cache_read_per_1m_tokens))
+                )
+                cache_write_price = (
+                    input_price
+                    if pricing.cache_write_per_1m_tokens is None
+                    else Decimal(str(pricing.cache_write_per_1m_tokens))
+                )
+                regular_input = usage.input - usage.cache_read - usage.cache_write
+                cost_input = (
+                    Decimal(str(regular_input)) * input_price
+                    + Decimal(str(usage.cache_read)) * cache_read_price
+                    + Decimal(str(usage.cache_write)) * cache_write_price
+                ) / mil_dec
+                cost_output = (Decimal(str(usage.output)) / mil_dec) * Decimal(
+                    str(pricing.output_per_1m_tokens)
+                )
+
+            elif self.auto_pricing:
+                # Use genai-prices to calculate input/output costs
+                if (
+                    self._auto_pricing_provider_id is None
+                    or self._auto_pricing_model_ref is None
+                ):
+                    # If not set, skip cost update
+                    return
+                try:
+                    # Each call is priced on its own, as the prices of some models
+                    # depend on the number of input tokens in a request (price tiers),
+                    # which the usage summed up over several calls would misrepresent
+                    call_costs = [
+                        self._calculate_auto_pricing_costs(
+                            call._input_tokens,
+                            call._output_tokens,
+                            cache_read_tokens=call._cache_read_tokens,
+                            cache_write_tokens=call._cache_write_tokens,
+                        )
+                        for call in usage.calls
+                    ]
+                    if not all(
+                        isinstance(cost, Decimal)
+                        for call_cost in call_costs
+                        for cost in call_cost
+                    ):
+                        raise RuntimeError("Auto-pricing returned non-Decimal values")
+                    cost_input = sum(
+                        (call_cost[0] for call_cost in call_costs), Decimal("0")
+                    )
+                    cost_output = sum(
+                        (call_cost[1] for call_cost in call_costs), Decimal("0")
+                    )
+                except Exception as e:
+                    warning_msg = (
+                        f"Unable to fetch pricing data for model `{self.model}`: {e}. "
+                        "Auto-pricing is skipped. "
+                        f"{self._get_missing_auto_pricing_advice()}"
+                    )
+                    warnings.warn(
+                        warning_msg,
+                        stacklevel=2,
+                    )
+
+            cost_total = cost_input + cost_output
+
+            # Accumulate with full precision; quantization happens on read
+            self._cost.input += cost_input
+            self._cost.output += cost_output
+            self._cost.total += cost_total
+
+    async def _update_usage_and_cost(
+        self, result: tuple[Any, _ModelUsage] | None
+    ) -> None:
+        """
+        Updates the model usage and cost details based on the given processing result.
+        This method modifies the LLM instance's usage statistics, whether or not pricing
+        params are provided, and increments the associated cost if they are provided.
+
+        :param result: A tuple containing an optional value and usage data. The usage
+            data is used to update the instance's input and output usage, as well as
+            the total cost. If the result is None, the method does nothing.
+        :type result: tuple[Any, _ModelUsage]
+        :return: None
+        :rtype: None
+        """
+
+        async with self._async_lock:
+            if result is None:
+                return
+            new_usage = result[1]
+            # Tokens data
+            self._usage.input += new_usage.input
+            self._usage.output += new_usage.output
+            self._usage.cache_read += new_usage.cache_read
+            self._usage.cache_write += new_usage.cache_write
+            # Pricing data (if pricing is configured)
+            self._increment_cost(new_usage)
+            # Calls data
+            self._usage.calls += new_usage.calls
+
+    def _get_missing_auto_pricing_advice(self) -> str:
+        """
+        Returns the advice for the warnings issued when the pricing data of the model
+        cannot be fetched. Unless the refresh of the pricing data is already enabled,
+        it is suggested first, as the pricing data bundled with genai-prices may not
+        include a recently released model.
+
+        :return: Advice on getting the costs of the LLM calculated
+        :rtype: str
+        """
+
+        if self.auto_pricing_refresh:
+            return (
+                "Consider setting `pricing_details=ModelPricing(...)` "
+                "or disabling auto-pricing."
+            )
+        return (
+            "The bundled pricing data may not include recently released models: "
+            "consider setting `auto_pricing_refresh=True` to fetch the latest "
+            "pricing data, setting `pricing_details=ModelPricing(...)`, "
+            "or disabling auto-pricing."
+        )
+
+    def _set_provider_and_model_for_auto_pricing(self) -> None:
+        """
+        Sets (provider_id, model_ref) pair for genai-prices from `model` field.
+        Does nothing when local models are detected.
+
+        :return: None
+        :rtype: None
+        """
+
+        if any(self.model.startswith(provider) for provider in _LOCAL_MODEL_PROVIDERS):
+            # Local models are not supported for auto-pricing
+            return
+
+        # Derive from self.model formatted as "provider/model"
+        parts = self.model.split("/", 1)
+        if len(parts) != 2:
+            warning_msg = (
+                f"Could not derive auto-pricing provider/model from `{self.model}`. "
+                f"Auto-pricing will be skipped. "
+                f"Consider setting `pricing_details=ModelPricing(...)` "
+                f"or disabling auto-pricing."
+            )
+            warnings.warn(
+                warning_msg,
+                stacklevel=2,
+            )
+            return
+
+        provider_id = parts[0]
+        model_ref = parts[1]
+        self._auto_pricing_provider_id = provider_id
+        self._auto_pricing_model_ref = model_ref
+
+        # Probe calculation with dummy tokens.
+        try:
+            self._calculate_auto_pricing_costs(1000, 25000)
+        except Exception as e:
+            warning_msg = (
+                f"Unable to fetch pricing data for model `{self.model}`: {e}. "
+                "Auto-pricing will be skipped. "
+                f"{self._get_missing_auto_pricing_advice()}"
+            )
+            warnings.warn(
+                warning_msg,
+                stacklevel=2,
+            )
+
+
+@_disable_direct_initialization
 class _DocumentModelGroup(_GenericModelProcessor):
     """
     Internal implementation of the ``DocumentModelGroup`` class.
     """
 
-    models: list[_DocumentLLM] = Field(
+    models: list[_DocumentModel] = Field(
         ...,
         min_length=2,
         description=(
@@ -3087,7 +3927,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
         :rtype: bool
         """
         for self_llm, other_llm in zip(self.models, other.models, strict=True):
-            if not self_llm._eq_deserialized_llm_config(other_llm):
+            if not self_llm._eq_deserialized_llm_config(other_llm):  # ty: ignore[unresolved-attribute]
                 return False
         return True
 
@@ -3099,7 +3939,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        models_with_tools = [llm.model for llm in self.models if llm.tools]
+        models_with_tools = [llm.model for llm in self.models if llm.tools]  # ty: ignore[unresolved-attribute]
         if models_with_tools:
             models_with_tools_list = ", ".join(models_with_tools)
             warnings.warn(
@@ -3111,17 +3951,17 @@ class _DocumentModelGroup(_GenericModelProcessor):
 
     @field_validator("models")
     @classmethod
-    def _validate_models(cls, models: list[_DocumentLLM]) -> list[_DocumentLLM]:
+    def _validate_models(cls, models: list[_DocumentModel]) -> list[_DocumentModel]:
         """
         Validates the provided list of _DocumentLLMs ensuring that each
         LLM has a unique role within the group, so that each aspect/concept
         is routed to a single LLM. No role (None) also counts as a role,
         i.e. only one LLM in the group can have no role.
 
-        :param models: A list of `_DocumentLLM` instances to be validated.
-        :type models: list[_DocumentLLM]
-        :return: A validated list of `_DocumentLLM` instances.
-        :rtype: list[_DocumentLLM]
+        :param models: A list of `_DocumentModel` instances to be validated.
+        :type models: list[_DocumentModel]
+        :return: A validated list of `_DocumentModel` instances.
+        :rtype: list[_DocumentModel]
         :raises ValueError: If not all model roles are unique.
         """
         seen_roles = set()
@@ -3223,7 +4063,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
             group's `output_language`.
         """
 
-        if any(i.output_language != self.output_language for i in self.models):
+        if any(i.output_language != self.output_language for i in self.models):  # ty: ignore[unresolved-attribute]
             raise ValueError(
                 "All LLMs in the group must have the same value of "
                 "`output_language` attribute as the group."

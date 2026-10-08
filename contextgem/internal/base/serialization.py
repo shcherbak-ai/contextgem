@@ -152,10 +152,10 @@ class _InstanceSerializer(BaseModel):
         """
 
         from contextgem.internal.base.llms import _DocumentLLM
-        from contextgem.internal.base.models import _DocumentModelGroup
+        from contextgem.internal.base.models import _DocumentModel, _DocumentModelGroup
         from contextgem.internal.data_models import _ModelCost, _ModelUsage
 
-        if isinstance(self, _DocumentLLM | _DocumentModelGroup):
+        if isinstance(self, _DocumentModel | _DocumentModelGroup):
             logger.info(
                 "API credentials and usage/cost stats are removed from the serialized LLM/model group."
             )

@@ -31,6 +31,7 @@ from unittest.mock import patch
 import pytest
 
 from contextgem.internal.base import llms as llms_module
+from contextgem.internal.base import models as models_module
 from contextgem.internal.data_models import _ModelCost, _ModelUsage
 from contextgem.internal.exceptions import ModelAPIError
 from contextgem.internal.loggers import logger
@@ -298,8 +299,8 @@ class TestUsageAndCost(BaseTest):
             Calculates the input and output prices of the usage with genai-prices.
             """
             provider_id, model_ref = model.split("/")
-            price = llms_module._calc_auto_price(
-                llms_module._GPUsage(**usage_kwargs),
+            price = models_module._calc_auto_price(
+                models_module._GPUsage(**usage_kwargs),
                 model_ref=model_ref,
                 provider_id=provider_id,
             )

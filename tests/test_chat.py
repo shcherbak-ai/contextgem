@@ -2140,7 +2140,7 @@ class TestChat(BaseTest):
         for fallback_tools in [tools, tuple(tools), tools[::-1]]:
             llm = create_llm(tools=tools)
             llm.fallback_models = [create_fallback_llm(tools=fallback_tools)]
-            assert llm.fallback_models[0].tools == list(fallback_tools)
+            assert llm.fallback_models[0].tools == list(fallback_tools)  # ty: ignore[unresolved-attribute]
 
         # Different tools, or tools of only one of the LLMs
         for main_tools, fallback_tools in [

@@ -27,11 +27,6 @@ complex ones.
 
 from __future__ import annotations
 
-# `_DocumentLLM` is not used in this module, but has to be in its namespace when
-# the `DocumentModelGroup` class is created: pydantic resolves the type of the inherited
-# `models` field (`list[_DocumentLLM]`) in the namespace of this module, as the module
-# of `_DocumentModelGroup` cannot import `_DocumentLLM` at runtime (circular import).
-from contextgem.internal.base.llms import _DocumentLLM  # noqa: F401
 from contextgem.internal.base.models import _DocumentModelGroup
 from contextgem.internal.decorators import _expose_in_registry
 

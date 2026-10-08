@@ -525,7 +525,7 @@ ContextGem uses [tethered](https://github.com/shcherbak-ai/tethered) for network
 **1. Production code (`tethered.scope`)** — the two non-LLM paths the framework controls are wrapped with `tethered.scope`, which can only narrow (intersection-only) egress and never widens a host application's policy:
 
 - `contextgem/internal/utils.py::_load_sat_model` — restricted to HuggingFace hosts (`_SAT_MODEL_DOWNLOAD_HOSTS`)
-- `contextgem/internal/base/llms.py::_calculate_auto_pricing_costs` — restricted to `raw.githubusercontent.com` (`_GENAI_PRICES_REFRESH_HOSTS`)
+- `contextgem/internal/base/models.py::_calculate_auto_pricing_costs` — restricted to `raw.githubusercontent.com` (`_GENAI_PRICES_REFRESH_HOSTS`)
 
 LLM API calls are deliberately **not** scoped — endpoints are user-configured (Azure custom domains, OpenAI-compatible proxies, self-hosted, etc.) and are left to the host application's own egress policy.
 

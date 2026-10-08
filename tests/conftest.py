@@ -33,7 +33,7 @@ import pytest
 import tethered
 from vcr.stubs import httpx_stubs
 
-from contextgem.internal.base.llms import _GENAI_PRICES_REFRESH_HOSTS
+from contextgem.internal.base.models import _GENAI_PRICES_REFRESH_HOSTS
 from contextgem.internal.loggers import LOGGER_LEVEL_ENV_VAR_NAME, logger
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
 from contextgem.internal.utils import _SAT_MODEL_DOWNLOAD_HOSTS
