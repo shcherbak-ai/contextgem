@@ -90,7 +90,7 @@ uv run pytest
 
 When adding new functionality:
 
-1. **Add test methods** to the test class of the relevant feature area (`tests/test_<area>.py::Test<Area>`, e.g. `tests/test_extraction.py::TestExtraction`) following existing patterns. The test classes inherit the shared test objects (documents, LLMs, images) from `tests/base.py::BaseTest`
+1. **Add test methods** to the test class of the relevant feature area (`tests/test_<area>.py::Test<Area>`, e.g. `tests/test_extraction.py::TestExtraction`) following existing patterns. The test classes inherit the shared test objects (documents, LLMs, images) from `tests/base.py::BaseTest`. A test must leave them unchanged: a test that changes a document works on its copy (`document = self.document.clone()`)
 2. **For tests that do NOT call LLM APIs**: Run them to verify they pass
 3. **For tests that call LLM APIs**: Add `@pytest.mark.vcr` decorator, **do NOT run them**, and inform the user that cassettes need recording before these tests can be executed
 

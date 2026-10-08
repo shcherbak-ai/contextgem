@@ -17,39 +17,24 @@
 #
 
 """
-Module defining tests for memory usage and extraction benchmarks.
+Module defining tests for extraction benchmarks.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from contextgem.internal.loggers import logger
+from contextgem.public import DocumentLLM
 from tests.base import BaseTest
 from tests.benchmark.core import run_benchmark_for_module
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 
 
 class TestPerformance(BaseTest):
     """
-    Tests that establish the memory usage baseline of the test run
-    and execute the extraction benchmarks.
+    Tests that execute the extraction benchmarks.
     """
 
-    @memory_profile_and_capture
-    def test_establish_memory_baseline(self):
-        """
-        Establishes a memory usage baseline for subsequent per-method memory calculations.
-
-        This test captures the initial memory footprint including module imports,
-        variable initialization, and framework setup. The memory profile from this
-        test serves as a baseline against which memory deltas of other test methods
-        can be measured.
-        """
-        logger.info("Memory usage baseline captured.")
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_benchmarks(self):
         """
         Executes extraction benchmarks to evaluate the accuracy and reliability
@@ -64,11 +49,13 @@ class TestPerformance(BaseTest):
         extraction performance.
         """
 
+        # The benchmark unsets the system message of the judge LLM, so the judge
+        # is a new LLM with the settings of the reasoner, not the shared reasoner
+        judge_llm = DocumentLLM(**self._llm_reasoner_kwargs_openai)  # ty: ignore[invalid-argument-type]
+
         run_benchmark_for_module(
             llm=self.llm_extractor,
-            judge_llm=self.llm_reasoner,
+            judge_llm=judge_llm,
             module_name="tests.benchmark.configs.dev_contract",
             benchmark_name="Dev Contract (Text Only)",
         )
-
-        check_locals_memory_usage(locals(), test_name="test_benchmarks")

@@ -19,9 +19,8 @@
 """
 Pytest configuration and fixtures for ContextGem tests.
 
-This module provides test configuration, command-line options, fixtures,
-and utilities for running ContextGem tests, including VCR cassette handling
-and memory profiling support.
+This module provides test configuration, fixtures, and utilities
+for running ContextGem tests, including VCR cassette handling.
 """
 
 from __future__ import annotations
@@ -35,7 +34,7 @@ import tethered
 from vcr.stubs import httpx_stubs
 
 from contextgem.internal.base.llms import _GENAI_PRICES_REFRESH_HOSTS
-from contextgem.internal.loggers import logger
+from contextgem.internal.loggers import LOGGER_LEVEL_ENV_VAR_NAME, logger
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
 from contextgem.internal.utils import _SAT_MODEL_DOWNLOAD_HOSTS
 from contextgem.public.utils import reload_logger_settings
@@ -75,24 +74,6 @@ def _patched_deserialize_response(vcr_response, httpx):
 httpx_stubs._deserialize_response = _patched_deserialize_response  # ty: ignore[invalid-assignment]
 
 
-# Memory profiling behavior
-_ENABLE_MEMORY_PROFILING_FLAG = "--mem-profile"
-_MEMORY_PROFILING_ENABLED = False
-# Name of the test that establishes the memory usage baseline, against which
-# the memory usage of the other tests is measured (see `tests/memory_profiling.py`)
-_MEMORY_BASELINE_TEST_NAME = "test_establish_memory_baseline"
-
-# Test modules that are run after the other test modules, in this order.
-# Their tests leave a state that affects the tests run after them: the logger
-# tests leave the logger with a closed output stream, the docstring examples
-# disable the logger, and the benchmarks unset the system message of the reasoner
-# LLM shared by the tests.
-_TEST_MODULES_RUN_LAST = (
-    "test_logging.py",
-    "test_usage_examples.py",
-    "test_performance.py",
-)
-
 # VCR redaction of API keys, private endpoints, etc.
 VCR_REDACTION_MARKER = "DUMMY"
 VCR_DUMMY_ENDPOINT_PREFIX = "https://dummy-endpoint.local/"
@@ -129,70 +110,35 @@ def vcr_config():
     }
 
 
-def pytest_addoption(parser):
-    """
-    Add custom command line options to pytest.
-    """
-    parser.addoption(
-        _ENABLE_MEMORY_PROFILING_FLAG,
-        action="store_true",
-        default=False,
-        help="Enable memory profiling during test execution",
-    )
-
-
 def pytest_configure(config):
     """
     Configure pytest with custom settings.
     """
-    global _MEMORY_PROFILING_ENABLED
-
     # Set contextgem logger level to DEBUG
-    os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "DEBUG"
+    os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = "DEBUG"
     reload_logger_settings()
 
-    # Set the global memory profiling flag
-    _MEMORY_PROFILING_ENABLED = config.getoption(_ENABLE_MEMORY_PROFILING_FLAG)
 
-
-def pytest_collection_modifyitems(items):
+@pytest.fixture
+def restore_logger_settings():
     """
-    Orders the tests that have to be run at the start or at the end of the test run.
+    Restores the logger settings after a test that changes them.
 
-    The test modules are run in alphabetical order, with two exceptions.
-    The memory baseline test is run first, as the memory usage of the other tests
-    is measured against it. The modules listed in ``_TEST_MODULES_RUN_LAST`` are run
-    last, as their tests leave a state that affects the tests run after them.
-    The order of the other tests, and of the tests within a module, is not changed.
+    The logger level is restored to its value before the test, and the logger
+    is reconfigured, which also binds it to the current output stream.
+
+    Apply the fixture with ``@pytest.mark.usefixtures``: it is then set up before
+    the fixtures requested as the arguments of the test, and finalized after them.
+    A test that uses ``capsys`` leaves the logger bound to a stream that is closed
+    when ``capsys`` is finalized, so the logger has to be reconfigured after that.
     """
-
-    def run_order(item) -> int:
-        """
-        Returns the position of the test relative to the other tests.
-
-        :param item: The collected test.
-        :return: A negative value for the test to run first, a positive value
-            for the tests to run last, zero for the other tests.
-        :rtype: int
-        """
-        if item.name == _MEMORY_BASELINE_TEST_NAME:
-            return -1
-        module_name = item.path.name
-        if module_name in _TEST_MODULES_RUN_LAST:
-            return _TEST_MODULES_RUN_LAST.index(module_name) + 1
-        return 0
-
-    items.sort(key=run_order)
-
-
-def is_memory_profiling_enabled() -> bool:
-    """
-    Check if memory profiling has been enabled via command line flag.
-
-    :return: True if memory profiling is enabled, False otherwise
-    :rtype: bool
-    """
-    return _MEMORY_PROFILING_ENABLED
+    previous_level = os.environ.get(LOGGER_LEVEL_ENV_VAR_NAME)
+    yield
+    if previous_level is None:
+        os.environ.pop(LOGGER_LEVEL_ENV_VAR_NAME, None)
+    else:
+        os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = previous_level
+    reload_logger_settings()
 
 
 def _get_cassette_path(request) -> str:

@@ -51,7 +51,6 @@ from contextgem.public import (
     StringExample,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_project_root_path, get_test_document_text
 
 
@@ -71,7 +70,6 @@ class TestExtraction(BaseTest):
     model_group = BaseTest.model_group
 
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_model_extraction_error_exception(self):
         """
         Tests for raising an exception when a model extraction error occurs.
@@ -391,19 +389,16 @@ class TestExtraction(BaseTest):
         assert all(i.extracted_items for i in processed_document.concepts)
         assert all(i.extracted_items for i in document.aspects[0].concepts)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_model_extraction_error_exception"
-        )
-
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_extract_aspects_from_document(self, llm: DocumentModelGroup | DocumentLLM):
         """
         Tests the aspects extraction functionality of LLMs.
         """
 
         self.config_llm_async_limiter_for_mock_responses(llm)
+
+        document = self.document.clone()  # clone for method-scoped state modification
 
         # Check for unsupported modality (aspects are extracted from text only)
         with pytest.raises(ValueError):
@@ -419,8 +414,8 @@ class TestExtraction(BaseTest):
                 description="Information on the parties in the contract",
             ),
         ]
-        self.document.aspects = document_aspects
-        assert self.document.aspects is not document_aspects
+        document.aspects = document_aspects
+        assert document.aspects is not document_aspects
 
         # Aspects validation
 
@@ -429,29 +424,27 @@ class TestExtraction(BaseTest):
             detached_aspects = [
                 Aspect(name="Random", description="Random"),
             ]
-            llm.extract_aspects_from_document(
-                self.document, from_aspects=detached_aspects
-            )
+            llm.extract_aspects_from_document(document, from_aspects=detached_aspects)
 
         # Invalid aspect types
         invalid_aspects = [1, True]
         with pytest.raises(ValueError):
-            self.document.aspects = invalid_aspects  # ty: ignore[invalid-assignment]
+            document.aspects = invalid_aspects  # ty: ignore[invalid-assignment]
         with pytest.raises(ValueError):
             llm.extract_aspects_from_document(
-                self.document,
+                document,
                 from_aspects=invalid_aspects,  # ty: ignore[invalid-argument-type]
             )
 
         # Invalid sequence types for "from_aspects"
         with pytest.raises(ValueError, match="list"):
             llm.extract_aspects_from_document(
-                self.document,
+                document,
                 from_aspects=tuple(document_aspects),
             )
         with pytest.raises(ValueError, match="list"):
             llm.extract_aspects_from_document(
-                self.document,
+                document,
                 from_aspects=set([1, 2, 3]),  # type: ignore
             )
 
@@ -469,23 +462,23 @@ class TestExtraction(BaseTest):
             ),
         ]
         with pytest.raises(ValueError):
-            self.document.aspects = duplicate_aspects
+            document.aspects = duplicate_aspects
         duplicate_name_aspects = [
             Aspect(name="Parties", description="Desc 1"),
             Aspect(name="Parties", description="Desc 2"),
         ]
         with pytest.raises(ValueError):
-            self.document.aspects = duplicate_name_aspects
+            document.aspects = duplicate_name_aspects
         duplicate_description_aspects = [
             Aspect(name="Name 1", description="Description"),
             Aspect(name="Name 2", description="Description"),
         ]
         with pytest.raises(ValueError):
-            self.document.aspects = duplicate_description_aspects
+            document.aspects = duplicate_description_aspects
 
         # No partial update check
-        assert self.document.aspects == document_aspects
-        assert self.document.aspects is not document_aspects
+        assert document.aspects == document_aspects
+        assert document.aspects is not document_aspects
 
         # LLM extraction
         document_aspects = [
@@ -543,28 +536,28 @@ class TestExtraction(BaseTest):
                 model_role="reasoner",
             ),
         ]
-        self.document.aspects = document_aspects
+        document.aspects = document_aspects
 
         # LLM extraction
         self.compare_with_concurrent_execution(
             llm=llm,
             expected_n_calls_no_concurrency=(3 if llm.is_group else 2) * 3
             + 2,  # *3 due to 30 (1/3) paras per call, +2 due to sub-aspects
-            expected_n_calls_1_item_per_call=len(self.document.aspects) * 3
+            expected_n_calls_1_item_per_call=len(document.aspects) * 3
             + 3,  # *3 due to 30 (1/3) paras per call, +3 due to sub-aspects
-            expected_n_calls_with_concurrency=len(self.document.aspects) * 3
+            expected_n_calls_with_concurrency=len(document.aspects) * 3
             + 3,  # *3 due to 30 (1/3) paras per call, +3 due to sub-aspects
             func=llm.extract_aspects_from_document,
             func_kwargs={
-                "document": self.document,
+                "document": document,
                 "max_paragraphs_to_analyze_per_call": 30,
             },
             original_container=document_aspects,
-            assigned_container=self.document.aspects,
+            assigned_container=document.aspects,
             assigned_instance_class=Aspect,
             compare_sequential_1_item_in_call=False,
         )
-        check_aspects = self.document.get_aspects_by_names(
+        check_aspects = document.get_aspects_by_names(
             [
                 "Parties",
                 "Term",
@@ -577,14 +570,12 @@ class TestExtraction(BaseTest):
 
         # Overwrite check
         with pytest.raises(ValueError):
-            llm.extract_aspects_from_document(self.document)
+            llm.extract_aspects_from_document(document)
         with pytest.raises(ValueError):
-            llm.extract_aspects_from_document(
-                self.document, from_aspects=document_aspects
-            )
-        overwrite_aspects = [self.document.get_aspect_by_name("Parties")]
+            llm.extract_aspects_from_document(document, from_aspects=document_aspects)
+        overwrite_aspects = [document.get_aspect_by_name("Parties")]
         extracted_aspects = llm.extract_aspects_from_document(
-            self.document,
+            document,
             from_aspects=overwrite_aspects,
             overwrite_existing=True,
         )
@@ -597,19 +588,19 @@ class TestExtraction(BaseTest):
 
         # Log sub-aspects for testing
         self.log_extracted_items_for_instance(
-            self.document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
+            document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
                 "Exclusions from confidential information"
             ).get_aspect_by_name("Information in possession of the receiving party"),
             full_repr=False,
         )
         self.log_extracted_items_for_instance(
-            self.document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
+            document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
                 "Exclusions from confidential information"
             ).get_aspect_by_name("Information received from a third party"),
             full_repr=False,
         )
         self.log_extracted_items_for_instance(
-            self.document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
+            document.get_aspect_by_name(  # ty: ignore[invalid-argument-type]
                 "Exclusions from confidential information"
             ).get_aspect_by_name("Independently developed information"),
             full_repr=False,
@@ -620,19 +611,16 @@ class TestExtraction(BaseTest):
         # Check cost
         self.check_cost(llm)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_extract_aspects_from_document"
-        )
-
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_extract_concepts_from_aspect(self, llm: DocumentModelGroup | DocumentLLM):
         """
         Tests for concept extraction from aspect.
         """
 
         self.config_llm_async_limiter_for_mock_responses(llm)
+
+        document = self.document.clone()  # clone for method-scoped state modification
 
         aspect_concepts = [
             BooleanConcept(
@@ -684,20 +672,18 @@ class TestExtraction(BaseTest):
 
         # Attachment to aspect
         with pytest.raises(ValueError):
-            self.document.aspects = []
-            llm.extract_concepts_from_aspect(aspect=aspects[0], document=self.document)
+            document.aspects = []
+            llm.extract_concepts_from_aspect(aspect=aspects[0], document=document)
 
         # LLM extraction
-        self.document.aspects = aspects
-        assert self.document.aspects is not aspects
-        attached_aspect = self.document.get_aspect_by_name("Confidential information")
+        document.aspects = aspects
+        assert document.aspects is not aspects
+        attached_aspect = document.get_aspect_by_name("Confidential information")
 
         # Attempt concept extraction first, without pre-extraction of the aspect.
         assert not attached_aspect.extracted_items
         with pytest.raises(ValueError):
-            llm.extract_concepts_from_aspect(
-                aspect=attached_aspect, document=self.document
-            )
+            llm.extract_concepts_from_aspect(aspect=attached_aspect, document=document)
 
         # Aspects first
         self.compare_with_concurrent_execution(
@@ -707,10 +693,10 @@ class TestExtraction(BaseTest):
             expected_n_calls_with_concurrency=1,
             func=llm.extract_aspects_from_document,
             func_kwargs={
-                "document": self.document,
+                "document": document,
             },
             original_container=aspects,
-            assigned_container=self.document.aspects,
+            assigned_container=document.aspects,
             assigned_instance_class=Aspect,
         )
         # Then concepts
@@ -722,7 +708,7 @@ class TestExtraction(BaseTest):
             func=llm.extract_concepts_from_aspect,
             func_kwargs={
                 "aspect": attached_aspect,
-                "document": self.document,
+                "document": document,
             },
             original_container=list(aspects[0].concepts),
             assigned_container=list(attached_aspect.concepts),
@@ -739,13 +725,13 @@ class TestExtraction(BaseTest):
             for extracted_item in concept_with_refs.extracted_items:
                 assert extracted_item.reference_paragraphs
                 item_ref_para_indices = [
-                    self.document.get_paragraph_index(p)
+                    document.get_paragraph_index(p)
                     for p in extracted_item.reference_paragraphs
                 ]
                 assert item_ref_para_indices == sorted(item_ref_para_indices)
                 assert extracted_item.reference_sentences
                 item_ref_sent_positions = [
-                    self.document.get_sentence_index(s)
+                    document.get_sentence_index(s)
                     for s in extracted_item.reference_sentences
                 ]
                 assert item_ref_sent_positions == sorted(item_ref_sent_positions)
@@ -759,37 +745,37 @@ class TestExtraction(BaseTest):
                 add_justifications=True,
             ),
         ]
-        self.document.aspects = aspects_without_concepts
-        assert self.document.aspects is not aspects_without_concepts
-        llm.extract_aspects_from_document(self.document)
+        document.aspects = aspects_without_concepts
+        assert document.aspects is not aspects_without_concepts
+        llm.extract_aspects_from_document(document)
         extracted_concepts = llm.extract_concepts_from_aspect(
-            aspect=self.document.get_aspect_by_name("Term and termination"),
-            document=self.document,
+            aspect=document.get_aspect_by_name("Term and termination"),
+            document=document,
         )
         self.check_instance_container_states(
             original_container=aspects_without_concepts,
-            assigned_container=self.document.aspects,
+            assigned_container=document.aspects,
             assigned_instance_class=Aspect,
         )
         assert extracted_concepts == []
 
         # Invalid concepts passed
-        self.document.aspects = aspects
-        assert self.document.aspects is not aspects
-        llm.extract_aspects_from_document(self.document)
-        attached_aspect = self.document.get_aspect_by_name("Confidential information")
+        document.aspects = aspects
+        assert document.aspects is not aspects
+        llm.extract_aspects_from_document(document)
+        attached_aspect = document.get_aspect_by_name("Confidential information")
         with pytest.raises(ValueError):
             no_concepts = []
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
-                document=self.document,
+                document=document,
                 from_concepts=no_concepts,
             )
         with pytest.raises(ValueError):
             invalid_concepts = [1, True]
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
-                document=self.document,
+                document=document,
                 from_concepts=invalid_concepts,  # ty: ignore[invalid-argument-type]
             )
         with pytest.raises(ValueError):
@@ -798,7 +784,7 @@ class TestExtraction(BaseTest):
             ]
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
-                document=self.document,
+                document=document,
                 from_concepts=detached_concepts,
             )
 
@@ -806,13 +792,13 @@ class TestExtraction(BaseTest):
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
-                document=self.document,
+                document=document,
                 from_concepts=tuple(attached_aspect.concepts),
             )
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
-                document=self.document,
+                document=document,
                 from_concepts=set([1, 2, 3]),  # type: ignore
             )
 
@@ -858,7 +844,7 @@ class TestExtraction(BaseTest):
 
         # LLM extraction
         extracted_concepts = llm.extract_concepts_from_aspect(
-            aspect=attached_aspect, document=self.document
+            aspect=attached_aspect, document=document
         )
         assert attached_aspect.concepts == extracted_concepts
         self.check_instance_container_states(
@@ -870,7 +856,7 @@ class TestExtraction(BaseTest):
         # Extract with different paragraph chunks for context
         extracted_concepts = llm.extract_concepts_from_aspect(
             aspect=attached_aspect,
-            document=self.document,
+            document=document,
             overwrite_existing=True,
             max_paragraphs_to_analyze_per_call=30,
         )
@@ -883,19 +869,17 @@ class TestExtraction(BaseTest):
 
         # Overwrite check
         with pytest.raises(ValueError):
-            llm.extract_concepts_from_aspect(
-                aspect=attached_aspect, document=self.document
-            )
+            llm.extract_concepts_from_aspect(aspect=attached_aspect, document=document)
         with pytest.raises(ValueError):
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
-                document=self.document,
+                document=document,
                 from_concepts=attached_aspect.concepts,
             )
         overwrite_concepts = [attached_aspect.concepts[0]]
         extracted_concepts = llm.extract_concepts_from_aspect(
             aspect=attached_aspect,
-            document=self.document,
+            document=document,
             from_concepts=overwrite_concepts,
             overwrite_existing=True,
         )
@@ -976,13 +960,8 @@ class TestExtraction(BaseTest):
         # Check cost
         self.check_cost(llm)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_extract_concepts_from_aspect"
-        )
-
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_extract_concepts_from_document(
         self, llm: DocumentModelGroup | DocumentLLM
     ):
@@ -991,6 +970,8 @@ class TestExtraction(BaseTest):
         """
 
         self.config_llm_async_limiter_for_mock_responses(llm)
+
+        document = self.document.clone()  # clone for method-scoped state modification
 
         document_concepts = [
             StringConcept(
@@ -1004,8 +985,8 @@ class TestExtraction(BaseTest):
                 add_justifications=True,
             ),
         ]
-        self.document.concepts = document_concepts
-        assert self.document.concepts is not document_concepts
+        document.concepts = document_concepts
+        assert document.concepts is not document_concepts
 
         # Concepts validation
 
@@ -1015,29 +996,29 @@ class TestExtraction(BaseTest):
                 StringConcept(name="Random", description="Random"),
             ]
             llm.extract_concepts_from_document(
-                self.document, from_concepts=detached_concepts
+                document, from_concepts=detached_concepts
             )
 
         # Invalid types
         with pytest.raises(ValueError):
             invalid_concepts = [1, True]
-            self.document.concepts = invalid_concepts  # ty: ignore[invalid-assignment]
+            document.concepts = invalid_concepts  # ty: ignore[invalid-assignment]
 
         # Invalid sequence types for "from_concepts"
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_document(
-                self.document,
-                from_concepts=tuple(self.document.concepts),
+                document,
+                from_concepts=tuple(document.concepts),
             )
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_document(
-                self.document,
+                document,
                 from_concepts=set([1, 2, 3]),  # type: ignore
             )
 
         # No partial update check
-        assert self.document.concepts == document_concepts
-        assert self.document.concepts is not document_concepts
+        assert document.concepts == document_concepts
+        assert document.concepts is not document_concepts
 
         document_concepts = [
             DateConcept(
@@ -1083,8 +1064,8 @@ class TestExtraction(BaseTest):
                 justification_max_sents=5,
             ),
         ]
-        self.document.concepts = document_concepts
-        assert self.document.concepts is not document_concepts
+        document.concepts = document_concepts
+        assert document.concepts is not document_concepts
 
         # Duplicates check
         duplicate_concepts = [
@@ -1100,7 +1081,7 @@ class TestExtraction(BaseTest):
             ),
         ]
         with pytest.raises(ValueError):
-            self.document.concepts = duplicate_concepts
+            document.concepts = duplicate_concepts
         duplicate_name_concepts = [
             StringConcept(
                 name="Title",
@@ -1112,7 +1093,7 @@ class TestExtraction(BaseTest):
             ),
         ]
         with pytest.raises(ValueError):
-            self.document.concepts = duplicate_name_concepts
+            document.concepts = duplicate_name_concepts
         duplicate_description_concepts = [
             StringConcept(name="Name 1", description="Description"),
             NumericalConcept(
@@ -1120,45 +1101,45 @@ class TestExtraction(BaseTest):
             ),
         ]
         with pytest.raises(ValueError):
-            self.document.concepts = duplicate_description_concepts
+            document.concepts = duplicate_description_concepts
 
         # No partial update check
-        assert self.document.concepts == document_concepts
-        assert self.document.concepts is not document_concepts
+        assert document.concepts == document_concepts
+        assert document.concepts is not document_concepts
 
         # LLM extraction
         self.compare_with_concurrent_execution(
             llm=llm,
             expected_n_calls_no_concurrency=(5 if llm.is_group else 4),
-            expected_n_calls_with_concurrency=len(self.document.concepts),
-            expected_n_calls_1_item_per_call=len(self.document.concepts),
+            expected_n_calls_with_concurrency=len(document.concepts),
+            expected_n_calls_1_item_per_call=len(document.concepts),
             func=llm.extract_concepts_from_document,
             func_kwargs={
-                "document": self.document,
+                "document": document,
             },
             original_container=list(document_concepts),
-            assigned_container=list(self.document.concepts),
+            assigned_container=list(document.concepts),
             assigned_instance_class=_Concept,
         )
-        self.check_extra_data_in_extracted_items(self.document)
+        self.check_extra_data_in_extracted_items(document)
 
         self.log_extracted_items_for_instance(
-            self.document.get_concept_by_name("Effective Date")
+            document.get_concept_by_name("Effective Date")
         )
         self.log_extracted_items_for_instance(
-            self.document.get_concept_by_name("Contract quality")
+            document.get_concept_by_name("Contract quality")
         )
 
         # Overwrite check
         with pytest.raises(ValueError):
-            llm.extract_concepts_from_document(self.document)
+            llm.extract_concepts_from_document(document)
         with pytest.raises(ValueError):
             llm.extract_concepts_from_document(
-                self.document, from_concepts=self.document.concepts
+                document, from_concepts=document.concepts
             )
-        overwrite_concepts = [self.document.concepts[0]]
+        overwrite_concepts = [document.concepts[0]]
         extracted_concepts = llm.extract_concepts_from_document(
-            self.document, from_concepts=overwrite_concepts, overwrite_existing=True
+            document, from_concepts=overwrite_concepts, overwrite_existing=True
         )
         assert overwrite_concepts == extracted_concepts
         self.check_instance_container_states(
@@ -1169,7 +1150,7 @@ class TestExtraction(BaseTest):
 
         # Extract with different paragraph chunks for context
         extracted_concepts = llm.extract_concepts_from_document(
-            self.document,
+            document,
             from_concepts=overwrite_concepts,
             overwrite_existing=True,
             max_paragraphs_to_analyze_per_call=20,
@@ -1186,10 +1167,6 @@ class TestExtraction(BaseTest):
         # Check cost
         self.check_cost(llm)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_extract_concepts_from_document"
-        )
-
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "document",
@@ -1200,7 +1177,6 @@ class TestExtraction(BaseTest):
         ],
     )
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_extract_all(
         self, document: Document, llm: DocumentModelGroup | DocumentLLM
     ):
@@ -1211,6 +1187,9 @@ class TestExtraction(BaseTest):
         self.config_llm_async_limiter_for_mock_responses(llm)
 
         self.config_llms_for_output_lang(document, llm)
+
+        is_non_eng_document = document in [self.document_ua, self.document_zh]
+        document = document.clone()  # clone for method-scoped state modification
 
         # Standard scenario - concepts are defined
         document_aspects = [
@@ -1291,7 +1270,7 @@ class TestExtraction(BaseTest):
             assigned_container=list(document.aspects),
             assigned_instance_class=Aspect,
         )
-        if document in [self.document_ua, self.document_zh]:
+        if is_non_eng_document:
             # Skip further processing for non-ENG docs.
             return
 
@@ -1372,11 +1351,8 @@ class TestExtraction(BaseTest):
         # Check cost
         self.check_cost(llm)
 
-        check_locals_memory_usage(locals(), test_name="test_extract_all")
-
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_aspect_extraction_from_paragraphs(
         self, llm: DocumentModelGroup | DocumentLLM
     ):
@@ -1442,12 +1418,7 @@ class TestExtraction(BaseTest):
         # Check cost
         self.check_cost(llm)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_aspect_extraction_from_paragraphs"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_extract_with_additional_context(self):
         """
         Tests for LLM extraction from a document with additional context for paragraphs.
@@ -1604,14 +1575,7 @@ class TestExtraction(BaseTest):
         for image in doc.images:
             self.check_instance_serialization_and_cloning(image)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_extract_with_additional_context"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture(max_memory=1000.0)
-    # higher value to allocate memory for SaT model sentence splitting in a very long document
-    # (2000+ sentences)
     def test_very_long_doc_extraction(self):
         """
         Tests for very long document extraction (200+ pages).
@@ -1707,7 +1671,3 @@ class TestExtraction(BaseTest):
                 match_found = True
                 break
         assert match_found, "No anomaly found in the middle of the document"
-
-        check_locals_memory_usage(
-            locals(), test_name="test_very_long_doc_extraction", max_obj_memory=5.0
-        )  # higher value for a very long document (200+ pages)

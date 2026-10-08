@@ -290,12 +290,12 @@ Tests are split across the feature/integration test modules and two files for pu
   | `test_llms.py` | LLM configuration, local LLMs, prompts, token limits, retries of API requests and rate limiting |
   | `test_logging.py` | Logger settings and log levels |
   | `test_model_groups.py` | Model groups, model roles and fallback models |
-  | `test_performance.py` | Memory usage baseline and extraction benchmarks |
+  | `test_performance.py` | Extraction benchmarks |
   | `test_serialization.py` | Serialization, deserialization and cloning of instances |
   | `test_usage_and_cost.py` | Usage and cost tracking, model pricing |
   | `test_usage_examples.py` | Usage examples in the documentation, README and docstrings |
 
-  All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. The state that a test leaves in a shared object is seen by the tests that are run after it, including the tests in the other modules. The test modules are run in alphabetical order, with two exceptions set in `tests/conftest.py`: the memory baseline test is run first, and `test_logging.py`, `test_usage_examples.py` and `test_performance.py` are run last, as their tests leave a state (logger settings, system message of a shared LLM) that affects the tests run after them.
+  All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run.
 - **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no fixtures, no cassettes.
 - **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no fixtures, no cassettes.
 
@@ -559,14 +559,6 @@ uv run python -c "import litellm; litellm.token_counter(model='gpt-6-luna', text
 ```
 
 > **Why:** The Windows build of `litellm` bundles the token encoding files with Windows line endings, which the tokenizer library (`tiktoken`) rejects, so that the encodings are downloaded on the first token count instead. During a test, this download is blocked (by VCR in replay mode, by `tethered` in the tests that are not VCR-marked), in which case tokens cannot be counted. Therefore, the encodings are downloaded before the tests start (see [Network Egress Control](#network-egress-control)) and cached in the virtual environment. The Linux and macOS builds of `litellm` are not affected.
-
-**🔍 Optional Memory Profiling**: For performance testing, you can enable memory profiling to analyze memory usage during test execution:
-
-```bash
-uv run pytest --mem-profile
-```
-
-> **Note:** Memory profiling adds significant overhead and tests will run much slower when profiling is enabled. Memory profiling helps ensure that ContextGem objects don't consume excessive memory and validates memory usage against defined reasonable limits.
 
 ### ⚠️✅ Expected Test Warnings
 

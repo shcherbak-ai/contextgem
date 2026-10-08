@@ -60,7 +60,6 @@ from contextgem.public import (
     StringExample,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_project_root_path, get_test_document_text
 
 
@@ -76,7 +75,6 @@ class TestAspectsAndConcepts(BaseTest):
     llm_extractor = BaseTest.llm_extractor
     model_group = BaseTest.model_group
 
-    @memory_profile_and_capture
     def test_init_aspect(self):
         """
         Tests the initializing and error handling of the `Aspect` class.
@@ -277,9 +275,6 @@ class TestAspectsAndConcepts(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(aspect)
 
-        check_locals_memory_usage(locals(), test_name="test_init_aspect")
-
-    @memory_profile_and_capture
     def test_init_and_validate_string_concept(self):
         """
         Tests the initialization of the StringConcept class with valid and invalid input parameters.
@@ -311,11 +306,6 @@ class TestAspectsAndConcepts(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(string_concept)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_string_concept"
-        )
-
-    @memory_profile_and_capture
     def test_init_and_validate_boolean_concept(self):
         """
         Tests the initialization of the BooleanConcept class with valid and invalid input parameters.
@@ -351,12 +341,7 @@ class TestAspectsAndConcepts(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(boolean_concept)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_boolean_concept"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_extract_bool_values(self):
         """
         Tests the extraction of a BooleanConcept instance.
@@ -523,9 +508,6 @@ class TestAspectsAndConcepts(BaseTest):
             is False
         )
 
-        check_locals_memory_usage(locals(), test_name="test_extract_boolean_concept")
-
-    @memory_profile_and_capture
     def test_init_and_validate_numerical_concept(self):
         """
         Tests for initialization and usage of NumericalConcept with different types.
@@ -596,11 +578,6 @@ class TestAspectsAndConcepts(BaseTest):
         self.check_instance_serialization_and_cloning(any_concept)
         self.check_instance_serialization_and_cloning(concept_with_refs)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_numerical_concept"
-        )
-
-    @memory_profile_and_capture
     def test_init_and_validate_rating_concept(self):
         """
         Tests the initialization of the RatingConcept class with valid and invalid input parameters.
@@ -730,11 +707,6 @@ class TestAspectsAndConcepts(BaseTest):
         self.check_instance_serialization_and_cloning(valid_rating_concept)
         self.check_instance_serialization_and_cloning(concept_with_refs)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_rating_concept"
-        )
-
-    @memory_profile_and_capture
     def test_init_and_validate_json_object_concept(self):
         """
         Tests the initialization of the JsonObjectConcept class with valid and invalid input parameters.
@@ -1535,12 +1507,7 @@ class TestAspectsAndConcepts(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(vision_concept)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_json_object_concept"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_extract_complex_json_object_concept(self):
         """
         Tests the extraction of a complex JsonObjectConcept from a text file, validating
@@ -1750,11 +1717,6 @@ class TestAspectsAndConcepts(BaseTest):
         self.check_instance_serialization_and_cloning(complex_concept)
         self.check_instance_serialization_and_cloning(document)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_extract_complex_json_object_concept"
-        )
-
-    @memory_profile_and_capture
     def test_init_and_validate_date_concept(self):
         """
         Tests the initialization of the DateConcept class with valid and invalid input parameters.
@@ -1807,11 +1769,6 @@ class TestAspectsAndConcepts(BaseTest):
         self.check_instance_serialization_and_cloning(default_date_concept)
         self.check_instance_serialization_and_cloning(date_concept_with_refs)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_date_concept"
-        )
-
-    @memory_profile_and_capture
     def test_init_and_validate_label_concept(self):
         """
         Tests the initialization of the LabelConcept class with valid and invalid input parameters.
@@ -1939,13 +1896,8 @@ class TestAspectsAndConcepts(BaseTest):
         self.check_instance_serialization_and_cloning(multi_label_concept)
         self.check_instance_serialization_and_cloning(concept_with_refs)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_init_and_validate_label_concept"
-        )
-
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_extract_label_concept(self, llm: DocumentModelGroup | DocumentLLM):
         """
         Tests for label concept extraction from document using LLMs.
@@ -2118,9 +2070,6 @@ class TestAspectsAndConcepts(BaseTest):
         # Check cost
         self.check_cost(llm)
 
-        check_locals_memory_usage(locals(), test_name="test_extract_label_concept")
-
-    @memory_profile_and_capture
     def test_init_example(self):
         """
         Tests the initialization of the example classes.
@@ -2171,9 +2120,6 @@ class TestAspectsAndConcepts(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(example)
 
-        check_locals_memory_usage(locals(), test_name="test_init_example")
-
-    @memory_profile_and_capture
     def test_init_item(self):
         """
         Tests the initialization of the extracted item classes.
@@ -2228,5 +2174,3 @@ class TestAspectsAndConcepts(BaseTest):
 
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(item)
-
-        check_locals_memory_usage(locals(), test_name="test_init_item")

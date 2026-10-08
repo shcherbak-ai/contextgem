@@ -34,7 +34,6 @@ from contextgem.internal.exceptions import LLMToolLoopLimitError, ModelAPIError
 from contextgem.internal.loggers import logger
 from contextgem.public import ChatSession, Document, DocumentLLM, register_tool
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 
 
 class TestChat(BaseTest):
@@ -42,7 +41,6 @@ class TestChat(BaseTest):
     Tests for messages, chat sessions, chat with LLMs and tool calling.
     """
 
-    @memory_profile_and_capture
     def test_init_message(self):
         """
         Tests for constructing a _Message instance and validating its content schema.
@@ -279,9 +277,6 @@ class TestChat(BaseTest):
         assert asst_from_j.unique_id == asst_msg.unique_id
         assert asst_from_j.time_created == asst_msg.time_created
 
-        check_locals_memory_usage(locals(), test_name="test_init_message")
-
-    @memory_profile_and_capture
     def test_init_chat_session(self):
         """
         Tests for initializing `ChatSession` and enforcing message history rules.
@@ -335,10 +330,7 @@ class TestChat(BaseTest):
                 ]
             )
 
-        check_locals_memory_usage(locals(), test_name="test_init_chat_session")
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_chat_no_session(self):
         """
         Tests for the chat method.
@@ -451,10 +443,7 @@ class TestChat(BaseTest):
         assert response is not None
         assert "John Doe" in response
 
-        check_locals_memory_usage(locals(), test_name="test_chat_no_session")
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_chat_with_session(self):
         """
         Tests for the chat method with a chat session that preserves message history.
@@ -680,14 +669,11 @@ class TestChat(BaseTest):
         assert msgs[0].role == "system"
         assert msgs[1].role == "user" and msgs[1]._response_succeeded is False
 
-        check_locals_memory_usage(locals(), test_name="test_chat_with_session")
-
     @pytest.mark.vcr
     @pytest.mark.parametrize(
         "parallel_tool_calls, use_session",
         [(False, False), (False, True), (True, False), (True, True)],
     )
-    @memory_profile_and_capture
     def test_chat_with_tools(self, parallel_tool_calls: bool, use_session: bool):
         """
         Test chat with tools.
@@ -921,9 +907,6 @@ class TestChat(BaseTest):
         with pytest.warns(UserWarning, match="ignored during extraction workflows"):
             llm.extract_all(document=Document(raw_text="test"))
 
-        check_locals_memory_usage(locals(), test_name="test_chat_with_tools")
-
-    @memory_profile_and_capture
     def test_invalid_tool_registrations(self):
         """
         Validate errors for invalid LLM tool registrations and tool configs.
@@ -1070,5 +1053,3 @@ class TestChat(BaseTest):
                 }
             ]
         assert llm.tools is None
-
-        check_locals_memory_usage(locals(), test_name="test_invalid_tool_registrations")

@@ -63,10 +63,11 @@ class BaseTest(TestUtils):
     Variables are initialized at a class level, once, to be used in the test methods
     of the test classes that inherit from this class. This class defines no tests.
 
-    The objects are shared by all test classes, so the state left by a test is seen
-    by the tests that are run after it, including the tests of the other classes.
-    The test modules are run in alphabetical order, except for the tests ordered
-    by the ``pytest_collection_modifyitems`` hook in ``tests/conftest.py``.
+    The objects are shared by all test classes, so a test must leave them unchanged.
+    A test that changes a document works on its copy (``self.document.clone()``).
+    The usage and cost recorded by the shared LLMs are reset before each test, and
+    their output language is restored after each test (see the fixtures below).
+    The tests do not depend on the order in which they are run.
     """
 
     # Default system messages
@@ -212,10 +213,23 @@ class BaseTest(TestUtils):
         images=[test_img_png_invoice],
     )
 
-    # Memory profiling
-    memory_baseline: float = 0.0  # baseline memory usage
-    memory_profiles: dict[str, str] = {}  # memory usage profiles
-    memory_deltas: dict[str, float] = {}  # memory usage deltas (relative to baseline)
+    @pytest.fixture(autouse=True)
+    def reset_llms_usage_and_cost(self):
+        """
+        Resets the usage and cost recorded by the LLMs shared by the tests.
+
+        The reset before each test makes the usage and cost that a test reads those
+        of its own LLM calls, independently of the tests run before it.
+        """
+        for llm in (
+            self.llm_extractor,
+            self.llm_reasoner,
+            self.model_group,
+            self.llm_invalid,
+            self.invalid_llm_with_valid_fallback,
+            self.llm_extractor_non_eng,
+        ):
+            llm.reset_usage_and_cost()
 
     @pytest.fixture(autouse=True)
     def restore_llms_output_language(self):

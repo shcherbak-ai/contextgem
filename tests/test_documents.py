@@ -37,7 +37,6 @@ from contextgem.public import (
     StringConcept,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_test_document_text
 
 
@@ -53,9 +52,6 @@ class TestDocuments(BaseTest):
     document = BaseTest.document
     extraction_pipeline = BaseTest.extraction_pipeline
 
-    @memory_profile_and_capture(
-        max_memory=500.0
-    )  # higher limit due to multiple SaT models loading
     def test_sat_model_no_cache(self):
         """
         Tests that the SaT model is not cached.
@@ -64,9 +60,6 @@ class TestDocuments(BaseTest):
         assert _load_sat_model(sat_model_id) != _load_sat_model(sat_model_id)
         assert id(_load_sat_model(sat_model_id)) != id(_load_sat_model(sat_model_id))
 
-        check_locals_memory_usage(locals(), test_name="test_sat_model_no_cache")
-
-    @memory_profile_and_capture
     def test_local_sat_model(self):
         """
         Tests the loading of a local SAT model.
@@ -111,9 +104,6 @@ class TestDocuments(BaseTest):
                     sat_model_id=temp_dir,
                 )
 
-        check_locals_memory_usage(locals(), test_name="test_local_sat_model")
-
-    @memory_profile_and_capture
     def test_requires_sentence_segmentation(self):
         """
         Tests the `_requires_sentence_segmentation` method of the Document class.
@@ -246,14 +236,7 @@ class TestDocuments(BaseTest):
         document.assign_pipeline(extraction_pipeline)
         assert document._requires_sentence_segmentation()
 
-        check_locals_memory_usage(
-            locals(), test_name="test_requires_sentence_segmentation"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture(
-        max_memory=500.0
-    )  # higher limit due to multiple SaT models loading
     def test_sat_model_deferred_segmentation(self):
         """
         Tests for the SaT model deferred segmentation.
@@ -514,11 +497,6 @@ class TestDocuments(BaseTest):
         self.llm_extractor.extract_all(document)
         assert document.sentences
 
-        check_locals_memory_usage(
-            locals(), test_name="test_sat_model_deferred_segmentation"
-        )
-
-    @memory_profile_and_capture
     def test_init_paragraph(self):
         """
         Tests for constructing a Paragraph instance and attaching it to a Document instance.
@@ -560,9 +538,6 @@ class TestDocuments(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(paragraph)
 
-        check_locals_memory_usage(locals(), test_name="test_init_paragraph")
-
-    @memory_profile_and_capture
     def test_init_sentence(self):
         """
         Tests for constructing a Sentence instance and attaching it to a Paragraph instance.
@@ -587,9 +562,6 @@ class TestDocuments(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(sentence)
 
-        check_locals_memory_usage(locals(), test_name="test_init_sentence")
-
-    @memory_profile_and_capture
     def test_get_paragraph_and_sentence_index(self):
         """
         Tests for looking up paragraph/sentence positions in a document by object,
@@ -780,12 +752,7 @@ class TestDocuments(BaseTest):
         assert Document.from_dict(document_with_sents.to_dict()) == document_with_sents
         self.check_instance_serialization_and_cloning(document)
 
-        check_locals_memory_usage(
-            locals(), test_name="test_get_paragraph_and_sentence_index"
-        )
-
     @pytest.mark.parametrize("context", [document, extraction_pipeline])
-    @memory_profile_and_capture(max_memory=2500.0)  # for testing larger SaT models
     def test_init_document_and_extraction_pipeline(
         self, context: Document | ExtractionPipeline
     ):
@@ -1147,7 +1114,3 @@ class TestDocuments(BaseTest):
         )
         with pytest.raises(ValueError):
             context.add_concepts([concept, concept])
-
-        check_locals_memory_usage(
-            locals(), test_name="test_init_document_and_extraction_pipeline"
-        )

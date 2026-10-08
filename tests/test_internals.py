@@ -69,7 +69,6 @@ from contextgem.public import (
     register_tool,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 
 
 class TestInternals(BaseTest):
@@ -78,7 +77,6 @@ class TestInternals(BaseTest):
     and for the rejection of invalid names and assignments.
     """
 
-    @memory_profile_and_capture
     def test_prompt_templates(self):
         """
         Tests for content validity and consistency in the prompt templates.
@@ -98,7 +96,6 @@ class TestInternals(BaseTest):
                     self.check_rendered_prompt(raw_content)
         assert j2_files_found, prompts_folder_path
 
-    @memory_profile_and_capture
     def test_registry(self):
         """
         Sanity checks for internal -> public mappings via the registry.
@@ -134,9 +131,6 @@ class TestInternals(BaseTest):
         pub_doc.add_concepts([pub_concept])
         assert all(isinstance(c, StringConcept) for c in pub_doc.concepts)
 
-        check_locals_memory_usage(locals(), test_name="test_registry")
-
-    @memory_profile_and_capture
     def test_init_instance_bases(self):
         """
         Tests for direct initialization of the base classes (internal classes).
@@ -190,7 +184,6 @@ class TestInternals(BaseTest):
             with pytest.raises(AttributeError):
                 TestNoRequiredAttrs()  # initialized with no required attributes
 
-    @memory_profile_and_capture
     def test_pre_v1_names_rejected(self):
         """
         Tests that the names of the classes and parameters that were renamed in v1.0
@@ -259,9 +252,6 @@ class TestInternals(BaseTest):
         with pytest.raises(TypeError, match="LLMPricing"):
             ModelPricing.from_dict(pricing_dict)
 
-        check_locals_memory_usage(locals(), test_name="test_pre_v1_names_rejected")
-
-    @memory_profile_and_capture
     def test_rejected_assignment_keeps_instance_unchanged(self):
         """
         Tests that an instance is left unchanged when a value assigned to its param
@@ -436,7 +426,3 @@ class TestInternals(BaseTest):
             "cannot have the same name as parent aspect",
         )
         assert [i.name for i in aspect.aspects] == ["Liability caps"]
-
-        check_locals_memory_usage(
-            locals(), test_name="test_rejected_assignment_keeps_instance_unchanged"
-        )

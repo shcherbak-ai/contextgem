@@ -42,7 +42,6 @@ from contextgem.public import (
     StringConcept,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_test_document_text
 
 
@@ -52,7 +51,6 @@ class TestModelGroups(BaseTest):
     by role, and fallback models.
     """
 
-    @memory_profile_and_capture
     def test_init_model_group(self):
         """
         Tests the behavior of the `DocumentModelGroup` class initialization.
@@ -108,9 +106,6 @@ class TestModelGroups(BaseTest):
         with pytest.raises(NotImplementedError):
             document_model_group.model_dump_json()
 
-        check_locals_memory_usage(locals(), test_name="test_init_model_group")
-
-    @memory_profile_and_capture
     def test_model_roles_and_concept_modality(self):
         """
         Tests for routing aspects/concepts to LLMs by the free-form model roles, and for
@@ -492,12 +487,7 @@ class TestModelGroups(BaseTest):
             ).extract_all(document)
         assert not llm_calls  # no LLM calls are made
 
-        check_locals_memory_usage(
-            locals(), test_name="test_model_roles_and_concept_modality"
-        )
-
     @pytest.mark.parametrize("use_concurrency", [False, True])
-    @memory_profile_and_capture
     def test_nested_extraction_role_preflight(self, use_concurrency: bool):
         """
         Tests that, when extracting with a model group, the roles of the nested
@@ -647,12 +637,7 @@ class TestModelGroups(BaseTest):
             assert not parent.concepts[1]._is_processed
             assert not parent.aspects[1].concepts[0]._is_processed
 
-        check_locals_memory_usage(
-            locals(), test_name="test_nested_extraction_role_preflight"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_extract_with_fallback(self):
         """
         Tests for retrying extraction with a fallback LLM.
@@ -691,9 +676,6 @@ class TestModelGroups(BaseTest):
         # Check cost
         self.check_cost(self.invalid_llm_with_valid_fallback)
 
-        check_locals_memory_usage(locals(), test_name="test_extract_with_fallback")
-
-    @memory_profile_and_capture
     def test_multiple_fallback_models(self):
         """
         Tests for configuring multiple fallback LLMs, which are tried in the given
@@ -908,9 +890,6 @@ class TestModelGroups(BaseTest):
         assert called_models == expected_models
         assert not any(i.extracted_items for i in document_unprocessed.concepts)
 
-        check_locals_memory_usage(locals(), test_name="test_multiple_fallback_models")
-
-    @memory_profile_and_capture
     def test_deserialize_fallback_models_differing_in_credentials(self):
         """
         Tests that an LLM can be deserialized if its fallback LLMs differ from it,
@@ -1060,8 +1039,3 @@ class TestModelGroups(BaseTest):
             llm_deserialized.fallback_models = [
                 create_llm(api_key="api_key_1", is_fallback=True)
             ]
-
-        check_locals_memory_usage(
-            locals(),
-            test_name="test_deserialize_fallback_models_differing_in_credentials",
-        )

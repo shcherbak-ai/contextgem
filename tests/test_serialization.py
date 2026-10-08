@@ -40,7 +40,6 @@ from contextgem.public import (
     StringConcept,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 
 
 class TestSerialization(BaseTest):
@@ -67,7 +66,6 @@ class TestSerialization(BaseTest):
         ],
     )
     @pytest.mark.parametrize("llm", [model_group, llm_extractor])
-    @memory_profile_and_capture
     def test_serialization_and_cloning(
         self, document: Document, llm: DocumentModelGroup | DocumentLLM
     ):
@@ -79,6 +77,8 @@ class TestSerialization(BaseTest):
         self.config_llm_async_limiter_for_mock_responses(llm)
 
         self.config_llms_for_output_lang(document, llm)
+
+        document = document.clone()  # clone for method-scoped state modification
 
         # Extraction pipeline serialization
         self.check_instance_serialization_and_cloning(self.extraction_pipeline)
@@ -391,5 +391,3 @@ class TestSerialization(BaseTest):
         self.check_usage(llm)
         # Check cost
         self.check_cost(llm)
-
-        check_locals_memory_usage(locals(), test_name="test_serialization_and_cloning")

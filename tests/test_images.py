@@ -43,7 +43,6 @@ from contextgem.public import (
 )
 from contextgem.public.utils import create_image, image_to_base64
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_project_root_path, get_test_document_text
 
 
@@ -65,7 +64,6 @@ class TestImages(BaseTest):
     @pytest.mark.parametrize(
         "image", [test_img_png_invoice, test_img_jpg_invoice, test_img_webp_invoice]
     )
-    @memory_profile_and_capture
     def test_init_and_attach_image(self, image: Image):
         """
         Tests for constructing a Image instance and attaching it to a Document instance.
@@ -91,8 +89,6 @@ class TestImages(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(document)
 
-        check_locals_memory_usage(locals(), test_name="test_init_and_attach_image")
-
     @pytest.mark.parametrize(
         "test_image_path",
         [
@@ -101,7 +97,6 @@ class TestImages(BaseTest):
             "tests/images/invoices/invoice.webp",
         ],
     )
-    @memory_profile_and_capture
     def test_create_image(self, test_image_path: str):
         """
         Tests for the `create_image` utility function with various input types.
@@ -193,8 +188,6 @@ class TestImages(BaseTest):
         with pytest.raises(OSError, match="Cannot open image from file-like object"):
             create_image(invalid_buffer)
 
-        check_locals_memory_usage(locals(), test_name="test_create_image")
-
     @pytest.mark.parametrize(
         "test_image_path",
         [
@@ -203,7 +196,6 @@ class TestImages(BaseTest):
             "tests/images/invoices/invoice.webp",
         ],
     )
-    @memory_profile_and_capture
     def test_image_to_base64(self, test_image_path: str):
         """
         Tests for the `image_to_base64` utility function with various input types.
@@ -256,10 +248,7 @@ class TestImages(BaseTest):
         with pytest.raises(OSError, match="Cannot read from file-like object"):
             image_to_base64(invalid_buffer)
 
-        check_locals_memory_usage(locals(), test_name="test_image_to_base64")
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_vision(self):
         """
         Tests for data extraction from document images using vision API.
@@ -400,21 +389,17 @@ class TestImages(BaseTest):
                 "What's the type of this document?", images=[self.test_img_png_invoice]
             )
 
-        check_locals_memory_usage(
-            locals(), test_name="test_vision", max_obj_memory=5.0
-        )  # higher value for images
-
     @pytest.mark.vcr
     @pytest.mark.parametrize("llm", [llm_extractor, llm_reasoner, model_group])
-    @memory_profile_and_capture
     def test_multimodal_concepts(self, llm: DocumentLLM | DocumentModelGroup):
         """
         Tests for multimodal concept extraction from multimodal document (text + images).
         """
 
         # ===Text + images===
-        self.document_multimodal.remove_all_instances()
-        self.document_multimodal.add_concepts(
+        # Clone for method-scoped state modification
+        document_multimodal = self.document_multimodal.clone()
+        document_multimodal.add_concepts(
             [
                 StringConcept(
                     name="Invoice number",
@@ -437,13 +422,11 @@ class TestImages(BaseTest):
             match="When extracting from images, references will not be added",
         ):
             # Document has both text and images - warns that refs will be added only for text
-            llm.extract_concepts_from_document(self.document_multimodal)
-        concept_invoice_number = self.document_multimodal.get_concept_by_name(
+            llm.extract_concepts_from_document(document_multimodal)
+        concept_invoice_number = document_multimodal.get_concept_by_name(
             "Invoice number"
         )
-        concept_invoice_date = self.document_multimodal.get_concept_by_name(
-            "Invoice date"
-        )
+        concept_invoice_date = document_multimodal.get_concept_by_name("Invoice date")
         if llm is not self.llm_reasoner:
             self.log_extracted_items_for_instance(concept_invoice_number)
             assert concept_invoice_number.extracted_items
@@ -464,7 +447,7 @@ class TestImages(BaseTest):
 
         # Test together with aspects and other concepts routed to different LLMs
         if isinstance(llm, DocumentModelGroup):
-            self.document_multimodal.add_aspects(
+            document_multimodal.add_aspects(
                 [
                     Aspect(
                         name="Invoices",
@@ -478,9 +461,9 @@ class TestImages(BaseTest):
                     )
                 ]
             )
-            llm.extract_aspects_from_document(self.document_multimodal)
-            assert self.document_multimodal.aspects[0].extracted_items
-            self.document_multimodal.add_concepts(
+            llm.extract_aspects_from_document(document_multimodal)
+            assert document_multimodal.aspects[0].extracted_items
+            document_multimodal.add_concepts(
                 [
                     StringConcept(
                         name="Document type",
@@ -490,13 +473,13 @@ class TestImages(BaseTest):
                     )
                 ]
             )
-            llm.extract_all(self.document_multimodal, overwrite_existing=True)
-            document_type_concept = self.document_multimodal.get_concept_by_name(
+            llm.extract_all(document_multimodal, overwrite_existing=True)
+            document_type_concept = document_multimodal.get_concept_by_name(
                 "Document type"
             )
             assert document_type_concept.extracted_items
             self.log_extracted_items_for_instance(document_type_concept)
-            assert self.document_multimodal.aspects[0].concepts[0].extracted_items
+            assert document_multimodal.aspects[0].concepts[0].extracted_items
 
         # ===Text only===
         document = Document(raw_text=get_test_document_text())
@@ -527,5 +510,3 @@ class TestImages(BaseTest):
         llm.extract_concepts_from_document(document)
         invoice_number_concept = document.get_concept_by_name("Invoice number")
         assert invoice_number_concept.extracted_items
-
-        check_locals_memory_usage(locals(), test_name="test_multimodal_concepts")

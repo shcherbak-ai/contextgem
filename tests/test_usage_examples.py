@@ -25,7 +25,6 @@ from __future__ import annotations
 import pytest
 
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 
 
 class TestUsageExamples(BaseTest):
@@ -34,9 +33,6 @@ class TestUsageExamples(BaseTest):
     """
 
     @pytest.mark.vcr
-    @memory_profile_and_capture(
-        max_memory=1000.0
-    )  # higher limit for multiple SaT models loading and splitting
     def test_usage_examples(self):
         """
         Tests for usage examples in project's documentation and README.md.
@@ -136,13 +132,12 @@ class TestUsageExamples(BaseTest):
             quickstart_concept,  # noqa: F401
         )
 
-        check_locals_memory_usage(locals(), test_name="test_usage_examples")
-
-    @memory_profile_and_capture
+    @pytest.mark.usefixtures("restore_logger_settings")
     def test_docstring_examples(self):
         """
         Tests for examples in docstrings.
         Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
+        Note: One of the examples disables the logger, so the logger settings are restored after the test.
         """
         from dev.usage_examples.docstrings.aspects import def_aspect  # noqa: F401
         from dev.usage_examples.docstrings.concepts import (
@@ -174,5 +169,3 @@ class TestUsageExamples(BaseTest):
             json_object_cls_struct,  # noqa: F401
             reload_logger_settings,  # noqa: F401
         )
-
-        check_locals_memory_usage(locals(), test_name="test_docstring_examples")

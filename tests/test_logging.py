@@ -29,9 +29,12 @@ from contextgem.public import reload_logger_settings
 from tests.base import BaseTest
 
 
+@pytest.mark.usefixtures("restore_logger_settings")
 class TestLogging(BaseTest):
     """
     Tests for the logger settings and log levels.
+
+    Each test changes the logger settings, which are restored after the test.
     """
 
     def test_logger_disabled(self, monkeypatch, capsys):

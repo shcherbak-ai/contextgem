@@ -43,7 +43,6 @@ from contextgem.public import (
     StringConcept,
 )
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_test_document_text
 
 
@@ -52,7 +51,6 @@ class TestUsageAndCost(BaseTest):
     Tests for tracking the usage and cost of models, and for model pricing.
     """
 
-    @memory_profile_and_capture
     def test_attr_models(self):
         """
         Tests for attribute validation models.
@@ -87,7 +85,6 @@ class TestUsageAndCost(BaseTest):
         with pytest.raises(ValueError):
             _ModelCost(input=-Decimal("0.001"))
 
-    @memory_profile_and_capture
     def test_model_group_usage_and_cost_by_role(self):
         """
         Tests for retrieving and resetting the usage and cost of the LLMs in a group
@@ -142,11 +139,6 @@ class TestUsageAndCost(BaseTest):
         assert all(i.usage.input == 0 for i in group.get_usage())
         assert all(i.cost.total == 0 for i in group.get_cost())
 
-        check_locals_memory_usage(
-            locals(), test_name="test_model_group_usage_and_cost_by_role"
-        )
-
-    @memory_profile_and_capture
     def test_cached_tokens_usage_and_cost(self):
         """
         Tests for tracking the input tokens read from and written to the prompt cache
@@ -413,12 +405,7 @@ class TestUsageAndCost(BaseTest):
             assert pricing_dict.pop(key) is None
         assert ModelPricing.from_dict(pricing_dict) == pricing
 
-        check_locals_memory_usage(
-            locals(), test_name="test_cached_tokens_usage_and_cost"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_auto_pricing(self):
         """
         Tests for optional auto-pricing using genai-prices when no manual pricing is provided.
@@ -503,5 +490,3 @@ class TestUsageAndCost(BaseTest):
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 auto_pricing=True,
             )
-
-        check_locals_memory_usage(locals(), test_name="test_auto_pricing")

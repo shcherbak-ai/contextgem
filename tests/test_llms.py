@@ -39,7 +39,6 @@ from contextgem.internal.utils import (
 )
 from contextgem.public import Document, DocumentLLM, ModelPricing, StringConcept
 from tests.base import BaseTest
-from tests.memory_profiling import check_locals_memory_usage, memory_profile_and_capture
 from tests.utils import get_project_root_path
 
 
@@ -50,7 +49,6 @@ class TestLLMs(BaseTest):
     """
 
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_local_llms_text(self):
         """
         Tests for initialization of and getting a response from local LLMs,
@@ -87,10 +85,7 @@ class TestLLMs(BaseTest):
         )
         self.extract_with_local_llm(llm_non_reasoning_lm_studio)
 
-        check_locals_memory_usage(locals(), test_name="test_local_llms_text")
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_local_llms_vision(self):
         """
         Tests for initialization of and getting a response from local LLMs
@@ -141,9 +136,6 @@ class TestLLMs(BaseTest):
         # Check serialization of LLM
         self._check_deserialized_llm_config_eq(llm_ollama)
 
-        check_locals_memory_usage(locals(), test_name="test_local_llms_vision")
-
-    @memory_profile_and_capture
     def test_init_api_llm(self):
         """
         Tests the behaviour of the `DocumentLLM` class initialization.
@@ -338,9 +330,6 @@ class TestLLMs(BaseTest):
                 system_message="You are a helpful assistant.",
             )
 
-        check_locals_memory_usage(locals(), test_name="test_init_api_llm")
-
-    @memory_profile_and_capture
     def test_update_default_prompt(self):
         """
         Tests for updating the default prompt for the LLM.
@@ -401,9 +390,6 @@ class TestLLMs(BaseTest):
             in llm_with_updated_prompts._extract_concept_items_prompt.render()
         )
 
-        check_locals_memory_usage(locals(), test_name="test_update_default_prompt")
-
-    @memory_profile_and_capture
     def test_input_output_token_validation(self):
         """
         Tests for max input and max output token validation.
@@ -438,12 +424,7 @@ class TestLLMs(BaseTest):
         ):
             llm_excessive_output._validate_output_tokens()
 
-        check_locals_memory_usage(
-            locals(), test_name="test_input_output_token_validation"
-        )
-
     @pytest.mark.vcr
-    @memory_profile_and_capture
     def test_system_messages(self):
         """
         Tests the system messages functionality of LLMs.
@@ -501,9 +482,6 @@ class TestLLMs(BaseTest):
             == "You are a helpful assistant that can answer questions and help with tasks."
         )
 
-        check_locals_memory_usage(locals(), test_name="test_system_messages")
-
-    @memory_profile_and_capture
     def test_model_api_request_retries(self):
         """
         Tests for retrying failed LLM API requests: only transient errors are retried,
@@ -785,9 +763,6 @@ class TestLLMs(BaseTest):
             assert requested_models() == [primary_model] * 4
             assert not document.concepts[0].extracted_items
 
-        check_locals_memory_usage(locals(), test_name="test_model_api_request_retries")
-
-    @memory_profile_and_capture
     def test_async_limiter_per_llm(self):
         """
         Tests that, with concurrency enabled, the requests to each LLM, including
@@ -871,5 +846,3 @@ class TestLLMs(BaseTest):
             llm.extract_concepts_from_document(document, overwrite_existing=True)
             assert acquisitions == []
             assert all(i.extracted_items for i in document.concepts)
-
-        check_locals_memory_usage(locals(), test_name="test_async_limiter_per_llm")

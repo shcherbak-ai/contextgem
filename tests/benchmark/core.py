@@ -232,7 +232,8 @@ def run_benchmark_for_module(
 
     :param llm: The main LLM used for extraction.
     :type llm: DocumentLLM
-    :param judge_llm: The LLM used to judge the extraction quality.
+    :param judge_llm: The LLM used to judge the extraction quality. Its system message
+        is unset by the benchmark, so pass an LLM that is not used elsewhere.
     :type judge_llm: DocumentLLM
     :param module_name: The name of the module providing the benchmark document and targets.
     :type module_name: str
