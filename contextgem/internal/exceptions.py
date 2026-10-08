@@ -158,3 +158,36 @@ class _ToolReturnValueError(Exception):
         """
         super().__init__(str(error))
         self.error = error
+
+
+# Decision model exceptions
+
+
+class _InvalidDecisionResponseError(ValueError):
+    """
+    Internal exception raised when the answer of a decision model to a question
+    cannot be used, which makes the whole response of the model invalid: the answer
+    is missing, refused, of another kind than the question, without the needed
+    probabilities, with a probability outside [0, 1], or with options other than
+    the options offered.
+
+    :ivar question_name: Name of the question whose answer cannot be used
+    :vartype question_name: str
+    :ivar reason: What is wrong with the answer
+    :vartype reason: str
+    """
+
+    def __init__(self, question_name: str, reason: str):
+        """
+        Initialize the exception.
+
+        :param question_name: Name of the question whose answer cannot be used
+        :type question_name: str
+        :param reason: What is wrong with the answer
+        :type reason: str
+        """
+        super().__init__(
+            f"Invalid answer to the decision question `{question_name}`: {reason}"
+        )
+        self.question_name = question_name
+        self.reason = reason

@@ -1,0 +1,21 @@
+{% if question_type == "boolean" %}
+Decide whether the statement in the concept description below is true according to the text.
+{% elif question_type == "multi_class" %}
+Classify the text by selecting exactly one of the options, based on the concept below.
+{% elif question_type == "multi_label" %}
+Decide whether the label below applies to the text, based on the concept below.
+{% elif question_type == "rating" %}
+Rate the text on a scale from {{ rating_start }} to {{ rating_end }}, based on the concept below.
+{% endif %}
+Concept name: {{ concept_name }}
+Concept description: {{ concept_description }}
+{% if question_type == "boolean" %}
+Answer "yes" if the text supports the statement. Answer "no" if the text contradicts the statement or does not support it.
+{% elif question_type == "multi_class" %}
+Select the most appropriate option, even if no option fits the text perfectly.
+{% elif question_type == "multi_label" %}
+Label: {{ label }}
+Answer "yes" if the label applies to the text. Answer "no" if it does not. The other labels of the concept are decided separately: several labels, or none, may apply.
+{% elif question_type == "rating" %}
+Select the level of the scale that fits the text best.
+{% endif %}

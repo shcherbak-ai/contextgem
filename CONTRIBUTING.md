@@ -285,6 +285,7 @@ Tests are split across the feature/integration test modules and two files for pu
   |--------|--------------|
   | `test_aspects_and_concepts.py` | Aspects, concepts, examples and extracted items; extraction of concepts of specific types |
   | `test_chat.py` | Messages, chat sessions, chat with LLMs and tool calling |
+  | `test_decision_models.py` | Decision models: questions for concepts and aspects, conversion of answers to item values and probabilities |
   | `test_documents.py` | Documents, paragraphs, sentences and extraction pipelines; text segmentation with SaT models |
   | `test_extraction.py` | Extraction of aspects and concepts from documents; extraction errors |
   | `test_images.py` | Images; extraction from images and multimodal documents |
