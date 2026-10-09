@@ -29,6 +29,7 @@ from unittest.mock import patch
 
 import pytest
 from aiolimiter import AsyncLimiter
+from pydantic import ValidationError
 
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
@@ -41,6 +42,7 @@ from contextgem.internal.utils import (
 from contextgem.public import (
     Document,
     DocumentLLM,
+    DocumentModelGroup,
     ModelPricing,
     StringConcept,
     register_tool,
@@ -1247,3 +1249,58 @@ class TestLLMs(BaseTest):
             llm.extract_concepts_from_document(document, overwrite_existing=True)
             assert acquisitions == []
             assert all(i.extracted_items for i in document.concepts)
+
+    def test_api_key_not_shown(self):
+        """
+        Tests that the API key of an LLM is not shown when the LLM is printed,
+        on its own, as a fallback LLM or in a model group, including in the error
+        of a validation that the LLM is the input of, while its API base is.
+        """
+        api_key = "sk-test-SECRET-0123456789"
+        api_base = "https://llm.example.com"
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key=api_key,
+            api_base=api_base,
+            fallback_models=[
+                DocumentLLM(
+                    model="openai/gpt-5.6-luna", api_key=api_key, is_fallback=True
+                )
+            ],
+        )
+        other_llm = DocumentLLM(
+            model="openai/gpt-5.6-luna", api_key=api_key, role="other"
+        )
+        model_group = DocumentModelGroup(models=[llm, other_llm])
+        # The key is set, and is sent with the requests
+        assert llm.api_key == api_key
+        assert llm.fallback_models[0].api_key == api_key
+        for instance in [llm, other_llm, model_group]:
+            for text in [repr(instance), str(instance), f"{instance}"]:
+                assert "SECRET" not in text
+                assert "api_key" not in text
+                assert "model='openai/gpt-" in text
+        assert f"api_base='{api_base}'" in repr(llm)
+        assert f"api_base='{api_base}'" in repr(model_group)
+
+        def check_error(error: ValidationError) -> None:
+            """
+            Checks that the validation error does not show the key, neither in
+            its text nor in the inputs that it reports, which the LLM is among.
+            """
+            assert "SECRET" not in str(error)
+            assert "SECRET" not in repr(error)
+            assert "DocumentLLM(" in repr(error.errors())
+            assert "SECRET" not in repr(error.errors())
+
+        # The LLM as an invalid item of the fallback LLMs of another LLM:
+        # it is not a fallback LLM
+        with pytest.raises(ValidationError, match="must be a fallback model") as e:
+            DocumentLLM(
+                model="openai/gpt-6-luna", api_key=api_key, fallback_models=[other_llm]
+            )
+        check_error(e.value)
+        # ... and as an invalid LLM of a group: with the role of another LLM
+        with pytest.raises(ValidationError) as e:
+            DocumentModelGroup(models=[other_llm, other_llm])
+        check_error(e.value)

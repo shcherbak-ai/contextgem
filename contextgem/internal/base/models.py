@@ -1308,7 +1308,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             if not routed_instances:
                 continue
             for model_instance in [model, *model.fallback_models]:
-                model_instance._check_instances_servable(routed_instances)
+                model_instance._check_instances_servable(
+                    routed_instances, routed_in_group=self.is_group
+                )
 
     @staticmethod
     def _get_all_instances_of_document(
@@ -2553,6 +2555,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     list["_ExtractedItem"], source_data["extracted_items"]
                 )
                 if extracted_item_type == "aspect":
+                    if overwrite_existing:
+                        # The references of an aspect that is extracted again are
+                        # those of its new items only: the sub-aspects and the concepts
+                        # of the aspect are extracted from its reference paragraphs.
+                        # Safe cast: source_instance is always an _Aspect instance
+                        # because extracted_item_type is "aspect"
+                        source_instance = cast(_Aspect, source_instance)
+                        source_instance.reference_paragraphs = []
+                        source_instance.reference_sentences = []
                     # References are automatically included for aspects, as paragraphs/sents'
                     # texts are the values of extracted items for the aspects
                     for ei in source_instance.extracted_items:
@@ -2943,15 +2954,27 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     :rtype: Any
                     """
                     try:
-                        return await self._extract_items_from_instances(**kwargs)
+                        result = await self._extract_items_from_instances(**kwargs)
                     except ModelAPIError as e:
                         return e
+                    completed_results.append(result)
+                    return result
 
                 # Process chunks concurrently
-                results = await _async_multi_executor(
-                    func=extract_items_or_api_error,
-                    data_list=data_list,
-                )
+                completed_results: list[Any] = []
+                try:
+                    results = await _async_multi_executor(
+                        func=extract_items_or_api_error,
+                        data_list=data_list,
+                    )
+                except asyncio.CancelledError:
+                    # The extraction is cancelled, e.g. on a timeout set by
+                    # the calling code, or as the extraction with another model of
+                    # the group failed. The calls completed by then are counted:
+                    # their results, with the usage, would be lost otherwise.
+                    for result in completed_results:
+                        await llm._update_usage_and_cost(result)
+                    raise
                 if len(results) != len(data_chunks):
                     raise RuntimeError(
                         f"Number of results ({len(results)}) does not match "
@@ -3132,8 +3155,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             if instance_type == "aspect"
             else cast(list[_Concept], filtered_instances)
         )
-        instance_groups = _group_instances_by_fields(
-            fields=fields_to_group_by, instances=typed_instances
+        # A model of a kind whose requests do not depend on some of these params,
+        # e.g. a decision model, is not called separately for the instances that
+        # differ only in them
+        instance_groups = llm._group_instances_for_calls(
+            instance_type=instance_type,
+            instances=typed_instances,
+            fields=fields_to_group_by,
         )
 
         # Run extraction for each group separately, as prompts will be rendered differently and
@@ -3281,6 +3309,9 @@ class _DocumentModel(_GenericModelProcessor):
     )
     api_key: NonEmptyStr | None = Field(
         default=None,
+        # The key is a secret: it is not shown when the model is printed, e.g.
+        # in logs, or in the error of a validation that the model is the input of
+        repr=False,
         description="API key for provider authentication; optional for local models.",
     )
     api_base: NonEmptyStr | None = Field(
@@ -3548,7 +3579,9 @@ class _DocumentModel(_GenericModelProcessor):
         return 0
 
     def _check_instances_servable(
-        self, instances: Sequence[_Aspect | _Concept]
+        self,
+        instances: Sequence[_Aspect | _Concept],
+        routed_in_group: bool = False,
     ) -> None:
         """
         Checks, before any requests are sent, that the model can extract the given
@@ -3558,12 +3591,41 @@ class _DocumentModel(_GenericModelProcessor):
 
         :param instances: The aspects and concepts to be extracted by the model.
         :type instances: Sequence[_Aspect | _Concept]
+        :param routed_in_group: Whether the aspects and concepts are routed to
+            the model by its role in a model group, which is what the error is
+            to tell how to change in such a case. Defaults to False.
+        :type routed_in_group: bool
         :return: None
         :rtype: None
         :raises ValueError: If the model cannot extract some of the aspects
             or concepts.
         """
         return None
+
+    def _group_instances_for_calls(
+        self,
+        instance_type: ExtractedInstanceType,
+        instances: list[_Aspect] | list[_Concept],
+        fields: list[str],
+    ) -> list[list[_Aspect] | list[_Concept]]:
+        """
+        Groups the aspects or concepts to be extracted by the model into the groups
+        that are extracted in separate calls. By default, the instances of a group
+        have the same values of all the given extraction params, each of which
+        changes the prompt of an LLM and the output expected from it: to be
+        overridden in the subclasses of the kinds of models whose requests do not
+        depend on some of the params.
+
+        :param instance_type: Type of the instances ("aspect" or "concept").
+        :type instance_type: ExtractedInstanceType
+        :param instances: The aspects or concepts to be extracted by the model.
+        :type instances: list[_Aspect] | list[_Concept]
+        :param fields: The extraction params of the instances to group them by.
+        :type fields: list[str]
+        :return: The groups of the instances.
+        :rtype: list[list[_Aspect] | list[_Concept]]
+        """
+        return _group_instances_by_fields(fields=fields, instances=instances)
 
     @field_validator("model")
     @classmethod
@@ -3583,7 +3645,28 @@ class _DocumentModel(_GenericModelProcessor):
                 "Model identifier must be in the form of `<model_provider>/<model_name>`. "
                 "See https://docs.litellm.ai/docs/providers for the list of supported providers."
             )
+        # Check what the specific kind of the model requires of the model identifier
+        cls._validate_kind_specific_model_id(model)
         return model
+
+    @classmethod
+    def _validate_kind_specific_model_id(cls, model: str) -> None:
+        """
+        Validates the model identifier against what the specific kind of the model
+        requires of it, e.g. a provider that serves models of that kind. Does
+        nothing by default: to be overridden in the subclasses that have such
+        requirements.
+
+        Called when the model identifier is validated, after it is checked to be
+        in the form of ``<model_provider>/<model_name>``.
+
+        :param model: The model identifier.
+        :type model: str
+        :return: None
+        :rtype: None
+        :raises ValueError: If the model identifier does not meet the requirements.
+        """
+        return None
 
     @field_validator("fallback_models")
     @classmethod

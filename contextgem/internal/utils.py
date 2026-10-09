@@ -510,6 +510,11 @@ async def _run_async_calls(
     "cancel other tasks on first error." Returned results maintain the same index order as
     cals_and_kwargs.
 
+    In "concurrent" mode, the error is raised only when no task is left running: on the first
+    error of a task, or when the caller is cancelled, the tasks that are still running are
+    cancelled and waited for. A task therefore does nothing in the background, e.g. sends
+    no requests and changes no objects, after the caller gets the error.
+
     :param cals_and_kwargs: A list of tuples where each tuple contains an asynchronous
         callable and a dictionary of keyword arguments to be passed to the callable.
     :param use_concurrency: A boolean flag indicating whether all tasks should be executed
@@ -520,7 +525,17 @@ async def _run_async_calls(
 
     if use_concurrency:
         tasks = [asyncio.create_task(i[0](**i[1])) for i in cals_and_kwargs]
-        return await asyncio.gather(*tasks)
+        try:
+            return await asyncio.gather(*tasks)
+        except BaseException:
+            # `gather` raises the first error without stopping the other tasks.
+            # Cancelling a task that is already done has no effect.
+            for task in tasks:
+                task.cancel()
+            # The errors of the other tasks, including their cancellation, are
+            # not raised: the first error is
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
     else:
         results = []
         for cal, kwargs in cals_and_kwargs:

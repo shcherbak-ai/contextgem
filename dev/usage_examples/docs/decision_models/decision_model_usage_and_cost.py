@@ -13,7 +13,8 @@ decision_model = DocumentDecisionModel(
         input_per_1m_tokens=0.042,  # Cost per 1M input tokens
         output_per_1m_tokens=0.0,  # No charge for output tokens
     ),
-    # or set `auto_pricing=True` instead of `pricing_details`, where supported
+    # or set `auto_pricing=True` instead of `pricing_details`, for a model whose
+    # prices of decision requests genai-prices has, e.g. the TypeSafe models
 )
 
 # Perform an extraction task

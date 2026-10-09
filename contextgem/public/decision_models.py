@@ -53,7 +53,8 @@ class DocumentDecisionModel(_DocumentDecisionModel):
 
     :ivar model: Model identifier in format {model_provider}/{model_name}, e.g.
         ``"typesafe/jev-latest"``. The model has to be served by one of the providers
-        of decision models that ``litellm`` supports.
+        of decision models that ``litellm`` supports: a model of another provider
+        is rejected when the decision model is created.
     :vartype model: str
     :ivar api_key: API key for authentication. Not required for self-hosted models.
         Not included in the serialized model data, i.e. to be set again after
@@ -80,11 +81,11 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         the price of the output tokens is to be set to ``0.0``. Defaults to None.
     :vartype pricing_details: ModelPricing | None
     :ivar auto_pricing: Enable automatic cost calculation using genai-prices. Cannot be
-        set together with ``pricing_details``. Not supported for the models whose
-        decision requests cannot be priced with it, e.g. self-hosted models
-        (``strands_decider/``) and ``openai/`` models, for which genai-prices has
-        only the prices of the chat requests: set ``pricing_details`` for them
-        instead. Defaults to ``False``.
+        set together with ``pricing_details``. Not supported for a model for which
+        genai-prices has the prices of a text-generating model, i.e. a price of
+        output tokens, which are the prices of the chat requests to the model
+        (e.g. ``gpt-6-luna``), and for self-hosted models (``strands_decider/``):
+        set ``pricing_details`` for them instead. Defaults to ``False``.
     :vartype auto_pricing: bool
     :ivar auto_pricing_refresh: Whether genai-prices should auto-refresh its cached
         pricing data, e.g. to price a recently released model that the bundled
@@ -151,7 +152,10 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             set with ``max_items_per_call``. With ``use_concurrency=True``, each
             aspect/concept is extracted in its own call by default, i.e. each text
             is sent, and is paid for, once per aspect/concept: set
-            ``max_items_per_call`` to send the texts fewer times. The requests for
+            ``max_items_per_call`` to send the texts fewer times. The settings
+            that a decision model does not use (``justification_depth``,
+            ``justification_max_sents`` and, for concepts, ``reference_depth``)
+            do not split the aspects/concepts into separate calls. The requests for
             the paragraphs are sent one after another, or concurrently with
             ``use_concurrency=True``, paced by the ``async_limiter`` of the model.
             A response that cannot be used, e.g. with a refused answer, is not
@@ -168,9 +172,12 @@ class DocumentDecisionModel(_DocumentDecisionModel):
 
         - Limits
             The limits on the number of options are those of ``litellm`` and of
-            the model provider. For example, ``litellm`` rejects a rating scale
-            with more than 10 levels. More questions on a text than ``litellm``
-            accepts in a request (128) are sent in several requests on that text.
+            the model provider. A concept with more options than ``litellm``
+            accepts in a question, e.g. a rating scale with more than 10 levels,
+            is rejected with a ``ValueError`` before any request is sent, as
+            the other concepts that a decision model cannot extract. More
+            questions on a text than ``litellm`` accepts in a request (128) are
+            sent in several requests on that text.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/decision_models/def_decision_model.py

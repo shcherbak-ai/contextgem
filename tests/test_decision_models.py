@@ -36,7 +36,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from unittest.mock import patch
 
 import pytest
@@ -53,6 +53,7 @@ from litellm.types.decisions import (
     OpenAIScoreAnswer,
     OpenAIScoreProbability,
 )
+from pydantic import ValidationError
 
 from contextgem.internal.base import decision_models as decision_models_module
 from contextgem.internal.base import models as models_module
@@ -808,6 +809,7 @@ class TestDecisionModels(BaseTest):
         assert answer.probability is None
         assert answer.option_probabilities is None
         assert answer.refused is False
+        assert answer.chosen_option is None
 
         # Instances are immutable
         for instance, attr_name in [
@@ -1152,10 +1154,6 @@ class TestDecisionModels(BaseTest):
                 {"written": 0.25, "email": 0.25, "any": 0.25, "not specified": 0.25},
                 "written",
             ),
-            (
-                {"written": 0.0, "email": 0.0, "any": 0.0, "not specified": 0.0},
-                "written",
-            ),
             # The probabilities that do not sum to 1 are taken as they are
             (
                 {"written": 0.1, "email": 0.1, "any": 0.3, "not specified": 0.1},
@@ -1180,6 +1178,27 @@ class TestDecisionModels(BaseTest):
             assert probabilities == option_probabilities
             assert list(probabilities) == labels
             assert all(type(i) is float for i in probabilities.values())
+
+        # The label that the answer names as the picked one does not select
+        # the label: the most probable label is taken
+        result = _convert_concept_answers(
+            concept,
+            3,
+            {
+                "C3": _choice_answer(
+                    "C3",
+                    option_probabilities={
+                        "written": 0.1,
+                        "email": 0.7,
+                        "any": 0.15,
+                        "not specified": 0.05,
+                    },
+                    chosen_option="any",
+                )
+            },
+        )
+        assert result is not None
+        assert result[0] == ["email"]
 
     def test_convert_multi_label_label_concept_answers(self):
         """
@@ -1609,6 +1628,63 @@ class TestDecisionModels(BaseTest):
                     rf"of the option `{option_labels[1]}` is not a number within "
                     r"\[0, 1\]",
                 )
+            # With a zero probability of each option: the first option is not
+            # taken as the most probable one of equally improbable options
+            for zero in [0.0, 0]:
+                _check_invalid_answer(
+                    convert,
+                    {
+                        name: create_answer(
+                            name,
+                            option_probabilities=dict.fromkeys(option_labels, zero),
+                        )
+                    },
+                    name,
+                    "the probability of each option is zero",
+                )
+            # ... while one probability above zero is enough
+            assert convert(
+                {
+                    name: create_answer(
+                        name,
+                        option_probabilities={
+                            **dict.fromkeys(option_labels, 0.0),
+                            option_labels[2]: 0.01,
+                        },
+                    )
+                }
+            )
+            # With an option named as the picked one that was not offered,
+            # whatever the probabilities of the options offered are
+            for chosen_option in [*other_labels, True, ""]:
+                for option_probabilities in [
+                    valid_probabilities,
+                    dict.fromkeys(option_labels, 0.0),
+                ]:
+                    _check_invalid_answer(
+                        convert,
+                        {
+                            name: create_answer(
+                                name,
+                                option_probabilities=option_probabilities,
+                                chosen_option=chosen_option,
+                            )
+                        },
+                        name,
+                        f"the answer picks the option `{chosen_option}`, which was "
+                        "not offered",
+                    )
+            # ... while each of the options offered can be the picked one
+            for chosen_option in option_labels:
+                assert convert(
+                    {
+                        name: create_answer(
+                            name,
+                            option_probabilities=valid_probabilities,
+                            chosen_option=chosen_option,
+                        )
+                    }
+                )
 
     def test_validate_answers(self):
         """
@@ -1705,6 +1781,28 @@ class TestDecisionModels(BaseTest):
                 {"C2": _score_answer("C2", option_probabilities={"1": 0.5, "2": 0.5})},
                 "C2",
                 r"the answer has no probabilities of the options \['3'\]",
+            ),
+            # With a zero probability of each option, or with an option named
+            # as the picked one that was not offered
+            (
+                {
+                    "C2": _score_answer(
+                        "C2", option_probabilities={"1": 0.0, "2": 0.0, "3": 0.0}
+                    )
+                },
+                "C2",
+                "the probability of each option is zero",
+            ),
+            (
+                {
+                    "C1": _choice_answer(
+                        "C1",
+                        option_probabilities={"written": 0.7, "email": 0.3},
+                        chosen_option="Written",
+                    )
+                },
+                "C1",
+                "the answer picks the option `Written`, which was not offered",
             ),
         ]:
             _check_invalid_answer(validate, answers, question_name, reason_match)
@@ -1868,10 +1966,19 @@ class TestDecisionModels(BaseTest):
             _create_decision_model(pricing_details=pricing_details, auto_pricing=True)
 
         for model, error_match in [
-            # genai-prices has only the chat prices of the models of OpenAI
+            # genai-prices has the chat prices of the model, i.e. a price of
+            # output tokens, which a decision model is not billed for
             (
                 "openai/gpt-6-luna",
                 "not supported for decision model `openai/gpt-6-luna`.*"
+                "has a price of output tokens.*"
+                "prices of the chat requests.*provide explicit `pricing_details`",
+            ),
+            # ... also when the model is served by another provider
+            (
+                "openrouter/openai/gpt-6-luna",
+                "not supported for decision model `openrouter/openai/gpt-6-luna`.*"
+                "has a price of output tokens.*"
                 "prices of the chat requests.*provide explicit `pricing_details`",
             ),
             # A self-hosted decision model has no prices
@@ -1904,15 +2011,41 @@ class TestDecisionModels(BaseTest):
                 decision_model.auto_pricing = True
             assert decision_model.auto_pricing is False
 
-        # As for a local LLM
-        with pytest.raises(ValueError, match="not supported for local models"):
+        # As for a local LLM, where the provider of the model is not rejected
+        # first, which it is while litellm lists no such provider of decision models
+        with (
+            patch.object(
+                decision_models_module,
+                "_get_supported_decision_providers",
+                new=lambda: None,
+            ),
+            pytest.raises(ValueError, match="not supported for local models"),
+        ):
             _create_decision_model("ollama/nimble", auto_pricing=True)
 
-        # The automatic pricing is accepted where genai-prices has a decision price
+        # The automatic pricing is accepted where genai-prices has a decision price,
+        # i.e. the prices of the model have no price of output tokens
         with pytest.warns(UserWarning, match="Auto-pricing"):
             decision_model = _create_decision_model(auto_pricing=True)
         assert decision_model._auto_pricing_provider_id == "typesafe"
         assert decision_model._auto_pricing_model_ref == "jev-latest"
+        assert decision_model._calculate_auto_pricing_costs(1_000_000, 1_000_000) == (
+            Decimal("0.042"),
+            Decimal("0"),
+        )
+        # A model that genai-prices has no prices for is accepted as well, with
+        # a warning that its costs are not calculated, as for an LLM
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            decision_model_without_prices = _create_decision_model(
+                "perplexity/pplx-decider-v1-27b", auto_pricing=True
+            )
+        assert decision_model_without_prices.auto_pricing is True
+        assert any(
+            "Unable to fetch pricing data for model `perplexity/pplx-decider-v1-27b`"
+            in str(caught_warning.message)
+            for caught_warning in caught_warnings
+        )
         # ... until the model is changed to a model that it is rejected for
         with pytest.raises(ValueError, match="not supported for decision model"):
             decision_model.model = "openai/gpt-6-luna"
@@ -2928,6 +3061,32 @@ class TestDecisionModels(BaseTest):
                 },
                 "`C1`: the answer repeats the option `written`",
             ),
+            # No usable probabilities: a zero for each option, as litellm fills
+            # in for the options that the provider returns no probability for
+            (
+                {**valid_answers, "C1": {"written": 0.0, "email": 0.0}},
+                "`C1`: the probability of each option is zero",
+            ),
+            (
+                {**valid_answers, "C2": {"1": 0.0, "2": 0.0, "3": 0.0}},
+                "`C2`: the probability of each option is zero",
+            ),
+            # The option picked is not one of the options offered
+            (
+                {
+                    **valid_answers,
+                    "C1": OpenAIChoiceAnswer(
+                        name="C1",
+                        choice="Written",
+                        confidence=0.7,
+                        probabilities=(
+                            OpenAIChoiceProbability(value="written", probability=0.7),
+                            OpenAIChoiceProbability(value="email", probability=0.3),
+                        ),
+                    ),
+                },
+                "`C1`: the answer picks the option `Written`, which was not offered",
+            ),
             # Fewer or more answers than questions
             (
                 create_response_with_answers(
@@ -2972,9 +3131,14 @@ class TestDecisionModels(BaseTest):
             ):
                 decision_model.extract_concepts_from_document(document)
             assert exc_info.value.retry_count == 0
-            # What is wrong with the response is logged
+            # What is wrong with the response is logged, with the concept that
+            # the answer is for
+            question_name_match = re.match(r"`C(\d)`", error_match)
+            assert question_name_match is not None
+            concept_name = concepts[int(question_name_match.group(1))].name
             assert any(
-                f"Decision model `{_DECISION_MODEL}` returned an invalid response"
+                f"Decision model `{_DECISION_MODEL}` returned an invalid response "
+                f"for concept `{concept_name}`, decision question "
                 in log
                 and re.search(error_match, log)
                 for log in captured_logs
@@ -4176,9 +4340,18 @@ class TestDecisionModels(BaseTest):
         string_concept = StringConcept(
             name="Title", description="Title of the document", model_role="decide"
         )
+        # The error tells how to route what the decision model cannot extract
+        # to an LLM of the group, which the decision model is already in
+        group_hint = (
+            "both without justifications\\. In a model group, an aspect or a concept "
+            "is extracted by the model with the `role` equal to its `model_role`: "
+            "set the `model_role` of the other aspects and concepts to the role "
+            "of an LLM in the group\\.$"
+        )
         group_error_match = (
             f"^Decision model `{_DECISION_MODEL}` cannot extract: "
             r"concept `Title` \(type `StringConcept` is not supported\)\. "
+            f".*{group_hint}"
         )
         # Only what is routed to the decision model is checked: a concept that it
         # cannot extract is rejected if it has the role of the decision model
@@ -4253,6 +4426,34 @@ class TestDecisionModels(BaseTest):
                 f"^Decision model `{_DECISION_MODEL}` cannot extract: "
                 r"aspect `Termination` \(justifications are not supported\)\. ",
             )
+
+        # A decision model without a role in a group is routed the aspects and
+        # concepts without a model role
+        roleless_group = DocumentModelGroup(
+            models=[_create_decision_model(), _create_llm(role="generate")]
+        )
+        document = _create_document(
+            concepts=[
+                supported_concept,
+                StringConcept(name="Title", description="Title of the document"),
+            ]
+        )
+        check_rejected(roleless_group, document, group_error_match)
+        # ... which are extracted once they are routed to the LLM of the group
+        document.concepts[1].model_role = "generate"
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [{"C0": 0.9}]})
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: ['[{"concept_id": "C0", "extracted_items": ["NDA"]}]']}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            roleless_group.extract_all(document)
+        assert [concept.extracted_items[0].value for concept in document.concepts] == [
+            True,
+            "NDA",
+        ]
 
         # What is routed to an LLM of the group is not checked
         document = _create_document(
@@ -4348,7 +4549,7 @@ class TestDecisionModels(BaseTest):
             ]
         )
         document = _create_document(concepts=[supported_concept, string_concept])
-        check_rejected(model_group, document, fallback_error_match)
+        check_rejected(model_group, document, f"{fallback_error_match}.*{group_hint}")
         document = _create_document(concepts=[title_concept])
         completions_stub = _CompletionsAPIStub(
             {_OTHER_LLM_MODEL: ['[{"concept_id": "C0", "extracted_items": ["NDA"]}]']}
@@ -5703,13 +5904,14 @@ class TestDecisionModels(BaseTest):
                     **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                 )
             assert extraction_exc_info.value.retry_count == 0
-            assert any(
+            # The log names the aspect that the answer is for, and the paragraph
+            # that the question was asked on, by its position in the document
+            assert (
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
-                "for aspects"
-                in log
-                and "`A1`: the model refused to answer" in log
-                for log in captured_logs
-            ), captured_logs
+                f"for aspect `Payment` on paragraph {failed_position + 1} of "
+                f"{n_paragraphs} (index {failed_position}), decision question `A1`: "
+                "the model refused to answer."
+            ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == failed_position + 1
             check_usage(decision_model, [0, 1, failed_position], [])
             check_not_extracted(document)
@@ -5766,8 +5968,85 @@ class TestDecisionModels(BaseTest):
         check_usage(decision_model, [0, 1, 2, 4], [3])
         check_not_extracted(document)
 
+        # Two requests fail in the same call: the error of the request that failed
+        # first is raised, and that request is recorded as the last call, whatever
+        # the positions of the two requests are
+        other_error = _create_api_error(litellm.BadRequestError)
+        for first_failed_position, second_failed_position in [(3, 1), (1, 3)]:
+            requests_in_progress: list[int] = []
+            sent_positions: list[int] = []
+
+            async def fail_two_requests_in_turn(
+                request: dict[str, Any],
+                first_failed_position: int = first_failed_position,
+                second_failed_position: int = second_failed_position,
+                requests_in_progress: list[int] = requests_in_progress,
+                sent_positions: list[int] = sent_positions,
+            ) -> Any:
+                """
+                Responds to the request when all the requests are sent, or fails
+                it: one of the two requests to fail when all the requests are
+                sent, and the other one when the first one has failed.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :param first_failed_position: The position of the paragraph whose
+                    request fails first.
+                :type first_failed_position: int
+                :param second_failed_position: The position of the paragraph whose
+                    request fails after it.
+                :type second_failed_position: int
+                :param requests_in_progress: The positions of the paragraphs
+                    whose requests are sent and not completed.
+                :type requests_in_progress: list[int]
+                :param sent_positions: The positions of the paragraphs whose
+                    requests are sent.
+                :type sent_positions: list[int]
+                :return: Response of litellm.
+                :rtype: Any
+                """
+                position = _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+                requests_in_progress.append(position)
+                sent_positions.append(position)
+                for _ in range(1000):
+                    all_sent = len(sent_positions) == n_paragraphs
+                    if all_sent and (
+                        position != second_failed_position
+                        or first_failed_position not in requests_in_progress
+                    ):
+                        break
+                    await asyncio.sleep(0)
+                requests_in_progress.remove(position)
+                if position == first_failed_position:
+                    raise auth_error
+                if position == second_failed_position:
+                    raise other_error
+                return respond(request)
+
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [fail_two_requests_in_turn]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(ModelAPIError) as exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document, use_concurrency=True, max_items_per_call=2
+                )
+            assert exc_info.value.original_error is auth_error
+            assert len(decisions_stub.requests) == n_paragraphs
+            check_usage(
+                decision_model,
+                [0, 2, 4],
+                [second_failed_position, first_failed_position],
+            )
+            check_not_extracted(document)
+
         # The requests that wait for the limiter when a request fails are not sent
         held_acquisitions: list[int] = []
+        cancelled_acquisitions: list[int] = []
 
         class HoldingAsyncLimiter(AsyncLimiter):
             """
@@ -5785,7 +6064,11 @@ class TestDecisionModels(BaseTest):
                 """
                 held_acquisitions.append(len(held_acquisitions))
                 if len(held_acquisitions) > 3:
-                    await asyncio.sleep(5)
+                    try:
+                        await asyncio.sleep(5)
+                    except asyncio.CancelledError:
+                        cancelled_acquisitions.append(len(held_acquisitions))
+                        raise
 
         decision_model = _create_decision_model()
         document = create_document()
@@ -5808,8 +6091,11 @@ class TestDecisionModels(BaseTest):
                 document, use_concurrency=True, max_items_per_call=2
             )
         assert exc_info.value.original_error is auth_error
-        # Each request waited for the limiter, and those held by it were not sent
+        # Each request waited for the limiter, and those held by it were not sent:
+        # they were cancelled when the request failed, without the limiter being
+        # waited for
         assert len(held_acquisitions) == n_paragraphs
+        assert len(cancelled_acquisitions) == n_paragraphs - 3
         assert [request["input"] for request in decisions_stub.requests] == (
             _ASPECTS_PARAGRAPH_TEXTS_SENT[:3]
         )
@@ -6591,6 +6877,1442 @@ class TestDecisionModels(BaseTest):
             ]
         ] == items_extracted
         assert len(decisions_stub.requests) == 7
+
+    def test_answers_without_usable_probabilities(self):
+        """
+        Tests that an answer of a provider without usable probabilities of
+        the options offered ends as an invalid response, and not as an item with
+        the first option and zero probabilities. The responses are created by
+        the conversion functions of litellm themselves, from the responses of
+        a provider in the System One format: litellm returns the probabilities of
+        the options offered only, with a zero for each option that the provider
+        returned no probability for, e.g. an option that it named differently.
+        """
+        # The functions that litellm converts the response of a System One
+        # provider with, for a request made in the OpenAI format. They are
+        # internals of litellm, i.e. they are imported here: if they are moved in
+        # another version of litellm, this test fails, and no other one.
+        from litellm.llms.base_llm.decisions.transformation import (
+            parse_systemone_response,
+        )
+        from litellm.llms.openai.decisions.transformation import (
+            ir_to_openai_response,
+            openai_request_to_ir,
+        )
+        from litellm.types.decisions import OpenAIDecisionRequestBody
+
+        def create_responder(
+            provider_answer: dict[str, Any],
+        ) -> Callable[[dict[str, Any]], Any]:
+            """
+            Creates the function that responds to a request with a single question
+            as litellm does when the provider returns the given answer to it.
+
+            :param provider_answer: The answer of the provider to the question,
+                in the System One format.
+            :type provider_answer: dict[str, Any]
+            :return: Function that creates the response for a request.
+            :rtype: Callable[[dict[str, Any]], Any]
+            """
+
+            def respond(request: dict[str, Any]) -> Any:
+                """
+                Converts the response of the provider with the functions of litellm.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :return: Response of litellm.
+                :rtype: Any
+                """
+                (question,) = request["questions"]
+                ir_request = openai_request_to_ir(
+                    OpenAIDecisionRequestBody.model_validate(
+                        {"input": request["input"], "questions": request["questions"]}
+                    )
+                )
+                ir_response = parse_systemone_response(
+                    {
+                        "model": "jev-1.13.0",
+                        "answers": {question["name"]: provider_answer},
+                        "usage": {"input_tokens": 50, "output_tokens": 0},
+                    },
+                    ir_request,
+                )
+                return ir_to_openai_response(ir_response, ir_request, request["model"])
+
+            return respond
+
+        label_concept = LabelConcept(
+            name="Document type",
+            description="Type of the document",
+            labels=["Contract", "Invoice", "Letter"],
+        )
+        rating_concept = RatingConcept(
+            name="Clarity",
+            description="Clarity of the text of the document",
+            rating_scale=(1, 5),
+        )
+
+        # === The answers with the probabilities of the options offered ===
+        for concept, provider_answer, expected_value, expected_probabilities in [
+            (
+                label_concept,
+                {
+                    "type": "choice",
+                    "choice": "Letter",
+                    "confidence": 0.9,
+                    "probabilities": {"Contract": 0.04, "Invoice": 0.06, "Letter": 0.9},
+                },
+                ["Letter"],
+                {"Contract": 0.04, "Invoice": 0.06, "Letter": 0.9},
+            ),
+            # The levels of a rating are keyed by their positions on the scale
+            (
+                rating_concept,
+                {
+                    "type": "score",
+                    "score": 3.9,
+                    "confidence": 0.7,
+                    "legend": {},
+                    "probabilities": {"0": 0.0, "1": 0.0, "2": 0.2, "3": 0.7, "4": 0.1},
+                },
+                4,
+                {1: 0.0, 2: 0.0, 3: 0.2, 4: 0.7, 5: 0.1},
+            ),
+        ]:
+            decision_model = _create_decision_model()
+            document = _create_document(concepts=[concept])
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder(provider_answer)]}
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_concepts_from_document(document)
+            (item,) = document.concepts[0].extracted_items
+            assert item.value == expected_value
+            assert item.probabilities == expected_probabilities
+
+        # === The answers without usable probabilities ===
+        for concept, provider_answer, reason in [
+            # No probabilities at all: only the picked option is returned
+            (
+                label_concept,
+                {
+                    "type": "choice",
+                    "choice": "Letter",
+                    "confidence": 0.9,
+                    "probabilities": {},
+                },
+                "the probability of each option is zero",
+            ),
+            (
+                rating_concept,
+                {
+                    "type": "score",
+                    "score": 4.0,
+                    "confidence": 0.7,
+                    "legend": {},
+                    "probabilities": {},
+                },
+                "the probability of each option is zero",
+            ),
+            # The options named differently than they were offered, here in
+            # another case: none of the probabilities is of an option offered
+            (
+                label_concept,
+                {
+                    "type": "choice",
+                    "choice": "letter",
+                    "confidence": 0.9,
+                    "probabilities": {"contract": 0.04, "invoice": 0.06, "letter": 0.9},
+                },
+                "the answer picks the option `letter`, which was not offered",
+            ),
+            # ... also when only the picked option is named differently
+            (
+                label_concept,
+                {
+                    "type": "choice",
+                    "choice": "LETTER",
+                    "confidence": 0.9,
+                    "probabilities": {"Contract": 0.04, "Invoice": 0.06, "Letter": 0.9},
+                },
+                "the answer picks the option `LETTER`, which was not offered",
+            ),
+        ]:
+            decision_model = _create_decision_model()
+            document = _create_document(concepts=[concept])
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder(provider_answer)]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                pytest.raises(
+                    ModelExtractionError,
+                    match="an invalid response returned by decision model",
+                ),
+            ):
+                decision_model.extract_concepts_from_document(document)
+            assert any(
+                f"returned an invalid response for concept `{concept.name}`, "
+                f"decision question `C0`: {reason}" in log
+                for log in captured_logs
+            ), captured_logs
+            assert not document.concepts[0]._is_processed
+            assert not document.concepts[0].extracted_items
+            # The request succeeded: it is counted, and it is not sent again
+            assert len(decisions_stub.requests) == 1
+            usage = decision_model.get_usage()[0].usage
+            assert usage.input == 50
+            assert [call.timestamp_received is not None for call in usage.calls] == [
+                True
+            ]
+
+    def test_overwrite_existing_resets_aspect_references(self):
+        """
+        Tests that an aspect extracted again by a decision model, with
+        ``overwrite_existing=True``, has the reference paragraphs of its new items
+        only, so that its sub-aspects and its concepts are extracted from them,
+        and that the references of an aspect are still added to without it.
+        """
+        yes_positions: dict[str, list[int]] = {}
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request with the questions of aspects, asked on one
+            paragraph, or with the questions of concepts.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            answers: dict[str, Any] = {}
+            for question in request["questions"]:
+                aspect_name_match = re.search(
+                    r"^Aspect name: (.+)$", question["instructions"], flags=re.MULTILINE
+                )
+                if aspect_name_match is None:
+                    answers[question["name"]] = 0.9
+                    continue
+                position = _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+                answers[question["name"]] = (
+                    0.9
+                    if position in yes_positions[aspect_name_match.group(1)]
+                    else 0.1
+                )
+            return _create_decisions_response(request["questions"], answers)
+
+        decision_model = _create_decision_model()
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on termination",
+                    aspects=[Aspect(name="Notices", description="Clauses on notices")],
+                    concepts=[
+                        BooleanConcept(
+                            name="Written notice",
+                            description="A written notice is required",
+                        )
+                    ],
+                )
+            ]
+        )
+        (aspect,) = document.aspects
+        paragraphs = document.paragraphs
+
+        # === The first extraction ===
+        yes_positions.update({"Termination": [2, 4], "Notices": [2]})
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraphs[2]),
+            id(paragraphs[4]),
+        ]
+        assert not aspect.reference_sentences
+        assert [request["input"] for request in decisions_stub.requests[5:]] == [
+            _ASPECTS_PARAGRAPH_TEXTS_SENT[2],
+            _ASPECTS_PARAGRAPH_TEXTS_SENT[4],
+        ]
+
+        # === The aspect is extracted again, from other paragraphs ===
+        # A paragraph of the first extraction is not extracted any more, and
+        # a paragraph before the other one is
+        yes_positions.update({"Termination": [1, 4], "Notices": [4]})
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(
+                document, overwrite_existing=True
+            )
+        assert [item.value for item in aspect.extracted_items] == [
+            paragraphs[1].raw_text,
+            paragraphs[4].raw_text,
+        ]
+        # The reference paragraphs are those of the new items only
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraphs[1]),
+            id(paragraphs[4]),
+        ]
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraph)
+            for item in aspect.extracted_items
+            for paragraph in item.reference_paragraphs
+        ]
+        assert not aspect.reference_sentences
+        # The sub-aspect is asked about on the new paragraphs only
+        assert [request["input"] for request in decisions_stub.requests[5:]] == [
+            _ASPECTS_PARAGRAPH_TEXTS_SENT[1],
+            _ASPECTS_PARAGRAPH_TEXTS_SENT[4],
+        ]
+        (sub_aspect,) = aspect.aspects
+        assert [item.value for item in sub_aspect.extracted_items] == [
+            paragraphs[4].raw_text
+        ]
+        # ... and so is the concept of the aspect
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_aspect(aspect, document)
+        (request,) = decisions_stub.requests
+        assert request["input"] == "\n\n".join(
+            [_ASPECTS_PARAGRAPH_TEXTS_SENT[1], _ASPECTS_PARAGRAPH_TEXTS_SENT[4]]
+        )
+        assert aspect.concepts[0].extracted_items[0].value is True
+
+        # An aspect that no paragraph belongs to any more has no references
+        yes_positions.update({"Termination": [], "Notices": []})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(
+                document, overwrite_existing=True
+            )
+        assert aspect._is_processed
+        assert not aspect.extracted_items
+        assert not aspect.reference_paragraphs
+
+        # === Without overwriting ===
+        # The reference paragraphs that an aspect has are kept, and those of
+        # its items are added to them, as before
+        document = _create_aspects_document(
+            aspects=[Aspect(name="Termination", description="Clauses on termination")]
+        )
+        (aspect,) = document.aspects
+        paragraphs = document.paragraphs
+        aspect.reference_paragraphs = [paragraphs[0], paragraphs[4]]
+        yes_positions.update({"Termination": [2, 4]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraphs[0]),
+            id(paragraphs[4]),
+            id(paragraphs[2]),
+        ]
+
+    def test_model_group_stops_other_models_when_one_fails(self):
+        """
+        Tests that, with concurrency, the failure of one model of a model group
+        stops the extraction with the other models of the group before the error
+        is raised: no task is left running, no request is sent after the error,
+        and the requests completed by then are counted in the usage.
+        """
+
+        def create_document() -> Document:
+            """
+            Creates a document with an aspect of the LLM and two aspects of
+            the decision model.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(name="Liability", description="Clauses on liability"),
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on termination",
+                        model_role="decide",
+                    ),
+                    Aspect(
+                        name="Payment",
+                        description="Clauses on payment",
+                        model_role="decide",
+                    ),
+                ]
+            )
+
+        def get_running_tasks() -> list[asyncio.Task[Any]]:
+            """
+            Returns the tasks of the current event loop that are not done,
+            other than the current one.
+
+            :return: The tasks still running.
+            :rtype: list[asyncio.Task[Any]]
+            """
+            current_task = asyncio.current_task()
+            return [
+                task
+                for task in asyncio.all_tasks()
+                if task is not current_task and not task.done()
+            ]
+
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        # The requests of the decision model that its limiter lets through:
+        # those of one of its aspects, and two of those of the other one
+        n_requests_let_through = n_paragraphs + 2
+
+        # === The LLM fails while the decision model is extracting ===
+        async def fail_llm() -> None:
+            """
+            Extracts the aspects with the group, with the request of the LLM
+            failing when the decision model has extracted one of its aspects and
+            has requests for the other one waiting for its limiter.
+            """
+            llm = _create_llm()
+            decision_model = _create_decision_model(
+                role="decide", async_limiter=AsyncLimiter(7, 3)
+            )
+            model_group = DocumentModelGroup(models=[llm, decision_model])
+            document = create_document()
+            liability, termination, payment = document.aspects
+            llm_error = _create_api_error(litellm.AuthenticationError, model=_LLM_MODEL)
+            release_held_requests = asyncio.Event()
+            cancelled_acquisitions: list[int] = []
+            n_acquisitions: list[int] = [0]
+
+            class HoldingAsyncLimiter(AsyncLimiter):
+                """
+                Lets the requests of the LLM through, as well as the first requests
+                of the decision model, and holds the other requests of the decision
+                model until they are released.
+                """
+
+                async def acquire(self, amount: float = 1) -> None:
+                    """
+                    Acquires the capacity at once, or when the requests held
+                    are released.
+
+                    :param amount: The capacity to acquire.
+                    :type amount: float
+                    """
+                    if (self.max_rate, self.time_period) != (7, 3):
+                        # The limiter of the LLM
+                        return
+                    n_acquisitions[0] += 1
+                    if n_acquisitions[0] > n_requests_let_through:
+                        try:
+                            await release_held_requests.wait()
+                        except asyncio.CancelledError:
+                            cancelled_acquisitions.append(n_acquisitions[0])
+                            raise
+
+            async def fail_when_decision_model_is_halfway(**kwargs: Any) -> Any:
+                """
+                Fails the request to the LLM when the decision model has extracted
+                the first of its aspects.
+
+                :param kwargs: Keyword arguments of ``litellm.acompletion``.
+                :type kwargs: Any
+                """
+                for _ in range(1000):
+                    if termination._is_processed:
+                        break
+                    await asyncio.sleep(0)
+                assert termination._is_processed
+                assert len(decisions_stub.requests) == n_requests_let_through
+                raise llm_error
+
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [
+                        _create_aspects_responder(
+                            {"Termination": {2: 0.9}}, input_tokens=20
+                        )
+                    ]
+                }
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(
+                    litellm, "acompletion", new=fail_when_decision_model_is_halfway
+                ),
+                patch.object(models_module, "AsyncLimiter", new=HoldingAsyncLimiter),
+            ):
+                with pytest.raises(ModelAPIError) as exc_info:
+                    await model_group.extract_aspects_from_document_async(
+                        document, use_concurrency=True
+                    )
+                assert exc_info.value.original_error is llm_error
+                # The extraction with the decision model is stopped: no task is
+                # left running, and the requests held by the limiter are cancelled
+                assert not get_running_tasks()
+                assert len(cancelled_acquisitions) == n_paragraphs - 2
+                # ... i.e. they are not sent when the limiter would let them through
+                release_held_requests.set()
+                await asyncio.sleep(0.05)
+                assert len(decisions_stub.requests) == n_requests_let_through
+
+            # The aspect extracted by then is kept, and nothing else is extracted
+            assert termination._is_processed
+            assert [item.value for item in termination.extracted_items] == [
+                document.paragraphs[2].raw_text
+            ]
+            assert not payment._is_processed and not payment.extracted_items
+            assert not liability._is_processed and not liability.extracted_items
+            # The requests completed by then are counted in the usage
+            usage = decision_model.get_usage()[0].usage
+            assert len(usage.calls) == n_requests_let_through
+            assert all(call.timestamp_received is not None for call in usage.calls)
+            assert usage.input == 20 * n_requests_let_through
+
+        asyncio.run(fail_llm())
+
+        # === The decision model fails while the LLM is extracting ===
+        async def fail_decision_model() -> None:
+            """
+            Extracts the aspects with the group, with a request of the decision
+            model failing when the request of the LLM is sent and not answered.
+            """
+            llm = _create_llm()
+            decision_model = _create_decision_model(role="decide")
+            model_group = DocumentModelGroup(models=[llm, decision_model])
+            document = create_document()
+            decision_model_error = _create_api_error(litellm.AuthenticationError)
+            llm_request_sent = asyncio.Event()
+            llm_requests: list[dict[str, Any]] = []
+            cancelled_llm_requests: list[dict[str, Any]] = []
+
+            async def never_respond(**kwargs: Any) -> Any:
+                """
+                Leaves the request to the LLM without a response.
+
+                :param kwargs: Keyword arguments of ``litellm.acompletion``.
+                :type kwargs: Any
+                """
+                llm_requests.append(kwargs)
+                llm_request_sent.set()
+                try:
+                    await asyncio.Event().wait()
+                except asyncio.CancelledError:
+                    cancelled_llm_requests.append(kwargs)
+                    raise
+
+            async def fail_when_llm_request_is_sent(request: dict[str, Any]) -> Any:
+                """
+                Fails the request to the decision model when the request to
+                the LLM is sent.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                """
+                await asyncio.wait_for(llm_request_sent.wait(), timeout=10)
+                raise decision_model_error
+
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [fail_when_llm_request_is_sent]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(litellm, "acompletion", new=never_respond),
+            ):
+                with pytest.raises(ModelAPIError) as exc_info:
+                    await model_group.extract_aspects_from_document_async(
+                        document, use_concurrency=True
+                    )
+                assert exc_info.value.original_error is decision_model_error
+                # The request of the LLM is cancelled, and no task is left running
+                assert not get_running_tasks()
+                assert len(llm_requests) == len(cancelled_llm_requests) == 1
+                n_decision_requests = len(decisions_stub.requests)
+                await asyncio.sleep(0.05)
+                assert len(llm_requests) == 1
+                assert len(decisions_stub.requests) == n_decision_requests
+            assert not any(aspect._is_processed for aspect in document.aspects)
+            assert not any(aspect.extracted_items for aspect in document.aspects)
+            # A request that is in flight when it is cancelled is not recorded
+            assert not llm.get_usage()[0].usage.calls
+
+        asyncio.run(fail_decision_model())
+
+        # === Without concurrency ===
+        # The models extract one after another: the models after the one that
+        # fails are not called
+        llm = _create_llm()
+        decision_model = _create_decision_model(role="decide")
+        model_group = DocumentModelGroup(models=[llm, decision_model])
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: [_create_api_error(litellm.AuthenticationError, _LLM_MODEL)]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+            pytest.raises(ModelAPIError),
+        ):
+            model_group.extract_aspects_from_document(document)
+        assert len(completions_stub.requests) == 1
+        assert not decisions_stub.requests
+
+    def test_decision_model_extracts_repeated_instances_once(self):
+        """
+        Tests that an aspect or a concept that is given to a decision model more
+        than once is asked about, and processed, once, and that the usage of
+        the requests made is not lost if an error is raised after them.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+
+        # === A concept given twice ===
+        for extraction_kwargs in [{}, {"use_concurrency": True}]:
+            decision_model = _create_decision_model()
+            document = _create_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The document is an NDA"
+                    ),
+                    BooleanConcept(
+                        name="Lease check", description="The document is a lease"
+                    ),
+                ]
+            )
+            nda_concept, lease_concept = document.concepts
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [_answer_all_questions]}
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                extracted_concepts = decision_model.extract_concepts_from_document(
+                    document,
+                    from_concepts=[nda_concept, lease_concept, nda_concept],
+                    **extraction_kwargs,
+                )
+            # One question for each distinct concept
+            assert sorted(
+                len(request["questions"]) for request in decisions_stub.requests
+            ) == ([1, 1] if extraction_kwargs else [2])
+            assert [concept.name for concept in extracted_concepts] == [
+                "NDA check",
+                "Lease check",
+                "NDA check",
+            ]
+            for concept in document.concepts:
+                assert concept._is_processed
+                assert [item.value for item in concept.extracted_items] == [True]
+            usage = decision_model.get_usage()[0].usage
+            assert len(usage.calls) == len(decisions_stub.requests)
+            assert usage.input == 100 * len(decisions_stub.requests)
+
+        # === An aspect given twice ===
+        for extraction_kwargs in [{}, {"use_concurrency": True}]:
+            decision_model = _create_decision_model()
+            document = _create_aspects_document(
+                aspects=[
+                    Aspect(name="Termination", description="Clauses on termination")
+                ]
+            )
+            (aspect,) = document.aspects
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [
+                        _create_aspects_responder({"Termination": {2: 0.9}})
+                    ]
+                }
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    from_aspects=[aspect, aspect],
+                    **extraction_kwargs,
+                )
+            assert len(decisions_stub.requests) == n_paragraphs
+            assert all(
+                len(request["questions"]) == 1 for request in decisions_stub.requests
+            )
+            assert [item.value for item in aspect.extracted_items] == [
+                document.paragraphs[2].raw_text
+            ]
+
+        # === A fallback decision model given a concept twice ===
+        # An LLM is asked about the concept as many times as it is given, in
+        # one request. The decision model that takes over is asked once.
+        llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
+        document = _create_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The document is an NDA")
+            ]
+        )
+        (concept,) = document.concepts
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: [_create_api_error(litellm.AuthenticationError, _LLM_MODEL)]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            llm.extract_concepts_from_document(
+                document, from_concepts=[concept, concept]
+            )
+        (request,) = decisions_stub.requests
+        assert [question["name"] for question in request["questions"]] == ["C0"]
+        assert [item.value for item in concept.extracted_items] == [True]
+
+        # === An error after the requests are made ===
+        # The concept is processed by another call while the request is made:
+        # the error is raised, with the request counted in the usage
+        decision_model = _create_decision_model()
+        document = _create_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The document is an NDA")
+            ]
+        )
+        (concept,) = document.concepts
+
+        def respond_and_process(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to the request, with the concept set as processed
+            in the meantime.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            concept._is_processed = True
+            return _answer_all_questions(request)
+
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_and_process]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            pytest.raises(ValueError, match="have already been processed"),
+        ):
+            decision_model.extract_concepts_from_document(document)
+        assert not concept.extracted_items
+        usage = decision_model.get_usage()[0].usage
+        assert usage.input == 100
+        (call,) = usage.calls
+        assert call.timestamp_received is not None
+
+    def test_decision_model_rejects_questions_over_litellm_limits(self):
+        """
+        Tests that a concept whose question litellm does not accept, e.g. for
+        more options than a question may have, is rejected before any request is
+        sent, as the other concepts that a decision model cannot extract, with
+        the reason given by litellm, and that the check is skipped if the types
+        of litellm cannot be used for it.
+        """
+        # A rating scale and labels over the limits of the pinned litellm version
+        rating_concept = RatingConcept(
+            name="Clarity",
+            description="Clarity of the text of the document",
+            rating_scale=(0, 10),
+        )
+        label_concept = LabelConcept(
+            name="Clause type",
+            description="Type of the clause",
+            labels=[f"type {number}" for number in range(256)],
+        )
+        supported_concepts = [
+            BooleanConcept(name="NDA check", description="The document is an NDA"),
+            # The widest scale and the most labels that litellm accepts
+            RatingConcept(
+                name="Quality",
+                description="Quality of the drafting",
+                rating_scale=(1, 10),
+            ),
+            LabelConcept(
+                name="Contract type",
+                description="Type of the contract",
+                labels=[f"type {number}" for number in range(255)],
+            ),
+            # Each label of such a concept is a question of its own
+            LabelConcept(
+                name="Topics",
+                description="Topics of the document",
+                labels=[f"topic {number}" for number in range(130)],
+                classification_type="multi_label",
+            ),
+        ]
+        rating_reason = (
+            r"concept `Clarity` \(its `score` question with 11 options is not "
+            r"accepted by litellm: `levels`: [^;)]*10[^;)]*\)"
+        )
+        label_reason = (
+            r"concept `Clause type` \(its `choice` question with 256 options is "
+            r"not accepted by litellm: `choices`: [^;)]*255[^;)]*\)"
+        )
+        requests: list[Any] = []
+
+        async def record_request(*args: Any, **kwargs: Any) -> Any:
+            """
+            Records a request to a model API, which is not expected where
+            this stub is used, and fails the test.
+
+            :param args: Arguments of the request.
+            :type args: Any
+            :param kwargs: Keyword arguments of the request.
+            :type kwargs: Any
+            """
+            requests.append(kwargs)
+            raise pytest.fail.Exception("No request is expected to be sent.")
+
+        # === A decision model used on its own, with and without a fallback LLM ===
+        for decision_model in [
+            _create_decision_model(),
+            # The concepts are not passed on to the fallback model silently
+            _create_decision_model(fallback_models=[_create_llm(is_fallback=True)]),
+        ]:
+            document = _create_document(
+                concepts=[*supported_concepts, rating_concept, label_concept]
+            )
+            for extraction_method in [
+                decision_model.extract_concepts_from_document,
+                decision_model.extract_all,
+            ]:
+                for use_concurrency in [False, True]:
+                    with (
+                        patch.object(litellm, "adecisions", new=record_request),
+                        patch.object(litellm, "acompletion", new=record_request),
+                        pytest.raises(
+                            ValueError,
+                            match=f"^Decision model `{_DECISION_MODEL}` cannot "
+                            f"extract: {rating_reason}; {label_reason}"
+                            r"\. A decision model extracts",
+                        ),
+                    ):
+                        extraction_method(document, use_concurrency=use_concurrency)
+            assert not requests
+            assert not any(concept._is_processed for concept in document.concepts)
+            assert not decision_model.get_usage()[0].usage.calls
+
+        # A concept of an aspect, and a decision model that is a fallback model
+        document = _create_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on termination",
+                    concepts=[rating_concept],
+                )
+            ]
+        )
+        with (
+            patch.object(litellm, "adecisions", new=record_request),
+            pytest.raises(ValueError, match=f"cannot extract: {rating_reason}"),
+        ):
+            _create_decision_model().extract_all(document)
+        llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
+        with (
+            patch.object(litellm, "adecisions", new=record_request),
+            patch.object(litellm, "acompletion", new=record_request),
+            pytest.raises(
+                ValueError,
+                match=f"^Fallback decision model `{_DECISION_MODEL}` cannot extract "
+                "what it is to extract if the model it is a fallback for fails: "
+                f"{rating_reason}",
+            ),
+        ):
+            llm.extract_all(document)
+        assert not requests
+
+        # === The concepts within the limits ===
+        decision_model = _create_decision_model()
+        document = _create_document(concepts=supported_concepts)
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(document)
+        assert all(concept._is_processed for concept in document.concepts)
+        # The questions over the cap of a request are sent in another request
+        assert [len(request["questions"]) for request in decisions_stub.requests] == [
+            MAX_DECISION_QUESTIONS,
+            3 + 130 - MAX_DECISION_QUESTIONS,
+        ]
+
+        # === The types of litellm cannot be used for the check ===
+        # The questions are not checked before the request, as before: a question
+        # that litellm does not accept is rejected by it when the request is made
+        class UnusableQuestionType:
+            """
+            Type of a question that cannot validate a question.
+            """
+
+            @staticmethod
+            def model_validate(question: Any) -> Any:
+                """
+                Fails with an error that is not a validation error.
+
+                :param question: The question to validate.
+                :type question: Any
+                """
+                raise RuntimeError("Simulated change of litellm")
+
+        for question_types in [
+            # The types are not there
+            types.SimpleNamespace(MAX_DECISION_QUESTIONS=MAX_DECISION_QUESTIONS),
+            # ... or they do not validate a question as expected
+            types.SimpleNamespace(
+                MAX_DECISION_QUESTIONS=MAX_DECISION_QUESTIONS,
+                OpenAIPredicateQuestion=UnusableQuestionType,
+                OpenAIChoiceQuestion=UnusableQuestionType,
+                OpenAIScoreQuestion=object(),
+            ),
+        ]:
+            decision_model = _create_decision_model()
+            document = _create_document(concepts=[rating_concept, label_concept])
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [_answer_all_questions]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(
+                    decision_models_module,
+                    "_litellm_decision_types",
+                    new=question_types,
+                ),
+            ):
+                decision_model.extract_concepts_from_document(document)
+            (request,) = decisions_stub.requests
+            assert len(request["questions"][0]["levels"]) == 11
+            assert len(request["questions"][1]["choices"]) == 256
+
+    def test_decision_model_provider_validation(self):
+        """
+        Tests that a decision model of a provider that litellm serves no decision
+        models of is rejected when the model is created or its identifier is
+        assigned, with the providers that litellm supports, and that the provider
+        is not checked if the providers cannot be read from litellm.
+        """
+        # The providers, as litellm lists them itself
+        supported_providers = list(
+            sys.modules["litellm.decisions.main"].DECISIONS_ENDPOINTS
+        )
+        assert {"typesafe", "openai"} <= set(supported_providers)
+        assert decision_models_module._get_supported_decision_providers() == tuple(
+            supported_providers
+        )
+
+        # Each of the providers is accepted
+        for provider in supported_providers:
+            assert DocumentDecisionModel(model=f"{provider}/decider").model == (
+                f"{provider}/decider"
+            )
+
+        # A provider of LLMs only, including those of local LLMs
+        for model in [
+            "anthropic/claude-x",
+            "ollama/nimble",
+            "ollama_chat/nimble",
+            "lm_studio/nimble",
+            # The provider is the prefix of the model identifier
+            "jev/typesafe",
+        ]:
+            provider = model.partition("/")[0]
+            error_match = (
+                f"Provider `{provider}` of model `{model}` is not a provider of "
+                f"decision models supported by litellm. Supported providers: "
+                f"{', '.join(supported_providers)}."
+            )
+            with pytest.raises(ValueError, match=re.escape(error_match)) as exc_info:
+                DocumentDecisionModel(model=model, api_key="test_api_key")
+            # The error is the one of the model identifier, i.e. it does not
+            # show the other params that the model is created with
+            assert "test_api_key" not in str(exc_info.value)
+            # ... also when the model identifier is assigned, with the model
+            # left unchanged
+            decision_model = _create_decision_model()
+            with pytest.raises(ValueError, match=re.escape(error_match)):
+                decision_model.model = model
+            assert decision_model.model == _DECISION_MODEL
+        # The format of the identifier is checked first
+        with pytest.raises(ValueError, match="<model_provider>/<model_name>"):
+            DocumentDecisionModel(model="nimble")
+
+        # === The providers cannot be read from litellm ===
+        # The provider is not checked: a model that litellm cannot serve fails
+        # at its first request
+        for decisions_module in [
+            # The module is not there, or cannot be imported
+            None,
+            # The providers are not where they are expected, or are not providers
+            types.SimpleNamespace(),
+            types.SimpleNamespace(DECISIONS_ENDPOINTS=None),
+            types.SimpleNamespace(DECISIONS_ENDPOINTS={}),
+            types.SimpleNamespace(DECISIONS_ENDPOINTS={1: "typesafe", "": "x"}),
+        ]:
+            with patch.dict(sys.modules, {"litellm.decisions.main": decisions_module}):
+                assert decision_models_module._get_supported_decision_providers() is (
+                    None
+                )
+                decision_model = DocumentDecisionModel(model="ollama/nimble")
+                decision_model.model = "anthropic/claude-x"
+            assert decision_model.model == "anthropic/claude-x"
+
+    def test_decision_model_call_grouping(self):
+        """
+        Tests that the aspects and concepts that differ only in the extraction
+        params that a decision model is not sent are extracted in the same calls
+        of a decision model, while an LLM is still called for each group of them.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+
+        def create_document() -> Document:
+            """
+            Creates a document with aspects and concepts that differ in the depth
+            and the length of justifications and in the depth of references,
+            none of which is requested.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(name="Termination", description="Clauses on termination"),
+                    Aspect(
+                        name="Liability",
+                        description="Clauses on liability",
+                        justification_depth="balanced",
+                    ),
+                    Aspect(
+                        name="Payment",
+                        description="Clauses on payment",
+                        justification_max_sents=5,
+                    ),
+                ],
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The document is an NDA"
+                    ),
+                    BooleanConcept(
+                        name="Lease check",
+                        description="The document is a lease",
+                        reference_depth="sentences",
+                    ),
+                    RatingConcept(
+                        name="Clarity",
+                        description="Clarity of the text of the document",
+                        rating_scale=(1, 3),
+                        justification_depth="comprehensive",
+                    ),
+                    LabelConcept(
+                        name="Notice form",
+                        description="Required form of the termination notice",
+                        labels=["written", "any"],
+                        justification_max_sents=4,
+                    ),
+                ],
+            )
+
+        # === A decision model ===
+        # Each paragraph is sent once, with the questions of all the aspects,
+        # and the text of the document once, with the questions of all the concepts
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_all(document)
+        assert [request["input"] for request in decisions_stub.requests[:-1]] == (
+            _ASPECTS_PARAGRAPH_TEXTS_SENT
+        )
+        assert [
+            [question["name"] for question in request["questions"]]
+            for request in decisions_stub.requests
+        ] == [["A0", "A1", "A2"]] * n_paragraphs + [["C0", "C1", "C2", "C3"]]
+        assert all(aspect._is_processed for aspect in document.aspects)
+        assert all(concept._is_processed for concept in document.concepts)
+        # ... also with the number of the items of a call set
+        document = create_document()
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_all(
+                document, use_concurrency=True, max_items_per_call=4
+            )
+        assert sorted(
+            len(request["questions"]) for request in decisions_stub.requests
+        ) == [3] * n_paragraphs + [4]
+
+        # === An LLM ===
+        # The aspects and concepts are extracted in the same calls as before:
+        # each group of them, by all the extraction params, in a call of its own
+        llm = _create_llm()
+        document = create_document()
+        prompts: list[str] = []
+
+        async def respond_to_prompt(**kwargs: Any) -> Any:
+            """
+            Responds to the request to the LLM with no items extracted.
+
+            :param kwargs: Keyword arguments of ``litellm.acompletion``.
+            :type kwargs: Any
+            :return: Completion object, with the attributes that the framework reads.
+            :rtype: Any
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            prompts.append(prompt)
+            if "aspect_id" in prompt:
+                content = '[{"aspect_id": "A0", "paragraph_ids": []}]'
+            else:
+                content = '[{"concept_id": "C0", "extracted_items": []}]'
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content)
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        with patch.object(litellm, "acompletion", new=respond_to_prompt):
+            llm.extract_all(document)
+        # One call for each of the three aspects and of the four concepts
+        assert len(prompts) == 7
+
+        # === A decision model with a fallback LLM ===
+        # The fallback LLM takes over the calls of the decision model as they
+        # are, i.e. it is given all the concepts in one call: none of the params
+        # that they differ in changes its prompt, as neither justifications nor
+        # references are requested
+        decision_model = _create_decision_model(
+            fallback_models=[_create_llm(is_fallback=True)]
+        )
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [_create_api_error(litellm.AuthenticationError)]}
+        )
+        completions_stub = _CompletionsAPIStub(
+            {
+                _LLM_MODEL: [
+                    json.dumps(
+                        [
+                            {"concept_id": "C0", "extracted_items": [True]},
+                            {"concept_id": "C1", "extracted_items": [False]},
+                            {"concept_id": "C2", "extracted_items": [3]},
+                            {
+                                "concept_id": "C3",
+                                "extracted_items": [{"labels": ["any"]}],
+                            },
+                        ]
+                    )
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            decision_model.extract_concepts_from_document(document)
+        assert len(decisions_stub.requests) == len(completions_stub.requests) == 1
+        assert [concept.extracted_items[0].value for concept in document.concepts] == [
+            True,
+            False,
+            3,
+            ["any"],
+        ]
+
+    def test_decision_model_api_key_not_shown(self):
+        """
+        Tests that the API key of a decision model is not shown when the model
+        is printed, including in the error of a validation that the model is
+        the input of, while its API base is.
+        """
+        api_key = "sk-test-SECRET-0123456789"
+        api_base = "https://decisions.example.com"
+        decision_model = DocumentDecisionModel(
+            model=_DECISION_MODEL,
+            api_key=api_key,
+            api_base=api_base,
+            fallback_models=[
+                DocumentLLM(model=_LLM_MODEL, api_key=api_key, is_fallback=True)
+            ],
+        )
+        # The key is set, and is sent with the requests
+        assert decision_model.api_key == api_key
+        for text in [repr(decision_model), str(decision_model), f"{decision_model}"]:
+            assert "SECRET" not in text
+            assert "api_key" not in text
+            assert f"model='{_DECISION_MODEL}'" in text
+            assert f"api_base='{api_base}'" in text
+
+        def check_error(error: Exception) -> None:
+            """
+            Checks that the validation error does not show the key, neither in
+            its text nor in the inputs that it reports.
+
+            :param error: The validation error.
+            :type error: Exception
+            """
+            assert isinstance(error, ValidationError)
+            assert "SECRET" not in str(error)
+            assert "SECRET" not in repr(error)
+            assert "SECRET" not in repr(error.errors())
+
+        # The model as an invalid item of the fallback models of another model:
+        # it is not a fallback model
+        with pytest.raises(ValidationError) as exc_info:
+            DocumentLLM(
+                model=_LLM_MODEL, api_key=api_key, fallback_models=[decision_model]
+            )
+        assert "must be a fallback model" in str(exc_info.value)
+        assert "DocumentDecisionModel(" in repr(exc_info.value.errors())
+        check_error(exc_info.value)
+        # ... and as an invalid model of a group: with the role of another model
+        with pytest.raises(ValidationError) as exc_info:
+            DocumentModelGroup(
+                models=[decision_model, DocumentLLM(model=_LLM_MODEL, api_key=api_key)]
+            )
+        assert "DocumentDecisionModel(" in repr(exc_info.value.errors())
+        check_error(exc_info.value)
+
+    def test_decision_model_image_concepts_rejected(self):
+        """
+        Tests that a concept extracted from images, which a decision model cannot
+        extract, is rejected for a document that has images as it is for
+        a document without them, for a decision model used on its own and as
+        a fallback model of an LLM that supports vision: vision is a capability
+        of LLMs, and is not checked for a decision model.
+        """
+        requests: list[Any] = []
+
+        async def record_request(*args: Any, **kwargs: Any) -> Any:
+            """
+            Records a request to a model API, which is not expected where
+            this stub is used, and fails the test.
+
+            :param args: Arguments of the request.
+            :type args: Any
+            :param kwargs: Keyword arguments of the request.
+            :type kwargs: Any
+            """
+            requests.append(kwargs)
+            raise pytest.fail.Exception("No request is expected to be sent.")
+
+        llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
+        # The LLM can extract from images, whatever litellm tells of its model
+        llm._supports_vision = True
+        modalities: list[Literal["image", "multimodal"]] = ["image", "multimodal"]
+        for modality in modalities:
+            document = Document(
+                raw_text=_DOCUMENT_RAW_TEXT, images=[self.test_img_png_invoice]
+            )
+            document.concepts = [
+                BooleanConcept(
+                    name="Signed", description="Is signed", modality=modality
+                )
+            ]
+            for model, error_match in [
+                (
+                    _create_decision_model(),
+                    f"^Decision model `{_DECISION_MODEL}` cannot extract: concept "
+                    rf"`Signed` \(modality `{modality}` is not supported\)\. ",
+                ),
+                (
+                    llm,
+                    f"^Fallback decision model `{_DECISION_MODEL}` cannot extract "
+                    "what it is to extract if the model it is a fallback for "
+                    rf"fails: concept `Signed` \(modality `{modality}` is not "
+                    r"supported\)\. ",
+                ),
+            ]:
+                for extraction_method in [
+                    model.extract_concepts_from_document,
+                    model.extract_all,
+                ]:
+                    with (
+                        patch.object(litellm, "adecisions", new=record_request),
+                        patch.object(litellm, "acompletion", new=record_request),
+                        pytest.raises(ValueError, match=error_match),
+                    ):
+                        extraction_method(document)
+            assert not requests
+            assert not document.concepts[0]._is_processed
+
+    def test_fallback_decision_model_paced_by_own_limiter(self):
+        """
+        Tests that, with concurrency, the requests of a fallback decision model
+        for the paragraphs are sent concurrently and paced by the limiter of
+        that fallback model, as the requests of the primary model are by its own.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        acquisitions: list[tuple[float, float]] = []
+        requests_in_progress: list[str] = []
+        max_requests_in_progress: list[int] = [0]
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the config of the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                acquisitions.append((self.max_rate, self.time_period))
+                await super().acquire(amount)
+
+        respond = _create_aspects_responder({"Termination": {2: 0.9, 4: 0.7}})
+
+        async def respond_after_other_requests(request: dict[str, Any]) -> Any:
+            """
+            Responds to the request to the fallback model, after the other
+            requests sent concurrently are in progress.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: Any
+            """
+            requests_in_progress.append(request["input"])
+            max_requests_in_progress[0] = max(
+                max_requests_in_progress[0], len(requests_in_progress)
+            )
+            for _ in range(3):
+                await asyncio.sleep(0)
+            requests_in_progress.remove(request["input"])
+            return respond(request)
+
+        for primary_model in [
+            _create_decision_model(async_limiter=AsyncLimiter(20, 5)),
+            _create_llm(async_limiter=AsyncLimiter(20, 5)),
+        ]:
+            primary_model.fallback_models = [
+                _create_decision_model(
+                    _OTHER_DECISION_MODEL,
+                    is_fallback=True,
+                    async_limiter=AsyncLimiter(7, 3),
+                )
+            ]
+            document = _create_aspects_document(
+                aspects=[
+                    Aspect(name="Termination", description="Clauses on termination")
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [_create_api_error(litellm.AuthenticationError)],
+                    _OTHER_DECISION_MODEL: [respond_after_other_requests],
+                }
+            )
+            completions_stub = _CompletionsAPIStub(
+                {
+                    _LLM_MODEL: [
+                        _create_api_error(litellm.AuthenticationError, _LLM_MODEL)
+                    ]
+                }
+            )
+            acquisitions.clear()
+            max_requests_in_progress[0] = 0
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(litellm, "acompletion", new=completions_stub),
+                patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+            ):
+                primary_model.extract_aspects_from_document(
+                    document, use_concurrency=True
+                )
+            # Each request to the fallback model is paced by the limiter of
+            # the fallback model, not by the one of the primary model
+            assert acquisitions.count((7, 3)) == n_paragraphs
+            assert set(acquisitions) == {(20, 5), (7, 3)}
+            assert acquisitions[-n_paragraphs:] == [(7, 3)] * n_paragraphs
+            # ... and the requests are sent concurrently
+            assert max_requests_in_progress[0] == n_paragraphs
+            (aspect,) = document.aspects
+            assert [item.value for item in aspect.extracted_items] == [
+                document.paragraphs[2].raw_text,
+                document.paragraphs[4].raw_text,
+            ]
+
+    def test_decision_model_response_with_invalid_token_counts(self):
+        """
+        Tests that a response that reports a number of tokens that cannot be
+        counted, such as a negative one, is not recorded as a response: its request
+        fails, with an unfinished call, and nothing is added to the usage.
+        """
+        document = _create_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The document is an NDA")
+            ]
+        )
+
+        def create_responder(
+            input_tokens: Any, output_tokens: Any
+        ) -> Callable[[dict[str, Any]], Any]:
+            """
+            Creates the function that responds to a request with a response
+            that reports the given numbers of tokens.
+
+            :param input_tokens: The number of input tokens to report.
+            :type input_tokens: Any
+            :param output_tokens: The number of output tokens to report.
+            :type output_tokens: Any
+            :return: Function that creates the response for a request.
+            :rtype: Callable[[dict[str, Any]], Any]
+            """
+
+            def respond(request: dict[str, Any]) -> Any:
+                """
+                Creates the response for the request.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :return: Response, with the attributes that the framework reads.
+                :rtype: Any
+                """
+                response = _answer_all_questions(request)
+                return types.SimpleNamespace(
+                    model=response.model,
+                    answers=response.answers,
+                    usage=types.SimpleNamespace(
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        input_tokens_details=None,
+                    ),
+                )
+
+            return respond
+
+        for input_tokens, output_tokens in [
+            (-1, 0),
+            (10, -5),
+            (None, 0),
+            (10, None),
+            ("12", 0),
+            (10.5, 0),
+        ]:
+            decision_model = _create_decision_model(
+                pricing_details=ModelPricing(
+                    input_per_1m_tokens=0.05, output_per_1m_tokens=0.0
+                )
+            )
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder(input_tokens, output_tokens)]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(ModelAPIError) as exc_info,
+            ):
+                decision_model.extract_concepts_from_document(document)
+            assert isinstance(exc_info.value.original_error, ValueError)
+            assert "reports an invalid number of tokens" in str(
+                exc_info.value.original_error
+            )
+            assert not document.concepts[0]._is_processed
+            # The request is recorded as a failed one, with no tokens
+            usage = decision_model.get_usage()[0].usage
+            (call,) = usage.calls
+            assert call.timestamp_received is None
+            assert call.response is None
+            assert (usage.input, usage.output) == (0, 0)
+            assert decision_model.get_cost()[0].cost.total == 0
+
+        # The numbers of tokens that can be counted, including zero
+        decision_model = _create_decision_model()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [create_responder(0, 0)]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(document)
+        usage = decision_model.get_usage()[0].usage
+        assert usage.calls[0].timestamp_received is not None
+        assert (usage.input, usage.output) == (0, 0)
+        assert document.concepts[0].extracted_items[0].value is True
 
     def _create_concepts_for_recorded_tests(self) -> list[Any]:
         """

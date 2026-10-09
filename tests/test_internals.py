@@ -22,6 +22,7 @@ Module defining tests for the internals of the framework.
 
 from __future__ import annotations
 
+import asyncio
 import os
 from pathlib import Path
 from typing import Any
@@ -56,6 +57,7 @@ from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.registry import _publicize, _resolve_public_type
+from contextgem.internal.utils import _run_async_calls
 from contextgem.public import (
     Aspect,
     Document,
@@ -427,3 +429,163 @@ class TestInternals(BaseTest):
             "cannot have the same name as parent aspect",
         )
         assert [i.name for i in aspect.aspects] == ["Liability caps"]
+
+    def test_run_async_calls(self):
+        """
+        Tests the running of asynchronous calls one after another and concurrently:
+        the order of the results, and what is left running when a call fails or
+        the caller is cancelled, which is nothing.
+        """
+        started: list[str] = []
+        cancelled: list[str] = []
+        finished: list[str] = []
+
+        class Interruption(BaseException):
+            """
+            Error that is not an ``Exception``, as an interruption is.
+            """
+
+        async def run_call(
+            name: str,
+            wait_for: asyncio.Event | None = None,
+            error: BaseException | None = None,
+            steps: int = 0,
+        ) -> str:
+            """
+            Runs a call that takes the given number of steps of the event loop,
+            or waits for the event, and then fails with the error, if given.
+            """
+            started.append(name)
+            try:
+                for _ in range(steps):
+                    await asyncio.sleep(0)
+                if wait_for is not None:
+                    await wait_for.wait()
+            except asyncio.CancelledError:
+                cancelled.append(name)
+                raise
+            if error is not None:
+                raise error
+            finished.append(name)
+            return name
+
+        def get_running_tasks() -> list[asyncio.Task[Any]]:
+            """
+            Returns the tasks of the current event loop that are not done,
+            other than the current one.
+            """
+            current_task = asyncio.current_task()
+            return [
+                task
+                for task in asyncio.all_tasks()
+                if task is not current_task and not task.done()
+            ]
+
+        async def check() -> None:
+            """
+            Runs the checks in one event loop.
+            """
+            # === The results are in the order of the calls ===
+            for use_concurrency in [False, True]:
+                started.clear()
+                finished.clear()
+                results = await _run_async_calls(
+                    cals_and_kwargs=[
+                        (run_call, {"name": "slow", "steps": 5}),
+                        (run_call, {"name": "fast"}),
+                    ],
+                    use_concurrency=use_concurrency,
+                )
+                assert results == ["slow", "fast"]
+                assert started == ["slow", "fast"]
+                assert finished == (
+                    ["fast", "slow"] if use_concurrency else ["slow", "fast"]
+                )
+            assert await _run_async_calls([], use_concurrency=True) == []
+
+            # === A call fails ===
+            # One after another: the calls after the failed one are not started
+            started.clear()
+            finished.clear()
+            error = RuntimeError("Simulated error")
+            with pytest.raises(RuntimeError) as exc_info:
+                await _run_async_calls(
+                    cals_and_kwargs=[
+                        (run_call, {"name": "first"}),
+                        (run_call, {"name": "failed", "error": error}),
+                        (run_call, {"name": "not started"}),
+                    ],
+                    use_concurrency=False,
+                )
+            assert exc_info.value is error
+            assert started == ["first", "failed"]
+
+            # Concurrently: the calls still running are cancelled and waited
+            # for before the error is raised, i.e. nothing is left running,
+            # whatever the error is
+            other_error = ValueError("Another simulated error")
+            first_error: BaseException
+            for first_error in [error, Interruption("Simulated interruption")]:
+                started.clear()
+                cancelled.clear()
+                finished.clear()
+                never_set = asyncio.Event()
+                with pytest.raises(type(first_error)) as concurrent_exc_info:
+                    await _run_async_calls(
+                        cals_and_kwargs=[
+                            (run_call, {"name": "waiting", "wait_for": never_set}),
+                            (run_call, {"name": "done"}),
+                            (
+                                run_call,
+                                {"name": "failed", "error": first_error, "steps": 3},
+                            ),
+                            (run_call, {"name": "also waiting", "wait_for": never_set}),
+                            # A call that fails later is cancelled as well:
+                            # the first error is the one raised
+                            (
+                                run_call,
+                                {
+                                    "name": "failed later",
+                                    "error": other_error,
+                                    "steps": 9,
+                                },
+                            ),
+                        ],
+                        use_concurrency=True,
+                    )
+                assert concurrent_exc_info.value is first_error
+                assert not get_running_tasks()
+                assert finished == ["done"]
+                assert sorted(cancelled) == ["also waiting", "failed later", "waiting"]
+                # ... and nothing happens afterwards
+                never_set.set()
+                for _ in range(20):
+                    await asyncio.sleep(0)
+                assert finished == ["done"]
+
+            # === The caller is cancelled ===
+            started.clear()
+            cancelled.clear()
+            finished.clear()
+            never_set = asyncio.Event()
+            caller = asyncio.ensure_future(
+                _run_async_calls(
+                    cals_and_kwargs=[
+                        (run_call, {"name": "waiting", "wait_for": never_set}),
+                        (run_call, {"name": "done"}),
+                        (run_call, {"name": "also waiting", "wait_for": never_set}),
+                    ],
+                    use_concurrency=True,
+                )
+            )
+            for _ in range(5):
+                await asyncio.sleep(0)
+            assert started == ["waiting", "done", "also waiting"]
+            caller.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await caller
+            assert not get_running_tasks()
+            assert finished == ["done"]
+            assert sorted(cancelled) == ["also waiting", "waiting"]
+
+        asyncio.run(check())

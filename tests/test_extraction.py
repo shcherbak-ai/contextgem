@@ -26,10 +26,13 @@ import os
 import re
 import types
 from contextlib import contextmanager
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 from aiolimiter import AsyncLimiter
 
+from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.data_models import _Message, _ModelCall, _ModelUsage
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
@@ -47,6 +50,7 @@ from contextgem.public import (
     NumericalConcept,
     Paragraph,
     RatingConcept,
+    Sentence,
     StringConcept,
     StringExample,
 )
@@ -1671,3 +1675,161 @@ class TestExtraction(BaseTest):
                 match_found = True
                 break
         assert match_found, "No anomaly found in the middle of the document"
+
+    def test_overwrite_existing_resets_aspect_references(self):
+        """
+        Tests that an aspect extracted again with ``overwrite_existing=True`` has
+        the reference paragraphs and sentences of its new items only, so that its
+        sub-aspects and its concepts are extracted from them, and that
+        the references of an aspect are still added to without it.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        texts = [
+            "Services agreement",
+            "The client shall pay a fee of 5,000 euros every month.",
+            "Either party may terminate this agreement with a notice of 30 days.",
+            "This agreement is governed by the laws of Norway.",
+        ]
+        responses: list[str] = []
+        prompts: list[str] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: records the prompt, and returns the next
+            response of the queue.
+            """
+            prompts.append(kwargs["messages"][-1]["content"])
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=responses.pop(0))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document with one sentence in each paragraph, and an aspect
+            whose items are sentences, with a sub-aspect and a concept.
+            """
+            document = Document(
+                paragraphs=[
+                    Paragraph(raw_text=text, sentences=[Sentence(raw_text=text)])
+                    for text in texts
+                ]
+            )
+            document.aspects = [
+                Aspect(
+                    name="Termination",
+                    description="Clauses on termination",
+                    reference_depth="sentences",
+                    aspects=[Aspect(name="Notices", description="Clauses on notices")],
+                    concepts=[
+                        StringConcept(
+                            name="Notice period",
+                            description="Length of the notice period",
+                        )
+                    ],
+                )
+            ]
+            return document
+
+        def get_aspect_response(paragraph_positions: list[int]) -> str:
+            """
+            Returns the response of the LLM with the first sentence of each of
+            the given paragraphs extracted for the aspect.
+            """
+            paragraphs_json = ", ".join(
+                f'{{"paragraph_id": "P{position}", '
+                f'"sentences": [{{"sentence_id": "P{position}-S0"}}]}}'
+                for position in paragraph_positions
+            )
+            return f'[{{"aspect_id": "A0", "paragraphs": [{paragraphs_json}]}}]'
+
+        sub_aspect_response = '[{"aspect_id": "A0", "paragraph_ids": ["P0"]}]'
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        document = create_document()
+        (aspect,) = document.aspects
+        paragraphs = document.paragraphs
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # === The first extraction ===
+            responses.extend([get_aspect_response([1, 2]), sub_aspect_response])
+            llm.extract_aspects_from_document(document)
+            assert [i.value for i in aspect.extracted_items] == texts[1:3]
+            assert [id(i) for i in aspect.reference_paragraphs] == [
+                id(paragraphs[1]),
+                id(paragraphs[2]),
+            ]
+            assert [id(i) for i in aspect.reference_sentences] == [
+                id(paragraphs[1].sentences[0]),
+                id(paragraphs[2].sentences[0]),
+            ]
+            # The sub-aspect is extracted from the paragraphs of the aspect
+            assert texts[1] in prompts[1] and texts[2] in prompts[1]
+            assert texts[0] not in prompts[1] and texts[3] not in prompts[1]
+
+            # === The aspect is extracted again, without one of the paragraphs ===
+            prompts.clear()
+            responses.extend([get_aspect_response([2]), sub_aspect_response])
+            llm.extract_aspects_from_document(document, overwrite_existing=True)
+            assert [i.value for i in aspect.extracted_items] == [texts[2]]
+            # The references are those of the new items only
+            assert [id(i) for i in aspect.reference_paragraphs] == [id(paragraphs[2])]
+            assert [id(i) for i in aspect.reference_sentences] == [
+                id(paragraphs[2].sentences[0])
+            ]
+            assert [id(i) for i in aspect.reference_paragraphs] == [
+                id(paragraph)
+                for item in aspect.extracted_items
+                for paragraph in item.reference_paragraphs
+            ]
+            assert [id(i) for i in aspect.reference_sentences] == [
+                id(sentence)
+                for item in aspect.extracted_items
+                for sentence in item.reference_sentences
+            ]
+            # The sub-aspect is extracted from the new paragraphs only
+            assert len(prompts) == 2
+            assert texts[2] in prompts[1]
+            assert texts[1] not in prompts[1]
+            assert [i.value for i in aspect.aspects[0].extracted_items] == [texts[2]]
+            # ... and so is the concept of the aspect
+            prompts.clear()
+            responses.append('[{"concept_id": "C0", "extracted_items": ["30 days"]}]')
+            llm.extract_concepts_from_aspect(aspect, document)
+            (concept_prompt,) = prompts
+            assert texts[2] in concept_prompt
+            assert texts[1] not in concept_prompt
+            assert aspect.concepts[0].extracted_items[0].value == "30 days"
+
+            # An aspect that nothing is extracted for any more has no references
+            responses.append(get_aspect_response([]))
+            llm.extract_aspects_from_document(document, overwrite_existing=True)
+            assert aspect._is_processed
+            assert not aspect.extracted_items
+            assert not aspect.reference_paragraphs
+            assert not aspect.reference_sentences
+
+            # === Without overwriting ===
+            # The references that an aspect has are kept, and those of its items
+            # are added to them, as before
+            document = create_document()
+            (aspect,) = document.aspects
+            paragraphs = document.paragraphs
+            aspect.reference_paragraphs = [paragraphs[0]]
+            aspect.reference_sentences = [paragraphs[0].sentences[0]]
+            responses.extend([get_aspect_response([2]), sub_aspect_response])
+            llm.extract_aspects_from_document(document)
+            assert [id(i) for i in aspect.reference_paragraphs] == [
+                id(paragraphs[0]),
+                id(paragraphs[2]),
+            ]
+            assert [id(i) for i in aspect.reference_sentences] == [
+                id(paragraphs[0].sentences[0]),
+                id(paragraphs[2].sentences[0]),
+            ]
+        assert not responses

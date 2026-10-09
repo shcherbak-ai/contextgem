@@ -139,12 +139,12 @@ The model names above are the ones in the model list of this ``litellm`` version
 
 What to know about the providers:
 
-- **The provider and the model name are not checked when a decision model is created.** A name that LiteLLM cannot serve, a missing API key and a missing API base all fail at the first request, with ``ModelAPIError`` (see :ref:`decision-models-errors-label`).
+- **The provider is checked when a decision model is created.** A model of a provider that the installed LiteLLM version serves no decision models of, e.g. ``anthropic/...``, is rejected with a validation error (a ``ValueError``) that lists the supported providers, also when ``model`` is assigned later. The model name is not checked: a name that the provider does not serve, a missing API key and a missing API base all fail at the first request, with ``ModelAPIError`` (see :ref:`decision-models-errors-label`).
 - **API keys in the environment.** If ``api_key`` is not passed, LiteLLM reads the key from the environment variable of the provider, if it is set, e.g. ``TYPESAFE_API_KEY`` or ``OPENAI_API_KEY``.
 - **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``) and to the Decisions API of OpenAI (``openai/gpt-6-luna``). The other providers are reached through the same LiteLLM call and are not tested with ContextGem.
 
 .. warning::
-   **Ollama and LM Studio are not verified.** LiteLLM has no decision provider under the ``ollama/``, ``ollama_chat/`` and ``lm_studio/`` prefixes, which are for LLMs. A decision model can be created with such a prefix, but its first request fails before it is sent, with ``ModelAPIError`` (*Unknown Decisions provider 'ollama'*). A local server is reached with the ``strands_decider/`` prefix and its ``api_base``, if it accepts ``POST <api_base>/v1/systemone``. Whether Ollama or LM Studio serve this endpoint has not been verified with ContextGem.
+   **Ollama and LM Studio are not verified.** LiteLLM has no decision provider under the ``ollama/``, ``ollama_chat/`` and ``lm_studio/`` prefixes, which are for LLMs: a decision model cannot be created with such a prefix, and a validation error (a ``ValueError``) with the supported providers is raised instead. A local server is reached with the ``strands_decider/`` prefix and its ``api_base``, if it accepts ``POST <api_base>/v1/systemone``. Whether Ollama or LM Studio serve this endpoint has not been verified with ContextGem.
 
 ContextGem sends only text to a decision model. Concepts with the ``"image"`` or ``"multimodal"`` modality are not supported, whichever provider is used.
 
@@ -193,7 +193,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
    * - ``auto_pricing``
      - ``bool``
      - ``False``
-     - Enable automatic cost calculation using ``genai-prices``. Mutually exclusive with ``pricing_details``. Rejected for the decision models whose requests cannot be priced with it, e.g. ``openai/`` and self-hosted (``strands_decider/``) ones. See :ref:`decision-models-cost-label`.
+     - Enable automatic cost calculation using ``genai-prices``. Mutually exclusive with ``pricing_details``. Rejected for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. a price of output tokens (e.g. ``gpt-6-luna``), and for self-hosted (``strands_decider/``) models. See :ref:`decision-models-cost-label`.
    * - ``auto_pricing_refresh``
      - ``bool``
      - ``False``
@@ -233,12 +233,12 @@ A decision model can extract only what can be answered with a probability. An as
      - ``reference_depth="sentences"``; ``add_justifications=True``
    * - :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.LabelConcept` (both classification types), :class:`~contextgem.public.concepts.RatingConcept`
      - With ``modality="text"`` (default), without justifications and without references. The concept can be attached to a document or to an aspect.
-     - ``modality="image"`` or ``modality="multimodal"``; ``add_justifications=True``; ``add_references=True``
+     - ``modality="image"`` or ``modality="multimodal"``; ``add_justifications=True``; ``add_references=True``; more labels of a single-label concept, or more levels of a rating scale, than ``litellm`` accepts in a question
    * - :class:`~contextgem.public.concepts.StringConcept`, :class:`~contextgem.public.concepts.NumericalConcept`, :class:`~contextgem.public.concepts.DateConcept`, :class:`~contextgem.public.concepts.JsonObjectConcept`
      - Not supported
      - Always
 
-The number of the labels of a single-label concept and the length of a rating scale are limited as well (see :ref:`decision-models-limits-label`).
+The number of the labels of a single-label concept and the length of a rating scale are limited by ``litellm``. A concept over such a limit is rejected with the same ``ValueError``, before any request is sent (see :ref:`decision-models-limits-label`).
 
 The error names the model and each aspect or concept that cannot be extracted, with the reasons:
 
@@ -412,7 +412,7 @@ In a :class:`~contextgem.public.models.DocumentModelGroup`, each aspect and conc
    :language: python
    :caption: A decision model and an LLM in a model group
 
-The routing is yours to declare: ContextGem does not pick a model for an aspect or a concept. If an aspect or a concept that a decision model cannot extract is routed to it, ``ValueError`` is raised before any request is sent (see :ref:`decision-models-supported-label`).
+The routing is yours to declare: ContextGem does not pick a model for an aspect or a concept. If an aspect or a concept that a decision model cannot extract is routed to it, ``ValueError`` is raised before any request is sent (see :ref:`decision-models-supported-label`): set the ``model_role`` of such an aspect or concept to the role of an LLM in the group.
 
 What else applies to a group with a decision model:
 
@@ -457,9 +457,9 @@ Token usage is tracked for every decision model, while costs are calculated only
 
 **How pricing is set:**
 
-- ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has. With the pinned ``genai-prices`` version (0.1.9), these are the TypeSafe models listed above.
+- ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.1.9), these are the TypeSafe models listed above.
 - For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.1.9, this is the case for the decision models of Perplexity, OpenRouter and Cloudflare listed above: set ``pricing_details`` to get the costs of these models.
-- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model whose requests cannot be priced with it, when the model is created and when ``auto_pricing`` or ``model`` is assigned. This is the case e.g. for ``openai/`` decision models: ``genai-prices`` has only the chat prices of ``gpt-6-luna``, which differ from its prices on the Decisions API, so the costs would be calculated with the wrong prices without any notice. It is also the case for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
+- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.9, this is the case for ``gpt-6-luna``, whose chat prices differ from its prices on the Decisions API, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``). ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
 - With ``pricing_details``, :class:`~contextgem.public.data_models.ModelPricing` requires both ``input_per_1m_tokens`` and ``output_per_1m_tokens``. Set ``output_per_1m_tokens=0.0`` for a provider that does not charge for output.
 
 As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0`` (`TypeSafe models <https://docs.typesafe.ai/models>`_), and OpenAI lists $0.10 per 1M input tokens for ``gpt-6-luna`` on the Decisions API (`OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_). Neither charges for output tokens. Check the pricing page of your provider for the current prices.
@@ -467,7 +467,7 @@ As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0``
 **What a request costs.** The text is sent, and billed as input tokens, once per request: the text of the document or of the paragraphs of the aspect for each call of concepts, and the text of the paragraph for each request of aspect extraction. The fewer requests a text is sent in, the less it costs:
 
 - With ``use_concurrency=True``, set ``max_items_per_call``, as each aspect and each concept is otherwise processed in a call of its own (see :ref:`decision-models-aspects-label`).
-- As for LLMs, only the aspects or concepts with the same extraction parameters are processed in one call. Aspects and concepts that differ in ``justification_depth`` or ``justification_max_sents``, and concepts that differ in ``reference_depth``, are therefore sent in separate requests, although a decision model does not use these parameters. Leave them at their defaults for the aspects and concepts of a decision model.
+- The parameters that a decision model does not use do not split its calls: aspects and concepts that differ only in ``justification_depth`` or ``justification_max_sents``, and concepts that differ only in ``reference_depth``, are processed in the same call, while an LLM is called separately for each combination of these parameters.
 - More than 128 questions on a text are sent in several requests (see :ref:`decision-models-limits-label`).
 
 
@@ -476,7 +476,7 @@ As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0``
 📏 Limits
 -----------
 
-**Limits of litellm.** ``litellm`` accepts a request only within the following limits:
+**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.104.2), these are:
 
 .. list-table::
    :header-rows: 1
@@ -487,11 +487,18 @@ As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0``
    * - Up to 128 questions per request
      - Not a limit for the extraction: ContextGem sends the questions over the cap in further requests on the same text. A Boolean, single-label or rating concept takes one question, and a multi-label concept takes one question per label, so e.g. a multi-label concept with 130 labels takes two requests. The text is sent, and billed, once per request. In aspect extraction, each aspect of the call takes one question on each paragraph.
    * - 2 to 255 options of a question with one option to pick
-     - A :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_class"`` can have up to 255 labels. A multi-label concept is not affected, as each of its labels is a question of its own.
+     - A :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_class"`` can have up to 255 labels: with more labels, ``ValueError`` is raised. A multi-label concept is not affected, as each of its labels is a question of its own.
    * - 2 to 10 levels of a rating question
-     - The rating scale of a :class:`~contextgem.public.concepts.RatingConcept` can have up to 10 levels: ``rating_scale=(1, 10)`` works, while ``rating_scale=(0, 10)`` has 11 levels and does not.
+     - The rating scale of a :class:`~contextgem.public.concepts.RatingConcept` can have up to 10 levels: ``rating_scale=(1, 10)`` works, while ``rating_scale=(0, 10)`` has 11 levels and raises ``ValueError``.
 
-A concept over the limit on the options or on the levels cannot be extracted with a decision model: the extraction fails, and no request with its question is sent to the provider. Use an LLM for such a concept, e.g. by routing it to an LLM in a model group.
+A concept over the limit on the options or on the levels is rejected as any other concept that a decision model cannot extract (see :ref:`decision-models-supported-label`): ``ValueError`` is raised when an extraction method is called, before any request is sent, and the other aspects and concepts of that extraction are not extracted either. The error names the concept and gives the reason of ``litellm``:
+
+.. code-block:: text
+   :caption: The error for a rating scale with more levels than litellm accepts
+
+   ValueError: Decision model `typesafe/jev-latest` cannot extract: concept `Clarity` (its `score` question with 11 options is not accepted by litellm: `levels`: Value should have at most 10 items after validation, not 11). A decision model extracts aspects with the `paragraphs` reference depth, and Boolean, label and rating concepts from text without references, both without justifications. Route the other aspects and concepts to an LLM, e.g. in a model group.
+
+ContextGem has no limits of its own on the options and the levels: it checks each question with the request types of the installed ``litellm`` version, so the limits are those of that version. Use an LLM for a concept over a limit, e.g. by routing it to an LLM in a model group.
 
 **The text must fit in one request.** A document-level concept is decided on the text of the whole document, which is sent in one request: the text is not split into parts, and its length is not checked before the request is sent. A request that the provider rejects for its length fails as any other rejected request. For Jev 1.13, TypeSafe documents a limit of 32k tokens for the text together with the longest question, and of 64k tokens per request (`TypeSafe models <https://docs.typesafe.ai/models>`_, as of October 2026). For a longer document, attach the concepts to aspects: the aspects are extracted paragraph by paragraph, and the concepts of an aspect are decided on the paragraphs of the aspect only, which also have to fit in one request.
 
@@ -510,11 +517,11 @@ Providers may set further limits of their own. See the documentation of your pro
    * - Error
      - When it is raised
    * - ``ValueError``
-     - When an extraction method is called, before any request is sent: the decision model, or a decision model in the fallback chain, cannot extract an aspect or a concept that it is given (see :ref:`decision-models-supported-label`).
+     - When an extraction method is called, before any request is sent: the decision model, or a decision model in the fallback chain, cannot extract an aspect or a concept that it is given (see :ref:`decision-models-supported-label`), including a concept over a limit of ``litellm`` (see :ref:`decision-models-limits-label`). Also when a decision model is created, or its params are assigned, as a validation error: the provider of the model is not a provider of decision models that ``litellm`` supports (see :ref:`decision-models-providers-label`), or ``auto_pricing`` cannot be used for the model (see :ref:`decision-models-cost-label`).
    * - ``ModelAPIError``
-     - A request failed for good: with a non-transient error, or with a transient error after ``num_retries_failed_request`` retries. This includes the requests that ``litellm`` rejects before sending them, e.g. for an unknown provider or for a missing API key or API base. The error has the number of retries made (``retry_count``) and the error of the request (``original_error``).
+     - A request failed for good: with a non-transient error, or with a transient error after ``num_retries_failed_request`` retries. This includes the requests that ``litellm`` rejects before sending them, e.g. for a missing API key or API base. The error has the number of retries made (``retry_count``) and the error of the request (``original_error``).
    * - ``ModelExtractionError``
-     - A response cannot be used: the model refused to answer a question, an answer is missing, or an answer does not have a valid probability for each of the options offered. The request is not sent again, as the same response is expected.
+     - A response cannot be used: the model refused to answer a question, an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The request is not sent again, as the same response is expected.
 
 ``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`).
 
@@ -523,6 +530,7 @@ What to expect when a call fails:
 - **One answer that cannot be used fails the whole call.** No aspect or concept of that call gets its items, including those whose answers were valid. The aspects and concepts extracted in other calls keep their items.
 - **In aspect extraction, the answers on all the paragraphs are needed.** When a request for a paragraph fails for good, or its response cannot be used, the requests not yet sent are not sent, and no aspect of the call gets its items.
 - **The requests made are recorded in the usage**, with their tokens, also when the call fails.
+- **A model that fails stops the other models of its group.** In a model group, with ``use_concurrency=True``, the models extract at the same time. When the extraction with one of them fails, the requests in flight of the other models are cancelled before the error is raised, and no request is sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
 - **A warning instead of an exception.** With ``raise_exception_on_extraction_error=False`` passed to the extraction method, a warning is issued instead of ``ModelAPIError`` or ``ModelExtractionError``, and the aspects or concepts of the failed call are left without items. The ``ValueError`` above is raised in any case.
 
 

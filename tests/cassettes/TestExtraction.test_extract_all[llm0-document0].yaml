@@ -390,8 +390,6 @@ interactions:
       - '30427'
       content-type:
       - application/json
-      cookie:
-      - DUMMY
       host:
       - DUMMY
       user-agent:
@@ -421,14 +419,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSwW7bMAyG73kKQ2dniJvYTXcrhh62ywpsQIHFgcFIjK1WljRJ3lYUefdRShM7
-        aHsREn78afInX2ZZxqRgnzPGOwi8t2p+99BDddt+0Ve/fyq3+/pdP8PTj4flt2FX/mJ5VJjdI/Jw
-        Un3ihnQYpNFHzB1CwFi1uL4pVuviplwk0BuBKspaG+bVXA0aXhWdkRw9oQ39zbKX9MbetMB/FE76
-        FOnRe2iRYqckCjqjYoSB99IH0IHlI+RGB9Sp3U2tqXh8sqymbEtjNFLUxGp2u6hZfmIWHLQObEfY
-        R76p2f2ypAyC9yv6sY2ph1pvp99yuB88xBn1oNQEgNYmQPQoTbl9JYfzXHuppe8ass6Tj9SrD8ay
-        RA/0bpNPw8XozDpyPjTBPGEqWy2u1seCbNzJiNcnGKgVNZEVRZW/U7ERGEAqP/GaceAdilFbLKvr
-        /AI2f50MOGasqnJ9zoBBSDOyxWxiwtue32vgaJDU7VilLD6sPwLO0dJRNtahkPzSmDHNYbzsj9LO
-        20gdM4/uD51tEyS6uDGBexjU8faYf/YB+4bW2qKzTqYDjEcxO8z+A+solJV3AwAA
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OkKR2mu7Ww3YoBqxAixZFHBiaxNjaFEmT6K5pkf9eSvmw
+        g7UXwebDz5d8G2UZU5J9zZhoOYqN0+Nvj89PN9eLu4eyuJ8ttq/i+90PuFnzn3Jb/mV5jLC/foPA
+        Y9QXYSkOUFmzx8IDR4hZp5dX03I6Ly7KBDZWgo5hjcPxfKw7ww8RrVUCAqEl/WbZW3pjb0bCC5kn
+        +dGygRB4A2Q7OpHRWx0tjIegAnKDLO+hsAbBpHaXlaHk8cmyirwdjVErWRGr2PWkYvmROe5547lr
+        CYfIlxW7vSjJg+BtQR+r6LqrzGpYy8O6CzzOaDqtB4AbY5FHjdKUqwPZneZaK6NCW5N0gXSkXgNa
+        xxLd0btKOnVnozPnSXms0f6BlHY+mS32CVm/kx7PpvMDRepFD+JmRZF/kLKWgFzpMBCbCS5akH1s
+        v5lE6n9eIZy1VJ48eCeVHYSOBhL83/FH1ffyKNP0WejGPi3QAyHA0U3WzoNU4lyX3s1DPOzP3E7L
+        SC2zAP6ZrrZGBT4uTMKad3p/eixsA8Kmpq024J1X6f7iTYx2o3d79kw1dgMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -451,13 +449,15 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1553'
+      - '2405'
       openai-project:
       - DUMMY
       openai-version:
       - '2020-10-01'
       server:
       - cloudflare
+      set-cookie:
+      - DUMMY
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       transfer-encoding:
@@ -475,9 +475,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 36ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 427ms
+      - 221ms
       x-request-id:
       - DUMMY
     status:
@@ -920,20 +920,23 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/6WW3U7bMBSA7/sUlq8D6n/a3QFCGhObOm3apNEqcu3TxiyxI9spIITEa+z19iQ7
-        dmjTdjC6cJO6Pn9fzjnO8X2LECoFfUcoT5njeZEdnX/P2eirdt+ym/P35vNqfhqv2McP8SCHdkkj
-        b6Hn18Dd2uqYa7QDJ7WqxNwAc+C9duJxpz/qjAfdIMi1gMybLQt3NDzKSsWeLFItOVgUXeFfQu7D
-        07MpAbe43Y7WOzlYy5aAe2sl3DQ68zuUWSutY8rRqBZyrRyogHs1VejcPwiZonaBr5FIMUXZlJ60
-        pzRaywpm2NKwIrVeeFVtb2z3dDYuJp2Ni0rlurROLiRnPjuVzoVyRosSX5e4FAh6AMiRjzBL5iDV
-        kuRMAC7dDYAKOhjISbDHU7r2/RAdStR9neiSzSGraBbSWEd8xgzjzsP42HeebRIWJ40gxv8FYQEB
-        xL8oThtRdNoHVEdgKXAPq3N+y3xfH5/pnFxenr05+gG9MTF6JQVsAv1+/GWJddgh2B5CGOz9ZrG7
-        DWNz6e4iJMDzHBGGRflxMcHCCGiG0Xsd4xPL9xmwD7ANSAHGahUosEukIf7UN+PoN0xHkWoFRJX5
-        HEyzyIOGkSFnMntTDwziQ5O/3/hS7X6pqq6US8VcacJx9R6aQY0PhfIEOA0kpqZkWQjvPwwLbfZ5
-        G4EMD/g2fPHHoCJx0mVA9KIhVrWY+R9cz7anlYFFaZmfkqrMsi0BU0q7QBPm5Ky1fsX1ZFxIJW2a
-        4PDFY+KnnXW6oEH6gM9ZmLTlzvCkhcHZ7RKnf0JwO+z2upVDWk/1WhwP4iepQ5Zsy248GkfPuEwE
-        OGxcuzWuKWc8BVHbdnrDONoRJjdGOqg1+qNhd6PBSiF1LWu3trLwN/RzAFWGsEy1l96o/2KAWsA5
-        FHixSQoDQvLd1NRqBvzt6CW1TT0CMrVgVnj1SXC+G18zAQtWZtX9hdo76yBPsLBLMIWR4RLj26L1
-        0PoDTV0kw7sJAAA=
+        H4sIAAAAAAAA/8yW3W7TMBTH73kKK9dp1fRz5W6sQ9pUoQqJTdBIyLFPG4/Ejmx3rExIvAavx5Nw
+        nDRtNwRr3CHtJkp97PP/5fh89P4VIYHgwWsSsJRalhdZ6/z69uP0Uo5774tr+21C3+b9cTJjV1eT
+        DyfDIHQnVHIDzNan2kzhObBCycrMNFALzms0GkeDaNjvjUpDrjhk7tiysK1hK1tJujmRKsHAoGmO
+        Pwm5L5+OTXK4w+VOWK/kYAxdAq7Vm3BRq8ytBNQYYSyVNgh3RqakBVnizmOJzt2DkBh3F/gZnwWP
+        0RYHp504CGtbQTVdalqkxhnn1fL27KM9WxezaOui2nKzMlYsBKMuOtWeC2m14iv8XGJTIOgBIEc+
+        Qg1JQMglySkHfLVfASRBESvAtOOg9vs9PJSmewANR2lc29AshDaWuIhpyqyDcfprxzYrX069QHpP
+        g8y0uhUcMShJMiq/IApknCyUrpV//fhpiKh41w5NSLTmpQ8vqv6LpBq8SKphIyqXQJg/f3J5aY8a
+        aRepkvBMyidNlCWBnIrsmaTHjWvXAIad/6t433iRRJ2nUd5R7Mvk/I66SdA+UzmZTs+OFo4ahH8j
+        VCa+sdhTsaFyrnFa+Gl3G2i76DNh1yEq4+QLMRc4+XQxw7vATr7LhIruKKxeo7S4pFgKEwUlUAqa
+        uEG5dy0lz6ZY/Xj6nldUValc5QloP+WBp3JVpMdcwqDr0aKNWEpqVxpaSabYfsvezd2yXP2Qeg3T
+        dU+wKpkaj2RCgh+DzzyV2Dj+Hos9NKU9I+MzT62w2X/GajZQObaVg3jwBv14Rr5NXshq+mwTqMpv
+        Wv8PeDCL/NhOGib3w2QuI/aI2o+jyUz+DQAA//+tWMtuwyAQvPszOOdQkwon39GzhRCsG1TXIB6t
+        esi/d4Em4DSWKjUXgzTrZdgdGw3tz7ewSlJXVTYPo8X+cD6/pHOp0CjaNtPt2g8QNev/I+ptPjei
+        LpMxDTgfW6/nYIpeJI+5xHluALEsJmQa2WWO3WVvF1856UX7E0fr6tHHolf0wViS0TM+x+xT48p6
+        EuvQ+QYezBvktIzuaUlIqieu8PEw/KABucwVGGh/3N1JyRUEPKx8Y3aJFPIEqr7b79mwW4H80+kA
+        NeL5wOg1QkSlTcWeuqYKv0nfI1AqhF90zULp9gIVkBJsQOrWgdJyXZoa5iDdLWyFXfuRKRMP7kNL
+        3KsGl3qmYBJxLu6f+C8f4J1jY1/BWafzFUCSRXfuvgEwWvVb+RAAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -956,7 +959,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6991'
+      - '6532'
       openai-project:
       - DUMMY
       openai-version:
@@ -980,9 +983,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 36ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 466ms
+      - 416ms
       x-request-id:
       - DUMMY
     status:
@@ -1248,15 +1251,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTwW7bMAyG73kKQacVcIq4jt26xwwrih6KYZcd4sBQJdrWKkuGJHftirz7KDuJ
-        HbS9yAg/kvj5k3lfEEKloLeE8oZ53nZq+eN3y+6ax83mRv5Krh66R/WQ/ev15v65Mj9pFCrM0x/g
-        /lh1yQ3WgZdGj5hbYB5C1/g6j9c3cZ7mA2iNABXK6s4vs6XqNTtUNEZycIi2+JOQ9+EN2rSAVwyv
-        omOkBedYDRg7JmHQGhUilDknnWfa02iC3GgPepC7LTQ2Dw8hRQAcOl9KUSAs6PdVQaMjhFdvGccx
-        SumhdSFjO7JA7+QLkG/pBXkDZh2prGmJb4AIHJyYijhZa6nry4KONbvw2Rd6NxdmoeodC4boXqkZ
-        YFobz4KhgyW7A9mfTKiklq4p0WeHpuNgzpuODnSP724wtT/ziXaoEYf15hmGtkmaJWNDOi1wwnl8
-        gB6lqFlZlq6jTzqWAjyTys0WQznjDRp4qo2T7Do6g+Vfi/ZOGVdxnpwyWC+kmdhqMTPho+bPBIwG
-        4SKmLuv0y/4T4OEuUHlnQUh+bsyUZiH8Db5KO21jUEwd2Be88dJLsGFjAirWq/FQqXtzeGQlrrUG
-        21k5XGs4isV+8R96obcapAMAAA==
+        H4sIAAAAAAAA/3WTwW7bMAyG73kKQacOcIp4id26xw0bMGCHDNuwDXFgaBJta3MkQ6KzBkXevZSd
+        xA7WXmSEH0n8/Mk8zRjjWvEHxmUtUO7aZv7hx/7X10/ffbb+nH7R6+r+5yFBodbQwrd3PAoV9vcf
+        kHiuupWW6gC1NQOWDgRC6BrfZXESp6vVqgc7q6AJZVWL83TedEacKmqrJXhCG/rJ2FP/Bm1GwSOF
+        F9E5sgPvRQUUOydR0NkmRLjwXnsUBnk0QmkNgunlbnJDzcPDWB6AhBYLrXKCOX+/yHl0hvCITkga
+        o9AIOx8yNgML9KPeA7tJ3rADCOdZ6eyOYQ1M0eDMlszrymhT3eZ8qNmGzzE326kwB2XnRTDEdE0z
+        AcIYiyIY2luyPZHjxYRSG+3rgnz2ZDoN5tG2vKdHere9qd2VT7wljTQs2r/Qt10m6XJoyMcFjjhL
+        ThBJSjMpS5P76IWOhQIUuvGTxXApZE0GXmrjZXoXXcHinyN7x4y3cba8ZIhOaTuyxWxiwv+aXxIw
+        GESLGLusslf7j0CGuyDlrQOl5bUxY5qD8Dd4Le2yjV4x9+D2dOMFanBhYwpK0TXDoXJ/8HRkBa21
+        Atc63V9rOIrZcfYMnT0lWqQDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1279,7 +1282,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1541'
+      - '1252'
       openai-project:
       - DUMMY
       openai-version:
@@ -1303,9 +1306,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 308ms
+      - 135ms
       x-request-id:
       - DUMMY
     status:
@@ -1625,16 +1628,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUXWvbMBR9z68Qek5KnNrp0rcxxkYZo7BCNuJgNPnKVmdLRpKzlJL/vis58Ue7
-        vBjrnnuOjq+O/DojhMqc3hPKS+Z43VSLz9uafdn+jGNx/Lr89R30NkkeHg7Jx1Xx7YnOPUP/fgbu
-        LqwbrpEHTmrVwdwAc+BVo7tNFH+INutlAGqdQ+VpReMW60XVKnZmlFpysAjtcEnIa3h6byqHI5YD
-        P1RqsJYVgLVLExaNrnyFMmuldUw5Oh9ArpUDFezuUoXi/kFI6gEOjctkniKY0k/LlM4vIBydYRw/
-        I5MOaus7dh3WK3SNB1a14OFkPi4/t9ZJITnzc+n0n0ogrDAANdohBmomlSVSERAC50mENkTIA5AX
-        YMYSYXRNHHJynCbRglhZKKmKm95lt5MBAQbwU7KGGdRnTTm1+8byVVY/iMdossVbggU/UHyR+fuN
-        uubHaPEDRabAfrw8DYu+fq6FNb7vx6eI27eW+fSotqpGAFNKuzDlkJ/9GTn1iRFSSVtmGEqLCcUU
-        WKcbGtATPvchge0kVLTB2WMynP4DQTaON1EnSIe0D3C0OgeUOvRSjXjr6MKbSGY5OCYrO4ox5YyX
-        GLdB9HZ9N5+A2V+DYRw6bqNV1HewNpd6wJaz0RTem/6fgW5CmLCRh+Sq/gBwf4vQeWMgl3w6maHN
-        gP9pXGvrjyM4phbMAf8ImZNg/JHlIFhbddea2heLVzLDcy3ANEaGu+1TMTvN/gHKrjDI0gQAAA==
+        H4sIAAAAAAAA/3VUy27bMBC8+ysInuXAdPyAc2xRtIcegj7R2obAkCuJqUSqJGUnCPzvXVK2Hkl9
+        EcSdneFoOdTLhBCqJL0jVBTci6oupx9+Hn59/zT/sTxWfv2lmH+u5IN69/fj701zZDQJDPPwCMJf
+        WDfCIA+8MrqFhQXuIaiy9YYt2WqxWEWgMhLKQMtrP11Ny0bzM6MwSoBDaItLQl7iM3jTEp6wPEsu
+        lQqc4zlg7dKERWvKUKHcOeU8154mPSiM9qCj3e1Oo3h4ELILgIDap0ruENzR97MdTS4gPHnLBX5G
+        qjxULnRsW6xTaBsPvGwgwMtkWH5snFeZEjzMpdX/VgDhuQWo0A6xUHGlHVGaQJbhPElmLMnUAcgz
+        cOtIZk1FPHIkTpOYjDiVa6Xzm85lu5OFDCzgp6Q1t6jP62Js95Xlq6xuEPdstMVrgoMwUHxR8u1G
+        bfM9m35FkTGwHy5P/aKrn2txje/74Sni9o3jIT26KcsBwLU2Pk455md/Rk5dYjKllStSDKXDhGIK
+        nDc1jegJn/uYwGYUKlrj7DEZ3vyBKLtYbFgrSPu09zCbnwNKPXopB7wVu/BGkqkEz1XpBjGmgosC
+        49aL3q7WyQhMjxbD2HfcsjnrOngjlemx2WQwhbem/2egnRAmbOBheVW/B0S4Rei8tiCVGE+mb7MQ
+        fhrX2rrjiI6pA3vAP0LqFdhwZBIy3pTttabu2eGVTPFcc7C1VfFuh1RMTpN/hkY2ddIEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1657,7 +1660,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1365'
+      - '1222'
       openai-project:
       - DUMMY
       openai-version:
@@ -1681,9 +1684,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 172ms
+      - 269ms
       x-request-id:
       - DUMMY
     status:
@@ -1908,10 +1911,13 @@ interactions:
       content=''Company ABC (Supplier)''\n        </extracted_item_example>\n    </extracted_item_examples>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nThis
       Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n\nParty A:\n\nParty B:\n\nExample.Com LLC\n\n5678
+      July 16, 2024, by and between:\n\nParty A:\n\n_____\n\n_____\n\n_____\n\nContact:
+      _____\n\nPhone: _____\n\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n\n5678
       Random Drive\n\nNew York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone:
-      (012) 345-6789\n\nEmail: jane.doe@example.com\n\nExample.Com LLC\n\nName: Jane
-      Doe\n\nTitle: Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
+      (012) 345-6789\n\nEmail: jane.doe@example.com\n\n_____\n\nBy: ___________________________\n\nName:
+      _____\n\nTitle: _____\n\nDate: ___________________________\n\nExample.Com LLC\n\nBy:
+      ___________________________\n\nName: Jane Doe\n\nTitle: Managing Partner\n\nDate:
+      ___________________________\n</document_text>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -1922,7 +1928,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19231'
+      - '19492'
       content-type:
       - application/json
       cookie:
@@ -1956,15 +1962,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/52TTW/bMAyG7/kVgk4d4BRxkuajxxodVizAdhuGODA0mUm0ypIh0VuKIv99lJzE
-        DtbusIsM8yGpVy+l1wFjXJX8nnG5FyirWg8fv1Xi6fMXnX2cbOvSfZ89LNzqaWTk8/RTxpNQYX/8
-        BInnqltpqQ5QWdNi6UAghK7pfJlOF+lyNo6gsiXoULarcTgb6saIU8XeKgme0Jp+GXuNa9BmSjhQ
-        eJScIxV4L3ZAsXMSBZ3VIcKF98qjMMiTDkprEEyUu84NNQ8LY3kAEmosVJkTzHk2ynlyhnBAJyQd
-        o1AIlQ8Z65YF+ngQ4cy3ma3YapXlvEWb8Dkm/94l/d9d2M1X4fCFPXy43i83m/55HWwbL4LPptG6
-        B4QxFkWYU3R6cyLHi7dbZZTfFzQ+T7Mkvzzamkd6pHUTZ9Vc2c9rR9PHAu0zxLaT+XTaNuTdvehw
-        urg7USQtule3HC+TN1oWJaBQ2vcGzqWQe7KsazqZzZMrWPx2ZGiXMSZZlwzRlMp2bDToufC36LcE
-        tA4ps+tpSO/e3aADMlwFkl47KJW8tqZLcxDe13tpl3lEydyD+0WPp0AFLsyshK1odPsCuH/xdK8K
-        GuwOXO1UfAbhWgyOgz8GT+kd/QMAAA==
+        H4sIAAAAAAAA/52TwW7bMAyG73kKQacOcIrYTWNktzXtLSi2wzYEcWBoEpNosyVXort0Rd69lJ3E
+        Ttft0IsM8yMp6v+l5wFjXCv+kXG5FSjLqhjefX9cfFvgp1ulvv754kt1fy/n9gHc4vr2gUehwv74
+        CRKPVZfSUh2gtqbF0oFACF3jdBpfx5PxOG1AaRUUoWxT4XAyLGojDhVbqyV4Qkv6Zey5WcNsRsGO
+        wqPoGCnBe7EBih2TKOhsESJceK89CoM86qC0BsE04y4zQ83DwlgWgIQKc60yghmfjTIeHSHs0AlJ
+        x8g1QulDxrJlgd7tRDjz5cyWbD6fZbxFq/DZR//fJX7vLuzis3D4xG4+nO+XmVX/vA7WtRdBZ1MX
+        RQ8IYyyK4FOj9OpA9idt19pov83JPk9ekl4ebcUbuqd11XhVn8nPK0fuY472FzRtr9Jp0jbk3b3o
+        cHyVHijSLEWvbppMozda5gpQ6ML3DOdSyC1J1ms6SaMzmP92JGiXkYyT5JQhaqVtx0aDngp/D/3W
+        AK1C2my6Lr0JXvfvgAw3gSavHCgtz5Xp0hyE5/WvtJMdzcTcg3ukt5OjBhcsU7AWddE+AO6fPF2r
+        nHzdgKucbl5BuBWD/eAFdpCT1vwDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1987,7 +1993,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2599'
+      - '1426'
       openai-project:
       - DUMMY
       openai-version:
@@ -2013,7 +2019,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 140ms
+      - 142ms
       x-request-id:
       - DUMMY
     status:
@@ -2387,18 +2393,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/41UUW/aMBB+51dYftqkMCWwQtlb11ZbJcoqJm2rGhQZ5wLeHDuzHUqF+O87J4SA
-        oFN5CHDfd+fLfd950yGEipR+IpQvmeN5Ibu3P3M2Vqu77+vHx88/Jvpr9Hc4uAuj+a/L6QUNfIae
-        /wbumqwPXGMeOKFVDXMDzIGvGg1H0cfLaDS4qIBcpyB92qJw3UFXlortMpZacLAIPeFfQjbV0/em
-        UlhjOAyaSA7WsgVgrCFh0GjpI5RZK6xjytGgBblWDlTV7lOssLh/EBJ7gEPhEpHGCMb0Ooxp0ICw
-        doZxfI1EOMitZzzVmEcnWnVvhOVS29IAuVoYgBwPIe8mN1fvY1ozZ/5rG/z/0OiNh26aH57IbIEK
-        JIrhOI5YNfxQmkJb2Fdu4jeQCSW8UkRn5FqrTKTYtWCS3KlMm5x57CTt21yKRQVZnzcFDmIl1II8
-        MONeTui3ay5LW7Ezo/O3nzMFV5qqtXs0kEG6PeGMBZsLKc4cO9FkjC5SZ977i16BUb7jMXsmTKUE
-        xStKB6f171FVkJIp0KVthNyL6T/bQ3FjNTv0moGstMx7XJVSHgBMKe3qEXq5Zjtku/e1F8YuE1wd
-        i3uEXrVOF7RCt/icVXtSHlmfFjhdtJLTf6AqexGGo7ogbXeyhXtRf4c67EUe5PV6veBMySQFx4S0
-        B8tGOeNL9Oc+N+oPhsERmDwbdG/L6A/6oz2DlanQLRZ2DqZw2vS5BuoJoZZtleHg1fotwP3aYeeF
-        gVTw48m0NAP+anuNtpej6phaMCt0XOIEGC9ZChkrZX35UPticYcT1HUBpjCiuoG8Kzrbzj+lOKIe
-        eAUAAA==
+        H4sIAAAAAAAA/41UyW7bMBC9+ysInlpALux4Cdxb1l6CIO2lLSxDoKmRzZQiBQ7pJAj87x1KtmTD
+        TlEdKInvzZvhLHzvMcZVzr8yLtfCy7LS/bufm9+/Lnxhv6O/v7mfXLunG1U83789XIchT6KFXT6D
+        9HurL9KSHXhlTQNLB8JDVB1ezoaT4XQ8ntVAaXPQ0WxV+f60r4MRO4u1VRKQoDn9MvZerzE2k8Mr
+        bQ+S/U4JiGIFtLcn0aazOu5wgajQC+N50oHSGg+mDneeGhKPC2NpBCRUPlN5SmDKbwYpT/YgvHon
+        JB0jUx5KjIx5g0X00Zr+rUKpLQYH7GrlAEpywj493l59TnnDXMTXNvm30+F/On3ff0SiwIoqkBlB
+        6ThiNfCTcF4BMmFyBkVBVLUBllNVWmctNbjK4un+LRTKqFjURuVV6oD0h8wWjA5RqJzOq4RmyhTW
+        lSJST1R+gAS1UWbFKgrpjdmlVquaime4PjjDrGM5oHdB1s7JG2mDI0+nJg9KLJVWJCxFVce5pN6T
+        a+aoGrmCU4tHyzS1mjlz4m92A87EWLV4SViusAoeSAqtDjGWpPYg2lpTVOWJyh0lhTqiZZERvfL4
+        iY0AAvnZxb3vlLZb4rM97J7ULA6b2UERUMQhMkHrA0AYY32T2dgPix2ybQcnlhPXGeUHaVBpGNDb
+        itfoltZFPYjhaLZ45Wi0febtH6hlJ4PBrBHk3dB38MV4vEM9xaIP7C4mo+SMZJaDF0rjwTRzSfWj
+        AWhth6PpZXIEZi+OxqNjjKajWcsQIVe2wwa9gyycBn0ugCZD1Aedymz0oX4HyDjXFHnlqPXkcWY6
+        moN4d35Ea8tRR8wR3Ia6NaNhdrFkORQi6OZ24/iGdElkVNcVuMqp+oqLXdHb9v4CrlI60NkFAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2421,7 +2427,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2288'
+      - '1955'
       openai-project:
       - DUMMY
       openai-version:
@@ -2445,9 +2451,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 205ms
+      - 276ms
       x-request-id:
       - DUMMY
     status:
@@ -2830,15 +2836,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTy27bMBC8+ysInuXA8jPptckhbZEe2iJtLUNgyLXFlCIFkkoTBP73LknrYTS5
-        0NLO7Hi0s3ydEEKloB8I5RXzvG7U9Oa+Znd3D9Wv5dcf1fXPL99uNivFxe/PUN3f0ix0mIdH4L7r
-        uuAG+8BLoxPMLTAPQTXfXOXLy/xqvYlAbQSo0HZo/HQ9Va1mp47KSA4OoS2+EvIaz+BNC3jG8izr
-        KjU4xw6AtY6ERWtUqFDmnHSeaU+zAeRGe9DR7rbQKB4OQooAcGh8KUWBYEE/zgqadSA8e8s4fkYp
-        PdQuMLYJ6xUS8YmpFpLAp1a9kHydkflsvuy1Eu2xdV7uJWdhTon+vQLCDhagRntEOlIzgRUtCL6D
-        BUGk9oYwR8yenGlfFLTTPqaHXfjB5934yy3sW8fCxHWr1AhgWhsfncSZ707IsZ/yXmrpqhKDdJgq
-        Ts5509CIHvHcxdTasyBoY3EPfOnNH4iyq3y2TIJ02JABzvP8hHr0okZ983yVvSFZCvBMKjeKnnLG
-        K4xoEF2kVRvA8q/FAAfGYrNY9gzWCmkGbDYZTeF/028ZSBOS+jD6h8t39QeAh81D5w3GLPn5ZAaa
-        hXDR3qP1cUTH1IF9wltUegk2RCZgz1qVrgJ1Lw7XuMRcD2AbK+N9CFsxOU7+AcTUMCYGBAAA
+        H4sIAAAAAAAA/3VTTW+cMBC976+wfGYjYNmP9LhJL700UtNW1bJCjhnAqbGRbTZZRfvfO4bwsWoi
+        JGPmzTw/5o3fFoRQkdMvhPKKOV43cvn19+kP+75/uL//ucFn93L3a3teP/zYJ4+rPQ18hX56Bu6G
+        qhuusQ6c0KqHuQHmwLNG29toHW2SddwBtc5B+rKyccvNUraKvVdUWnCwCB3wk5C3bvXaVA6vGA6D
+        IVKDtawEjA1JGDRa+ghl1grrmHI0mECulQPVyT2kCsn9QkjqAQ6Ny0SeIpjSuzClwQDCqzOM429k
+        wkFtfcahx0aGPvHEZAs9wbdWnkm0CUgcxsnI1ac9t9aJQnDm+9SnP1ZAWGkAapRHhCUoHQ8kTpMn
+        IDXLEVY5QRAMhoVCgFmiC3J10E1Kh4Mu/eboX7g/zttgoGgt8+1XrZQzgCmlXSerM+D4jlzGlhdC
+        CVtl6KpFi7GN1umGdugF12NnYXvlCm0MDoXLnP4LHe06CpOekE7jMsET6lCLnNXF4S74gDLLwTEh
+        7WwOKGe8Qr8m0tVmG1yB2YtBN6eM1XaVjBmszYWesHAx68L/oj8S0HdIqHJiiXef8k8A92OIyhu0
+        WfDrzkxpBvyt+yxttKNTTC2YE16pzAkw3rIcCtbK/l5Qe7Y40xn6WoJpjOguh5+KxWXxD5wQVP0T
+        BAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2861,7 +2868,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1725'
+      - '1243'
       openai-project:
       - DUMMY
       openai-version:
@@ -2885,9 +2892,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 48ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 614ms
+      - 197ms
       x-request-id:
       - DUMMY
     status:
@@ -3254,14 +3261,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSTW/iMBC98yssn6EiggLpsR+rPeyl6qEHgiJjD2Dq2JE92bKq+O87dggJ2u3F
-        Seb5vbx5M18jxrhW/IFxeRAoq9pMXt4r8RqOZvbj+VX9+rl4M4+zKtuePh8hd3wcGW57BIkd6046
-        4gFqZ1tYehAIUTVb5tl8leXLaQIqp8BE2r7Gyf3dYmIaKy6cg9MSAoFr+mTsK53RnVVwonJSSJUK
-        QhB7oFp3iYremVjhIgQdUFjk4x6UziLYZHhdWBKPB2NFBCTUWGpVEFjwp2nBxx0IJ/RCUiOlRqhC
-        vLFuMcbQN9C+b+LjXNjN8Icedk0QsVXbGDMAhLUORYwqtbq5IOdrczttdTiUlGCgOMlwQFfzhJ7p
-        3KSwmpv+ee1pAFii+4AkO1+t8laQ96Pp4dklSo5kxQxoedbRbhRLBSi0CYPAuRTyQMFcudlssRzf
-        gOWnp9gGf73v1GMMjdKux6ajQQj/ev6fgTYgbfcDlW/le0DGcZPx2oPS8jaX/pqHuN/fXbsOIxnm
-        AfxvWt0SNfg4MAU70Zh2/3j4E2h3SprqHnztdVrCuBOj8+gvePrZh30DAAA=
+        H4sIAAAAAAAA/3VSTW/CMAy98yuinAENDRjsti9p2jTtuE0UVSE1kC1NqsQdTIj/PieltOzjkjZ+
+        fs7zs3cdxrjK+CXjci1Q5oXu3b18vi1GV+Pi6fbmzrxeb66G9w+bR3he5Ch4NzDs4h0k1qy+tMQD
+        VNZUsHQgEELVwcV0MBqMh6PzCOQ2Ax1oqwJ7o/64p0tzKCnXVknwBM7oytgunkGdyWBL4bNuHcnB
+        e7ECitVJFHRWhwgX3iuPwiDvNqC0BsFEwbPEUPFwMJYEQEKBqcoSAhN+c5bwbg3CFp2Q1EiqEHIf
+        MmYVxhi6Eqr/efjsEzNvP+hgWXoRWjWl1i1AGGNRBKtiq/MDsj82t1RG+XVKDnqykwR7tAWP6J7O
+        eTSrPOmfF44GgCnaD4hlh5PJtCrIm9E08PnBSo4kRbdo00FNO6mYZoBCad8ynEsh12TMkdtMJyLp
+        xpFnJ4rGxwxRZsq2qJ2WA78F//V65Y4yq78E/CzfADLMmlQXDjIlT01p0hyE5f4v7TiJKJh7cJ+0
+        tykqcGFaGSxFqavl4/7L0+KkNNIVuMKpuIFhITr7zje1ggx8egMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3284,7 +3291,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1257'
+      - '743'
       openai-project:
       - DUMMY
       openai-version:
@@ -3738,14 +3745,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OELttmu62FgW2W4AN6CEODFZibLWyJEhyP1Dkv4+Sk9rG
-        1otg8+HnS34ssoxJwb5njLcQeGfV8v6hg9+vT+s/3a9Nebe+f3t5d4fb8uFu+7NoWB4jzOMT8nCO
-        +sYNxWGQRg+YO4SAMWtxfVNcboqb6zKBzghUMayxYbleql7DKaI1kqMntKPfLPtIb+xNC3wj8yo/
-        Wzr0Hhok29mJjM6oaGHgvfQBdGD5CLnRAXVqd1dpSh6fLKvI29IYtRQVsYr9WFUsPzMLDhoHtiXs
-        I99VbFuQA7HtxdXp45I+9jHkWOn9tKbDQ+8hzqp7pSYAtDYBolZp2v2JHD/nO0gtfVuThJ70pJ59
-        MJYleqR3n/TqZxIw62gDoQ7mGVPa9arcDAnZuJsRF8M6iAbqRU3iytVJ6HnKWmAAqfxEdMaBtyhm
-        Na/yGaxfnQw4eow7hF5IMwGLiQT/dvy/6oM8UjeTqS6KLwuMgHO0dJu1dSgkn+syujmMB/6V2+cy
-        UsvMo3uh662DRBcXJvAAvRpOkPl3H7CraasNOutkusN4E4vj4i+O2urdfgMAAA==
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OEOfDXXfroR3QHtrtMgxxYKgSY2uVJVWiuw1F/vsoJa4d
+        rL0INh9+vuTrLMuYkuxLxkTLUXROz69/vPyEm+vVd9st5W2wz6v9cn3/7bn7WrZ3LI8R9vEXCByi
+        PglLcYDKmiMWHjhCzFpcXBabolxvygQ6K0HHsMbhvJzr3vBTRGuVgEBoS79Z9pre2JuR8IfMi3yw
+        dBACb4BsgxMZvdXRwngIKiA3yPIRCmsQTGp3WxlKHp8sq8jb0Ri1khWxil0tKpYPzHHPG89dSzhE
+        vq3YQ0EOxB5Wm9PHmj52MeRQmd20pod9H3ic1fRaTwA3xiKPWqVpdydyeJtvr4wKbU0SBtKTeg5o
+        HUv0QO8u6dWfScCcpw1gjfYJUtpysfx8TMjG3Yy4KAeK1IuexBWXZf5OyloCcqXDRHQmuGhBntXc
+        5Gew/u0Vwugx7pD3UtkJmE0k+L/j96of5VGmmUy1vPiwwAiEAEe3WTsPUolzXUY3D/HAP3J7W0Zq
+        mQXwL3S9NSrwcWES9rzXxxNk4W9A6GraagPeeZXuMN7E7DD7B2cMQ6d+AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3768,7 +3775,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2150'
+      - '2023'
       openai-project:
       - DUMMY
       openai-version:
@@ -3792,9 +3799,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 341ms
+      - 221ms
       x-request-id:
       - DUMMY
     status:
@@ -4237,23 +4244,23 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
+        DgAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4276,7 +4283,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '9650'
+      - '6568'
       openai-project:
       - DUMMY
       openai-version:
@@ -4300,9 +4307,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 229ms
+      - 415ms
       x-request-id:
       - DUMMY
     status:
@@ -4570,15 +4577,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTUW/TMBDH3/spLD+BlKJ2a7uVR2ATICT2gDShpoqMfUnMHDuyL2PT1O++s7Mm
-        KbA8OMr97k5//+/yNGOMa8XfMy5rgbJpzfzqthFw8+P7l6+33YfP26vmZqXvvonrxfpn84lnscL9
-        +g0Sj1XvpKM6QO1sj6UHgRC7Li+2y9Xlcnu5SqBxCkwsq1qcb+ams+KlonZaQiC0o0/GntIZtVkF
-        DxReZMdIAyGICih2TKKgdyZGuAhBBxQWeTZC6SyCTXJ3uaXm8WAsj0BCi4VWOcGcf1zkPDtCeEAv
-        JF2j0AhNiBm7nkV6re+BvVm/ZY8gfGCldw3DGpiiizNXsqArq22V875kH1+H3O6nujyUXRDRD9sZ
-        MwHCWoci+pkc2b+Qw+BBqa0OdUE2B/Kc7hXQtTzRA5375Gl3YhNvSSLdFd0dpLbn6+1Z35CP8xvx
-        AJGkmEnZpp/l3x0LBSi0CZO5cClkTf4NtcvzzUV2Aos/ntwdM87oGTJEp7Qb2WI2MeFfzf8T0BtE
-        cxi7rDav9h+BjGtBylsPSstTY8Y0D/EveC1tmEZSzAP4e1rxAjX4ODEFpehMv6c8PAbasYLGWoFv
-        vU7LGpdidpg9A6ASas2jAwAA
+        H4sIAAAAAAAA/3WTwW7bMAyG73kKQacWcIqka9x013a7DthlG+LAUCTaVitLrkRnCYq8+yi7jh2s
+        9UGG+ZHEr5/024wxrhX/yrisBMq6MfNvv/Z/3Bpgp34eqiO87tK1rZ6DUE8/fgNPYoXbPYPEoepG
+        OqoD1M72WHoQCLHr8v5huVqmd2nagdopMLGsbHCezk1rxXtF5bSEQGhDn4y9dWfUZhUcKLxIhkgN
+        IYgSKDYkUdA7EyNchKADCos8GaF0FsF2cjeZpebxYCyLQEKDuVYZwYw/LjKeDBAO6IWka+QaoQ4x
+        Y9OzSL/rPbCr1TU7gvCBFd7VDCtgii7OXMGCLq225U3G+5ptfJ0yu50K81C0QURDbGvMBAhrHYpo
+        aGfJ9p2cziYU2upQ5eRzINPpYgFdwzt6onPbmdpe+MQb0kiXRfcCXdsvq4fbviEfBzji9QCRpJhJ
+        WXp/l3zQMVeAQpswGQyXQlZk4Ll2ScXJBcz/erJ3zLil55whWqXdyBaziQn/a/5IQG8QDWKq/9P+
+        I5BxL0h540FpeWnMmOYh/gafpZ2n0SnmAfyedjxHDT5OTEEhWtMvKg/HQEuW01hL8I3X3bbGpZid
+        Zv8AjmLriqQDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4601,7 +4608,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1450'
+      - '1057'
       openai-project:
       - DUMMY
       openai-version:
@@ -4951,16 +4958,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUy27bMBC8+ysInuUgsmI77jXIpUCKIC3QopYhMNRKYkyRAkm5CQL/e5eUrUcS
-        XwRxZ3c4Gg71PiOEipx+I5RXzPG6kfP73zUrZSKT73tz+PP04MS9Lu/2zdPDj78JjfyEfn4B7s5T
-        V1zjHDihVQdzA8yBZ43Xm/jmNt7crgJQ6xykHysbN1/NZavYaaLSgoNFaItLQt7D02tTObxi+To6
-        V2qwlpWAtXMTFo2WvkKZtcI6phyNBpBr5UAFudtUIbl/EJJ6gEPjMpGnCKb07jql0RmEV2cYx8/I
-        hIPa+o5th/UMXeOByRY8vIzG5ZfWOlEIzrwvHf+vCggrDUCNcoiBmglliVAEigL9JIU2pBAHIG/A
-        jCWF0TVxOGNFqYQqSY6uXvUSu20MFGAAvyNrmEFy1lRTrR/0XpzqXXhcTLb4OGDBu4kvIv+8Udf8
-        uJj/jFM6BXbj5XFY9PVTLazxfTc+Qty+tcxHR7VSjgCmlHbB4hCe3Qk59nEphBK2yjCRFuOJEbBO
-        NzSgR3zuQvzaSaJog8ZjLJzeQ6C9WW6SjpAOUR/gON6cUIda5GhuHS+iLyizHBwT0o4yTDnjFWZt
-        IE1W62gCZv8MJnHoSBaLpO9gbS70gF3PRi58Fv2VgM4hjNlIw/Ii/wBwf4VQeWMgF3zqzNBmwP8x
-        LrX1xxEUUwvmgL+DzAkw/shyKFgruztN7ZvF+5jhuZZgGiPCxfapmB1n/wGrwRqmzwQAAA==
+        H4sIAAAAAAAA/3VUy27bMBC8+ysInuXAkl9wrkUboOghRQsYrWUINLWSmEqkyoebIPC/d0nZkpzE
+        F0Lc2R2OlrN8nRBCRU7vCeUVs7xp6+nn7fFX67bw98v3h+S3+vYwO7h4LbeLw/qro5GvUIcn4PZS
+        dccV1oEVSnYw18AseNZ4vYmX8WqxWgegUTnUvqxs7XQ1rZ1k54pKCQ4GoR1uCXkNq9cmc3jG8Cy6
+        RBowhpWAsUsSBrWqfYQyY4SxTFoaDSBX0oIMcnepRHK/EJJ6gENrM5GnCKb00yyl0QWEZ6sZx9/I
+        hIXG+Ixdh/UMXeKR1Q48vIzG4SdnrCgEZ74vHf/PCggrNUCDcoiGhglpiJAEigL7SQqlSSGOQF6A
+        aUMKrRpisSbHbhJVECNKKWR516vsTtJQgAb8laxlGvlZW13LfSP5ZlXfiMfk6oi3BQZ8Q/FD5O8P
+        6pIfk+mPOKXXwH68PQ2bPn6OhT1+78e3iMc7w7x7pKvrEcCkVDZ0Ofhnf0ZOvWMKIYWpMjSlQYei
+        C4xVLQ3oCdd9cKC7MhVtsffoDKv+QKBdLDfzjpAObh/gON6cUYta6lHdOk6iDyizHCwTtRnZmHLG
+        K7TbQDrvxmYAs38azThkzJNk3mcwlws1YLPJqAvvRX8koOsQOmykYXGTfwC4nyJU3mrIBb/uzJCm
+        wT8at9L66wiKqQF9xBchswK0v7IcCubqbqypeTE4khneawm61SLMtnfF5DT5Dx+wNxbSBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -4983,7 +4990,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1412'
+      - '1257'
       openai-project:
       - DUMMY
       openai-version:
@@ -5007,9 +5014,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 252ms
+      - 273ms
       x-request-id:
       - DUMMY
     status:
@@ -5392,15 +5399,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTwW7bMAy95ysEnZ3CzrIm3XFFUWDYrSt6iANDkWlbnSx5EpWlKPLvo+wkdrD2
-        Itt85OMzH/U+Y4yrkn9jXDYCZdvp+cNLK5Q4tH8e98+7l9r9fHp6vG+f/cMOvweexAq7ewWJ56ob
-        aakOUFkzwNKBQIis2eouW66zu/W6B1pbgo5ldYfz27kORpwqGqskeII29MnYe39GbaaEA4XT5Bxp
-        wXtRA8XOSRR0VscIF94rj8IgT0ZQWoNgermb3BB5PBjLIyChw0KVOYE5v09znpxBOKATkn6jUAit
-        jxmbAbswDIl7oQMMBD+CfmPZbcIW6WJ54RrSXoNHVSkp4pyG9F8NMFE7gJbkMeUZSaeGDC3bAWtF
-        SbApGYHgKKwMAcIzW7GrRjc5Pzc6Di/b+KD37XQMDqrgRRy/CVpPAGGMxV5Wb8D2hBwvI6+UUb4p
-        yFVPFtMYPdqO9+iRzm1vYbhyhXeOlgILtL+hp/2apcuBkI/rMsJZ+uWEImnRk7pFuko+oCxKQKG0
-        n+wBl0I25Ne0Z5ZcgcVfR26OGeNaiVAqOwFmkxH8r/ij7sN4lKlHlsXqU/4RkHEHSXZHHit5PZYx
-        zUG8cp+lXbzoFXMPbk/3qUAFLvpVQiWCHi4F92+eFrogU2twnVP9zYgrMTvO/gHb/d3JEAQAAA==
+        H4sIAAAAAAAA/3VTTW/bMAy951cIOjtF3KVJ02uxduh2GjZ0RRwYikzbymTJ00eWosh/HyXHsYO1
+        F9nmIx+f+ai3CSFUFPSOUF4zx5tWTj8/71/+wOEpfd7d/vz66/Fhef/lZfW92i78tzlNQoXe7oC7
+        vuqKa6wDJ7TqYG6AOQis6XKV3qSL+eI2Ao0uQIayqnXTxVR6xU4VtRYcLEJr/CTkLZ5BmyrggOFZ
+        0kcasJZVgLE+CYNGyxChzFphHVOOJgPItXKgotx1ppA8HIRkAeDQulwUGYIZvZ9lNOlBODjDOP5G
+        Lhw0NmSsO+zM0CXumfTQETx5+UrSRUKuZ9fzM1eXtvPWiVJwFubUpf+ogbDKADQojwhLUDo2JE6T
+        LZCGFQirgiAIBsNCIcAs0SW5aHSV0b7RsXvZhAe+b8ZjMFB6y8L4lZdyBDCltIuyogGbE3I8j7wU
+        Stg6R1ctWoxjtE63NKJHPDfRQn/hCm0NLoXLnf4NkfYmnc07QjqsywCvPp1Ah1LkuGy1TN5hzAtw
+        TEg7WgPKGa/RrnHLNLkA878GzRwyhq1ivhB6BExGE/hf8Hvdu+kIVQ0s6fJD/gHgYQVRdosWC345
+        lSHNQLhxH6WdrYiKqQWzx+uUOwEm2FVAybzs7gS1rxb3OUdPKzCtEfFihI2YHCf/AEkgp5kPBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5423,7 +5430,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1589'
+      - '1232'
       openai-project:
       - DUMMY
       openai-version:
@@ -5447,9 +5454,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 338ms
+      - 197ms
       x-request-id:
       - DUMMY
     status:
@@ -5816,14 +5823,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/42STW/CMAyG7/yKKOcywcYY7LiNC5dN4rADRVVIDWRLkypx2Qfiv89J6Vq0Tdol
-        bfzYjv3ahx5jXOX8lnG5EyiLUvdnz4V4WX/6R5w9LeZyvrirHi7dXhfj9QJ4EiLs+gUkNlEX0lIc
-        oLKmxtKBQAhZhzfT4WgynE6mERQ2Bx3CtiX2ry/GfV0ZcYrZWSXBE1zSlbFDPEN1Jod3Mg+SxlKA
-        92ILZGucyOisDhYuvFcehUGetFBag2BiwcvUUPJwMJYGIKHETOUpwZTfD1KeNBDe0QlJjWQKofDB
-        Y1kzxtBVUP+vwueYmlX3QQebyovQqqm07gBhjEURpIqtrk7k+N3cRhnldxkp6ElOKtijLXmkRzpX
-        UazqrH9eOhoAZmhfIaYdTWq9Y+fNaFp8dZKSI5WiO2HTYRN2ljHLAYXSviM4l0LuSJjuk+PkDGZv
-        jmRrPdr5iSpXtgN6HQV+Fvzb67U6ymz/k74FMsyaqi4d5Eqei9K6OQjL/Zfb9yRiwdyD29PeZqjA
-        hWnlsBGVrpeP+w9Pi5PRSLfgSqfiBoaF6B17X4fbfSt6AwAA
+        H4sIAAAAAAAA/42SwU7DMAyG73uKKOcNbbB1jBtMSEiIM0LrVIXUawNpUhJ3gNDeHSfd1k6AxCVt
+        /NmO/dtfA8a4yvkV47IUKKtaj24ft0/+DSp//3n+sHTmIalu7m6SSlw/vpR8GCLs8wtIPESdSUtx
+        gMqaFksHAiFkncwXk9kkmc7HEVQ2Bx3CihpHs7NkpBsj9jGlVRI8wRVdGfuKZ6jO5PBB5pghWirw
+        XhRAtoMTGZ3VwcKF98qjMMiHHZTWIJhY8Co1lDwcjKUBSKgxU3lKMOXLccqHBwgf6ISkRjKFJEfw
+        WLWMMXQNtP/r8NmlZt1/0MGm8SK0ahqte0AYY1EEqWKr6z3ZHZvbKKN8mZGCnuSkgj3amke6o3Md
+        xWpO+ue1owFghvYVYtrp5eWiTci70XT4Yi8lRypF98IWk0PYScYsBxRK+57gXApZkjD9J5PhCcze
+        HcnWeXTzE02ubA8Megr8LPi311t1lCn+k74DMsyaqq4d5EqeitK5OQjL/ZfbcRKxYO7BbWlvM1Tg
+        wrRy2IhGt8vH/aenxclopAW42qm4gWEhBrvBN1eGOVx6AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -5846,7 +5853,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '706'
+      - '891'
       openai-project:
       - DUMMY
       openai-version:
@@ -6091,14 +6098,13 @@ interactions:
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nThis
       Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n\nParty A:\n\n_____\n\n_____\n\n_____\n\nContact:
-      _____\n\nPhone: _____\n\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n\n5678
-      Random Drive\n\nNew York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone:
-      (012) 345-6789\n\nEmail: jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties
-      hereto have executed this Non-Disclosure Agreement as of the date first above
-      written.\n\n_____\n\nBy: ___________________________\n\nName: _____\n\nTitle:
-      _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName: Jane Doe\n\nTitle:
-      Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
+      July 16, 2024, by and between:\n\nParty A:\n\nContact: _____\n\nPhone: _____\n\nEmail:
+      _____\n\nParty B:\n\nExample.Com LLC\n\n5678 Random Drive\n\nNew York, NY 00000\n\nContact:
+      Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail: jane.doe@example.com\n\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\n\n_____\n\nBy: ___________________________\n\nName:
+      _____\n\nTitle: _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName:
+      Jane Doe\n\nTitle: Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -6109,7 +6115,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18848'
+      - '18821'
       content-type:
       - application/json
       cookie:
@@ -6143,14 +6149,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WS247aQAyG73mKaK5hxaEKm94iuquKHlSttJUIimYnBqY7mYlmnC3VinevPQES
-        1HIzCH/+Hfu33wdJInQpPiZC7SWqqjaj5XMlXxf3n2bN0/Kbffv88v1Bf8kq++Px6+qnGLLCvfwC
-        hWfVnXKkA9TOtlh5kAhcdTLPJh/uJ1k2jqByJRiW7WocpSPTWHlS7J1WEAit6W+SvMeXe7MlHCgc
-        9TFSQQhyBxQ7J1HQO8MRIUPQAaVFMeygchbBxnbXuaXi/CRJzkBBjYUuc4K5WIxzMTxDOKCXisYo
-        NEIVOGPdMqbLg+SZ7xauSlarRS5atOGfY243/e972DZB8ty2MaYHpLUOJfsWJ9+cyPEy61ZbHfYF
-        2RnIW+o/oKtFpEd6N9G75soOUXvaBhboXiGWnaXpyTzR7anD6fQEkVoxPdl8eiZXFYsSUGoTev4L
-        JdWefLpoJ7N0PryCxW9PLnYZ02nWbVQ2pXYdGw96Jvzb8/8aaA3Sdtf7wuxm/Q4oXj91Xnsotbo2
-        pkvzwNd+K+2yjdixCODf6JQL1OB5YyVsZWPaexThT6BbKmitO/C11/Eo+SgGx8Ff1gmB2YsDAAA=
+        H4sIAAAAAAAA/3WTwW7bMAyG73kKQWensNrYXncLsmDD0A07rRjiwNBkxtFmS4ZEtymKvPsoO4kd
+        rL1IMD/yB/WTfp0xxnXJPzKu9hJV09bz9ePTL9Ru/Tk+rIR8/LZc2k/Vl1R8/Smev/MoVNjff0Dh
+        uepGWaoD1NYMWDmQCEFVZPciEekiEz1obAl1KKtanKfzujPyVLG3WoEntKFPxl77M/RmSjhQOI7O
+        kQa8lxVQ7JxEQWfrEOHSe+1RGuTRCJU1CKZvd5MbEg8HY3kAClosdJkTzPkqznl0hnBAJxU9o9AI
+        jQ8Zm4EF+kM6fGHLS36IrQ8y+HCzsg17eFjlfEDbcB1zs5325GDXeRm8MF1dT4A0xqIMXvZubE/k
+        eHn/Thvt9wVZ7MlvepNH2/KeHunc9n52Vxbx1tGEsED7F3rZuzRZDIJ8nN2IRSxOFKmXelKXJUn0
+        hmRRAkpd+8lQuJJqT+aNondpFl3B4tmRtWPG7e2HxSVDdqW2I4tnExf+b/qtBgaHtKlGlSR7V38E
+        KuwEdd46KLW6dmZMcxB+gffSLuPoO+Ye3BPtd4EaXBhZCTvZ1cOScv/iacEKmmsFrnW639SwFbPj
+        7B91QRw7oAMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6173,7 +6180,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1212'
+      - '1321'
       openai-project:
       - DUMMY
       openai-version:
@@ -6197,9 +6204,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 14ms
       x-ratelimit-reset-tokens:
-      - 317ms
+      - 249ms
       x-request-id:
       - DUMMY
     status:
@@ -6419,14 +6426,13 @@ interactions:
       content=''Company ABC (Supplier)''\n        </extracted_item_example>\n    </extracted_item_examples>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nThis
       Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n\nParty A:\n\n_____\n\n_____\n\n_____\n\nContact:
-      _____\n\nPhone: _____\n\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n\n5678
-      Random Drive\n\nNew York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone:
-      (012) 345-6789\n\nEmail: jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties
-      hereto have executed this Non-Disclosure Agreement as of the date first above
-      written.\n\n_____\n\nBy: ___________________________\n\nName: _____\n\nTitle:
-      _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName: Jane Doe\n\nTitle:
-      Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
+      July 16, 2024, by and between:\n\nParty A:\n\nContact: _____\n\nPhone: _____\n\nEmail:
+      _____\n\nParty B:\n\nExample.Com LLC\n\n5678 Random Drive\n\nNew York, NY 00000\n\nContact:
+      Jane Doe, Managing Partner\n\nPhone: (012) 345-6789\n\nEmail: jane.doe@example.com\n\nIN
+      WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure Agreement
+      as of the date first above written.\n\n_____\n\nBy: ___________________________\n\nName:
+      _____\n\nTitle: _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName:
+      Jane Doe\n\nTitle: Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -6437,7 +6443,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19057'
+      - '19030'
       content-type:
       - application/json
       cookie:
@@ -6471,15 +6477,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTW/bMAyG7/kVgk4r4BRxvOVjxwZZL0WxHYYNiANDlelErSwZEr2lKPLfR8lJ
-        7GDtRYb5kC/Il3wbMcZVyb8yLvcCZd3o8fpXLerl1P6cVdXj75cf5u7xabG+//Y8W+uWJ6HCPj2D
-        xHPVrbRUB6is6bB0IBCCajpfpp8X6XI5jaC2JehQtmtwPBvr1ohTxd4qCZ7Qhn4Ze4tv6M2UcKDw
-        JDlHavBe7IBi5yQKOqtDhAvvlUdhkCc9lNYgmNjuJjckHh7G8gAkNFioMieY89Uk58kZwgGdkDRG
-        oRBqHzI2HQt0fRBh5tuVrdnDw4p9+i4cvrK7m5x3SdvwOeZmO+zEQdV6ERwwrdYDIIyxKIKD0YPt
-        iRwvU1fKKL8vyFhPLtMkHm3DIz3Su40utlfG8MbRXrBA+wJRNptPsk6Q9xvrcZp+OVGkXvSgbpEu
-        knckixJQKO0Hq+BSyD1Z1otms3lyBYu/jgztM6ZZll0yRFsq27PJaODC/02/10DnkDK7XmX+sX4P
-        ZLgE6rxxUCp57Uyf5iAc/kdpl3XEjrkH94euukAFLqyshEq0ujtN7l89nVVBe92Ba5yK9xmuYnQc
-        /QOc6/34lgMAAA==
+        H4sIAAAAAAAA/3WSwW7bMAyG73kKQacNcIq4buNmty3ogA1dttuwxYGhykyiTZYMic5SFHn3UXJc
+        O9h6URB+JP3zJ58njHFV8XeMy71AWTd6ev/98OPw+DP//N7hx3b1abnNVqv6S5N+PSwqnoQK+/gL
+        JPZVV9JSHaCypsPSgUAIXdN8kd6m85s8i6C2FehQtmtwOp/q1ohzxd4qCZ7Qmv4y9hzfoM1UcKTw
+        LOkjNXgvdkCxPomCzuoQ4cJ75VEY5MkApTUIJspdF4aah4exIgAJDZaqKggWfDkreNJDOKITksYo
+        FULtQ8a6Y4HeH0WY+Wppa/bwsGRvvgmHT+zD24J3SZvwcyrMZqzEwbb1IjhgWq1HQBhjUQQHoweb
+        Mzm9TL1VRvl9ScZ6cpkm8WgbHumJ3k10sb0whjeO9oIl2t8Q22bzRd415MPGBpzenk3mSFr0qO7u
+        pq+7aFlWgEJpP1oFl0LuybKhaTbPkwtY/nFk6JBxnV0PGaKtlB3YbDJy4V/R/xPQOaTMbqRhdvfq
+        BwYgwymQ9MZBpeSlNUOag3D5r6W97CNK5h7cgc66RAUu7KyCrWh1d5vcP3m6q5IWuwPXOBUPNJzF
+        5DT5C03VA5CXAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6502,7 +6508,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1782'
+      - '1786'
       openai-project:
       - DUMMY
       openai-version:
@@ -6526,9 +6532,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 36ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 430ms
+      - 252ms
       x-request-id:
       - DUMMY
     status:
@@ -6895,15 +6901,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTW/bMAyG7/kVgk4t4BTJlq7xbu3aHoN9HHaIA0OTGFutLBkSvWYo8t9HyXHt
-        YOtFhvmQr6iXfJ0xxrXinxmXtUDZtGb+8LMRrjl8D/Z5sXjZ5O2Pb+rxweHTXVd/5VmscL+eQOJQ
-        dSUd1QFqZ3ssPQiEqLq8yZer9TLPVwk0ToGJZVWL809z01lxqqidlhAIbemXsdd0xt6sggOFF9kQ
-        aSAEUQHFhiQKemdihIsQdEBhkWcjlM4i2NTutrAkHg/GiggktFhqVRAs+JdFwbMBwgG9kPSMUiM0
-        IWZsexbpxtn5vQ7SuNB5YLeVB2joEnaxub+9LHifuYufY2F303Y87Lsgog22M2YChLUORbQxGbE7
-        kePb0/fa6lCX5G4gq+k5AV3LEz3SuUtWdmfu8NbTcLBE9wxJdrVeX/eCfBzbiK9PRnOkVsykLP84
-        lJ0plgpQaBMm4+BSyJpsm175ITuD5YsnU8eMcbqiU9pNwGziwL8N/+/23h1tq1Hl5l35Eci4CdR1
-        60FpeW7KmOYhLv57aW+TSA3zAP43bXWJGnycloK96Ey/mjz8CbRWJY20At96nfYzLsTsOPsL5HTA
-        w5YDAAA=
+        H4sIAAAAAAAA/3VSwYrbMBC95yuETi04JWbjZLe30F1KadlDaShLHIwiTxy1suRK4zTLkn/fkRLH
+        Du1eBJo3b3jz3ryMGOOq5B8ZlzuBsm70+OHn/unwdfl5We839XTx5/vzpnx6WHxZfjM/tjwJDLv5
+        BRI71gdpiQeorDnB0oFACFPT+V2apbPpPItAbUvQgVY1OJ6NdWvEmbGzSoInaEVfxl7iG7SZEg5U
+        niRdpQbvRQVU65qo6KwOFS68Vx6FQZ70oLQGwUS5q9zQ8PAwlgdAQoOFKnMCc/5pkvOkA+GATkha
+        o1AItQ8dq5w/WjO+V15q61sHbFE5gJqGs3eP94v3OV8H+jE366EAB9vWi7C4abUeAMIYiyIYF1df
+        n5HjZdmtMsrvCvLTk7m0gEfb8Ige6V1H89orP3jjKA4s0P6GOHZ6e5udBvI+qB7OOhBJih7Q7qZn
+        068nFiWgUNoPAuBSyB0ZdeGmN7N5cgUWfx3Z2HfcZGl26RBtqWyPTUYDE/7V/D8BJ4OUqQYa3p7f
+        AzLkT8obB6WS18b0bQ7Cub/VdkkjKuYe3J5uuUAFLiRWwla0+nSQ3D97OqaCYq3ANU7FqwxHMTqO
+        XgFv5it7jAMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -6926,7 +6932,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '944'
+      - '904'
       openai-project:
       - DUMMY
       openai-version:
@@ -6952,7 +6958,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 216ms
+      - 188ms
       x-request-id:
       - DUMMY
     status:
@@ -7321,19 +7327,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/41UXW/aMBR951dYfk6nUqCFva1rNW3q1GmatEkFRca5Sbw5tuXrUKqK/77rBBJQ
-        6LSXYHzOPb7fryPGuMr4e8ZlKYKsnL64/1kJt7Z3Dz/K9SPmP+4/fLmrbm+/KvvLf+ZJtLDr3yDD
-        weqdtGQHQVnTwtKDCBBVxzeL8XQ+XixmDVDZDHQ0K1y4uL7QtRF7i9IqCUjQE/1l7LX5Rt9MBlu6
-        vkwONxUgigLo7kCiS291vOECUWEQJvCkB6U1AUzj7tPSkHj8MLaMgAQXUpUtCVzyj5dLnhxA2AYv
-        JIWRqgAVRsZTi3UKLVGgo2SkRpBnJ6wW/iZ8UIBMmIxBnhNVbYBllKDusY5ae2cRmM1ZKIGJwgNU
-        5PmAeAe5MiomvJXdilgAjIYUU64yMlJCM2Vy6ysRiQON+63UNRKCLPe2+n/D7yBBbZQpmKPQXphd
-        a1U0VDzDDbU3zHqWAQZfy8ZncpO0wdNLQ5MHJdZKKxKWwjXheUpCFlNIPrE19ZYsB1aPzwY8lsr9
-        KweNmrFMU68ZHOb/k92ANzEyLZ4Tlil0dQB6H62uo0DSKHR1YRRDNUwsveuPqkdG9JPFI7YCCPTO
-        PsozdQFZd96iKoygHMbW6nmrw3HXHpr/dF4dt72HvEYRx83UWh8Bwhgb2oLFdl3tkV03YrG5sEwp
-        00gjTWODwTreoDv6rpqRrU+mkDvqIRqlYP9AIztdjOetIO/XQw9fXc32aCBfdA/MxtNJckYyzSAI
-        pfFo7rmkTqD57GzHk+ub5ARMnz1Nb8+YzKbzjiHqTNkeuxwdZWHo9DkH2gxRw/Qq88mb+j0g49oh
-        z52nxpanmelpHuKWfYvWlaPxmCP4DbV1SrvGx5JlkItat3uQ4wvSDkuprgV451WzDGNXjHajvyaJ
-        O2ADBgAA
+        H4sIAAAAAAAA/41UXW/aMBR951dYeU4naPnqHrd106Spq/qwrQIUGfsmeHPs6NqmsIr/3usEEhhU
+        2kswPvdcn/v50mMsUTJ5zxKx4l6Ulb66+7l+2n4ePn54ml5bnU/L8nv54+/DPX4Nv3iSRoZd/gbh
+        D6x3whIPvLKmgQUC9xC9Dia3g9FgPJyMa6C0EnSkFZW/Gl/pYPYOxcoqAY6gGf1l7KX+Rm1Gwoau
+        ++nhpgTneAF0dzCiS7Q63iTcOeU8Nz5JO1BY48HUcmdzQ87jh7F5BARUPlNyTuA8+difJ+kBhI1H
+        LiiMTHkoXbSYNVjroTHkrqJkZIaTshOrBn7g6BU4xo1kkOdkqtbAJCWofaw1DVhZB8zmzK+A8QIB
+        SlJ+ZvgJcmVUTHjjdsNjAVwkUky5kkRSXDNlcoslj4ZnPu42QgdHiGM52vL/iY8gQK2VKVhFoW1P
+        iMpvUxYcpLWuCq2P8ZJMu9SqqP25Cw59QDJBJsF5DHvGP7GQGkA6nPO/Kb5U8WkmeFU/jJQ2GZNO
+        UbAldaNYnbHuLdPUcybmG5mlhCNDVay8YwVSB4E8o3yxa0ATI9f8OWVSuSp4oNec1SGKbsJu68Zk
+        wDeSTzHhUYWJSD8yHl3jxAG9tY/rQu1AhLb8ThWGUwpj+3V2i8Nx1xzq/3ReHI8GQh4cjyNpgtZH
+        ADfG+qZesaUXe2TXjmFsQLfKKLeOxp5Gy3lbJTW6o++iHutwMqkJ9UNJ4+btH6jdDm8H08Zh0q2Q
+        Dr4ejfaoJy26A0aDyU16wWUmwXOl3dFuSATVnma45Q5uxpP0BMyekSa8s7gZDaetBQ9S2Q7r946y
+        cC76koAmQ9Q0Rxr6kzcf6AARdxNJr5B6WZympjNDiKv4LbO2HrXkxAGuqeczWkgYayYh50E3yzJx
+        W0eLLqPCFoAVqnpjxrbo7XqvsON1fygGAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -7356,7 +7362,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2638'
+      - '2157'
       openai-project:
       - DUMMY
       openai-version:
@@ -7380,9 +7386,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 250ms
+      - 313ms
       x-request-id:
       - DUMMY
     status:
@@ -7810,14 +7816,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSbWvbMBDH3+dTGL12RpylbbJ3o1sZg0EHe2iIg7lKF1udLAlJ3lZKvvtOilPb
-        rH0j7Pvd4//uaZZlTAr2LmO8gcBbq+Yff7bgvz9+ge2Hbffp2/b6sGkebu7vbr5+vvvB8hhh7h+Q
-        h3PUG24oDoM0+oS5QwgYsxZXm2K1LjabdQKtEahiWG3D/HKuOg19RGMkR09oR79Z9pTe2JsW+JfM
-        i/xsadF7qJFsZycyOqOihYH30gfQgeUD5EYH1KndXakpeXyyrCRvS2NUUpTESvZ+UbL8zCw4qB3Y
-        hrCPfFey24IciN2+veg/VvSxjyHHUu/HNR0eOg9xVt0pNQKgtQkQtUrT7ntyfJ7vILX0TUUSetKT
-        evbBWJbokd590qubSMCsow2EKphfmNJeLpbrU0I27GbAy2LZ00C9qFHcctULPU1ZCQwglR+Jzjjw
-        BsWk5kU+gdUfJwMOHsMOoRPSjMBsJMH/Hb9U/SSP1PWQpbgqXi0wAM7R0m1W1qGQfKrL4OYwHvhr
-        bs/LSC0zj+43XW8VJLq4MIEH6NTpBJl/9AHbirZao7NOpjuMNzE7zv4Blx1EW34DAAA=
+        H4sIAAAAAAAA/3WSTW/iMBCG7/yKyOewSqCEsrfVqj33Vu0SFLn2kLg1tmtPCquK/96xgSZo24uV
+        zDOf78z7JMuYkuxnxkTHUeycnt49vv0tVve2n28r9br3h3uzOvg/z7/dbL9neYywT88g8BL1Q1iK
+        A1TWnLDwwBFi1nK5KhdldbO8TWBnJegY1jqcVlPdG36O6KwSEAit6TfL3tMbezMSDmQu8otlByHw
+        Fsh2cSKjtzpaGA9BBeQGWT5AYQ2CSe2ua0PJ45NlNXk7GqNRsiZWs19FzfILc9zz1nPXEQ6Rr2v2
+        UJIDsYf54vxxQx+bGHKszWZc08O2DzzOanqtR4AbY5FHrdK0mzM5fs63VUaFriEJA+lJPQe0jiV6
+        pHeT9OqvJGDO0wawQfsCKW1VzG5PCdmwmwGXy+WZIvWiR3GzYpF/kbKRgFzpMBKdCS46kFc1F/kV
+        bPZeIQweww55L5UdgclIgv87/qr6SR5l2tFU8+rbAgMQAhzdZuM8SCWudRncPMQD/87tcxmpZRbA
+        v9H1NqjAx4VJ2PJen06QhX8BYdfQVlvwzqt0h/EmJsfJB7CR1jp+AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -7840,7 +7846,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2788'
+      - '1704'
       openai-project:
       - DUMMY
       openai-version:
@@ -7864,9 +7870,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 375ms
+      - 221ms
       x-request-id:
       - DUMMY
     status:
@@ -8309,17 +8315,22 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -8342,7 +8353,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6446'
+      - '6741'
       openai-project:
       - DUMMY
       openai-version:
@@ -8584,14 +8595,14 @@ interactions:
       id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Contract
       term</concept_name>\n\n    <concept_description>\n    Contract term\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
-      (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nUpon
-      termination of this Agreement or upon request, the Receiving Party shall return
-      all materials containing Confidential Information to the Disclosing Party or
-      destroy them, at the Disclosing Party''s discretion.\n\nAll disputes shall be
-      resolved by the courts of the State of California. This Agreement shall remain
-      in effect for a period of five (5) years from the date of signing this agreement.\n\nThis
+      (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nThis
       Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n</document_text>"}],"model":"gpt-6-luna"}'
+      July 16, 2024, by and between:\n\nUpon termination of this Agreement or upon
+      request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party''s
+      discretion.\n\nAll disputes shall be resolved by the courts of the State of
+      California. This Agreement shall remain in effect for a period of five (5) years
+      from the date of signing this agreement.\n</document_text>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -8636,15 +8647,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTwW7bMAyG73kKQWensNM1Xndbhw1FTzsU6LA4MBSJttXIkiHJXYsi7z5KTiIH
-        W32QYX4k8esn/b4ghEpBvxDKO+Z5P6jl96d+Vzz+XD8V7O6+/Hq3f7jfPz/8foTdjv+iWagwu2fg
-        /lR1xQ3WgZdGT5hbYB5C16K8LT59XuV5GUFvBKhQ1g5+uV6qUbNjRWckB4dog5+EvMczaNMCXjGc
-        Z6dID86xFjB2SsKgNSpEKHNOOs+0p1mC3GgPOsrdVBqbh4OQKgAOg6+lqBBW9Fte0ewE4dVbxvEa
-        tfTQu5CxmVigP+QLkDdg1pHGmp74DojASxPTECdbLXV7VdEpfxteh0pv56IsNKNjwQw9KjUDTGvj
-        WTAz2rE9ksPZgEZq6boaPXZoOF7KeTPQSA94bqOh44VHdECNeFFv9hDbXt/crqaGNA0v4SI/+k09
-        alGzuvW57qJlLcAzqdxsKpQz3qF7qen1uswuYP3HorcpY4XPOYONQprE8sXMhX9F/0/A5BBOInW5
-        KT/snwAPS4HKBwtC8ktnUpqF8A98lHYeR1RMHdgXXPDaS7BhZAIaNqppS6l7c7hhNc61BTtYGVc1
-        bMXisPgLkHZkYaEDAAA=
+        H4sIAAAAAAAA/3WTTW/bMAyG7/kVgk4b4AxOs3z1NgwrUGCXfQDDFgeGKtG2VlsyRDlLVuS/l5KT
+        2sHWiwzzIelXL+mnCWNcK37LuKyEl01bTz/92P/aqMf5hw7an3fu6/H7/pB+uf98j9/+znkSKuzD
+        b5D+UvVOWqoDr63psXQgPISus9Vmtpgt369XETRWQR3KytZPl9O6M+JcUVktAQlt6ZWxp3gGbUbB
+        gcJpcok0gChKoNgliYLO1iHCBaJGL4znyQClNR5MlLvNDDUPB2NZABJan2uVEcz4xzTjyQXCwTsh
+        6Rq59tBgyNj2LNA7vQf2ZvGWHUE4ZIWzDfMVMEUXZ7ZgqEujTZnxvmQXHqfM7Ma6HBQdiuCH6ep6
+        BIQx1ovgZ3RkdyanFw8KbTRWOdmM5DndC71teaQnOnfR0+7KJt6SRLqrt48Q284Xm5u+IR/mN+BZ
+        uj5TT1rqUd0qPQ/jumWuwAtd42gwXApZkYGjb643yRXM/ziyd8gY5iw6pe0ITEYW/Kv4f1/v7aEp
+        DF2WN6/2H4AMS0GyWwdKy2tbhjQH4R94Le1lFlExR3B7WvDca3BhXgoK0dX9lnI8Im1YTkMtwbVO
+        x1UNKzE5TZ4B1wDe/6EDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -8667,7 +8678,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2006'
+      - '1352'
       openai-project:
       - DUMMY
       openai-version:
@@ -8959,20 +8970,20 @@ interactions:
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>int
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
       PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Upon
+      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                This
+      Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
+      July 16, 2024, by and between:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Upon
       termination of this Agreement or upon request, the Receiving Party shall return
       all materials containing Confidential Information to the Disclosing Party or
       destroy them, at the Disclosing Party''s discretion.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                All
-      disputes shall be resolved by the courts of the State of California.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P1-S1\">\n                <sentence_id>P1-S1</sentence_id>\n                \n                <sentence_text>\n                This
-      Agreement shall remain in effect for a period of five (5) years from the date
-      of signing this agreement.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
       id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                This
-      Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                All
+      disputes shall be resolved by the courts of the State of California.\n                </sentence_text>\n            </sentence>\n            <sentence
+      id=\"P2-S1\">\n                <sentence_id>P2-S1</sentence_id>\n                \n                <sentence_text>\n                This
+      Agreement shall remain in effect for a period of five (5) years from the date
+      of signing this agreement.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -9017,16 +9028,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUXW/iMBB851dYfg4VAQpHX089tTr1VKknVSdAkeusE7eJnbMdDlTx32/tQD7a
-        8hLFOzvjyXqc9xEhVKb0hlCeM8fLqhjfPpcvc/Xn7kHer/bV3V/7LG5/HZT78cCfftLIM/TLK3B3
-        Zl1xjTxwUqsG5gaYA68aL1fx/Nt0Ek8CUOoUCk/LKjdejItasRMj15KDRWiNS0Lew9N7UynssRz4
-        oVKCtSwDrJ2bsGh04SuUWSutY8rRqAO5Vg5UsLveKBT3D0I2HuBQuUSmGwQ39PtkQ6MzCHtnGMfP
-        SKSD0vqOdYO1Ck3jjhU1ePg66pdfa+ukkJz5uTT6v3MgLDMAJdohBkomlSVSERAC50mENkTIHZAD
-        MGOJMLokDjkpTpNoQazMlFTZVeuy2cmAAAP4KUnFDOqzKh/a/WD5IqsdxGM82OIjwYIfKL7I9PNG
-        TfNjPH5CkSGw7S+P3aKtn2phje/b/ini9rVlPj2qLooewJTSLkw55Gd7Qo5tYoRU0uYJhtJiQjEF
-        1umKBvSIz21IYD0IFa1w9pgMp98gyM6vV7NGkHZp7+B4Fp9Qh16KHm85nUdfSCYpOCYL24sx5Yzn
-        GLee6GIZDcDkn8Ewdh2z6XTWdrA6lbrDJqPeFD6b/spAMyFMWKcyXVzU7wDubxE6rwykkg8n07UZ
-        8D+NS23tcQTH1ILZ4R8hcRKMP7IUBKuL5lpTe7B4JRM81wxMZWS42z4Vo+PoP8D7qcbSBAAA
+        H4sIAAAAAAAA/3VUwW7bMAy95ysEnZOi3ppm2XFFd9qKAWuxrnFgqDJtq5MlV5KzBkX+vZTs2HK3
+        XASLj4+kyEe/zgihIqefCeUVc7xu5OL61+7hy8P3pX6+e2zXz1/3t1fy911yf3N9c/+Nzj1DPz4B
+        d0fWGdfIAye06mBugDnwUZPVOlkmlxef1gGodQ7S08rGLS4XslWsZ1RacLAIbfBKyGs4fW0qhxc0
+        n8+PlhqsZSWg7eiERqOlt1BmrbCOKUfnI8i1cqBCuZtUYXB/EJJ6gEPjMpGnCKb06jyl8yMIL84w
+        js/IhIPaeo9Nhw0ROscdky14eDmPzU+tdaIQnPm+dPFvKyCsNAA1lkMM1EwoS4QiUBTYT1JoQwqx
+        A7IHZiwpjK6JQ44VpRKqJDl29WwosUtjoAAD+I6sYQaDs6aa1vqu3pOsoQs/PkxSvCdY8N3ED5H3
+        iZCx+JmkdBuTDuNlsPe2cMfvbTwkTNBa5sWhWikjgCmlXWhikMe2Rw6DIAqhhK0y1JxFAeKQrdMN
+        DegBz20QWDvRDG2wtTh4p/9ACHuxXH/sAtJRzCOcJKsedViLjHirpFfmNGSWg2NC2killDNeoZri
+        nKOqA5j9Nai10WOEWZsLHQGzqAX/Vvy/7F17UEXRq1Yn448A9xuCZTcGcsGnbRndDPgfwim3YRah
+        YmrB7HDbMyfA+HnlULBWditL7d7iumU41BJMY0TYWy+J2WH2Br3ZDViuBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -9049,7 +9060,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1464'
+      - '1149'
       openai-project:
       - DUMMY
       openai-version:
@@ -9073,9 +9084,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 36ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 374ms
+      - 275ms
       x-request-id:
       - DUMMY
     status:
@@ -9300,10 +9311,14 @@ interactions:
       content=''Company ABC (Supplier)''\n        </extracted_item_example>\n    </extracted_item_examples>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nThis
       Non-Disclosure Agreement (the \"Agreement\") is made and entered into as of
-      July 16, 2024, by and between:\n\nParty A:\n\nParty B:\n\nExample.Com LLC\n\n5678
+      July 16, 2024, by and between:\n\nParty A:\n\n_____\n\n_____\n\n_____\n\nContact:
+      _____\n\nPhone: _____\n\nEmail: _____\n\nParty B:\n\nExample.Com LLC\n\n5678
       Random Drive\n\nNew York, NY 00000\n\nContact: Jane Doe, Managing Partner\n\nPhone:
-      (012) 345-6789\n\nEmail: jane.doe@example.com\n\nExample.Com LLC\n\nName: Jane
-      Doe\n\nTitle: Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
+      (012) 345-6789\n\nEmail: jane.doe@example.com\n\nIN WITNESS WHEREOF, the parties
+      hereto have executed this Non-Disclosure Agreement as of the date first above
+      written.\n\n_____\n\nBy: ___________________________\n\nName: _____\n\nTitle:
+      _____\n\nExample.Com LLC\n\nBy: ___________________________\n\nName: Jane Doe\n\nTitle:
+      Managing Partner\n</document_text>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -9314,7 +9329,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19231'
+      - '19540'
       content-type:
       - application/json
       cookie:
@@ -9348,15 +9363,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/4WTXW/aMBSG7/kVka9DRSiDtZdFXGxCkzZN6gVBkescglvHzuyTja3iv+8cB5qg
-        teuNEec5X35f53mUJEKX4jYRai9R1Y0Zr+7rhw+fv8zlVz/99ONxdVdhe/9t0q6/PzV/RMoV7uER
-        FJ6rrpSjOkDtbIeVB4nAXbPFTTb7OJ1kWQS1K8FwWdXgeD42rZWnir3TCgKhDf1Nkud48m62hAOF
-        J+k5UkMIsgKKnZMo6J3hiJAh6IDSokh7qJxFsHHdTW6pOR9JkjNQ0GChy5xgLpaTXKRnCAf0UtE1
-        Co1QB87YdIzp6iD5zldLVyfr9TIXHdryzzH9/5TsnSldk9xuh5fwsGuDZPFsa8wASGsdShY/yrc9
-        keOLYDttddgX5Ekgg0iEgK4RkR7p3EYD2gtNRePJUizQPUFse72YzbqGoje7x9Pp9Yki7WIGdTfz
-        RfpKy6IElNqEgYtCSbUnHYYzs/QCFr88qdRn9I9CtqV2AzAaSPDvxq9N7+TRtuq7ZPPZmwN6oNhc
-        2rvxUGp1qUuf5oG/mLfSXsyIK4sA/id9DgVq8GxYCTvZmu5Ni/A70EspyNUKfON1fNj8JkbH0V8s
-        XezkzwMAAA==
+        H4sIAAAAAAAA/52TwW7bMAyG73kKQacNcIp4TtJkxwa5rO027DJscWBoMpOokyVDotsURd59lJzE
+        DtbusIsM8yMp6if5MmCMq5J/ZFzuBMqq1sPl98efi2+T5tP8/mb5xTw9jPWPe6H07a377HgSIuyv
+        B5B4irqSluIAlTUtlg4EQsiaXs/TSTodz0cRVLYEHcK2NQ6nQ90YcYzYWSXBE1rRL2Mv8Qy1mRL2
+        ZI7x0VKB92ILZDs5kdFZHSxceK88CoM86aC0BsHEcle5oeThYCwPQEKNhSpzgjlfjHKenCDs0QlJ
+        zygUQuWDx6plgS73Irz5amErdne3yHmL1uFzSP59S/q/t7B3X4XDZ3bz/vK+3Kz773WwabwIOptG
+        6x4QxlgUoU9R6fWRHM7abpRRfldQ+zz1kvTyaGse6YHOdexVcyE/rx11Hwu0vyGmzWajWZuQd3PR
+        4XSSHSlSLboXN5+mySspixKQps/3Gs6lkDuSrEuaTa+TC1g8ORK08/gwzmZnD9GUynZsNOip8HfR
+        rxXQKqTMtssyy97M3wEZJoEqrx2USl4q07k5COv1ltu5HbFi7sE90u4UqMCFlpWwEY1uF4D7Z09j
+        VVBft+Bqp+IWhKkYHAZ/ABvPCKT8AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -9379,7 +9394,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3480'
+      - '1414'
       openai-project:
       - DUMMY
       openai-version:
@@ -9403,9 +9418,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 361ms
+      - 143ms
       x-request-id:
       - DUMMY
     status:
@@ -9779,18 +9794,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/41UW0/bMBR+76+w/LRJ6dR249K9AUXTpMIq2LRppIpc5yQ1OHbkSylC/e87TghJ
-        lTLx4iTnO7ec831+HhBCRUq/EsrXzPGilMPL38Vq+leMFtvi/uH8cXx7Pvv1Z1OUE+eyOY1ChF7d
-        A3dN1CeuMQ6c0KqGuQHmIGQdn0zHX04no/FRBRQ6BRnC8tINj4fSK/YSsdaCg0XoDj8Jea7O0JtK
-        YYvmUdRYCrCW5YC2xgmNRstgocxaYR1TjkYtyLVyoKp272KFycNBSBwADqVLRBojGNOLUUyjBoSt
-        M4zjbyTCQWGDx12NBfRaq+FMWC619QbIWW4ACixCPlzPzj7GtPZchscu+n/R8TuLPjcvwZHZEjeQ
-        KIbj2POq4YU3pbbwmrmxzyATSoRNEZ2RC60ykWLXgknyXWXaFCxgvbDLLZfeImJJZnTx/sAfKyny
-        CrKh4A1wEBuhcrJgxj313G/AeVO1doUEMpjd9nzmgq2EFO6JMJWSBSgmnQBsTBtyjsTj617ItSZz
-        pJc6MJBvegNGhY7m7LHKiFstvYN+4XbHP8EUPfgK2QBSMgXa2wMTBO6ruYcatyJXDH81VGn9ls3r
-        rsueWC27ZDaQecuCiJSXsgMwpbSrRx34sHxBdq/CCZu36wRHZFGoKAbrdEkrdIfnshKi39MWLXHb
-        yFWnH6BKezQaTeuEtBV9C09OP7+gDnuRnbjJdBIdSJmk4JiQtqNmynGFKIBuzeNoD0weDcqj9Wgv
-        B+ZToTvAoDOCfseHqtfjQUK0WcaT0zcLtAAPqsa+SwOp4Ptzad0MhJvzLbfXZVQtUwtmg7xNkN8m
-        LCyFjHlZ323UPlm8IhLcag6mNKK64AInBrvBP+1q7U/XBQAA
+        H4sIAAAAAAAA/41U227aQBB95ytW+9RKpgKSkNK3NNAqEkmjNFLVxsjarMew6XrX2gsXIf69s3aM
+        jSBV/LCGOWcunjOz2w4hVKT0C6F8wRzPC9md/Fr+mTx+W0xgffPbDkYvXn/ejH5+NZPVY49GwUM/
+        vwB3tdcnrtEPnNCqgrkB5iBE7V+O+hf94floUAK5TkEGt3nhusOu9Iq9eiy04GAResK/hGzLM9Sm
+        UlijuRfVlhysZXNAW01Co9EyWCizVljHlKNRA3KtHKiy3KdYYfBwEBIHgEPhEpHGCMb0uhfTqAZh
+        7Qzj+BmJcJDbwHiqsIDeadUdC8ultt4AuZobgByTkA9346uPMa2Ys/DaRf9P2n9n0m39IxCZLVCB
+        RDFsxwGrgu+9KbSFfeTaPoZMKBGUIjoj11plIsWqBZPkRmXa5CxgR24/nqWYl5ANfg/AQSyFmpN7
+        ZtzmiD5Zc+ltyc6Mzt+f5wGcN2VptzhABun2iDMV7FlIcSLtnSZTnCJ14ru/6yUYFSqeshVhKiUo
+        XuEdHMd/BJMfGW9RapCSKdDe1uruFQ7Prq14rGbtATSQecvC4CsvZQtgSmlX9TVoOHtFdvthD2rZ
+        RYL7ZHG5cICt0wUt0R2es3J5/ME+0AJbjvPl9F8ow170eqMqIG0WtYEHvfNX1GEtsuU36J9FJ0Im
+        KTgmpG1tIOWML3Bo2zmH0QGYrAyOdMNoFpr5VOgW0Gm14LjiU9mr9qC6TZTh2ZvxG4CHRcSyCwOp
+        4IdtaWgGwmX3Fm2vRVkxtWCWOIOJE2CCXilkzMvqOqJ2Y3GrExR1DqYworyTwkh0dp1/2Fpwe4oF
+        AAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -9813,7 +9828,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3166'
+      - '1929'
       openai-project:
       - DUMMY
       openai-version:
@@ -9837,9 +9852,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 24ms
       x-ratelimit-reset-tokens:
-      - 192ms
+      - 276ms
       x-request-id:
       - DUMMY
     status:
@@ -10222,15 +10237,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTwW7bMAy95ysEnZ3CdrOm2TUoUAxYTwOGLQ4MRaZtpbJkSHLWrMi/j5KS2MHa
-        i2zzkY/PfNT7jBAqKvqVUN4yx7tezp9+drt1+sQWq/bF/P2+/7X6/aLs+v54eN73NPEVercH7i5V
-        d1xjHTihVYS5AebAs2bLVbZ4zNPsMQCdrkD6sqZ384e5HBQ7V7RacLAIbfCTkPdwem2qgjcMp8kl
-        0oG1rAGMXZIwaLT0EcqsFdYx5WgyglwrByrI3RQKyf1BSOEBDr0rRVUgWNB1WtDkAsKbM4zjb5TC
-        QWd9xiZiV4aYeGBygEjwbZBHkj0kJE/zxZUrpu0H60QtOPNziuk/WiCsMQAdyiPCEpSODYnTZAek
-        YxXCqiIIgsGwUAgwS3RNbhrdFfTS6BRftv6B79vpGAzUg2V+/GqQcgIwpbQLsoIB2zNyuo68FkrY
-        tkRXLVqMY7RO9zSgJzy3wcLhxhXaG1wKVzr9CoH2S5YuIiEd12WEs/T+jDrUIid1ebpMPqAsK3BM
-        SDvZA8oZb9Gvac8suQHLPwbdHDPGtWJDJfQEmE1G8L/ij7rH8QjVjCz58lP+EeB+B1F2jx4LfjuW
-        Mc2Av3KfpV29CIqpBXPA+1Q6Acb7VUHNBhkvBbVHiwtdoqkNmN6IcDP8SsxOs3+1ZeBOEAQAAA==
+        H4sIAAAAAAAA/3VTwWrjMBC95yuEzk6JQ5o2e+yyFEoXFrqwS+NgFHlsK5UlI43TlpJ/35GcxA7b
+        XmR73syb53mjjwljXBX8G+OyFiibVk9//Nk/3/ut2f26fX6S7Z28+1vf1y8/09fHmyeehAq73YHE
+        U9WVtFQHqKzpYelAIATW9GaVXqfLxWoRgcYWoENZ1eJ0OdWdEceK2ioJnqA1fTL2Ec+gzRTwRuFZ
+        coo04L2ogGKnJAo6q0OEC++VR2GQJwMorUEwUe46M0QeDsayAEhoMVdFRmDGv88ynpxAeEMnJP1G
+        rhAaHzLWPXZm6BP3QnfQEzx0+p2ly4TNZ/PFmatP23UeVamkCHPq03/XwETlABqSx5RnJJ0aMrRs
+        C6wRBcGmYASCo7AyBAjPbMkuGl1l/NTo0L9swoPeN+MxOCg7L8L4Taf1CBDGWIyyogGbI3I4j7xU
+        Rvk6J1c9WUxj9GhbHtEDnZtoYXfhCm8dLQXmaF8g0l6ns0VPyId1GeDV7RFEkqJHZfSDySeMeQEo
+        lPajNeBSyJrsGrdMkwswf3Vk5pAxbJXoCmVHwGQ0gf8Ff9a9n44y1cAyn3/JPwAyrCDJbsliJS+n
+        MqQ5CDfuq7SzFVEx9+D2dJ1yVOCCXQWUotP9neD+3dM+5+RpBa51Kl6MsBGTw+QfiktoAA8EAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -10253,7 +10268,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1255'
+      - '1095'
       openai-project:
       - DUMMY
       openai-version:
@@ -10277,9 +10292,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 316ms
+      - 197ms
       x-request-id:
       - DUMMY
     status:
@@ -10646,14 +10661,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/42SUW/aMBDH3/kUlp8BBcYo9LET0vYyad2kVSMoMvZBPBw7tS9bq4rvvrMDJKit
-        tBcnvt/d+e5/9zJgjGvFbxmXpUBZ1Wa0+lltV9n35WL6+OsgttJ9+arKrPz2+f7u4Qcfxgi3/Q0S
-        z1Fj6SgOUDvbYulBIMSsk5vlZLaYZtMsgcopMDFsX+Po43g+Mo0Vp5jSaQmB4JqujL2kM1ZnFTyR
-        OWVIlgpCEHsg29mJjN6ZaOEiBB1QWOTDDkpnEWwqeJ1bSh4PxvIIJNRYaJUTzPmnLOfDM4Qn9EJS
-        I4VGqEL0WLeMMfQNtP+b+DnmdtN/0MOuCSK2ahtjekBY61BEqVKrmxM5XprbaatDWZCCgeSkggO6
-        mid6pHOTxGqu+ue1pwFgge4AKe1ssVi2CXk3mg5/OEnJkUoxvbDl5Bx2lbFQgEKb0BOcSyFLEqb/
-        5Hx4BYu/nmTrPLr5iUZp1wODngKvC37r9VYdbff/k74DMs6aqq49KC2vRencPMTlfs/tMolUMA/g
-        /9DeFqjBx2kp2InGtMvHw3OgxSlopHvwtddpA+NCDI6Df+ASAl56AwAA
+        H4sIAAAAAAAA/42SwU7DMAyG73uKKOcObWIbjCtCAk5wQmKdqizx1kCWVIkLDLR3x0nXtRMgcUkb
+        f7Zj//bXgDGuFb9iXJYC5bYyw5unt+fbz9VuNR2d+4cLUT4+3t+tPp9eQO0mPIsRbvUCEtuoM+ko
+        DlA722DpQSDErOOL+Xg6nk3m0wS2ToGJYZsKh9Oz2dDUVhxiSqclBIILujL2lc5YnVXwQeZR1lq2
+        EILYANlaJzJ6Z6KFixB0QGGRZx2UziLYVPAit5Q8HozlEUiosNAqJ5jz61HOsxbCB3ohqZFCI2xD
+        9Fg0jDH0NTT/y/jZ53bZf9DDug4itmprY3pAWOtQRKlSq8sD2R+bW2urQ1mQgoHkpIIDuoonuqdz
+        mcSqT/rnlacBYIHuFVLayeXlvEnIu9F0+PwgJUcqxfTC5uM27CRjoQCFNqEnOJdCliRM/8lZdgKL
+        d0+ydR7d/ESttOuBQU+BnwX/9nqjjrab/6TvgIyzpqorD0rLU1E6Nw9xuf9yO04iFcwD+Dfa2wI1
+        +DgtBWtRm2b5eNgFWpyCRroBX3mdNjAuxGA/+AYWM0MEegMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -10676,7 +10691,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '652'
+      - '759'
       openai-project:
       - DUMMY
       openai-version:
@@ -11133,16 +11148,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/4VTTY+bMBC951cgn0mFkwBJb1U/Lr3soVWrDRHymglxS2xkm22rVf57x4QBot1t
-        Lx7i9+b5xfP8tIgipir2NmLyJLw8t83y47fzwyez+nx098fH1ZfvXz9U4r2ruyZX23sWhw7z8AOk
-        p6430mAfeGX0FZYWhIegyvMd32xXyYr3wNlU0IS2uvXLbNl0WgwdJ6MkOIT2+DOKnvo1eNMV/Mbt
-        JKadMzgnasA9IuGmNU3YYcI55bzQnsUTKI32oHu7+0KjeFiiqEB2i3+jVFWBWMHeJQWLCWuFFbUV
-        7QlhF/B9we7WKTIQvNvgxyFQL/E/Ffn/FPkguBrqmg4YKh2YDTUf6naou6HyhD5IkZMkJ01OopxU
-        UyKnRE6JnI4ORjJ5SMlESi5SspGRjYzTBRX6MB+GhWPnRAiB7ppmBgitjRchRH0MDgNyGQd/VFq5
-        U4nZchg0HKbzpmU9esH10Aepu8kGay1G05fe/IReNkvy3VWQTaGd4HRHqEcvzawvy7fxC5JlBV6o
-        xs3SyKSQJ6imXr7O8vgGLH9Z5WFibPJkNzJEVykzYclidgvPTb9k4HpDStezEzbJqwdMgJTQ4rst
-        WwuVkrdXM9EshMf/Gm2cR2+ZObCP+LJLr8CGmVVwFF1zfZ7M/XEeziUOtgbbWtW/0RCLxWXxF2Xr
-        fsCaBAAA
+        H4sIAAAAAAAA/4VTTY+bMBC951cgn0mFkwChtz3sql9a7a1SQ4RcMwFvwUa22Xa1yn/vmGAg2t32
+        4iHz3ryZzMfLKgiIKMnHgPCaWd52zfr2+9OPz/efdj2jN/3XtLx/5u2Xu/2jSDf6GwldhPr5CNz6
+        qA9cYRxYoeQF5hqYBadK04zGNNllyQC0qoTGhVWdXSfrppdsjKiV4GAQOuDPIHgZXlebLOEPuqPQ
+        e1owhlWAPk9Cp1aN8xBmjDCWSUvCGeRKWpBDuYdcorh7giBHdod/oxBljlhObqKchB7rmGaVZl2N
+        sHH4IScP2xgZCD7s8OPoqOfwn4r0f4p0FNyMdusTjNYnTEabjnY/2my0NPIfXpF6Seo1qRelXjX2
+        5NiTY0+Opwomss8d++Sxz55Evh25PC5br+HUG+ZGLvumWQBMSmWZW5lh6McROU9jPgkpTF3gJhlc
+        KxydsaojA3rG9zisTX+1CaTTuIi2sOoXDLJJlGYXQTKv6AzvJtRiLc0iLo734RuSRQmWicYsdo9w
+        xmso51i6TdLwCix+a2FhmTbKJgbrS6FmLFotuvC66LcKuHRIyGpW2W727yaYAc6hwystOg2l4Net
+        mWka3Km/R5vmMZRMDOgnvOPCCtBuZiWcWN9cjpGYZ2OhLXCwFehOi+Ei3Vqszqu/8zLOkogEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -11165,7 +11179,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6275'
+      - '4056'
       openai-project:
       - DUMMY
       openai-version:
@@ -11191,7 +11205,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 12ms
       x-ratelimit-reset-tokens:
-      - 313ms
+      - 222ms
       x-request-id:
       - DUMMY
     status:
@@ -11563,15 +11577,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/4VT0WrbMBR9z1cIPW3gFNvN7GRvXVsY2yiDUdYSB6NKN7Y6WTKSvKWU/PuunDhO
-        aLu9CHzPvUdH51w/TwihUtCPhPKaed60anr9s3n4tri8hbR2Qn/arOfia3qbiu8/7j7f0yhMmIdH
-        4H6YOuMG58BLo3cwt8A8BNYkXySzeRqneQ80RoAKY1Xrp9lUdZrtJ2ojOTiElvhJyHN/Bm1awAbL
-        cTRUGnCOVYC1oQmL1qhQocw56TzTnkYjyI32oHu5y0IjeTgIKQLAofWlFAWCBb2MCxoNIGy8ZRyf
-        UUoPjQsdy4LeGD29ko4r4zoL5KKyAA2Sk3c3VxfvC7oK49vo39ck/73mS6eeSJJFBK2bDayFXh0/
-        y8K6cyzYqTuljgCmtfEsxNEbutoj24OFa6mlq0tMyWFkaIvzpqU9usVz1UfSnbhMW4sh+9KbX9DT
-        zhb5fEdIx/hHeDHbgx6lqLH+Ic7T6BXGUoBnUrmjWClnvEZfDrPJeZZHJ2D5x6JrY8d5Fs8PHawT
-        0oxYPDky4aXm1wTsDJK6GlnS7E3+EeAhblTeWhCSnxoztlkIP9FbbYc0esXUgf2Nf0jpJdiQmIA1
-        69Ruzal7crg7JcZagW2t7Hc9LMVkO/kL4jJgqeIDAAA=
+        H4sIAAAAAAAA/4VTTWvjMBC951cInVpwFrtJnLS3sNlLYUNhD4WNg1Hlia1Wlowkpwkl/31Hyocd
+        tt29CDxv5unpvfHHgBAqCvpAKK+Y43Ujhz+et79/vr48PatyvntX8a/laPO0GC+r/fZtTiM/oV9e
+        gbvz1DeucQ6c0OoIcwPMgWdNpvfJJEkncRyAWhcg/VjZuGE6lK1ip4lKCw4WoRV+EvIRTq9NFbDD
+        cpgPlRqsZSVg7dyERaOlr1BmrbCOKUejDuRaOVBB7ipTSO4PQjIPcGhcLooMwYx+jzManUHYOcM4
+        PiMXDmrrO1YZXWo1XAjLpbatATIvDUCN5ORmuZjfZnTtxw/Rv69J/nvNYyv3JEkjchffjc+smVr3
+        n2Vg01rm7VStlD2AKaUd83EEQ9cn5HCxcCOUsFWOKVmMDG2xTjc0oAc81yGS9spl2hgM2eVOv0Gg
+        Hd9PZ0dC2sXfwUk8OaEOtcgOmMSzUfQJZV6AY0LaXq6UM16hMR3pKJ1GV2D+btC2rmOUxrNLB2sL
+        oTssHvRc+Fv0ZwKODglV9m6YfsnfAdznjcobA4Xg1850bQb8X/RV2yWOoJhaMFv8RXInwPjICtiw
+        Vh73nNq9xeXJMdcSTGNEWHa/FYPD4A8wvYFB4wMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -11594,7 +11608,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1323'
+      - '4012'
       openai-project:
       - DUMMY
       openai-version:
@@ -11618,9 +11632,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 12ms
       x-ratelimit-reset-tokens:
-      - 386ms
+      - 191ms
       x-request-id:
       - DUMMY
     status:
@@ -11987,14 +12001,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/42STU/DMAyG7/sVUc4d2hgfG1cEEhIgJA6A1qnKUm8LS5MqcWGA9t9x0nXtBEhc
-        0saP7div/dVjjKucXzAuVwJlUer+1VMxv38Z6M/5nS5u3u8314/yY3N7vR49PGuehAg7fwWJTdSR
-        tBQHqKypsXQgEELW4flkeDI+HhxPIihsDjqELUvsnx6d9XVlxC5mZZUET3BKV8a+4hmqMzlsyDxI
-        GksB3oslkK1xIqOzOli48F55FAZ50kJpDYKJBU9TQ8nDwVgagIQSM5WnBFN+OUh50kDYoBOSGskU
-        QuGDx7RmjKGroP6fhc82NbPugw4WlRehVVNp3QHCGIsiSBVbne3Idt/cQhnlVxkp6ElOKtijLXmk
-        WzpnUazqoH9eOhoAZmjXENOejMeTOiFvR9Pi0U5KjlSK7oRNhk3YQcYsBxRK+47gXAq5ImG6T54l
-        BzB7dyRb69HOT1S5sh3Q6yjws+DfXq/VUWb5n/QtkGHWVHXpIFfyUJTWzUFY7r/c9pOIBXMP7o32
-        NkMFLkwrh4WodL183H94WpyMRroEVzoVNzAsRG/b+wbk9HHyegMAAA==
+        H4sIAAAAAAAA/42STU/DMAyG7/sVUc4d2gQbjCsCxIUDCPGxTlVIvC2QJlXi8iG0/46TrmsnQOKS
+        Nn5sx37trwFjXCt+yrhcC5RlZYbn929PN9cX9eHtZ/UQHhHullePpTqa3V1fXfIsRrjnF5DYRh1I
+        R3GA2tkGSw8CIWYdH8/Gk/F0MpokUDoFJoatKhxODqZDU1uxjVk7LSEQnNOVsa90xuqsgg8yj7LW
+        UkIIYgVka53I6J2JFi5C0AGFRZ51UDqLYFPB89xS8ngwlkcgocJCq5xgzs9GOc9aCB/ohaRGCo1Q
+        hugxbxhj6Gto/hfxs8ntov+gh2UdRGzV1sb0gLDWoYhSpVYXW7LZNbfUVod1QQoGkpMKDugqnuiG
+        zkUSq97rn1eeBoAFuldIaY9OTmZNQt6NpsOHWyk5UimmFzYbt2F7GQsFKLQJPcG5FHJNwvSfnGZ7
+        sHj3JFvn0c1P1Eq7Hhj0FPhZ8G+vN+pou/pP+g7IOGuquvKgtNwXpXPzEJf7L7fdJFLBPIB/o70t
+        UIOP01KwFLVplo+Hz0CLU9BIV+Arr9MGxoUYbAbfokuEW3oDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -12017,7 +12031,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1518'
+      - '676'
       openai-project:
       - DUMMY
       openai-version:

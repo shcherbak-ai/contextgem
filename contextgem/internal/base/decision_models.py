@@ -33,12 +33,16 @@ items, are defined in the ``decisions`` module of the ``internal`` package.
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
 import warnings
 from collections.abc import Sequence
 from typing import Any, cast
 
 from aiolimiter import AsyncLimiter
+from genai_prices import Usage as _GPUsage
+from genai_prices import calc_price as _calc_auto_price
+from pydantic import ValidationError
 
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.concepts import (
@@ -59,6 +63,8 @@ from contextgem.internal.decisions import (
     _convert_concept_answers,
     _DecisionAnswer,
     _DecisionQuestion,
+    _get_aspect_question_name,
+    _get_concept_question_name,
     _validate_answers,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -73,6 +79,7 @@ from contextgem.internal.utils import (
     _clean_text_for_llm_prompt,
     _get_cache_token_counts,
     _get_model_api_retry_delay,
+    _group_instances_by_fields,
     _is_retryable_model_api_error,
 )
 
@@ -91,12 +98,91 @@ _SELF_HOSTED_DECISION_MODEL_PROVIDERS = [
     "strands_decider/",
 ]
 
-# Model providers whose decision models cannot be priced automatically: genai-prices
-# has only the chat prices of their models, which differ from the prices of
-# the decision requests to the same models
-_NO_AUTO_PRICING_DECISION_MODEL_PROVIDERS = [
-    "openai/",
-]
+# Module of litellm that serves its Decisions API, and the name of the mapping
+# in it that is keyed by the providers of decision models that litellm supports
+_LITELLM_DECISIONS_MODULE_NAME = "litellm.decisions.main"
+_LITELLM_DECISION_PROVIDERS_ATTR = "DECISIONS_ENDPOINTS"
+
+# Names of the types that litellm validates the questions of a request with,
+# in the OpenAI format, by the kinds of the questions
+_LITELLM_QUESTION_TYPE_NAMES = {
+    "predicate": "OpenAIPredicateQuestion",
+    "choice": "OpenAIChoiceQuestion",
+    "score": "OpenAIScoreQuestion",
+}
+
+# Extraction params of aspects and concepts that a decision model is not sent
+# and that do not decide whether it can extract an aspect or a concept, i.e.
+# the params that do not split the aspects or concepts into separate calls of
+# a decision model: those of all instances, and those of concepts only
+_NOT_APPLIED_INSTANCE_PARAMS = ("justification_depth", "justification_max_sents")
+_NOT_APPLIED_CONCEPT_PARAMS = ("reference_depth",)
+
+
+def _get_supported_decision_providers() -> tuple[str, ...] | None:
+    """
+    Returns the providers of decision models that litellm supports, i.e.
+    the provider prefixes of the model identifiers that its Decisions API accepts,
+    as litellm lists them itself.
+
+    The list is read from the module of litellm that serves its Decisions API.
+    The module is imported by its full name: ``litellm.decisions`` is the function
+    that sends a request, which shadows the package of the same name, i.e.
+    the module cannot be reached as an attribute of ``litellm``.
+
+    :return: The providers, or None if they cannot be read from the installed
+        version of litellm, in which case the provider of a model cannot be checked
+        before a request is sent to it.
+    :rtype: tuple[str, ...] | None
+    """
+    try:
+        decisions_module = importlib.import_module(_LITELLM_DECISIONS_MODULE_NAME)
+        providers = tuple(getattr(decisions_module, _LITELLM_DECISION_PROVIDERS_ATTR))
+    except Exception:
+        return None
+    if not providers or not all(
+        isinstance(provider, str) and provider for provider in providers
+    ):
+        return None
+    return providers
+
+
+def _get_question_rejection_reasons(question: _DecisionQuestion) -> list[str]:
+    """
+    Returns the reasons why litellm would reject a question of a request to its
+    Decisions API, before sending the request, e.g. for more options than
+    a question may have.
+
+    The question is validated with the type that litellm validates it with when
+    a request is made, so that the limits of litellm are applied as they are in
+    the installed version, without being repeated in the framework.
+
+    :param question: The question to check.
+    :type question: _DecisionQuestion
+    :return: The reasons, as worded by litellm, each with the part of the question
+        that it refers to. Empty if litellm accepts the question, or if the question
+        cannot be checked with the installed version of litellm, in which case
+        a question that litellm does not accept is rejected when its request is made.
+    :rtype: list[str]
+    """
+    question_type = getattr(
+        _litellm_decision_types, _LITELLM_QUESTION_TYPE_NAMES[question.kind], None
+    )
+    validate_question = getattr(question_type, "model_validate", None)
+    if not callable(validate_question):
+        return []
+    try:
+        validate_question(_get_request_question(question))
+    except ValidationError as e:
+        reasons: list[str] = []
+        for error in e.errors():
+            location = ".".join(str(part) for part in error["loc"])
+            message = error["msg"].removeprefix("Value error, ")
+            reasons.append(f"`{location}`: {message}" if location else message)
+        return reasons
+    except Exception:
+        return []
+    return []
 
 
 def _get_request_question(question: _DecisionQuestion) -> dict[str, Any]:
@@ -149,6 +235,12 @@ def _get_answers_by_question_names(
     are keyed by the labels of the options as returned, i.e. by the value of an option
     of a "choice" answer and by the label of a level of a "score" answer (not by
     the position of the level, which is its value in the response).
+
+    The option that a "choice" answer names as the picked one is passed on as
+    returned. litellm returns it as the provider named it, while it returns
+    the probabilities of the options offered only, with a zero for each option
+    that the provider returned no probability for, e.g. an option that
+    the provider named differently.
 
     Only what cannot be attributed to a question is rejected here. Whether an answer
     is of the kind of its question, and has the probabilities of the options offered,
@@ -206,6 +298,7 @@ def _get_answers_by_question_names(
                 option_probabilities=_get_option_probabilities_by_labels(
                     question, response_answer, label_attr_name="value"
                 ),
+                chosen_option=getattr(response_answer, "choice", None),
             )
         elif answer_type == "score":
             answer = _DecisionAnswer(
@@ -273,34 +366,101 @@ class _DocumentDecisionModel(_DocumentModel):
         """
         return "decision model"
 
+    @classmethod
+    def _validate_kind_specific_model_id(cls, model: str) -> None:
+        """
+        Validates that the model is served by a provider of decision models that
+        litellm supports, when the model identifier is validated. A model of
+        another provider, e.g. of a provider of LLMs only, would fail at its first
+        request.
+
+        The providers are those listed by the installed version of litellm.
+        If they cannot be read from it, the provider is not checked.
+
+        :param model: The model identifier, in the form of
+            ``<model_provider>/<model_name>``.
+        :type model: str
+        :return: None
+        :rtype: None
+        :raises ValueError: If the provider of the model is not a provider of
+            decision models that litellm supports.
+        """
+        supported_providers = _get_supported_decision_providers()
+        if supported_providers is None:
+            return
+        provider = model.partition("/")[0]
+        if provider not in supported_providers:
+            raise ValueError(
+                f"Provider `{provider}` of model `{model}` is not a provider of "
+                f"decision models supported by litellm. Supported providers: "
+                f"{', '.join(supported_providers)}."
+            )
+
+    def _is_self_hosted(self) -> bool:
+        """
+        Checks whether the decision model is a self-hosted one, i.e. a model of
+        a provider that has no prices.
+
+        :return: True if the model is self-hosted, False otherwise.
+        :rtype: bool
+        """
+        return any(
+            self.model.startswith(provider)
+            for provider in _SELF_HOSTED_DECISION_MODEL_PROVIDERS
+        )
+
+    def _has_text_generation_prices(self) -> bool:
+        """
+        Checks whether the prices that genai-prices has for the model are those
+        of a text-generating model, i.e. include a price of output tokens.
+
+        A decision model generates no text and is billed for its input only. Prices
+        that include a price of output tokens are therefore the prices of the chat
+        requests to a model of the same name, e.g. of a model that is served both
+        as an LLM and as a decision model, which differ from the prices of
+        the decision requests.
+
+        :return: True if the prices found for the model include a price of output
+            tokens. False if they do not, or if no prices are found for the model.
+        :rtype: bool
+        """
+        provider_id, _, model_ref = self.model.partition("/")
+        try:
+            price_data = _calc_auto_price(
+                _GPUsage(input_tokens=0, output_tokens=1_000_000),
+                model_ref=model_ref,
+                provider_id=provider_id,
+            )
+            return price_data.output_price > 0
+        except Exception:
+            # No prices are found for the model, which is warned about when
+            # the automatic pricing is set up and when it is applied
+            return False
+
     def _get_auto_pricing_error_msg(self) -> str | None:
         """
         Returns the error message for the automatic pricing of the decision model,
-        if its costs cannot be calculated automatically.
+        if its costs cannot be calculated automatically: for a self-hosted model,
+        which has no prices, and for a model for which the pricing data has
+        the prices of a text-generating model.
 
         :return: The error message, or None if the automatic pricing is not ruled
             out for the model.
         :rtype: str | None
         """
-        if any(
-            self.model.startswith(provider)
-            for provider in _SELF_HOSTED_DECISION_MODEL_PROVIDERS
-        ):
+        if self._is_self_hosted():
             return (
                 "`auto_pricing=True` is not supported for self-hosted decision models. "
                 "Disable `auto_pricing` or provide explicit `pricing_details`."
             )
-        if any(
-            self.model.startswith(provider)
-            for provider in _NO_AUTO_PRICING_DECISION_MODEL_PROVIDERS
-        ):
+        if self._has_text_generation_prices():
             return (
                 f"`auto_pricing=True` is not supported for decision model "
-                f"`{self.model}`: the pricing data has only the prices of the chat "
-                f"requests to the models of this provider, which differ from "
-                f"the prices of the decision requests and would be applied instead "
-                f"of them. Disable `auto_pricing` and provide explicit "
-                f"`pricing_details` to get the costs calculated."
+                f"`{self.model}`: the pricing data found for it has a price of "
+                f"output tokens, i.e. it has the prices of the chat requests to "
+                f"this model, which differ from the prices of the decision requests "
+                f"and would be applied instead of them. Disable `auto_pricing` and "
+                f"provide explicit `pricing_details` to get the costs calculated."
             )
         return None
 
@@ -327,8 +487,8 @@ class _DocumentDecisionModel(_DocumentModel):
         :return: None
         :rtype: None
         :raises ValueError: If the automatic pricing is enabled for a self-hosted
-            decision model, or for a decision model of a provider whose decision
-            requests have no prices in the pricing data.
+            decision model, or for a decision model for which the pricing data has
+            the prices of a text-generating model, i.e. a price of output tokens.
         """
         if self.auto_pricing:
             error_msg = self._get_auto_pricing_error_msg()
@@ -345,6 +505,65 @@ class _DocumentDecisionModel(_DocumentModel):
         """
         return None
 
+    def _group_instances_for_calls(
+        self,
+        instance_type: ExtractedInstanceType,
+        instances: list[_Aspect] | list[_Concept],
+        fields: list[str],
+    ) -> list[list[_Aspect] | list[_Concept]]:
+        """
+        Groups the aspects or concepts to be extracted by the decision model into
+        the groups that are extracted in separate calls.
+
+        Each aspect or concept is in one group only, also if it is given more
+        than once: the model is asked about it once.
+
+        The instances are not split by the params that a decision model is not
+        sent, i.e. the depth and the length of justifications and, for concepts,
+        the depth of references: the same text would otherwise be sent, and billed,
+        once for each value of such a param. They are still split by the params
+        that decide whether a decision model can extract an instance, which have
+        the same values for all the instances that it can extract.
+
+        :param instance_type: Type of the instances ("aspect" or "concept").
+        :type instance_type: ExtractedInstanceType
+        :param instances: The aspects or concepts to be extracted by the model.
+        :type instances: list[_Aspect] | list[_Concept]
+        :param fields: The extraction params of the instances by which they are
+            grouped for the extraction with an LLM.
+        :type fields: list[str]
+        :return: The groups of the instances.
+        :rtype: list[list[_Aspect] | list[_Concept]]
+        """
+        not_applied_params = _NOT_APPLIED_INSTANCE_PARAMS + (
+            _NOT_APPLIED_CONCEPT_PARAMS if instance_type == "concept" else ()
+        )
+        return _group_instances_by_fields(
+            fields=[field for field in fields if field not in not_applied_params],
+            # Safe cast: the distinct instances are of the type of the instances
+            instances=cast(
+                list[_Aspect] | list[_Concept], self._get_distinct_instances(instances)
+            ),
+        )
+
+    @staticmethod
+    def _get_distinct_instances(
+        instances: Sequence[_Aspect | _Concept],
+    ) -> list[_Aspect | _Concept]:
+        """
+        Returns the given aspects or concepts without the repeated ones, i.e. each
+        of them once, in the order in which they are first given.
+
+        :param instances: The aspects or concepts, possibly with repeated ones.
+        :type instances: Sequence[_Aspect | _Concept]
+        :return: The distinct aspects or concepts.
+        :rtype: list[_Aspect | _Concept]
+        """
+        distinct_instances: dict[str, _Aspect | _Concept] = {}
+        for instance in instances:
+            distinct_instances.setdefault(instance.unique_id, instance)
+        return list(distinct_instances.values())
+
     @staticmethod
     def _get_unservable_reasons(instance: _Aspect | _Concept) -> list[str]:
         """
@@ -356,6 +575,13 @@ class _DocumentDecisionModel(_DocumentModel):
         the concepts whose values come from a closed set of options (Boolean, label
         and rating concepts), from text only and with no references. Neither
         is extracted with justifications.
+
+        An aspect or a concept of a supported type and with supported settings
+        cannot be extracted either if litellm does not accept a question built
+        for it, e.g. the question of a rating concept with more levels than
+        a question may have: the request with such a question would be rejected
+        before it is sent. The questions are checked with the types of litellm
+        themselves, i.e. with the limits of the installed version.
 
         :param instance: The aspect or concept to be extracted.
         :type instance: _Aspect | _Concept
@@ -371,20 +597,37 @@ class _DocumentDecisionModel(_DocumentModel):
                 )
             if instance.add_justifications:
                 reasons.append("justifications are not supported")
-            return reasons
+            questions = [] if reasons else _build_aspect_questions([instance])
+        else:
+            if not isinstance(instance, _DECISION_CONCEPT_TYPES):
+                reasons.append(f"type `{type(instance).__name__}` is not supported")
+            if instance.modality != "text":
+                reasons.append(f"modality `{instance.modality}` is not supported")
+            if instance.add_justifications:
+                reasons.append("justifications are not supported")
+            if instance.add_references:
+                reasons.append("references are not supported")
+            questions = [] if reasons else _build_concept_questions([instance])
 
-        if not isinstance(instance, _DECISION_CONCEPT_TYPES):
-            reasons.append(f"type `{type(instance).__name__}` is not supported")
-        if instance.modality != "text":
-            reasons.append(f"modality `{instance.modality}` is not supported")
-        if instance.add_justifications:
-            reasons.append("justifications are not supported")
-        if instance.add_references:
-            reasons.append("references are not supported")
+        for question in questions:
+            rejection_reasons = _get_question_rejection_reasons(question)
+            if rejection_reasons:
+                question_desc = f"`{question.kind}` question"
+                if question.options:
+                    question_desc += f" with {len(question.options)} options"
+                reasons.append(
+                    f"its {question_desc} is not accepted by litellm: "
+                    f"{'; '.join(rejection_reasons)}"
+                )
+                # The questions of an instance are of one kind, i.e. the other
+                # questions are rejected for the same reasons, if they are
+                break
         return reasons
 
     def _check_instances_servable(
-        self, instances: Sequence[_Aspect | _Concept]
+        self,
+        instances: Sequence[_Aspect | _Concept],
+        routed_in_group: bool = False,
     ) -> None:
         """
         Checks, before any requests are sent, that the decision model can extract
@@ -392,6 +635,10 @@ class _DocumentDecisionModel(_DocumentModel):
 
         :param instances: The aspects and concepts to be extracted by the model.
         :type instances: Sequence[_Aspect | _Concept]
+        :param routed_in_group: Whether the aspects and concepts are routed to
+            the model by its role in a model group, in which case the error tells
+            how to route them to an LLM of the group. Defaults to False.
+        :type routed_in_group: bool
         :return: None
         :rtype: None
         :raises ValueError: If the decision model cannot extract some of the aspects
@@ -414,13 +661,24 @@ class _DocumentDecisionModel(_DocumentModel):
         else:
             subject = "Decision model"
             condition = ""
+        if routed_in_group:
+            # The model is already in a group: what it cannot extract is to be
+            # routed to another model of the group
+            hint = (
+                "In a model group, an aspect or a concept is extracted by the model "
+                "with the `role` equal to its `model_role`: set the `model_role` "
+                "of the other aspects and concepts to the role of an LLM in the group."
+            )
+        else:
+            hint = (
+                "Route the other aspects and concepts to an LLM, e.g. in a model group."
+            )
         raise ValueError(
             f"{subject} `{self.model}` cannot extract{condition}: "
             f"{'; '.join(unservable_instances)}. "
             f"A decision model extracts aspects with the `paragraphs` reference depth, "
             f"and Boolean, label and rating concepts from text without references, "
-            f"both without justifications. Route the other aspects and concepts "
-            f"to an LLM, e.g. in a model group."
+            f"both without justifications. {hint}"
         )
 
     @staticmethod
@@ -527,6 +785,13 @@ class _DocumentDecisionModel(_DocumentModel):
         If there are more questions on a text than a request can hold, they are
         sent in several requests on the same text.
 
+        An aspect or a concept that is given more than once is asked about, and
+        processed, once.
+
+        Whatever the call ends with, the usage of the requests made is not lost:
+        it is returned with the result, or the usage and cost of the model are
+        updated with it before an exception is raised.
+
         :param extracted_item_type: Type of the item(s) being extracted
             ("aspect" or "concept").
         :type extracted_item_type: ExtractedInstanceType
@@ -576,9 +841,17 @@ class _DocumentDecisionModel(_DocumentModel):
         # the checks made when an extraction starts are bypassed
         self._check_instances_servable(instances_to_process)
 
-        paragraphs = self._get_source_paragraphs(
+        # Each aspect or concept is asked about once, also if it is given more
+        # than once. Safe cast: the distinct instances are of the type of the instances
+        distinct_instances = cast(
+            list[_Aspect] | list[_Concept],
+            self._get_distinct_instances(instances_to_process),
+        )
+
+        source_paragraphs = self._get_source_paragraphs(
             extracted_item_type=extracted_item_type, source=source, document=document
         )
+        paragraphs = source_paragraphs
         if extracted_item_type == "aspect":
             # Each paragraph is sent with its text as it is shown to an LLM for
             # the extraction of aspects. A paragraph that has no such text is not
@@ -595,9 +868,7 @@ class _DocumentDecisionModel(_DocumentModel):
             paragraphs = [paragraph for paragraph, _ in paragraphs_with_texts]
             texts = [text for _, text in paragraphs_with_texts]
             # Safe cast: only aspects are extracted with the "aspect" item type
-            questions = _build_aspect_questions(
-                cast(list[_Aspect], instances_to_process)
-            )
+            questions = _build_aspect_questions(cast(list[_Aspect], distinct_instances))
             # The requests for the paragraphs are sent concurrently if concurrency
             # is enabled for the extraction, in which case a limiter is given
             send_concurrently = async_limiter is not None
@@ -610,7 +881,7 @@ class _DocumentDecisionModel(_DocumentModel):
             ]
             # Safe cast: only concepts are extracted with the "concept" item type
             questions = _build_concept_questions(
-                cast(list[_Concept], instances_to_process)
+                cast(list[_Concept], distinct_instances)
             )
             send_concurrently = False
             not_applied_reason = "the text is sent to it as a whole"
@@ -636,8 +907,14 @@ class _DocumentDecisionModel(_DocumentModel):
         except _InvalidDecisionResponseError as e:
             # The requests succeeded, i.e. their calls are recorded as finished
             logger.error(
-                f"Decision model `{self.model}` returned an invalid response "
-                f"for {extracted_item_type}s: {e}"
+                self._get_invalid_response_msg(
+                    error=e,
+                    extracted_item_type=extracted_item_type,
+                    instances=distinct_instances,
+                    # The questions of aspects are asked on each paragraph
+                    paragraphs=paragraphs if extracted_item_type == "aspect" else None,
+                    source_paragraphs=source_paragraphs,
+                )
             )
             return None, usage
         except asyncio.CancelledError:
@@ -672,54 +949,165 @@ class _DocumentDecisionModel(_DocumentModel):
                     )
             return None, usage
 
-        # Convert the answers to the items of each aspect or concept
-        instances_and_items: list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]
+        # The requests are made: whatever fails from here on, their usage is counted
         try:
-            if extracted_item_type == "aspect":
-                instances_and_items = self._get_aspects_items(
-                    # Safe cast: only aspects are extracted with the "aspect" item type
-                    aspects=cast(list[_Aspect], instances_to_process),
-                    paragraphs=paragraphs,
-                    answers_of_paragraphs=answers_of_texts,
+            # Convert the answers to the items of each aspect or concept
+            instances_and_items: list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]
+            try:
+                if extracted_item_type == "aspect":
+                    instances_and_items = self._get_aspects_items(
+                        # Safe cast: only aspects are extracted with the "aspect"
+                        # item type
+                        aspects=cast(list[_Aspect], distinct_instances),
+                        paragraphs=paragraphs,
+                        answers_of_paragraphs=answers_of_texts,
+                    )
+                else:
+                    instances_and_items = self._get_concepts_items(
+                        # Safe cast: only concepts are extracted with the "concept"
+                        # item type
+                        concepts=cast(list[_Concept], distinct_instances),
+                        answers=answers_of_texts[0],
+                    )
+            except ValueError as e:
+                # An answer that cannot be used (missing, refused, of another kind
+                # than its question, without the probabilities of the options
+                # offered), or a value that the item of the aspect or concept
+                # does not accept
+                logger.error(
+                    self._get_invalid_response_msg(
+                        error=e,
+                        extracted_item_type=extracted_item_type,
+                        instances=distinct_instances,
+                    )
                 )
-            else:
-                instances_and_items = self._get_concepts_items(
-                    # Safe cast: only concepts are extracted with the "concept" item type
-                    concepts=cast(list[_Concept], instances_to_process),
-                    answers=answers_of_texts[0],
-                )
-        except ValueError as e:
-            # An answer that cannot be used (missing, refused, of another kind than
-            # its question, without the probabilities of the options offered),
-            # or a value that the item of the aspect or concept does not accept
-            logger.error(
-                f"Decision model `{self.model}` returned an invalid response "
-                f"for {extracted_item_type}s: {e}"
-            )
-            return None, usage
+                return None, usage
 
-        # Process all gathered results for all processed instances
-        async with (
-            self._async_lock
-        ):  # ensure atomicity of the instances' state check and modification
-            for instance, extracted_items in instances_and_items:
-                self._check_instances_already_processed(
-                    instance_type=extracted_item_type,
-                    # Safe cast: a list with a single aspect or a single concept
-                    instances=cast(list[_Aspect] | list[_Concept], [instance]),
-                    overwrite_existing=overwrite_existing,
-                )
-                instance.extracted_items = extracted_items
-                if isinstance(instance, _Aspect):
-                    # References are automatically included for aspects, as paragraphs'
-                    # texts are the values of extracted items for the aspects
-                    for extracted_item in instance.extracted_items:
-                        for ref_para in extracted_item.reference_paragraphs:
-                            if ref_para not in instance.reference_paragraphs:
-                                instance.reference_paragraphs += [ref_para]
-                instance._is_processed = True
+            # Process all gathered results for all processed instances
+            async with (
+                self._async_lock
+            ):  # ensure atomicity of the instances' state check and modification
+                for instance, extracted_items in instances_and_items:
+                    self._check_instances_already_processed(
+                        instance_type=extracted_item_type,
+                        # Safe cast: a list with a single aspect or a single concept
+                        instances=cast(list[_Aspect] | list[_Concept], [instance]),
+                        overwrite_existing=overwrite_existing,
+                    )
+                    instance.extracted_items = extracted_items
+                    if isinstance(instance, _Aspect):
+                        if overwrite_existing:
+                            # The references of an aspect that is extracted again
+                            # are those of its new items only
+                            instance.reference_paragraphs = []
+                            instance.reference_sentences = []
+                        # References are automatically included for aspects, as
+                        # paragraphs' texts are the values of extracted items for
+                        # the aspects
+                        for extracted_item in instance.extracted_items:
+                            for ref_para in extracted_item.reference_paragraphs:
+                                if ref_para not in instance.reference_paragraphs:
+                                    instance.reference_paragraphs += [ref_para]
+                    instance._is_processed = True
+        except Exception:
+            # e.g. an aspect or a concept that was processed by another call while
+            # the requests of this call were made. No usage is returned when
+            # an exception is raised, i.e. the usage of the requests would be lost.
+            await self._update_usage_and_cost((None, usage))
+            raise
 
         return instances_to_process, usage
+
+    def _get_invalid_response_msg(
+        self,
+        error: ValueError,
+        extracted_item_type: ExtractedInstanceType,
+        instances: Sequence[_Aspect | _Concept],
+        paragraphs: list[_Paragraph] | None = None,
+        source_paragraphs: list[_Paragraph] | None = None,
+    ) -> str:
+        """
+        Returns the message on a response of the decision model that cannot be used.
+
+        The message names what the answer that cannot be used is for, so that it
+        can be found: the aspect or the concept, with the label if the question is
+        on one label of a concept, and the paragraph that the question was asked
+        on, if the questions of the call were asked on each paragraph, as
+        the questions of aspects are. The paragraph is given by its position among
+        the paragraphs that the aspects are extracted from, i.e. those of
+        the document, or of the parent aspect for sub-aspects.
+
+        :param error: The error that tells what is wrong with the response.
+        :type error: ValueError
+        :param extracted_item_type: Type of the item(s) being extracted
+            ("aspect" or "concept").
+        :type extracted_item_type: ExtractedInstanceType
+        :param instances: The aspects or concepts that the questions of the call
+            were built for, in the order of their questions.
+        :type instances: Sequence[_Aspect | _Concept]
+        :param paragraphs: The paragraphs that the questions of the call were asked
+            on, each in a request of its own, in the order of the texts of the call.
+            Defaults to None, i.e. the questions were not asked on each paragraph.
+        :type paragraphs: list[_Paragraph] | None
+        :param source_paragraphs: The paragraphs that the aspects or concepts are
+            extracted from, which the positions of the paragraphs are given in.
+            Defaults to None.
+        :type source_paragraphs: list[_Paragraph] | None
+        :return: The message.
+        :rtype: str
+        """
+        intro = f"Decision model `{self.model}` returned an invalid response for"
+        if not isinstance(error, _InvalidDecisionResponseError):
+            # Not an answer to a specific question, e.g. a value that the item
+            # of an aspect or a concept does not accept
+            return f"{intro} {extracted_item_type}s: {error}"
+
+        # What each question of the call is on, by the names of the questions
+        subjects: dict[str, str] = {}
+        for position, instance in enumerate(instances):
+            if extracted_item_type == "aspect":
+                subjects[_get_aspect_question_name(position)] = (
+                    f"aspect `{instance.name}`"
+                )
+                continue
+            subjects[_get_concept_question_name(position)] = (
+                f"concept `{instance.name}`"
+            )
+            if isinstance(instance, _LabelConcept):
+                for label_position, label in enumerate(instance.labels):
+                    subjects[_get_concept_question_name(position, label_position)] = (
+                        f"concept `{instance.name}` (label `{label}`)"
+                    )
+        subject = subjects.get(error.question_name, f"{extracted_item_type}s")
+
+        location = ""
+        if (
+            paragraphs is not None
+            and source_paragraphs is not None
+            and error.text_position is not None
+            and 0 <= error.text_position < len(paragraphs)
+        ):
+            paragraph = paragraphs[error.text_position]
+            # The paragraphs without text are not asked about, i.e. the position
+            # of the text is not the position of the paragraph in the source
+            paragraph_position = next(
+                (
+                    position
+                    for position, source_paragraph in enumerate(source_paragraphs)
+                    if source_paragraph is paragraph
+                ),
+                None,
+            )
+            if paragraph_position is not None:
+                location = (
+                    f" on paragraph {paragraph_position + 1} of "
+                    f"{len(source_paragraphs)} (index {paragraph_position})"
+                )
+
+        return (
+            f"{intro} {subject}{location}, decision question "
+            f"`{error.question_name}`: {error.reason}"
+        )
 
     @staticmethod
     def _get_concepts_items(
@@ -832,13 +1220,17 @@ class _DocumentDecisionModel(_DocumentModel):
         that are already sent by then, which is possible when they are sent
         concurrently, are waited for, so that the tokens they use are counted.
 
-        All the requests made are recorded in the usage object when this method
-        is left, including when it is left for an error or cancelled:
+        The requests completed, i.e. those that got a response or failed, are
+        recorded in the usage object when this method is left, including when it
+        is left for an error or cancelled:
 
         - first the requests that got a response, in the order of the texts,
           each with the tokens used and the answers;
         - then the requests that failed, as unfinished calls, with the request
           whose error is raised as the last of them, i.e. as the last call recorded.
+
+        A request that is in flight when this method is cancelled is cancelled
+        with it and is not recorded, as its outcome is not known.
 
         :param texts: The texts to ask the questions on.
         :type texts: list[str]
@@ -863,6 +1255,7 @@ class _DocumentDecisionModel(_DocumentModel):
             its answers cannot be attributed to the questions of its request, or
             an answer is not usable (e.g. the model refused to answer), and no
             request failed. The call of each request is then recorded as finished.
+            The error has the position of the text that the response is for.
         :raises Exception: The error of the first request that failed for good.
         """
         # The cap is the one of litellm, which rejects a request over it
@@ -962,6 +1355,8 @@ class _DocumentDecisionModel(_DocumentModel):
                 _validate_answers(questions_chunk, answers)
                 answers_of_requests[position] = answers
             except _InvalidDecisionResponseError as e:
+                # The text that the questions of the request were asked on
+                e.text_position = position // len(questions_chunks)
                 response_errors.append(e)
                 stop_sending()
 

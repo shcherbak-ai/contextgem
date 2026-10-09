@@ -168,13 +168,16 @@ class _InvalidDecisionResponseError(ValueError):
     Internal exception raised when the answer of a decision model to a question
     cannot be used, which makes the whole response of the model invalid: the answer
     is missing, refused, of another kind than the question, without the needed
-    probabilities, with a probability outside [0, 1], or with options other than
-    the options offered.
+    probabilities, with a probability outside [0, 1], with options other than
+    the options offered, or with a zero probability of each option.
 
     :ivar question_name: Name of the question whose answer cannot be used
     :vartype question_name: str
     :ivar reason: What is wrong with the answer
     :vartype reason: str
+    :ivar text_position: Position of the text that the question was asked on, among
+        the texts that the questions of the same call were asked on, if it is known
+    :vartype text_position: int | None
     """
 
     def __init__(self, question_name: str, reason: str):
@@ -191,3 +194,4 @@ class _InvalidDecisionResponseError(ValueError):
         )
         self.question_name = question_name
         self.reason = reason
+        self.text_position: int | None = None

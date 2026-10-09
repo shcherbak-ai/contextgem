@@ -143,6 +143,10 @@ class _DecisionAnswer:
         answer cannot be used, whatever its kind and probabilities are.
         Defaults to False.
     :vartype refused: bool
+    :ivar chosen_option: Label of the option that the model picked, for the answer
+        to a "choice" question that names it. It must be one of the options of
+        the question. Defaults to None, i.e. the picked option is not named.
+    :vartype chosen_option: str | bool | None
     """
 
     name: str
@@ -150,6 +154,7 @@ class _DecisionAnswer:
     probability: float | None = None
     option_probabilities: Mapping[str, float] | None = None
     refused: bool = False
+    chosen_option: str | bool | None = None
 
 
 # Building questions
@@ -317,7 +322,12 @@ def _convert_concept_answers(
     are not normalised, and an answer whose probabilities do not sum to 1 is valid.
     Such an answer must have the probability of each option offered, and of no
     other option: an option without a probability is not taken as an option with
-    a zero probability.
+    a zero probability. At least one of the probabilities must be above zero:
+    an answer with a zero probability of each option tells nothing about
+    the options, and is what an answer without the probabilities of the options
+    offered becomes when the missing probabilities are filled in with zeros before
+    the answer is converted. For the same reason, the option that a "choice" answer
+    names as the picked one must be one of the options offered.
 
     Only the answers to the questions of the concept are read, i.e. the mapping may
     hold the answers to all the questions of a request.
@@ -340,8 +350,9 @@ def _convert_concept_answers(
         cannot extract.
     :raises _InvalidDecisionResponseError: If the answer to a question of the concept
         is missing, refused, of another kind than the question, without the needed
-        probabilities, with a probability that is not a number within [0, 1], or
-        with options other than the options of the question.
+        probabilities, with a probability that is not a number within [0, 1],
+        with options other than the options of the question, or with a zero
+        probability of each option.
     """
     probabilities: _DecisionProbabilities
 
@@ -444,8 +455,9 @@ def _validate_answers(
     :rtype: None
     :raises _InvalidDecisionResponseError: If the answer to a question is missing,
         refused, of another kind than the question, without the needed
-        probabilities, with a probability that is not a number within [0, 1], or
-        with options other than the options of the question.
+        probabilities, with a probability that is not a number within [0, 1],
+        with options other than the options of the question, or with a zero
+        probability of each option.
     """
     for question in questions:
         if question.kind == "predicate":
@@ -692,7 +704,7 @@ def _get_option_probabilities(
     a "score" question.
 
     The probabilities are returned as they are, i.e. they are not normalised, and
-    they do not have to sum to 1.
+    they do not have to sum to 1. At least one of them must be above zero.
 
     :param answers: Answers of the decision model by the names of the questions.
     :type answers: Mapping[str, _DecisionAnswer]
@@ -708,7 +720,9 @@ def _get_option_probabilities(
     :raises _InvalidDecisionResponseError: If the answer is missing, refused, of
         another kind than the question, without the probabilities of the options,
         with an option that is not an option of the question, without an option of
-        the question, or with a probability that is not a number within [0, 1].
+        the question, with a probability that is not a number within [0, 1], with
+        a zero probability of each option, or with an option named as the picked
+        one that is not an option of the question.
     """
     answer = _get_answer(answers, question_name, kind=kind)
     option_probabilities = answer.option_probabilities
@@ -744,6 +758,22 @@ def _get_option_probabilities(
                 f"is not a number within [0, 1].",
             )
         probabilities[option.value] = float(probability)
+    if answer.chosen_option is not None and answer.chosen_option not in option_labels:
+        raise _InvalidDecisionResponseError(
+            question_name,
+            f"the answer picks the option `{answer.chosen_option}`, which was not "
+            f"offered. Options offered: {option_labels}.",
+        )
+    if not any(probabilities.values()):
+        # The answer does not tell the options apart. This is also what an answer
+        # without the probabilities of the options offered looks like once
+        # the missing probabilities are filled in with zeros, as the library
+        # that sends the requests does.
+        raise _InvalidDecisionResponseError(
+            question_name,
+            "the probability of each option is zero, i.e. the answer has no usable "
+            "probabilities of the options offered.",
+        )
     return probabilities
 
 
