@@ -27,13 +27,14 @@ import dataclasses
 import inspect
 import json
 import logging as stdlib_logging
+import os
 import re
 import sys
 import types
 import warnings
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -54,9 +55,12 @@ from litellm.types.decisions import (
 )
 
 from contextgem.internal.base import decision_models as decision_models_module
+from contextgem.internal.base import models as models_module
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.decision_models import _DocumentDecisionModel
 from contextgem.internal.base.llms import _DocumentLLM
+from contextgem.internal.base.models import _COST_QUANT
+from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.data_models import _ModelCost, _ModelUsage
 from contextgem.internal.decisions import (
     _build_aspect_questions,
@@ -66,6 +70,7 @@ from contextgem.internal.decisions import (
     _DecisionAnswer,
     _DecisionOption,
     _DecisionQuestion,
+    _validate_answers,
 )
 from contextgem.internal.exceptions import (
     ModelAPIError,
@@ -91,6 +96,7 @@ from contextgem.public import (
     LabelConcept,
     ModelPricing,
     NumericalConcept,
+    Paragraph,
     RatingConcept,
     StringConcept,
     register_tool,
@@ -137,6 +143,43 @@ _ASPECT_PARAGRAPHS_TEXT_SENT = (
     "The parties agree as follows.\n\n"
     "Either party may terminate this agreement with a written notice."
 )
+
+# Texts of the paragraphs of the document used in the tests of the extraction of
+# aspects, and the texts expected to be sent to a decision model for them: the text
+# of each paragraph, in a request of its own
+_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS = [
+    "Non-disclosure  agreement",
+    "The receiving party shall keep the information confidential.",
+    "Either party may terminate this agreement with a written notice of 30 days.",
+    "The liability of each party is limited to the fees paid.",
+    "A notice of termination does not release a party from confidentiality.",
+]
+_ASPECTS_PARAGRAPH_TEXTS_SENT = [
+    "Non-disclosure agreement",
+    *_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS[1:],
+]
+
+# Texts of the documents of the tests whose requests are sent to the APIs of
+# decision models and recorded (the tests marked with `vcr`): short, as they are
+# paid for when recorded, and unambiguous on what is extracted from them
+_RECORDED_CONCEPTS_DOCUMENT_TEXT = (
+    "NON-DISCLOSURE AGREEMENT\n\n"
+    "This Non-Disclosure Agreement is made between Alpha Ltd and Beta Inc. "
+    "Each party shall keep the confidential information of the other party "
+    "secret and shall not disclose it to any third party.\n\n"
+    "The parties rate the sensitivity of the confidential information as 4 "
+    "on a scale from 1 to 5.\n\n"
+    "This agreement is governed by the laws of Norway."
+)
+_RECORDED_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS = [
+    "SERVICES AGREEMENT",
+    "This agreement is made between Alpha Ltd, the client, and Beta Inc, the provider.",
+    "The provider shall deliver consulting services to the client.",
+    "The client shall pay the provider a fee of 5,000 euros every month.",
+    "Each invoice of the provider is payable within 30 days of the invoice date.",
+    "Either party may terminate this agreement by giving a written notice of 60 days.",
+    "This agreement is governed by the laws of Norway.",
+]
 
 
 def _create_decisions_response(
@@ -422,6 +465,83 @@ def _create_document(
     return document
 
 
+def _create_aspects_document(
+    aspects: list[Aspect] | None = None, concepts: list[Any] | None = None
+) -> Document:
+    """
+    Creates a document with five paragraphs, with the given aspects and concepts
+    assigned to it. The third paragraph has additional context and custom data.
+
+    :param aspects: Aspects of the document. Defaults to None.
+    :type aspects: list[Aspect] | None
+    :param concepts: Concepts of the document. Defaults to None.
+    :type concepts: list[Any] | None
+    :return: Document.
+    :rtype: Document
+    """
+    paragraphs: list[_Paragraph] = [
+        Paragraph(raw_text=text) for text in _ASPECTS_DOCUMENT_PARAGRAPH_TEXTS
+    ]
+    paragraphs[2] = Paragraph(
+        raw_text=_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS[2],
+        additional_context="Section 3. Termination",
+        custom_data={"page": 2},
+    )
+    document = Document(paragraphs=paragraphs)
+    if aspects:
+        document.aspects = aspects
+    if concepts:
+        document.concepts = concepts
+    return document
+
+
+def _create_aspects_responder(
+    yes_probabilities: dict[str, dict[int, float]],
+    default_probability: float = 0.1,
+    **usage_kwargs: int,
+) -> Callable[[dict[str, Any]], OpenAIDecisionResponse]:
+    """
+    Creates the function that responds to a request with the questions of aspects,
+    asked on one paragraph of the document created by
+    :func:`_create_aspects_document`.
+
+    :param yes_probabilities: The probability that a paragraph belongs to an aspect,
+        by the name of the aspect and by the position of the paragraph in
+        the document.
+    :type yes_probabilities: dict[str, dict[int, float]]
+    :param default_probability: The probability for the aspects and paragraphs
+        that are not given. Defaults to 0.1.
+    :type default_probability: float
+    :param usage_kwargs: Token counts to report in the responses.
+    :type usage_kwargs: int
+    :return: Function that creates the response for a request.
+    :rtype: Callable[[dict[str, Any]], OpenAIDecisionResponse]
+    """
+
+    def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+        """
+        Creates the response for the request.
+
+        :param request: Keyword arguments of the request.
+        :type request: dict[str, Any]
+        :return: Response of litellm.
+        :rtype: OpenAIDecisionResponse
+        """
+        paragraph_position = _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+        answers: dict[str, Any] = {}
+        for question in request["questions"]:
+            aspect_name_match = re.search(
+                r"^Aspect name: (.+)$", question["instructions"], flags=re.MULTILINE
+            )
+            assert aspect_name_match is not None, question
+            answers[question["name"]] = yes_probabilities.get(
+                aspect_name_match.group(1), {}
+            ).get(paragraph_position, default_probability)
+        return _create_decisions_response(request["questions"], answers, **usage_kwargs)
+
+    return respond
+
+
 def _set_aspect_as_extracted(document: Document, aspect: _Aspect) -> None:
     """
     Sets the aspect as extracted from the document, with the last two paragraphs
@@ -585,19 +705,29 @@ class TestDecisionModels(BaseTest):
     """
     Tests for decision models: the questions built for concepts and aspects,
     the conversion of the answers to the values of extracted items with their
-    probabilities, and the extraction of concepts with a decision model, on its
-    own, in a model group and in a fallback chain.
+    probabilities, and the extraction of aspects and concepts with a decision model,
+    on its own, in a model group and in a fallback chain.
 
-    No requests are made, i.e. no cassettes are required: the API calls are stubbed
-    in each test that makes them, and an API call that is not stubbed fails the test
-    (see the fixture below).
+    In the tests that are not marked with ``vcr``, no requests are made, i.e. no
+    cassettes are required: the API calls are stubbed in each test that makes them,
+    and an API call that is not stubbed fails the test (see the fixture below).
+    The tests marked with ``vcr`` send their requests to the APIs of the models,
+    which are recorded to and replayed from cassettes as in the other test classes.
     """
 
     @pytest.fixture(autouse=True)
-    def fail_on_unstubbed_model_api_calls(self, monkeypatch: pytest.MonkeyPatch):
+    def fail_on_unstubbed_model_api_calls(
+        self, request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+    ):
         """
         Makes any call to a model API that is not stubbed by the test fail the test,
         instead of sending a request.
+
+        Does not apply to the tests marked with ``vcr``, and to them only: their
+        requests are to reach the cassette (or, when a cassette is recorded,
+        the API), through the calls of litellm as they are set up for such tests
+        (see ``vcr_compatible_acompletion`` in ``conftest.py``), with the API keys
+        taken from the environment.
 
         A test stubs the API calls that it expects, on the same module object that
         the framework calls them through. Without a stub, the calls of litellm to
@@ -615,6 +745,10 @@ class TestDecisionModels(BaseTest):
         the environment for the time of the test: litellm reads them from there
         when no key is passed.
         """
+        if request.node.get_closest_marker("vcr") is not None:
+            yield
+            return
+
         unstubbed_calls: list[str] = []
 
         def create_failure(name: str) -> Callable[..., Any]:
@@ -1475,6 +1609,112 @@ class TestDecisionModels(BaseTest):
                     rf"of the option `{option_labels[1]}` is not a number within "
                     r"\[0, 1\]",
                 )
+
+    def test_validate_answers(self):
+        """
+        Tests the validation of the answers to a set of questions, which accepts
+        what the conversion of the answers accepts, whatever the questions are
+        built for.
+        """
+        concepts = [
+            BooleanConcept(name="Is a contract", description="Document is a contract"),
+            LabelConcept(
+                name="Notice form",
+                description="Required form of the termination notice",
+                labels=["written", "email"],
+            ),
+            RatingConcept(
+                name="Drafting quality",
+                description="Overall drafting quality of the contract",
+                rating_scale=(1, 3),
+            ),
+        ]
+        questions = [
+            *_build_concept_questions(concepts),
+            *_build_aspect_questions(
+                [Aspect(name="Liability", description="Clauses on liability")]
+            ),
+        ]
+        assert [question.name for question in questions] == ["C0", "C1", "C2", "A0"]
+        valid_answers = {
+            "C0": _predicate_answer("C0", probability=0.9),
+            "C1": _choice_answer(
+                "C1", option_probabilities={"written": 0.7, "email": 0.3}
+            ),
+            "C2": _score_answer(
+                "C2", option_probabilities={"1": 0.2, "2": 0.5, "3": 0.3}
+            ),
+            "A0": _predicate_answer("A0", probability=0.1),
+        }
+        assert _validate_answers(questions, valid_answers) is None
+        # The answers to other questions are not read
+        assert (
+            _validate_answers(
+                questions,
+                {**valid_answers, "C3": _predicate_answer("C3", refused=True)},
+            )
+            is None
+        )
+        # No questions: nothing to validate
+        assert _validate_answers([], {}) is None
+
+        def validate(answers: dict[str, _DecisionAnswer]) -> Any:
+            """
+            Validates the given answers together with the valid answers to
+            the other questions.
+            """
+            return _validate_answers(questions, {**valid_answers, **answers})
+
+        for answers, question_name, reason_match in [
+            # Refused
+            (
+                {"C0": _predicate_answer("C0", refused=True)},
+                "C0",
+                "the model refused to answer",
+            ),
+            (
+                {"A0": _predicate_answer("A0", probability=0.9, refused=True)},
+                "A0",
+                "the model refused to answer",
+            ),
+            # Of another kind than the question
+            (
+                {"C1": _predicate_answer("C1", probability=0.9)},
+                "C1",
+                "the answer is of the kind `predicate`, while the question is of "
+                "the kind `choice`",
+            ),
+            # Without the probability, or with a probability that is not one
+            ({"C0": _predicate_answer("C0")}, "C0", "the answer has no probability"),
+            (
+                {"A0": _predicate_answer("A0", probability=1.5)},
+                "A0",
+                r"is not a number within \[0, 1\]",
+            ),
+            # With an option that was not offered, or without an option offered
+            (
+                {
+                    "C1": _choice_answer(
+                        "C1", option_probabilities={"written": 0.7, "fax": 0.3}
+                    )
+                },
+                "C1",
+                r"the answer has options that were not offered: \['fax'\]",
+            ),
+            (
+                {"C2": _score_answer("C2", option_probabilities={"1": 0.5, "2": 0.5})},
+                "C2",
+                r"the answer has no probabilities of the options \['3'\]",
+            ),
+        ]:
+            _check_invalid_answer(validate, answers, question_name, reason_match)
+        # Missing
+        _check_invalid_answer(
+            lambda answers: _validate_answers(questions, answers),
+            {name: answer for name, answer in valid_answers.items() if name != "C2"},
+            "C2",
+            "the answer is missing",
+        )
 
     def test_decision_model_init(self):
         """
@@ -3728,6 +3968,7 @@ class TestDecisionModels(BaseTest):
             document: Document,
             error_match: str,
             aspect: _Aspect | None = None,
+            only_full_extraction: bool = False,
         ) -> None:
             """
             Checks that the extraction methods that are to extract the instances
@@ -3744,10 +3985,16 @@ class TestDecisionModels(BaseTest):
                 Defaults to None, in which case the instances of the document
                 are extracted.
             :type aspect: _Aspect | None
+            :param only_full_extraction: Whether only the extraction of everything
+                that the document has is to reject the instances, as the other
+                extraction methods do not extract them. Defaults to False.
+            :type only_full_extraction: bool
             """
             extraction_methods: list[Callable[..., Any]]
             extraction_kwargs: dict[str, Any] = {"document": document}
-            if aspect is not None:
+            if only_full_extraction:
+                extraction_methods = [model.extract_all]
+            elif aspect is not None:
                 extraction_methods = [model.extract_concepts_from_aspect]
                 extraction_kwargs["aspect"] = aspect
             elif document.aspects:
@@ -3780,7 +4027,10 @@ class TestDecisionModels(BaseTest):
             error_match = (
                 f"^Decision model `{_DECISION_MODEL}` cannot extract: "
                 f"concept `{concept.name}` \\({reasons}\\)\\. "
-                f"A decision model extracts Boolean, label and rating concepts"
+                f"A decision model extracts aspects with the `paragraphs` reference "
+                f"depth, and Boolean, label and rating concepts from text without "
+                f"references, both without justifications\\. Route the other aspects "
+                f"and concepts to an LLM"
             )
             # A concept of the document, next to a concept that can be extracted
             document = _create_document(concepts=[supported_concept, concept])
@@ -3815,36 +4065,109 @@ class TestDecisionModels(BaseTest):
             r"supported\)\. A decision model",
         )
 
-        # Aspects are not extracted by a decision model, including sub-aspects
+        # Aspects that a decision model cannot extract
+        unservable_aspects: list[tuple[dict[str, Any], str]] = [
+            # Sentences as the extracted items
+            (
+                {"reference_depth": "sentences"},
+                "reference depth `sentences` is not supported",
+            ),
+            # Justifications
+            ({"add_justifications": True}, "justifications are not supported"),
+            # Each reason is given
+            (
+                {"reference_depth": "sentences", "add_justifications": True},
+                "reference depth `sentences` is not supported, justifications "
+                "are not supported",
+            ),
+        ]
+        for aspect_kwargs, reasons in unservable_aspects:
+            error_match = (
+                f"^Decision model `{_DECISION_MODEL}` cannot extract: "
+                f"aspect `Termination` \\({reasons}\\)\\. "
+                f"A decision model extracts aspects with the `paragraphs` reference "
+                f"depth"
+            )
+            # An aspect of the document, next to an aspect that can be extracted
+            document = _create_document(
+                aspects=[
+                    Aspect(name="Liability", description="Clauses on liability"),
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on termination",
+                        **aspect_kwargs,
+                    ),
+                ],
+                concepts=[supported_concept],
+            )
+            check_rejected(decision_model, document, error_match)
+            # A sub-aspect of an aspect that can be extracted
+            document = _create_document(
+                aspects=[
+                    Aspect(
+                        name="Liability",
+                        description="Clauses on liability",
+                        aspects=[
+                            Aspect(
+                                name="Termination",
+                                description="Clauses on termination",
+                                **aspect_kwargs,
+                            )
+                        ],
+                    )
+                ]
+            )
+            check_rejected(decision_model, document, error_match)
+        # All the instances that cannot be extracted are named by the extraction
+        # of everything that the document has
         document = _create_document(
             aspects=[
                 Aspect(
                     name="Termination",
                     description="Clauses on termination",
-                    aspects=[Aspect(name="Notices", description="Clauses on notices")],
+                    add_justifications=True,
+                    concepts=[unservable_concepts[7][0]],
+                    aspects=[
+                        Aspect(
+                            name="Notices",
+                            description="Clauses on notices",
+                            reference_depth="sentences",
+                        )
+                    ],
                 )
             ],
-            concepts=[supported_concept],
+            concepts=[unservable_concepts[0][0]],
         )
         check_rejected(
             decision_model,
             document,
-            f"^Decision model `{_DECISION_MODEL}` cannot extract: "
-            # `extract_all()` names all the aspects, `extract_aspects_from_document()`
-            # names those that it is to extract
-            r".*aspect `Termination` \(aspects are not supported\); "
-            r"aspect `Notices` \(aspects are not supported\)\. A decision model",
+            r"cannot extract: concept `Title` \(type `StringConcept` is not "
+            r"supported\); aspect `Termination` \(justifications are not "
+            r"supported\); concept `Notice form` \(references are not supported\); "
+            r"aspect `Notices` \(reference depth `sentences` is not supported\)\. ",
+            only_full_extraction=True,
         )
-        # ... while the concepts of the document can still be extracted
-        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [{"C0": 0.9}]})
+        # A concept of an aspect is not extracted when the aspects are, i.e. it is
+        # rejected only by the extraction of everything that the document has
+        document = _create_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on termination",
+                    concepts=[unservable_concepts[0][0]],
+                )
+            ]
+        )
+        check_rejected(
+            decision_model,
+            document,
+            f"^Decision model `{_DECISION_MODEL}` cannot extract: concept `Title`",
+            only_full_extraction=True,
+        )
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [{"A0": 0.9}]})
         with patch.object(litellm, "adecisions", new=decisions_stub):
-            decision_model.extract_concepts_from_document(document)
-        assert document.concepts[0].extracted_items[0].value is True
-        # A document without aspects is extracted in full
-        document = _create_document(concepts=[supported_concept])
-        with patch.object(litellm, "adecisions", new=decisions_stub):
-            decision_model.extract_all(document)
-        assert document.concepts[0].extracted_items[0].value is True
+            decision_model.extract_aspects_from_document(document)
+        assert len(document.aspects[0].extracted_items) == 3
 
         # === A decision model in a model group ===
         llm = _create_llm()
@@ -3896,22 +4219,40 @@ class TestDecisionModels(BaseTest):
         _set_aspect_as_extracted(document, aspect)
         _set_aspect_as_extracted(document, aspect.aspects[0])
         check_rejected(model_group, document, group_error_match, aspect=aspect)
-        # An aspect with the role of the decision model is rejected
-        document = _create_document(
-            aspects=[
+        # An aspect that the decision model cannot extract is rejected if it has
+        # the role of the decision model, also when it is a sub-aspect of an aspect
+        # that an LLM is to extract
+        for aspects in [
+            [
                 Aspect(
                     name="Termination",
                     description="Clauses on termination",
+                    add_justifications=True,
                     model_role="decide",
                 )
-            ]
-        )
-        check_rejected(
-            model_group,
-            document,
-            f"^Decision model `{_DECISION_MODEL}` cannot extract: "
-            r"aspect `Termination` \(aspects are not supported\)\. ",
-        )
+            ],
+            [
+                Aspect(
+                    name="Liability",
+                    description="Clauses on liability",
+                    aspects=[
+                        Aspect(
+                            name="Termination",
+                            description="Clauses on termination",
+                            add_justifications=True,
+                            model_role="decide",
+                        )
+                    ],
+                )
+            ],
+        ]:
+            document = _create_document(aspects=aspects)
+            check_rejected(
+                model_group,
+                document,
+                f"^Decision model `{_DECISION_MODEL}` cannot extract: "
+                r"aspect `Termination` \(justifications are not supported\)\. ",
+            )
 
         # What is routed to an LLM of the group is not checked
         document = _create_document(
@@ -3955,6 +4296,7 @@ class TestDecisionModels(BaseTest):
                 Aspect(
                     name="Termination",
                     description="Clauses on termination",
+                    reference_depth="sentences",
                     concepts=[supported_concept],
                 )
             ]
@@ -3963,7 +4305,8 @@ class TestDecisionModels(BaseTest):
             llm,
             document,
             f"^Fallback decision model `{_DECISION_MODEL}` cannot extract what it "
-            r"is to extract.*: aspect `Termination` \(aspects are not supported\)",
+            r"is to extract if the model it is a fallback for fails: aspect "
+            r"`Termination` \(reference depth `sentences` is not supported\)\. ",
         )
         # ... while an LLM with such a fallback model extracts what a decision
         # model can extract
@@ -4033,6 +4376,29 @@ class TestDecisionModels(BaseTest):
                     source=document,
                     llm=decision_model,
                     instances_to_process=list(document.concepts),
+                    document=document,
+                )
+            )
+        assert not requests
+        document = _create_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on termination",
+                    add_justifications=True,
+                )
+            ]
+        )
+        with (
+            patch.object(litellm, "adecisions", new=record_request),
+            pytest.raises(ValueError, match="cannot extract: aspect `Termination`"),
+        ):
+            asyncio.run(
+                decision_model._extract_items_from_instances(
+                    extracted_item_type="aspect",
+                    source=document,
+                    llm=decision_model,
+                    instances_to_process=list(document.aspects),
                     document=document,
                 )
             )
@@ -4428,3 +4794,2163 @@ class TestDecisionModels(BaseTest):
         decision_model_dict["auto_pricing"] = True
         with pytest.raises(ValueError, match="not supported for decision model"):
             DocumentDecisionModel.from_dict(decision_model_dict)
+
+    def test_extract_aspects_with_decision_model(self):
+        """
+        Tests the extraction of aspects from a document with a decision model:
+        the requests sent, one for each paragraph, and the items extracted, with
+        their values, probabilities and reference paragraphs.
+        """
+        decision_model = _create_decision_model(
+            api_base="https://decisions.example.com", timeout=30
+        )
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(
+                    name="Confidentiality",
+                    description="Clauses on the confidentiality of the information",
+                ),
+                Aspect(
+                    name="Termination",
+                    description="Clauses on the termination of the agreement",
+                ),
+                Aspect(name="Payment", description="Clauses on the payment of fees"),
+            ]
+        )
+        paragraphs = document.paragraphs
+        # The probability that a paragraph belongs to an aspect, by the position of
+        # the paragraph: 0.1 for the paragraphs that are not listed
+        yes_probabilities = {
+            # A paragraph with a probability of exactly 0.5 belongs to the aspect
+            "Confidentiality": {0: 0.6, 1: 0.95, 4: 0.5},
+            "Termination": {2: 0.9, 4: 0.7},
+            # No paragraph has a probability of 0.5 or more
+            "Payment": {3: 0.4999},
+        }
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    _create_aspects_responder(yes_probabilities, input_tokens=20)
+                ]
+            }
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            extracted_aspects = decision_model.extract_aspects_from_document(document)
+
+        # === The requests ===
+        # One request for each paragraph, in the order of the paragraphs, with
+        # the text of the paragraph and one question for each aspect
+        questions = _build_aspect_questions(document.aspects)
+        assert [question.name for question in questions] == ["A0", "A1", "A2"]
+        expected_questions = [
+            {
+                "type": "predicate",
+                "name": question.name,
+                "instructions": question.instructions,
+            }
+            for question in questions
+        ]
+        assert "Aspect name: Termination\n" in questions[1].instructions
+        assert len(decisions_stub.requests) == len(paragraphs) == 5
+        for request, text_sent in zip(
+            decisions_stub.requests, _ASPECTS_PARAGRAPH_TEXTS_SENT, strict=True
+        ):
+            assert set(request) == {
+                "model",
+                "input",
+                "questions",
+                "api_key",
+                "api_base",
+                "timeout",
+            }
+            assert request["model"] == _DECISION_MODEL
+            assert request["api_key"] == "test_api_key"
+            assert request["api_base"] == "https://decisions.example.com"
+            assert request["timeout"] == 30
+            # The text of the paragraph, as it is shown to an LLM
+            assert request["input"] == text_sent
+            assert request["questions"] == expected_questions
+        # A paragraph is judged on its own text: its additional context is not sent
+        assert paragraphs[2].additional_context == "Section 3. Termination"
+        assert "Section 3" not in json.dumps(decisions_stub.requests)
+
+        # === The items ===
+        assert len(extracted_aspects) == 3
+        assert all(
+            extracted_aspect is aspect
+            for extracted_aspect, aspect in zip(
+                extracted_aspects, document.aspects, strict=True
+            )
+        )
+        # The paragraphs that belong to each aspect, with their probabilities
+        expected_paragraphs: dict[str, list[tuple[int, float]]] = {
+            "Confidentiality": [(0, 0.6), (1, 0.95), (4, 0.5)],
+            "Termination": [(2, 0.9), (4, 0.7)],
+            # An aspect that no paragraph belongs to is processed and has no items,
+            # as an aspect for which an LLM returns no paragraphs
+            "Payment": [],
+        }
+        for aspect in document.aspects:
+            assert aspect._is_processed
+            aspect_paragraphs = expected_paragraphs[aspect.name]
+            # One item for each paragraph, in the order of the paragraphs
+            assert len(aspect.extracted_items) == len(aspect_paragraphs)
+            for item, (paragraph_position, probability) in zip(
+                aspect.extracted_items, aspect_paragraphs, strict=True
+            ):
+                paragraph = paragraphs[paragraph_position]
+                assert type(item) is _StringItem
+                # The text of the paragraph as it is in the document
+                assert item.value == paragraph.raw_text
+                self.check_item_probabilities(
+                    item, {True: probability, False: 1 - probability}
+                )
+                assert item.reference_paragraphs == [paragraph]
+                assert item.reference_paragraphs[0].unique_id == paragraph.unique_id
+                assert not item.reference_sentences
+                # A decision model generates no text
+                assert item.justification is None
+                # The custom data of the paragraph
+                assert item.custom_data == paragraph.custom_data
+            assert aspect.reference_paragraphs == [
+                paragraphs[paragraph_position]
+                for paragraph_position, _ in aspect_paragraphs
+            ]
+            assert not aspect.reference_sentences
+        assert document.aspects[0].extracted_items[0].value == (
+            "Non-disclosure  agreement"
+        )
+        assert document.aspects[1].extracted_items[0].custom_data == {"page": 2}
+        assert document.aspects[1].extracted_items[1].custom_data == {}
+
+        # === The usage ===
+        # Each request is recorded as a call, in the order of the paragraphs
+        usage = decision_model.get_usage()[0].usage
+        assert usage.input == 5 * 20
+        assert len(usage.calls) == 5
+        for call, request in zip(usage.calls, decisions_stub.requests, strict=True):
+            assert json.loads(call.prompt) == {
+                "model": _DECISION_MODEL,
+                "input": request["input"],
+                "questions": request["questions"],
+            }
+            assert call.timestamp_received is not None
+            assert call._input_tokens == 20
+        assert usage.calls[0].response is not None
+        assert json.loads(usage.calls[0].response) == [
+            {"type": "predicate", "name": "A0", "probability": 0.6},
+            {"type": "predicate", "name": "A1", "probability": 0.1},
+            {"type": "predicate", "name": "A2", "probability": 0.1},
+        ]
+
+        # === Serialization ===
+        self.check_instance_serialization_and_cloning(document)
+        for restored_document in [
+            Document.from_dict(document.to_dict()),
+            Document.from_json(document.to_json()),
+            document.clone(),
+        ]:
+            assert restored_document == document
+            for restored_aspect, aspect in zip(
+                restored_document.aspects, document.aspects, strict=True
+            ):
+                assert restored_aspect._is_processed
+                assert restored_aspect.extracted_items == aspect.extracted_items
+                assert restored_aspect.reference_paragraphs == (
+                    aspect.reference_paragraphs
+                )
+                for restored_item, item in zip(
+                    restored_aspect.extracted_items, aspect.extracted_items, strict=True
+                ):
+                    self.check_item_probabilities(restored_item, item.probabilities)
+                    assert restored_item.reference_paragraphs == (
+                        item.reference_paragraphs
+                    )
+                    assert restored_item.custom_data == item.custom_data
+
+        # === Already processed aspects ===
+        decisions_stub.requests.clear()
+        decisions_stub.outcomes[_DECISION_MODEL] = [
+            _create_aspects_responder({"Termination": {2: 0.9}, "Payment": {3: 0.8}})
+        ]
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            # ... are not extracted again, before any request is sent
+            with pytest.raises(ValueError, match="already been processed"):
+                decision_model.extract_aspects_from_document(document)
+            assert not decisions_stub.requests
+            # ... unless they are to be overwritten
+            decision_model.extract_aspects_from_document(
+                document, overwrite_existing=True
+            )
+        assert len(decisions_stub.requests) == 5
+        confidentiality, termination, payment = document.aspects
+        assert confidentiality._is_processed and not confidentiality.extracted_items
+        assert [item.value for item in termination.extracted_items] == [
+            paragraphs[2].raw_text
+        ]
+        assert [item.value for item in payment.extracted_items] == [
+            paragraphs[3].raw_text
+        ]
+        assert payment.reference_paragraphs == [paragraphs[3]]
+
+        # === The params of the extraction ===
+        def requests_sent() -> list[tuple[str, list[str]]]:
+            """
+            Returns the text and the names of the questions of each request sent.
+
+            :return: The requests, in the order they were sent.
+            :rtype: list[tuple[str, list[str]]]
+            """
+            return [
+                (
+                    request["input"],
+                    [question["name"] for question in request["questions"]],
+                )
+                for request in decisions_stub.requests
+            ]
+
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            # The number of aspects per call is limited: each call sends a request
+            # for each paragraph, with the questions of its aspects. The names of
+            # the questions follow the position of an aspect in its call.
+            decisions_stub.requests.clear()
+            decision_model.extract_aspects_from_document(
+                document, overwrite_existing=True, max_items_per_call=2
+            )
+            assert requests_sent() == [
+                *[(text, ["A0", "A1"]) for text in _ASPECTS_PARAGRAPH_TEXTS_SENT],
+                *[(text, ["A0"]) for text in _ASPECTS_PARAGRAPH_TEXTS_SENT],
+            ]
+            assert [item.value for item in payment.extracted_items] == [
+                paragraphs[3].raw_text
+            ]
+
+            # Only the aspects selected are extracted
+            decisions_stub.requests.clear()
+            decision_model.extract_aspects_from_document(
+                document, from_aspects=[termination], overwrite_existing=True
+            )
+            assert requests_sent() == [
+                (text, ["A0"]) for text in _ASPECTS_PARAGRAPH_TEXTS_SENT
+            ]
+            assert all(
+                "Aspect name: Termination\n" in request["questions"][0]["instructions"]
+                for request in decisions_stub.requests
+            )
+
+            # The number of paragraphs per call is not applied to a decision model:
+            # each paragraph is always sent in a request of its own
+            decisions_stub.requests.clear()
+            with _capture_logs() as captured_logs:
+                decision_model.extract_aspects_from_document(
+                    document,
+                    overwrite_existing=True,
+                    max_paragraphs_to_analyze_per_call=2,
+                )
+            assert requests_sent() == [
+                (text, ["A0", "A1", "A2"]) for text in _ASPECTS_PARAGRAPH_TEXTS_SENT
+            ]
+            assert (
+                f"`max_paragraphs_to_analyze_per_call` is not applied to decision "
+                f"model `{_DECISION_MODEL}`: each paragraph is sent to it in "
+                f"a request of its own." in captured_logs
+            )
+
+        # === More aspects than the questions that a request can hold ===
+        # The questions on a paragraph are sent in several requests on that paragraph
+        n_aspects = MAX_DECISION_QUESTIONS + 2
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(name=f"Topic {i}", description=f"Clauses on the topic {i}")
+                for i in range(n_aspects)
+            ]
+        )
+        last_topic = f"Topic {n_aspects - 1}"
+        decision_model = _create_decision_model()
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    _create_aspects_responder(
+                        {"Topic 0": {0: 0.8, 4: 0.7}, last_topic: {4: 0.9}},
+                        input_tokens=20,
+                    )
+                ]
+            }
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        question_names = [f"A{i}" for i in range(n_aspects)]
+        assert requests_sent() == [
+            (text, names)
+            for text in _ASPECTS_PARAGRAPH_TEXTS_SENT
+            for names in [
+                question_names[:MAX_DECISION_QUESTIONS],
+                question_names[MAX_DECISION_QUESTIONS:],
+            ]
+        ]
+        assert all(aspect._is_processed for aspect in document.aspects)
+        assert {
+            aspect.name: [item.value for item in aspect.extracted_items]
+            for aspect in document.aspects
+            if aspect.extracted_items
+        } == {
+            "Topic 0": [
+                document.paragraphs[0].raw_text,
+                document.paragraphs[4].raw_text,
+            ],
+            last_topic: [document.paragraphs[4].raw_text],
+        }
+        self.check_item_probabilities(
+            document.aspects[-1].extracted_items[0], {True: 0.9, False: 1 - 0.9}
+        )
+        usage = decision_model.get_usage()[0].usage
+        assert usage.input == 10 * 20
+        assert len(usage.calls) == 10
+
+        # === A document that has no text ===
+        document = Document(images=[self.test_img_png_invoice])
+        document.aspects = [
+            Aspect(name="Payment", description="Clauses on the payment of fees")
+        ]
+        decisions_stub.requests.clear()
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            pytest.raises(ValueError, match="Document lacks text or paragraphs"),
+        ):
+            decision_model.extract_aspects_from_document(document)
+        assert not decisions_stub.requests
+
+    def test_extract_sub_aspects_with_decision_model(self):
+        """
+        Tests the extraction of sub-aspects with a decision model: the sub-aspects
+        of an aspect are extracted from the paragraphs extracted for that aspect,
+        with one request for each of these paragraphs.
+        """
+        decision_model = _create_decision_model()
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on the termination of the agreement",
+                    aspects=[
+                        Aspect(
+                            name="Notice of termination",
+                            description="Clauses on the notice that terminates "
+                            "the agreement",
+                        ),
+                        Aspect(
+                            name="Effects of termination",
+                            description="Clauses on what follows the termination",
+                        ),
+                        Aspect(
+                            name="Termination fee",
+                            description="Clauses on the fee paid on the termination",
+                        ),
+                    ],
+                ),
+                Aspect(
+                    name="Payment",
+                    description="Clauses on the payment of fees",
+                    aspects=[
+                        Aspect(
+                            name="Late payment",
+                            description="Clauses on the payments that are late",
+                        )
+                    ],
+                ),
+            ]
+        )
+        paragraphs = document.paragraphs
+        yes_probabilities = {
+            "Termination": {2: 0.9, 4: 0.7},
+            "Notice of termination": {2: 0.8, 4: 0.55},
+            "Effects of termination": {4: 0.6},
+            # A paragraph that does not belong to the aspect is not asked about
+            # for its sub-aspects
+            "Termination fee": {3: 0.9},
+            "Late payment": {3: 0.9},
+        }
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [_create_aspects_responder(yes_probabilities)]}
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+
+        # The aspects are asked about on each paragraph of the document, and
+        # the sub-aspects of an aspect on each paragraph extracted for the aspect.
+        # No paragraph is extracted for the other aspect, i.e. there is nothing
+        # to ask about its sub-aspect on.
+        assert [
+            (request["input"], [question["name"] for question in request["questions"]])
+            for request in decisions_stub.requests
+        ] == [
+            *[(text, ["A0", "A1"]) for text in _ASPECTS_PARAGRAPH_TEXTS_SENT],
+            (_ASPECTS_PARAGRAPH_TEXTS_SENT[2], ["A0", "A1", "A2"]),
+            (_ASPECTS_PARAGRAPH_TEXTS_SENT[4], ["A0", "A1", "A2"]),
+        ]
+        assert all(
+            "Aspect name: Notice of termination\n"
+            in request["questions"][0]["instructions"]
+            for request in decisions_stub.requests[5:]
+        )
+
+        termination, payment = document.aspects
+        assert [item.value for item in termination.extracted_items] == [
+            paragraphs[2].raw_text,
+            paragraphs[4].raw_text,
+        ]
+        assert payment._is_processed and not payment.extracted_items
+        expected_paragraphs: dict[str, list[tuple[int, float]]] = {
+            "Notice of termination": [(2, 0.8), (4, 0.55)],
+            "Effects of termination": [(4, 0.6)],
+            "Termination fee": [],
+        }
+        for sub_aspect in termination.aspects:
+            assert sub_aspect._is_processed
+            sub_aspect_paragraphs = expected_paragraphs[sub_aspect.name]
+            assert len(sub_aspect.extracted_items) == len(sub_aspect_paragraphs)
+            for item, (paragraph_position, probability) in zip(
+                sub_aspect.extracted_items, sub_aspect_paragraphs, strict=True
+            ):
+                paragraph = paragraphs[paragraph_position]
+                assert item.value == paragraph.raw_text
+                self.check_item_probabilities(
+                    item, {True: probability, False: 1 - probability}
+                )
+                # The paragraph of the document
+                assert item.reference_paragraphs == [paragraph]
+                assert item.reference_paragraphs[0].unique_id == paragraph.unique_id
+                assert item.custom_data == paragraph.custom_data
+            assert sub_aspect.reference_paragraphs == [
+                paragraphs[paragraph_position]
+                for paragraph_position, _ in sub_aspect_paragraphs
+            ]
+        # The sub-aspect of the aspect with no paragraphs is not extracted
+        (late_payment,) = payment.aspects
+        assert not late_payment._is_processed
+        assert not late_payment.extracted_items
+        self.check_instance_serialization_and_cloning(document)
+
+    def test_decision_model_aspect_requests_concurrency(self):
+        """
+        Tests that the requests for the paragraphs, which aspects are extracted
+        with by a decision model, are sent one after another by default, and
+        concurrently, each paced by the limiter of the model, with concurrency
+        enabled, with the same items extracted.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        yes_probabilities = {
+            "Confidentiality": {0: 0.6, 1: 0.95, 4: 0.5},
+            "Termination": {2: 0.9, 4: 0.7},
+            "Payment": {},
+        }
+        respond = _create_aspects_responder(yes_probabilities)
+        requests_in_progress: list[str] = []
+        max_requests_in_progress: list[int] = []
+        completed_inputs: list[str] = []
+        acquisitions: list[tuple[float, float]] = []
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the config of the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                acquisitions.append((self.max_rate, self.time_period))
+                await super().acquire(amount)
+
+        # Set when the expected number of requests are in progress at the same
+        # time, and when the request for the paragraph at each position is completed
+        events: dict[str | int, asyncio.Event] = {}
+        n_requests_at_once: list[int] = [1]
+
+        async def wait_for_event(event: asyncio.Event) -> None:
+            """
+            Waits for the event, or fails if it is not set in a reasonable time,
+            so that requests that are not sent as expected do not hang the test.
+
+            :param event: The event to wait for.
+            :type event: asyncio.Event
+            """
+            await asyncio.wait_for(event.wait(), timeout=10)
+
+        async def respond_in_turn(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to the request, and records how many requests are in progress
+            at the same time. If several requests are expected to be in progress at
+            the same time, the requests are responded to in the reverse order of
+            their paragraphs: the response to the request for the last paragraph
+            comes when all the requests are in progress, and the response to
+            the request for each of the other paragraphs when the request for
+            the paragraph after it is completed.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            requests_in_progress.append(request["input"])
+            max_requests_in_progress.append(len(requests_in_progress))
+            position = _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+            if n_requests_at_once[0] == 1:
+                # Let any other request be sent, if the requests are sent concurrently
+                for _ in range(3):
+                    await asyncio.sleep(0)
+            else:
+                if len(requests_in_progress) == n_requests_at_once[0]:
+                    events["all_sent"].set()
+                await wait_for_event(
+                    events["all_sent"]
+                    if position == n_paragraphs - 1
+                    else events[position + 1]
+                )
+            requests_in_progress.remove(request["input"])
+            completed_inputs.append(request["input"])
+            events[position].set()
+            return respond(request)
+
+        def extract(
+            n_requests_expected_at_once: int = 1, **extraction_kwargs: Any
+        ) -> tuple[Document, _DecisionsAPIStub]:
+            """
+            Extracts the aspects of a new document with a new decision model.
+
+            :param n_requests_expected_at_once: The number of requests expected to
+                be in progress at the same time. Defaults to 1.
+            :type n_requests_expected_at_once: int
+            :param extraction_kwargs: Params of the extraction method.
+            :type extraction_kwargs: Any
+            :return: The document, and the stub with the requests received.
+            :rtype: tuple[Document, _DecisionsAPIStub]
+            """
+            decision_model = _create_decision_model(async_limiter=AsyncLimiter(20, 5))
+            document = _create_aspects_document(
+                aspects=[
+                    Aspect(name=name, description=f"Clauses on {name.lower()}")
+                    for name in yes_probabilities
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_in_turn]})
+            max_requests_in_progress.clear()
+            completed_inputs.clear()
+            acquisitions.clear()
+            # The events are used in the event loop of this extraction only
+            n_requests_at_once[0] = n_requests_expected_at_once
+            events.clear()
+            events["all_sent"] = asyncio.Event()
+            for position in range(n_paragraphs):
+                events[position] = asyncio.Event()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+            ):
+                decision_model.extract_aspects_from_document(
+                    document, **extraction_kwargs
+                )
+            # Each request is recorded as a call, in the order of the paragraphs,
+            # whatever the order in which the requests are completed
+            usage = decision_model.get_usage()[0].usage
+            assert len(usage.calls) == len(decisions_stub.requests)
+            assert [
+                json.loads(call.prompt)["input"] for call in usage.calls[:n_paragraphs]
+            ] == _ASPECTS_PARAGRAPH_TEXTS_SENT
+            return document, decisions_stub
+
+        def get_items(document: Document) -> list[list[tuple[str, Any]]]:
+            """
+            Returns the values and the probabilities of the items of each aspect
+            of the document.
+
+            :param document: The document with the extracted aspects.
+            :type document: Document
+            :return: The items of each aspect, in the order of the aspects.
+            :rtype: list[list[tuple[str, Any]]]
+            """
+            assert all(aspect._is_processed for aspect in document.aspects)
+            return [
+                [(item.value, item.probabilities) for item in aspect.extracted_items]
+                for aspect in document.aspects
+            ]
+
+        # === Without concurrency ===
+        # The requests are sent one after another, with no limiter
+        document, decisions_stub = extract()
+        assert [request["input"] for request in decisions_stub.requests] == (
+            _ASPECTS_PARAGRAPH_TEXTS_SENT
+        )
+        assert max(max_requests_in_progress) == 1
+        assert completed_inputs == _ASPECTS_PARAGRAPH_TEXTS_SENT
+        assert acquisitions == []
+        expected_items = get_items(document)
+        assert [[value for value, _ in items] for items in expected_items] == [
+            [document.paragraphs[position].raw_text for position in positions]
+            for positions in yes_probabilities.values()
+        ]
+
+        # === With concurrency ===
+        # The requests for the paragraphs are sent concurrently, each paced by
+        # the limiter of the model. The items are in the order of the paragraphs,
+        # whatever the order in which the requests are completed.
+        document, decisions_stub = extract(
+            n_requests_expected_at_once=n_paragraphs,
+            use_concurrency=True,
+            max_items_per_call=3,
+        )
+        assert [request["input"] for request in decisions_stub.requests] == (
+            _ASPECTS_PARAGRAPH_TEXTS_SENT
+        )
+        assert all(
+            len(request["questions"]) == 3 for request in decisions_stub.requests
+        )
+        assert max(max_requests_in_progress) == n_paragraphs
+        assert completed_inputs == _ASPECTS_PARAGRAPH_TEXTS_SENT[::-1]
+        assert acquisitions == [(20, 5)] * n_paragraphs
+        assert get_items(document) == expected_items
+
+        # By default, each aspect is extracted in its own call with concurrency,
+        # i.e. with its own requests for the paragraphs
+        document, decisions_stub = extract(
+            n_requests_expected_at_once=3 * n_paragraphs, use_concurrency=True
+        )
+        assert sorted(request["input"] for request in decisions_stub.requests) == (
+            sorted(_ASPECTS_PARAGRAPH_TEXTS_SENT * 3)
+        )
+        assert all(
+            [question["name"] for question in request["questions"]] == ["A0"]
+            for request in decisions_stub.requests
+        )
+        assert max(max_requests_in_progress) == 3 * n_paragraphs
+        assert acquisitions == [(20, 5)] * 3 * n_paragraphs
+        assert get_items(document) == expected_items
+
+    def test_decision_model_aspect_request_failures(self):
+        """
+        Tests the extraction of aspects with a decision model when the request for
+        one of the paragraphs fails for good, or gets a response that cannot be
+        used, with and without concurrency: no further requests are sent,
+        the requests completed are counted in the usage, and a failed request is
+        recorded as the last call, which is unfinished.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        failed_position = 2
+        failed_text = _ASPECTS_PARAGRAPH_TEXTS_SENT[failed_position]
+        auth_error = _create_api_error(litellm.AuthenticationError)
+        rate_limit_error = _create_api_error(litellm.RateLimitError)
+        yes_probabilities = {"Termination": {2: 0.9, 4: 0.7}, "Payment": {}}
+        respond = _create_aspects_responder(yes_probabilities, input_tokens=20)
+
+        def create_document() -> Document:
+            """
+            Creates a document with the aspects to extract.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(name=name, description=f"Clauses on {name.lower()}")
+                    for name in yes_probabilities
+                ]
+            )
+
+        def create_responder(
+            outcomes: dict[int, Any] | None = None,
+            delays: dict[int, float] | None = None,
+        ) -> Callable[[dict[str, Any]], Any]:
+            """
+            Creates the function that responds to the request for a paragraph.
+
+            :param outcomes: By the position of a paragraph: an error to raise for
+                its request, or the answers to respond with instead of the valid
+                ones. Defaults to None.
+            :type outcomes: dict[int, Any] | None
+            :param delays: By the position of a paragraph, the delay of
+                the response to its request, in seconds. Defaults to None, in which
+                case each response is immediate, i.e. the requests sent
+                concurrently are completed in the order they are sent.
+            :type delays: dict[int, float] | None
+            :return: Function that responds to a request.
+            :rtype: Callable[[dict[str, Any]], Any]
+            """
+
+            async def respond_to_request(request: dict[str, Any]) -> Any:
+                """
+                Responds to the request for a paragraph, or fails it.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :return: Response of litellm.
+                :rtype: Any
+                """
+                position = _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+                if delays:
+                    await asyncio.sleep(delays.get(position, 0))
+                outcome = (outcomes or {}).get(position)
+                if isinstance(outcome, Exception):
+                    raise outcome
+                if outcome is not None:
+                    return _create_decisions_response(
+                        request["questions"], outcome, input_tokens=20
+                    )
+                return respond(request)
+
+            return respond_to_request
+
+        def check_usage(
+            model: DocumentDecisionModel,
+            finished_positions: list[int],
+            failed_positions: list[int],
+        ) -> None:
+            """
+            Checks the calls recorded in the usage of the decision model: first
+            the requests that got a response, then the requests that failed.
+
+            :param model: The decision model.
+            :type model: DocumentDecisionModel
+            :param finished_positions: The positions of the paragraphs whose
+                requests got a response, in the order of the calls.
+            :type finished_positions: list[int]
+            :param failed_positions: The positions of the paragraphs whose requests
+                failed, in the order of the calls.
+            :type failed_positions: list[int]
+            """
+            usage = model.get_usage()[0].usage
+            assert [json.loads(call.prompt)["input"] for call in usage.calls] == [
+                _ASPECTS_PARAGRAPH_TEXTS_SENT[position]
+                for position in [*finished_positions, *failed_positions]
+            ]
+            assert [call.timestamp_received is not None for call in usage.calls] == (
+                [True] * len(finished_positions) + [False] * len(failed_positions)
+            )
+            assert usage.input == 20 * len(finished_positions)
+
+        def check_not_extracted(document: Document) -> None:
+            """
+            Checks that no aspect of the document is extracted.
+
+            :param document: The document.
+            :type document: Document
+            """
+            assert not any(aspect._is_processed for aspect in document.aspects)
+            assert not any(aspect.extracted_items for aspect in document.aspects)
+            assert not any(aspect.reference_paragraphs for aspect in document.aspects)
+
+        # === The request for a paragraph in the middle of the document fails ===
+        # With immediate responses, the requests sent concurrently are completed in
+        # the order they are sent, i.e. the outcome is the same in both modes:
+        # the requests for the paragraphs after the failed one are not sent
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            # No fallback model: a model API error is raised
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder({failed_position: auth_error})]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(ModelAPIError) as exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert exc_info.value.original_error is auth_error
+            assert exc_info.value.retry_count == 0
+            assert [request["input"] for request in decisions_stub.requests] == (
+                _ASPECTS_PARAGRAPH_TEXTS_SENT[: failed_position + 1]
+            )
+            check_usage(decision_model, [0, 1], [failed_position])
+            check_not_extracted(document)
+
+            # ... or a warning is issued, if no exception is to be raised: only
+            # the one on the failed request, as no response is there to report
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub.requests.clear()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                warnings.catch_warnings(record=True) as caught_warnings,
+            ):
+                warnings.simplefilter("always")
+                decision_model.extract_aspects_from_document(
+                    document,
+                    raise_exception_on_extraction_error=False,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            warning_messages = [
+                str(caught_warning.message)
+                for caught_warning in caught_warnings
+                if "aspects" in str(caught_warning.message)
+                or "API" in str(caught_warning.message)
+            ]
+            (warning_message,) = warning_messages
+            assert "calling decision model API" in warning_message
+            assert "(0 retries)" in warning_message
+            assert len(decisions_stub.requests) == failed_position + 1
+            check_usage(decision_model, [0, 1], [failed_position])
+            check_not_extracted(document)
+
+            # A transient error is retried before the request fails for good
+            decision_model = _create_decision_model(num_retries_failed_request=2)
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [
+                        create_responder({failed_position: rate_limit_error})
+                    ]
+                }
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(
+                    decision_models_module,
+                    "_get_model_api_retry_delay",
+                    new=lambda retry_number: 0.0,
+                ),
+                pytest.raises(ModelAPIError) as exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert exc_info.value.original_error is rate_limit_error
+            assert exc_info.value.retry_count == 2
+            if extraction_kwargs:
+                # With concurrency, the requests for the other paragraphs are sent
+                # while the retry of the failed request is waited for
+                expected_inputs = [*_ASPECTS_PARAGRAPH_TEXTS_SENT, *[failed_text] * 2]
+                finished_positions = [0, 1, 3, 4]
+            else:
+                expected_inputs = [
+                    *_ASPECTS_PARAGRAPH_TEXTS_SENT[:failed_position],
+                    *[failed_text] * 3,
+                ]
+                finished_positions = [0, 1]
+            assert [request["input"] for request in decisions_stub.requests] == (
+                expected_inputs
+            )
+            check_usage(decision_model, finished_positions, [failed_position])
+            check_not_extracted(document)
+
+            # With a fallback model, the aspects are extracted by it
+            decision_model = _create_decision_model(
+                fallback_models=[
+                    _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                ]
+            )
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [create_responder({failed_position: auth_error})],
+                    _OTHER_DECISION_MODEL: [respond],
+                }
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert decisions_stub.requested_models() == (
+                [_DECISION_MODEL] * (failed_position + 1)
+                + [_OTHER_DECISION_MODEL] * n_paragraphs
+            )
+            check_usage(decision_model, [0, 1], [failed_position])
+            fallback_usage = decision_model.get_usage()[1].usage
+            assert fallback_usage.input == 20 * n_paragraphs
+            assert len(fallback_usage.calls) == n_paragraphs
+            termination, payment = document.aspects
+            assert [item.value for item in termination.extracted_items] == [
+                document.paragraphs[2].raw_text,
+                document.paragraphs[4].raw_text,
+            ]
+            assert payment._is_processed and not payment.extracted_items
+
+            # === A response that cannot be used ===
+            # The response to the request for one paragraph makes the whole call
+            # invalid: no further requests are sent, and each call is finished
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [
+                        create_responder(
+                            {failed_position: {"A0": 0.9, "A1": "refusal"}}
+                        )
+                    ]
+                }
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                pytest.raises(
+                    ModelExtractionError,
+                    match="Some aspects could not be processed due to "
+                    "an invalid response returned by decision model. "
+                    r"Failed aspects: \['Termination', 'Payment'\]",
+                ) as extraction_exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert extraction_exc_info.value.retry_count == 0
+            assert any(
+                f"Decision model `{_DECISION_MODEL}` returned an invalid response "
+                "for aspects"
+                in log
+                and "`A1`: the model refused to answer" in log
+                for log in captured_logs
+            ), captured_logs
+            assert len(decisions_stub.requests) == failed_position + 1
+            check_usage(decision_model, [0, 1, failed_position], [])
+            check_not_extracted(document)
+
+        # === With concurrency, the requests already sent are waited for ===
+        # All the requests are sent before the request in the middle fails:
+        # the other ones are completed, and the failed one is the last call
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    create_responder(
+                        {failed_position: auth_error},
+                        delays={0: 0.05, 1: 0.05, 2: 0.01, 3: 0.05, 4: 0.05},
+                    )
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            pytest.raises(ModelAPIError) as exc_info,
+        ):
+            decision_model.extract_aspects_from_document(
+                document, use_concurrency=True, max_items_per_call=2
+            )
+        assert exc_info.value.original_error is auth_error
+        assert len(decisions_stub.requests) == n_paragraphs
+        check_usage(decision_model, [0, 1, 3, 4], [failed_position])
+        check_not_extracted(document)
+
+        # A failed request comes before a response that cannot be used: the call
+        # is a failed one, with the failed request as the last call
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    create_responder(
+                        {1: {"A0": "refusal", "A1": 0.1}, 3: auth_error},
+                        delays={0: 0.05, 1: 0.01, 2: 0.05, 3: 0.03, 4: 0.05},
+                    )
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            pytest.raises(ModelAPIError) as exc_info,
+        ):
+            decision_model.extract_aspects_from_document(
+                document, use_concurrency=True, max_items_per_call=2
+            )
+        assert exc_info.value.original_error is auth_error
+        check_usage(decision_model, [0, 1, 2, 4], [3])
+        check_not_extracted(document)
+
+        # The requests that wait for the limiter when a request fails are not sent
+        held_acquisitions: list[int] = []
+
+        class HoldingAsyncLimiter(AsyncLimiter):
+            """
+            Lets the first three requests through at once, and holds each of
+            the other ones for much longer than the requests take.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Acquires the capacity at once for the first three requests,
+                and after a long delay for the other ones.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                held_acquisitions.append(len(held_acquisitions))
+                if len(held_acquisitions) > 3:
+                    await asyncio.sleep(5)
+
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    create_responder(
+                        {failed_position: auth_error},
+                        delays={0: 0.05, 1: 0.05, 2: 0.01},
+                    )
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(models_module, "AsyncLimiter", new=HoldingAsyncLimiter),
+            pytest.raises(ModelAPIError) as exc_info,
+        ):
+            decision_model.extract_aspects_from_document(
+                document, use_concurrency=True, max_items_per_call=2
+            )
+        assert exc_info.value.original_error is auth_error
+        # Each request waited for the limiter, and those held by it were not sent
+        assert len(held_acquisitions) == n_paragraphs
+        assert [request["input"] for request in decisions_stub.requests] == (
+            _ASPECTS_PARAGRAPH_TEXTS_SENT[:3]
+        )
+        check_usage(decision_model, [0, 1], [failed_position])
+        check_not_extracted(document)
+
+        # === A cancelled extraction ===
+        # The usage of the requests completed by then is recorded, and no request
+        # is left running
+        async def extract_and_cancel(
+            decision_model: DocumentDecisionModel,
+            document: Document,
+            **extraction_kwargs: Any,
+        ) -> _DecisionsAPIStub:
+            """
+            Starts the extraction of the aspects of the document, and cancels it
+            when the request for the paragraph in the middle is sent, which gets
+            no response, as the requests after it.
+
+            :param decision_model: Decision model to extract with.
+            :type decision_model: DocumentDecisionModel
+            :param document: Document to extract from.
+            :type document: Document
+            :param extraction_kwargs: Other params of the extraction method.
+            :type extraction_kwargs: Any
+            :return: The stub with the requests received.
+            :rtype: _DecisionsAPIStub
+            """
+            request_in_the_middle_sent = asyncio.Event()
+
+            async def respond_or_hang(request: dict[str, Any]) -> Any:
+                """
+                Responds to the requests for the first paragraphs, and leaves
+                the other requests without a response.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :return: Response of litellm.
+                :rtype: Any
+                """
+                position = _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+                if position < failed_position:
+                    return respond(request)
+                if position == failed_position:
+                    request_in_the_middle_sent.set()
+                await asyncio.sleep(3600)
+
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_or_hang]})
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                extraction = asyncio.ensure_future(
+                    decision_model.extract_aspects_from_document_async(
+                        document, **extraction_kwargs
+                    )
+                )
+                await request_in_the_middle_sent.wait()
+                # Let the other requests be sent, if they are sent concurrently
+                await asyncio.sleep(0.01)
+                extraction.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await extraction
+            # No request is left running
+            current_task = asyncio.current_task()
+            assert not [
+                task
+                for task in asyncio.all_tasks()
+                if task is not current_task and not task.done()
+            ]
+            return decisions_stub
+
+        for extraction_kwargs, expected_n_requests in [
+            ({}, failed_position + 1),
+            ({"use_concurrency": True, "max_items_per_call": 2}, n_paragraphs),
+        ]:
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = asyncio.run(
+                extract_and_cancel(decision_model, document, **extraction_kwargs)
+            )
+            assert len(decisions_stub.requests) == expected_n_requests
+            check_usage(decision_model, [0, 1], [])
+            check_not_extracted(document)
+
+    def test_extract_all_with_decision_model(self):
+        """
+        Tests the extraction of everything that a document has with a decision
+        model used on its own: the aspects with their sub-aspects, the concepts
+        of the aspects and of the sub-aspects, and the concepts of the document.
+        """
+
+        def create_document() -> Document:
+            """
+            Creates a document with aspects, sub-aspects and concepts.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        concepts=[
+                            BooleanConcept(
+                                name="Termination for convenience",
+                                description="Either party may terminate without cause",
+                            ),
+                            LabelConcept(
+                                name="Notice form",
+                                description="Required form of the termination notice",
+                                labels=["written", "any"],
+                            ),
+                        ],
+                        aspects=[
+                            Aspect(
+                                name="Effects of termination",
+                                description="Clauses on what follows the termination",
+                                concepts=[
+                                    BooleanConcept(
+                                        name="Survival",
+                                        description="Some obligations survive "
+                                        "the termination",
+                                    )
+                                ],
+                            )
+                        ],
+                    ),
+                    Aspect(
+                        name="Payment",
+                        description="Clauses on the payment of fees",
+                        concepts=[
+                            BooleanConcept(
+                                name="Late fee",
+                                description="A fee is charged on late payments",
+                            )
+                        ],
+                    ),
+                ],
+                concepts=[
+                    RatingConcept(
+                        name="Clarity",
+                        description="Clarity of the text of the document",
+                        rating_scale=(1, 3),
+                    ),
+                    BooleanConcept(
+                        name="NDA check", description="The document is an NDA"
+                    ),
+                ],
+            )
+
+        respond_on_aspects = _create_aspects_responder(
+            {
+                "Termination": {2: 0.9, 4: 0.7},
+                "Effects of termination": {4: 0.8},
+                "Payment": {},
+            },
+            input_tokens=20,
+        )
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request with the questions of aspects, asked on
+            a paragraph, or with the questions of concepts.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            if request["questions"][0]["name"].startswith("A"):
+                return respond_on_aspects(request)
+            return _answer_all_questions(request)
+
+        def get_items(document: Document) -> dict[str, list[tuple[Any, Any]]]:
+            """
+            Returns the values and the probabilities of the items of each aspect,
+            sub-aspect and concept of the document.
+
+            :param document: The document.
+            :type document: Document
+            :return: The items by the names of the aspects and concepts.
+            :rtype: dict[str, list[tuple[Any, Any]]]
+            """
+            instances: list[Any] = [*document.concepts]
+            for aspect in document.aspects:
+                instances.extend([aspect, *aspect.concepts])
+                for sub_aspect in aspect.aspects:
+                    instances.extend([sub_aspect, *sub_aspect.concepts])
+            return {
+                instance.name: [
+                    (item.value, item.probabilities)
+                    for item in instance.extracted_items
+                ]
+                for instance in instances
+            }
+
+        decision_model = _create_decision_model(
+            pricing_details=ModelPricing(
+                input_per_1m_tokens=10.0, output_per_1m_tokens=0.0
+            )
+        )
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_all(document)
+
+        paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        termination_text = f"{paragraph_texts[2]}\n\n{paragraph_texts[4]}"
+        assert [
+            (request["input"], [question["name"] for question in request["questions"]])
+            for request in decisions_stub.requests
+        ] == [
+            # The aspects, on each paragraph of the document
+            *[(text, ["A0", "A1"]) for text in paragraph_texts],
+            # The sub-aspect, on each paragraph of its aspect
+            (paragraph_texts[2], ["A0"]),
+            (paragraph_texts[4], ["A0"]),
+            # The concepts of the aspect, on the text of its paragraphs
+            (termination_text, ["C0", "C1"]),
+            # The concept of the sub-aspect, on the text of its paragraph
+            (paragraph_texts[4], ["C0"]),
+            # The concepts of the document, on its text
+            ("\n\n".join(paragraph_texts), ["C0", "C1"]),
+        ]
+        paragraphs = document.paragraphs
+        termination_items = [
+            (paragraphs[2].raw_text, {True: 0.9, False: 1 - 0.9}),
+            (paragraphs[4].raw_text, {True: 0.7, False: 1 - 0.7}),
+        ]
+        expected_items = {
+            "Termination": termination_items,
+            "Termination for convenience": [(True, {True: 0.9, False: 1 - 0.9})],
+            "Notice form": [(["written"], {"written": 1.0, "any": 0.0})],
+            "Effects of termination": [
+                (paragraphs[4].raw_text, {True: 0.8, False: 1 - 0.8})
+            ],
+            "Survival": [(True, {True: 0.9, False: 1 - 0.9})],
+            # No paragraph belongs to the aspect, i.e. there is no text to extract
+            # its concept from
+            "Payment": [],
+            "Late fee": [],
+            "Clarity": [(1, {1: 1.0, 2: 0.0, 3: 0.0})],
+            "NDA check": [(True, {True: 0.9, False: 1 - 0.9})],
+        }
+        assert get_items(document) == expected_items
+        termination, payment = document.aspects
+        assert payment._is_processed
+        assert not payment.concepts[0]._is_processed
+        assert all(concept._is_processed for concept in termination.concepts)
+        assert termination.aspects[0].concepts[0]._is_processed
+        assert all(concept._is_processed for concept in document.concepts)
+        # Each request is recorded in the usage and priced
+        (usage_container,) = decision_model.get_usage()
+        assert len(usage_container.usage.calls) == len(decisions_stub.requests) == 10
+        assert usage_container.usage.input == 7 * 20 + 3 * 100
+        assert decision_model.get_cost()[0].cost.total == Decimal("0.0044")
+        self.check_instance_serialization_and_cloning(document)
+
+        # The same is extracted with concurrency, with each aspect and each concept
+        # extracted in its own call
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_all(document, use_concurrency=True)
+        assert get_items(document) == expected_items
+        assert all(
+            len(request["questions"]) == 1 for request in decisions_stub.requests
+        )
+        # 2 aspects and 1 sub-aspect on their paragraphs, and 5 concepts
+        assert len(decisions_stub.requests) == 2 * 5 + 2 + 5
+
+    def test_decision_model_aspect_fallback_chains(self):
+        """
+        Tests the fallback chains with models of different kinds for the extraction
+        of aspects: an LLM that falls back to a decision model, and a decision
+        model that falls back to an LLM.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        auth_error = _create_api_error(litellm.AuthenticationError)
+        llm_auth_error = _create_api_error(litellm.AuthenticationError, _LLM_MODEL)
+        yes_probabilities = {
+            "Termination": {2: 0.9, 4: 0.7},
+            "Effects of termination": {4: 0.8},
+            "Payment": {},
+        }
+        respond = _create_aspects_responder(yes_probabilities)
+        # The answers of an LLM for the aspects, and for the sub-aspect, which
+        # is extracted from the two paragraphs of its aspect
+        llm_aspects_answer = json.dumps(
+            [
+                {"aspect_id": "A0", "paragraph_ids": ["P2", "P4"]},
+                {"aspect_id": "A1", "paragraph_ids": []},
+            ]
+        )
+        llm_sub_aspect_answer = json.dumps(
+            [{"aspect_id": "A0", "paragraph_ids": ["P1"]}]
+        )
+        invalid_llm_answer = "<<<not-json>>>"
+
+        def create_document() -> Document:
+            """
+            Creates a document with two aspects, one of which has a sub-aspect.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        aspects=[
+                            Aspect(
+                                name="Effects of termination",
+                                description="Clauses on what follows the termination",
+                            )
+                        ],
+                    ),
+                    Aspect(
+                        name="Payment", description="Clauses on the payment of fees"
+                    ),
+                ]
+            )
+
+        def get_items(document: Document) -> dict[str, list[tuple[Any, Any]]]:
+            """
+            Returns the values and the probabilities of the items of each aspect
+            and sub-aspect of the document.
+
+            :param document: The document.
+            :type document: Document
+            :return: The items by the names of the aspects.
+            :rtype: dict[str, list[tuple[Any, Any]]]
+            """
+            aspects: list[Any] = []
+            for aspect in document.aspects:
+                assert aspect._is_processed
+                aspects.extend([aspect, *aspect.aspects])
+            return {
+                aspect.name: [
+                    (item.value, item.probabilities) for item in aspect.extracted_items
+                ]
+                for aspect in aspects
+            }
+
+        paragraph_texts = [
+            paragraph.raw_text for paragraph in create_document().paragraphs
+        ]
+        # The items as extracted by a decision model, with their probabilities,
+        # and as extracted by an LLM, without them
+        decision_model_items = {
+            "Termination": [
+                (paragraph_texts[2], {True: 0.9, False: 1 - 0.9}),
+                (paragraph_texts[4], {True: 0.7, False: 1 - 0.7}),
+            ],
+            "Effects of termination": [
+                (paragraph_texts[4], {True: 0.8, False: 1 - 0.8})
+            ],
+            "Payment": [],
+        }
+        llm_items = {
+            name: [(value, None) for value, _ in items]
+            for name, items in decision_model_items.items()
+        }
+
+        # === An LLM with a decision model as its fallback model ===
+        for llm_outcome, n_llm_requests_per_call in [
+            # The request to the LLM fails
+            (llm_auth_error, 1),
+            # The LLM returns invalid data, also when asked again
+            (invalid_llm_answer, 2),
+        ]:
+            for extraction_kwargs in [
+                {},
+                {"use_concurrency": True, "max_items_per_call": 2},
+            ]:
+                llm = _create_llm(
+                    max_retries_invalid_data=1,
+                    fallback_models=[_create_decision_model(is_fallback=True)],
+                )
+                document = create_document()
+                decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+                completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_outcome]})
+                with (
+                    patch.object(litellm, "adecisions", new=decisions_stub),
+                    patch.object(litellm, "acompletion", new=completions_stub),
+                ):
+                    llm.extract_aspects_from_document(
+                        document,
+                        **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                    )
+                # The LLM is asked for the aspects and for the sub-aspect, and
+                # the decision model about each paragraph for both
+                assert len(completions_stub.requests) == 2 * n_llm_requests_per_call
+                assert sorted(
+                    request["input"] for request in decisions_stub.requests
+                ) == sorted(
+                    [
+                        *_ASPECTS_PARAGRAPH_TEXTS_SENT,
+                        _ASPECTS_PARAGRAPH_TEXTS_SENT[2],
+                        _ASPECTS_PARAGRAPH_TEXTS_SENT[4],
+                    ]
+                )
+                assert get_items(document) == decision_model_items
+                usage_containers = llm.get_usage()
+                assert [
+                    (container.model, container.is_fallback)
+                    for container in usage_containers
+                ] == [(_LLM_MODEL, False), (_DECISION_MODEL, True)]
+                assert len(usage_containers[1].usage.calls) == n_paragraphs + 2
+                assert usage_containers[1].usage.input == (n_paragraphs + 2) * 100
+
+        # The fallback decision model is the last model to fail
+        llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [auth_error]})
+        completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_auth_error]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+            pytest.raises(ModelAPIError, match="decision model API") as exc_info,
+        ):
+            llm.extract_aspects_from_document(document)
+        assert exc_info.value.original_error is auth_error
+        assert len(decisions_stub.requests) == 1
+        assert not any(aspect._is_processed for aspect in document.aspects)
+
+        # === A decision model with an LLM as its fallback model ===
+        for decision_model_outcomes in [
+            # The request for the paragraph in the middle fails
+            {2: auth_error},
+            # The response to it cannot be used
+            {2: {"A0": 0.9, "A1": "refusal"}},
+        ]:
+            decision_model = _create_decision_model(
+                fallback_models=[_create_llm(is_fallback=True)]
+            )
+            document = create_document()
+
+            def respond_or_fail(
+                request: dict[str, Any],
+                outcomes: dict[int, Any] = decision_model_outcomes,
+            ) -> OpenAIDecisionResponse:
+                """
+                Responds to the request for a paragraph, unless there is another
+                outcome for the paragraph.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :param outcomes: By the position of a paragraph: an error to raise
+                    for its request, or the answers to respond with.
+                :type outcomes: dict[int, Any]
+                :return: Response of litellm.
+                :rtype: OpenAIDecisionResponse
+                """
+                outcome = None
+                # Only the requests for the two aspects, not for the sub-aspect
+                if len(request["questions"]) == 2:
+                    outcome = outcomes.get(
+                        _ASPECTS_PARAGRAPH_TEXTS_SENT.index(request["input"])
+                    )
+                if isinstance(outcome, Exception):
+                    raise outcome
+                if outcome is not None:
+                    return _create_decisions_response(request["questions"], outcome)
+                return respond(request)
+
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_or_fail]})
+            completions_stub = _CompletionsAPIStub(
+                {_LLM_MODEL: [llm_aspects_answer, llm_sub_aspect_answer]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(litellm, "acompletion", new=completions_stub),
+            ):
+                decision_model.extract_aspects_from_document(document)
+            # The aspects are extracted by the LLM, after the decision model fails
+            # for them on the third paragraph. The sub-aspect is extracted by
+            # the decision model, which is asked about each paragraph of its aspect.
+            assert [request["input"] for request in decisions_stub.requests] == [
+                *_ASPECTS_PARAGRAPH_TEXTS_SENT[:3],
+                _ASPECTS_PARAGRAPH_TEXTS_SENT[2],
+                _ASPECTS_PARAGRAPH_TEXTS_SENT[4],
+            ]
+            assert len(completions_stub.requests) == 1
+            assert get_items(document) == {
+                **llm_items,
+                "Effects of termination": decision_model_items[
+                    "Effects of termination"
+                ],
+            }
+            # The paragraphs that the LLM extracted are the reference paragraphs
+            assert document.aspects[0].reference_paragraphs == [
+                document.paragraphs[2],
+                document.paragraphs[4],
+            ]
+
+        # The fallback LLM extracts what the decision model fails to extract at
+        # each level: the aspects and the sub-aspect
+        decision_model = _create_decision_model(
+            fallback_models=[_create_llm(is_fallback=True)]
+        )
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [auth_error]})
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: [llm_aspects_answer, llm_sub_aspect_answer]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            decision_model.extract_aspects_from_document(document)
+        assert len(decisions_stub.requests) == 2
+        assert len(completions_stub.requests) == 2
+        assert get_items(document) == llm_items
+
+    def test_decision_model_aspects_in_model_group(self):
+        """
+        Tests a model group with an LLM and a decision model for the extraction
+        of aspects: each aspect, sub-aspect and concept is extracted by the model
+        that it is routed to by the role, whatever model extracts its parent.
+        """
+        llm = _create_llm()
+        decision_model = _create_decision_model(role="decide")
+        model_group = DocumentModelGroup(models=[llm, decision_model])
+        document = _create_aspects_document(
+            aspects=[
+                # An aspect of the decision model, with a sub-aspect and a concept
+                # of the LLM, and a concept of the decision model
+                Aspect(
+                    name="Termination",
+                    description="Clauses on the termination of the agreement",
+                    model_role="decide",
+                    aspects=[
+                        Aspect(
+                            name="Effects of termination",
+                            description="Clauses on what follows the termination",
+                        )
+                    ],
+                    concepts=[
+                        StringConcept(
+                            name="Notice period",
+                            description="Length of the notice period",
+                        ),
+                        BooleanConcept(
+                            name="Termination for convenience",
+                            description="Either party may terminate without cause",
+                            model_role="decide",
+                        ),
+                    ],
+                ),
+                # An aspect of the LLM, with a sub-aspect of the decision model
+                Aspect(
+                    name="Confidentiality",
+                    description="Clauses on the confidentiality of the information",
+                    aspects=[
+                        Aspect(
+                            name="Survival of confidentiality",
+                            description="Clauses on the confidentiality after "
+                            "the termination",
+                            model_role="decide",
+                        )
+                    ],
+                ),
+            ],
+            concepts=[StringConcept(name="Title", description="Title of the document")],
+        )
+        paragraphs = document.paragraphs
+        # The paragraphs that the LLM returns for an aspect, by their positions
+        # among the paragraphs that the aspect is extracted from
+        llm_paragraph_ids = {
+            # From the paragraphs of the document
+            "Confidentiality": ["P1", "P4"],
+            # From the two paragraphs that the decision model extracted for
+            # the aspect of this sub-aspect
+            "Effects of termination": ["P1"],
+        }
+        llm_prompt_kwargs: list[dict[str, Any]] = []
+
+        async def send_messages_stub(self, *, model_call_obj: Any, **kwargs: Any):
+            """
+            Simulates a successful LLM API call, which returns the paragraphs of
+            each aspect in the prompt, or an extracted item for each concept in
+            the prompt.
+
+            Same params as `llm._send_messages_with_tools`.
+            """
+            params = model_call_obj.prompt_kwargs
+            llm_prompt_kwargs.append(params)
+            if "aspects" in params:
+                answer = [
+                    {
+                        "aspect_id": f"A{i}",
+                        "paragraph_ids": llm_paragraph_ids[aspect.name],
+                    }
+                    for i, aspect in enumerate(params["aspects"])
+                ]
+            else:
+                answer = [
+                    {"concept_id": f"C{i}", "extracted_items": ["Item"]}
+                    for i, _ in enumerate(params["concepts"])
+                ]
+            return json.dumps(answer), False
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request with the questions of aspects, asked on
+            a paragraph, or with the questions of concepts.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            if request["questions"][0]["name"].startswith("A"):
+                return _create_aspects_responder(
+                    {
+                        "Termination": {2: 0.9, 4: 0.7},
+                        "Survival of confidentiality": {4: 0.8},
+                    },
+                    input_tokens=20,
+                )(request)
+            return _answer_all_questions(request)
+
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                _DocumentLLM,
+                "_send_messages_with_tools",
+                autospec=True,
+                side_effect=send_messages_stub,
+            ),
+        ):
+            model_group.extract_all(document)
+
+        # === The requests to the decision model ===
+        def get_instance_name(question: dict[str, Any]) -> str:
+            """
+            Returns the name of the aspect or concept that the question is about.
+
+            :param question: The question of a request.
+            :type question: dict[str, Any]
+            :return: The name of the aspect or concept.
+            :rtype: str
+            """
+            name_match = re.search(
+                r"^(?:Aspect|Concept) name: (.+)$",
+                question["instructions"],
+                flags=re.MULTILINE,
+            )
+            assert name_match is not None, question
+            return name_match.group(1)
+
+        paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        assert sorted(
+            (
+                request["input"],
+                [get_instance_name(question) for question in request["questions"]],
+            )
+            for request in decisions_stub.requests
+        ) == sorted(
+            [
+                # Its aspect, on each paragraph of the document
+                *[(text, ["Termination"]) for text in paragraph_texts],
+                # Its sub-aspect, on each paragraph that the LLM extracted for
+                # the aspect of the sub-aspect
+                (paragraph_texts[1], ["Survival of confidentiality"]),
+                (paragraph_texts[4], ["Survival of confidentiality"]),
+                # Its concept, on the text of the paragraphs of its aspect
+                (
+                    f"{paragraph_texts[2]}\n\n{paragraph_texts[4]}",
+                    ["Termination for convenience"],
+                ),
+            ]
+        )
+
+        # === The calls of the LLM ===
+        assert sorted(
+            (
+                # What is extracted
+                [
+                    instance.name
+                    for instance in params.get("aspects", params.get("concepts"))
+                ],
+                # The paragraphs given to extract aspects from
+                [paragraph.raw_text for paragraph in params.get("paragraphs", [])],
+            )
+            for params in llm_prompt_kwargs
+        ) == sorted(
+            [
+                # Its aspect, from the paragraphs of the document
+                (["Confidentiality"], [paragraph.raw_text for paragraph in paragraphs]),
+                # Its sub-aspect, from the paragraphs that the decision model
+                # extracted for the aspect of the sub-aspect
+                (
+                    ["Effects of termination"],
+                    [paragraphs[2].raw_text, paragraphs[4].raw_text],
+                ),
+                # Its concepts
+                (["Notice period"], []),
+                (["Title"], []),
+            ]
+        )
+
+        # === The items ===
+        termination, confidentiality = document.aspects
+        assert [
+            (item.value, item.probabilities) for item in termination.extracted_items
+        ] == [
+            (paragraphs[2].raw_text, {True: 0.9, False: 1 - 0.9}),
+            (paragraphs[4].raw_text, {True: 0.7, False: 1 - 0.7}),
+        ]
+        assert termination.reference_paragraphs == [paragraphs[2], paragraphs[4]]
+        # The sub-aspect extracted by the LLM from the paragraphs of the aspect
+        # extracted by the decision model
+        (effects_of_termination,) = termination.aspects
+        assert [
+            (item.value, item.probabilities)
+            for item in effects_of_termination.extracted_items
+        ] == [(paragraphs[4].raw_text, None)]
+        notice_period, termination_for_convenience = termination.concepts
+        assert notice_period.extracted_items[0].value == "Item"
+        assert notice_period.extracted_items[0].probabilities is None
+        self.check_item_probabilities(
+            termination_for_convenience.extracted_items[0], {True: 0.9, False: 1 - 0.9}
+        )
+        # The aspect extracted by the LLM
+        assert [
+            (item.value, item.probabilities) for item in confidentiality.extracted_items
+        ] == [(paragraphs[1].raw_text, None), (paragraphs[4].raw_text, None)]
+        # ... and its sub-aspect extracted by the decision model
+        (survival,) = confidentiality.aspects
+        assert [
+            (item.value, item.probabilities) for item in survival.extracted_items
+        ] == [(paragraphs[4].raw_text, {True: 0.8, False: 1 - 0.8})]
+        assert survival.reference_paragraphs == [paragraphs[4]]
+        assert document.concepts[0].extracted_items[0].value == "Item"
+
+        # === The usage of the group, by the role ===
+        (usage_container,) = model_group.get_usage(model_role="decide")
+        assert usage_container.model == _DECISION_MODEL
+        assert len(usage_container.usage.calls) == len(decisions_stub.requests) == 8
+        assert usage_container.usage.input == 7 * 20 + 100
+        self.check_instance_serialization_and_cloning(document)
+
+        # === With concurrency ===
+        # The same is extracted
+        items_extracted = [
+            [(item.value, item.probabilities) for item in aspect.extracted_items]
+            for aspect in [
+                termination,
+                effects_of_termination,
+                confidentiality,
+                survival,
+            ]
+        ]
+        decisions_stub.requests.clear()
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                _DocumentLLM,
+                "_send_messages_with_tools",
+                autospec=True,
+                side_effect=send_messages_stub,
+            ),
+        ):
+            model_group.extract_aspects_from_document(
+                document, overwrite_existing=True, use_concurrency=True
+            )
+        termination, confidentiality = document.aspects
+        assert [
+            [(item.value, item.probabilities) for item in aspect.extracted_items]
+            for aspect in [
+                termination,
+                termination.aspects[0],
+                confidentiality,
+                confidentiality.aspects[0],
+            ]
+        ] == items_extracted
+        assert len(decisions_stub.requests) == 7
+
+    def _create_concepts_for_recorded_tests(self) -> list[Any]:
+        """
+        Creates the concepts extracted in the tests that send their requests to
+        the API of a decision model: one concept of each kind of question, with
+        the answers that are unambiguous for the text they are extracted from
+        (see ``_RECORDED_CONCEPTS_DOCUMENT_TEXT``).
+
+        :return: The concepts.
+        :rtype: list[Any]
+        """
+        return [
+            BooleanConcept(
+                name="NDA check",
+                description="The document is a non-disclosure agreement",
+            ),
+            LabelConcept(
+                name="Document type",
+                description="Type of the document",
+                labels=[
+                    "non-disclosure agreement",
+                    "employment agreement",
+                    "lease agreement",
+                    "invoice",
+                ],
+            ),
+            LabelConcept(
+                name="Topics",
+                description="Topics that the document covers",
+                labels=["confidentiality", "governing law", "salary", "real estate"],
+                classification_type="multi_label",
+            ),
+            RatingConcept(
+                name="Sensitivity",
+                description="Sensitivity of the confidential information, as rated "
+                "by the parties in the document",
+                rating_scale=(1, 5),
+            ),
+        ]
+
+    def _check_concepts_of_recorded_tests(
+        self, document: Document, decision_model: DocumentDecisionModel
+    ) -> None:
+        """
+        Checks the items of the concepts created by
+        ``_create_concepts_for_recorded_tests()``, as extracted by a decision model
+        through its API, and the usage of the model.
+
+        The values are checked, as the answers are unambiguous. The probabilities
+        are checked for having the options of the concept as their keys, for being
+        within [0, 1], and for being consistent with the value: their exact values
+        are up to the model.
+
+        :param document: The document with the extracted concepts.
+        :type document: Document
+        :param decision_model: The decision model that extracted the concepts.
+        :type decision_model: DocumentDecisionModel
+        """
+        boolean_concept, label_concept, multi_label_concept, rating_concept = (
+            document.concepts
+        )
+        for concept in document.concepts:
+            assert concept._is_processed
+            assert len(concept.extracted_items) == 1
+            probabilities = concept.extracted_items[0].probabilities
+            assert probabilities is not None
+            assert all(
+                type(probability) is float and 0 <= probability <= 1
+                for probability in probabilities.values()
+            )
+
+        # Boolean concept
+        (item,) = boolean_concept.extracted_items
+        assert item.value is True
+        assert item.probabilities is not None
+        assert list(item.probabilities) == [True, False]
+        assert item.probabilities[True] >= 0.5
+        assert item.probabilities[False] == pytest.approx(1 - item.probabilities[True])
+
+        # Label concept, a single label to select: the most probable label
+        (item,) = label_concept.extracted_items
+        assert item.value == ["non-disclosure agreement"]
+        assert item.probabilities is not None
+        assert list(item.probabilities) == [
+            "non-disclosure agreement",
+            "employment agreement",
+            "lease agreement",
+            "invoice",
+        ]
+        assert item.probabilities["non-disclosure agreement"] == max(
+            item.probabilities.values()
+        )
+
+        # Label concept, any number of labels to select: the labels with
+        # a probability of 0.5 or more
+        (item,) = multi_label_concept.extracted_items
+        assert item.probabilities is not None
+        assert list(item.probabilities) == [
+            "confidentiality",
+            "governing law",
+            "salary",
+            "real estate",
+        ]
+        assert item.value == [
+            label
+            for label, probability in item.probabilities.items()
+            if probability >= 0.5
+        ]
+        assert "confidentiality" in item.value
+        assert "salary" not in item.value
+        assert "real estate" not in item.value
+
+        # Rating concept: the most probable level of the scale
+        (item,) = rating_concept.extracted_items
+        assert item.value == 4
+        assert item.probabilities is not None
+        assert list(item.probabilities) == [1, 2, 3, 4, 5]
+        assert item.probabilities[4] == max(item.probabilities.values())
+
+        # One request for all the concepts
+        (usage_container,) = decision_model.get_usage()
+        assert usage_container.usage.input > 0
+        (call,) = usage_container.usage.calls
+        assert call.timestamp_received is not None
+        assert call.response is not None
+        assert [answer["name"] for answer in json.loads(call.response)] == [
+            "C0",
+            "C1",
+            "C2-L0",
+            "C2-L1",
+            "C2-L2",
+            "C2-L3",
+            "C3",
+        ]
+        self._check_cost_of_recorded_tests(decision_model)
+        self.check_instance_serialization_and_cloning(document)
+
+    @staticmethod
+    def _check_cost_of_recorded_tests(decision_model: DocumentDecisionModel) -> None:
+        """
+        Checks that the cost of the decision model is the cost of its input tokens,
+        as reported by its API, at the price set for the model.
+
+        :param decision_model: The decision model, with its pricing details set.
+        :type decision_model: DocumentDecisionModel
+        """
+        assert decision_model.pricing_details is not None
+        usage = decision_model.get_usage()[0].usage
+        cost = decision_model.get_cost()[0].cost
+        expected_cost = (
+            Decimal(usage.input)
+            * Decimal(str(decision_model.pricing_details.input_per_1m_tokens))
+            / Decimal(1_000_000)
+        ).quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
+        assert cost.input == expected_cost
+        assert cost.output == 0
+        assert cost.total == expected_cost
+
+    @pytest.mark.vcr
+    def test_extract_concepts_with_typesafe_api(self):
+        """
+        Tests the extraction of concepts of each supported type from a document
+        with a decision model of TypeSafe, with the requests sent to its API.
+        """
+        decision_model = DocumentDecisionModel(
+            model="typesafe/jev-latest",
+            api_key=os.getenv("TYPESAFE_API_KEY"),
+            pricing_details=ModelPricing(
+                input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
+            ),
+        )
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = self._create_concepts_for_recorded_tests()
+
+        decision_model.extract_concepts_from_document(document)
+
+        self._check_concepts_of_recorded_tests(document, decision_model)
+
+    @pytest.mark.vcr
+    def test_extract_all_with_typesafe_api(self):
+        """
+        Tests the extraction of aspects, and of the concepts of the aspects, from
+        a document with a decision model of TypeSafe, with the requests sent to
+        its API, one after another.
+        """
+        decision_model = DocumentDecisionModel(
+            model="typesafe/jev-latest",
+            api_key=os.getenv("TYPESAFE_API_KEY"),
+            pricing_details=ModelPricing(
+                input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
+            ),
+        )
+        paragraph_texts = _RECORDED_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS
+        document = Document(raw_text="\n\n".join(paragraph_texts))
+        assert [paragraph.raw_text for paragraph in document.paragraphs] == (
+            paragraph_texts
+        )
+        document.aspects = [
+            Aspect(
+                name="Payment",
+                description="Clauses on the fees and on how the fees are paid",
+                concepts=[
+                    BooleanConcept(
+                        name="Monthly fee",
+                        description="The fee is paid every month",
+                    )
+                ],
+            ),
+            Aspect(
+                name="Termination",
+                description="Clauses on how the agreement is terminated",
+                concepts=[
+                    LabelConcept(
+                        name="Notice form",
+                        description="Form in which the notice of termination "
+                        "is to be given",
+                        labels=["written", "oral", "not specified"],
+                    )
+                ],
+            ),
+        ]
+
+        # Without concurrency, i.e. with the requests in the order of the paragraphs
+        decision_model.extract_all(document)
+
+        # === The aspects ===
+        payment, termination = document.aspects
+        fee_text, invoices_text, termination_text = paragraph_texts[3:6]
+        assert [item.value for item in payment.extracted_items] == [
+            fee_text,
+            invoices_text,
+        ]
+        assert [item.value for item in termination.extracted_items] == [
+            termination_text
+        ]
+        for aspect in document.aspects:
+            assert aspect._is_processed
+            for item in aspect.extracted_items:
+                # The paragraph that the item is extracted for
+                (paragraph,) = item.reference_paragraphs
+                assert paragraph in document.paragraphs
+                assert item.value == paragraph.raw_text
+                # Whether the paragraph belongs to the aspect: it does
+                assert item.probabilities is not None
+                assert list(item.probabilities) == [True, False]
+                assert 0.5 <= item.probabilities[True] <= 1
+                assert item.probabilities[False] == pytest.approx(
+                    1 - item.probabilities[True]
+                )
+                assert item.justification is None
+            assert aspect.reference_paragraphs == [
+                item.reference_paragraphs[0] for item in aspect.extracted_items
+            ]
+
+        # === The concepts of the aspects ===
+        (item,) = payment.concepts[0].extracted_items
+        assert item.value is True
+        assert item.probabilities is not None
+        assert list(item.probabilities) == [True, False]
+        assert item.probabilities[True] >= 0.5
+        (item,) = termination.concepts[0].extracted_items
+        assert item.value == ["written"]
+        assert item.probabilities is not None
+        assert list(item.probabilities) == ["written", "oral", "not specified"]
+        assert item.probabilities["written"] == max(item.probabilities.values())
+        assert all(0 <= probability <= 1 for probability in item.probabilities.values())
+
+        # === The usage ===
+        # One request for each paragraph, with the questions of both aspects, and
+        # one request for the concepts of each aspect
+        (usage_container,) = decision_model.get_usage()
+        usage = usage_container.usage
+        assert usage.input > 0
+        assert len(usage.calls) == len(paragraph_texts) + 2
+        assert [
+            json.loads(call.prompt)["input"]
+            for call in usage.calls[: len(paragraph_texts)]
+        ] == paragraph_texts
+        assert all(call.timestamp_received is not None for call in usage.calls)
+        self._check_cost_of_recorded_tests(decision_model)
+        self.check_instance_serialization_and_cloning(document)
+
+    @pytest.mark.vcr
+    def test_model_group_with_typesafe_api(self):
+        """
+        Tests a model group with an LLM and a decision model of TypeSafe, with
+        the requests sent to the APIs of both: each concept is extracted by
+        the model that it is routed to by the role.
+        """
+        llm = DocumentLLM(**self._llm_extractor_kwargs_openai)  # ty: ignore[invalid-argument-type]
+        decision_model = DocumentDecisionModel(
+            model="typesafe/jev-latest",
+            api_key=os.getenv("TYPESAFE_API_KEY"),
+            role="decide",
+            pricing_details=ModelPricing(
+                input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
+            ),
+        )
+        model_group = DocumentModelGroup(models=[llm, decision_model])
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = [
+            # Extracted by the LLM, which has no role
+            StringConcept(
+                name="Governing law",
+                description="Country whose laws govern the agreement",
+            ),
+            # Extracted by the decision model
+            BooleanConcept(
+                name="NDA check",
+                description="The document is a non-disclosure agreement",
+                model_role="decide",
+            ),
+        ]
+
+        model_group.extract_concepts_from_document(document)
+
+        string_concept, boolean_concept = document.concepts
+        # An item extracted by an LLM has no probabilities
+        assert string_concept.extracted_items
+        assert any(
+            "Norway" in item.value and item.probabilities is None
+            for item in string_concept.extracted_items
+        )
+        (item,) = boolean_concept.extracted_items
+        assert item.value is True
+        assert item.probabilities is not None
+        assert list(item.probabilities) == [True, False]
+        assert 0.5 <= item.probabilities[True] <= 1
+
+        # The usage and cost of each model of the group
+        llm_usage_container, usage_container = model_group.get_usage()
+        assert llm_usage_container.model == llm.model
+        assert llm_usage_container.usage.input > 0
+        assert llm_usage_container.usage.output > 0
+        assert usage_container.model == "typesafe/jev-latest"
+        assert usage_container.role == "decide"
+        assert usage_container.usage.input > 0
+        assert len(usage_container.usage.calls) == 1
+        assert model_group.get_usage(model_role="decide") == [usage_container]
+        self._check_cost_of_recorded_tests(decision_model)
+        self.check_instance_serialization_and_cloning(document)
+
+    @pytest.mark.vcr
+    def test_extract_concepts_with_openai_decisions_api(self):
+        """
+        Tests the extraction of concepts of each supported type from a document
+        with a decision model of OpenAI, with the requests sent to its Decisions
+        API: the only provider whose API takes the requests in the format that
+        they are sent to litellm in, without a conversion.
+        """
+        decision_model = DocumentDecisionModel(
+            model="openai/gpt-6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            pricing_details=ModelPricing(
+                input_per_1m_tokens=0.10, output_per_1m_tokens=0.0
+            ),
+        )
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = self._create_concepts_for_recorded_tests()
+
+        decision_model.extract_concepts_from_document(document)
+
+        self._check_concepts_of_recorded_tests(document, decision_model)

@@ -420,6 +420,42 @@ def _convert_aspect_answer(
     return probability >= _YES_PROBABILITY_THRESHOLD, probabilities
 
 
+def _validate_answers(
+    questions: Sequence[_DecisionQuestion],
+    answers: Mapping[str, _DecisionAnswer],
+) -> None:
+    """
+    Validates that each of the questions has an answer that can be used, i.e.
+    an answer that the conversion of the answers accepts (see
+    :func:`_convert_concept_answers` and :func:`_convert_aspect_answer`).
+
+    This allows for rejecting a response of a decision model as soon as it is
+    received, e.g. before the other requests of the same extraction are sent,
+    whatever the questions are built for.
+
+    Only the answers to the given questions are read, i.e. the mapping may hold
+    the answers to other questions as well.
+
+    :param questions: Questions that were asked.
+    :type questions: Sequence[_DecisionQuestion]
+    :param answers: Answers of the decision model by the names of the questions.
+    :type answers: Mapping[str, _DecisionAnswer]
+    :return: None
+    :rtype: None
+    :raises _InvalidDecisionResponseError: If the answer to a question is missing,
+        refused, of another kind than the question, without the needed
+        probabilities, with a probability that is not a number within [0, 1], or
+        with options other than the options of the question.
+    """
+    for question in questions:
+        if question.kind == "predicate":
+            _get_predicate_probability(answers, question.name)
+        else:
+            _get_option_probabilities(
+                answers, question.name, kind=question.kind, options=question.options
+            )
+
+
 # Helpers
 
 

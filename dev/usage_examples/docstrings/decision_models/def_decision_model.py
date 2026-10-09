@@ -7,7 +7,7 @@ from contextgem import (
 
 
 # Create a decision model. A decision model answers closed questions on a text
-# with probabilities: it extracts Boolean, label and rating concepts.
+# with probabilities: it extracts aspects, and Boolean, label and rating concepts.
 decision_model = DocumentDecisionModel(
     model="typesafe/jev-latest",
     api_key="your-typesafe-api-key",  # Replace with your actual API key
@@ -18,7 +18,7 @@ decision_model = DocumentDecisionModel(
 )
 
 # Create a fallback LLM in case the decision model fails. It extracts
-# the same concepts with its prompts, i.e. without the probabilities.
+# the same aspects and concepts with its prompts, i.e. without the probabilities.
 decision_model_fallback = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key="your-openai-api-key",  # Replace with your actual API key
@@ -34,6 +34,6 @@ llm = DocumentLLM(
     api_key="your-openai-api-key",  # Replace with your actual API key
 )
 
-# Create a DocumentModelGroup. The concepts with `model_role="decide"` are extracted
-# by the decision model, and all the other aspects and concepts by the LLM.
+# Create a DocumentModelGroup. The aspects and concepts with `model_role="decide"`
+# are extracted by the decision model, and all the other ones by the LLM.
 model_group = DocumentModelGroup(models=[llm, decision_model])

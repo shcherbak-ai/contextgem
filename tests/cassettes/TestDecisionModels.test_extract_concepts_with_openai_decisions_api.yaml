@@ -1,0 +1,127 @@
+interactions:
+- request:
+    body: '{"model":"gpt-6-luna","input":"NON-DISCLOSURE AGREEMENT\n\nThis Non-Disclosure
+      Agreement is made between Alpha Ltd and Beta Inc. Each party shall keep the
+      confidential information of the other party secret and shall not disclose it
+      to any third party.\n\nThe parties rate the sensitivity of the confidential
+      information as 4 on a scale from 1 to 5.\n\nThis agreement is governed by the
+      laws of Norway.","questions":[{"type":"predicate","name":"C0","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: NDA check\nConcept description: The document is a non-disclosure
+      agreement\nAnswer \"yes\" if the text supports the statement. Answer \"no\"
+      if the text contradicts the statement or does not support it."},{"type":"choice","name":"C1","instructions":"Classify
+      the text by selecting exactly one of the options, based on the concept below.\nConcept
+      name: Document type\nConcept description: Type of the document\nSelect the most
+      appropriate option, even if no option fits the text perfectly.","choices":[{"value":"non-disclosure
+      agreement"},{"value":"employment agreement"},{"value":"lease agreement"},{"value":"invoice"}]},{"type":"predicate","name":"C2-L0","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the document covers\nLabel: confidentiality\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},{"type":"predicate","name":"C2-L1","instructions":"Decide whether
+      the label below applies to the text, based on the concept below.\nConcept name:
+      Topics\nConcept description: Topics that the document covers\nLabel: governing
+      law\nAnswer \"yes\" if the label applies to the text. Answer \"no\" if it does
+      not. The other labels of the concept are decided separately: several labels,
+      or none, may apply."},{"type":"predicate","name":"C2-L2","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the document covers\nLabel: salary\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},{"type":"predicate","name":"C2-L3","instructions":"Decide whether
+      the label below applies to the text, based on the concept below.\nConcept name:
+      Topics\nConcept description: Topics that the document covers\nLabel: real estate\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},{"type":"score","name":"C3","instructions":"Rate the text on a
+      scale from 1 to 5, based on the concept below.\nConcept name: Sensitivity\nConcept
+      description: Sensitivity of the confidential information, as rated by the parties
+      in the document\nSelect the level of the scale that fits the text best.","levels":[{"label":"1","description":"1
+      on a scale from 1 to 5"},{"label":"2","description":"2 on a scale from 1 to
+      5"},{"label":"3","description":"3 on a scale from 1 to 5"},{"label":"4","description":"4
+      on a scale from 1 to 5"},{"label":"5","description":"5 on a scale from 1 to
+      5"}]}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '3387'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.104.2
+    method: POST
+    uri: https://api.openai.com/v1/decisions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52STW6DMBCFr1J5DRGGUClsu+0NqgoNZkqsGtuyTSKEuHsNSQPkh0bd2c/fG808
+        T0dqVaIgGam0C19D0UggAQFpj2gsyT464lqN/l0bLDkDh/5ZQj1Ib5E/a6MKKLjgriUZ3UR9cLGw
+        veJszlN/PosZkUqGJbdMKNsYfIHKINYo3aImx1MTBxDN06apkV8b1lqodgAfW6KlRSBYfJrm8nCe
+        9Yb69DMr+cVLlMPcy4jupRqH738E+8BF/+WKH4y27krWXZYpM3cM+EnLkk1EV744CoiAYlxJuh46
+        nch4nYwnMlknk4nc3pK73QzdTmh6pyi9/vjR7rXGQuWvnd8Z3bjcqW+UPgGapr7NuZaX6IALO7AM
+        2B7LC+xDGpX8aLjDSe4Doho3LxtdKfOixq+4klxWiwJOORCLtvr+B9++HugnBAAA
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - x-request-id,retry-after,server-timing-total
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-processing-ms:
+      - '921'
+      server:
+      - cloudflare
+      server-timing-total:
+      - '921.597'
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      x-content-type-options:
+      - nosniff
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 46ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

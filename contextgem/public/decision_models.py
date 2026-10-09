@@ -22,8 +22,9 @@ Module for handling processing logic using decision models.
 This module provides the class for using a decision model in document processing
 workflows. A decision model takes a text and a set of closed questions (yes/no, pick
 one option, rate on a scale) and returns the probabilities of the answers. It generates
-no text, which makes it faster and cheaper than an LLM for the concepts whose values
-come from a closed set of options, and lets it report how sure it is of each value.
+no text, which makes it faster and cheaper than an LLM for what can be put as such
+questions: which paragraphs of a document belong to an aspect, and the concepts whose
+values come from a closed set of options. It also reports how sure it is of each answer.
 
 The requests are sent through the litellm library, which supports several providers
 of decision models. The module covers the configuration of a model, the requests to
@@ -42,11 +43,13 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     Handles processing documents with a specific decision model.
 
     A decision model answers closed questions on a text with probabilities and
-    generates no text. It extracts the concepts whose values come from a closed set
-    of options: ``BooleanConcept``, ``LabelConcept`` and ``RatingConcept``. Each
-    extracted item has the probabilities of all the options in its ``probabilities``
-    attribute. A decision model can be used on its own or, with a role assigned,
-    as a part of a model group, next to the LLMs that extract everything else.
+    generates no text. It extracts aspects, by deciding on each paragraph whether
+    the paragraph belongs to an aspect, and the concepts whose values come from
+    a closed set of options: ``BooleanConcept``, ``LabelConcept`` and
+    ``RatingConcept``. Each extracted item has the probabilities of all the options
+    in its ``probabilities`` attribute. A decision model can be used on its own or,
+    with a role assigned, as a part of a model group, next to the LLMs that extract
+    everything else.
 
     :ivar model: Model identifier in format {model_provider}/{model_name}, e.g.
         ``"typesafe/jev-latest"``. The model has to be served by one of the providers
@@ -60,10 +63,10 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         model data, i.e. to be set again after deserialization.
     :vartype api_base: str | None
     :ivar role: Free-form role label of the model (up to 64 printable characters), used
-        for routing in a ``DocumentModelGroup``: the model extracts the concepts with
-        the same ``model_role``. Defaults to None, in which case the model extracts
-        the concepts without ``model_role``. Ignored when the model is used on its own,
-        as it then extracts all the concepts it is given.
+        for routing in a ``DocumentModelGroup``: the model extracts the aspects/concepts
+        with the same ``model_role``. Defaults to None, in which case the model extracts
+        the aspects/concepts without ``model_role``. Ignored when the model is used on
+        its own, as it then extracts all the aspects/concepts it is given.
     :vartype role: str | None
     :ivar num_retries_failed_request: Number of retries when a request fails with
         a transient error (request timeout, rate limit, server or connection error).
@@ -92,11 +95,14 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         in the given order until one of them succeeds: decision models, LLMs, or both.
         Each must have ``is_fallback=True`` and the same role as the current model, and
         must differ from the current model and from each other in at least one config
-        param. A fallback LLM extracts the same concepts with its prompts, i.e. its
-        items have no probabilities. Defaults to an empty list.
+        param. A fallback LLM extracts the same aspects/concepts with its prompts,
+        i.e. its items have no probabilities. Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
     :ivar async_limiter: Controls frequency of async API requests for concurrent tasks.
         Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues.
+        With concurrency enabled, the requests for the paragraphs of a document, which
+        aspects are extracted with, are paced by the limiter: consider a higher rate
+        for long documents, if the rate limits of the model provider allow for it.
         Requests to a fallback model are controlled by the limiter of that fallback model.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
@@ -104,15 +110,28 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     Note:
 
         - What a decision model extracts
-            Only ``BooleanConcept``, ``LabelConcept`` and ``RatingConcept``, from text
-            (``modality="text"``), without justifications (``add_justifications=False``)
-            and without references (``add_references=False``), from a document or from
-            an aspect. A ``ValueError`` is raised before any request is sent if
-            the model is to extract anything else, such as an aspect or a concept
-            of another type. In a model group, route such aspects and concepts to
-            an LLM.
+            Aspects, including sub-aspects, with the ``"paragraphs"`` reference depth
+            (``reference_depth="paragraphs"``), and ``BooleanConcept``, ``LabelConcept``
+            and ``RatingConcept``, from text (``modality="text"``) and without
+            references (``add_references=False``), from a document or from an aspect.
+            Both without justifications (``add_justifications=False``).
+            A ``ValueError`` is raised before any request is sent if the model is to
+            extract anything else, such as a concept of another type. In a model
+            group, route such aspects and concepts to an LLM.
 
-        - Extracted items
+        - Extracted items of aspects
+            Each paragraph of the document is judged on its own text, i.e. without
+            the other paragraphs and without its ``additional_context``: it belongs
+            to an aspect if the probability of that is 0.5 or more. Each such
+            paragraph becomes an item of the aspect, as when the aspect is extracted
+            by an LLM: the value of the item is the text of the paragraph, and
+            the paragraph is its reference paragraph. The ``probabilities`` of
+            the item are those of the paragraph belonging (``True``) and not
+            belonging (``False``) to the aspect. An aspect that no paragraph belongs
+            to has no items. The sub-aspects of an aspect are extracted from
+            the paragraphs of that aspect.
+
+        - Extracted items of concepts
             A concept gets at most one item per document or aspect, whatever its
             ``singular_occurrence`` is. A ``BooleanConcept`` always gets an item
             (``True`` if the probability of "yes" is 0.5 or more). A ``LabelConcept``
@@ -123,19 +142,25 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             of correctness.
 
         - Requests
-            The questions of all the concepts extracted in one call are sent in
-            one request, with the text of the document or of the paragraphs of
-            the aspect. The number of concepts per call is set with
-            ``max_items_per_call``. With ``use_concurrency=True``, each concept is
-            extracted in its own request by default, i.e. the text is sent, and
-            is paid for, once per concept: set ``max_items_per_call`` to send
-            the text fewer times.
+            Concepts: the questions of all the concepts extracted in one call are
+            sent in one request, with the text of the document or of the paragraphs
+            of the aspect. Aspects: one request is sent for each paragraph of
+            the document, with the text of the paragraph and one question for each
+            aspect extracted in the call. The number of aspects/concepts per call is
+            set with ``max_items_per_call``. With ``use_concurrency=True``, each
+            aspect/concept is extracted in its own call by default, i.e. each text
+            is sent, and is paid for, once per aspect/concept: set
+            ``max_items_per_call`` to send the texts fewer times. The requests for
+            the paragraphs are sent one after another, or concurrently with
+            ``use_concurrency=True``, paced by the ``async_limiter`` of the model.
 
         - Length of the text
-            The text of the document, or of the paragraphs of the aspect, is sent
-            in one request, i.e. it has to fit into the context window of the model:
-            ``max_paragraphs_to_analyze_per_call`` is not applied to a decision model.
-            For a long document, extract the concepts from aspects.
+            Concepts: the text of the document, or of the paragraphs of the aspect,
+            is sent in one request, i.e. it has to fit into the context window of
+            the model. For a long document, extract the concepts from aspects.
+            Aspects: each paragraph is sent in a request of its own, whatever
+            the length of the document. ``max_paragraphs_to_analyze_per_call`` is
+            not applied to a decision model.
 
         - Limits
             The limits on the number of options are those of ``litellm`` and of

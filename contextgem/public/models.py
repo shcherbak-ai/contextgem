@@ -39,8 +39,9 @@ class DocumentModelGroup(_DocumentModelGroup):
     This class manages multiple LLMs, each of which extracts the aspects and concepts routed
     to it by its role, e.g. to use a smaller model for simpler tasks and a more capable
     model for more complex ones. A group can also have decision models
-    (``DocumentDecisionModel``) next to its LLMs: a decision model extracts the concepts
-    routed to it that have values from a closed set of options.
+    (``DocumentDecisionModel``) next to its LLMs: a decision model extracts the aspects
+    routed to it, and the concepts routed to it that have values from a closed set
+    of options.
 
     :ivar models: A list of DocumentLLM instances, each with a unique ``role``. An aspect/concept
         is extracted by the LLM with the ``role`` equal to the ``model_role`` of the aspect/concept,
