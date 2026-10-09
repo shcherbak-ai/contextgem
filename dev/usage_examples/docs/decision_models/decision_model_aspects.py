@@ -60,7 +60,7 @@ doc.add_aspects(
 # Configure the decision model with your API parameters
 decision_model = DocumentDecisionModel(
     model="typesafe/jev-latest",
-    api_key=os.getenv("TYPESAFE_API_KEY"),
+    api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
 )
 
 # Extract the aspects and their concepts.

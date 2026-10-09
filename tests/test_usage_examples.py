@@ -148,6 +148,8 @@ class TestUsageExamples(BaseTest):
             decision_model_fallbacks,  # noqa: F401
             decision_model_group,  # noqa: F401
             decision_model_init,  # noqa: F401
+            decision_model_local,  # noqa: F401
+            decision_model_threshold,  # noqa: F401
             decision_model_usage_and_cost,  # noqa: F401
         )
 

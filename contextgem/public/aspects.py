@@ -54,6 +54,12 @@ class Aspect(_Aspect):
     :ivar reference_depth: The structural depth of references (paragraphs or sentences).
         Defaults to "paragraphs". Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
+    :ivar decision_threshold: The lowest probability (above 0, up to 1) with which
+        a decision model (``DocumentDecisionModel``) takes a paragraph as belonging to
+        the aspect. Defaults to None, in which case the ``decision_threshold`` of
+        the decision model applies. Not passed on to the sub-aspects. Ignored when
+        the aspect is extracted by an LLM.
+    :vartype decision_threshold: float | None
     :ivar add_justifications: Whether the LLM will output justification for each extracted item.
         Inherited from base class. Defaults to False.
     :vartype add_justifications: bool

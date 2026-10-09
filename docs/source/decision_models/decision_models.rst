@@ -127,9 +127,9 @@ A decision model is identified in the same way as an LLM, in the format ``<provi
    * - Cloudflare
      - ``cloudflare/clef``, ``cloudflare/clef-flash``
      - ``api_key``, and the ID of your account: either in ``api_base``, as ``https://api.cloudflare.com/client/v4/accounts/<account_id>/ai/run``, or in the ``CLOUDFLARE_ACCOUNT_ID`` environment variable.
-   * - Self-hosted
+   * - Local or self-hosted server
      - ``strands_decider/<model_name>``
-     - ``api_base``. No API key is needed. The requests are sent to ``POST <api_base>/v1/systemone``.
+     - ``api_base``: the address of the server. No API key is needed. The requests are sent to ``POST <api_base>/v1/systemone``. This is how a decision model served by Ollama or LM Studio is reached, see :ref:`decision-models-local-label`.
 
 The model names above are the ones in the model list of this ``litellm`` version.
 
@@ -141,12 +141,29 @@ What to know about the providers:
 
 - **The provider is checked when a decision model is created.** A model of a provider that the installed LiteLLM version serves no decision models of, e.g. ``anthropic/...``, is rejected with a validation error (a ``ValueError``) that lists the supported providers, also when ``model`` is assigned later. The model name is not checked: a name that the provider does not serve, a missing API key and a missing API base all fail at the first request, with ``ModelAPIError`` (see :ref:`decision-models-errors-label`).
 - **API keys in the environment.** If ``api_key`` is not passed, LiteLLM reads the key from the environment variable of the provider, if it is set, e.g. ``TYPESAFE_API_KEY`` or ``OPENAI_API_KEY``.
-- **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``) and to the Decisions API of OpenAI (``openai/gpt-6-luna``). The other providers are reached through the same LiteLLM call and are not tested with ContextGem.
-
-.. warning::
-   **Ollama and LM Studio are not verified.** LiteLLM has no decision provider under the ``ollama/``, ``ollama_chat/`` and ``lm_studio/`` prefixes, which are for LLMs: a decision model cannot be created with such a prefix, and a validation error (a ``ValueError``) with the supported providers is raised instead. A local server is reached with the ``strands_decider/`` prefix and its ``api_base``, if it accepts ``POST <api_base>/v1/systemone``. Whether Ollama or LM Studio serve this endpoint has not been verified with ContextGem.
+- **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``), to the Decisions API of OpenAI (``openai/gpt-6-luna``), and to the local servers of Ollama (``strands_decider/nimble``) and LM Studio (``strands_decider/kev-4b``). The other providers are reached through the same LiteLLM call and are not tested with ContextGem.
 
 ContextGem sends only text to a decision model. Concepts with the ``"image"`` or ``"multimodal"`` modality are not supported, whichever provider is used.
+
+
+.. _decision-models-local-label:
+
+💻 Local Decision Models
+--------------------------
+
+A decision model that runs on your machine is reached through the server that serves it. Both `Ollama <https://ollama.com/>`_ (since its version 0.35) and `LM Studio <https://lmstudio.ai/>`_ (since its version 0.4.26) serve decision models at ``POST /v1/systemone``. Create the decision model with the ``strands_decider/`` prefix and with the address of the server as ``api_base``:
+
+.. literalinclude:: ../../../dev/usage_examples/docs/decision_models/decision_model_local.py
+   :language: python
+   :caption: Using a local decision model
+
+What to know about local decision models:
+
+- **The prefix is not the one of local LLMs.** LiteLLM has no provider of decision models under the ``ollama/``, ``ollama_chat/`` and ``lm_studio/`` prefixes, which are for LLMs. A decision model created with such a prefix is rejected with a validation error (a ``ValueError``) that names the prefix to use. ``strands_decider/`` is the prefix that LiteLLM has for a self-hosted server with the ``/v1/systemone`` endpoint, whichever server it is.
+- **No API key and no prices.** A local server needs no ``api_key``. The tokens are counted as for any other decision model, and no cost is calculated unless you set ``pricing_details``.
+- **LM Studio serves only the models that it lists as decision models**, e.g. the GGUF builds that ``ggml-org`` publishes on Hugging Face, such as Kev 4B (``lms get https://huggingface.co/ggml-org/Kev-4B-GGUF``). A request for a model that LM Studio lists as an LLM is rejected, and the extraction fails with ``ModelAPIError``. The local server of LM Studio Bionic, which is a separate app, does not serve the endpoint as of its version 1.1.7 (October 2026).
+- **The choice of the model matters.** In the tests of ContextGem on a short and unambiguous document, ``nimble`` (9B, with Ollama 0.40) answered each question as expected, with probabilities above 0.99. ``kev-4b`` (4B, with LM Studio 0.4.26) answered as expected except for one of the two labels of a multi-label concept that apply, which got a probability of 0.31. The much smaller ``tev1:0.8b`` answered several of the same questions wrongly. Check a local model on your own documents before you rely on it.
+- **Shorter texts than with the cloud models.** A local model has a smaller context, and the text is not cut to fit it: both servers reject a request whose text and question exceed the context that the model is loaded with, Ollama also a request whose body exceeds 64 KiB, and the extraction fails with ``ModelAPIError``. A document-level concept is decided on the text of the whole document, so attach the concepts of a long document to aspects (see :ref:`decision-models-limits-label`).
 
 
 📝 Configuration Parameters
@@ -206,12 +223,16 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
      - ``list[DocumentDecisionModel | DocumentLLM]``
      - ``[]``
      - Models to use as fallbacks if the current one fails, tried in the given order until one of them succeeds. A fallback model can be a decision model or an LLM. Each must have ``is_fallback=True`` and the same role as the current model. See :ref:`decision-models-fallbacks-label`.
+   * - ``decision_threshold``
+     - ``float``
+     - ``0.5``
+     - The lowest probability of "yes" (above 0, up to 1) with which a yes/no question is taken as answered "yes": a paragraph belongs to an aspect, a Boolean concept is ``True``, a label of a multi-label concept is selected. Applies unless the aspect or the concept has a ``decision_threshold`` of its own. See :ref:`decision-models-threshold-label`.
    * - ``async_limiter``
      - ``AsyncLimiter``
      - ``AsyncLimiter(10, 10)``
-     - Relevant when concurrency is enabled for extraction tasks. Controls the frequency of the requests sent concurrently. Defaults to allowing 10 acquisitions per 10-second period. This matters most for aspect extraction, which sends one request per paragraph (see :ref:`decision-models-aspects-label`). See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details.
+     - Relevant when concurrency is enabled for extraction tasks. Controls the frequency of the requests sent concurrently. Defaults to allowing 10 acquisitions per 10-second period. The rate applies to all the requests to the decision model that are sent concurrently, i.e. the extraction calls that run at the same time share it. This matters most for aspect extraction, which sends one request per paragraph (see :ref:`decision-models-aspects-label`). See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details.
 
-A decision model has none of the other parameters of :class:`~contextgem.public.llms.DocumentLLM`, e.g. those that control the generation of text or the chat (``system_message``, ``output_language``, ``temperature``, ``top_p``, ``seed``, ``max_tokens``, ``reasoning_effort``, ``tools``), or ``max_retries_invalid_data``. Passing one of them raises a validation error.
+Apart from ``decision_threshold``, which only a decision model has, a decision model has none of the other parameters of :class:`~contextgem.public.llms.DocumentLLM`, e.g. those that control the generation of text or the chat (``system_message``, ``output_language``, ``temperature``, ``top_p``, ``seed``, ``max_tokens``, ``reasoning_effort``, ``tools``), or ``max_retries_invalid_data``. Passing one of them raises a validation error.
 
 
 .. _decision-models-supported-label:
@@ -276,13 +297,13 @@ Each concept is turned into one or more typed questions. The text of a question 
      - Value of the extracted item
    * - :class:`~contextgem.public.concepts.BooleanConcept`
      - One yes/no question: is the statement in the description true according to the text?
-     - ``True`` if the probability of "yes" is 0.5 or more, else ``False``
+     - ``True`` if the probability of "yes" is the decision threshold (0.5 by default) or more, else ``False``
    * - :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_class"``
      - One question with the labels as the options, of which one is to be picked
      - A list with the most probable label, e.g. ``["Written"]``
    * - :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_label"``
      - One yes/no question per label: does the label apply to the text?
-     - A list of the labels with a probability of 0.5 or more, in the order of the labels of the concept. No item is extracted if no label reaches 0.5.
+     - A list of the labels with a probability of the decision threshold (0.5 by default) or more, in the order of the labels of the concept. No item is extracted if no label reaches the threshold.
    * - :class:`~contextgem.public.concepts.RatingConcept`
      - One rating question, with one level for each integer of the rating scale
      - The most probable level, as an integer of the scale
@@ -347,11 +368,39 @@ The dictionary has all the possible answers, in the order of the labels of the c
    item = label_concept.extracted_items[0]
    p_labels = {label: item.probabilities[label] for label in item.value}
 
-The values of the items are set with a fixed threshold of 0.5. To apply a higher threshold, read the probabilities: e.g. take a Boolean concept as confirmed only if ``item.probabilities[True] >= 0.9``.
-
-What is not extracted has no probabilities to read. A multi-label concept none of whose labels reaches 0.5 has no extracted item, and a paragraph with a probability below 0.5 is not among the extracted items of the aspect. A threshold below 0.5 can therefore not be applied to them afterwards. The answers of the model to each request, including these, are recorded as JSON in the usage of the model (see :ref:`decision-models-cost-label`).
+What is not extracted has no probabilities to read. A multi-label concept none of whose labels reaches the decision threshold has no extracted item, and a paragraph with a probability below the threshold is not among the extracted items of the aspect. To have them extracted, lower the threshold (see :ref:`decision-models-threshold-label`). The answers of the model to each request, including these, are recorded as JSON in the usage of the model (see :ref:`decision-models-cost-label`).
 
 ``probabilities`` is ``None`` for every item extracted by an LLM, including an LLM that is a fallback of a decision model. The probabilities are kept when a document is serialized (see :doc:`../serialization`).
+
+
+.. _decision-models-threshold-label:
+
+🎚️ Decision Threshold
+-----------------------
+
+A yes/no question is taken as answered "yes" if the probability of "yes" is the decision threshold or more. The threshold is 0.5 by default, i.e. "yes" is the more probable answer. It decides three things:
+
+- which paragraphs become the extracted items of an :class:`~contextgem.public.aspects.Aspect`;
+- whether the value of a :class:`~contextgem.public.concepts.BooleanConcept` is ``True`` or ``False``;
+- which labels a :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_label"`` gets.
+
+A lower threshold extracts more, including what the model is less sure of. A higher threshold extracts only what the model is surer of. Set it in two places:
+
+- **For the decision model**, with its ``decision_threshold`` parameter: it applies to all the aspects and concepts that the model extracts.
+- **For an aspect or a concept**, with its own ``decision_threshold`` parameter: it applies instead of the threshold of the decision model, whichever decision model extracts the aspect or the concept. It is ``None`` by default, i.e. the threshold of the decision model applies.
+
+.. literalinclude:: ../../../dev/usage_examples/docs/decision_models/decision_model_threshold.py
+   :language: python
+   :caption: Setting the decision threshold
+
+What to know about the threshold:
+
+- **It does not apply to single-label and rating concepts.** For a :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_class"`` and for a :class:`~contextgem.public.concepts.RatingConcept`, the most probable option is taken, whatever its probability is. Setting ``decision_threshold`` for a single-label concept raises a validation error (a ``ValueError``), and a rating concept has no such parameter.
+- **It does not change the probabilities.** The ``probabilities`` of an item are those returned by the model, whatever threshold its value is set with: e.g. with a threshold of 0.7 and a probability of 0.6, the value of a Boolean concept is ``False`` and its probabilities are ``{True: 0.6, False: 0.4}``.
+- **A sub-aspect does not get the threshold of its aspect.** Each aspect has its own threshold, or that of the decision model.
+- **An LLM does not use it.** The ``decision_threshold`` of an aspect or a concept is ignored when an LLM extracts it, including an LLM that is a fallback of a decision model. A fallback decision model applies its own ``decision_threshold`` to the aspects and concepts that have none of their own.
+- **The value must be above 0 and not above 1.** With a threshold of 1, only a probability of exactly 1 counts as "yes".
+- **The probabilities are what the model reports**, so the right threshold depends on the model: check it on your own documents (see :ref:`decision-models-trust-label`).
 
 See :ref:`decision-models-trust-label` for what a probability does and does not tell.
 
@@ -365,7 +414,7 @@ A decision model extracts aspects one paragraph at a time:
 
 - **One request per paragraph.** A request has the text of one paragraph and, for each aspect processed in the call, one yes/no question: is the paragraph relevant to the aspect? The question is built from the ``name`` and the ``description`` of the aspect.
 - **A paragraph is judged on its own text.** The model is not sent the neighbouring paragraphs, the rest of the document, or the ``additional_context`` of the paragraph, whereas an LLM is sent the paragraphs together. A paragraph that can be understood only in its context, e.g. *"The same applies to the Supplier."*, can therefore be judged differently than by an LLM.
-- **A paragraph with a probability of 0.5 or more becomes an extracted item** of the aspect. As for LLMs, the value of the item is the text of the paragraph, and ``reference_paragraphs`` of the item has the paragraph. A paragraph can belong to several aspects.
+- **A paragraph with a probability of the decision threshold or more becomes an extracted item** of the aspect. The threshold is 0.5 by default, and can be set for the decision model and for each aspect (see :ref:`decision-models-threshold-label`). As for LLMs, the value of the item is the text of the paragraph, and ``reference_paragraphs`` of the item has the paragraph. A paragraph can belong to several aspects.
 - **An aspect that no paragraph belongs to has no extracted items.** Its sub-aspects and concepts are then not extracted, as for LLMs.
 
 The sub-aspects of an aspect are extracted in the same way from the paragraphs extracted for that aspect, with one request for each of these paragraphs. The concepts of an aspect are decided on the text of the paragraphs extracted for it.

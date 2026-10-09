@@ -30,6 +30,7 @@ from pydantic import (
     Field,
     PrivateAttr,
     StrictBool,
+    StrictFloat,
     StrictInt,
     field_validator,
     model_validator,
@@ -105,6 +106,17 @@ class _Aspect(
         description=(
             "Reference granularity for extraction outputs: 'paragraphs' or 'sentences'. "
             "Affects the structure of extracted_items."
+        ),
+    )
+    decision_threshold: StrictFloat | None = Field(
+        default=None,
+        gt=0,
+        le=1,
+        description=(
+            "Lowest probability with which a decision model takes a paragraph as "
+            "belonging to this aspect (0 < threshold <= 1). Defaults to None, in which "
+            "case the `decision_threshold` of the decision model applies. Not passed on "
+            "to the sub-aspects. Ignored when the aspect is extracted by an LLM."
         ),
     )
 

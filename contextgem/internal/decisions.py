@@ -63,8 +63,10 @@ _DecisionItemValue = bool | int | list[str]
 # to its probability.
 _DecisionProbabilities = dict[bool | int | str, float]
 
-# Lowest probability of "yes" with which a predicate is taken as answered "yes"
-_YES_PROBABILITY_THRESHOLD = 0.5
+# Default decision threshold: the lowest probability of "yes" with which a yes/no
+# question is taken as answered "yes", unless another threshold is set for
+# the decision model, or for the aspect or the concept that the question is of
+_DEFAULT_DECISION_THRESHOLD = 0.5
 
 # Names of the templates of the question instructions
 _CONCEPT_QUESTION_TEMPLATE_NAME = "decision_question_concept"
@@ -295,6 +297,7 @@ def _convert_concept_answers(
     concept: _Concept,
     position: int,
     answers: Mapping[str, _DecisionAnswer],
+    decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
 ) -> tuple[_DecisionItemValue, _DecisionProbabilities] | None:
     """
     Converts the answers of a decision model to the questions of a concept
@@ -303,20 +306,22 @@ def _convert_concept_answers(
 
     Value and probabilities by concept type:
 
-    - Boolean concept: ``True`` if the probability ``p`` of "yes" is 0.5 or more,
-      else ``False``; ``{True: p, False: 1 - p}``.
+    - Boolean concept: ``True`` if the probability ``p`` of "yes" is the decision
+      threshold or more, else ``False``; ``{True: p, False: 1 - p}``.
     - Label concept with the "multi_class" classification type: a list with the most
       probable label; the probability of each label of the concept.
     - Label concept with the "multi_label" classification type: a list of the labels
-      whose own predicate has a probability of 0.5 or more, in the order of the labels
-      of the concept; the probability of the predicate of each label of the concept
-      (the probabilities do not sum to 1). No item if no label has a probability of
-      0.5 or more.
+      whose own predicate has a probability of the decision threshold or more, in
+      the order of the labels of the concept; the probability of the predicate of each
+      label of the concept (the probabilities do not sum to 1). No item if no label
+      has a probability of the decision threshold or more.
     - Rating concept: the most probable integer of the rating scale; the probability
       of each integer of the scale.
 
     If several options are the most probable ones, the first of them is taken, in
     the order of the labels of the concept, or in the ascending order of the scale.
+    The decision threshold does not apply to the options: the most probable one is
+    taken, whatever its probability is.
 
     The probabilities of a "choice" or a "score" answer are taken as they are: they
     are not normalised, and an answer whose probabilities do not sum to 1 is valid.
@@ -340,11 +345,15 @@ def _convert_concept_answers(
     :type position: int
     :param answers: Answers of the decision model by the names of the questions.
     :type answers: Mapping[str, _DecisionAnswer]
+    :param decision_threshold: Lowest probability of "yes" with which a yes/no
+        question of the concept is taken as answered "yes" (see
+        :func:`_get_decision_threshold`). Defaults to 0.5.
+    :type decision_threshold: float
     :return: Value of the extracted item (``bool`` for a Boolean concept, ``int`` for
         a rating concept, ``list[str]`` for a label concept) and its probability
         distribution, in the order of the options, or None if there is no item to
         extract, i.e. no label of a label concept with the "multi_label"
-        classification type has a probability of 0.5 or more.
+        classification type has a probability of the decision threshold or more.
     :rtype: tuple[bool | int | list[str], dict[bool | int | str, float]] | None
     :raises TypeError: If the concept is of a type that a decision model
         cannot extract.
@@ -361,7 +370,7 @@ def _convert_concept_answers(
             answers, _get_concept_question_name(position)
         )
         probabilities = {True: probability, False: 1 - probability}
-        return probability >= _YES_PROBABILITY_THRESHOLD, probabilities
+        return probability >= decision_threshold, probabilities
 
     if isinstance(concept, _LabelConcept):
         if concept.classification_type == "multi_class":
@@ -382,7 +391,7 @@ def _convert_concept_answers(
         labels = [
             label
             for label in concept.labels
-            if probabilities[label] >= _YES_PROBABILITY_THRESHOLD
+            if probabilities[label] >= decision_threshold
         ]
         return (labels, probabilities) if labels else None
 
@@ -402,6 +411,7 @@ def _convert_concept_answers(
 def _convert_aspect_answer(
     position: int,
     answers: Mapping[str, _DecisionAnswer],
+    decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
 ) -> tuple[bool, _DecisionProbabilities]:
     """
     Converts the answer of a decision model to the question of an aspect
@@ -417,8 +427,12 @@ def _convert_aspect_answer(
     :param answers: Answers of the decision model on the paragraph, by the names of
         the questions.
     :type answers: Mapping[str, _DecisionAnswer]
+    :param decision_threshold: Lowest probability of "yes" with which the paragraph
+        is taken as belonging to the aspect (see :func:`_get_decision_threshold`).
+        Defaults to 0.5.
+    :type decision_threshold: float
     :return: Whether the paragraph belongs to the aspect, i.e. the probability ``p``
-        of "yes" is 0.5 or more, and ``{True: p, False: 1 - p}``.
+        of "yes" is the decision threshold or more, and ``{True: p, False: 1 - p}``.
     :rtype: tuple[bool, dict[bool | int | str, float]]
     :raises _InvalidDecisionResponseError: If the answer to the question of the aspect
         is missing, refused, of another kind than a predicate, without a probability,
@@ -428,7 +442,32 @@ def _convert_aspect_answer(
         answers, _get_aspect_question_name(position)
     )
     probabilities: _DecisionProbabilities = {True: probability, False: 1 - probability}
-    return probability >= _YES_PROBABILITY_THRESHOLD, probabilities
+    return probability >= decision_threshold, probabilities
+
+
+def _get_decision_threshold(
+    instance: _Aspect | _Concept, model_decision_threshold: float
+) -> float:
+    """
+    Returns the decision threshold that applies to an aspect or a concept: the one
+    set for the aspect or the concept itself, if any, otherwise the one of
+    the decision model that extracts it.
+
+    Only the aspects and the concepts that are extracted with yes/no questions have
+    a decision threshold of their own: aspects, Boolean concepts, and label
+    concepts with the "multi_label" classification type.
+
+    :param instance: Aspect or concept that is extracted.
+    :type instance: _Aspect | _Concept
+    :param model_decision_threshold: Decision threshold of the decision model.
+    :type model_decision_threshold: float
+    :return: Decision threshold that applies to the aspect or the concept.
+    :rtype: float
+    """
+    decision_threshold = getattr(instance, "decision_threshold", None)
+    return (
+        model_decision_threshold if decision_threshold is None else decision_threshold
+    )
 
 
 def _validate_answers(

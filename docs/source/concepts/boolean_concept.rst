@@ -97,6 +97,10 @@ When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can spe
      - ``str``
      - ``"paragraphs"``
      - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
+   * - ``decision_threshold``
+     - ``float | None``
+     - ``None``
+     - Relevant when the concept is extracted by a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`): the lowest probability of "yes" (above 0, up to 1) with which the value of the concept is set to ``True``. With the default ``None``, the ``decision_threshold`` of the decision model applies. Ignored when the concept is extracted by an LLM. See :ref:`decision-models-threshold-label`.
    * - ``singular_occurrence``
      - ``bool``
      - ``False``

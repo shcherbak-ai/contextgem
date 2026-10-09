@@ -400,7 +400,7 @@ Based on the test results and your changes, you'll fall into one of these four s
    CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
    
    # For TypeSafe API tests (decision models)
-   TYPESAFE_API_KEY=your_typesafe_api_key
+   CONTEXTGEM_TYPESAFE_API_KEY=your_typesafe_api_key
    
    # For debugging output
    CONTEXTGEM_LOGGER_LEVEL=DEBUG
@@ -494,13 +494,13 @@ Based on the test results and your changes, you'll fall into one of these four s
 **Automatically Redacted Variables:**
 
 - `CONTEXTGEM_OPENAI_API_KEY`
-- `TYPESAFE_API_KEY`
+- `CONTEXTGEM_TYPESAFE_API_KEY`
 
 The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
 
 **Adding New Variables:**
 
-- Use the `CONTEXTGEM_` prefix for new API keys (the key of TypeSafe is the exception, see [Decision Model Testing](#decision-model-testing))
+- Use the `CONTEXTGEM_` prefix for new API keys
 - Verify redaction in your cassette files
 - Update redaction logic in `tests/utils.py` if needed
 - Add dummy values to `set_dummy_env_variables_for_testing_from_cassettes()`
@@ -518,10 +518,12 @@ For local LLM testing, install the following tools and download the relevant mod
 
 Most tests of decision models in `tests/test_decision_models.py` replace the API call of `litellm` with a stub and need no cassettes. The tests that send requests to the APIs of decision models are marked with `@pytest.mark.vcr`: the ones in `tests/test_decision_models.py`, and `test_decision_model_usage_examples` in `tests/test_usage_examples.py`, which runs the usage examples in `dev/usage_examples/docs/decision_models/`. Recording their cassettes needs:
 
-- **`TYPESAFE_API_KEY`** in your `.env` file, for the requests to TypeSafe (`typesafe/jev-latest`). This variable is the exception to the `CONTEXTGEM_` prefix: it has the name under which `litellm` itself reads the key of TypeSafe when no key is passed.
+- **`CONTEXTGEM_TYPESAFE_API_KEY`** in your `.env` file, for the requests to TypeSafe (`typesafe/jev-latest`).
 - **`CONTEXTGEM_OPENAI_API_KEY`** in your `.env` file, for the requests to the Decisions API of OpenAI (`openai/gpt-6-luna` as a decision model), and to the LLM that is used next to the decision model in a model group.
+- **[Ollama](https://ollama.com/) 0.35 or later**, running on its default port, with the decision model identified under the `strands_decider/` prefix in `tests/test_decision_models.py` downloaded (`ollama pull nimble`), for the requests to a local decision model. No API key is needed.
+- **[LM Studio](https://lmstudio.ai/) 0.4.26 or later** (not LM Studio Bionic, whose server does not serve decision models), running its local server on the default port, with the decision model of the LM Studio test in `tests/test_decision_models.py` downloaded (`lms get https://huggingface.co/ggml-org/Kev-4B-GGUF`). No API key is needed.
 
-`litellm` rejects a request to a decision model that has no API key before the request is sent, i.e. before it can be replayed from a cassette. For this reason, a dummy `TYPESAFE_API_KEY` is set when no `.env` file is present. If your `.env` file has no `TYPESAFE_API_KEY`, add the variable with any value, otherwise these tests fail also in replay.
+`litellm` rejects a request to a decision model that has no API key before the request is sent, i.e. before it can be replayed from a cassette. For this reason, a dummy `CONTEXTGEM_TYPESAFE_API_KEY` is set when no `.env` file is present. If your `.env` file has no `CONTEXTGEM_TYPESAFE_API_KEY`, add the variable with any value, otherwise these tests fail also in replay.
 
 The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed while recording. A test that sends requests to another provider of decision models needs the host of that provider added to that list (see [Network Egress Control](#network-egress-control)).
 

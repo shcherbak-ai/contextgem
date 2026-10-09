@@ -22,6 +22,7 @@ Module defining tests for the extraction of aspects and concepts.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import types
@@ -1675,6 +1676,173 @@ class TestExtraction(BaseTest):
                 match_found = True
                 break
         assert match_found, "No anomaly found in the middle of the document"
+
+    def test_repeated_instances_are_extracted_once(self):
+        """
+        Tests that an aspect or a concept that is passed to an extraction method
+        more than once is extracted once: it is listed in one prompt, once, gets
+        its items once, and is returned once, with and without concurrency.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        # The IDs of the aspects or concepts that each prompt lists
+        listed_ids: list[list[str]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: each aspect that the prompt lists is found in
+            the first paragraph, and each concept listed gets one item.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            aspect_ids = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
+            listed_ids.append(concept_ids or aspect_ids)
+            content = (
+                [
+                    {"concept_id": concept_id, "extracted_items": ["Item"]}
+                    for concept_id in concept_ids
+                ]
+                if concept_ids
+                else [
+                    {"aspect_id": aspect_id, "paragraph_ids": ["P0"]}
+                    for aspect_id in aspect_ids
+                ]
+            )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document with two aspects, each with a sub-aspect and
+            a concept, and with two document-level concepts.
+            """
+            document = Document(
+                raw_text="Services agreement\n\nThe parties agree as follows."
+            )
+            document.aspects = [
+                Aspect(
+                    name=f"Aspect {i}",
+                    description=f"Clauses on topic {i}",
+                    aspects=[
+                        Aspect(
+                            name=f"Sub-aspect {i}",
+                            description=f"Clauses on a part of topic {i}",
+                        )
+                    ],
+                    concepts=[
+                        StringConcept(
+                            name=f"Aspect concept {i}",
+                            description=f"Detail of topic {i}",
+                        )
+                    ],
+                )
+                for i in range(2)
+            ]
+            document.concepts = [
+                StringConcept(name=f"Concept {i}", description=f"Detail {i}")
+                for i in range(2)
+            ]
+            return document
+
+        for extraction_kwargs in [{}, {"use_concurrency": True}]:
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            # With concurrency, each instance is listed in a prompt of its own
+            in_separate_prompts = bool(extraction_kwargs)
+
+            with patch.object(litellm, "acompletion", new=acompletion_stub):
+                # === Aspects of the document ===
+                document = create_document()
+                aspect, other_aspect = document.aspects
+                listed_ids.clear()
+                extracted_aspects = llm.extract_aspects_from_document(
+                    document,
+                    from_aspects=[aspect, other_aspect, aspect],
+                    **extraction_kwargs,
+                )
+                # The aspects, then the sub-aspect of each of them
+                assert sorted(listed_ids) == (
+                    [["A0"]] * 4
+                    if in_separate_prompts
+                    else [["A0"], ["A0"], ["A0", "A1"]]
+                )
+                # The distinct aspects, in the order given
+                assert [id(i) for i in extracted_aspects] == [
+                    id(aspect),
+                    id(other_aspect),
+                ]
+                for extracted_aspect in extracted_aspects:
+                    assert len(extracted_aspect.extracted_items) == 1
+                    assert len(extracted_aspect.reference_paragraphs) == 1
+                    assert len(extracted_aspect.aspects[0].extracted_items) == 1
+
+                # === Concepts of an aspect ===
+                (concept,) = aspect.concepts
+                listed_ids.clear()
+                extracted_concepts = llm.extract_concepts_from_aspect(
+                    aspect,
+                    document,
+                    from_concepts=[concept, concept, concept],
+                    **extraction_kwargs,
+                )
+                assert listed_ids == [["C0"]]
+                assert [id(i) for i in extracted_concepts] == [id(concept)]
+                assert [item.value for item in concept.extracted_items] == ["Item"]
+
+                # === Concepts of the document ===
+                concept, other_concept = document.concepts
+                listed_ids.clear()
+                extracted_concepts = llm.extract_concepts_from_document(
+                    document,
+                    from_concepts=[other_concept, concept, other_concept, concept],
+                    **extraction_kwargs,
+                )
+                assert sorted(listed_ids) == (
+                    [["C0"], ["C0"]] if in_separate_prompts else [["C0", "C1"]]
+                )
+                assert [id(i) for i in extracted_concepts] == [
+                    id(other_concept),
+                    id(concept),
+                ]
+                for extracted_concept in extracted_concepts:
+                    assert [
+                        item.value for item in extracted_concept.extracted_items
+                    ] == ["Item"]
+
+            # A request for each prompt, and no other
+            usage = llm.get_usage()[0].usage
+            assert len(usage.calls) == (4 + 1 + 2 if in_separate_prompts else 3 + 1 + 1)
+
+        # === In a model group ===
+        model_group = DocumentModelGroup(
+            models=[
+                DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key"),
+                DocumentLLM(
+                    model="openai/gpt-5.6-luna", api_key="test_api_key", role="other"
+                ),
+            ]
+        )
+        document = create_document()
+        concept, other_concept = document.concepts
+        other_concept.model_role = "other"
+        listed_ids.clear()
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            extracted_concepts = model_group.extract_concepts_from_document(
+                document, from_concepts=[concept, other_concept, concept, other_concept]
+            )
+        # Each concept is extracted once, by the LLM with its role
+        assert listed_ids == [["C0"], ["C0"]]
+        assert [id(i) for i in extracted_concepts] == [id(concept), id(other_concept)]
+        for extracted_concept in extracted_concepts:
+            assert [item.value for item in extracted_concept.extracted_items] == [
+                "Item"
+            ]
 
     def test_overwrite_existing_resets_aspect_references(self):
         """

@@ -71,6 +71,7 @@ from contextgem.internal.decisions import (
     _DecisionAnswer,
     _DecisionOption,
     _DecisionQuestion,
+    _get_decision_threshold,
     _validate_answers,
 )
 from contextgem.internal.exceptions import (
@@ -1339,6 +1340,136 @@ class TestDecisionModels(BaseTest):
             pytest.approx({True: 0.7, False: 0.3}),
         )
 
+    def test_convert_answers_with_decision_threshold(self):
+        """
+        Tests that the answers to yes/no questions are converted with the decision
+        threshold given, including the probability of exactly the threshold, that
+        the probabilities of the items do not depend on it, and that it does not
+        apply to the questions with options, of which the most probable is taken.
+        """
+        # === Boolean concept ===
+        boolean_concept = BooleanConcept(
+            name="Is a contract", description="Document is a contract"
+        )
+        for decision_threshold, probability, expected_value in [
+            (0.7, 0.93, True),
+            (0.7, 0.7, True),
+            (0.7, 0.6999, False),
+            (0.7, 0.5, False),
+            (0.3, 0.5, True),
+            (0.3, 0.3, True),
+            (0.3, 0.2999, False),
+            (1.0, 1.0, True),
+            (1.0, 0.9999, False),
+        ]:
+            assert _convert_concept_answers(
+                boolean_concept,
+                0,
+                {"C0": _predicate_answer("C0", probability=probability)},
+                decision_threshold=decision_threshold,
+            ) == (
+                expected_value,
+                # The probabilities are those of the answer, whatever the value is
+                pytest.approx({True: probability, False: 1 - probability}),
+            )
+
+        # === Label concept, any number of labels to select ===
+        labels = ["liability", "payment", "termination"]
+        multi_label_concept = LabelConcept(
+            name="Topics",
+            description="Topics covered by the contract",
+            labels=labels,
+            classification_type="multi_label",
+        )
+        label_probabilities = [0.9, 0.6, 0.3]
+        answers = {
+            f"C0-L{label_position}": _predicate_answer(
+                f"C0-L{label_position}", probability=probability
+            )
+            for label_position, probability in enumerate(label_probabilities)
+        }
+        for decision_threshold, expected_labels in [
+            (0.5, ["liability", "payment"]),
+            (0.3, ["liability", "payment", "termination"]),
+            (0.2, ["liability", "payment", "termination"]),
+            (0.6, ["liability", "payment"]),
+            (0.61, ["liability"]),
+            (0.9, ["liability"]),
+        ]:
+            assert _convert_concept_answers(
+                multi_label_concept, 0, answers, decision_threshold=decision_threshold
+            ) == (expected_labels, dict(zip(labels, label_probabilities, strict=True)))
+        # No label reaches the threshold: no item
+        assert (
+            _convert_concept_answers(
+                multi_label_concept, 0, answers, decision_threshold=0.91
+            )
+            is None
+        )
+
+        # === Aspect ===
+        for decision_threshold, probability, expected_belongs in [
+            (0.7, 0.7, True),
+            (0.7, 0.6999, False),
+            (0.3, 0.3, True),
+            (0.3, 0.2999, False),
+        ]:
+            assert _convert_aspect_answer(
+                0,
+                {"A0": _predicate_answer("A0", probability=probability)},
+                decision_threshold=decision_threshold,
+            ) == (
+                expected_belongs,
+                pytest.approx({True: probability, False: 1 - probability}),
+            )
+
+        # === Questions with options: the most probable option, whatever
+        # the threshold and the probability of the option are ===
+        multi_class_concept = LabelConcept(
+            name="Type", description="Type of the contract", labels=["NDA", "lease"]
+        )
+        rating_concept = RatingConcept(
+            name="Clarity", description="Clarity of the contract", rating_scale=(1, 3)
+        )
+        for decision_threshold in [0.1, 0.5, 0.99]:
+            assert _convert_concept_answers(
+                multi_class_concept,
+                0,
+                {
+                    "C0": _choice_answer(
+                        "C0", option_probabilities={"NDA": 0.45, "lease": 0.55}
+                    )
+                },
+                decision_threshold=decision_threshold,
+            ) == (["lease"], {"NDA": 0.45, "lease": 0.55})
+            assert _convert_concept_answers(
+                rating_concept,
+                0,
+                {
+                    "C0": _score_answer(
+                        "C0", option_probabilities={"1": 0.3, "2": 0.4, "3": 0.3}
+                    )
+                },
+                decision_threshold=decision_threshold,
+            ) == (2, {1: 0.3, 2: 0.4, 3: 0.3})
+
+        # === The threshold that applies to an aspect or a concept: its own,
+        # if set, otherwise the one of the decision model ===
+        aspect = Aspect(name="Termination", description="Termination clauses")
+        assert _get_decision_threshold(aspect, 0.6) == 0.6
+        assert _get_decision_threshold(boolean_concept, 0.6) == 0.6
+        assert _get_decision_threshold(multi_label_concept, 0.6) == 0.6
+        aspect.decision_threshold = 0.2
+        boolean_concept.decision_threshold = 0.8
+        multi_label_concept.decision_threshold = 1.0
+        assert _get_decision_threshold(aspect, 0.6) == 0.2
+        assert _get_decision_threshold(boolean_concept, 0.6) == 0.8
+        assert _get_decision_threshold(multi_label_concept, 0.6) == 1.0
+        # The concepts that are extracted with a question with options have no
+        # threshold of their own
+        assert _get_decision_threshold(rating_concept, 0.6) == 0.6
+        assert _get_decision_threshold(multi_class_concept, 0.6) == 0.6
+
     def test_invalid_predicate_answers(self):
         """
         Tests that an answer to a predicate that cannot be used is rejected as
@@ -1817,7 +1948,8 @@ class TestDecisionModels(BaseTest):
     def test_decision_model_init(self):
         """
         Tests the creation of a decision model: it has the params that models of
-        all kinds have, and none of the params and methods that only an LLM has.
+        all kinds have, the decision threshold, which only a decision model has,
+        and none of the params and methods that only an LLM has.
         """
         decision_model = DocumentDecisionModel(model=_DECISION_MODEL)
         assert isinstance(decision_model, _DocumentDecisionModel)
@@ -1834,6 +1966,8 @@ class TestDecisionModels(BaseTest):
             "auto_pricing_refresh",
             "is_fallback",
             "fallback_models",
+            # Only a decision model has it
+            "decision_threshold",
         }
 
         # Defaults
@@ -1848,6 +1982,7 @@ class TestDecisionModels(BaseTest):
         assert decision_model.auto_pricing_refresh is False
         assert decision_model.is_fallback is False
         assert decision_model.fallback_models == []
+        assert decision_model.decision_threshold == 0.5
         assert decision_model.is_group is False
         assert decision_model.list_roles == [None]
         assert isinstance(decision_model.async_limiter, AsyncLimiter)
@@ -1867,8 +2002,10 @@ class TestDecisionModels(BaseTest):
                 input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
             ),
             is_fallback=True,
+            decision_threshold=0.7,
             async_limiter=async_limiter,  # ty: ignore[unknown-argument]
         )
+        assert decision_model.decision_threshold == 0.7
         assert decision_model.role == "decide"  # validated as the role of an LLM
         assert decision_model.list_roles == ["decide"]
         assert decision_model.async_limiter is async_limiter
@@ -5630,6 +5767,431 @@ class TestDecisionModels(BaseTest):
         assert acquisitions == [(20, 5)] * 3 * n_paragraphs
         assert get_items(document) == expected_items
 
+    def test_decision_model_limiter_shared_by_concurrent_calls(self):
+        """
+        Tests that, with concurrency enabled, all the requests to a decision model
+        that are sent in the same event loop are paced by the same limiter, i.e.
+        share the rate set for the model: the requests for the paragraphs, sent for
+        each aspect, and the requests of the extraction calls that run concurrently
+        for the concepts of different aspects.
+        """
+        paragraph_texts = ["Services agreement", "The parties agree as follows."]
+        document = Document(raw_text="\n\n".join(paragraph_texts))
+        document.aspects = [
+            Aspect(
+                name=f"Aspect {i}",
+                description=f"Clauses on topic {i}",
+                concepts=[
+                    BooleanConcept(
+                        name=f"Concept {i}", description=f"Topic {i} is covered"
+                    )
+                ],
+            )
+            for i in range(3)
+        ]
+        document.concepts = [
+            BooleanConcept(name="Agreement", description="It is an agreement")
+        ]
+        decision_model = _create_decision_model(async_limiter=AsyncLimiter(1000, 1))
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+
+        # The limiter of each request, in the order the requests are paced
+        limiters: list[AsyncLimiter] = []
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                limiters.append(self)
+                await super().acquire(amount)
+
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+        ):
+            decision_model.extract_all(document, use_concurrency=True)
+
+        for aspect in document.aspects:
+            assert [item.value for item in aspect.extracted_items] == paragraph_texts
+            assert aspect.concepts[0].extracted_items[0].value is True
+        assert document.concepts[0].extracted_items[0].value is True
+        # With concurrency, each aspect and each concept is processed in a call
+        # of its own: a request for each paragraph and each aspect, a request for
+        # the concept of each aspect, and one for the concept of the document
+        n_requests = 3 * len(paragraph_texts) + 3 + 1
+        assert len(decisions_stub.requests) == n_requests
+        assert len(limiters) == n_requests
+        (limiter,) = {id(i): i for i in limiters}.values()
+        assert (limiter.max_rate, limiter.time_period) == (1000, 1)
+        # The limiter set for the model gives the rate, and is not used itself
+        assert limiter is not decision_model.async_limiter
+
+    def test_decision_threshold(self):
+        """
+        Tests the decision threshold: the one of a decision model applies to
+        the aspects and the concepts that have none of their own, and the one of
+        an aspect or a concept applies whichever decision model extracts it,
+        including a fallback one, while an LLM does not use it. Also tests
+        the values that are accepted, and that the threshold is serialized.
+        """
+        # === The threshold of a decision model ===
+        assert _create_decision_model().decision_threshold == 0.5
+        for value in [0.01, 0.5, 1.0]:
+            decision_model = _create_decision_model(decision_threshold=value)
+            assert decision_model.decision_threshold == value
+        for value in [0.0, -0.1, 1.01, "0.5", None]:
+            with pytest.raises(ValueError):
+                _create_decision_model(decision_threshold=value)
+        decision_model = _create_decision_model()
+        with pytest.raises(ValueError):
+            decision_model.decision_threshold = 0.0
+        assert decision_model.decision_threshold == 0.5
+        # An LLM has no decision threshold
+        with pytest.raises(ValueError):
+            _create_llm(decision_threshold=0.5)
+
+        # === The threshold of an aspect or a concept ===
+        aspect = Aspect(name="Termination", description="Termination clauses")
+        boolean_concept = BooleanConcept(name="NDA", description="It is an NDA")
+        label_concept = LabelConcept(
+            name="Topics",
+            description="Topics covered",
+            labels=["liability", "payment"],
+            classification_type="multi_label",
+        )
+        for instance in [aspect, boolean_concept, label_concept]:
+            # Not set by default, i.e. the threshold of the decision model applies
+            assert instance.decision_threshold is None
+            for value in [0.01, 1.0]:
+                instance.decision_threshold = value
+                assert instance.decision_threshold == value
+            for value in [0.0, -0.1, 1.01, "0.5"]:
+                with pytest.raises(ValueError):
+                    instance.decision_threshold = value  # ty: ignore[invalid-assignment]
+            assert instance.decision_threshold == 1.0
+            instance.decision_threshold = None
+            assert instance.decision_threshold is None
+
+        # A label concept with a single label to select has no yes/no question:
+        # the threshold cannot be set for it
+        match = "can be set only for the `multi_label` classification type"
+        with pytest.raises(ValueError, match=match):
+            LabelConcept(
+                name="Type",
+                description="Type of the document",
+                labels=["NDA", "lease"],
+                decision_threshold=0.5,
+            )
+        label_concept.decision_threshold = 0.7
+        with pytest.raises(ValueError, match=match):
+            label_concept.classification_type = "multi_class"
+        assert label_concept.classification_type == "multi_label"
+        assert label_concept.decision_threshold == 0.7
+        label_concept.decision_threshold = None
+        label_concept.classification_type = "multi_class"
+        with pytest.raises(ValueError, match=match):
+            label_concept.decision_threshold = 0.7
+        assert label_concept.decision_threshold is None
+        # The other concepts have no decision threshold
+        for concept_class, kwargs in [
+            (RatingConcept, {"rating_scale": (1, 5)}),
+            (StringConcept, {}),
+        ]:
+            with pytest.raises(ValueError):
+                concept_class(
+                    name="Concept",
+                    description="Concept description",
+                    decision_threshold=0.5,
+                    **kwargs,
+                )
+
+        # === Extraction ===
+        # The probability that each paragraph belongs to each aspect, by
+        # the positions of the paragraphs
+        aspect_probabilities = {1: 0.9, 2: 0.6, 3: 0.4}
+        respond_on_aspects = _create_aspects_responder(
+            {
+                "Default": aspect_probabilities,
+                "Lenient": aspect_probabilities,
+                "Strict": aspect_probabilities,
+                "Part of lenient": {1: 0.9, 2: 0.4, 3: 0.4},
+            }
+        )
+        # The probability of "yes" for a Boolean concept, and for each label of
+        # a label concept, by the positions of the labels
+        boolean_probability = 0.6
+        label_probabilities = [0.8, 0.6, 0.4]
+        labels = ["liability", "payment", "termination"]
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Creates the response for a request with the questions of aspects, asked
+            on one paragraph, or with the questions of concepts.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            if request["questions"][0]["name"].startswith("A"):
+                return respond_on_aspects(request)
+            answers: dict[str, Any] = {}
+            for question in request["questions"]:
+                _, _, label_position = question["name"].partition("-L")
+                answers[question["name"]] = (
+                    label_probabilities[int(label_position)]
+                    if label_position
+                    else boolean_probability
+                )
+            return _create_decisions_response(request["questions"], answers)
+
+        def create_document() -> Document:
+            """
+            Creates a document with aspects and concepts without a decision
+            threshold, and with a lower and a higher one.
+
+            :return: The document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(name="Default", description="Clauses of the default kind"),
+                    Aspect(
+                        name="Lenient",
+                        description="Clauses of the lenient kind",
+                        decision_threshold=0.3,
+                        # A sub-aspect does not get the threshold of its aspect
+                        aspects=[
+                            Aspect(
+                                name="Part of lenient",
+                                description="Clauses of a part of the lenient kind",
+                            )
+                        ],
+                    ),
+                    Aspect(
+                        name="Strict",
+                        description="Clauses of the strict kind",
+                        decision_threshold=0.7,
+                    ),
+                ],
+                concepts=[
+                    BooleanConcept(name="Flag default", description="Default flag"),
+                    BooleanConcept(
+                        name="Flag lenient",
+                        description="Lenient flag",
+                        decision_threshold=0.3,
+                    ),
+                    BooleanConcept(
+                        name="Flag strict",
+                        description="Strict flag",
+                        decision_threshold=0.7,
+                    ),
+                    LabelConcept(
+                        name="Topics default",
+                        description="Default topics",
+                        labels=labels,
+                        classification_type="multi_label",
+                    ),
+                    LabelConcept(
+                        name="Topics lenient",
+                        description="Lenient topics",
+                        labels=labels,
+                        classification_type="multi_label",
+                        decision_threshold=0.3,
+                    ),
+                    LabelConcept(
+                        name="Topics strict",
+                        description="Strict topics",
+                        labels=labels,
+                        classification_type="multi_label",
+                        decision_threshold=0.9,
+                    ),
+                ],
+            )
+
+        def get_extracted(document: Document) -> dict[str, Any]:
+            """
+            Returns what is extracted from the document: the positions of
+            the paragraphs of each aspect and sub-aspect, and the values of
+            the items of each concept.
+
+            :param document: The document.
+            :type document: Document
+            :return: What is extracted, by the names of the aspects and concepts.
+            :rtype: dict[str, Any]
+            """
+            paragraph_texts = [paragraph.raw_text for paragraph in document.paragraphs]
+            extracted: dict[str, Any] = {}
+            for aspect in [
+                *document.aspects,
+                *[sub_aspect for i in document.aspects for sub_aspect in i.aspects],
+            ]:
+                extracted[aspect.name] = [
+                    paragraph_texts.index(item.value) for item in aspect.extracted_items
+                ]
+            for concept in document.concepts:
+                extracted[concept.name] = [
+                    item.value for item in concept.extracted_items
+                ]
+            return extracted
+
+        def check_probabilities(document: Document) -> None:
+            """
+            Checks that the items have the probabilities of the answers, whatever
+            threshold their values are set with.
+
+            :param document: The document.
+            :type document: Document
+            """
+            for aspect in document.aspects:
+                for item in aspect.extracted_items:
+                    assert item.probabilities is not None
+                    assert item.probabilities[True] in aspect_probabilities.values()
+            for concept in document.concepts:
+                for item in concept.extracted_items:
+                    assert item.probabilities == (
+                        dict(zip(labels, label_probabilities, strict=True))
+                        if isinstance(concept, LabelConcept)
+                        else pytest.approx(
+                            {True: boolean_probability, False: 1 - boolean_probability}
+                        )
+                    )
+
+        # What is extracted with the threshold of the aspect or the concept itself,
+        # whatever the threshold of the decision model is
+        extracted_with_own_thresholds = {
+            "Lenient": [1, 2, 3],
+            "Strict": [1],
+            "Flag lenient": [True],
+            "Flag strict": [False],
+            "Topics lenient": [labels],
+            # No label reaches the threshold: no item
+            "Topics strict": [],
+        }
+
+        for decision_threshold, extracted_with_model_threshold in [
+            (
+                None,
+                {
+                    "Default": [1, 2],
+                    # Extracted from the paragraphs of its aspect
+                    "Part of lenient": [1],
+                    "Flag default": [True],
+                    "Topics default": [labels[:2]],
+                },
+            ),
+            (
+                0.65,
+                {
+                    "Default": [1],
+                    "Part of lenient": [1],
+                    "Flag default": [False],
+                    "Topics default": [labels[:1]],
+                },
+            ),
+            (
+                0.35,
+                {
+                    "Default": [1, 2, 3],
+                    "Part of lenient": [1, 2, 3],
+                    "Flag default": [True],
+                    "Topics default": [labels],
+                },
+            ),
+        ]:
+            decision_model = _create_decision_model(
+                **(
+                    {}
+                    if decision_threshold is None
+                    else {"decision_threshold": decision_threshold}
+                )
+            )
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+            document = create_document()
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_all(document)
+            assert get_extracted(document) == {
+                **extracted_with_model_threshold,
+                **extracted_with_own_thresholds,
+            }
+            check_probabilities(document)
+            self.check_instance_serialization_and_cloning(document)
+
+        # === A fallback decision model: with its own threshold ===
+        decision_model = _create_decision_model(
+            decision_threshold=0.35,
+            fallback_models=[
+                _create_decision_model(
+                    _OTHER_DECISION_MODEL, is_fallback=True, decision_threshold=0.65
+                )
+            ],
+        )
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [_create_api_error(litellm.AuthenticationError)],
+                _OTHER_DECISION_MODEL: [respond],
+            }
+        )
+        document = create_document()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_all(document)
+        assert get_extracted(document) == {
+            "Default": [1],
+            "Part of lenient": [1],
+            "Flag default": [False],
+            "Topics default": [labels[:1]],
+            **extracted_with_own_thresholds,
+        }
+
+        # === An LLM: without the threshold ===
+        document = _create_document(
+            concepts=[
+                BooleanConcept(
+                    name="Flag strict",
+                    description="Strict flag",
+                    decision_threshold=1.0,
+                )
+            ]
+        )
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: ['[{"concept_id": "C0", "extracted_items": [true]}]']}
+        )
+        with patch.object(litellm, "acompletion", new=completions_stub):
+            _create_llm().extract_concepts_from_document(document)
+        (item,) = document.concepts[0].extracted_items
+        assert item.value is True
+        assert item.probabilities is None
+
+        # === Serialization ===
+        for decision_model in [
+            _create_decision_model(),
+            _create_decision_model(decision_threshold=0.65),
+        ]:
+            restored_decision_model = DocumentDecisionModel.from_dict(
+                decision_model.to_dict()
+            )
+            assert (
+                restored_decision_model.decision_threshold
+                == decision_model.decision_threshold
+            )
+            assert decision_model._eq_deserialized_model_config(restored_decision_model)
+        # Data serialized without the threshold, i.e. by an earlier version
+        aspect = Aspect(name="Termination", description="Termination clauses")
+        aspect.decision_threshold = 0.3
+        aspect_dict = aspect.to_dict()
+        assert aspect_dict["decision_threshold"] == 0.3
+        assert Aspect.from_dict(aspect_dict).decision_threshold == 0.3
+        del aspect_dict["decision_threshold"]
+        assert Aspect.from_dict(aspect_dict).decision_threshold is None
+
     def test_decision_model_aspect_request_failures(self):
         """
         Tests the extraction of aspects with a decision model when the request for
@@ -7488,10 +8050,10 @@ class TestDecisionModels(BaseTest):
             assert sorted(
                 len(request["questions"]) for request in decisions_stub.requests
             ) == ([1, 1] if extraction_kwargs else [2])
+            # The concepts returned are the distinct ones, in the order given
             assert [concept.name for concept in extracted_concepts] == [
                 "NDA check",
                 "Lease check",
-                "NDA check",
             ]
             for concept in document.concepts:
                 assert concept._is_processed
@@ -7531,8 +8093,8 @@ class TestDecisionModels(BaseTest):
             ]
 
         # === A fallback decision model given a concept twice ===
-        # An LLM is asked about the concept as many times as it is given, in
-        # one request. The decision model that takes over is asked once.
+        # The LLM is asked about the concept once, and so is the decision model
+        # that takes over
         llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
         document = _create_document(
             concepts=[
@@ -7551,6 +8113,8 @@ class TestDecisionModels(BaseTest):
             llm.extract_concepts_from_document(
                 document, from_concepts=[concept, concept]
             )
+        (llm_request,) = completions_stub.requests
+        assert llm_request["messages"][-1]["content"].count("<concept_id>C") == 1
         (request,) = decisions_stub.requests
         assert [question["name"] for question in request["questions"]] == ["C0"]
         assert [item.value for item in concept.extracted_items] == [True]
@@ -7814,6 +8378,16 @@ class TestDecisionModels(BaseTest):
             # The error is the one of the model identifier, i.e. it does not
             # show the other params that the model is created with
             assert "test_api_key" not in str(exc_info.value)
+            # A prefix of the LLMs of a local server: the error names the prefix
+            # that a decision model of a local server is reached under
+            local_server_hint = (
+                "For a decision model served by a local server, e.g. by Ollama or "
+                "LM Studio, use the `strands_decider/` prefix, i.e. "
+                "`strands_decider/nimble`, and set `api_base` to the address of "
+                "the server."
+            )
+            is_local_llm_prefix = provider in ["ollama", "ollama_chat", "lm_studio"]
+            assert (local_server_hint in str(exc_info.value)) is is_local_llm_prefix
             # ... also when the model identifier is assigned, with the model
             # left unchanged
             decision_model = _create_decision_model()
@@ -8454,14 +9028,17 @@ class TestDecisionModels(BaseTest):
     def _check_cost_of_recorded_tests(decision_model: DocumentDecisionModel) -> None:
         """
         Checks that the cost of the decision model is the cost of its input tokens,
-        as reported by its API, at the price set for the model.
+        as reported by its API, at the price set for the model, or zero if no
+        price is set for the model.
 
-        :param decision_model: The decision model, with its pricing details set.
+        :param decision_model: The decision model.
         :type decision_model: DocumentDecisionModel
         """
-        assert decision_model.pricing_details is not None
         usage = decision_model.get_usage()[0].usage
         cost = decision_model.get_cost()[0].cost
+        if decision_model.pricing_details is None:
+            assert (cost.input, cost.output, cost.total) == (0, 0, 0)
+            return
         expected_cost = (
             Decimal(usage.input)
             * Decimal(str(decision_model.pricing_details.input_per_1m_tokens))
@@ -8479,7 +9056,7 @@ class TestDecisionModels(BaseTest):
         """
         decision_model = DocumentDecisionModel(
             model="typesafe/jev-latest",
-            api_key=os.getenv("TYPESAFE_API_KEY"),
+            api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
             pricing_details=ModelPricing(
                 input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
             ),
@@ -8500,7 +9077,7 @@ class TestDecisionModels(BaseTest):
         """
         decision_model = DocumentDecisionModel(
             model="typesafe/jev-latest",
-            api_key=os.getenv("TYPESAFE_API_KEY"),
+            api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
             pricing_details=ModelPricing(
                 input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
             ),
@@ -8605,7 +9182,7 @@ class TestDecisionModels(BaseTest):
         llm = DocumentLLM(**self._llm_extractor_kwargs_openai)  # ty: ignore[invalid-argument-type]
         decision_model = DocumentDecisionModel(
             model="typesafe/jev-latest",
-            api_key=os.getenv("TYPESAFE_API_KEY"),
+            api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
             role="decide",
             pricing_details=ModelPricing(
                 input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
@@ -8669,6 +9246,43 @@ class TestDecisionModels(BaseTest):
             pricing_details=ModelPricing(
                 input_per_1m_tokens=0.10, output_per_1m_tokens=0.0
             ),
+        )
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = self._create_concepts_for_recorded_tests()
+
+        decision_model.extract_concepts_from_document(document)
+
+        self._check_concepts_of_recorded_tests(document, decision_model)
+
+    @pytest.mark.vcr
+    def test_extract_concepts_with_ollama_api(self):
+        """
+        Tests the extraction of concepts of each supported type from a document
+        with a decision model served by a local Ollama server, with the requests
+        sent to the server. A local server is reached under the prefix of
+        self-hosted decision models, without an API key, and has no prices.
+        """
+        decision_model = DocumentDecisionModel(
+            model="strands_decider/nimble",
+            api_base="http://localhost:11434",
+        )
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = self._create_concepts_for_recorded_tests()
+
+        decision_model.extract_concepts_from_document(document)
+
+        self._check_concepts_of_recorded_tests(document, decision_model)
+
+    @pytest.mark.vcr
+    def test_extract_concepts_with_lm_studio_api(self):
+        """
+        Tests the extraction of concepts of each supported type from a document
+        with a decision model served by a local LM Studio server, with the requests
+        sent to the server, under the same prefix as for an Ollama server.
+        """
+        decision_model = DocumentDecisionModel(
+            model="strands_decider/kev-4b",
+            api_base="http://localhost:1234",
         )
         document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
         document.concepts = self._create_concepts_for_recorded_tests()

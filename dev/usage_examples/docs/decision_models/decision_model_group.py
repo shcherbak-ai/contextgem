@@ -22,7 +22,7 @@ llm = DocumentLLM(
 # Decision model with a role: extracts the aspects/concepts that have `model_role="decide"`
 decision_model = DocumentDecisionModel(
     model="typesafe/jev-latest",
-    api_key=os.getenv("TYPESAFE_API_KEY"),
+    api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
     role="decide",  # a label of your choice
 )
 

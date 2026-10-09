@@ -137,6 +137,11 @@ class BooleanConcept(_BooleanConcept):
         from the concept's name, description, and type (e.g., "contains confidential information"
         vs "compliance violations").
     :vartype singular_occurrence: StrictBool
+    :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with which
+        a decision model (``DocumentDecisionModel``) sets the value of the concept to True.
+        Defaults to None, in which case the ``decision_threshold`` of the decision model
+        applies. Ignored when the concept is extracted by an LLM.
+    :vartype decision_threshold: float | None
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_boolean_concept.py
@@ -447,6 +452,13 @@ class LabelConcept(_LabelConcept):
         from the concept's name, description, and type (e.g., "document type" vs
         "content topics").
     :vartype singular_occurrence: bool
+    :ivar decision_threshold: The lowest probability (above 0, up to 1) with which
+        a decision model (``DocumentDecisionModel``) selects a label of the concept.
+        Can be set for the "multi_label" classification type only: with "multi_class",
+        the most probable label is always selected. Defaults to None, in which case
+        the ``decision_threshold`` of the decision model applies. Ignored when
+        the concept is extracted by an LLM.
+    :vartype decision_threshold: float | None
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_label_concept.py

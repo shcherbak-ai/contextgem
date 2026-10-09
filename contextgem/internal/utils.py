@@ -28,7 +28,7 @@ import json
 import random
 import re
 from collections import defaultdict
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Sequence
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
@@ -62,6 +62,8 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+# An aspect or a concept, i.e. an instance that items are extracted for
+InstanceT = TypeVar("InstanceT", bound="_Aspect | _Concept")
 
 
 # Network destinations required to download SaT models from HuggingFace.
@@ -1008,6 +1010,26 @@ def _group_instances_by_fields(
         grouped_dict[key].append(instance)
     # Return the grouped instances as a list of lists
     return list(grouped_dict.values())
+
+
+def _get_distinct_instances(instances: Sequence[InstanceT]) -> list[InstanceT]:
+    """
+    Returns the given aspects or concepts without the repeated ones, i.e. each of
+    them once, in the order in which they are first given.
+
+    An aspect or a concept that is passed to an extraction method more than once
+    is extracted once: it would otherwise be listed in a prompt several times and
+    get the items of each listing, or be processed in several calls at once.
+
+    :param instances: The aspects or concepts, possibly with repeated ones.
+    :type instances: Sequence[_Aspect] | Sequence[_Concept]
+    :return: The distinct aspects or concepts.
+    :rtype: list[_Aspect] | list[_Concept]
+    """
+    distinct_instances: dict[str, InstanceT] = {}
+    for instance in instances:
+        distinct_instances.setdefault(instance.unique_id, instance)
+    return list(distinct_instances.values())
 
 
 def _is_json_serializable(data: Any) -> bool:

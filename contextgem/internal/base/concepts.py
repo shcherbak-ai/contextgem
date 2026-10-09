@@ -32,6 +32,7 @@ from pydantic import (
     Field,
     PrivateAttr,
     StrictBool,
+    StrictFloat,
     StrictInt,
     field_validator,
     model_validator,
@@ -239,6 +240,18 @@ class _BooleanConcept(_Concept):
     """
     Internal implementation of the BooleanConcept class.
     """
+
+    decision_threshold: StrictFloat | None = Field(
+        default=None,
+        gt=0,
+        le=1,
+        description=(
+            "Lowest probability of 'yes' with which a decision model sets the value "
+            "of this concept to True (0 < threshold <= 1). Defaults to None, in which "
+            "case the `decision_threshold` of the decision model applies. Ignored when "
+            "the concept is extracted by an LLM."
+        ),
+    )
 
     _extracted_items: list[_BooleanItem] = PrivateAttr(default_factory=list)
 
@@ -941,8 +954,44 @@ class _LabelConcept(_Concept):
             "Classification mode: 'multi_class' for a single selected label, or 'multi_label' for multiple labels."
         ),
     )
+    decision_threshold: StrictFloat | None = Field(
+        default=None,
+        gt=0,
+        le=1,
+        description=(
+            "Lowest probability with which a decision model selects a label of this "
+            "concept (0 < threshold <= 1). Can be set for the 'multi_label' "
+            "classification type only: with 'multi_class', the most probable label is "
+            "always selected. Defaults to None, in which case the `decision_threshold` "
+            "of the decision model applies. Ignored when the concept is extracted "
+            "by an LLM."
+        ),
+    )
 
     _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)
+
+    @model_validator(mode="after")
+    def _validate_decision_threshold_applicable(self) -> Self:
+        """
+        Validates that a decision threshold is set only for the classification type
+        that it applies to: with the "multi_class" classification type, the most
+        probable label is selected, whatever its probability is.
+
+        :return: The validated instance.
+        :rtype: Self
+        :raises ValueError: If a decision threshold is set for the "multi_class"
+            classification type.
+        """
+        if (
+            self.decision_threshold is not None
+            and self.classification_type == "multi_class"
+        ):
+            raise ValueError(
+                "`decision_threshold` can be set only for the `multi_label` "
+                "classification type: with `multi_class`, the most probable label "
+                "is always selected."
+            )
+        return self
 
     @_post_init_method
     def _post_init(self, __context: Any):

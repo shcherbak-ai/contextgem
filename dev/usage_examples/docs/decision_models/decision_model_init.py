@@ -20,8 +20,9 @@ decision_model_cloudflare = DocumentDecisionModel(
     api_base="https://api.cloudflare.com/client/v4/accounts/<your-account-id>/ai/run",
 )
 
-# Self-hosted server that serves `POST <api_base>/v1/systemone`. No API key is needed.
-decision_model_self_hosted = DocumentDecisionModel(
-    model="strands_decider/strands-decider-2B-hobson-v19",  # or the model of your server
-    api_base="http://localhost:8000",
+# Local or self-hosted server that serves `POST <api_base>/v1/systemone`,
+# e.g. Ollama. No API key is needed.
+decision_model_local = DocumentDecisionModel(
+    model="strands_decider/nimble",  # the model of your server
+    api_base="http://localhost:11434",  # Default Ollama endpoint
 )

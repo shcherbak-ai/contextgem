@@ -100,11 +100,23 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         param. A fallback LLM extracts the same aspects/concepts with its prompts,
         i.e. its items have no probabilities. Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
+    :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with
+        which a yes/no question is taken as answered "yes": a paragraph belongs to
+        an aspect, a ``BooleanConcept`` is ``True``, a label of a ``LabelConcept`` with
+        ``classification_type="multi_label"`` is selected. A lower threshold extracts
+        more, a higher one extracts only what the model is surer of. Applies unless
+        the aspect or the concept has a ``decision_threshold`` of its own. Does not
+        apply to a ``LabelConcept`` with ``classification_type="multi_class"`` and to
+        a ``RatingConcept``, for which the most probable option is taken. Does not
+        change the ``probabilities`` of the extracted items. Defaults to 0.5.
+    :vartype decision_threshold: float
     :ivar async_limiter: Controls frequency of async API requests for concurrent tasks.
         Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues.
         With concurrency enabled, the requests for the paragraphs of a document, which
         aspects are extracted with, are paced by the limiter: consider a higher rate
         for long documents, if the rate limits of the model provider allow for it.
+        The rate applies to all the requests to the model that are sent concurrently,
+        i.e. the extraction calls that run at the same time share it.
         Requests to a fallback model are controlled by the limiter of that fallback model.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
@@ -124,7 +136,8 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         - Extracted items of aspects
             Each paragraph of the document is judged on its own text, i.e. without
             the other paragraphs and without its ``additional_context``: it belongs
-            to an aspect if the probability of that is 0.5 or more. Each such
+            to an aspect if the probability of that is the decision threshold
+            (0.5 by default) or more. Each such
             paragraph becomes an item of the aspect, as when the aspect is extracted
             by an LLM: the value of the item is the text of the paragraph, and
             the paragraph is its reference paragraph. The ``probabilities`` of
@@ -136,9 +149,11 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         - Extracted items of concepts
             A concept gets at most one item per document or aspect, whatever its
             ``singular_occurrence`` is. A ``BooleanConcept`` always gets an item
-            (``True`` if the probability of "yes" is 0.5 or more). A ``LabelConcept``
-            with ``classification_type="multi_label"`` gets an item with the labels
-            whose probability is 0.5 or more, and no item if there are none.
+            (``True`` if the probability of "yes" is the decision threshold or more,
+            0.5 by default). A ``LabelConcept`` with
+            ``classification_type="multi_label"`` gets an item with the labels
+            whose probability is the decision threshold or more, and no item if
+            there are none.
             A ``RatingConcept`` gets the most probable integer of its scale.
             The probabilities are what the model reports and are not a guarantee
             of correctness.

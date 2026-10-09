@@ -42,7 +42,7 @@ from typing import Any, cast
 from aiolimiter import AsyncLimiter
 from genai_prices import Usage as _GPUsage
 from genai_prices import calc_price as _calc_auto_price
-from pydantic import ValidationError
+from pydantic import Field, StrictFloat, ValidationError
 
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.concepts import (
@@ -53,10 +53,11 @@ from contextgem.internal.base.concepts import (
 )
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.items import _ExtractedItem
-from contextgem.internal.base.models import _DocumentModel
+from contextgem.internal.base.models import _LOCAL_MODEL_PROVIDERS, _DocumentModel
 from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.data_models import _ModelCall, _ModelUsage
 from contextgem.internal.decisions import (
+    _DEFAULT_DECISION_THRESHOLD,
     _build_aspect_questions,
     _build_concept_questions,
     _convert_aspect_answer,
@@ -65,6 +66,7 @@ from contextgem.internal.decisions import (
     _DecisionQuestion,
     _get_aspect_question_name,
     _get_concept_question_name,
+    _get_decision_threshold,
     _validate_answers,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -93,7 +95,9 @@ with _suppress_litellm_warnings_context():
 # from a closed set of options
 _DECISION_CONCEPT_TYPES = (_BooleanConcept, _LabelConcept, _RatingConcept)
 
-# Model providers of self-hosted decision models, which have no prices
+# Model providers of self-hosted decision models, which have no prices. A local
+# server, e.g. Ollama or LM Studio, is reached under the first of them, with
+# the ``api_base`` of the server.
 _SELF_HOSTED_DECISION_MODEL_PROVIDERS = [
     "strands_decider/",
 ]
@@ -355,6 +359,20 @@ class _DocumentDecisionModel(_DocumentModel):
     Internal implementation of the ``DocumentDecisionModel`` class.
     """
 
+    decision_threshold: StrictFloat = Field(
+        default=_DEFAULT_DECISION_THRESHOLD,
+        gt=0,
+        le=1,
+        description=(
+            "Lowest probability of 'yes' with which a yes/no question is taken as "
+            "answered 'yes' (0 < threshold <= 1): a paragraph belongs to an aspect, "
+            "a Boolean concept is True, a label of a multi-label concept applies. "
+            "Applies unless the aspect or the concept has a `decision_threshold` of "
+            "its own. Does not apply to single-label and rating concepts, for which "
+            "the most probable option is taken."
+        ),
+    )
+
     @property
     def _kind_name(self) -> str:
         """
@@ -388,13 +406,26 @@ class _DocumentDecisionModel(_DocumentModel):
         supported_providers = _get_supported_decision_providers()
         if supported_providers is None:
             return
-        provider = model.partition("/")[0]
+        provider, _, model_name = model.partition("/")
         if provider not in supported_providers:
-            raise ValueError(
+            msg = (
                 f"Provider `{provider}` of model `{model}` is not a provider of "
                 f"decision models supported by litellm. Supported providers: "
                 f"{', '.join(supported_providers)}."
             )
+            self_hosted_prefix = _SELF_HOSTED_DECISION_MODEL_PROVIDERS[0]
+            if (
+                f"{provider}/" in _LOCAL_MODEL_PROVIDERS
+                and self_hosted_prefix.rstrip("/") in supported_providers
+            ):
+                # The prefix is the one of the LLMs of a local server
+                msg += (
+                    f" For a decision model served by a local server, e.g. by Ollama "
+                    f"or LM Studio, use the `{self_hosted_prefix}` prefix, i.e. "
+                    f"`{self_hosted_prefix}{model_name}`, and set `api_base` to "
+                    f"the address of the server."
+                )
+            raise ValueError(msg)
 
     def _is_self_hosted(self) -> bool:
         """
@@ -515,9 +546,6 @@ class _DocumentDecisionModel(_DocumentModel):
         Groups the aspects or concepts to be extracted by the decision model into
         the groups that are extracted in separate calls.
 
-        Each aspect or concept is in one group only, also if it is given more
-        than once: the model is asked about it once.
-
         The instances are not split by the params that a decision model is not
         sent, i.e. the depth and the length of justifications and, for concepts,
         the depth of references: the same text would otherwise be sent, and billed,
@@ -540,29 +568,8 @@ class _DocumentDecisionModel(_DocumentModel):
         )
         return _group_instances_by_fields(
             fields=[field for field in fields if field not in not_applied_params],
-            # Safe cast: the distinct instances are of the type of the instances
-            instances=cast(
-                list[_Aspect] | list[_Concept], self._get_distinct_instances(instances)
-            ),
+            instances=instances,
         )
-
-    @staticmethod
-    def _get_distinct_instances(
-        instances: Sequence[_Aspect | _Concept],
-    ) -> list[_Aspect | _Concept]:
-        """
-        Returns the given aspects or concepts without the repeated ones, i.e. each
-        of them once, in the order in which they are first given.
-
-        :param instances: The aspects or concepts, possibly with repeated ones.
-        :type instances: Sequence[_Aspect | _Concept]
-        :return: The distinct aspects or concepts.
-        :rtype: list[_Aspect | _Concept]
-        """
-        distinct_instances: dict[str, _Aspect | _Concept] = {}
-        for instance in instances:
-            distinct_instances.setdefault(instance.unique_id, instance)
-        return list(distinct_instances.values())
 
     @staticmethod
     def _get_unservable_reasons(instance: _Aspect | _Concept) -> list[str]:
@@ -841,13 +848,6 @@ class _DocumentDecisionModel(_DocumentModel):
         # the checks made when an extraction starts are bypassed
         self._check_instances_servable(instances_to_process)
 
-        # Each aspect or concept is asked about once, also if it is given more
-        # than once. Safe cast: the distinct instances are of the type of the instances
-        distinct_instances = cast(
-            list[_Aspect] | list[_Concept],
-            self._get_distinct_instances(instances_to_process),
-        )
-
         source_paragraphs = self._get_source_paragraphs(
             extracted_item_type=extracted_item_type, source=source, document=document
         )
@@ -868,7 +868,9 @@ class _DocumentDecisionModel(_DocumentModel):
             paragraphs = [paragraph for paragraph, _ in paragraphs_with_texts]
             texts = [text for _, text in paragraphs_with_texts]
             # Safe cast: only aspects are extracted with the "aspect" item type
-            questions = _build_aspect_questions(cast(list[_Aspect], distinct_instances))
+            questions = _build_aspect_questions(
+                cast(list[_Aspect], instances_to_process)
+            )
             # The requests for the paragraphs are sent concurrently if concurrency
             # is enabled for the extraction, in which case a limiter is given
             send_concurrently = async_limiter is not None
@@ -881,7 +883,7 @@ class _DocumentDecisionModel(_DocumentModel):
             ]
             # Safe cast: only concepts are extracted with the "concept" item type
             questions = _build_concept_questions(
-                cast(list[_Concept], distinct_instances)
+                cast(list[_Concept], instances_to_process)
             )
             send_concurrently = False
             not_applied_reason = "the text is sent to it as a whole"
@@ -910,7 +912,7 @@ class _DocumentDecisionModel(_DocumentModel):
                 self._get_invalid_response_msg(
                     error=e,
                     extracted_item_type=extracted_item_type,
-                    instances=distinct_instances,
+                    instances=instances_to_process,
                     # The questions of aspects are asked on each paragraph
                     paragraphs=paragraphs if extracted_item_type == "aspect" else None,
                     source_paragraphs=source_paragraphs,
@@ -958,16 +960,18 @@ class _DocumentDecisionModel(_DocumentModel):
                     instances_and_items = self._get_aspects_items(
                         # Safe cast: only aspects are extracted with the "aspect"
                         # item type
-                        aspects=cast(list[_Aspect], distinct_instances),
+                        aspects=cast(list[_Aspect], instances_to_process),
                         paragraphs=paragraphs,
                         answers_of_paragraphs=answers_of_texts,
+                        decision_threshold=self.decision_threshold,
                     )
                 else:
                     instances_and_items = self._get_concepts_items(
                         # Safe cast: only concepts are extracted with the "concept"
                         # item type
-                        concepts=cast(list[_Concept], distinct_instances),
+                        concepts=cast(list[_Concept], instances_to_process),
                         answers=answers_of_texts[0],
+                        decision_threshold=self.decision_threshold,
                     )
             except ValueError as e:
                 # An answer that cannot be used (missing, refused, of another kind
@@ -978,7 +982,7 @@ class _DocumentDecisionModel(_DocumentModel):
                     self._get_invalid_response_msg(
                         error=e,
                         extracted_item_type=extracted_item_type,
-                        instances=distinct_instances,
+                        instances=instances_to_process,
                     )
                 )
                 return None, usage
@@ -1111,7 +1115,9 @@ class _DocumentDecisionModel(_DocumentModel):
 
     @staticmethod
     def _get_concepts_items(
-        concepts: list[_Concept], answers: dict[str, _DecisionAnswer]
+        concepts: list[_Concept],
+        answers: dict[str, _DecisionAnswer],
+        decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
     ) -> list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]:
         """
         Converts the answers of the decision model to the questions of the concepts,
@@ -1121,10 +1127,17 @@ class _DocumentDecisionModel(_DocumentModel):
         the concept is set to, and no item if there is nothing to extract for it,
         i.e. no label of the concept applies.
 
+        A yes/no question of a concept is taken as answered "yes" with a probability
+        of the decision threshold of the concept or more, or of the given threshold
+        if the concept has none of its own.
+
         :param concepts: The concepts that the questions were built for.
         :type concepts: list[_Concept]
         :param answers: The answers of the decision model by the names of the questions.
         :type answers: dict[str, _DecisionAnswer]
+        :param decision_threshold: The decision threshold of the decision model.
+            Defaults to 0.5.
+        :type decision_threshold: float
         :return: Each concept with its items, in the order of the concepts.
         :rtype: list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]
         :raises ValueError: If an answer cannot be used, or if a value is not
@@ -1134,7 +1147,10 @@ class _DocumentDecisionModel(_DocumentModel):
         for position, concept in enumerate(concepts):
             extracted_items: list[_ExtractedItem] = []
             value_and_probabilities = _convert_concept_answers(
-                concept, position, answers
+                concept,
+                position,
+                answers,
+                decision_threshold=_get_decision_threshold(concept, decision_threshold),
             )
             # None if there is no item to extract, i.e. no label applies
             if value_and_probabilities is not None:
@@ -1151,6 +1167,7 @@ class _DocumentDecisionModel(_DocumentModel):
         aspects: list[_Aspect],
         paragraphs: list[_Paragraph],
         answers_of_paragraphs: list[dict[str, _DecisionAnswer]],
+        decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
     ) -> list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]:
         """
         Converts the answers of the decision model to the questions of the aspects,
@@ -1165,6 +1182,10 @@ class _DocumentDecisionModel(_DocumentModel):
         The items of an aspect are in the order of the paragraphs. An aspect that
         no paragraph belongs to has no items.
 
+        A paragraph belongs to an aspect with a probability of the decision
+        threshold of the aspect or more, or of the given threshold if the aspect
+        has none of its own.
+
         :param aspects: The aspects that the questions were built for.
         :type aspects: list[_Aspect]
         :param paragraphs: The paragraphs that the questions were asked on.
@@ -1172,17 +1193,25 @@ class _DocumentDecisionModel(_DocumentModel):
         :param answers_of_paragraphs: For each paragraph, the answers of the decision
             model by the names of the questions.
         :type answers_of_paragraphs: list[dict[str, _DecisionAnswer]]
+        :param decision_threshold: The decision threshold of the decision model.
+            Defaults to 0.5.
+        :type decision_threshold: float
         :return: Each aspect with its items, in the order of the aspects.
         :rtype: list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]
         :raises ValueError: If an answer on any of the paragraphs cannot be used.
         """
         items_of_aspects: list[list[_ExtractedItem]] = [[] for _ in aspects]
+        decision_thresholds = [
+            _get_decision_threshold(aspect, decision_threshold) for aspect in aspects
+        ]
         for paragraph, answers in zip(paragraphs, answers_of_paragraphs, strict=True):
             for position in range(len(aspects)):
                 # The answer on each paragraph is checked for each aspect, i.e.
                 # also the answer that the paragraph does not belong to the aspect
                 belongs, answer_probabilities = _convert_aspect_answer(
-                    position, answers
+                    position,
+                    answers,
+                    decision_threshold=decision_thresholds[position],
                 )
                 if not belongs:
                     continue

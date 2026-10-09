@@ -156,7 +156,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``from_aspects``
      - ``list[Aspect] | None``
      - ``None``
-     - Specific aspects to extract from the document. If ``None``, extracts all aspects attached to the document. This allows you to selectively process only certain aspects rather than the entire set.
+     - Specific aspects to extract from the document. If ``None``, extracts all aspects attached to the document. This allows you to selectively process only certain aspects rather than the entire set. An aspect that is listed more than once is extracted once.
    * - ``overwrite_existing``
      - ``bool``
      - ``False``
@@ -244,7 +244,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``from_concepts``
      - ``list[_Concept] | None``
      - ``None``
-     - Specific concepts to extract from the document. If ``None``, extracts all concepts attached to the document. This allows you to selectively process only certain concepts rather than the entire set.
+     - Specific concepts to extract from the document. If ``None``, extracts all concepts attached to the document. This allows you to selectively process only certain concepts rather than the entire set. A concept that is listed more than once is extracted once.
    * - ``overwrite_existing``
      - ``bool``
      - ``False``
@@ -337,7 +337,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``from_concepts``
      - ``list[_Concept] | None``
      - ``None``
-     - Specific concepts to extract from the aspect. If ``None``, extracts all concepts attached to the aspect. This allows you to selectively process only certain concepts rather than the entire set.
+     - Specific concepts to extract from the aspect. If ``None``, extracts all concepts attached to the aspect. This allows you to selectively process only certain concepts rather than the entire set. A concept that is listed more than once is extracted once.
    * - ``overwrite_existing``
      - ``bool``
      - ``False``

@@ -22,6 +22,7 @@ Module defining tests for LLMs.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import types
 from typing import Any
@@ -40,6 +41,8 @@ from contextgem.internal.utils import (
     _is_retryable_model_api_error,
 )
 from contextgem.public import (
+    Aspect,
+    BooleanConcept,
     Document,
     DocumentLLM,
     DocumentModelGroup,
@@ -1249,6 +1252,146 @@ class TestLLMs(BaseTest):
             llm.extract_concepts_from_document(document, overwrite_existing=True)
             assert acquisitions == []
             assert all(i.extracted_items for i in document.concepts)
+
+    def test_async_limiter_shared_by_concurrent_calls(self):
+        """
+        Tests that, with concurrency enabled, all the requests to an LLM that are
+        sent in the same event loop are paced by the same limiter, i.e. share
+        the rate set for the LLM: the requests of the extraction calls that run
+        concurrently for the aspects, the sub-aspects and the concepts of different
+        aspects, and those of the extractions that the calling code runs concurrently.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        llm.async_limiter = AsyncLimiter(1000, 1)
+
+        # The limiter of each request, in the order the requests are paced
+        limiters: list[AsyncLimiter] = []
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+                """
+                limiters.append(self)
+                await super().acquire(amount)
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: each aspect is found in the first paragraph,
+            and each concept is extracted. With concurrency, an aspect or a concept
+            is processed in a request of its own, i.e. is the first one in it.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            content = (
+                '[{"concept_id": "C0", "extracted_items": [true]}]'
+                if '"concept_id"' in prompt
+                else '[{"aspect_id": "A0", "paragraph_ids": ["P0"]}]'
+            )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content)
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document with three aspects, each with a sub-aspect and
+            a concept, and with a document-level concept.
+            """
+            document = Document(
+                raw_text="Services agreement\n\nThe parties agree as follows."
+            )
+            document.aspects = [
+                Aspect(
+                    name=f"Aspect {i}",
+                    description=f"Clauses on topic {i}",
+                    aspects=[
+                        Aspect(
+                            name=f"Sub-aspect {i}",
+                            description=f"Clauses on a part of topic {i}",
+                        )
+                    ],
+                    concepts=[
+                        BooleanConcept(
+                            name=f"Concept {i}", description=f"Topic {i} is covered"
+                        )
+                    ],
+                )
+                for i in range(3)
+            ]
+            document.concepts = [
+                BooleanConcept(name="Agreement", description="It is an agreement")
+            ]
+            return document
+
+        def check_extracted(document: Document) -> None:
+            """
+            Checks that each aspect, sub-aspect and concept of the document is
+            extracted.
+            """
+            for aspect in document.aspects:
+                assert aspect.extracted_items
+                assert aspect.aspects[0].extracted_items
+                assert aspect.concepts[0].extracted_items
+            assert document.concepts[0].extracted_items
+
+        # 3 aspects, 3 sub-aspects, 3 concepts of the aspects, 1 document concept
+        n_requests = 10
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+        ):
+            # === The extraction calls of one extraction ===
+            document = create_document()
+            llm.extract_all(document, use_concurrency=True)
+            check_extracted(document)
+            assert len(limiters) == n_requests
+            (limiter,) = {id(i): i for i in limiters}.values()
+            assert (limiter.max_rate, limiter.time_period) == (1000, 1)
+            # The limiter set for the LLM gives the rate, and is not used itself
+            assert limiter is not llm.async_limiter
+
+            # === Extractions that the calling code runs concurrently ===
+            async def extract_from_two_documents() -> list[Document]:
+                """
+                Runs the extraction from two documents concurrently, in the same
+                event loop.
+                """
+                documents = [create_document(), create_document()]
+                await asyncio.gather(
+                    *[
+                        llm.extract_all_async(document, use_concurrency=True)
+                        for document in documents
+                    ]
+                )
+                return documents
+
+            limiters.clear()
+            for document in asyncio.run(extract_from_two_documents()):
+                check_extracted(document)
+            assert len(limiters) == n_requests * 2
+            assert len({id(i) for i in limiters}) == 1
+
+            # === Another rate is set for the LLM ===
+            limiters.clear()
+            # The class of the limiter is the one that is patched in
+            llm.async_limiter = RecordingAsyncLimiter(2000, 1)
+            document = create_document()
+            llm.extract_all(document, use_concurrency=True)
+            check_extracted(document)
+            (limiter,) = {id(i): i for i in limiters}.values()
+            assert (limiter.max_rate, limiter.time_period) == (2000, 1)
 
     def test_api_key_not_shown(self):
         """

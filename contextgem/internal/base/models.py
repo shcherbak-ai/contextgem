@@ -29,6 +29,7 @@ is defined in a module of its own, and the group of models with different roles
 from __future__ import annotations
 
 import asyncio
+import threading
 import warnings
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
@@ -92,6 +93,7 @@ from contextgem.internal.utils import (
     _async_multi_executor,
     _chunk_list,
     _clean_text_for_llm_prompt,
+    _get_distinct_instances,
     _group_instances_by_fields,
     _model_call_result_is_api_failure,
     _model_call_result_is_output_truncated,
@@ -135,6 +137,68 @@ _GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
 # Name of the kind of the models in the messages on the models of different kinds
 _ANY_KIND_NAME = "model"
+
+
+class _LoopAsyncLimiters:
+    """
+    Keeps the limiters that pace the requests to a model: one limiter for each
+    event loop in which requests are sent to the model.
+
+    A limiter is bound to the event loop that it is first used in, so the limiter
+    that is set for a model is not used for the requests itself: it gives the rate,
+    and a limiter with this rate is created for each event loop. All the requests
+    to the model that are sent in the same event loop are paced by the same limiter,
+    i.e. they share the rate of the model, whichever extraction calls they belong
+    to and however many of the calls run concurrently.
+
+    A copy of an instance has no limiters: they are not copied with the model.
+    """
+
+    def __init__(self) -> None:
+        # The limiters by their event loops
+        self._limiters: dict[asyncio.AbstractEventLoop, AsyncLimiter] = {}
+        # Event loops may run in different threads
+        self._lock = threading.Lock()
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> _LoopAsyncLimiters:
+        """
+        Returns a new instance without limiters: a limiter cannot be copied
+        together with the event loop that it is bound to.
+
+        :param memo: Objects already copied (unused).
+        :type memo: dict[int, Any]
+        :return: A new instance without limiters.
+        :rtype: _LoopAsyncLimiters
+        """
+        return type(self)()
+
+    def get(self, max_rate: float, time_period: float) -> AsyncLimiter:
+        """
+        Returns the limiter of the running event loop, created on the first call
+        in the event loop, and again when the rate changes.
+
+        :param max_rate: The maximum number of requests in the time period.
+        :type max_rate: float
+        :param time_period: The time period, in seconds.
+        :type time_period: float
+        :return: The limiter of the running event loop, with the given rate.
+        :rtype: AsyncLimiter
+        :raises RuntimeError: If no event loop is running.
+        """
+        loop = asyncio.get_running_loop()
+        with self._lock:
+            # The limiters of the event loops that are closed are no longer needed
+            for closed_loop in [i for i in self._limiters if i.is_closed()]:
+                del self._limiters[closed_loop]
+            limiter = self._limiters.get(loop)
+            if (
+                limiter is None
+                or limiter.max_rate != max_rate
+                or limiter.time_period != time_period
+            ):
+                limiter = AsyncLimiter(max_rate=max_rate, time_period=time_period)
+                self._limiters[loop] = limiter
+            return limiter
 
 
 def _get_common_kind_name(models: Sequence[_DocumentModel]) -> str:
@@ -383,7 +447,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document from which aspects are to be extracted.
         :type document: _Document
         :param from_aspects: Existing aspects to use as a base for extraction. If None, uses all
-            document's aspects.
+            document's aspects. An aspect that is given more than once is extracted once.
         :type from_aspects: list[_Aspect] | None
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
             Defaults to False.
@@ -441,7 +505,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document from which aspects are to be extracted.
         :type document: _Document
         :param from_aspects: Existing aspects to use as a base for extraction. If None, uses all
-            document's aspects.
+            document's aspects. An aspect that is given more than once is extracted once.
         :type from_aspects: list[_Aspect] | None
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
             Defaults to False.
@@ -516,7 +580,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 llm=cast("_DocumentModel", self),
             )
 
-        document_aspects = from_aspects if from_aspects else document.aspects
+        # An aspect that is given more than once is extracted once, with its
+        # sub-aspects
+        document_aspects = (
+            _get_distinct_instances(from_aspects) if from_aspects else document.aspects
+        )
 
         # Extract sub-aspects
         extract_sub_aspects_kwargs = {
@@ -600,6 +668,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document that contains the aspect.
         :type document: _Document
         :param from_concepts: List of existing concepts to process. Defaults to None.
+            A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with newly
             extracted information. Defaults to False.
@@ -662,6 +731,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document that contains the aspect.
         :type document: _Document
         :param from_concepts: List of existing concepts to process. Defaults to None.
+            A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with newly
             extracted information. Defaults to False.
@@ -806,7 +876,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     sub_aspect.concepts = sub_aspect_concepts
 
         # Explicitly return list of concepts for type checking
-        return list(from_concepts) if from_concepts else list(aspect.concepts)
+        return (
+            _get_distinct_instances(from_concepts)
+            if from_concepts
+            else list(aspect.concepts)
+        )
 
     def extract_concepts_from_document(
         self,
@@ -829,7 +903,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document from which concepts are to be extracted.
         :type document: _Document
         :param from_concepts: Existing concepts to use as a base for extraction. If None, uses all
-            document's concepts.
+            document's concepts. A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
             newly extracted information. Defaults to False.
@@ -891,7 +965,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document from which concepts are to be extracted.
         :type document: _Document
         :param from_concepts: Existing concepts to use as a base for extraction. If None, uses all
-            document's concepts.
+            document's concepts. A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
             newly extracted information. Defaults to False.
@@ -971,7 +1045,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             )
 
         # Explicitly return list of concepts for type checking
-        return list(from_concepts) if from_concepts else list(document.concepts)
+        return (
+            _get_distinct_instances(from_concepts)
+            if from_concepts
+            else list(document.concepts)
+        )
 
     def _check_model_roles_before_extract_all(
         self,
@@ -2640,17 +2718,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :return: None
         """
 
-        # If concurrency is enabled, recreate the async limiter of the LLM, as well as
-        # of each of its fallback LLMs, as a new instance for the current event loop,
-        # presuming that we do not have intersecting event loops, i.e. all event loops
-        # in the framework are run sequentially. The limiters are keyed by the ID of
-        # the LLM instance, so that the requests to each LLM are paced by its own limiter.
+        # If concurrency is enabled, get the limiter of the model, as well as of each
+        # of its fallback models, for the running event loop. The limiters are keyed
+        # by the ID of the model instance, so that the requests to each model are
+        # paced by its own limiter. The limiter of a model is the same in all
+        # the extraction calls that run in the event loop, so that the calls that
+        # run concurrently, e.g. for the concepts of different aspects, share
+        # the rate of the model.
         async_limiters: dict[int, AsyncLimiter] = (
             {
-                id(llm_instance): AsyncLimiter(
-                    max_rate=llm_instance.async_limiter.max_rate,
-                    time_period=llm_instance.async_limiter.time_period,
-                )
+                id(llm_instance): llm_instance._get_async_limiter_for_running_loop()
                 for llm_instance in [llm, *llm.fallback_models]
             }
             if use_concurrency
@@ -3113,7 +3190,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     f"assigned to {context.__class__.__name__}. Use get_*() methods to retrieve such "
                     f"assigned instances from the object, e.g. document.get_aspect_by_name(name), etc."
                 )
-            instances_to_process = from_instances
+            # An instance that is given more than once is extracted once
+            instances_to_process = _get_distinct_instances(from_instances)
         else:
             instances_to_process = all_instances
 
@@ -3378,6 +3456,10 @@ class _DocumentModel(_GenericModelProcessor):
 
     # Async
     _async_limiter: AsyncLimiter = PrivateAttr()
+    # Limiters that pace the requests, by event loops, at the rate of the limiter above
+    _loop_async_limiters: _LoopAsyncLimiters = PrivateAttr(
+        default_factory=_LoopAsyncLimiters
+    )
 
     # Token counting
     _usage: _ModelUsage = PrivateAttr(default_factory=_ModelUsage)
@@ -3502,6 +3584,26 @@ class _DocumentModel(_GenericModelProcessor):
         if not isinstance(value, AsyncLimiter):
             raise TypeError("async_limiter must be an AsyncLimiter instance")
         self._async_limiter = value
+
+    def _get_async_limiter_for_running_loop(self) -> AsyncLimiter:
+        """
+        Returns the limiter that paces the requests to the model in the running
+        event loop, at the rate of the limiter set for the model
+        (see :attr:`async_limiter`).
+
+        The limiter is the same for all the extraction calls that run in the event
+        loop, including the calls that run concurrently, e.g. those that extract
+        the concepts of different aspects, so that the requests of all of them
+        together stay within the rate.
+
+        :return: The limiter of the running event loop.
+        :rtype: AsyncLimiter
+        :raises RuntimeError: If no event loop is running.
+        """
+        return self._loop_async_limiters.get(
+            max_rate=self._async_limiter.max_rate,
+            time_period=self._async_limiter.time_period,
+        )
 
     @property
     def is_group(self) -> bool:

@@ -119,6 +119,10 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
      - ``str``
      - ``"paragraphs"``
      - Source reference granularity. Available values: ``"paragraphs"``, ``"sentences"``.
+   * - ``decision_threshold``
+     - ``float | None``
+     - ``None``
+     - Relevant when the concept is extracted by a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`): the lowest probability (above 0, up to 1) with which a label is selected. Can be set for ``classification_type="multi_label"`` only: with ``"multi_class"``, the most probable label is always selected, and setting the threshold raises a validation error. With the default ``None``, the ``decision_threshold`` of the decision model applies. Ignored when the concept is extracted by an LLM. See :ref:`decision-models-threshold-label`.
    * - ``singular_occurrence``
      - ``bool``
      - ``False``

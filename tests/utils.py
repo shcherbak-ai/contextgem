@@ -1029,10 +1029,10 @@ def set_dummy_env_variables_for_testing_from_cassettes() -> None:
 
     default_env_vars = {
         "CONTEXTGEM_OPENAI_API_KEY": "DUMMY",
-        # The key of the decision models of TypeSafe, under the name that litellm
-        # reads it by: a request for which no key is passed or set is rejected
-        # by litellm before it is sent, i.e. before it can be replayed
-        "TYPESAFE_API_KEY": "DUMMY",
+        # The key of the decision models of TypeSafe: a request for which no key
+        # is passed is rejected by litellm before it is sent, i.e. before it can
+        # be replayed
+        "CONTEXTGEM_TYPESAFE_API_KEY": "DUMMY",
         "CONTEXTGEM_LOGGER_LEVEL": "DEBUG",
     }
 

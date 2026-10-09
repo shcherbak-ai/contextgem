@@ -8,7 +8,7 @@ from contextgem import BooleanConcept, Document, DocumentDecisionModel, ModelPri
 # Configure the decision model with the prices for cost calculation
 decision_model = DocumentDecisionModel(
     model="typesafe/jev-latest",
-    api_key=os.getenv("TYPESAFE_API_KEY"),
+    api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
     pricing_details=ModelPricing(
         input_per_1m_tokens=0.042,  # Cost per 1M input tokens
         output_per_1m_tokens=0.0,  # No charge for output tokens

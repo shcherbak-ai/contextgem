@@ -136,6 +136,10 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
      - ``int``
      - ``2``
      - Maximum number of sentences in a justification.
+   * - ``decision_threshold``
+     - ``float | None``
+     - ``None``
+     - Relevant when the aspect is extracted by a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`): the lowest probability (above 0, up to 1) with which a paragraph is taken as belonging to the aspect. With the default ``None``, the ``decision_threshold`` of the decision model applies. Not passed on to the sub-aspects. Ignored when the aspect is extracted by an LLM. See :ref:`decision-models-threshold-label`.
 
 
 📊 Extracted Items

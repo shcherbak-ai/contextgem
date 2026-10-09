@@ -24,11 +24,14 @@ from __future__ import annotations
 
 import asyncio
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from _pytest.nodes import Item as PytestItem
+from aiolimiter import AsyncLimiter
 
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.attrs import (
@@ -52,7 +55,7 @@ from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.llms import _DocumentLLM
-from contextgem.internal.base.models import _DocumentModelGroup
+from contextgem.internal.base.models import _DocumentModelGroup, _LoopAsyncLimiters
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
@@ -429,6 +432,98 @@ class TestInternals(BaseTest):
             "cannot have the same name as parent aspect",
         )
         assert [i.name for i in aspect.aspects] == ["Liability caps"]
+
+    def test_loop_async_limiters(self):
+        """
+        Tests the keeping of the limiters that pace the requests to a model: one
+        limiter for each event loop, at the rate requested, for as long as
+        the event loop is open.
+        """
+
+        class Loop:
+            """
+            Stands in for an event loop.
+            """
+
+            def __init__(self) -> None:
+                self.closed = False
+
+            def is_closed(self) -> bool:
+                """
+                Tells whether the event loop is closed.
+                """
+                return self.closed
+
+        limiters = _LoopAsyncLimiters()
+        loop, other_loop = Loop(), Loop()
+
+        def get(
+            running_loop: Loop, max_rate: float = 10, time_period: float = 5
+        ) -> AsyncLimiter:
+            """
+            Returns the limiter for the given rate, with the given event loop
+            as the running one.
+            """
+            with patch.object(asyncio, "get_running_loop", return_value=running_loop):
+                return limiters.get(max_rate=max_rate, time_period=time_period)
+
+        # No event loop is running
+        with pytest.raises(RuntimeError):
+            limiters.get(max_rate=10, time_period=5)
+
+        limiter = get(loop)
+        assert type(limiter) is AsyncLimiter
+        assert (limiter.max_rate, limiter.time_period) == (10, 5)
+        # The same limiter in the same event loop
+        assert get(loop) is limiter
+        # A limiter of its own in another event loop
+        other_limiter = get(other_loop)
+        assert other_limiter is not limiter
+        assert (other_limiter.max_rate, other_limiter.time_period) == (10, 5)
+        assert get(other_loop) is other_limiter
+        assert get(loop) is limiter
+
+        # Another rate: a new limiter, in this event loop only
+        for max_rate, time_period in [(20, 5), (20, 1)]:
+            new_limiter = get(loop, max_rate, time_period)
+            assert new_limiter is not limiter
+            assert (new_limiter.max_rate, new_limiter.time_period) == (
+                max_rate,
+                time_period,
+            )
+            assert get(loop, max_rate, time_period) is new_limiter
+            limiter = new_limiter
+        assert get(other_loop) is other_limiter
+
+        # The limiter of an event loop that is closed is not kept
+        assert list(limiters._limiters) == [loop, other_loop]
+        loop.closed = True
+        assert get(other_loop) is other_limiter
+        assert list(limiters._limiters) == [other_loop]
+
+        # A copy has no limiters, and gets its own
+        limiters_copy = deepcopy(limiters)
+        assert type(limiters_copy) is _LoopAsyncLimiters
+        assert limiters_copy._limiters == {}
+        assert list(limiters._limiters) == [other_loop]
+        with patch.object(asyncio, "get_running_loop", return_value=other_loop):
+            assert limiters_copy.get(max_rate=10, time_period=5) is not other_limiter
+
+        # The limiter of a model has the rate of the limiter set for the model,
+        # which is not used itself, and follows the rate when it is changed
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        other_llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        with patch.object(asyncio, "get_running_loop", return_value=other_loop):
+            limiter = llm._get_async_limiter_for_running_loop()
+            assert (limiter.max_rate, limiter.time_period) == (10, 10)
+            assert limiter is not llm.async_limiter
+            assert llm._get_async_limiter_for_running_loop() is limiter
+            # Each model has its own limiters
+            assert other_llm._get_async_limiter_for_running_loop() is not limiter
+            llm.async_limiter = AsyncLimiter(3, 7)
+            new_limiter = llm._get_async_limiter_for_running_loop()
+            assert new_limiter is not limiter
+            assert (new_limiter.max_rate, new_limiter.time_period) == (3, 7)
 
     def test_run_async_calls(self):
         """
