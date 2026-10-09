@@ -32,7 +32,7 @@ import re
 import sys
 import types
 import warnings
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -72,6 +72,7 @@ from contextgem.internal.decisions import (
     _DecisionOption,
     _DecisionQuestion,
     _get_decision_threshold,
+    _get_paragraph_text_for_aspects,
     _validate_answers,
 )
 from contextgem.internal.exceptions import (
@@ -148,7 +149,10 @@ _ASPECT_PARAGRAPHS_TEXT_SENT = (
 
 # Texts of the paragraphs of the document used in the tests of the extraction of
 # aspects, and the texts expected to be sent to a decision model for them: the text
-# of each paragraph, in a request of its own
+# of each paragraph, in a request of its own, with the additional context of
+# the paragraph if it has any, which only the third paragraph does (see
+# `_create_aspects_document`). The cleaned texts of the paragraphs are what
+# the text sent for the concepts is made of, which has no additional context.
 _ASPECTS_DOCUMENT_PARAGRAPH_TEXTS = [
     "Non-disclosure  agreement",
     "The receiving party shall keep the information confidential.",
@@ -156,9 +160,15 @@ _ASPECTS_DOCUMENT_PARAGRAPH_TEXTS = [
     "The liability of each party is limited to the fees paid.",
     "A notice of termination does not release a party from confidentiality.",
 ]
-_ASPECTS_PARAGRAPH_TEXTS_SENT = [
+_ASPECTS_PARAGRAPH_TEXTS_CLEANED = [
     "Non-disclosure agreement",
     *_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS[1:],
+]
+_ASPECTS_PARAGRAPH_TEXTS_SENT = [
+    *_ASPECTS_PARAGRAPH_TEXTS_CLEANED[:2],
+    "Paragraph: Either party may terminate this agreement with a written notice "
+    "of 30 days.\n\nAdditional context of the paragraph: Section 3. Termination",
+    *_ASPECTS_PARAGRAPH_TEXTS_CLEANED[3:],
 ]
 
 # Texts of the documents of the tests whose requests are sent to the APIs of
@@ -2560,7 +2570,7 @@ class TestDecisionModels(BaseTest):
         :rtype: list[str]
         """
         if paragraph_texts is None:
-            paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+            paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_CLEANED
         return [
             "\n\n".join(paragraph_texts[start : start + n_paragraphs_per_part])
             for start in range(0, len(paragraph_texts), n_paragraphs_per_part)
@@ -2836,7 +2846,7 @@ class TestDecisionModels(BaseTest):
 
         # === One paragraph per part ===
         paragraph_texts = self._get_texts_of_parts(1)
-        assert paragraph_texts == _ASPECTS_PARAGRAPH_TEXTS_SENT
+        assert paragraph_texts == _ASPECTS_PARAGRAPH_TEXTS_CLEANED
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
         with patch.object(litellm, "adecisions", new=decisions_stub):
             decision_model.extract_concepts_from_document(
@@ -2850,7 +2860,7 @@ class TestDecisionModels(BaseTest):
         # === No parts ===
         # The text of the document is sent as a whole, in one request, as it is
         # without the number of paragraphs per call
-        whole_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        whole_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_CLEANED)
         respond_on_whole_text = self._create_concepts_responder(
             [whole_text], answers_of_parts[:1]
         )
@@ -2994,8 +3004,8 @@ class TestDecisionModels(BaseTest):
         sub_aspect.extracted_items = sub_aspect_items
         sub_aspect.reference_paragraphs = sub_aspect_paragraphs
         sub_aspect._is_processed = True
-        aspect_paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT[1:]
-        sub_aspect_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_SENT[3:])
+        aspect_paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_CLEANED[1:]
+        sub_aspect_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_CLEANED[3:])
 
         # === Up to three paragraphs per part ===
         # The four paragraphs of the aspect are sent in two parts. The two
@@ -3060,7 +3070,7 @@ class TestDecisionModels(BaseTest):
             )
         assert [request["input"] for request in decisions_stub.requests] == [
             *aspect_paragraph_texts,
-            *_ASPECTS_PARAGRAPH_TEXTS_SENT[3:],
+            *_ASPECTS_PARAGRAPH_TEXTS_CLEANED[3:],
         ]
         assert [len(concept.extracted_items) for concept in aspect.concepts] == [4, 4]
         assert len(sub_aspect.concepts[0].extracted_items) == 2
@@ -3709,7 +3719,10 @@ class TestDecisionModels(BaseTest):
         ):
             decision_model.extract_all(document, max_paragraphs_to_analyze_per_call=2)
 
+        # The paragraphs as they are sent for aspects, i.e. with their additional
+        # context, and their texts, which the texts sent for concepts are made of
         paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        cleaned_texts = _ASPECTS_PARAGRAPH_TEXTS_CLEANED
         assert [
             (request["input"], [question["name"] for question in request["questions"]])
             for request in decisions_stub.requests
@@ -3719,11 +3732,11 @@ class TestDecisionModels(BaseTest):
             # The sub-aspect, on each of the three paragraphs of its aspect
             *[(paragraph_texts[position], ["A0"]) for position in [1, 2, 4]],
             # The concept of the aspect, on the two parts of its three paragraphs
-            (f"{paragraph_texts[1]}\n\n{paragraph_texts[2]}", ["C0"]),
-            (paragraph_texts[4], ["C0"]),
+            (f"{cleaned_texts[1]}\n\n{cleaned_texts[2]}", ["C0"]),
+            (cleaned_texts[4], ["C0"]),
             # The concept of the sub-aspect, on the text of its two paragraphs,
             # which are within the limit
-            (f"{paragraph_texts[2]}\n\n{paragraph_texts[4]}", ["C0"]),
+            (f"{cleaned_texts[2]}\n\n{cleaned_texts[4]}", ["C0"]),
             # The concepts of the document, on the three parts of its paragraphs
             *[(text, ["C0", "C1"]) for text in self._get_texts_of_parts(2)],
         ]
@@ -6209,7 +6222,7 @@ class TestDecisionModels(BaseTest):
 
         # === What is not rejected ===
         part_texts = self._get_texts_of_parts(2)
-        whole_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        whole_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_CLEANED)
 
         def requested_texts() -> list[str]:
             """
@@ -6748,19 +6761,27 @@ class TestDecisionModels(BaseTest):
         # the text of the paragraph and one question for each aspect
         questions = _build_aspect_questions(document.aspects)
         assert [question.name for question in questions] == ["A0", "A1", "A2"]
-        expected_questions = [
-            {
-                "type": "predicate",
-                "name": question.name,
-                "instructions": question.instructions,
-            }
-            for question in questions
-        ]
         assert "Aspect name: Termination\n" in questions[1].instructions
         assert len(decisions_stub.requests) == len(paragraphs) == 5
-        for request, text_sent in zip(
-            decisions_stub.requests, _ASPECTS_PARAGRAPH_TEXTS_SENT, strict=True
+        for request, text_sent, paragraph in zip(
+            decisions_stub.requests,
+            _ASPECTS_PARAGRAPH_TEXTS_SENT,
+            paragraphs,
+            strict=True,
         ):
+            # The questions on a paragraph that has additional context tell that
+            # the text has it
+            expected_questions = [
+                {
+                    "type": "predicate",
+                    "name": question.name,
+                    "instructions": question.instructions,
+                }
+                for question in _build_aspect_questions(
+                    document.aspects,
+                    has_additional_context=paragraph.additional_context is not None,
+                )
+            ]
             assert set(request) == {
                 "model",
                 "input",
@@ -6776,9 +6797,12 @@ class TestDecisionModels(BaseTest):
             # The text of the paragraph, as it is shown to an LLM
             assert request["input"] == text_sent
             assert request["questions"] == expected_questions
-        # A paragraph is judged on its own text: its additional context is not sent
+        # The additional context of a paragraph is sent with the paragraph that
+        # has it, and only with it
         assert paragraphs[2].additional_context == "Section 3. Termination"
-        assert "Section 3" not in json.dumps(decisions_stub.requests)
+        assert [
+            "Section 3" in request["input"] for request in decisions_stub.requests
+        ] == [False, False, True, False, False]
 
         # === The items ===
         assert len(extracted_aspects) == 3
@@ -7135,6 +7159,357 @@ class TestDecisionModels(BaseTest):
         assert not late_payment._is_processed
         assert not late_payment.extracted_items
         self.check_instance_serialization_and_cloning(document)
+
+    def test_decision_model_aspect_paragraph_additional_context(self):
+        """
+        Tests that the additional context of a paragraph is sent to a decision
+        model when aspects are extracted: the questions built for a text with
+        additional context, the text of a paragraph with and without it, and
+        the requests sent for the aspects and sub-aspects of a document in which
+        only some of the paragraphs have additional context.
+        """
+        # === The questions ===
+        aspects = [
+            Aspect(
+                name="Termination",
+                description="Clauses on the termination of the agreement",
+                aspects=[
+                    Aspect(
+                        name="Notice of termination",
+                        description="Clauses on the notice that terminates "
+                        "the agreement",
+                    )
+                ],
+            ),
+            Aspect(name="Payment", description="Clauses on the payment of fees"),
+        ]
+        questions_with_context = _build_aspect_questions(
+            aspects, has_additional_context=True
+        )
+        assert questions_with_context == [
+            _DecisionQuestion(
+                name="A0",
+                kind="predicate",
+                instructions=(
+                    "The text has one paragraph of a document and additional context "
+                    "of the paragraph, such as its formatting, list context or table "
+                    "position. Use the additional context to understand "
+                    "the structural role and position of the paragraph in "
+                    "the document. Decide whether the paragraph is relevant to "
+                    "the aspect below.\n"
+                    "Aspect name: Termination\n"
+                    "Aspect description: Clauses on the termination of the agreement\n"
+                    'Answer "yes" if the paragraph addresses or clearly relates to '
+                    'the aspect. Answer "no" if it does not.'
+                ),
+                options=(),
+            ),
+            _DecisionQuestion(
+                name="A1",
+                kind="predicate",
+                instructions=(
+                    "The text has one paragraph of a document and additional context "
+                    "of the paragraph, such as its formatting, list context or table "
+                    "position. Use the additional context to understand "
+                    "the structural role and position of the paragraph in "
+                    "the document. Decide whether the paragraph is relevant to "
+                    "the aspect below.\n"
+                    "Aspect name: Payment\n"
+                    "Aspect description: Clauses on the payment of fees\n"
+                    'Answer "yes" if the paragraph addresses or clearly relates to '
+                    'the aspect. Answer "no" if it does not.'
+                ),
+                options=(),
+            ),
+        ]
+        for question in questions_with_context:
+            self.check_rendered_prompt(question.instructions)
+        # Without additional context, the questions are those asked on a paragraph
+        # alone, which differ only in what the text is said to be
+        questions_without_context = _build_aspect_questions(
+            aspects, has_additional_context=False
+        )
+        assert questions_without_context == _build_aspect_questions(aspects)
+        for question_with_context, question_without_context in zip(
+            questions_with_context, questions_without_context, strict=True
+        ):
+            assert question_with_context.name == question_without_context.name
+            lines_with_context = question_with_context.instructions.split("\n")
+            lines_without_context = question_without_context.instructions.split("\n")
+            assert lines_without_context[0] == (
+                "The text is one paragraph of a document. Decide whether "
+                "the paragraph is relevant to the aspect below."
+            )
+            assert lines_with_context[0] != lines_without_context[0]
+            assert lines_with_context[1:] == lines_without_context[1:]
+
+        # === The text of a paragraph ===
+        # A paragraph without additional context: its cleaned text alone
+        assert _get_paragraph_text_for_aspects(
+            Paragraph(raw_text="Either  party may terminate this agreement.")
+        ) == ("Either party may terminate this agreement.", False)
+        # A paragraph with additional context: both, each with a label.
+        # The additional context is cleaned as the text of the paragraph is.
+        assert _get_paragraph_text_for_aspects(
+            Paragraph(
+                raw_text="Either  party may terminate this agreement.",
+                additional_context=" List item  2 of 5​ ",
+            )
+        ) == (
+            "Paragraph: Either party may terminate this agreement.\n\n"
+            "Additional context of the paragraph: List item 2 of 5",
+            True,
+        )
+        # Additional context that has nothing to show to a model is not sent
+        assert _get_paragraph_text_for_aspects(
+            Paragraph(
+                raw_text="Either party may terminate this agreement.",
+                additional_context="​",
+            )
+        ) == ("Either party may terminate this agreement.", False)
+
+        # === The requests ===
+        paragraph_kwargs: list[dict[str, Any]] = [
+            {"raw_text": "Services  agreement"},
+            {
+                "raw_text": "Either party may terminate this agreement.",
+                "additional_context": "Section  3. Termination​",
+                "custom_data": {"page": 2},
+            },
+            {"raw_text": "The fees are paid every month."},
+            {
+                "raw_text": "The same applies to the provider.",
+                "additional_context": "List item 2 of 2",
+            },
+        ]
+        texts_sent = [
+            "Services agreement",
+            "Paragraph: Either party may terminate this agreement.\n\n"
+            "Additional context of the paragraph: Section 3. Termination",
+            "The fees are paid every month.",
+            "Paragraph: The same applies to the provider.\n\n"
+            "Additional context of the paragraph: List item 2 of 2",
+        ]
+        has_context = [False, True, False, True]
+        yes_probabilities = {
+            "Termination": {1: 0.9, 3: 0.7},
+            "Notice of termination": {1: 0.8},
+            "Payment": {2: 0.6},
+        }
+
+        def create_document() -> Document:
+            """
+            Creates a document in which two of the four paragraphs have
+            additional context, with the aspects to extract.
+
+            :return: Document.
+            :rtype: Document
+            """
+            document = Document(
+                paragraphs=[Paragraph(**kwargs) for kwargs in paragraph_kwargs]
+            )
+            document.aspects = aspects
+            return document
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request with the questions of aspects, asked on one
+            paragraph of the document.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            paragraph_position = texts_sent.index(request["input"])
+            answers: dict[str, Any] = {}
+            for question in request["questions"]:
+                aspect_name_match = re.search(
+                    r"^Aspect name: (.+)$", question["instructions"], flags=re.MULTILINE
+                )
+                assert aspect_name_match is not None, question
+                answers[question["name"]] = yes_probabilities[
+                    aspect_name_match.group(1)
+                ].get(paragraph_position, 0.1)
+            return _create_decisions_response(request["questions"], answers)
+
+        def get_request_questions(
+            aspects: Sequence[_Aspect], has_additional_context: bool
+        ) -> list[dict[str, Any]]:
+            """
+            Returns the questions expected in a request for a paragraph.
+
+            :param aspects: The aspects that the paragraph is asked about.
+            :type aspects: Sequence[_Aspect]
+            :param has_additional_context: Whether the paragraph has additional
+                context.
+            :type has_additional_context: bool
+            :return: The questions of the request.
+            :rtype: list[dict[str, Any]]
+            """
+            return [
+                {
+                    "type": "predicate",
+                    "name": question.name,
+                    "instructions": question.instructions,
+                }
+                for question in _build_aspect_questions(
+                    aspects, has_additional_context=has_additional_context
+                )
+            ]
+
+        # The questions built for the requests: those built to check what
+        # a decision model can extract are built without the param
+        questions_built: list[tuple[list[str], bool]] = []
+
+        def build_aspect_questions(*args: Any, **kwargs: Any) -> Any:
+            """
+            Builds the questions of aspects, and records for which aspects and
+            for which kind of text they are built.
+
+            :param args: Arguments of the function that builds the questions.
+            :type args: Any
+            :param kwargs: Keyword arguments of the function.
+            :type kwargs: Any
+            :return: The questions.
+            :rtype: Any
+            """
+            if "has_additional_context" in kwargs:
+                questions_built.append(
+                    (
+                        [aspect.name for aspect in args[0]],
+                        kwargs["has_additional_context"],
+                    )
+                )
+            return _build_aspect_questions(*args, **kwargs)
+
+        decision_model = _create_decision_model()
+        document = create_document()
+        paragraphs = document.paragraphs
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                decision_models_module,
+                "_build_aspect_questions",
+                new=build_aspect_questions,
+            ),
+        ):
+            decision_model.extract_aspects_from_document(document)
+
+        termination, payment = document.aspects
+        (notice,) = termination.aspects
+        assert [
+            (request["input"], request["questions"])
+            for request in decisions_stub.requests
+        ] == [
+            # The aspects, on each paragraph of the document: a paragraph that has
+            # additional context is sent with it, and with the questions that tell
+            # that the text has it, and the other paragraphs as their texts alone
+            *[
+                (text, get_request_questions(document.aspects, with_context))
+                for text, with_context in zip(texts_sent, has_context, strict=True)
+            ],
+            # The sub-aspect, on each paragraph extracted for its aspect, which
+            # are the paragraphs of the document, i.e. with their additional context
+            (texts_sent[1], get_request_questions([notice], True)),
+            (texts_sent[3], get_request_questions([notice], True)),
+        ]
+        # The questions differ between the paragraphs with and without additional
+        # context only
+        assert (
+            decisions_stub.requests[1]["questions"]
+            == decisions_stub.requests[3]["questions"]
+            != decisions_stub.requests[0]["questions"]
+            == decisions_stub.requests[2]["questions"]
+        )
+        assert all(
+            ("additional context" in question["instructions"]) is with_context
+            for request, with_context in zip(
+                decisions_stub.requests, [*has_context, True, True], strict=True
+            )
+            for question in request["questions"]
+        )
+        # Each variant of the questions is built once per call, and only if
+        # a paragraph of the call is asked about with it
+        assert questions_built == [
+            (["Termination", "Payment"], False),
+            (["Termination", "Payment"], True),
+            (["Notice of termination"], True),
+        ]
+        # The request is recorded in the usage as sent
+        usage = decision_model.get_usage()[0].usage
+        assert json.loads(usage.calls[1].prompt) == {
+            "model": _DECISION_MODEL,
+            "input": texts_sent[1],
+            "questions": get_request_questions(document.aspects, True),
+        }
+
+        # The items are the paragraphs as they are in the document, i.e. without
+        # the labels and the additional context
+        assert [
+            [(item.value, item.reference_paragraphs) for item in aspect.extracted_items]
+            for aspect in [termination, notice, payment]
+        ] == [
+            [
+                (paragraphs[1].raw_text, [paragraphs[1]]),
+                (paragraphs[3].raw_text, [paragraphs[3]]),
+            ],
+            [(paragraphs[1].raw_text, [paragraphs[1]])],
+            [(paragraphs[2].raw_text, [paragraphs[2]])],
+        ]
+        assert termination.extracted_items[0].value == (
+            "Either party may terminate this agreement."
+        )
+        assert termination.extracted_items[0].custom_data == {"page": 2}
+        self.check_item_probabilities(
+            notice.extracted_items[0], {True: 0.8, False: 1 - 0.8}
+        )
+        self.check_instance_serialization_and_cloning(document)
+
+        # === A response that cannot be used ===
+        # The log names the paragraph by its position, as for a paragraph
+        # without additional context
+        for failed_position in [1, 2]:
+            decision_model = _create_decision_model()
+            document = create_document()
+
+            def respond_or_refuse(
+                request: dict[str, Any], failed_position: int = failed_position
+            ) -> OpenAIDecisionResponse:
+                """
+                Responds to the request for a paragraph, with a refused answer
+                to the second question on one of the paragraphs.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :param failed_position: The position of the paragraph with
+                    the refused answer.
+                :type failed_position: int
+                :return: Response of litellm.
+                :rtype: OpenAIDecisionResponse
+                """
+                if request["input"] == texts_sent[failed_position]:
+                    return _create_decisions_response(
+                        request["questions"], {"A0": 0.9, "A1": "refusal"}
+                    )
+                return respond(request)
+
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_or_refuse]})
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                pytest.raises(ModelExtractionError),
+            ):
+                decision_model.extract_aspects_from_document(document)
+            assert (
+                f"Decision model `{_DECISION_MODEL}` returned an invalid response "
+                f"for aspect `Payment` on paragraph {failed_position + 1} of 4 "
+                f"(index {failed_position}), decision question `A1`: "
+                "the model refused to answer."
+            ) in captured_logs, captured_logs
+            assert len(decisions_stub.requests) == failed_position + 1
+            assert not any(aspect._is_processed for aspect in document.aspects)
 
     def test_decision_model_aspect_requests_concurrency(self):
         """
@@ -8431,7 +8806,9 @@ class TestDecisionModels(BaseTest):
             decision_model.extract_all(document)
 
         paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
-        termination_text = f"{paragraph_texts[2]}\n\n{paragraph_texts[4]}"
+        # The text sent for the concepts has no additional context of the paragraphs
+        cleaned_texts = _ASPECTS_PARAGRAPH_TEXTS_CLEANED
+        termination_text = f"{cleaned_texts[2]}\n\n{cleaned_texts[4]}"
         assert [
             (request["input"], [question["name"] for question in request["questions"]])
             for request in decisions_stub.requests
@@ -8444,9 +8821,9 @@ class TestDecisionModels(BaseTest):
             # The concepts of the aspect, on the text of its paragraphs
             (termination_text, ["C0", "C1"]),
             # The concept of the sub-aspect, on the text of its paragraph
-            (paragraph_texts[4], ["C0"]),
+            (cleaned_texts[4], ["C0"]),
             # The concepts of the document, on its text
-            ("\n\n".join(paragraph_texts), ["C0", "C1"]),
+            ("\n\n".join(cleaned_texts), ["C0", "C1"]),
         ]
         paragraphs = document.paragraphs
         termination_items = [
@@ -8894,9 +9271,11 @@ class TestDecisionModels(BaseTest):
                 # the aspect of the sub-aspect
                 (paragraph_texts[1], ["Survival of confidentiality"]),
                 (paragraph_texts[4], ["Survival of confidentiality"]),
-                # Its concept, on the text of the paragraphs of its aspect
+                # Its concept, on the text of the paragraphs of its aspect, which
+                # has no additional context of the paragraphs
                 (
-                    f"{paragraph_texts[2]}\n\n{paragraph_texts[4]}",
+                    f"{_ASPECTS_PARAGRAPH_TEXTS_CLEANED[2]}\n\n"
+                    f"{_ASPECTS_PARAGRAPH_TEXTS_CLEANED[4]}",
                     ["Termination for convenience"],
                 ),
             ]

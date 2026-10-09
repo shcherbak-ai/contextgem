@@ -141,8 +141,11 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             group, route such aspects and concepts to an LLM.
 
         - Extracted items of aspects
-            Each paragraph of the document is judged on its own text, i.e. without
-            the other paragraphs and without its ``additional_context``: it belongs
+            Each paragraph of the document is judged on its own, i.e. without
+            the other paragraphs. A paragraph that has ``additional_context`` is
+            sent with it: the text of its request has the paragraph and its
+            additional context, each with a label, and the question tells that
+            the paragraph is what is to be judged. A paragraph belongs
             to an aspect if the probability of that is the decision threshold
             (0.5 by default) or more. Each such
             paragraph becomes an item of the aspect, as when the aspect is extracted

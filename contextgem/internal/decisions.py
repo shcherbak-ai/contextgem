@@ -24,9 +24,10 @@ rate on a scale) and returns probabilities for each question. It generates no te
 
 The module defines the question and answer types, which are independent of the wire
 formats of the decision model APIs, the mapping from concepts and aspects to
-questions, and the conversion of answers to the values of extracted items with their
-probability distributions. The functions are pure: the module sends no requests and
-does not depend on the library that sends them.
+questions, the text of a paragraph that the questions of aspects are asked on, and
+the conversion of answers to the values of extracted items with their probability
+distributions. The functions are pure: the module sends no requests and does not
+depend on the library that sends them.
 """
 
 from __future__ import annotations
@@ -45,8 +46,9 @@ from contextgem.internal.base.concepts import (
     _LabelConcept,
     _RatingConcept,
 )
+from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.exceptions import _InvalidDecisionResponseError
-from contextgem.internal.utils import _get_template
+from contextgem.internal.utils import _clean_text_for_llm_prompt, _get_template
 
 
 # Kind of a decision question, and of the answer to it: a yes/no question,
@@ -246,15 +248,21 @@ def _build_concept_questions(concepts: Sequence[_Concept]) -> list[_DecisionQues
     return questions
 
 
-def _build_aspect_questions(aspects: Sequence[_Aspect]) -> list[_DecisionQuestion]:
+def _build_aspect_questions(
+    aspects: Sequence[_Aspect], has_additional_context: bool = False
+) -> list[_DecisionQuestion]:
     """
     Builds the questions that a decision model is to answer on one paragraph to
     extract the aspects: for each aspect, whether the paragraph belongs to it.
 
     The question of an aspect is a predicate ``A{i}``, where ``i`` is the position
     of the aspect in the sequence, so that the names of the questions are unique
-    within the request for these aspects. The questions do not depend on
-    the paragraph: the same questions are asked on each paragraph.
+    within the request for these aspects. The questions depend on the paragraph
+    only in whether the text that they are asked on has the additional context of
+    the paragraph (see :func:`_get_paragraph_text_for_aspects`), which
+    the instructions of the questions then tell: the same questions are asked on
+    each paragraph with additional context, and the same questions on each
+    paragraph without it.
 
     Only the aspects of the sequence get a question, i.e. the sub-aspects of
     an aspect do not.
@@ -264,6 +272,10 @@ def _build_aspect_questions(aspects: Sequence[_Aspect]) -> list[_DecisionQuestio
 
     :param aspects: Aspects to build the questions for.
     :type aspects: Sequence[_Aspect]
+    :param has_additional_context: Whether the text that the questions are asked
+        on has the additional context of the paragraph, next to the paragraph.
+        Defaults to False, i.e. the text is the paragraph alone.
+    :type has_additional_context: bool
     :return: Questions in the order of the aspects, one for each aspect.
     :rtype: list[_DecisionQuestion]
     :raises TypeError: If an object in the sequence is not an aspect.
@@ -279,6 +291,7 @@ def _build_aspect_questions(aspects: Sequence[_Aspect]) -> list[_DecisionQuestio
             _ASPECT_QUESTION_TEMPLATE_NAME,
             aspect_name=aspect.name,
             aspect_description=aspect.description,
+            has_additional_context=has_additional_context,
         )
         questions.append(
             _DecisionQuestion(
@@ -288,6 +301,47 @@ def _build_aspect_questions(aspects: Sequence[_Aspect]) -> list[_DecisionQuestio
             )
         )
     return questions
+
+
+def _get_paragraph_text_for_aspects(paragraph: _Paragraph) -> tuple[str, bool]:
+    """
+    Returns the text of a paragraph that a decision model is to answer
+    the questions of aspects on (see :func:`_build_aspect_questions`).
+
+    The text is the text of the paragraph as it is shown to an LLM for
+    the extraction of aspects, i.e. cleaned and without line breaks. If
+    the paragraph has additional context, e.g. its formatting, list context or
+    table position, the text has both, each with a label, so that the model can
+    tell the paragraph, which is what it judges, from its context::
+
+        Paragraph: <text of the paragraph>
+
+        Additional context of the paragraph: <additional context>
+
+    The additional context is cleaned as the text of the paragraph is. A paragraph
+    without additional context is sent as its text alone, without a label.
+
+    :param paragraph: Paragraph to ask the questions of aspects on.
+    :type paragraph: _Paragraph
+    :return: The text to ask the questions on, which is empty if the paragraph has
+        no text to show to a model, i.e. it is not to be asked about, and whether
+        the text has the additional context of the paragraph, i.e. whether
+        the questions are to be built for a text with additional context.
+    :rtype: tuple[str, bool]
+    """
+    text = _clean_text_for_llm_prompt(
+        paragraph.raw_text, preserve_linebreaks=False, strip_text=True
+    )
+    additional_context = _clean_text_for_llm_prompt(
+        paragraph.additional_context or "", preserve_linebreaks=False, strip_text=True
+    )
+    if not text or not additional_context:
+        return text, False
+    return (
+        f"Paragraph: {text}\n\n"
+        f"Additional context of the paragraph: {additional_context}",
+        True,
+    )
 
 
 # Converting answers

@@ -110,6 +110,7 @@ Pass such paragraphs to the document via ``paragraphs``. The additional context:
 
 - must be a single-line string;
 - is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
+- is sent to a decision model together with the paragraph text when aspects are extracted (see :ref:`decision-models-aspects-label`);
 - is inherited by the sentences segmented from the paragraph, and is passed to the LLM with each sentence when sentence-level references are used (``reference_depth="sentences"``);
 - is preserved when the document is serialized.
 

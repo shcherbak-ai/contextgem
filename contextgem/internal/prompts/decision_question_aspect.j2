@@ -1,4 +1,8 @@
+{% if has_additional_context %}
+The text has one paragraph of a document and additional context of the paragraph, such as its formatting, list context or table position. Use the additional context to understand the structural role and position of the paragraph in the document. Decide whether the paragraph is relevant to the aspect below.
+{% else %}
 The text is one paragraph of a document. Decide whether the paragraph is relevant to the aspect below.
+{% endif %}
 Aspect name: {{ aspect_name }}
 Aspect description: {{ aspect_description }}
 Answer "yes" if the paragraph addresses or clearly relates to the aspect. Answer "no" if it does not.

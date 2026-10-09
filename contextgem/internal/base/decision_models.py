@@ -68,6 +68,7 @@ from contextgem.internal.decisions import (
     _get_aspect_question_name,
     _get_concept_question_name,
     _get_decision_threshold,
+    _get_paragraph_text_for_aspects,
     _validate_answers,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -79,7 +80,6 @@ from contextgem.internal.typings.types import ExtractedInstanceType, ItemProbabi
 from contextgem.internal.utils import (
     _MODEL_API_RETRIES_ATTEMPTED_ATTR,
     _chunk_list,
-    _clean_text_for_llm_prompt,
     _get_cache_token_counts,
     _get_model_api_retry_delay,
     _group_instances_by_fields,
@@ -843,8 +843,9 @@ class _DocumentDecisionModel(_DocumentModel):
 
         Aspects: one request is sent for each paragraph of the source, with
         the text of the paragraph and one question for each aspect: whether
-        the paragraph belongs to the aspect. A paragraph is judged on its own text,
-        i.e. without the other paragraphs and without its additional context.
+        the paragraph belongs to the aspect. A paragraph is judged on its own,
+        i.e. without the other paragraphs. Its additional context, if it has any,
+        is sent with its text, as an LLM is given it.
         The requests are sent concurrently if a limiter is given, which is the case
         when concurrency is enabled for the extraction, each of them paced by
         the limiter, and one after another otherwise. Each paragraph that belongs
@@ -1142,6 +1143,12 @@ class _DocumentDecisionModel(_DocumentModel):
         each aspect. A paragraph that has no such text is not shown to an LLM
         either: it is not asked about, i.e. it belongs to no aspect.
 
+        A paragraph that has additional context is sent with it, as an LLM is given
+        it: the text of the request then has the paragraph and its additional
+        context, each with a label, and the questions tell that the text has both
+        (see ``_get_paragraph_text_for_aspects`` and ``_build_aspect_questions``).
+        A paragraph without additional context is sent as its text alone.
+
         The requests are sent concurrently if a limiter is given, which is the case
         when concurrency is enabled for the extraction, and one after another
         otherwise.
@@ -1166,21 +1173,25 @@ class _DocumentDecisionModel(_DocumentModel):
         :raises _InvalidDecisionResponseError: If a response cannot be used.
         :raises Exception: The error of the first request that failed for good.
         """
-        # The same questions are asked on each paragraph
-        questions = _build_aspect_questions(aspects)
+        # The same questions are asked on each paragraph with additional context,
+        # and the same on each paragraph without it: each of the two variants of
+        # the questions is built once, for the first paragraph that it is asked on
+        questions_variants: dict[bool, list[_DecisionQuestion]] = {}
         paragraphs: list[_Paragraph] = []
         units: list[_QuestionsOnText] = []
         for position, paragraph in enumerate(source_paragraphs):
-            text = _clean_text_for_llm_prompt(
-                paragraph.raw_text, preserve_linebreaks=False, strip_text=True
-            )
+            text, has_additional_context = _get_paragraph_text_for_aspects(paragraph)
             if not text:
                 continue
+            if has_additional_context not in questions_variants:
+                questions_variants[has_additional_context] = _build_aspect_questions(
+                    aspects, has_additional_context=has_additional_context
+                )
             paragraphs.append(paragraph)
             units.append(
                 _QuestionsOnText(
                     text=text,
-                    questions=questions,
+                    questions=questions_variants[has_additional_context],
                     # The paragraphs without text are not asked about, i.e.
                     # the position of the paragraph is the one in the source
                     location=(

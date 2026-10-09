@@ -51,8 +51,9 @@ class Paragraph(_Paragraph):
         single-line string, e.g. its structural role, formatting, or position in the document
         ("Heading, level 2" or "Table: Fees, row 2, column 3"). It is passed to the LLM
         together with the paragraph text in the prompts that list paragraphs, i.e. when
-        aspects are extracted, or when concepts are extracted with references. Sentences
-        segmented from the paragraph inherit it. Defaults to None.
+        aspects are extracted, or when concepts are extracted with references. A decision
+        model is sent it together with the paragraph text when aspects are extracted.
+        Sentences segmented from the paragraph inherit it. Defaults to None.
     :vartype additional_context: str | None
 
     Note:

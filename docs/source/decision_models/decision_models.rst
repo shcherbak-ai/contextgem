@@ -439,9 +439,19 @@ See :ref:`decision-models-trust-label` for what a probability does and does not 
 A decision model extracts aspects one paragraph at a time:
 
 - **One request per paragraph.** A request has the text of one paragraph and, for each aspect processed in the call, one yes/no question: is the paragraph relevant to the aspect? The question is built from the ``name`` and the ``description`` of the aspect.
-- **A paragraph is judged on its own text.** The model is not sent the neighbouring paragraphs, the rest of the document, or the ``additional_context`` of the paragraph, whereas an LLM is sent the paragraphs together. A paragraph that can be understood only in its context, e.g. *"The same applies to the Supplier."*, can therefore be judged differently than by an LLM.
+- **A paragraph is judged on its own.** The model is not sent the neighbouring paragraphs or the rest of the document, whereas an LLM is sent the paragraphs together. A paragraph that can be understood only in its context, e.g. *"The same applies to the Supplier."*, can therefore be judged differently than by an LLM.
+- **The additional context of a paragraph is sent with it.** If a paragraph has ``additional_context``, e.g. its heading level, list context or table position (see :ref:`paragraph-additional-context`), the text of its request has both, each with a label, and the question tells the model that the text has the additional context of the paragraph, and that the paragraph is what it is to judge. A paragraph without additional context is sent as its text alone. As a decision model is not sent the neighbouring paragraphs, the additional context is the only context of a paragraph that it gets.
 - **A paragraph with a probability of the decision threshold or more becomes an extracted item** of the aspect. The threshold is 0.5 by default, and can be set for the decision model and for each aspect (see :ref:`decision-models-threshold-label`). As for LLMs, the value of the item is the text of the paragraph, and ``reference_paragraphs`` of the item has the paragraph. A paragraph can belong to several aspects.
 - **An aspect that no paragraph belongs to has no extracted items.** Its sub-aspects and concepts are then not extracted, as for LLMs.
+
+The text of the request for a paragraph that has additional context looks like this:
+
+.. code-block:: text
+   :caption: The text sent for a paragraph with additional context
+
+   Paragraph: The same applies to the Supplier.
+
+   Additional context of the paragraph: Section 7. Confidentiality; list item 2 of 3
 
 The sub-aspects of an aspect are extracted in the same way from the paragraphs extracted for that aspect, with one request for each of these paragraphs. The concepts of an aspect are decided on the text of the paragraphs extracted for it.
 
