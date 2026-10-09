@@ -29,6 +29,7 @@ from contextgem.public import (
     ChatSession,
     DateConcept,
     Document,
+    DocumentDecisionModel,
     DocumentLLM,
     DocumentModelGroup,
     ExtractionPipeline,
@@ -79,6 +80,8 @@ __all__ = (
     "ChatSession",
     "DocumentLLM",
     "DocumentModelGroup",
+    # Decision models
+    "DocumentDecisionModel",
     # Data models
     "ModelPricing",
     # Utils

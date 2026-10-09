@@ -673,6 +673,47 @@ def _get_model_api_retry_delay(retry_number: int) -> float:
     return backoff * random.uniform(0.5, 1.0)  # nosec B311 - not a security context
 
 
+def _get_cache_token_counts(
+    input_tokens: int, input_tokens_details: Any
+) -> tuple[int, int]:
+    """
+    Retrieves the number of input tokens read from, and written to, the prompt cache
+    of the model provider, from the details of the input tokens of a request, as
+    reported in the usage data of the response to it.
+
+    Relies on the token details that litellm populates in the same way for all
+    model providers that report such tokens, where they are a part of the input tokens.
+    Missing or invalid counts are treated as zero, and the counts are capped so that
+    together they do not exceed the number of input tokens, e.g. if a custom API
+    endpoint reports them separately from the input tokens.
+
+    :param input_tokens: The number of input tokens of the request.
+    :type input_tokens: int
+    :param input_tokens_details: The details of the input tokens of the request,
+        as returned by litellm, or None if there are no such details.
+    :type input_tokens_details: Any
+    :return: A tuple of the number of tokens read from the cache and the number
+        of tokens written to the cache.
+    :rtype: tuple[int, int]
+    """
+
+    def get_count(attr_name: str) -> int:
+        """
+        Retrieves a token count from the details of the input tokens.
+
+        :param attr_name: The name of the attribute holding the token count.
+        :type attr_name: str
+        :return: The token count, or zero if it is missing or invalid.
+        :rtype: int
+        """
+        count = getattr(input_tokens_details, attr_name, None)
+        return count if isinstance(count, int) and count > 0 else 0
+
+    cache_read = min(get_count("cached_tokens"), input_tokens)
+    cache_write = min(get_count("cache_write_tokens"), input_tokens - cache_read)
+    return cache_read, cache_write
+
+
 def _get_llm_cache_token_counts(completion_usage: Any) -> tuple[int, int]:
     """
     Retrieves the number of input tokens read from, and written to, the prompt cache
@@ -690,24 +731,10 @@ def _get_llm_cache_token_counts(completion_usage: Any) -> tuple[int, int]:
         of tokens written to the cache.
     :rtype: tuple[int, int]
     """
-    details = getattr(completion_usage, "prompt_tokens_details", None)
-
-    def get_count(attr_name: str) -> int:
-        """
-        Retrieves a token count from the prompt token details.
-
-        :param attr_name: The name of the attribute holding the token count.
-        :type attr_name: str
-        :return: The token count, or zero if it is missing or invalid.
-        :rtype: int
-        """
-        count = getattr(details, attr_name, None)
-        return count if isinstance(count, int) and count > 0 else 0
-
-    prompt_tokens = completion_usage.prompt_tokens
-    cache_read = min(get_count("cached_tokens"), prompt_tokens)
-    cache_write = min(get_count("cache_write_tokens"), prompt_tokens - cache_read)
-    return cache_read, cache_write
+    return _get_cache_token_counts(
+        completion_usage.prompt_tokens,
+        getattr(completion_usage, "prompt_tokens_details", None),
+    )
 
 
 def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | None:

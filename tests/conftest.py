@@ -281,6 +281,10 @@ def vcr_compatible_acompletion(request):
     With nest_asyncio applied at module level, we can safely call sync
     litellm.completion() from async context.
 
+    The same applies to adecisions(), the async call of the Decisions API that
+    decision models are requested through: it is routed to the sync
+    litellm.decisions(), which has the same signature.
+
     TODO: Remove this when vcr supports acompletion() with litellm's httpx transport
     """
     # Check if the test is marked with @pytest.mark.vcr
@@ -314,7 +318,24 @@ def vcr_compatible_acompletion(request):
             # and VCR's patched _run_async_function uses asyncio.run() safely
             return litellm.completion(*args, **kwargs)
 
-        with patch.object(litellm, "acompletion", vcr_compatible_acompletion_fn):
+        async def vcr_compatible_adecisions_fn(*args, **kwargs):
+            """
+            VCR-compatible wrapper for litellm.adecisions().
+
+            Uses sync litellm.decisions() which VCR can properly intercept:
+            the async call is sent through a transport that VCR cannot record.
+
+            :param args: Arguments to pass to litellm.decisions
+            :param kwargs: Keyword arguments to pass to litellm.decisions
+            :return: Decisions response from litellm
+            """
+            logger.debug("Using monkey-patched adecisions()")
+            return litellm.decisions(*args, **kwargs)
+
+        with (
+            patch.object(litellm, "acompletion", vcr_compatible_acompletion_fn),
+            patch.object(litellm, "adecisions", vcr_compatible_adecisions_fn),
+        ):
             yield
     else:
         yield

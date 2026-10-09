@@ -51,7 +51,6 @@ from contextgem.internal.base.utils import _is_registered_tool
 from contextgem.internal.data_models import (
     _Message,
     _ModelCall,
-    _ModelCost,
     _ModelUsage,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -226,6 +225,67 @@ class _DocumentLLM(_DocumentModel):
     # Tool registry: name -> ToolRegistration
     _tool_registry: dict[str, ToolRegistration] = PrivateAttr(default_factory=dict)
 
+    @property
+    def _kind_name(self) -> str:
+        """
+        Returns the name of the kind of the model, as used in the messages of
+        the logic that models of all kinds share.
+
+        :return: The name of the kind of the model.
+        :rtype: str
+        """
+        return "LLM"
+
+    @property
+    def _invalid_output_desc(self) -> str:
+        """
+        Returns what the LLM is said to have returned when its output cannot
+        be used, as worded in the messages on the extraction that fails for it.
+
+        :return: The description of an output of the LLM that cannot be used.
+        :rtype: str
+        """
+        return "invalid JSON"
+
+    @property
+    def _retries_invalid_data(self) -> int:
+        """
+        Returns the number of times that a call is made again when the LLM returns
+        invalid data for it, as set for the LLM.
+
+        :return: The number of retries of a call with invalid data returned.
+        :rtype: int
+        """
+        return self.max_retries_invalid_data
+
+    @property
+    def _provider_retries_failed_request(self) -> int:
+        """
+        Returns the number of retries of a failed request that are left to the SDK
+        of the LLM provider, as set for the LLM.
+
+        :return: The number of retries of a failed request by the provider's SDK.
+        :rtype: int
+        """
+        return self.max_retries_failed_request
+
+    @property
+    def _fallback_llms(self) -> list[_DocumentLLM]:
+        """
+        Returns the fallback models of the LLM that are LLMs themselves, i.e. those
+        that can replace the LLM in a chat. A fallback model of another kind, such
+        as a decision model, generates no text: it replaces the LLM only in
+        the extraction of what it can extract.
+
+        :return: The fallback LLMs, in the order they are tried.
+        :rtype: list[_DocumentLLM]
+        """
+        return [
+            fallback_model
+            for fallback_model in self.fallback_models
+            if isinstance(fallback_model, _DocumentLLM)
+        ]
+
     def _log_kind_specific_info(self) -> None:
         """
         Logs the information that applies to specific LLM providers, when the LLM
@@ -338,21 +398,39 @@ class _DocumentLLM(_DocumentModel):
             ``tool_max_rounds`` rounds of tool calls
         """
 
+        # Only LLMs can chat. A fallback model of another kind, such as a decision
+        # model, is skipped: it is a fallback only for the extraction.
+        fallback_llms = self._fallback_llms
+        skipped_fallback_models = [
+            fallback_model
+            for fallback_model in self.fallback_models
+            if not isinstance(fallback_model, _DocumentLLM)
+        ]
+        if skipped_fallback_models:
+            skipped_models_list = ", ".join(
+                f"{fallback_model._kind_name} `{fallback_model.model}`"
+                for fallback_model in skipped_fallback_models
+            )
+            logger.info(
+                f"Fallback models that cannot chat are skipped for chat: "
+                f"{skipped_models_list}"
+            )
+
         # Check the request params of the fallback LLMs before any request is sent.
         # A fallback LLM is used only if the LLM it is a fallback for fails, i.e. an invalid
         # param of a fallback LLM would otherwise go unnoticed until then. The request
         # params of this LLM are checked when its request is built.
-        for fallback_llm in self.fallback_models:
-            fallback_llm._validate_output_tokens()  # ty: ignore[unresolved-attribute]
-            fallback_llm._build_request_config(use_tools=True)  # ty: ignore[unresolved-attribute]
+        for fallback_llm in fallback_llms:
+            fallback_llm._validate_output_tokens()
+            fallback_llm._build_request_config(use_tools=True)
 
         # Try this LLM first, then each fallback LLM in the given order
-        llms_to_try = [self, *self.fallback_models]
+        llms_to_try = [self, *fallback_llms]
         response: str | None = None
         for i, llm in enumerate(llms_to_try):
             if i > 0:
                 logger.info(f"Using fallback LLM {llm.model} for chat")
-            response = await llm._chat_async(  # ty: ignore[unresolved-attribute]
+            response = await llm._chat_async(
                 prompt=prompt,
                 images=images,
                 chat_session=chat_session,
@@ -421,8 +499,8 @@ class _DocumentLLM(_DocumentModel):
         # Check for vision support of the LLM and of its fallback LLMs, as a fallback
         # LLM is sent the same images, if the LLM it is a fallback for fails
         if images:
-            for llm in [self, *self.fallback_models]:
-                if not llm._supports_vision:  # ty: ignore[unresolved-attribute]
+            for llm in [self, *self._fallback_llms]:
+                if not llm._supports_vision:
                     raise ValueError(
                         f"{'Fallback model' if llm.is_fallback else 'Model'} "
                         f"`{llm.model}` does not support vision according to "
@@ -736,39 +814,24 @@ class _DocumentLLM(_DocumentModel):
         :rtype: bool
         """
 
-        # Create a copy of the dictionaries to modify
-        self_dict = self.__dict__.copy()
-        other_dict = other.__dict__.copy()
+        # What models of all kinds have is compared first, then what only
+        # an LLM has (see `_eq_deserialized_kind_specific_config` below)
+        return self._eq_deserialized_model_config(other)
 
-        # Fallback LLMs are compared separately, each with this same method
-        self_fallback_models = self_dict.pop("fallback_models")
-        other_fallback_models = other_dict.pop("fallback_models")
-        if len(self_fallback_models) != len(other_fallback_models):
-            raise RuntimeError("Deserialized fallback LLMs were not properly set")
-        for self_fallback_llm, other_fallback_llm in zip(
-            self_fallback_models, other_fallback_models, strict=True
-        ):
-            if not self_fallback_llm._eq_deserialized_llm_config(other_fallback_llm):
-                logger.debug("Fallback LLM config of deserialized LLM is different.")
-                return False
+    def _eq_deserialized_kind_specific_config(self, other: _DocumentModel) -> bool:
+        """
+        Compares what only an LLM has with the same of a deserialized LLM:
+        the prompts and the capabilities.
 
-        # Skip checks for api_key and api_base that were redacted pre-serialization
-        self_dict.pop("api_key")
-        other_dict.pop("api_key")
-        self_dict.pop("api_base")
-        other_dict.pop("api_base")
-        if not (other.api_key is None and other.api_base is None):
-            raise RuntimeError(
-                "Deserialized LLM has api_key or api_base set, "
-                "while API credentials should have been redacted pre-serialization"
-            )
+        :param other: Another _DocumentLLM instance to compare with
+        :type other: _DocumentModel
+        :return: True if the instances are equal in what is compared, False otherwise
+        :rtype: bool
+        """
 
-        # Compare the modified dictionaries
-        if self_dict != other_dict:
-            logger.debug("LLM __dict__ of deserialized LLM is different.")
-            return False
-
-        # Special checks for specific private attributes
+        # Safe cast: the instances are checked to be of the same class
+        # before this method is called
+        other = cast(_DocumentLLM, other)
 
         # Check _extract_aspect_items_prompt
         if (
@@ -787,35 +850,6 @@ class _DocumentLLM(_DocumentModel):
         ):
             logger.debug(
                 "Extract concept items prompt of deserialized LLM is different."
-            )
-            return False
-
-        # Check that usage and cost stats were reset pre-serialization
-        if not (other._usage == _ModelUsage() and other._cost == _ModelCost()):
-            raise RuntimeError(
-                "Usage and cost stats were not properly reset during serialization"
-            )
-
-        # Check _async_limiter
-        if (
-            self._async_limiter.time_period != other._async_limiter.time_period
-            or self._async_limiter.max_rate != other._async_limiter.max_rate
-        ):
-            logger.debug("Async limiter params of deserialized LLM are different.")
-            return False
-
-        # Check _async_lock
-        if not (
-            isinstance(self._async_lock, asyncio.Lock)
-            and isinstance(other._async_lock, asyncio.Lock)
-        ):
-            logger.debug("Async lock of deserialized LLM is different.")
-            return False
-
-        # Check _private_attrs_initialized
-        if self._private_attrs_initialized != other._private_attrs_initialized:
-            logger.debug(
-                "`_private_attrs_initialized` of deserialized LLM is different."
             )
             return False
 

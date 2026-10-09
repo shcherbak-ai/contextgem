@@ -122,8 +122,12 @@ class DocumentLLM(_DocumentLLM):
         and the same role, output language, system message, tools, ``tool_choice`` and
         ``parallel_tool_calls`` as the current LLM, must differ from the current LLM and
         from each other in at least one config param, and must support vision if
-        the current LLM is used to extract concepts from images. Defaults to an empty list.
-    :vartype fallback_models: list[DocumentLLM]
+        the current LLM is used to extract concepts from images. A decision model
+        (``DocumentDecisionModel``) with ``is_fallback=True`` and the same role can
+        also be a fallback: it replaces the LLM only in the extraction, provided that
+        a decision model can extract everything the LLM is to extract, and is skipped
+        in a chat. Defaults to an empty list.
+    :vartype fallback_models: list[DocumentLLM | DocumentDecisionModel]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
         Applies only when DocumentLLM's default system message is used.

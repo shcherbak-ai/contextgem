@@ -133,11 +133,52 @@ _COST_QUANT = Decimal("0.00001")
 # and imported by tests/conftest.py to keep the test allowlist in sync.
 _GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
-# Error message for the LLMs that have the same role in a model group
-_NON_UNIQUE_MODEL_ROLES_MSG = (
-    "LLMs in a group must have different roles, "
-    "and only one LLM in a group can have no role."
-)
+# Name of the kind of the models in the messages on the models of different kinds
+_ANY_KIND_NAME = "model"
+
+
+def _get_common_kind_name(models: Sequence[_DocumentModel]) -> str:
+    """
+    Returns the name of the kind of the given models for the messages that apply
+    to all of them, e.g. to the models of a group.
+
+    :param models: The models that a message applies to.
+    :type models: Sequence[_DocumentModel]
+    :return: The name of the kind that all the models are of, e.g. "LLM", or "model"
+        if the models are of different kinds.
+    :rtype: str
+    """
+    kind_names = {model._kind_name for model in models}
+    return kind_names.pop() if len(kind_names) == 1 else _ANY_KIND_NAME
+
+
+def _with_indefinite_article(kind_name: str) -> str:
+    """
+    Returns the name of a kind of models with the indefinite article.
+
+    :param kind_name: The name of the kind of models, e.g. "LLM".
+    :type kind_name: str
+    :return: The name with its article, e.g. "an LLM" or "a decision model".
+    :rtype: str
+    """
+    # "LLM" is spelled out, i.e. it starts with a vowel sound
+    return f"an {kind_name}" if kind_name == "LLM" else f"a {kind_name}"
+
+
+def _get_non_unique_model_roles_msg(kind_name: str) -> str:
+    """
+    Returns the error message for the models that have the same role in a model group.
+
+    :param kind_name: The name of the kind of the models in the group, e.g. "LLM".
+    :type kind_name: str
+    :return: The error message.
+    :rtype: str
+    """
+    msg = (
+        f"{kind_name}s in a group must have different roles, "
+        f"and only one {kind_name} in a group can have no role."
+    )
+    return msg[0].upper() + msg[1:]
 
 
 class _GenericModelProcessor(_AbstractGenericModelProcessor):
@@ -260,6 +301,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         self._check_model_roles_before_extract_all(document)
         self._check_vision_support_for_concepts(
             document=document, concepts=document.concepts
+        )
+        # All aspects and concepts of the document are checked here, as the concepts
+        # of the aspects are extracted only after the requests for the aspects are sent
+        self._check_models_can_serve_instances(
+            self._get_all_instances_of_document(document)
         )
 
         # Check if sentence segmentation is required for some aspects or concepts
@@ -464,10 +510,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
             )
         else:
-            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            # Safe cast: self is a single model because `is_group` is False
             await self._extract_instances(
                 **extract_instances_kwargs,  # ty: ignore[invalid-argument-type]
-                llm=cast("_DocumentLLM", self),
+                llm=cast("_DocumentModel", self),
             )
 
         document_aspects = from_aspects if from_aspects else document.aspects
@@ -694,10 +740,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
             )
         else:
-            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            # Safe cast: self is a single model because `is_group` is False
             await self._extract_instances(
                 **extract_instances_kwargs,  # ty: ignore[invalid-argument-type]
-                llm=cast("_DocumentLLM", self),
+                llm=cast("_DocumentModel", self),
             )
 
         # Extract concepts from sub-aspects
@@ -919,9 +965,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
             )
         else:
-            # Safe cast: self is a _DocumentLLM because `is_group` is False
+            # Safe cast: self is a single model because `is_group` is False
             await self._extract_instances(
-                **extract_instances_kwargs, llm=cast("_DocumentLLM", self)
+                **extract_instances_kwargs, llm=cast("_DocumentModel", self)
             )
 
         # Explicitly return list of concepts for type checking
@@ -980,6 +1026,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 for role in sorted(roles, key=lambda role: (role is not None, role))
             )
 
+        # The models are named in the messages by their kind, e.g. as LLMs, unless
+        # the group has models of different kinds.
+        # Safe cast: the roles are routed only in a model group
+        kind = _get_common_kind_name(cast("_DocumentModelGroup", self).models)
+
         # The roles of the LLMs are validated to be unique when a group is created
         # or its LLMs are reassigned. However, the role of an LLM can be changed after
         # the LLM is added to a group, which the group is not notified of.
@@ -989,20 +1040,21 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         }
         if duplicate_roles:
             raise ValueError(
-                f"{_NON_UNIQUE_MODEL_ROLES_MSG} "
-                f"Roles assigned to several LLMs: {format_roles(duplicate_roles)}."
+                f"{_get_non_unique_model_roles_msg(kind)} "
+                f"Roles assigned to several {kind}s: {format_roles(duplicate_roles)}."
             )
 
         group_roles = set(roles_of_llms)
         missing_model_roles = model_roles.difference(group_roles)
         if missing_model_roles:
             raise ValueError(
-                f"Some aspects/concepts cannot be routed to an LLM in the group, "
-                f"as no LLM in the group has the role: {format_roles(missing_model_roles)}. "
-                f"Roles of the LLMs in the group: {format_roles(group_roles)}. "
-                f"An aspect/concept is extracted by the LLM with the `role` equal to "
+                f"Some aspects/concepts cannot be routed to "
+                f"{_with_indefinite_article(kind)} in the group, "
+                f"as no {kind} in the group has the role: {format_roles(missing_model_roles)}. "
+                f"Roles of the {kind}s in the group: {format_roles(group_roles)}. "
+                f"An aspect/concept is extracted by the {kind} with the `role` equal to "
                 f"the `model_role` of the aspect/concept. An aspect/concept without `model_role` "
-                f"is extracted by the LLM without `role`."
+                f"is extracted by the {kind} without `role`."
             )
 
     def _check_vision_support_for_concepts(
@@ -1042,12 +1094,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         if not image_concepts:
             return
 
+        # Imported here, as the module that defines LLMs imports this module
+        from contextgem.internal.base.llms import _DocumentLLM
+
         if self.is_group:
             # Safe cast: self is a _DocumentModelGroup because `is_group` is True
             llms = cast("_DocumentModelGroup", self).models
         else:
-            # Safe cast: self is a _DocumentLLM because `is_group` is False
-            llms = [cast("_DocumentLLM", self)]
+            # Safe cast: self is a single model because `is_group` is False
+            llms = [cast("_DocumentModel", self)]
 
         for llm in llms:
             # In a model group, a concept is extracted by the LLM with the same role.
@@ -1061,7 +1116,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 continue
             concept_names = ", ".join(f"`{i.name}`" for i in llm_image_concepts)
             for llm_instance in [llm, *llm.fallback_models]:
-                if llm_instance._supports_vision:  # ty: ignore[unresolved-attribute]
+                if not isinstance(llm_instance, _DocumentLLM):
+                    # Vision is a capability of LLMs. Whether a model of another
+                    # kind can extract the concepts routed to it, e.g. from images,
+                    # is checked separately (see `_check_models_can_serve_instances`).
+                    continue
+                if llm_instance._supports_vision:
                     continue
                 if llm_instance.is_fallback:
                     subject = "Fallback model"
@@ -1080,7 +1140,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
     def _check_instances_and_llm_params(
         self,
         target: _Document | _Aspect,
-        llm_or_group: _DocumentLLM | _DocumentModelGroup,
+        llm_or_group: _DocumentModel | _DocumentModelGroup,
         instances_to_process: Sequence[_Aspect]
         | Sequence[_Concept]
         | None,  # using Sequence type with list validator for type checking
@@ -1093,14 +1153,17 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         descendants that this extraction will process before any requests are sent.
         Aspect extraction checks aspect roles only; concept extraction from an aspect
         checks concept roles in the selected aspect and its non-empty descendants.
+        The same instances are checked to be extractable by the models that are
+        to extract them, where a model extracts only some aspects/concepts,
+        as a decision model does.
 
         :param target: The target object, which should have an attribute corresponding
             to `instance_type` (e.g., 'aspects' for 'aspect', etc.). Expected to be an
             instance of either _Document or _Aspect.
         :type target: _Document | _Aspect
-        :param llm_or_group: The LLM or a model group to be validated. This may either
-            be a standalone DocumentLLM or a DocumentModelGroup to ensure compatibility.
-        :type llm_or_group: _DocumentLLM | _DocumentModelGroup
+        :param llm_or_group: The model or a model group to be validated. This may either
+            be a standalone model, e.g. a DocumentLLM, or a DocumentModelGroup.
+        :type llm_or_group: _DocumentModel | _DocumentModelGroup
         :param instances_to_process: A list of instances to process, which must match
             the specified instance-type (`aspect` or `concept`). If not provided,
             defaults to instances present in the target attribute.
@@ -1155,6 +1218,27 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             overwrite_existing=overwrite_existing,
         )
 
+        # Include the descendants that the public extraction method processes
+        # recursively, respecting the selection of top-level instances.
+        instances_in_scope: list[_Aspect | _Concept] = list(check_instances)
+        if instance_type == "aspect":
+            pending_aspects = list(cast(Sequence[_Aspect], check_instances))
+        elif isinstance(target, _Aspect):
+            pending_aspects = list(target.aspects)
+        else:
+            pending_aspects = []
+        while pending_aspects:
+            aspect = pending_aspects.pop()
+            if instance_type == "aspect":
+                instances_in_scope.extend(aspect.aspects)
+            else:
+                # Concept extraction skips this whole subtree when the aspect
+                # has no extracted paragraphs to provide as context.
+                if not aspect.reference_paragraphs:
+                    continue
+                instances_in_scope.extend(aspect.concepts)
+            pending_aspects.extend(aspect.aspects)
+
         # Check DocumentModelGroup. A standalone DocumentLLM extracts all the instances,
         # regardless of their model roles, i.e. requires no check of the model roles.
         if llm_or_group.is_group:
@@ -1164,27 +1248,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 raise ValueError(
                     "The provided DocumentModelGroup does not contain any defined LLMs."
                 )
-            # Include the descendants that the public extraction method processes
-            # recursively, respecting the selection of top-level instances.
-            required_roles = {i.model_role for i in check_instances}
-            if instance_type == "aspect":
-                pending_aspects = list(cast(Sequence[_Aspect], check_instances))
-            elif isinstance(target, _Aspect):
-                pending_aspects = list(target.aspects)
-            else:
-                pending_aspects = []
-            while pending_aspects:
-                aspect = pending_aspects.pop()
-                if instance_type == "aspect":
-                    required_roles.add(aspect.model_role)
-                else:
-                    # Concept extraction skips this whole subtree when the aspect
-                    # has no extracted paragraphs to provide as context.
-                    if not aspect.reference_paragraphs:
-                        continue
-                    required_roles.update(i.model_role for i in aspect.concepts)
-                pending_aspects.extend(aspect.aspects)
-            model_group._check_model_roles_are_routable(required_roles)
+            model_group._check_model_roles_are_routable(
+                {i.model_role for i in instances_in_scope}
+            )
 
         # Concepts can be extracted from images only at the document level
         if instance_type == "concept" and isinstance(target, _Document):
@@ -1194,6 +1260,79 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # because `instance_type` is "concept"
                 concepts=cast(Sequence[_Concept], check_instances),
             )
+
+        # A model of a kind that extracts only some aspects/concepts, e.g. a decision
+        # model, must be able to extract what this extraction routes to it
+        llm_or_group._check_models_can_serve_instances(instances_in_scope)
+
+    def _check_models_can_serve_instances(
+        self, instances: Sequence[_Aspect | _Concept]
+    ) -> None:
+        """
+        Checks, before any requests are sent, that each model can extract the aspects
+        and concepts that are to be extracted by it. The same is required of
+        the fallback models of such model, as a fallback model is to extract what
+        the model it replaces fails to extract. Otherwise, a fallback model that
+        cannot extract an aspect or a concept would fail only when it is needed,
+        i.e. after the requests to the primary model are sent.
+
+        What a model can extract depends on its kind (see
+        ``_DocumentModel._check_instances_servable``): an LLM extracts any aspect
+        or concept, while a decision model extracts only some of them.
+
+        In a model group, each aspect or concept is extracted by the model that it
+        is routed to by the role, i.e. the roles must be checked to be routable
+        before this check. A standalone model extracts all the aspects and concepts,
+        regardless of their roles.
+
+        :param instances: The aspects and concepts to be extracted, including those
+            extracted from the aspects that the extraction goes through.
+        :type instances: Sequence[_Aspect | _Concept]
+        :return: None
+        :rtype: None
+        :raises ValueError: If a model that is to extract some of the aspects or
+            concepts, or any of its fallback models, cannot extract them.
+        """
+
+        if self.is_group:
+            # Safe cast: self is a _DocumentModelGroup because `is_group` is True
+            models = cast("_DocumentModelGroup", self).models
+        else:
+            # Safe cast: self is a single model because `is_group` is False
+            models = [cast("_DocumentModel", self)]
+
+        for model in models:
+            routed_instances = [
+                i for i in instances if not self.is_group or i.model_role == model.role
+            ]
+            if not routed_instances:
+                continue
+            for model_instance in [model, *model.fallback_models]:
+                model_instance._check_instances_servable(routed_instances)
+
+    @staticmethod
+    def _get_all_instances_of_document(
+        document: _Document,
+    ) -> list[_Aspect | _Concept]:
+        """
+        Returns all aspects and concepts assigned to the document, including
+        the sub-aspects and the concepts of the aspects at any level of nesting,
+        i.e. everything that the full extraction method extract_all() is to extract.
+
+        :param document: The document to get the aspects and concepts of.
+        :type document: _Document
+        :return: The concepts of the document, followed by each aspect with its
+            concepts, the aspects of a level before their sub-aspects.
+        :rtype: list[_Aspect | _Concept]
+        """
+        instances: list[_Aspect | _Concept] = list(document.concepts)
+        pending_aspects = list(document.aspects)
+        while pending_aspects:
+            aspect = pending_aspects.pop(0)
+            instances.append(aspect)
+            instances.extend(aspect.concepts)
+            pending_aspects.extend(aspect.aspects)
+        return instances
 
     @staticmethod
     def _check_instances_already_processed(
@@ -1224,6 +1363,53 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     f"Some {instance_type}s have already been processed: {already_processed_names}."
                     "Set `overwrite_existing=True` to overwrite them."
                 )
+
+    @staticmethod
+    def _get_text_for_concept_extraction(
+        source: _Document | _Aspect,
+        paragraphs_chunk: list[_Paragraph],
+    ) -> str:
+        """
+        Returns the text that concepts are extracted from, when it is sent to a model
+        as a raw text, i.e. not as the paragraphs to be referenced.
+
+        :param source: The source that the concepts are extracted from.
+        :type source: _Document | _Aspect
+        :param paragraphs_chunk: The paragraphs of the source to be sent in one
+            call: all the paragraphs of the document or of the aspect, or a part
+            of them if the source is processed in chunks.
+        :type paragraphs_chunk: list[_Paragraph]
+        :return: The raw text of the document, cleaned with its linebreaks preserved,
+            if the document is processed as a whole; otherwise, the cleaned raw texts
+            of the paragraphs, separated by a blank line.
+        :rtype: str
+        :raises ValueError: If the document is processed as a whole and has no text.
+        """
+        if isinstance(source, _Document) and len(paragraphs_chunk) == len(
+            source.paragraphs
+        ):
+            # If the document is being processed as a whole,
+            # use raw_text of the document.
+            text = source.raw_text
+            if text is None:
+                raise ValueError("Document lacks text for concept extraction.")
+            return _clean_text_for_llm_prompt(
+                text,
+                preserve_linebreaks=True,
+                strip_text=True,
+            )  # raw text of the document
+        # If an aspect is being processed, or if the document is being
+        # processed in chunks, use raw_text of the paragraphs.
+        return "\n\n".join(
+            [
+                _clean_text_for_llm_prompt(
+                    p.raw_text,
+                    preserve_linebreaks=False,
+                    strip_text=True,
+                )
+                for p in paragraphs_chunk
+            ]
+        )
 
     @staticmethod
     def _prepare_message_kwargs_list(
@@ -1455,34 +1641,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             )
                     else:
                         # Raw text of document/aspect used for concept extraction
-                        if isinstance(source, _Document) and len(
-                            paragraphs_chunk
-                        ) == len(source.paragraphs):
-                            # If the document is being processed as a whole,
-                            # use raw_text of the document.
-                            text = source.raw_text
-                            if text is None:
-                                raise ValueError(
-                                    "Document lacks text for concept extraction."
-                                )
-                            prompt_kwargs["text"] = _clean_text_for_llm_prompt(
-                                text,
-                                preserve_linebreaks=True,
-                                strip_text=True,
-                            )  # raw text of the document
-                        else:
-                            # If an aspect is being processed, or if the document is being
-                            # processed in chunks, use raw_text of the paragraphs.
-                            prompt_kwargs["text"] = "\n\n".join(
-                                [
-                                    _clean_text_for_llm_prompt(
-                                        p.raw_text,
-                                        preserve_linebreaks=False,
-                                        strip_text=True,
-                                    )
-                                    for p in paragraphs_chunk
-                                ]
+                        prompt_kwargs["text"] = (
+                            _GenericModelProcessor._get_text_for_concept_extraction(
+                                source=source, paragraphs_chunk=paragraphs_chunk
                             )
+                        )
 
                 else:
                     raise ValueError(
@@ -1552,7 +1715,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         self,
         extracted_item_type: ExtractedInstanceType,
         source: _Document | _Aspect,
-        llm: _DocumentLLM,
+        llm: _DocumentModel,
         instances_to_process: list[_Aspect] | list[_Concept],
         document: _Document,
         overwrite_existing: bool = False,
@@ -1575,12 +1738,18 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         This unified method handles extraction from both documents and aspects,
         supporting both text and images as the content to extract from.
 
+        The method is the single entry point of the extraction with a model of
+        any kind. After the checks that apply to any model, the extraction with
+        a decision model is passed to the implementation of that model, which
+        returns the result under the same contract, while the extraction with
+        an LLM is performed here.
+
         :param extracted_item_type: Type of the item(s) being extracted ("aspect" or "concept")
         :type extracted_item_type: ExtractedInstanceType
         :param source: The source to extract from (_Document or _Aspect)
         :type source: _Document | _Aspect
-        :param llm: The LLM used for extraction
-        :type llm: DocumentLLM
+        :param llm: The model used for extraction: an LLM or a decision model
+        :type llm: _DocumentModel
         :param instances_to_process: List of aspects or concepts to process
         :type instances_to_process: list[_Aspect] | list[_Concept]
         :param document: The document containing the source.
@@ -1794,8 +1963,34 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # Handle empty instances list
         if not instances_to_process:
-            logger.info(f"No {extracted_item_type}s to process with LLM `{llm.model}`")
+            logger.info(
+                f"No {extracted_item_type}s to process with {llm._kind_name} "
+                f"`{llm.model}`"
+            )
             return [], _ModelUsage()
+
+        # A decision model is sent no prompt: it answers typed questions on the text
+        # of the source, i.e. it builds its requests and the items from its answers
+        # itself. The checks of the source above apply to a model of any kind.
+        # Imported here, as the module that defines decision models imports this module.
+        from contextgem.internal.base.decision_models import _DocumentDecisionModel
+
+        if isinstance(llm, _DocumentDecisionModel):
+            return await llm._extract_items_from_decisions(
+                extracted_item_type=extracted_item_type,
+                source=source,
+                instances_to_process=instances_to_process,
+                document=document,
+                overwrite_existing=overwrite_existing,
+                max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                num_retries_failed_request=num_retries_failed_request,
+                async_limiter=async_limiter,
+                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
+                has_fallback_pending=has_fallback_pending,
+            )
+
+        # Safe cast: a model that is not a decision model is an LLM
+        llm = cast("_DocumentLLM", llm)
 
         # Prepare message kwargs list based on extraction params
         message_kwargs_list = self._prepare_message_kwargs_list(
@@ -2385,7 +2580,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
     async def _extract_instances(
         self,
         context: _Document | _Aspect,
-        llm: _DocumentLLM,
+        llm: _DocumentModel,
         instance_type: ExtractedInstanceType,
         document: _Document,
         from_instances: list[_Aspect] | list[_Concept] | None = None,
@@ -2401,8 +2596,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         :param context: The context (document or aspect) from which to extract instances
         :type context: _Document | _Aspect
-        :param llm: The LLM used for extraction
-        :type llm: DocumentLLM
+        :param llm: The model used for extraction: an LLM or a decision model
+        :type llm: _DocumentModel
         :param instance_type: Type of instance to extract ("aspect" or "concept")
         :type instance_type: ExtractedInstanceType
         :param document: The document object associated with the context.
@@ -2494,8 +2689,30 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     f"while some {instance_type}s rely on such LLM."
                 )
 
+            def get_invalid_output_error_msg(
+                model: _DocumentModel,
+                instances: list[_Aspect] | list[_Concept],
+            ) -> str:
+                """
+                Returns the error message for the instances that could not be
+                processed because the model returned an output that cannot be used.
+
+                :param model: The model that returned such output.
+                :type model: _DocumentModel
+                :param instances: The instances that could not be processed.
+                :type instances: list[_Aspect] | list[_Concept]
+                :return: The error message, which names the instances.
+                :rtype: str
+                """
+                instance_names = [instance.name for instance in instances]
+                return (
+                    f"Some {instance_type}s could not be processed due to "
+                    f"{model._invalid_output_desc} returned by {model._kind_name}. "
+                    f"Failed {instance_type}s: {instance_names}"
+                )
+
             async def retry_processing_for_result(
-                llm_instance: _DocumentLLM,
+                llm_instance: _DocumentModel,
                 res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
                 instances: list[_Aspect] | list[_Concept],
                 n_retries: int = 0,
@@ -2509,8 +2726,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 soon as a response is cut off at the max output tokens, as the same
                 request would be cut off again.
 
-                :param llm_instance: The LLM instance to process the data.
-                :type llm_instance: _DocumentLLM
+                :param llm_instance: The model instance to process the data.
+                :type llm_instance: _DocumentModel
                 :param res: Result to check and retry if invalid.
                 :type res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
                 :param instances: List of processed instances associated with the result.
@@ -2529,7 +2746,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 if not _model_call_result_is_valid(res):
                     for i in range(n_retries):
                         logger.info(
-                            f"Retrying {instance_type}s with invalid JSON "
+                            f"Retrying {instance_type}s with "
+                            f"{llm_instance._invalid_output_desc} "
                             f"({i + 1}/{n_retries})"
                         )
                         res = await self._extract_items_from_instances(
@@ -2548,7 +2766,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                             max_images_to_analyze_per_call=max_images_to_analyze_per_call,
                             num_retries_failed_request=llm_instance.num_retries_failed_request,
-                            max_retries_failed_request=llm_instance.max_retries_failed_request,
+                            max_retries_failed_request=llm_instance._provider_retries_failed_request,
                             async_limiter=async_limiters.get(id(llm_instance)),
                             raise_exception_on_extraction_error=raise_exception_on_extraction_error,
                             has_fallback_pending=not retry_is_final,
@@ -2573,10 +2791,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             _model_call_result_is_api_failure(res)
                             or _model_call_result_is_output_truncated(res)
                         ):
-                            instance_names = [instance.name for instance in instances]
-                            error_msg = (
-                                f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
-                                f"Failed {instance_type}s: {instance_names}"
+                            error_msg = get_invalid_output_error_msg(
+                                llm_instance, instances
                             )
                             if raise_exception_on_extraction_error:
                                 logger.error(error_msg)
@@ -2620,7 +2836,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # If its response was cut off at the max output tokens, the same
                 # request would be cut off again.
                 if (
-                    llm.max_retries_invalid_data > 0
+                    llm._retries_invalid_data > 0
                     and not _model_call_result_is_api_failure(result)
                     and not _model_call_result_is_output_truncated(result)
                 ):
@@ -2628,7 +2844,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         llm_instance=llm,
                         res=result,
                         instances=chunk,
-                        n_retries=llm.max_retries_invalid_data,
+                        n_retries=llm._retries_invalid_data,
                         retry_is_final=not llm.fallback_models,
                     )
                 n_fallbacks = len(llm.fallback_models)
@@ -2636,20 +2852,41 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     if retry_successful:
                         break
                     logger.info(
-                        f"Trying with fallback LLM {fallback_llm.model} "
-                        f"({i + 1}/{n_fallbacks})"
+                        f"Trying with fallback {fallback_llm._kind_name} "
+                        f"{fallback_llm.model} ({i + 1}/{n_fallbacks})"
                     )
                     retry_successful = await retry_processing_for_result(
-                        llm_instance=fallback_llm,  # ty: ignore[invalid-argument-type]
+                        llm_instance=fallback_llm,
                         res=result,
                         instances=chunk,
                         n_retries=max(
-                            fallback_llm.max_retries_invalid_data,  # ty: ignore[unresolved-attribute]
+                            fallback_llm._retries_invalid_data,
                             1,
                         ),  # retry with each fallback LLM at least once
                         retry_is_final=i == n_fallbacks - 1,
                     )
                 return retry_successful
+
+            def is_reported_failure(
+                result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+                | None,
+            ) -> bool:
+                """
+                Checks whether the invalid result of a call is already reported
+                by the model that made the call, i.e. whether its API request failed
+                or its response was cut off at the max output tokens. Such a result
+                is not to be reported as an invalid output of the model as well.
+
+                :param result: The invalid result of a call, or None if no result
+                    is received.
+                :type result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+                    | None
+                :return: True if the failure is already reported, False otherwise.
+                :rtype: bool
+                """
+                return _model_call_result_is_api_failure(
+                    result
+                ) or _model_call_result_is_output_truncated(result)
 
             if use_concurrency:
                 # default - each item in a separate call
@@ -2680,7 +2917,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
                 "max_images_to_analyze_per_call": max_images_to_analyze_per_call,
                 "num_retries_failed_request": llm.num_retries_failed_request,
-                "max_retries_failed_request": llm.max_retries_failed_request,
+                "max_retries_failed_request": llm._provider_retries_failed_request,
                 "async_limiter": async_limiters.get(id(llm)),
                 "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
                 "has_fallback_pending": bool(llm.fallback_models),
@@ -2750,13 +2987,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         ),
                         return_exceptions=True,
                     )
-                    for (chunk, _), outcome in zip(
+                    for (chunk, result), outcome in zip(
                         failed_pairs, retry_outcomes, strict=True
                     ):
                         if isinstance(outcome, BaseException):
                             raise outcome
                         if not outcome:
-                            if llm.max_retries_invalid_data > 0 or llm.fallback_models:
+                            if llm._retries_invalid_data > 0 or llm.fallback_models:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have
                                     # been raised in case of extraction error such as invalid JSON.
@@ -2765,12 +3002,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                         "`raise_exception_on_extraction_error` set to True, "
                                         "yet no exception was raised."
                                     )
-                            else:
-                                instance_names = [instance.name for instance in chunk]
-                                error_msg = (
-                                    f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
-                                    f"Failed {instance_type}s: {instance_names}"
-                                )
+                            elif not is_reported_failure(result):
+                                error_msg = get_invalid_output_error_msg(llm, chunk)
                                 if raise_exception_on_extraction_error:
                                     raise ModelExtractionError(error_msg, retry_count=0)
                                 else:
@@ -2803,7 +3036,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             result=result,
                         )
                         if not retry_successful:
-                            if llm.max_retries_invalid_data > 0 or llm.fallback_models:
+                            if llm._retries_invalid_data > 0 or llm.fallback_models:
                                 if raise_exception_on_extraction_error:
                                     # Final retry was already performed, therefore an exception should have
                                     # been raised in case of extraction error such as invalid JSON.
@@ -2812,14 +3045,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                         "`raise_exception_on_extraction_error` set to True, "
                                         "yet no exception was raised."
                                     )
-                            else:
-                                instance_names = [
-                                    instance.name  # ty: ignore[unresolved-attribute]
-                                    for instance in data["instances_to_process"]  # ty: ignore[not-iterable]
-                                ]
-                                error_msg = (
-                                    f"Some {instance_type}s could not be processed due to invalid JSON returned by LLM. "
-                                    f"Failed {instance_type}s: {instance_names}"
+                            elif not is_reported_failure(result):
+                                error_msg = get_invalid_output_error_msg(
+                                    llm,
+                                    data["instances_to_process"],  # ty: ignore[invalid-argument-type]
                                 )
                                 if raise_exception_on_extraction_error:
                                     raise ModelExtractionError(error_msg, retry_count=0)
@@ -2920,7 +3149,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             }
             logger.debug(
                 f"Processing group of {instance_class.__name__}s ({len(group)}) "
-                f"with LLM `{llm.model}` with params: {params_combination}"
+                f"with {llm._kind_name} `{llm.model}` with params: {params_combination}"
             )
             cals_and_kwargs.append(
                 (
@@ -2992,8 +3221,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         # For individual LLM, use self and its fallbacks
         # For group, iterate through all LLMs in self.models
         llms_to_process = self.models if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
-        # Safe cast: llms_to_process contains only _DocumentLLM instances
-        llms_to_process = cast(list["_DocumentLLM"], llms_to_process)
+        # Safe cast: llms_to_process contains only single models, of any kind
+        llms_to_process = cast(list["_DocumentModel"], llms_to_process)
 
         for primary_llm in llms_to_process:
             for llm in [primary_llm, *primary_llm.fallback_models]:
@@ -3024,7 +3253,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             ]  # for both main and fallback LLMs
             if not info_containers:
                 raise ValueError(
-                    f"No LLM with the given role `{model_role}` was found in group."
+                    f"No {_get_common_kind_name(llms_to_process)} with the given role "
+                    f"`{model_role}` was found in group."
                 )
         return info_containers
 
@@ -3266,6 +3496,75 @@ class _DocumentModel(_GenericModelProcessor):
         """
         return [self.role]
 
+    @property
+    def _kind_name(self) -> str:
+        """
+        Returns the name of the kind of the model, as used in the messages of
+        the logic that models of all kinds share. To be overridden in the subclasses.
+
+        :return: The name of the kind of the model, e.g. "LLM".
+        :rtype: str
+        """
+        return _ANY_KIND_NAME
+
+    @property
+    def _invalid_output_desc(self) -> str:
+        """
+        Returns what the model is said to have returned when its output cannot
+        be used, as worded in the messages on the extraction that fails for it.
+        To be overridden in the subclasses of the kinds of models whose output
+        is invalid in a specific way, e.g. is not a valid JSON.
+
+        :return: The description of an output of the model that cannot be used.
+        :rtype: str
+        """
+        return "an invalid response"
+
+    @property
+    def _retries_invalid_data(self) -> int:
+        """
+        Returns the number of times that a call is made again when the model returns
+        invalid data for it. Zero by default, i.e. such a call is not made again:
+        to be overridden in the subclasses of the kinds of models that may return
+        valid data when the same call is repeated, as an LLM may.
+
+        :return: The number of retries of a call with invalid data returned.
+        :rtype: int
+        """
+        return 0
+
+    @property
+    def _provider_retries_failed_request(self) -> int:
+        """
+        Returns the number of retries of a failed request that are left to the SDK
+        of the model provider, in addition to the retries performed by the framework
+        (``num_retries_failed_request``). Zero by default, i.e. there are no such
+        retries: to be overridden in the subclasses of the kinds of models whose
+        requests are sent through such an SDK.
+
+        :return: The number of retries of a failed request by the provider's SDK.
+        :rtype: int
+        """
+        return 0
+
+    def _check_instances_servable(
+        self, instances: Sequence[_Aspect | _Concept]
+    ) -> None:
+        """
+        Checks, before any requests are sent, that the model can extract the given
+        aspects and concepts, which are to be extracted by it. Does nothing by
+        default, i.e. the model extracts any aspect or concept: to be overridden
+        in the subclasses of the kinds of models that extract only some of them.
+
+        :param instances: The aspects and concepts to be extracted by the model.
+        :type instances: Sequence[_Aspect | _Concept]
+        :return: None
+        :rtype: None
+        :raises ValueError: If the model cannot extract some of the aspects
+            or concepts.
+        """
+        return None
+
     @field_validator("model")
     @classmethod
     def _validate_model(cls, model: str) -> str:
@@ -3303,10 +3602,12 @@ class _DocumentModel(_GenericModelProcessor):
         :raises ValueError: If any of the ``fallback_models`` is not a fallback model, as
             indicated by the ``is_fallback`` attribute set to ``False``.
         """
-        if any(not fallback_llm.is_fallback for fallback_llm in fallback_models):
-            raise ValueError(
-                "Fallback LLM must be a fallback model. Use `is_fallback=True`."
-            )
+        for fallback_llm in fallback_models:
+            if not fallback_llm.is_fallback:
+                raise ValueError(
+                    f"Fallback {fallback_llm._kind_name} must be a fallback model. "
+                    f"Use `is_fallback=True`."
+                )
         return fallback_models
 
     @model_validator(mode="after")
@@ -3347,11 +3648,16 @@ class _DocumentModel(_GenericModelProcessor):
                 "Disable `auto_pricing` or provide explicit `pricing_details`."
             )
 
+        # The models are named in the messages by their kind, e.g. as LLMs.
+        # A fallback model may be of another kind than the main one.
+        kind = self._kind_name
+
         # Fallback model validation
         if self.is_fallback and self.fallback_models:
             raise ValueError(
-                "Fallback LLM cannot have its own fallback LLMs "
-                "and must be attached to a non-fallback model."
+                f"Fallback {kind} cannot have its own fallback "
+                f"{_get_common_kind_name([self, *self.fallback_models])}s "
+                f"and must be attached to a non-fallback model."
             )
 
         # A fallback LLM with the same config params as the main LLM or as another
@@ -3403,10 +3709,12 @@ class _DocumentModel(_GenericModelProcessor):
         fallback_llm_dicts: list[dict[str, Any]] = []
 
         for fallback_llm in self.fallback_models:
+            fallback_kind = fallback_llm._kind_name
+
             # Check for the consistency of the fallback LLM role
             if fallback_llm.role != self.role:
                 raise ValueError(
-                    f"The fallback LLM must have the same role `{self.role}` as the main one."
+                    f"The fallback {fallback_kind} must have the same role `{self.role}` as the main one."
                 )
 
             # Check the params that the specific kind of the model requires its
@@ -3414,16 +3722,17 @@ class _DocumentModel(_GenericModelProcessor):
             self._validate_kind_specific_fallback(fallback_llm)
 
             # Check that the fallback LLM is not the replica of the main LLM or of another
-            # fallback LLM, just with different `is_fallback` and `fallback_models` params
+            # fallback LLM, just with different `is_fallback` and `fallback_models` params.
+            # Only the models of the same kind can have the same config params.
             fallback_llm_dict = get_config_params(fallback_llm)
             if check_same_config:
                 if main_llm_dict == fallback_llm_dict:
                     raise ValueError(
-                        "Fallback LLM must not have the exact same config params as the main LLM."
+                        f"Fallback {fallback_kind} must not have the exact same config params as the main {kind}."
                     )
                 if fallback_llm_dict in fallback_llm_dicts:
                     raise ValueError(
-                        "Fallback LLMs must not have the exact same config params as each other."
+                        f"Fallback {fallback_kind}s must not have the exact same config params as each other."
                     )
             fallback_llm_dicts.append(fallback_llm_dict)
 
@@ -3466,6 +3775,118 @@ class _DocumentModel(_GenericModelProcessor):
         """
         return None
 
+    def _eq_deserialized_model_config(self, other: _DocumentModel) -> bool:
+        """
+        Custom config equality method to compare this model with a deserialized instance.
+
+        Compares the __dict__ of both instances and performs specific checks for
+        certain attributes that require special handling: first for what models
+        of all kinds have, then for what only the specific kind of the model has
+        (see ``_eq_deserialized_kind_specific_config``).
+
+        Note that, by default, the reconstructed deserialized model will be only partially
+        equal (==) to the original one, as the api credentials are redacted, and the async
+        limiter and the async lock are not serialized and point to different objects
+        in memory post-initialization. Also, usage and cost are reset by default pre-serialization.
+
+        :param other: Another model instance to compare with
+        :type other: _DocumentModel
+        :return: True if the instances are equal, False otherwise
+        :rtype: bool
+        """
+
+        kind = self._kind_name
+
+        # A model deserialized as an instance of another class is another model
+        if type(self) is not type(other):
+            logger.debug(f"Class of deserialized {kind} is different.")
+            return False
+
+        # Create a copy of the dictionaries to modify
+        self_dict = self.__dict__.copy()
+        other_dict = other.__dict__.copy()
+
+        # Fallback models are compared separately, each with this same method
+        self_fallback_models = self_dict.pop("fallback_models")
+        other_fallback_models = other_dict.pop("fallback_models")
+        if len(self_fallback_models) != len(other_fallback_models):
+            raise RuntimeError(f"Deserialized fallback {kind}s were not properly set")
+        for self_fallback_llm, other_fallback_llm in zip(
+            self_fallback_models, other_fallback_models, strict=True
+        ):
+            if not self_fallback_llm._eq_deserialized_model_config(other_fallback_llm):
+                logger.debug(
+                    f"Fallback {kind} config of deserialized {kind} is different."
+                )
+                return False
+
+        # Skip checks for api_key and api_base that were redacted pre-serialization
+        self_dict.pop("api_key")
+        other_dict.pop("api_key")
+        self_dict.pop("api_base")
+        other_dict.pop("api_base")
+        if not (other.api_key is None and other.api_base is None):
+            raise RuntimeError(
+                f"Deserialized {kind} has api_key or api_base set, "
+                f"while API credentials should have been redacted pre-serialization"
+            )
+
+        # Compare the modified dictionaries
+        if self_dict != other_dict:
+            logger.debug(f"{kind} __dict__ of deserialized {kind} is different.")
+            return False
+
+        # Special checks for specific private attributes
+
+        # Check that usage and cost stats were reset pre-serialization
+        if not (other._usage == _ModelUsage() and other._cost == _ModelCost()):
+            raise RuntimeError(
+                "Usage and cost stats were not properly reset during serialization"
+            )
+
+        # Check _async_limiter
+        if (
+            self._async_limiter.time_period != other._async_limiter.time_period
+            or self._async_limiter.max_rate != other._async_limiter.max_rate
+        ):
+            logger.debug(f"Async limiter params of deserialized {kind} are different.")
+            return False
+
+        # Check _async_lock
+        if not (
+            isinstance(self._async_lock, asyncio.Lock)
+            and isinstance(other._async_lock, asyncio.Lock)
+        ):
+            logger.debug(f"Async lock of deserialized {kind} is different.")
+            return False
+
+        # Check _private_attrs_initialized
+        if self._private_attrs_initialized != other._private_attrs_initialized:
+            logger.debug(
+                f"`_private_attrs_initialized` of deserialized {kind} is different."
+            )
+            return False
+
+        # Check what only the specific kind of the model has
+        return self._eq_deserialized_kind_specific_config(other)
+
+    def _eq_deserialized_kind_specific_config(self, other: _DocumentModel) -> bool:
+        """
+        Compares what only the specific kind of the model has with the same
+        of a deserialized instance of the same class, e.g. the prompts and
+        the capabilities of an LLM. Nothing is compared by default: to be overridden
+        in the subclasses whose instances have such attributes.
+
+        Called at the end of ``_eq_deserialized_model_config``, i.e. when what models
+        of all kinds have is found to be equal.
+
+        :param other: Another instance of the same class to compare with
+        :type other: _DocumentModel
+        :return: True if the instances are equal in what is compared, False otherwise
+        :rtype: bool
+        """
+        return True
+
     def _get_raw_usage(self) -> _ModelUsage:
         """
         Retrieves the raw usage information of the LLM.
@@ -3488,10 +3909,11 @@ class _DocumentModel(_GenericModelProcessor):
         """
 
         if self.pricing_details is None and not self.auto_pricing:
+            kind = self._kind_name
             logger.info(
-                f"No pricing params provided for the LLM `{self.model}`"
+                f"No pricing params provided for the {kind} `{self.model}`"
                 f"{f' with role `{self.role}`' if self.role else ''}. "
-                f"Costs for this LLM were not calculated."
+                f"Costs for this {kind} were not calculated."
             )
 
         # Quantize for presentation without mutating internal state
@@ -3602,7 +4024,7 @@ class _DocumentModel(_GenericModelProcessor):
             or self._auto_pricing_model_ref is None
         ):
             raise LookupError(
-                "Auto-pricing provider/model are not set for this LLM instance"
+                f"Auto-pricing provider/model are not set for this {self._kind_name} instance"
             )
 
         # Cache tokens are a part of the input tokens, in genai-prices as well
@@ -3616,15 +4038,16 @@ class _DocumentModel(_GenericModelProcessor):
         if self.auto_pricing_refresh and not self._auto_pricing_refresh_attempted:
             # Attempt price update only once, as it involves a network call
             self._auto_pricing_refresh_attempted = True
+            kind = self._kind_name
             with _GPUpdatePrices() as update_prices:
                 logger.info(
-                    f"Updating LLM API prices since `auto_pricing_refresh=True` for model `{self.model}`"
+                    f"Updating {kind} API prices since `auto_pricing_refresh=True` for model `{self.model}`"
                 )
                 try:
                     update_prices.wait()
-                    logger.info("Finished updating LLM API prices")
+                    logger.info(f"Finished updating {kind} API prices")
                 except Exception as e:
-                    logger.error(f"Error updating LLM API prices: {e}.")
+                    logger.error(f"Error updating {kind} API prices: {e}.")
                 price_data = _calc_auto_price(
                     usage,
                     model_ref=self._auto_pricing_model_ref,
@@ -3893,6 +4316,22 @@ class _DocumentModelGroup(_GenericModelProcessor):
         """
         return [i.role for i in self.models]
 
+    @property
+    def _llms(self) -> list[_DocumentLLM]:
+        """
+        Returns the LLMs of the group, i.e. its models other than those of
+        the kinds that generate no text, such as decision models. The params
+        that only LLMs have, e.g. the output language and the tools, apply
+        to these models of the group only.
+
+        :return: The models of the group that are LLMs, in the order of the group.
+        :rtype: list[_DocumentLLM]
+        """
+        # Imported here, as the module that defines LLMs imports this module
+        from contextgem.internal.base.llms import _DocumentLLM
+
+        return [model for model in self.models if isinstance(model, _DocumentLLM)]
+
     def group_update_output_language(
         self, output_language: LanguageRequirement
     ) -> None:
@@ -3904,7 +4343,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        for llm in self.models:
+        for llm in self._llms:
             llm.output_language = output_language
         self.output_language = output_language
         logger.info(
@@ -3918,8 +4357,8 @@ class _DocumentModelGroup(_GenericModelProcessor):
         """
         Custom config equality method to compare this _DocumentModelGroup with a deserialized instance.
 
-        Uses the `_eq_deserialized_llm_config` method of the _DocumentLLM class to compare each LLM
-        in the group, including fallbacks, if any.
+        Uses the `_eq_deserialized_model_config` method of each model in the group, of any
+        kind, to compare it with its counterpart, including fallbacks, if any.
 
         :param other: Another _DocumentModelGroup instance to compare with
         :type other: _DocumentModelGroup
@@ -3927,7 +4366,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
         :rtype: bool
         """
         for self_llm, other_llm in zip(self.models, other.models, strict=True):
-            if not self_llm._eq_deserialized_llm_config(other_llm):  # ty: ignore[unresolved-attribute]
+            if not self_llm._eq_deserialized_model_config(other_llm):
                 return False
         return True
 
@@ -3939,7 +4378,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        models_with_tools = [llm.model for llm in self.models if llm.tools]  # ty: ignore[unresolved-attribute]
+        models_with_tools = [llm.model for llm in self._llms if llm.tools]
         if models_with_tools:
             models_with_tools_list = ", ".join(models_with_tools)
             warnings.warn(
@@ -3967,7 +4406,9 @@ class _DocumentModelGroup(_GenericModelProcessor):
         seen_roles = set()
         for llm in models:
             if llm.role in seen_roles:
-                raise ValueError(_NON_UNIQUE_MODEL_ROLES_MSG)
+                raise ValueError(
+                    _get_non_unique_model_roles_msg(_get_common_kind_name(models))
+                )
             seen_roles.add(llm.role)
         return models
 
@@ -4045,7 +4486,8 @@ class _DocumentModelGroup(_GenericModelProcessor):
                 llm.reset_usage_and_cost()
             except StopIteration:
                 raise ValueError(
-                    f"No LLM with the given role `{model_role}` was found in group."
+                    f"No {_get_common_kind_name(self.models)} with the given role "
+                    f"`{model_role}` was found in group."
                 ) from None
         else:
             for llm in self.models:
@@ -4055,7 +4497,8 @@ class _DocumentModelGroup(_GenericModelProcessor):
     def _validate_document_model_group_post(self) -> Self:
         """
         Validates the model group to ensure consistency of the `output_language`
-        attribute across all LLMs within the group.
+        attribute across all LLMs within the group. The models of the group that
+        generate no text, such as decision models, have no output language.
 
         :return: The model group instance after successful validation.
         :rtype: Self
@@ -4063,7 +4506,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
             group's `output_language`.
         """
 
-        if any(i.output_language != self.output_language for i in self.models):  # ty: ignore[unresolved-attribute]
+        if any(i.output_language != self.output_language for i in self._llms):
             raise ValueError(
                 "All LLMs in the group must have the same value of "
                 "`output_language` attribute as the group."

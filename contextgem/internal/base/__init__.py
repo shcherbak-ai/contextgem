@@ -28,6 +28,7 @@ from contextgem.internal.base.concepts import (
     _StringConcept,
 )
 from contextgem.internal.base.data_models import _ModelPricing
+from contextgem.internal.base.decision_models import _DocumentDecisionModel
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.images import _Image
@@ -68,6 +69,8 @@ __all__ = (
     "_ChatSession",
     "_DocumentLLM",
     "_DocumentModelGroup",
+    # Decision models
+    "_DocumentDecisionModel",
     # Paragraphs and sentences
     "_Paragraph",
     "_Sentence",

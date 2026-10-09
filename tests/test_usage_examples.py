@@ -152,6 +152,9 @@ class TestUsageExamples(BaseTest):
         from dev.usage_examples.docstrings.data_models import (
             def_model_pricing,  # noqa: F401
         )
+        from dev.usage_examples.docstrings.decision_models import (
+            def_decision_model,  # noqa: F401
+        )
         from dev.usage_examples.docstrings.documents import def_document  # noqa: F401
         from dev.usage_examples.docstrings.examples import (
             def_example_json_object,  # noqa: F401

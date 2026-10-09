@@ -27,6 +27,7 @@ from contextgem.public.concepts import (
     StringConcept,
 )
 from contextgem.public.data_models import ModelPricing
+from contextgem.public.decision_models import DocumentDecisionModel
 from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
@@ -72,6 +73,8 @@ __all__ = (
     "DocumentLLM",
     "DocumentModelGroup",
     "ChatSession",
+    # Decision models
+    "DocumentDecisionModel",
     # Data models
     "ModelPricing",
     # Utils

@@ -156,8 +156,14 @@ class _InstanceSerializer(BaseModel):
         from contextgem.internal.data_models import _ModelCost, _ModelUsage
 
         if isinstance(self, _DocumentModel | _DocumentModelGroup):
+            # A model of another kind than an LLM is named by its kind
+            serialized_instance = (
+                "LLM/model group"
+                if isinstance(self, _DocumentLLM | _DocumentModelGroup)
+                else self._kind_name
+            )
             logger.info(
-                "API credentials and usage/cost stats are removed from the serialized LLM/model group."
+                f"API credentials and usage/cost stats are removed from the serialized {serialized_instance}."
             )
 
         # Start with normal public fields serialization
