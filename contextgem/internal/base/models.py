@@ -370,7 +370,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         # All aspects and concepts of the document are checked here, as the concepts
         # of the aspects are extracted only after the requests for the aspects are sent
         self._check_models_can_serve_instances(
-            self._get_all_instances_of_document(document)
+            self._get_all_instances_of_document(document),
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
         )
 
         # Check if sentence segmentation is required for some aspects or concepts
@@ -541,6 +542,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             instances_to_process=from_aspects,
             instance_type="aspect",
             overwrite_existing=overwrite_existing,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
         )
 
         # Check if sentence segmentation is required for some aspects or concepts
@@ -767,6 +769,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             instances_to_process=from_concepts,
             instance_type="concept",
             overwrite_existing=overwrite_existing,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
         )
 
         # Check if sentence segmentation is required for some aspects or concepts
@@ -1005,6 +1008,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             instances_to_process=from_concepts,
             instance_type="concept",
             overwrite_existing=overwrite_existing,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
         )
 
         # Check if sentence segmentation is required for some aspects or concepts
@@ -1225,6 +1229,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         | None,  # using Sequence type with list validator for type checking
         instance_type: ExtractedInstanceType,
         overwrite_existing: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
     ) -> None:
         """
         Validates instances and LLM parameters, ensuring compatibility with the target
@@ -1234,7 +1239,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         checks concept roles in the selected aspect and its non-empty descendants.
         The same instances are checked to be extractable by the models that are
         to extract them, where a model extracts only some aspects/concepts,
-        as a decision model does.
+        as a decision model does, with the given max number of paragraphs to
+        analyze per call.
 
         :param target: The target object, which should have an attribute corresponding
             to `instance_type` (e.g., 'aspects' for 'aspect', etc.). Expected to be an
@@ -1253,6 +1259,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param overwrite_existing: A flag indicating whether to overwrite the states of
             the existing processed instances. Defaults to False.
         :type overwrite_existing: bool
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs to
+            analyze per call that the extraction is run with. What a model can
+            extract may depend on it. Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
         :return: None. The function performs validation and raises errors in case of
             mismatches or invalid configurations.
         :rtype: None
@@ -1342,10 +1352,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # A model of a kind that extracts only some aspects/concepts, e.g. a decision
         # model, must be able to extract what this extraction routes to it
-        llm_or_group._check_models_can_serve_instances(instances_in_scope)
+        llm_or_group._check_models_can_serve_instances(
+            instances_in_scope,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+        )
 
     def _check_models_can_serve_instances(
-        self, instances: Sequence[_Aspect | _Concept]
+        self,
+        instances: Sequence[_Aspect | _Concept],
+        max_paragraphs_to_analyze_per_call: int = 0,
     ) -> None:
         """
         Checks, before any requests are sent, that each model can extract the aspects
@@ -1357,7 +1372,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         What a model can extract depends on its kind (see
         ``_DocumentModel._check_instances_servable``): an LLM extracts any aspect
-        or concept, while a decision model extracts only some of them.
+        or concept, while a decision model extracts only some of them, which
+        also depends on the max number of paragraphs to analyze per call.
 
         In a model group, each aspect or concept is extracted by the model that it
         is routed to by the role, i.e. the roles must be checked to be routable
@@ -1367,6 +1383,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param instances: The aspects and concepts to be extracted, including those
             extracted from the aspects that the extraction goes through.
         :type instances: Sequence[_Aspect | _Concept]
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs to
+            analyze per call that the extraction is run with. Defaults to 0
+            (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
         :return: None
         :rtype: None
         :raises ValueError: If a model that is to extract some of the aspects or
@@ -1388,7 +1408,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 continue
             for model_instance in [model, *model.fallback_models]:
                 model_instance._check_instances_servable(
-                    routed_instances, routed_in_group=self.is_group
+                    routed_instances,
+                    routed_in_group=self.is_group,
+                    max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                 )
 
     @staticmethod
@@ -3698,6 +3720,7 @@ class _DocumentModel(_GenericModelProcessor):
         self,
         instances: Sequence[_Aspect | _Concept],
         routed_in_group: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
     ) -> None:
         """
         Checks, before any requests are sent, that the model can extract the given
@@ -3711,6 +3734,11 @@ class _DocumentModel(_GenericModelProcessor):
             the model by its role in a model group, which is what the error is
             to tell how to change in such a case. Defaults to False.
         :type routed_in_group: bool
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs to
+            analyze per call that the extraction is run with, for the kinds of
+            models for which it decides what they can extract. Defaults to 0
+            (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
         :return: None
         :rtype: None
         :raises ValueError: If the model cannot extract some of the aspects

@@ -254,12 +254,14 @@ A decision model can extract only what can be answered with a probability. An as
      - ``reference_depth="sentences"``; ``add_justifications=True``
    * - :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.LabelConcept` (both classification types), :class:`~contextgem.public.concepts.RatingConcept`
      - With ``modality="text"`` (default), without justifications and without references. The concept can be attached to a document or to an aspect.
-     - ``modality="image"`` or ``modality="multimodal"``; ``add_justifications=True``; ``add_references=True``; more labels of a single-label concept, or more levels of a rating scale, than ``litellm`` accepts in a question
+     - ``modality="image"`` or ``modality="multimodal"``; ``add_justifications=True``; ``add_references=True``; more labels of a single-label concept, or more levels of a rating scale, than ``litellm`` accepts in a question; ``singular_occurrence=True`` when ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method
    * - :class:`~contextgem.public.concepts.StringConcept`, :class:`~contextgem.public.concepts.NumericalConcept`, :class:`~contextgem.public.concepts.DateConcept`, :class:`~contextgem.public.concepts.JsonObjectConcept`
      - Not supported
      - Always
 
 The number of the labels of a single-label concept and the length of a rating scale are limited by ``litellm``. A concept over such a limit is rejected with the same ``ValueError``, before any request is sent (see :ref:`decision-models-limits-label`).
+
+A concept with ``singular_occurrence=True`` is supported unless ``max_paragraphs_to_analyze_per_call`` (above 0) is passed to the extraction method. With that parameter, a text is sent in parts, and a decision model returns an item for each part, so the concept would get several items. It is rejected with the same ``ValueError``, before any request is sent, whatever the number of parts the text would be split into (see :ref:`sending a long text in parts <decision-models-parts-label>`).
 
 The error names the model and each aspect or concept that cannot be extracted, with the reasons:
 
@@ -316,7 +318,7 @@ What follows from this:
 - **A rating is the most probable level**, not an average over the levels. The levels are sent to the model as numbers (*"3 on a scale from 1 to 5"*), so describe in the concept description what the low and the high end of the scale mean.
 - **Labels are sent as they are.** A label has no description of its own, so make the labels self-explanatory.
 - **If two answers are equally probable**, the first one is taken: the first label in the order of the labels of the concept, or the lower level of the rating scale.
-- **At most one item is extracted** for a concept from a document or an aspect, whatever ``singular_occurrence`` is set to, unless the text is sent in parts: a concept then has one item for each part (see :ref:`below <decision-models-parts-label>`).
+- **At most one item is extracted** for a concept from a document or an aspect, with ``singular_occurrence=True`` and without it, unless the text is sent in parts: a concept then has one item for each part, and ``singular_occurrence=True`` is not accepted (see :ref:`below <decision-models-parts-label>`).
 
 By default, all the questions of the concepts processed in one call are sent in one request, together with the text: the text of the document for document-level concepts, or the text of the paragraphs extracted for the aspect for aspect-level concepts. As for LLMs, ``max_items_per_call`` sets how many concepts are processed in one call (all of them by default, or one with ``use_concurrency=True``).
 
@@ -327,6 +329,7 @@ By default, all the questions of the concepts processed in one call are sent in 
 - **A concept then has one item for each part**, in the order of the parts, each with the probabilities of the answers on its part. The answers on the parts are not merged into one item: combining the items is up to you, e.g. taking a Boolean concept as true if it is true for any part, or taking the highest rating.
 - **Each part is decided on its own text.** The model is not sent the other parts. A Boolean concept is ``False`` for a part that does not support the statement, and a single-label and a rating concept get a label and a level for each part, including the parts that say nothing about the concept. A multi-label concept has no item for a part in which no label reaches the threshold, so it can have fewer items than there are parts.
 - **An item does not tell which part it comes from.** As any item of a concept extracted by a decision model, it has no references.
+- **A concept with** ``singular_occurrence=True`` **is rejected.** An LLM stops at the first part that gives an item for such a concept, while a decision model answers on every part. When ``max_paragraphs_to_analyze_per_call`` is above 0, ``ValueError`` is therefore raised, before any request is sent, for each such concept that a decision model is to extract, on its own or as a fallback model (see :ref:`decision-models-supported-label`). This does not depend on the length of the text: the concept is also rejected if the text has few enough paragraphs to be sent as a whole. To extract the concept, set ``singular_occurrence=False`` and combine the items yourself, leave ``max_paragraphs_to_analyze_per_call`` out, or route the concept to an LLM.
 - **The requests for the parts** are sent one after another, or concurrently with ``use_concurrency=True``, at the rate allowed by the ``async_limiter`` of the decision model, as the requests for the paragraphs in aspect extraction (see :ref:`decision-models-aspects-label`).
 
 .. code-block:: python

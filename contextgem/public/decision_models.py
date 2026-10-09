@@ -132,6 +132,10 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             and ``RatingConcept``, from text (``modality="text"``) and without
             references (``add_references=False``), from a document or from an aspect.
             Both without justifications (``add_justifications=False``).
+            A concept with ``singular_occurrence=True`` is extracted unless
+            ``max_paragraphs_to_analyze_per_call`` is passed to the extraction
+            method, as it would get an item for each part of the text (see
+            "Length of the text").
             A ``ValueError`` is raised before any request is sent if the model is to
             extract anything else, such as a concept of another type. In a model
             group, route such aspects and concepts to an LLM.
@@ -150,12 +154,13 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             the paragraphs of that aspect.
 
         - Extracted items of concepts
-            A concept gets at most one item per document or aspect, whatever its
-            ``singular_occurrence`` is, or, if the text is sent in parts (see
-            "Length of the text"), at most one item for each part, in the order
-            of the parts. The answers on different parts are not merged, i.e.
-            combining such items is up to the caller, and an item does not tell
-            which part it comes from. A ``BooleanConcept`` always gets an item
+            A concept gets at most one item per document or aspect, with
+            ``singular_occurrence=True`` and without it, or, if the text is sent
+            in parts (see "Length of the text"), at most one item for each part,
+            in the order of the parts. The answers on different parts are not
+            merged, i.e. combining such items is up to the caller, and an item
+            does not tell which part it comes from.
+            A ``BooleanConcept`` always gets an item
             (``True`` if the probability of "yes" is the decision threshold or more,
             0.5 by default). A ``LabelConcept`` with
             ``classification_type="multi_label"`` gets an item with the labels
@@ -194,9 +199,14 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             a text with more paragraphs is then split into consecutive parts of at
             most that many paragraphs, as for an LLM, and one request is sent for
             each part. Each concept then gets an item for each part, with
-            the probabilities of the answers on that part. Extracting the concepts
-            from aspects also shortens the text. Aspects: each paragraph is sent
-            in a request of its own, whatever the length of the document, i.e.
+            the probabilities of the answers on that part. A decision model
+            answers on every part, i.e. it cannot stop at the first part that
+            gives an item: with ``max_paragraphs_to_analyze_per_call`` above 0,
+            a concept with ``singular_occurrence=True`` is rejected with
+            a ``ValueError`` before any request is sent, whatever the number of
+            the paragraphs of the text. Extracting the concepts from aspects
+            also shortens the text. Aspects: each paragraph is sent in a request
+            of its own, whatever the length of the document, i.e.
             ``max_paragraphs_to_analyze_per_call`` changes nothing for them.
 
         - Limits

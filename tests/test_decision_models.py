@@ -5966,6 +5966,359 @@ class TestDecisionModels(BaseTest):
             decision_model.extract_concepts_from_document(document)
         assert not requests
 
+    def test_decision_model_rejects_singular_occurrence_in_parts(self):
+        """
+        Tests that a concept with a singular occurrence is rejected, before any
+        request is sent, when a decision model is to extract it with the max
+        number of paragraphs to analyze per call set, i.e. from a text analyzed
+        in parts, for each of which the concept would get an item: for
+        a decision model used on its own, with a fallback LLM, as a fallback
+        model of an LLM, and in a model group, by each of the extraction methods
+        that extract concepts. Without that number, such a concept is extracted.
+        """
+        singular_reason = (
+            r"\(`singular_occurrence=True` cannot be applied when the text is "
+            r"analyzed in parts \(`max_paragraphs_to_analyze_per_call` is set\): "
+            r"a decision model returns an item for each part\)"
+        )
+        llm_answer = '[{"concept_id": "C0", "extracted_items": [true]}]'
+        # The stubs respond to any request, so that a request that is sent
+        # where none is expected is found by its record
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [_answer_all_questions],
+                _OTHER_DECISION_MODEL: [_answer_all_questions],
+            }
+        )
+        completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_answer]})
+
+        def create_document(
+            level: Literal["document", "aspect", "sub_aspect"],
+            model_role: str | None = None,
+            singular_occurrence: bool = True,
+        ) -> Document:
+            """
+            Creates a document with five paragraphs and a Boolean concept with
+            a singular occurrence, next to a Boolean concept without it.
+
+            :param level: What the concept with a singular occurrence is
+                attached to: the document, an aspect of it, or a sub-aspect of
+                that aspect.
+            :type level: Literal["document", "aspect", "sub_aspect"]
+            :param model_role: The model role of that concept. Defaults to None.
+            :type model_role: str | None
+            :param singular_occurrence: Whether that concept has a singular
+                occurrence. Defaults to True.
+            :type singular_occurrence: bool
+            :return: Document.
+            :rtype: Document
+            """
+            concept = BooleanConcept(
+                name="Lease check",
+                description="The text is of a lease agreement",
+                singular_occurrence=singular_occurrence,
+                model_role=model_role,
+            )
+            other_concept = BooleanConcept(
+                name="NDA check", description="The text is of an NDA"
+            )
+            if level == "document":
+                return _create_aspects_document(concepts=[other_concept, concept])
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        concepts=[other_concept, concept]
+                        if level == "aspect"
+                        else [other_concept],
+                        aspects=[
+                            Aspect(
+                                name="Notices",
+                                description="Clauses on the notices of termination",
+                                concepts=[concept] if level == "sub_aspect" else [],
+                            )
+                        ],
+                    )
+                ]
+            )
+
+        def check_rejected(
+            model: DocumentDecisionModel | DocumentLLM | DocumentModelGroup,
+            error_prefix: str,
+            model_role: str | None = None,
+        ) -> None:
+            """
+            Checks that each extraction method that is to extract the concept with
+            a singular occurrence, attached at each level, rejects it when
+            the max number of paragraphs to analyze per call is set, before any
+            request is sent and with the document left unchanged.
+
+            :param model: Model or model group to extract with.
+            :type model: DocumentDecisionModel | DocumentLLM | DocumentModelGroup
+            :param error_prefix: Pattern that the start of the error is to match,
+                up to the concept that is rejected.
+            :type error_prefix: str
+            :param model_role: The model role of the concept. Defaults to None.
+            :type model_role: str | None
+            """
+            error_match = f"{error_prefix}concept `Lease check` {singular_reason}\\. "
+            extractions: list[tuple[Document, Callable[..., Any], dict[str, Any]]] = []
+            for level in ("document", "aspect", "sub_aspect"):
+                # The extraction of everything that the document has, in which
+                # the aspects are yet to be extracted
+                document = create_document(level, model_role)
+                extractions.append((document, model.extract_all, {}))
+                # The extraction of the concepts: of the document, or of
+                # an aspect that is extracted, as is its sub-aspect
+                document = create_document(level, model_role)
+                if level == "document":
+                    extractions.append(
+                        (document, model.extract_concepts_from_document, {})
+                    )
+                else:
+                    (aspect,) = document.aspects
+                    _set_aspect_as_extracted(document, aspect)
+                    _set_aspect_as_extracted(document, aspect.aspects[0])
+                    extractions.append(
+                        (
+                            document,
+                            model.extract_concepts_from_aspect,
+                            {"aspect": aspect},
+                        )
+                    )
+            decisions_stub.requests.clear()
+            completions_stub.requests.clear()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(litellm, "acompletion", new=completions_stub),
+            ):
+                for document, extraction_method, method_kwargs in extractions:
+                    before = document.to_dict()
+                    # The concept is rejected whatever the number of the parts
+                    # that the text would be split into, also if it is one
+                    for max_paragraphs in [1, 100]:
+                        for use_concurrency in [False, True]:
+                            with pytest.raises(ValueError, match=error_match):
+                                extraction_method(
+                                    document=document,
+                                    max_paragraphs_to_analyze_per_call=max_paragraphs,
+                                    use_concurrency=use_concurrency,
+                                    **method_kwargs,
+                                )
+                    assert document.to_dict() == before
+            assert not decisions_stub.requests
+            assert not completions_stub.requests
+
+        # === A decision model used on its own ===
+        decision_model_error_prefix = (
+            f"^Decision model `{_DECISION_MODEL}` cannot extract: "
+        )
+        decision_model = _create_decision_model()
+        check_rejected(decision_model, decision_model_error_prefix)
+
+        # === A decision model with a fallback LLM ===
+        check_rejected(
+            _create_decision_model(fallback_models=[_create_llm(is_fallback=True)]),
+            decision_model_error_prefix,
+        )
+
+        # === A decision model that is a fallback model of an LLM ===
+        # It is to extract what the LLM fails to extract
+        check_rejected(
+            _create_llm(fallback_models=[_create_decision_model(is_fallback=True)]),
+            f"^Fallback decision model `{_DECISION_MODEL}` cannot extract what it "
+            f"is to extract if the model it is a fallback for fails: ",
+        )
+
+        # === A decision model in a model group ===
+        # The concept is routed to the decision model by its role, also when
+        # the aspect that it is attached to is extracted by the LLM of the group
+        model_group = DocumentModelGroup(
+            models=[_create_llm(), _create_decision_model(role="decide")]
+        )
+        check_rejected(model_group, decision_model_error_prefix, model_role="decide")
+
+        # === The reasons ===
+        get_reasons = _DocumentDecisionModel._get_unservable_reasons
+        singular_reason_text = (
+            "`singular_occurrence=True` cannot be applied when the text is "
+            "analyzed in parts (`max_paragraphs_to_analyze_per_call` is set): "
+            "a decision model returns an item for each part"
+        )
+        (singular_concept,) = create_document("document").concepts[1:]
+        assert get_reasons(singular_concept, max_paragraphs_to_analyze_per_call=1) == [
+            singular_reason_text
+        ]
+        # The number is not set: the text is sent as a whole
+        for max_paragraphs in [0, -1]:
+            assert not get_reasons(
+                singular_concept, max_paragraphs_to_analyze_per_call=max_paragraphs
+            )
+        assert not get_reasons(singular_concept)
+        # Each reason is given
+        rating_concept = RatingConcept(
+            name="Clarity",
+            description="Clarity of the text",
+            rating_scale=(0, 10),
+            singular_occurrence=True,
+        )
+        singular_rating_reason, question_reason = get_reasons(
+            rating_concept, max_paragraphs_to_analyze_per_call=2
+        )
+        assert singular_rating_reason == singular_reason_text
+        assert "`score` question with 11 options is not accepted" in question_reason
+        assert get_reasons(rating_concept) == [question_reason]
+        assert get_reasons(
+            StringConcept(
+                name="Title",
+                description="Title of the document",
+                singular_occurrence=True,
+            ),
+            max_paragraphs_to_analyze_per_call=2,
+        ) == ["type `StringConcept` is not supported", singular_reason_text]
+        # An aspect is extracted paragraph by paragraph whatever the number is
+        assert not get_reasons(
+            Aspect(name="Termination", description="Clauses on termination"),
+            max_paragraphs_to_analyze_per_call=2,
+        )
+
+        # === The checks made by the decision model itself ===
+        # Nothing is requested, also when the checks made at the start of
+        # an extraction are bypassed
+        document = create_document("document")
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            pytest.raises(
+                ValueError,
+                match=f"{decision_model_error_prefix}concept `Lease check` "
+                f"{singular_reason}",
+            ),
+        ):
+            asyncio.run(
+                decision_model._extract_items_from_instances(
+                    extracted_item_type="concept",
+                    source=document,
+                    llm=decision_model,
+                    instances_to_process=list(document.concepts),
+                    document=document,
+                    max_paragraphs_to_analyze_per_call=2,
+                )
+            )
+        assert not decisions_stub.requests
+
+        # === What is not rejected ===
+        part_texts = self._get_texts_of_parts(2)
+        whole_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+
+        def requested_texts() -> list[str]:
+            """
+            Returns the texts of the requests sent to the decision model since
+            the last call of this function.
+
+            :return: The texts, in the order the requests were sent.
+            :rtype: list[str]
+            """
+            texts = [request["input"] for request in decisions_stub.requests]
+            decisions_stub.requests.clear()
+            return texts
+
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            # The number of paragraphs per call is not set: the text is sent as
+            # a whole, and the concept gets one item
+            document = create_document("document")
+            decision_model.extract_concepts_from_document(document)
+            assert requested_texts() == [whole_text]
+            assert [len(concept.extracted_items) for concept in document.concepts] == [
+                1,
+                1,
+            ]
+            document = create_document("sub_aspect")
+            decision_model.extract_all(document)
+            (aspect,) = document.aspects
+            assert len(aspect.aspects[0].concepts[0].extracted_items) == 1
+            assert len(requested_texts()) == 5 + 5 + 1 + 1
+
+            # The number of images per call is not the one of paragraphs
+            document = create_document("document")
+            decision_model.extract_concepts_from_document(
+                document, max_images_to_analyze_per_call=1
+            )
+            assert requested_texts() == [whole_text]
+            document = create_document("aspect")
+            decision_model.extract_all(document, max_images_to_analyze_per_call=1)
+            assert len(document.aspects[0].concepts[1].extracted_items) == 1
+            requested_texts()
+
+            # A concept without a singular occurrence gets an item for each part
+            document = create_document("document", singular_occurrence=False)
+            decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+            assert requested_texts() == part_texts
+            assert [len(concept.extracted_items) for concept in document.concepts] == [
+                3,
+                3,
+            ]
+
+            # A concept that is not among the concepts to extract
+            document = create_document("document")
+            other_concept, singular_concept = document.concepts
+            decision_model.extract_concepts_from_document(
+                document,
+                from_concepts=[other_concept],
+                max_paragraphs_to_analyze_per_call=2,
+            )
+            assert requested_texts() == part_texts
+            assert len(other_concept.extracted_items) == 3
+            assert not singular_concept._is_processed
+            # ... or is a concept of an aspect, when the aspects are extracted,
+            # for which the number of paragraphs per call changes nothing
+            document = create_document("aspect")
+            decision_model.extract_aspects_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+            assert requested_texts() == [
+                *_ASPECTS_PARAGRAPH_TEXTS_SENT,
+                *_ASPECTS_PARAGRAPH_TEXTS_SENT,
+            ]
+            assert len(document.aspects[0].extracted_items) == 5
+            assert not any(
+                concept._is_processed for concept in document.aspects[0].concepts
+            )
+            assert not completions_stub.requests
+
+            # A concept that is routed to an LLM of a model group: the LLM is
+            # sent the first part only, as the concept has its item by then,
+            # while the decision model extracts what is routed to it in parts
+            document = create_document("document")
+            other_concept, singular_concept = document.concepts
+            other_concept.model_role = "decide"
+            model_group.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+            assert requested_texts() == part_texts
+            assert len(completions_stub.requests) == 1
+            assert [item.value for item in singular_concept.extracted_items] == [True]
+            assert len(other_concept.extracted_items) == 3
+
+            # An LLM used on its own, with no decision model to fall back to
+            completions_stub.requests.clear()
+            document = create_document("document")
+            _create_llm().extract_concepts_from_document(
+                document,
+                from_concepts=[document.concepts[1]],
+                max_paragraphs_to_analyze_per_call=2,
+            )
+            assert len(completions_stub.requests) == 1
+            assert [item.value for item in document.concepts[1].extracted_items] == [
+                True
+            ]
+            assert not decisions_stub.requests
+
     def test_chat_skips_decision_model_fallback(self):
         """
         Tests that a decision model that is a fallback model of an LLM is skipped

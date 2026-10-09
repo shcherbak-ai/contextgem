@@ -23,7 +23,7 @@ Extraction Methods
 
 This guide documents the extraction methods provided by the :class:`~contextgem.public.llms.DocumentLLM` and :class:`~contextgem.public.models.DocumentModelGroup` classes for extracting aspects and concepts from documents using large language models.
 
-The same methods, with the same parameters, are provided by the :class:`~contextgem.public.decision_models.DocumentDecisionModel` class, for the aspects and concepts that a decision model can extract. With a decision model, ``max_paragraphs_to_analyze_per_call`` applies to concepts, which are then extracted from the text in parts, with one extracted item for each part, and changes nothing for aspects, while ``max_images_to_analyze_per_call`` is not applied. See :doc:`../decision_models/decision_models`.
+The same methods, with the same parameters, are provided by the :class:`~contextgem.public.decision_models.DocumentDecisionModel` class, for the aspects and concepts that a decision model can extract. With a decision model, ``max_paragraphs_to_analyze_per_call`` applies to concepts, which are then extracted from the text in parts, with one extracted item for each part (a concept with ``singular_occurrence=True`` is then rejected), and changes nothing for aspects, while ``max_images_to_analyze_per_call`` is not applied. See :doc:`../decision_models/decision_models`.
 
 |
 

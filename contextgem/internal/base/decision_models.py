@@ -595,7 +595,9 @@ class _DocumentDecisionModel(_DocumentModel):
         )
 
     @staticmethod
-    def _get_unservable_reasons(instance: _Aspect | _Concept) -> list[str]:
+    def _get_unservable_reasons(
+        instance: _Aspect | _Concept, max_paragraphs_to_analyze_per_call: int = 0
+    ) -> list[str]:
         """
         Returns the reasons why a decision model cannot extract an aspect or a concept.
 
@@ -606,6 +608,16 @@ class _DocumentDecisionModel(_DocumentModel):
         and rating concepts), from text only and with no references. Neither
         is extracted with justifications.
 
+        A concept with a singular occurrence cannot be extracted if the max number
+        of paragraphs to analyze per call is set, i.e. if the text is to be
+        analyzed in parts: a decision model answers on each part, i.e. it returns
+        an item for each of them, and cannot stop at the first part that has
+        an item, as an LLM does for such a concept. Such a concept is rejected
+        whatever the number of parts that the text is split into, also if it is
+        one: that number is not known before the extraction for the concepts of
+        an aspect that is yet to be extracted. With no max number of paragraphs
+        set, the text is sent as a whole, and the concept gets at most one item.
+
         An aspect or a concept of a supported type and with supported settings
         cannot be extracted either if litellm does not accept a question built
         for it, e.g. the question of a rating concept with more levels than
@@ -615,6 +627,10 @@ class _DocumentDecisionModel(_DocumentModel):
 
         :param instance: The aspect or concept to be extracted.
         :type instance: _Aspect | _Concept
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs to
+            analyze per call that the extraction is run with. Defaults to 0, in
+            which case the text is not analyzed in parts.
+        :type max_paragraphs_to_analyze_per_call: int
         :return: The reasons, or an empty list if a decision model can extract
             the aspect or concept.
         :rtype: list[str]
@@ -638,6 +654,12 @@ class _DocumentDecisionModel(_DocumentModel):
             if instance.add_references:
                 reasons.append("references are not supported")
             questions = [] if reasons else _build_concept_questions([instance])
+            if max_paragraphs_to_analyze_per_call > 0 and instance.singular_occurrence:
+                reasons.append(
+                    "`singular_occurrence=True` cannot be applied when the text is "
+                    "analyzed in parts (`max_paragraphs_to_analyze_per_call` is "
+                    "set): a decision model returns an item for each part"
+                )
 
         for question in questions:
             rejection_reasons = _get_question_rejection_reasons(question)
@@ -658,6 +680,7 @@ class _DocumentDecisionModel(_DocumentModel):
         self,
         instances: Sequence[_Aspect | _Concept],
         routed_in_group: bool = False,
+        max_paragraphs_to_analyze_per_call: int = 0,
     ) -> None:
         """
         Checks, before any requests are sent, that the decision model can extract
@@ -669,6 +692,11 @@ class _DocumentDecisionModel(_DocumentModel):
             the model by its role in a model group, in which case the error tells
             how to route them to an LLM of the group. Defaults to False.
         :type routed_in_group: bool
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs to
+            analyze per call that the extraction is run with: if it is set,
+            a concept with a singular occurrence cannot be extracted. Defaults
+            to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
         :return: None
         :rtype: None
         :raises ValueError: If the decision model cannot extract some of the aspects
@@ -676,7 +704,10 @@ class _DocumentDecisionModel(_DocumentModel):
         """
         unservable_instances: list[str] = []
         for instance in instances:
-            reasons = self._get_unservable_reasons(instance)
+            reasons = self._get_unservable_reasons(
+                instance,
+                max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+            )
             if reasons:
                 instance_type = "aspect" if isinstance(instance, _Aspect) else "concept"
                 unservable_instances.append(
@@ -807,6 +838,8 @@ class _DocumentDecisionModel(_DocumentModel):
         the parts, each with the probabilities of its own answers: the answers on
         different parts are not merged. The requests for the parts are sent
         concurrently if a limiter is given, and one after another otherwise.
+        A concept with a singular occurrence is rejected if that number is set,
+        as it would get several items.
 
         Aspects: one request is sent for each paragraph of the source, with
         the text of the paragraph and one question for each aspect: whether
@@ -844,7 +877,8 @@ class _DocumentDecisionModel(_DocumentModel):
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs
             of the source whose text is sent in one request for concepts: a source
             with more paragraphs is asked about in parts. Defaults to 0, in which
-            case the text of the source is sent as a whole. Has no effect on
+            case the text of the source is sent as a whole. If it is set, a concept
+            with a singular occurrence cannot be extracted. Has no effect on
             aspects, for which each paragraph is sent in a request of its own,
             i.e. any such limit is met.
         :type max_paragraphs_to_analyze_per_call: int
@@ -878,7 +912,10 @@ class _DocumentDecisionModel(_DocumentModel):
 
         # No request is sent for what a decision model cannot extract, also if
         # the checks made when an extraction starts are bypassed
-        self._check_instances_servable(instances_to_process)
+        self._check_instances_servable(
+            instances_to_process,
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+        )
 
         source_paragraphs = self._get_source_paragraphs(
             extracted_item_type=extracted_item_type, source=source, document=document
@@ -1277,9 +1314,12 @@ class _DocumentDecisionModel(_DocumentModel):
         asked on each text, to the items of each concept.
 
         A concept gets at most one item for each text that the questions are asked
-        on, whatever ``singular_occurrence`` of the concept is set to, and no item
-        for a text if there is nothing to extract from it, i.e. no label of
-        the concept applies. The items of a concept are in the order of the texts.
+        on, and no item for a text if there is nothing to extract from it, i.e.
+        no label of the concept applies. The items of a concept are in the order
+        of the texts. ``singular_occurrence`` of a concept is not applied here:
+        a concept with a singular occurrence is asked about on one text only, i.e.
+        it gets at most one item, as it is rejected before any request is sent
+        when the text is to be analyzed in parts.
 
         A yes/no question of a concept is taken as answered "yes" with a probability
         of the decision threshold of the concept or more, or of the given threshold
