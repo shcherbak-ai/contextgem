@@ -8582,8 +8582,10 @@ class TestDecisionModels(BaseTest):
     def test_decision_model_api_key_not_shown(self):
         """
         Tests that the API key of a decision model is not shown when the model
-        is printed, including in the error of a validation that the model is
-        the input of, while its API base is.
+        is printed, while its API base is, and that no part of the key is shown
+        in the text of a validation error of a decision model, or of an LLM or
+        a model group that the decision model is passed to, which does not show
+        the inputs of the validation.
         """
         api_key = "sk-test-SECRET-0123456789"
         api_base = "https://decisions.example.com"
@@ -8603,17 +8605,19 @@ class TestDecisionModels(BaseTest):
             assert f"model='{_DECISION_MODEL}'" in text
             assert f"api_base='{api_base}'" in text
 
-        def check_error(error: Exception) -> None:
+        def check_error(error: Exception, expected_texts: list[str]) -> None:
             """
             Checks that the validation error does not show the key, neither in
-            its text nor in the inputs that it reports.
+            its text, which shows no inputs of the validation, nor in the inputs
+            that it reports.
 
             :param error: The validation error.
             :type error: Exception
+            :param expected_texts: The texts that the error is to have.
+            :type expected_texts: list[str]
             """
             assert isinstance(error, ValidationError)
-            assert "SECRET" not in str(error)
-            assert "SECRET" not in repr(error)
+            self.check_validation_error_hides_inputs(error, api_key, expected_texts)
             assert "SECRET" not in repr(error.errors())
 
         # The model as an invalid item of the fallback models of another model:
@@ -8622,16 +8626,48 @@ class TestDecisionModels(BaseTest):
             DocumentLLM(
                 model=_LLM_MODEL, api_key=api_key, fallback_models=[decision_model]
             )
-        assert "must be a fallback model" in str(exc_info.value)
         assert "DocumentDecisionModel(" in repr(exc_info.value.errors())
-        check_error(exc_info.value)
+        check_error(exc_info.value, ["fallback_models", "must be a fallback model"])
         # ... and as an invalid model of a group: with the role of another model
         with pytest.raises(ValidationError) as exc_info:
             DocumentModelGroup(
                 models=[decision_model, DocumentLLM(model=_LLM_MODEL, api_key=api_key)]
             )
         assert "DocumentDecisionModel(" in repr(exc_info.value.errors())
-        check_error(exc_info.value)
+        check_error(exc_info.value, ["models", "must have different roles"])
+
+        # A fallback LLM that is not valid for the decision model: with another
+        # role. The input of this check is all the params that the decision model
+        # is created with, i.e. the key, if it is the first or the last of them.
+        fallback_llm = DocumentLLM(
+            model=_LLM_MODEL, api_key=api_key, is_fallback=True, role="other"
+        )
+        invalid_model_params: list[dict[str, Any]] = [
+            {
+                "api_key": api_key,
+                "model": _DECISION_MODEL,
+                "fallback_models": [fallback_llm],
+            },
+            {
+                "model": _DECISION_MODEL,
+                "fallback_models": [fallback_llm],
+                "api_key": api_key,
+            },
+        ]
+        for model_params in invalid_model_params:
+            with pytest.raises(ValidationError) as exc_info:
+                DocumentDecisionModel(**model_params)
+            self.check_validation_error_hides_inputs(
+                exc_info.value,
+                api_key,
+                ["The fallback LLM must have the same role `None` as the main one"],
+            )
+
+        # The decision model that is invalid itself, when it is created, changed or
+        # deserialized: the key is among the inputs of its validation
+        self.check_model_validation_errors_hide_inputs(
+            DocumentDecisionModel, {"model": _DECISION_MODEL}, api_key
+        )
 
     def test_decision_model_image_concepts_rejected(self):
         """

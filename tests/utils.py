@@ -33,12 +33,13 @@ from copy import deepcopy
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from uuid import uuid4
 
 import pytest
 from aiolimiter import AsyncLimiter
 from dotenv import load_dotenv
+from pydantic import ValidationError
 
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.documents import _POSITION_CACHE_KEYS
@@ -60,9 +61,11 @@ from contextgem.internal.utils import (
 from contextgem.public import (
     Aspect,
     Document,
+    DocumentDecisionModel,
     DocumentLLM,
     DocumentModelGroup,
     Image,
+    ModelPricing,
     StringConcept,
     create_image,
 )
@@ -630,6 +633,186 @@ class TestUtils:
             (type(option), option, float, probability)
             for option, probability in expected_probabilities.items()
         ]
+
+    @staticmethod
+    def check_validation_error_hides_inputs(
+        error: ValidationError, api_key: str, expected_texts: list[str]
+    ) -> None:
+        """
+        Checks that the text of a validation error of a model or of a model group
+        does not show the inputs of the validation, i.e. no part of the API key
+        that is among them, while it still tells what is invalid and why.
+
+        The key is looked for by its fragments: an input is cut in the middle in
+        the text of an error, so that only the beginning or the end of the key
+        may be shown there.
+
+        :param error: The validation error to check.
+        :type error: ValidationError
+        :param api_key: The API key that is among the inputs of the validation.
+        :type api_key: str
+        :param expected_texts: The texts that the error is to have, e.g. the name
+            of the invalid param and the reason why it is invalid.
+        :type expected_texts: list[str]
+        :return: None
+        """
+        fragment_length = 6
+        key_fragments = {
+            api_key[start : start + fragment_length]
+            for start in range(len(api_key) - fragment_length + 1)
+        }
+        assert key_fragments, "The key is too short to be looked for by its fragments"
+        for text in [str(error), repr(error)]:
+            for input_marker in ["input_value", "input_type"]:
+                assert input_marker not in text, f"The error shows an input: {text}"
+            shown_key_fragments = sorted(i for i in key_fragments if i in text)
+            assert not shown_key_fragments, (
+                f"The error shows parts of the key ({shown_key_fragments}): {text}"
+            )
+            for expected_text in expected_texts:
+                assert expected_text in text, (
+                    f"The error does not have the text `{expected_text}`: {text}"
+                )
+
+    def check_model_validation_errors_hide_inputs(
+        self,
+        model_class: type[DocumentLLM] | type[DocumentDecisionModel],
+        model_params: dict[str, Any],
+        api_key: str,
+    ) -> None:
+        """
+        Checks that the text of the errors of the validation of a model of the given
+        class does not show the inputs of the validation, which the API key of
+        the model is among: when a model is created, when a value is assigned to its
+        param, and when it is deserialized, for a fallback model as well.
+
+        :param model_class: The class of the model.
+        :type model_class: type[DocumentLLM] | type[DocumentDecisionModel]
+        :param model_params: The valid params to create a model of the class with,
+            without the API key.
+        :type model_params: dict[str, Any]
+        :param api_key: The API key of the model.
+        :type api_key: str
+        :return: None
+        """
+
+        def create_model(
+            key_first: bool = True, **params: Any
+        ) -> DocumentLLM | DocumentDecisionModel:
+            """
+            Creates a model with the API key as its first or its last param.
+
+            :param key_first: Whether the key is the first param, or the last one.
+            :type key_first: bool
+            :param params: The params of the model that are added to the valid ones.
+            :type params: Any
+            :return: The model.
+            :rtype: DocumentLLM | DocumentDecisionModel
+            """
+            params = {**model_params, **params}
+            key = params.pop("api_key", api_key)
+            if key_first:
+                return model_class(api_key=key, **params)
+            return model_class(**params, api_key=key)
+
+        pricing = ModelPricing(input_per_1m_tokens=1.0, output_per_1m_tokens=2.0)
+        # A key of a wrong type, e.g. a tuple that a trailing comma makes of the key
+        invalid_key = (api_key,)
+        fallback_of_other_role = create_model(is_fallback=True, role="other")
+
+        # What the errors tell of the invalid params
+        timeout_error = ["timeout", "Input should be a valid integer"]
+        key_error = ["api_key", "Input should be a valid string"]
+        pricing_error = ["`pricing_details` cannot be set together with `auto_pricing"]
+        fallback_role_error = ["must have the same role `None` as the main one"]
+
+        # A model that is created with invalid params. The input of a check that
+        # involves several params is all the params that the model is created with:
+        # it is cut in the middle in the text of an error, i.e. the key was shown
+        # there if it was the first or the last param.
+        invalid_params: list[tuple[dict[str, Any], list[str]]] = [
+            ({"timeout": "x"}, timeout_error),
+            ({"api_key": invalid_key}, key_error),
+            # The key passed in a param that the model does not have
+            ({"apikey": api_key}, ["apikey", "Extra inputs are not permitted"]),
+            ({"pricing_details": pricing, "auto_pricing": True}, pricing_error),
+            # A fallback model that is invalid itself, and one that is not valid
+            # for the model that it is passed to
+            ({"is_fallback": True, "timeout": "x"}, timeout_error),
+            ({"fallback_models": [fallback_of_other_role]}, fallback_role_error),
+        ]
+        for params, expected_texts in invalid_params:
+            for key_first in [True, False]:
+                with pytest.raises(ValidationError) as exc_info:
+                    create_model(key_first=key_first, **params)
+                self.check_validation_error_hides_inputs(
+                    exc_info.value, api_key, expected_texts
+                )
+
+        # A model, and its fallback model, that an invalid value is assigned to
+        fallback_model = create_model(is_fallback=True)
+        model = create_model(pricing_details=pricing, fallback_models=[fallback_model])
+        invalid_assignments: list[tuple[Any, str, Any, list[str]]] = [
+            (model, "timeout", "x", timeout_error),
+            (model, "api_key", invalid_key, key_error),
+            (model, "auto_pricing", True, pricing_error),
+            (model, "fallback_models", [fallback_of_other_role], fallback_role_error),
+            (fallback_model, "timeout", "x", timeout_error),
+            (fallback_model, "api_key", invalid_key, key_error),
+        ]
+        for instance, param, value, expected_texts in invalid_assignments:
+            with pytest.raises(ValidationError) as exc_info:
+                setattr(instance, param, value)
+            self.check_validation_error_hides_inputs(
+                exc_info.value, api_key, expected_texts
+            )
+        # The models are left as they were
+        assert model.api_key == fallback_model.api_key == api_key
+        assert model.fallback_models == [fallback_model]
+
+        def get_serialized_model() -> dict[str, Any]:
+            """
+            Returns the serialized data of the model with the API keys of the model
+            and of its fallback model added: the keys are not serialized, i.e.
+            the data has them only if they are added to it.
+
+            :return: The serialized data of the model, with the keys.
+            :rtype: dict[str, Any]
+            """
+            serialized_model = model.to_dict()
+            serialized_model["api_key"] = api_key
+            serialized_model["fallback_models"][0]["api_key"] = api_key
+            return serialized_model
+
+        # A model that is deserialized from invalid data. The data is valid, and
+        # has the keys, before it is changed.
+        deserialized_model = model_class.from_dict(get_serialized_model())
+        assert deserialized_model.api_key == api_key
+        assert deserialized_model.fallback_models[0].api_key == api_key
+        invalid_data: list[tuple[dict[str, Any], list[str]]] = []
+        for param, value, expected_texts in [
+            ("timeout", "x", timeout_error),
+            ("api_key", [api_key], key_error),
+            ("auto_pricing", True, pricing_error),
+        ]:
+            serialized_model = get_serialized_model()
+            serialized_model[param] = value
+            invalid_data.append((serialized_model, expected_texts))
+        # ... and from the data in which its fallback model is invalid
+        serialized_model = get_serialized_model()
+        serialized_model["fallback_models"][0]["timeout"] = "x"
+        invalid_data.append((serialized_model, timeout_error))
+        for serialized_model, expected_texts in invalid_data:
+            with pytest.raises(ValidationError) as exc_info:
+                model_class.from_dict(serialized_model)
+            self.check_validation_error_hides_inputs(
+                exc_info.value, api_key, expected_texts
+            )
+            with pytest.raises(ValidationError) as exc_info:
+                model_class.from_json(json.dumps(serialized_model))
+            self.check_validation_error_hides_inputs(
+                exc_info.value, api_key, expected_texts
+            )
 
     def check_instance_container_states(
         self,

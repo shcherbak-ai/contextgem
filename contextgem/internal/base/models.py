@@ -41,6 +41,7 @@ from genai_prices import UpdatePrices as _GPUpdatePrices
 from genai_prices import Usage as _GPUsage
 from genai_prices import calc_price as _calc_auto_price
 from pydantic import (
+    ConfigDict,
     Field,
     PrivateAttr,
     StrictBool,
@@ -3388,7 +3389,9 @@ class _DocumentModel(_GenericModelProcessor):
     api_key: NonEmptyStr | None = Field(
         default=None,
         # The key is a secret: it is not shown when the model is printed, e.g.
-        # in logs, or in the error of a validation that the model is the input of
+        # in logs, or in the error of a validation that the model is the input of.
+        # The errors of the validation of the model itself, which the key is
+        # an input of, show no inputs at all (see `model_config` below).
         repr=False,
         description="API key for provider authentication; optional for local models.",
     )
@@ -3480,6 +3483,17 @@ class _DocumentModel(_GenericModelProcessor):
     # such attributes. We also want to avoid re-setting private attributes
     # in every call of a model validator that validates any new assignment.
     _private_attrs_initialized: bool = PrivateAttr(default=False)
+
+    # The text of a validation error of a model does not show the inputs of
+    # the validation (`input_value=..., input_type=...`), as the API key is among
+    # them: when the key itself is rejected, e.g. a key of a wrong type, and when
+    # a check that involves several params fails, the input of which is all
+    # the params that the model is created with. Such an input is cut in the middle
+    # in the text of the error, i.e. the beginning or the end of the key would be
+    # shown there. The error still names the param and tells what is wrong with it.
+    # This applies to the text of the error only: the inputs are still returned by
+    # its `errors()` and `json()` methods, unless `include_input=False` is passed.
+    model_config = ConfigDict(hide_input_in_errors=True)
 
     def __init__(self, **data: Any):
         # Pop the async_limiter if provided; otherwise use a default.
@@ -4470,6 +4484,13 @@ class _DocumentModelGroup(_GenericModelProcessor):
             "Applies only when DocumentLLMs' default system messages are used."
         ),
     )
+
+    # The text of a validation error of a group does not show the inputs of
+    # the validation either. The models of a group are shown without their API
+    # keys, but an API key that is passed to the group itself by mistake (a group
+    # has no such param: the key is set for each model) would be shown in the text
+    # of the error that rejects it, as the value of any input that is not a model.
+    model_config = ConfigDict(hide_input_in_errors=True)
 
     def _set_private_attrs(self) -> None:
         """

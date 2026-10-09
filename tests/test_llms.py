@@ -1396,8 +1396,10 @@ class TestLLMs(BaseTest):
     def test_api_key_not_shown(self):
         """
         Tests that the API key of an LLM is not shown when the LLM is printed,
-        on its own, as a fallback LLM or in a model group, including in the error
-        of a validation that the LLM is the input of, while its API base is.
+        on its own, as a fallback LLM or in a model group, while its API base is,
+        and that no part of the key is shown in the text of a validation error
+        of an LLM or of a model group, which does not show the inputs of
+        the validation.
         """
         api_key = "sk-test-SECRET-0123456789"
         api_base = "https://llm.example.com"
@@ -1426,15 +1428,23 @@ class TestLLMs(BaseTest):
         assert f"api_base='{api_base}'" in repr(llm)
         assert f"api_base='{api_base}'" in repr(model_group)
 
-        def check_error(error: ValidationError) -> None:
+        def check_error(error: ValidationError, expected_texts: list[str]) -> None:
             """
             Checks that the validation error does not show the key, neither in
-            its text nor in the inputs that it reports, which the LLM is among.
+            its text, which shows no inputs of the validation, nor in the inputs
+            that it reports, which the LLM is among.
+
+            :param error: The validation error.
+            :type error: ValidationError
+            :param expected_texts: The texts that the error is to have.
+            :type expected_texts: list[str]
             """
-            assert "SECRET" not in str(error)
-            assert "SECRET" not in repr(error)
+            self.check_validation_error_hides_inputs(error, api_key, expected_texts)
             assert "DocumentLLM(" in repr(error.errors())
             assert "SECRET" not in repr(error.errors())
+
+        different_roles_error = ["models", "must have different roles"]
+        output_language_error = ["must have the same value of `output_language`"]
 
         # The LLM as an invalid item of the fallback LLMs of another LLM:
         # it is not a fallback LLM
@@ -1442,8 +1452,47 @@ class TestLLMs(BaseTest):
             DocumentLLM(
                 model="openai/gpt-6-luna", api_key=api_key, fallback_models=[other_llm]
             )
-        check_error(e.value)
+        check_error(e.value, ["fallback_models", "must be a fallback model"])
         # ... and as an invalid LLM of a group: with the role of another LLM
         with pytest.raises(ValidationError) as e:
             DocumentModelGroup(models=[other_llm, other_llm])
-        check_error(e.value)
+        check_error(e.value, different_roles_error)
+        with pytest.raises(ValidationError) as e:
+            model_group.models = [other_llm, other_llm]
+        check_error(e.value, different_roles_error)
+        # ... or with another output language than the group has
+        with pytest.raises(ValidationError) as e:
+            DocumentModelGroup(models=[llm, other_llm], output_language="adapt")
+        check_error(e.value, output_language_error)
+        with pytest.raises(ValidationError) as e:
+            model_group.output_language = "adapt"
+        check_error(e.value, output_language_error)
+        assert model_group.models == [llm, other_llm]
+        assert model_group.output_language == "en"
+
+        # The key that is passed to a group by mistake: a group has no such param,
+        # as the key is set for each of its LLMs
+        invalid_group_params: list[dict[str, Any]] = [
+            {"api_key": api_key, "models": [llm, other_llm]},
+            {"models": [llm, other_llm], "api_key": api_key},
+        ]
+        for group_params in invalid_group_params:
+            with pytest.raises(ValidationError) as e:
+                DocumentModelGroup(**group_params)
+            self.check_validation_error_hides_inputs(
+                e.value, api_key, ["api_key", "Extra inputs are not permitted"]
+            )
+
+        # The LLM that is invalid itself, when it is created, changed or deserialized:
+        # the key is among the inputs of its validation. For an LLM created with
+        # the default system message, the input of a check that involves several
+        # params is the LLM, which is shown without the key. For an LLM created with
+        # a system message of its own, it is all the params that the LLM is created
+        # with: the key was shown if it was the first or the last of them.
+        for model_params in [
+            {"model": "openai/gpt-6-luna"},
+            {"model": "openai/gpt-6-luna", "system_message": "Be concise."},
+        ]:
+            self.check_model_validation_errors_hide_inputs(
+                DocumentLLM, model_params, api_key
+            )

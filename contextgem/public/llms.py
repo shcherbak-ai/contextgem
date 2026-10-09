@@ -52,6 +52,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype deployment_id: str | None
     :ivar api_key: API key for LLM authentication. Not required for local models (e.g., Ollama).
         Not included in the serialized LLM data, i.e. to be set again after deserialization.
+        Not shown when the LLM is printed, nor in the text of a validation error of the LLM,
+        which names the invalid parameter and the reason without showing the values passed
+        (these are still returned by the ``errors()`` method of the error).
     :vartype api_key: str | None
     :ivar api_base: Base URL of the API endpoint. Not included in the serialized LLM data,
         i.e. to be set again after deserialization.

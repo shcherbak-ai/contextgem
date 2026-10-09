@@ -58,7 +58,10 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     :vartype model: str
     :ivar api_key: API key for authentication. Not required for self-hosted models.
         Not included in the serialized model data, i.e. to be set again after
-        deserialization.
+        deserialization. Not shown when the model is printed, nor in the text of
+        a validation error of the model, which names the invalid parameter and
+        the reason without showing the values passed (these are still returned by
+        the ``errors()`` method of the error).
     :vartype api_key: str | None
     :ivar api_base: Base URL of the API endpoint. Not included in the serialized
         model data, i.e. to be set again after deserialization.
