@@ -55,7 +55,7 @@ from contextgem.internal.base.concepts import (
 from contextgem.internal.base.documents import _Document
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.base.models import _LOCAL_MODEL_PROVIDERS, _DocumentModel
-from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.data_models import _ModelCall, _ModelUsage
 from contextgem.internal.decisions import (
     _DEFAULT_DECISION_THRESHOLD,
@@ -69,6 +69,7 @@ from contextgem.internal.decisions import (
     _get_concept_question_name,
     _get_decision_threshold,
     _get_paragraph_text_for_aspects,
+    _get_sentence_text_for_aspects,
     _validate_answers,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -122,6 +123,11 @@ _LITELLM_QUESTION_TYPE_NAMES = {
 # a decision model: those of all instances, and those of concepts only
 _NOT_APPLIED_INSTANCE_PARAMS = ("justification_depth", "justification_max_sents")
 _NOT_APPLIED_CONCEPT_PARAMS = ("reference_depth",)
+
+# Answers of a decision model on the sentences of one paragraph: each sentence
+# that is asked about, in the order of the sentences, with the answers on it
+# by the names of the questions
+_AnswersOnSentences = list[tuple[_Sentence, dict[str, _DecisionAnswer]]]
 
 
 def _get_supported_decision_providers() -> tuple[str, ...] | None:
@@ -388,8 +394,9 @@ class _DocumentDecisionModel(_DocumentModel):
         le=1,
         description=(
             "Lowest probability of 'yes' with which a yes/no question is taken as "
-            "answered 'yes' (0 < threshold <= 1): a paragraph belongs to an aspect, "
-            "a Boolean concept is True, a label of a multi-label concept applies. "
+            "answered 'yes' (0 < threshold <= 1): a paragraph or a sentence belongs "
+            "to an aspect, a Boolean concept is True, a label of a multi-label "
+            "concept applies. "
             "Applies unless the aspect or the concept has a `decision_threshold` of "
             "its own. Does not apply to single-label and rating concepts, for which "
             "the most probable option is taken."
@@ -574,7 +581,9 @@ class _DocumentDecisionModel(_DocumentModel):
         the depth of references: the same text would otherwise be sent, and billed,
         once for each value of such a param. They are still split by the params
         that decide whether a decision model can extract an instance, which have
-        the same values for all the instances that it can extract.
+        the same values for all the instances that it can extract, and aspects
+        also by the depth of references, by which an aspect is extracted with
+        paragraphs or with sentences as its items.
 
         :param instance_type: Type of the instances ("aspect" or "concept").
         :type instance_type: ExtractedInstanceType
@@ -603,7 +612,9 @@ class _DocumentDecisionModel(_DocumentModel):
 
         A decision model answers closed questions on a text and generates no text.
         It extracts an aspect by deciding on each paragraph whether the paragraph
-        belongs to the aspect, i.e. with paragraphs as the extracted items, and
+        belongs to the aspect and, for an aspect with the "sentences" reference
+        depth, on each sentence of such a paragraph whether the sentence does,
+        i.e. with paragraphs or sentences as the extracted items, and
         the concepts whose values come from a closed set of options (Boolean, label
         and rating concepts), from text only and with no references. Neither
         is extracted with justifications.
@@ -637,10 +648,6 @@ class _DocumentDecisionModel(_DocumentModel):
         """
         reasons: list[str] = []
         if isinstance(instance, _Aspect):
-            if instance.reference_depth != "paragraphs":
-                reasons.append(
-                    f"reference depth `{instance.reference_depth}` is not supported"
-                )
             if instance.add_justifications:
                 reasons.append("justifications are not supported")
             questions = [] if reasons else _build_aspect_questions([instance])
@@ -737,9 +744,9 @@ class _DocumentDecisionModel(_DocumentModel):
         raise ValueError(
             f"{subject} `{self.model}` cannot extract{condition}: "
             f"{'; '.join(unservable_instances)}. "
-            f"A decision model extracts aspects with the `paragraphs` reference depth, "
-            f"and Boolean, label and rating concepts from text without references, "
-            f"both without justifications. {hint}"
+            f"A decision model extracts aspects, and Boolean, label and rating "
+            f"concepts from text without references, both without justifications. "
+            f"{hint}"
         )
 
     @staticmethod
@@ -853,6 +860,20 @@ class _DocumentDecisionModel(_DocumentModel):
         An aspect that no paragraph belongs to is processed and has no items, as
         an aspect for which an LLM returns no paragraphs.
 
+        Aspects with the "sentences" reference depth are extracted in two stages.
+        The first stage is the one above: which paragraphs belong to the aspect.
+        In the second stage, one request is sent for each sentence of each
+        paragraph that belongs to such an aspect, with the sentence and its
+        paragraph as the text, and one question for each of such aspects that
+        the paragraph belongs to: whether the sentence belongs to the aspect.
+        Each sentence that belongs to the aspect becomes an item of the aspect,
+        in the order of the document, i.e. a paragraph that belongs to the aspect
+        while none of its sentences does gives no items. The requests of
+        the second stage are sent as those of the first one are, after them, and
+        are recorded in the same usage. They are not sent if the first stage fails.
+        It is the reference depth of each aspect that decides how the aspect is
+        extracted, i.e. the aspects of a call may have different ones.
+
         If there are more questions on a text than a request can hold, they are
         sent in several requests on the same text.
 
@@ -930,9 +951,16 @@ class _DocumentDecisionModel(_DocumentModel):
         # the source, or of each part of it, for concepts
         paragraphs: list[_Paragraph] = []
         answers_of_texts: list[dict[str, _DecisionAnswer]]
+        # The answers on the sentences of each of these paragraphs, for the aspects
+        # that are extracted with sentences as their items
+        answers_of_sentences: list[_AnswersOnSentences] = []
         try:
             if extracted_item_type == "aspect":
-                paragraphs, answers_of_texts = await self._ask_about_aspects(
+                (
+                    paragraphs,
+                    answers_of_texts,
+                    answers_of_sentences,
+                ) = await self._ask_about_aspects(
                     # Safe cast: only aspects are extracted with the "aspect"
                     # item type
                     aspects=cast(list[_Aspect], instances_to_process),
@@ -1008,6 +1036,7 @@ class _DocumentDecisionModel(_DocumentModel):
                         paragraphs=paragraphs,
                         answers_of_paragraphs=answers_of_texts,
                         decision_threshold=self.decision_threshold,
+                        answers_of_sentences=answers_of_sentences,
                     )
                 else:
                     instances_and_items = self._get_concepts_items(
@@ -1050,12 +1079,23 @@ class _DocumentDecisionModel(_DocumentModel):
                             instance.reference_paragraphs = []
                             instance.reference_sentences = []
                         # References are automatically included for aspects, as
-                        # paragraphs' texts are the values of extracted items for
-                        # the aspects
+                        # paragraphs/sents' texts are the values of extracted items
+                        # for the aspects
                         for extracted_item in instance.extracted_items:
                             for ref_para in extracted_item.reference_paragraphs:
                                 if ref_para not in instance.reference_paragraphs:
                                     instance.reference_paragraphs += [ref_para]
+                                    # As when an LLM extracts the aspect:
+                                    # the sentences of each reference paragraph
+                                    if instance.reference_depth == "sentences":
+                                        for ref_sent in ref_para.sentences:
+                                            if (
+                                                ref_sent
+                                                not in instance.reference_sentences
+                                            ):
+                                                instance.reference_sentences += [
+                                                    ref_sent
+                                                ]
                     instance._is_processed = True
         except Exception:
             # e.g. an aspect or a concept that was processed by another call while
@@ -1081,7 +1121,9 @@ class _DocumentDecisionModel(_DocumentModel):
         on is, if the error has its location, e.g. the paragraph, as the questions
         of aspects are asked on each paragraph. The paragraph is given by its
         position among the paragraphs that the aspects are extracted from, i.e.
-        those of the document, or of the parent aspect for sub-aspects. For
+        those of the document, or of the parent aspect for sub-aspects.
+        A sentence that a question of an aspect was asked on is given by its
+        position among the sentences of its paragraph, with that paragraph. For
         the concepts whose questions are asked on the text in parts, it is
         the part, given by its position among the parts of the text.
 
@@ -1133,10 +1175,19 @@ class _DocumentDecisionModel(_DocumentModel):
         usage: _ModelUsage,
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
-    ) -> tuple[list[_Paragraph], list[dict[str, _DecisionAnswer]]]:
+    ) -> tuple[
+        list[_Paragraph],
+        list[dict[str, _DecisionAnswer]],
+        list[_AnswersOnSentences],
+    ]:
         """
         Asks the decision model, on each paragraph of the source, whether
-        the paragraph belongs to each of the aspects.
+        the paragraph belongs to each of the aspects, and then, for the aspects
+        with the "sentences" reference depth, on each sentence of the paragraphs
+        that belong to them, whether the sentence does (see
+        ``_ask_about_sentences``). The sentences are not asked about if
+        the paragraphs cannot be, i.e. if a request fails for good or a response
+        cannot be used.
 
         One request is sent for each paragraph, with the text of the paragraph as
         it is shown to an LLM for the extraction of aspects, and one question for
@@ -1167,9 +1218,12 @@ class _DocumentDecisionModel(_DocumentModel):
             controls the frequency of the requests, when concurrency is enabled.
         :type async_limiter: AsyncLimiter | None
         :return: The paragraphs that are asked about, in the order of
-            the paragraphs of the source, and for each of them, the answers of
-            the model by the names of the questions.
-        :rtype: tuple[list[_Paragraph], list[dict[str, _DecisionAnswer]]]
+            the paragraphs of the source, for each of them, the answers of
+            the model by the names of the questions, and for each of them,
+            the sentences that are asked about, each with the answers of the model
+            by the names of the questions.
+        :rtype: tuple[list[_Paragraph], list[dict[str, _DecisionAnswer]],
+            list[list[tuple[_Sentence, dict[str, _DecisionAnswer]]]]]
         :raises _InvalidDecisionResponseError: If a response cannot be used.
         :raises Exception: The error of the first request that failed for good.
         """
@@ -1207,7 +1261,163 @@ class _DocumentDecisionModel(_DocumentModel):
             async_limiter=async_limiter,
             send_concurrently=async_limiter is not None,
         )
-        return paragraphs, answers_of_paragraphs
+        # The second stage, for the aspects extracted with sentences as their items
+        answers_of_sentences = await self._ask_about_sentences(
+            aspects=aspects,
+            source_paragraphs=source_paragraphs,
+            paragraphs=paragraphs,
+            answers_of_paragraphs=answers_of_paragraphs,
+            usage=usage,
+            num_retries_failed_request=num_retries_failed_request,
+            async_limiter=async_limiter,
+        )
+        return paragraphs, answers_of_paragraphs, answers_of_sentences
+
+    async def _ask_about_sentences(
+        self,
+        *,
+        aspects: list[_Aspect],
+        source_paragraphs: list[_Paragraph],
+        paragraphs: list[_Paragraph],
+        answers_of_paragraphs: list[dict[str, _DecisionAnswer]],
+        usage: _ModelUsage,
+        num_retries_failed_request: int = 3,
+        async_limiter: AsyncLimiter | None = None,
+    ) -> list[_AnswersOnSentences]:
+        """
+        Asks the decision model, on each sentence of each paragraph that belongs to
+        an aspect with the "sentences" reference depth, whether the sentence
+        belongs to the aspect. This is the second stage of the extraction of such
+        aspects, after the paragraphs are asked about.
+
+        One request is sent for each sentence of such a paragraph, with
+        the sentence and its paragraph as the text (see
+        ``_get_sentence_text_for_aspects``), and one question for each aspect with
+        the "sentences" reference depth that the paragraph belongs to. A paragraph
+        belongs to an aspect with a probability of the decision threshold of
+        the aspect or more, or of that of the model if the aspect has none of
+        its own: the same threshold applies to the sentences. The name of
+        a question follows the position of its aspect among the aspects of
+        the call, as the name of its question on a paragraph does.
+
+        No request is sent for an aspect with another reference depth, for
+        a paragraph that belongs to no aspect with the "sentences" reference depth,
+        for a paragraph without sentences, or for a sentence without a text to
+        show to a model.
+
+        The requests are sent concurrently if a limiter is given, which is the case
+        when concurrency is enabled for the extraction, and one after another
+        otherwise.
+
+        :param aspects: The aspects of the call, as asked about on the paragraphs.
+        :type aspects: list[_Aspect]
+        :param source_paragraphs: The paragraphs that the aspects are extracted
+            from, by the positions of which the paragraphs are named in
+            the message on a response that cannot be used.
+        :type source_paragraphs: list[_Paragraph]
+        :param paragraphs: The paragraphs that are asked about.
+        :type paragraphs: list[_Paragraph]
+        :param answers_of_paragraphs: For each of these paragraphs, the answers of
+            the model by the names of the questions.
+        :type answers_of_paragraphs: list[dict[str, _DecisionAnswer]]
+        :param usage: The usage object to record the requests in.
+        :type usage: _ModelUsage
+        :param num_retries_failed_request: Number of retries when a request fails
+            with a transient error. Defaults to 3.
+        :type num_retries_failed_request: int
+        :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
+            controls the frequency of the requests, when concurrency is enabled.
+        :type async_limiter: AsyncLimiter | None
+        :return: For each of the paragraphs, the sentences that are asked about,
+            in the order of the sentences, each with the answers of the model by
+            the names of the questions. Empty for a paragraph none of whose
+            sentences is asked about.
+        :rtype: list[list[tuple[_Sentence, dict[str, _DecisionAnswer]]]]
+        :raises _InvalidDecisionResponseError: If a response cannot be used.
+        :raises Exception: The error of the first request that failed for good.
+        """
+        answers_of_sentences: list[_AnswersOnSentences] = [[] for _ in paragraphs]
+        # The decision thresholds of the aspects that are extracted with sentences
+        # as their items, by the positions of the aspects in the call
+        decision_thresholds = {
+            position: _get_decision_threshold(aspect, self.decision_threshold)
+            for position, aspect in enumerate(aspects)
+            if aspect.reference_depth == "sentences"
+        }
+        if not decision_thresholds:
+            return answers_of_sentences
+
+        # The paragraphs of the source are distinct objects
+        source_positions = {
+            id(paragraph): position
+            for position, paragraph in enumerate(source_paragraphs)
+        }
+        # The questions on a sentence are built once for all the aspects of
+        # the call, with and without additional context in the text, when the first
+        # sentence needs them: those of the aspects that the paragraph of
+        # a sentence belongs to are taken from them
+        questions_variants: dict[bool, list[_DecisionQuestion]] = {}
+        # The sentences asked about, each with the position of its paragraph
+        sentences: list[tuple[int, _Sentence]] = []
+        units: list[_QuestionsOnText] = []
+        for paragraph_position, (paragraph, answers) in enumerate(
+            zip(paragraphs, answers_of_paragraphs, strict=True)
+        ):
+            aspect_positions = [
+                position
+                for position, decision_threshold in decision_thresholds.items()
+                if _convert_aspect_answer(
+                    position, answers, decision_threshold=decision_threshold
+                )[0]
+            ]
+            if not aspect_positions:
+                continue
+            source_position = source_positions[id(paragraph)]
+            for sentence_position, sentence in enumerate(paragraph.sentences):
+                text, has_additional_context = _get_sentence_text_for_aspects(
+                    sentence, paragraph
+                )
+                if not text:
+                    continue
+                if has_additional_context not in questions_variants:
+                    questions_variants[has_additional_context] = (
+                        _build_aspect_questions(
+                            aspects,
+                            has_additional_context=has_additional_context,
+                            text_unit="sentence",
+                        )
+                    )
+                questions = questions_variants[has_additional_context]
+                sentences.append((paragraph_position, sentence))
+                units.append(
+                    _QuestionsOnText(
+                        text=text,
+                        questions=[
+                            questions[position] for position in aspect_positions
+                        ],
+                        location=(
+                            f" on sentence {sentence_position + 1} of "
+                            f"{len(paragraph.sentences)} of paragraph "
+                            f"{source_position + 1} of {len(source_paragraphs)} "
+                            f"(index {source_position})"
+                        ),
+                    )
+                )
+        if not units:
+            return answers_of_sentences
+
+        answers_of_units = await self._get_answers(
+            units=units,
+            usage=usage,
+            num_retries_failed_request=num_retries_failed_request,
+            async_limiter=async_limiter,
+            send_concurrently=async_limiter is not None,
+        )
+        for (paragraph_position, sentence), answers in zip(
+            sentences, answers_of_units, strict=True
+        ):
+            answers_of_sentences[paragraph_position].append((sentence, answers))
+        return answers_of_sentences
 
     async def _ask_about_concepts(
         self,
@@ -1377,6 +1587,7 @@ class _DocumentDecisionModel(_DocumentModel):
         paragraphs: list[_Paragraph],
         answers_of_paragraphs: list[dict[str, _DecisionAnswer]],
         decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
+        answers_of_sentences: list[_AnswersOnSentences] | None = None,
     ) -> list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]:
         """
         Converts the answers of the decision model to the questions of the aspects,
@@ -1395,6 +1606,17 @@ class _DocumentDecisionModel(_DocumentModel):
         threshold of the aspect or more, or of the given threshold if the aspect
         has none of its own.
 
+        For an aspect with the "sentences" reference depth, a paragraph that
+        belongs to the aspect gives no item itself: each of its sentences that
+        belongs to the aspect, by the answers on the sentences and with the same
+        decision threshold, becomes an item, as it does when such an aspect is
+        extracted by an LLM without justifications. The value of the item is
+        the text of the sentence, the item has the custom data of the sentence,
+        the paragraph is its reference paragraph and the sentence is its reference
+        sentence. In addition, the item has the probabilities of the sentence
+        belonging and not belonging to the aspect. The items are in the order of
+        the paragraphs and of the sentences in them.
+
         :param aspects: The aspects that the questions were built for.
         :type aspects: list[_Aspect]
         :param paragraphs: The paragraphs that the questions were asked on.
@@ -1405,15 +1627,27 @@ class _DocumentDecisionModel(_DocumentModel):
         :param decision_threshold: The decision threshold of the decision model.
             Defaults to 0.5.
         :type decision_threshold: float
+        :param answers_of_sentences: For each paragraph, the sentences of
+            the paragraph that the questions were asked on, each with the answers
+            of the decision model by the names of the questions: those of
+            the aspects with the "sentences" reference depth that the paragraph
+            belongs to. Defaults to None, i.e. no sentence was asked about.
+        :type answers_of_sentences:
+            list[list[tuple[_Sentence, dict[str, _DecisionAnswer]]]] | None
         :return: Each aspect with its items, in the order of the aspects.
         :rtype: list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]
-        :raises ValueError: If an answer on any of the paragraphs cannot be used.
+        :raises ValueError: If an answer on any of the paragraphs, or on any of
+            the sentences, cannot be used.
         """
         items_of_aspects: list[list[_ExtractedItem]] = [[] for _ in aspects]
         decision_thresholds = [
             _get_decision_threshold(aspect, decision_threshold) for aspect in aspects
         ]
-        for paragraph, answers in zip(paragraphs, answers_of_paragraphs, strict=True):
+        if answers_of_sentences is None:
+            answers_of_sentences = [[] for _ in paragraphs]
+        for paragraph, answers, sentences_answers in zip(
+            paragraphs, answers_of_paragraphs, answers_of_sentences, strict=True
+        ):
             for position in range(len(aspects)):
                 # The answer on each paragraph is checked for each aspect, i.e.
                 # also the answer that the paragraph does not belong to the aspect
@@ -1424,6 +1658,32 @@ class _DocumentDecisionModel(_DocumentModel):
                 )
                 if not belongs:
                     continue
+                if aspects[position].reference_depth == "sentences":
+                    # Reference depth - sentence
+                    # Each extracted item has the reference sentence text as value,
+                    # the reference paragraph in the list of reference paragraphs,
+                    # and the reference sentence in the list of reference sentences
+                    for sentence, sentence_answers in sentences_answers:
+                        sentence_belongs, sentence_probabilities = (
+                            _convert_aspect_answer(
+                                position,
+                                sentence_answers,
+                                decision_threshold=decision_thresholds[position],
+                            )
+                        )
+                        if not sentence_belongs:
+                            continue
+                        item_probabilities: ItemProbabilities = sentence_probabilities
+                        extracted_item = _StringItem(
+                            value=sentence.raw_text,
+                            custom_data=sentence.custom_data,  # inherit custom data from sentence object
+                            probabilities=item_probabilities,
+                        )
+                        extracted_item.reference_paragraphs = [paragraph]
+                        extracted_item.reference_sentences = [sentence]
+                        items_of_aspects[position].append(extracted_item)
+                    continue
+                # Reference depth - paragraph
                 probabilities: ItemProbabilities = answer_probabilities
                 extracted_item = _StringItem(
                     value=paragraph.raw_text,

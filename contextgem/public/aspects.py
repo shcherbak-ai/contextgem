@@ -56,7 +56,8 @@ class Aspect(_Aspect):
     :vartype reference_depth: ReferenceDepth
     :ivar decision_threshold: The lowest probability (above 0, up to 1) with which
         a decision model (``DocumentDecisionModel``) takes a paragraph as belonging to
-        the aspect. Defaults to None, in which case the ``decision_threshold`` of
+        the aspect, and, with ``reference_depth="sentences"``, a sentence of such
+        a paragraph. Defaults to None, in which case the ``decision_threshold`` of
         the decision model applies. Not passed on to the sub-aspects. Ignored when
         the aspect is extracted by an LLM.
     :vartype decision_threshold: float | None

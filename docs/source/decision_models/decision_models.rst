@@ -26,7 +26,7 @@ A decision model takes a text and typed questions about it (yes/no, pick one opt
 ContextGem uses decision models next to LLMs. A :class:`~contextgem.public.decision_models.DocumentDecisionModel` extracts:
 
 - :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.LabelConcept` and :class:`~contextgem.public.concepts.RatingConcept`, from a document or from an aspect;
-- aspects, by deciding for each paragraph whether it belongs to the aspect.
+- aspects, by deciding for each paragraph whether it belongs to the aspect and, for an aspect with ``reference_depth="sentences"``, for each sentence of such a paragraph.
 
 It has the same extraction methods as :class:`~contextgem.public.llms.DocumentLLM` (see :doc:`../llms/llm_extraction_methods`), and no ``chat()`` method. It can be used on its own, in a :class:`~contextgem.public.models.DocumentModelGroup` together with LLMs, and in a fallback chain with LLMs. Each item it extracts has the probabilities of all the possible answers in its ``probabilities`` attribute.
 
@@ -52,7 +52,7 @@ The requests are sent with `LiteLLM <https://github.com/BerriAI/litellm>`_, as f
      - Boolean, label and rating concepts
      - All concept types
    * - Aspects
-     - Yes, one paragraph at a time, with paragraphs as the extracted items
+     - Yes, one paragraph at a time, with paragraphs or sentences as the extracted items
      - Yes, with paragraphs or sentences as the extracted items
    * - Justifications
      - No
@@ -226,7 +226,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
    * - ``decision_threshold``
      - ``float``
      - ``0.5``
-     - The lowest probability of "yes" (above 0, up to 1) with which a yes/no question is taken as answered "yes": a paragraph belongs to an aspect, a Boolean concept is ``True``, a label of a multi-label concept is selected. Applies unless the aspect or the concept has a ``decision_threshold`` of its own. See :ref:`decision-models-threshold-label`.
+     - The lowest probability of "yes" (above 0, up to 1) with which a yes/no question is taken as answered "yes": a paragraph or a sentence belongs to an aspect, a Boolean concept is ``True``, a label of a multi-label concept is selected. Applies unless the aspect or the concept has a ``decision_threshold`` of its own. See :ref:`decision-models-threshold-label`.
    * - ``async_limiter``
      - ``AsyncLimiter``
      - ``AsyncLimiter(10, 10)``
@@ -250,8 +250,8 @@ A decision model can extract only what can be answered with a probability. An as
      - Supported
      - Raises ``ValueError``
    * - :class:`~contextgem.public.aspects.Aspect`, including sub-aspects
-     - With ``reference_depth="paragraphs"`` (default) and without justifications
-     - ``reference_depth="sentences"``; ``add_justifications=True``
+     - With ``reference_depth="paragraphs"`` (default) or ``reference_depth="sentences"``, without justifications
+     - ``add_justifications=True``
    * - :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.LabelConcept` (both classification types), :class:`~contextgem.public.concepts.RatingConcept`
      - With ``modality="text"`` (default), without justifications and without references. The concept can be attached to a document or to an aspect.
      - ``modality="image"`` or ``modality="multimodal"``; ``add_justifications=True``; ``add_references=True``; more labels of a single-label concept, or more levels of a rating scale, than ``litellm`` accepts in a question; ``singular_occurrence=True`` when ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method
@@ -268,7 +268,7 @@ The error names the model and each aspect or concept that cannot be extracted, w
 .. code-block:: text
    :caption: The error for a concept that a decision model cannot extract
 
-   ValueError: Decision model `typesafe/jev-latest` cannot extract: concept `Fee` (type `StringConcept` is not supported). A decision model extracts aspects with the `paragraphs` reference depth, and Boolean, label and rating concepts from text without references, both without justifications. Route the other aspects and concepts to an LLM, e.g. in a model group.
+   ValueError: Decision model `typesafe/jev-latest` cannot extract: concept `Fee` (type `StringConcept` is not supported). A decision model extracts aspects, and Boolean, label and rating concepts from text without references, both without justifications. Route the other aspects and concepts to an LLM, e.g. in a model group.
 
 **Which models are checked:**
 
@@ -374,7 +374,7 @@ Each item extracted by a decision model has the ``probabilities`` attribute: a d
      - The probability of each integer of the rating scale
      - ``{1: 0.0, 2: 0.0, 3: 0.15, 4: 0.55, 5: 0.3}``
    * - :class:`~contextgem.public.aspects.Aspect`
-     - The probability ``p`` that the paragraph belongs to the aspect under ``True``, and ``1 - p`` under ``False``
+     - The probability ``p`` that the paragraph, or the sentence for an aspect with ``reference_depth="sentences"``, belongs to the aspect under ``True``, and ``1 - p`` under ``False``
      - ``{True: 0.91, False: 0.09}``
 
 The dictionary has all the possible answers, in the order of the labels of the concept or of the levels of the scale, and the keys keep their types: ``True`` and ``False`` for a yes/no question, strings for labels, integers for ratings. The probabilities of the labels of a single-label concept and of the levels of a rating are stored as the model returns them, without being normalised.
@@ -406,7 +406,7 @@ What is not extracted has no probabilities to read. A multi-label concept none o
 
 A yes/no question is taken as answered "yes" if the probability of "yes" is the decision threshold or more. The threshold is 0.5 by default, i.e. "yes" is the more probable answer. It decides three things:
 
-- which paragraphs become the extracted items of an :class:`~contextgem.public.aspects.Aspect`;
+- which paragraphs, or which sentences with ``reference_depth="sentences"``, become the extracted items of an :class:`~contextgem.public.aspects.Aspect`;
 - whether the value of a :class:`~contextgem.public.concepts.BooleanConcept` is ``True`` or ``False``;
 - which labels a :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_label"`` gets.
 
@@ -436,7 +436,7 @@ See :ref:`decision-models-trust-label` for what a probability does and does not 
 📄 Extracting Aspects
 -----------------------
 
-A decision model extracts aspects one paragraph at a time:
+A decision model extracts aspects one paragraph at a time. The paragraphs are the extracted items of an aspect with ``reference_depth="paragraphs"`` (default), for which the following applies. For an aspect with ``reference_depth="sentences"``, the sentences of these paragraphs are then decided on as well (see "Sentences as the extracted items" below):
 
 - **One request per paragraph.** A request has the text of one paragraph and, for each aspect processed in the call, one yes/no question: is the paragraph relevant to the aspect? The question is built from the ``name`` and the ``description`` of the aspect.
 - **A paragraph is judged on its own.** The model is not sent the neighbouring paragraphs or the rest of the document, whereas an LLM is sent the paragraphs together. A paragraph that can be understood only in its context, e.g. *"The same applies to the Supplier."*, can therefore be judged differently than by an LLM.
@@ -458,6 +458,29 @@ The sub-aspects of an aspect are extracted in the same way from the paragraphs e
 .. literalinclude:: ../../../dev/usage_examples/docs/decision_models/decision_model_aspects.py
    :language: python
    :caption: Extracting aspects and their concepts with a decision model
+
+**Sentences as the extracted items.** An aspect with ``reference_depth="sentences"`` is extracted in two stages:
+
+1. **Paragraphs.** One request per paragraph, as described above: does the paragraph belong to the aspect? The text and the question are the same as for an aspect with ``reference_depth="paragraphs"``.
+2. **Sentences.** For each paragraph that belongs to the aspect, one request per sentence of the paragraph: is the sentence relevant to the aspect? The text of the request has the sentence, which is what the model judges, and the paragraph that the sentence is from, as its context, each with a label. The ``additional_context`` of the sentence and that of the paragraph follow, if they are set. A request has one question for each aspect with ``reference_depth="sentences"`` of the call that the paragraph belongs to.
+
+.. code-block:: text
+   :caption: The text sent for a sentence
+
+   Sentence: The notice shall be given in writing.
+
+   Paragraph that the sentence is from: Either party may terminate this agreement with a notice of 30 days. The notice shall be given in writing.
+
+   Additional context of the paragraph: Section 3. Termination
+
+What to know about the aspects with sentences as the extracted items:
+
+- **A sentence with a probability of the decision threshold or more becomes an extracted item** of the aspect. The same threshold applies at both stages: to the paragraphs, and to their sentences. As for LLMs, the value of the item is the text of the sentence, ``reference_sentences`` of the item has the sentence, and ``reference_paragraphs`` has its paragraph. The ``probabilities`` of the item are those of the sentence.
+- **A paragraph that belongs to the aspect gives no item itself.** If none of its sentences belongs to the aspect, the paragraph is not among the paragraphs of the aspect, i.e. the sub-aspects and the concepts of the aspect are not extracted from it.
+- **The number of requests** is the number of the paragraphs plus the number of the sentences in the paragraphs that belong to the aspect. For example, a document of 100 paragraphs, of which 10 belong to the aspect, with about 3 sentences each, takes about 130 requests: 100 for the paragraphs, and about 30 for the sentences. The text of a paragraph that belongs to the aspect is sent, and billed, once more with each of its sentences.
+- **The sentences are segmented before the extraction**, as for LLMs. A sentence segmented from a paragraph has the ``additional_context`` of the paragraph, which is sent once with the sentence, as that of the paragraph.
+- **The requests for the sentences are sent after those for the paragraphs**, one after another or, with ``use_concurrency=True``, concurrently, as the requests for the paragraphs are.
+- **Aspects with different reference depths are processed in separate calls**, as for LLMs: each call sends its own request for each paragraph.
 
 **Use concurrency.** A document of 300 paragraphs takes 300 requests. By default, they are sent one after another. With ``use_concurrency=True`` passed to the extraction method, they are sent concurrently, at the rate allowed by the ``async_limiter`` of the decision model. The default limiter allows 10 requests per 10 seconds, at which 300 requests take about five minutes, so set it to the rate limits of your provider account:
 
@@ -549,7 +572,7 @@ Token usage is tracked for every decision model, while costs are calculated only
 
 As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0`` (`TypeSafe models <https://docs.typesafe.ai/models>`_), and OpenAI lists $0.10 per 1M input tokens for ``gpt-6-luna`` on the Decisions API (`OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_). Neither charges for output tokens. Check the pricing page of your provider for the current prices.
 
-**What a request costs.** The text is sent, and billed as input tokens, once per request: the text of the document or of the paragraphs of the aspect for each call of concepts, and the text of the paragraph for each request of aspect extraction. The fewer requests a text is sent in, the less it costs:
+**What a request costs.** The text is sent, and billed as input tokens, once per request: the text of the document or of the paragraphs of the aspect for each call of concepts, and the text of the paragraph for each request of aspect extraction, including each request for a sentence of the paragraph, for an aspect with ``reference_depth="sentences"``. The fewer requests a text is sent in, the less it costs:
 
 - With ``use_concurrency=True``, set ``max_items_per_call``, as each aspect and each concept is otherwise processed in a call of its own (see :ref:`decision-models-aspects-label`).
 - The parameters that a decision model does not use do not split its calls: aspects and concepts that differ only in ``justification_depth`` or ``justification_max_sents``, and concepts that differ only in ``reference_depth``, are processed in the same call, while an LLM is called separately for each combination of these parameters.
@@ -582,7 +605,7 @@ A concept over the limit on the options or on the levels is rejected as any othe
 .. code-block:: text
    :caption: The error for a rating scale with more levels than litellm accepts
 
-   ValueError: Decision model `typesafe/jev-latest` cannot extract: concept `Clarity` (its `score` question with 11 options is not accepted by litellm: `levels`: Value should have at most 10 items after validation, not 11). A decision model extracts aspects with the `paragraphs` reference depth, and Boolean, label and rating concepts from text without references, both without justifications. Route the other aspects and concepts to an LLM, e.g. in a model group.
+   ValueError: Decision model `typesafe/jev-latest` cannot extract: concept `Clarity` (its `score` question with 11 options is not accepted by litellm: `levels`: Value should have at most 10 items after validation, not 11). A decision model extracts aspects, and Boolean, label and rating concepts from text without references, both without justifications. Route the other aspects and concepts to an LLM, e.g. in a model group.
 
 ContextGem has no limits of its own on the options and the levels: it checks each question with the request types of the installed ``litellm`` version, so the limits are those of that version. Use an LLM for a concept over a limit, e.g. by routing it to an LLM in a model group.
 
@@ -617,7 +640,7 @@ Providers may set further limits of their own. See the documentation of your pro
 What to expect when a call fails:
 
 - **One answer that cannot be used fails the whole call.** No aspect or concept of that call gets its items, including those whose answers were valid. The aspects and concepts extracted in other calls keep their items.
-- **In aspect extraction, the answers on all the paragraphs are needed.** When a request for a paragraph fails for good, or its response cannot be used, the requests not yet sent are not sent, and no aspect of the call gets its items.
+- **In aspect extraction, the answers on all the paragraphs are needed.** When a request for a paragraph fails for good, or its response cannot be used, the requests not yet sent are not sent, and no aspect of the call gets its items. The same holds for the requests for the sentences of the aspects with ``reference_depth="sentences"``, which are not sent at all if a request for a paragraph fails.
 - **For concepts extracted from a text in parts, the answers on all the parts are needed.** When a request for a part fails for good, or its response cannot be used, the requests not yet sent are not sent, and no concept of the call gets its items, including for the parts already answered. The logged error names the part, e.g. ``on part 2 of 3 of the text``.
 - **The requests made are recorded in the usage**, with their tokens, also when the call fails.
 - **A model that fails stops the other models of its group.** In a model group, with ``use_concurrency=True``, the models extract at the same time. When the extraction with one of them fails, the requests in flight of the other models are cancelled before the error is raised, and no request is sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.

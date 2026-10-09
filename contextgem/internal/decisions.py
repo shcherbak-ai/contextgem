@@ -24,10 +24,10 @@ rate on a scale) and returns probabilities for each question. It generates no te
 
 The module defines the question and answer types, which are independent of the wire
 formats of the decision model APIs, the mapping from concepts and aspects to
-questions, the text of a paragraph that the questions of aspects are asked on, and
-the conversion of answers to the values of extracted items with their probability
-distributions. The functions are pure: the module sends no requests and does not
-depend on the library that sends them.
+questions, the text of a paragraph or of a sentence that the questions of aspects
+are asked on, and the conversion of answers to the values of extracted items with
+their probability distributions. The functions are pure: the module sends no
+requests and does not depend on the library that sends them.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from contextgem.internal.base.concepts import (
     _LabelConcept,
     _RatingConcept,
 )
-from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.exceptions import _InvalidDecisionResponseError
 from contextgem.internal.utils import _clean_text_for_llm_prompt, _get_template
 
@@ -54,6 +54,11 @@ from contextgem.internal.utils import _clean_text_for_llm_prompt, _get_template
 # Kind of a decision question, and of the answer to it: a yes/no question,
 # a question with one option to pick, or a question with a level to rate on.
 _DecisionKind = Literal["predicate", "choice", "score"]
+
+# What a question of an aspect is asked on, i.e. what is judged for belonging to
+# the aspect: a paragraph, or a sentence of a paragraph that belongs to the aspect,
+# for an aspect that is extracted with sentences as its items.
+_AspectTextUnit = Literal["paragraph", "sentence"]
 
 # Value of an extracted item, as converted from the answers of a decision model:
 # a boolean (Boolean concept), an integer of the rating scale (rating concept),
@@ -249,7 +254,9 @@ def _build_concept_questions(concepts: Sequence[_Concept]) -> list[_DecisionQues
 
 
 def _build_aspect_questions(
-    aspects: Sequence[_Aspect], has_additional_context: bool = False
+    aspects: Sequence[_Aspect],
+    has_additional_context: bool = False,
+    text_unit: _AspectTextUnit = "paragraph",
 ) -> list[_DecisionQuestion]:
     """
     Builds the questions that a decision model is to answer on one paragraph to
@@ -264,6 +271,16 @@ def _build_aspect_questions(
     each paragraph with additional context, and the same questions on each
     paragraph without it.
 
+    The questions can also be built for one sentence, for the aspects that are
+    extracted with sentences as their items: for each aspect, whether the sentence
+    belongs to it. The text that such questions are asked on has the sentence and
+    the paragraph that the sentence is from (see
+    :func:`_get_sentence_text_for_aspects`), and the instructions tell that
+    the sentence is what is judged. The names of the questions are the same as
+    for a paragraph, i.e. the questions of some of the aspects only, taken from
+    those built for all the aspects of a call, keep the names that tell
+    the positions of their aspects in the call.
+
     Only the aspects of the sequence get a question, i.e. the sub-aspects of
     an aspect do not.
 
@@ -273,9 +290,14 @@ def _build_aspect_questions(
     :param aspects: Aspects to build the questions for.
     :type aspects: Sequence[_Aspect]
     :param has_additional_context: Whether the text that the questions are asked
-        on has the additional context of the paragraph, next to the paragraph.
-        Defaults to False, i.e. the text is the paragraph alone.
+        on has additional context, next to the paragraph: that of the paragraph
+        or, for the questions on a sentence, that of the sentence, of its
+        paragraph, or of both. Defaults to False, i.e. the text is the paragraph
+        alone, or the sentence and its paragraph.
     :type has_additional_context: bool
+    :param text_unit: What the questions are asked on, i.e. what is judged:
+        "paragraph" or "sentence". Defaults to "paragraph".
+    :type text_unit: Literal["paragraph", "sentence"]
     :return: Questions in the order of the aspects, one for each aspect.
     :rtype: list[_DecisionQuestion]
     :raises TypeError: If an object in the sequence is not an aspect.
@@ -292,6 +314,7 @@ def _build_aspect_questions(
             aspect_name=aspect.name,
             aspect_description=aspect.description,
             has_additional_context=has_additional_context,
+            text_unit=text_unit,
         )
         questions.append(
             _DecisionQuestion(
@@ -329,12 +352,8 @@ def _get_paragraph_text_for_aspects(paragraph: _Paragraph) -> tuple[str, bool]:
         the questions are to be built for a text with additional context.
     :rtype: tuple[str, bool]
     """
-    text = _clean_text_for_llm_prompt(
-        paragraph.raw_text, preserve_linebreaks=False, strip_text=True
-    )
-    additional_context = _clean_text_for_llm_prompt(
-        paragraph.additional_context or "", preserve_linebreaks=False, strip_text=True
-    )
+    text = _clean_text_for_question(paragraph.raw_text)
+    additional_context = _clean_text_for_question(paragraph.additional_context)
     if not text or not additional_context:
         return text, False
     return (
@@ -342,6 +361,60 @@ def _get_paragraph_text_for_aspects(paragraph: _Paragraph) -> tuple[str, bool]:
         f"Additional context of the paragraph: {additional_context}",
         True,
     )
+
+
+def _get_sentence_text_for_aspects(
+    sentence: _Sentence, paragraph: _Paragraph
+) -> tuple[str, bool]:
+    """
+    Returns the text of a sentence that a decision model is to answer
+    the questions of aspects on, built for a sentence (see
+    :func:`_build_aspect_questions`).
+
+    A sentence is rarely understood on its own, so the text has the sentence,
+    which is what the model judges, and the paragraph that the sentence is from,
+    as its context, each with a label. The additional context of the sentence and
+    that of the paragraph follow, each with a label, if they are set::
+
+        Sentence: <text of the sentence>
+
+        Paragraph that the sentence is from: <text of the paragraph>
+
+        Additional context of the sentence: <additional context>
+
+        Additional context of the paragraph: <additional context>
+
+    The texts and the additional context are cleaned as the text of a paragraph
+    is (see :func:`_get_paragraph_text_for_aspects`). A sentence that is segmented
+    from a paragraph inherits the additional context of the paragraph: additional
+    context that the sentence and the paragraph share is given once, as that of
+    the paragraph.
+
+    :param sentence: Sentence to ask the questions of aspects on.
+    :type sentence: _Sentence
+    :param paragraph: Paragraph that the sentence is from.
+    :type paragraph: _Paragraph
+    :return: The text to ask the questions on, which is empty if the sentence has
+        no text to show to a model, i.e. it is not to be asked about, and whether
+        the text has additional context, of the sentence or of the paragraph, i.e.
+        whether the questions are to be built for a text with additional context.
+    :rtype: tuple[str, bool]
+    """
+    sentence_text = _clean_text_for_question(sentence.raw_text)
+    if not sentence_text:
+        return "", False
+    parts = [
+        f"Sentence: {sentence_text}",
+        "Paragraph that the sentence is from: "
+        f"{_clean_text_for_question(paragraph.raw_text)}",
+    ]
+    sentence_context = _clean_text_for_question(sentence.additional_context)
+    paragraph_context = _clean_text_for_question(paragraph.additional_context)
+    if sentence_context and sentence_context != paragraph_context:
+        parts.append(f"Additional context of the sentence: {sentence_context}")
+    if paragraph_context:
+        parts.append(f"Additional context of the paragraph: {paragraph_context}")
+    return "\n\n".join(parts), len(parts) > 2
 
 
 # Converting answers
@@ -472,6 +545,9 @@ def _convert_aspect_answer(
     (see :func:`_build_aspect_questions`), asked on one paragraph, to whether
     the paragraph belongs to the aspect and to the probability distribution of that.
 
+    The answer to the question of an aspect asked on one sentence is converted in
+    the same way, to whether the sentence belongs to the aspect.
+
     Only the answer to the question of the aspect is read, i.e. the mapping may hold
     the answers to the questions of all the aspects of a request.
 
@@ -562,6 +638,25 @@ def _validate_answers(
 
 
 # Helpers
+
+
+def _clean_text_for_question(text: str | None) -> str:
+    """
+    Cleans the text of a paragraph or of a sentence, or their additional context,
+    for a text that the questions of aspects are asked on: as the text of
+    a paragraph is cleaned when it is shown to an LLM for the extraction of
+    aspects, i.e. without line breaks.
+
+    :param text: Text to clean, or None, e.g. for additional context that
+        is not set.
+    :type text: str | None
+    :return: The cleaned text, which is empty if there is nothing to show to
+        a model.
+    :rtype: str
+    """
+    return _clean_text_for_llm_prompt(
+        text or "", preserve_linebreaks=False, strip_text=True
+    )
 
 
 def _get_concept_question_name(position: int, label_position: int | None = None) -> str:

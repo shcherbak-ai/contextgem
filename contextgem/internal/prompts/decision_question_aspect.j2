@@ -1,8 +1,14 @@
+{% if text_unit == "sentence" %}
 {% if has_additional_context %}
+The text has one sentence of a document, the paragraph that the sentence is from, given as its context, and additional context of the sentence, of the paragraph, or of both, such as formatting, list context or table position. Use the additional context to understand the structural role and position of the sentence in the document. Decide whether the sentence is relevant to the aspect below.
+{% else %}
+The text has one sentence of a document and the paragraph that the sentence is from, given as its context. Decide whether the sentence is relevant to the aspect below.
+{% endif %}
+{% elif has_additional_context %}
 The text has one paragraph of a document and additional context of the paragraph, such as its formatting, list context or table position. Use the additional context to understand the structural role and position of the paragraph in the document. Decide whether the paragraph is relevant to the aspect below.
 {% else %}
 The text is one paragraph of a document. Decide whether the paragraph is relevant to the aspect below.
 {% endif %}
 Aspect name: {{ aspect_name }}
 Aspect description: {{ aspect_description }}
-Answer "yes" if the paragraph addresses or clearly relates to the aspect. Answer "no" if it does not.
+Answer "yes" if the {{ text_unit }} addresses or clearly relates to the aspect. Answer "no" if it does not.

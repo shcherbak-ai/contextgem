@@ -56,6 +56,7 @@ from litellm.types.decisions import (
 from pydantic import ValidationError
 
 from contextgem.internal.base import decision_models as decision_models_module
+from contextgem.internal.base import documents as documents_module
 from contextgem.internal.base import models as models_module
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.decision_models import _DocumentDecisionModel
@@ -73,6 +74,7 @@ from contextgem.internal.decisions import (
     _DecisionQuestion,
     _get_decision_threshold,
     _get_paragraph_text_for_aspects,
+    _get_sentence_text_for_aspects,
     _validate_answers,
 )
 from contextgem.internal.exceptions import (
@@ -101,6 +103,7 @@ from contextgem.public import (
     NumericalConcept,
     Paragraph,
     RatingConcept,
+    Sentence,
     StringConcept,
     register_tool,
 )
@@ -573,6 +576,206 @@ def _set_aspect_as_extracted(document: Document, aspect: _Aspect) -> None:
     aspect.extracted_items = items
     aspect.reference_paragraphs = paragraphs
     aspect._is_processed = True
+
+
+# Sentences of the paragraphs of the document used in the tests of the extraction
+# of aspects with sentences as the extracted items. The text of a paragraph is its
+# sentences joined with a space.
+_SENTENCES_DOCUMENT_SENTENCE_TEXTS = [
+    ["Services  agreement"],
+    [
+        "Either party may terminate this agreement with a notice of 30 days.",
+        "The notice shall be given in writing.",
+        "The fees paid are not refunded.",
+    ],
+    ["The client shall pay the fees every month.", "Late payments bear interest."],
+    [
+        "The provider may suspend the services.",
+        "Termination does not affect the accrued rights.",
+    ],
+    ["This agreement is governed by the laws of Norway."],
+]
+# The texts expected to be sent to a decision model for the paragraphs of that
+# document, each in a request of its own: only the second paragraph has
+# additional context
+_SENTENCES_PARAGRAPH_TEXTS_SENT = [
+    "Services agreement",
+    "Paragraph: Either party may terminate this agreement with a notice of 30 days. "
+    "The notice shall be given in writing. The fees paid are not refunded.\n\n"
+    "Additional context of the paragraph: Section 3. Termination",
+    "The client shall pay the fees every month. Late payments bear interest.",
+    "The provider may suspend the services. Termination does not affect the accrued "
+    "rights.",
+    "This agreement is governed by the laws of Norway.",
+]
+# ... and for the sentences of the paragraphs, each in a request of its own, by
+# the positions of the paragraph and of the sentence in it: the sentence, its
+# paragraph, and the additional context of the sentence and of the paragraph,
+# where they are set. Additional context that a sentence shares with its paragraph,
+# as the third sentence of the second paragraph does, is given once.
+_SENTENCES_TEXTS_SENT = {
+    (0, 0): "Sentence: Services agreement\n\n"
+    "Paragraph that the sentence is from: Services agreement",
+    (1, 0): "Sentence: Either party may terminate this agreement with a notice of "
+    "30 days.\n\n"
+    "Paragraph that the sentence is from: Either party may terminate this agreement "
+    "with a notice of 30 days. The notice shall be given in writing. The fees paid "
+    "are not refunded.\n\n"
+    "Additional context of the paragraph: Section 3. Termination",
+    (1, 1): "Sentence: The notice shall be given in writing.\n\n"
+    "Paragraph that the sentence is from: Either party may terminate this agreement "
+    "with a notice of 30 days. The notice shall be given in writing. The fees paid "
+    "are not refunded.\n\n"
+    "Additional context of the sentence: List item 2 of 3\n\n"
+    "Additional context of the paragraph: Section 3. Termination",
+    (1, 2): "Sentence: The fees paid are not refunded.\n\n"
+    "Paragraph that the sentence is from: Either party may terminate this agreement "
+    "with a notice of 30 days. The notice shall be given in writing. The fees paid "
+    "are not refunded.\n\n"
+    "Additional context of the paragraph: Section 3. Termination",
+    (2, 0): "Sentence: The client shall pay the fees every month.\n\n"
+    "Paragraph that the sentence is from: The client shall pay the fees every "
+    "month. Late payments bear interest.",
+    (2, 1): "Sentence: Late payments bear interest.\n\n"
+    "Paragraph that the sentence is from: The client shall pay the fees every "
+    "month. Late payments bear interest.",
+    (3, 0): "Sentence: The provider may suspend the services.\n\n"
+    "Paragraph that the sentence is from: The provider may suspend the services. "
+    "Termination does not affect the accrued rights.",
+    (3, 1): "Sentence: Termination does not affect the accrued rights.\n\n"
+    "Paragraph that the sentence is from: The provider may suspend the services. "
+    "Termination does not affect the accrued rights.\n\n"
+    "Additional context of the sentence: Footnote 4",
+    (4, 0): "Sentence: This agreement is governed by the laws of Norway.\n\n"
+    "Paragraph that the sentence is from: This agreement is governed by the laws "
+    "of Norway.",
+}
+
+
+def _create_sentences_document(aspects: list[Aspect] | None = None) -> Document:
+    """
+    Creates a document with five paragraphs that have their sentences, nine in
+    total, with the given aspects assigned to it, so that no sentences are to be
+    segmented when the aspects are extracted with sentences as their items.
+
+    The second paragraph has additional context and custom data. Its second
+    sentence has additional context and custom data of its own, and its third
+    sentence has the additional context of the paragraph, as a sentence segmented
+    from the paragraph has. The second sentence of the fourth paragraph, which has
+    no additional context, has additional context of its own.
+
+    :param aspects: Aspects of the document. Defaults to None.
+    :type aspects: list[Aspect] | None
+    :return: Document.
+    :rtype: Document
+    """
+    paragraph_kwargs: dict[int, dict[str, Any]] = {
+        1: {"additional_context": "Section 3. Termination", "custom_data": {"page": 2}}
+    }
+    sentence_kwargs: dict[tuple[int, int], dict[str, Any]] = {
+        (1, 1): {
+            "additional_context": "List item  2 of 3",
+            "custom_data": {"line": 7},
+        },
+        (1, 2): {"additional_context": "Section 3. Termination"},
+        (3, 1): {"additional_context": "Footnote 4"},
+    }
+    paragraphs: list[_Paragraph] = [
+        Paragraph(
+            raw_text=" ".join(sentence_texts),
+            sentences=[
+                Sentence(
+                    raw_text=sentence_text,
+                    **sentence_kwargs.get((paragraph_position, sentence_position), {}),
+                )
+                for sentence_position, sentence_text in enumerate(sentence_texts)
+            ],
+            **paragraph_kwargs.get(paragraph_position, {}),
+        )
+        for paragraph_position, sentence_texts in enumerate(
+            _SENTENCES_DOCUMENT_SENTENCE_TEXTS
+        )
+    ]
+    document = Document(paragraphs=paragraphs)
+    assert len(document.sentences) == 9
+    if aspects:
+        document.aspects = aspects
+    return document
+
+
+def _get_sentences_request_position(request: dict[str, Any]) -> int | tuple[int, int]:
+    """
+    Returns what a request with the questions of aspects is for, among
+    the paragraphs and the sentences of the document created by
+    :func:`_create_sentences_document`.
+
+    :param request: Keyword arguments of the request.
+    :type request: dict[str, Any]
+    :return: The position of the paragraph, for a request for a paragraph, or
+        the positions of the paragraph and of the sentence in it, for a request
+        for a sentence.
+    :rtype: int | tuple[int, int]
+    """
+    text = request["input"]
+    if text in _SENTENCES_PARAGRAPH_TEXTS_SENT:
+        return _SENTENCES_PARAGRAPH_TEXTS_SENT.index(text)
+    (position,) = [
+        position
+        for position, text_sent in _SENTENCES_TEXTS_SENT.items()
+        if text_sent == text
+    ]
+    return position
+
+
+def _create_sentences_responder(
+    yes_probabilities: dict[str, dict[int | tuple[int, int], float]],
+    default_probability: float = 0.1,
+    **usage_kwargs: int,
+) -> Callable[[dict[str, Any]], OpenAIDecisionResponse]:
+    """
+    Creates the function that responds to a request with the questions of aspects,
+    asked on one paragraph, or on one sentence, of the document created by
+    :func:`_create_sentences_document`.
+
+    :param yes_probabilities: The probability that a paragraph or a sentence
+        belongs to an aspect, by the name of the aspect, and by the position of
+        the paragraph in the document, or by the positions of the paragraph and
+        of the sentence in it.
+    :type yes_probabilities: dict[str, dict[int | tuple[int, int], float]]
+    :param default_probability: The probability for the aspects, paragraphs and
+        sentences that are not given. Defaults to 0.1.
+    :type default_probability: float
+    :param usage_kwargs: Token counts to report in the responses.
+    :type usage_kwargs: int
+    :return: Function that creates the response for a request.
+    :rtype: Callable[[dict[str, Any]], OpenAIDecisionResponse]
+    """
+
+    def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+        """
+        Creates the response for the request.
+
+        :param request: Keyword arguments of the request.
+        :type request: dict[str, Any]
+        :return: Response of litellm.
+        :rtype: OpenAIDecisionResponse
+        """
+        position = _get_sentences_request_position(request)
+        # The questions on a sentence tell that a sentence is what is judged
+        text_unit = "paragraph" if isinstance(position, int) else "sentence"
+        answers: dict[str, Any] = {}
+        for question in request["questions"]:
+            aspect_name_match = re.search(
+                r"^Aspect name: (.+)$", question["instructions"], flags=re.MULTILINE
+            )
+            assert aspect_name_match is not None, question
+            assert f"whether the {text_unit} is relevant" in question["instructions"]
+            answers[question["name"]] = yes_probabilities.get(
+                aspect_name_match.group(1), {}
+            ).get(position, default_probability)
+        return _create_decisions_response(request["questions"], answers, **usage_kwargs)
+
+    return respond
 
 
 @contextmanager
@@ -5556,10 +5759,9 @@ class TestDecisionModels(BaseTest):
             error_match = (
                 f"^Decision model `{_DECISION_MODEL}` cannot extract: "
                 f"concept `{concept.name}` \\({reasons}\\)\\. "
-                f"A decision model extracts aspects with the `paragraphs` reference "
-                f"depth, and Boolean, label and rating concepts from text without "
-                f"references, both without justifications\\. Route the other aspects "
-                f"and concepts to an LLM"
+                f"A decision model extracts aspects, and Boolean, label and rating "
+                f"concepts from text without references, both without "
+                f"justifications\\. Route the other aspects and concepts to an LLM"
             )
             # A concept of the document, next to a concept that can be extracted
             document = _create_document(concepts=[supported_concept, concept])
@@ -5596,26 +5798,20 @@ class TestDecisionModels(BaseTest):
 
         # Aspects that a decision model cannot extract
         unservable_aspects: list[tuple[dict[str, Any], str]] = [
-            # Sentences as the extracted items
-            (
-                {"reference_depth": "sentences"},
-                "reference depth `sentences` is not supported",
-            ),
             # Justifications
             ({"add_justifications": True}, "justifications are not supported"),
-            # Each reason is given
+            # ... whatever the extracted items are: sentences are supported
             (
                 {"reference_depth": "sentences", "add_justifications": True},
-                "reference depth `sentences` is not supported, justifications "
-                "are not supported",
+                "justifications are not supported",
             ),
         ]
         for aspect_kwargs, reasons in unservable_aspects:
             error_match = (
                 f"^Decision model `{_DECISION_MODEL}` cannot extract: "
                 f"aspect `Termination` \\({reasons}\\)\\. "
-                f"A decision model extracts aspects with the `paragraphs` reference "
-                f"depth"
+                f"A decision model extracts aspects, and Boolean, label and rating "
+                f"concepts"
             )
             # An aspect of the document, next to an aspect that can be extracted
             document = _create_document(
@@ -5661,6 +5857,7 @@ class TestDecisionModels(BaseTest):
                             name="Notices",
                             description="Clauses on notices",
                             reference_depth="sentences",
+                            add_justifications=True,
                         )
                     ],
                 )
@@ -5673,7 +5870,7 @@ class TestDecisionModels(BaseTest):
             r"cannot extract: concept `Title` \(type `StringConcept` is not "
             r"supported\); aspect `Termination` \(justifications are not "
             r"supported\); concept `Notice form` \(references are not supported\); "
-            r"aspect `Notices` \(reference depth `sentences` is not supported\)\. ",
+            r"aspect `Notices` \(justifications are not supported\)\. ",
             only_full_extraction=True,
         )
         # A concept of an aspect is not extracted when the aspects are, i.e. it is
@@ -5863,6 +6060,7 @@ class TestDecisionModels(BaseTest):
                     name="Termination",
                     description="Clauses on termination",
                     reference_depth="sentences",
+                    add_justifications=True,
                     concepts=[supported_concept],
                 )
             ]
@@ -5872,7 +6070,7 @@ class TestDecisionModels(BaseTest):
             document,
             f"^Fallback decision model `{_DECISION_MODEL}` cannot extract what it "
             r"is to extract if the model it is a fallback for fails: aspect "
-            r"`Termination` \(reference depth `sentences` is not supported\)\. ",
+            r"`Termination` \(justifications are not supported\)\. ",
         )
         # ... while an LLM with such a fallback model extracts what a decision
         # model can extract
@@ -7510,6 +7708,2116 @@ class TestDecisionModels(BaseTest):
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == failed_position + 1
             assert not any(aspect._is_processed for aspect in document.aspects)
+
+    def test_decision_model_aspect_sentence_questions_and_texts(self):
+        """
+        Tests the questions built for aspects to be asked on one sentence, for
+        the aspects that are extracted with sentences as their items, and the text
+        of a sentence that such questions are asked on.
+        """
+        aspects = [
+            Aspect(
+                name="Termination",
+                description="Clauses on the termination of the agreement",
+                reference_depth="sentences",
+            ),
+            Aspect(name="Payment", description="Clauses on the payment of fees"),
+        ]
+
+        # === The questions ===
+        questions = _build_aspect_questions(aspects, text_unit="sentence")
+        assert questions == [
+            _DecisionQuestion(
+                name="A0",
+                kind="predicate",
+                instructions=(
+                    "The text has one sentence of a document and the paragraph "
+                    "that the sentence is from, given as its context. Decide "
+                    "whether the sentence is relevant to the aspect below.\n"
+                    "Aspect name: Termination\n"
+                    "Aspect description: Clauses on the termination of the agreement\n"
+                    'Answer "yes" if the sentence addresses or clearly relates to '
+                    'the aspect. Answer "no" if it does not.'
+                ),
+                options=(),
+            ),
+            _DecisionQuestion(
+                name="A1",
+                kind="predicate",
+                instructions=(
+                    "The text has one sentence of a document and the paragraph "
+                    "that the sentence is from, given as its context. Decide "
+                    "whether the sentence is relevant to the aspect below.\n"
+                    "Aspect name: Payment\n"
+                    "Aspect description: Clauses on the payment of fees\n"
+                    'Answer "yes" if the sentence addresses or clearly relates to '
+                    'the aspect. Answer "no" if it does not.'
+                ),
+                options=(),
+            ),
+        ]
+        # The text of a sentence may also have additional context
+        questions_with_context = _build_aspect_questions(
+            aspects, has_additional_context=True, text_unit="sentence"
+        )
+        assert questions_with_context == [
+            _DecisionQuestion(
+                name="A0",
+                kind="predicate",
+                instructions=(
+                    "The text has one sentence of a document, the paragraph that "
+                    "the sentence is from, given as its context, and additional "
+                    "context of the sentence, of the paragraph, or of both, such as "
+                    "formatting, list context or table position. Use the additional "
+                    "context to understand the structural role and position of "
+                    "the sentence in the document. Decide whether the sentence is "
+                    "relevant to the aspect below.\n"
+                    "Aspect name: Termination\n"
+                    "Aspect description: Clauses on the termination of the agreement\n"
+                    'Answer "yes" if the sentence addresses or clearly relates to '
+                    'the aspect. Answer "no" if it does not.'
+                ),
+                options=(),
+            ),
+            _DecisionQuestion(
+                name="A1",
+                kind="predicate",
+                instructions=(
+                    "The text has one sentence of a document, the paragraph that "
+                    "the sentence is from, given as its context, and additional "
+                    "context of the sentence, of the paragraph, or of both, such as "
+                    "formatting, list context or table position. Use the additional "
+                    "context to understand the structural role and position of "
+                    "the sentence in the document. Decide whether the sentence is "
+                    "relevant to the aspect below.\n"
+                    "Aspect name: Payment\n"
+                    "Aspect description: Clauses on the payment of fees\n"
+                    'Answer "yes" if the sentence addresses or clearly relates to '
+                    'the aspect. Answer "no" if it does not.'
+                ),
+                options=(),
+            ),
+        ]
+        for question in [*questions, *questions_with_context]:
+            self.check_rendered_prompt(question.instructions)
+        # The questions on a paragraph are those built by default: the reference
+        # depth of an aspect does not change its question on a paragraph
+        for has_additional_context in [False, True]:
+            questions_on_paragraph = _build_aspect_questions(
+                aspects, has_additional_context=has_additional_context
+            )
+            assert questions_on_paragraph == _build_aspect_questions(
+                aspects,
+                has_additional_context=has_additional_context,
+                text_unit="paragraph",
+            )
+            assert all(
+                "sentence" not in question.instructions
+                for question in questions_on_paragraph
+            )
+        assert _build_aspect_questions(aspects)[0].instructions == (
+            "The text is one paragraph of a document. Decide whether "
+            "the paragraph is relevant to the aspect below.\n"
+            "Aspect name: Termination\n"
+            "Aspect description: Clauses on the termination of the agreement\n"
+            'Answer "yes" if the paragraph addresses or clearly relates to '
+            'the aspect. Answer "no" if it does not.'
+        )
+
+        # === The text of a sentence ===
+        # The sentence, which is what is judged, and its paragraph, each with
+        # a label, with the additional context of the sentence and of the paragraph
+        # where they are set
+        document = _create_sentences_document()
+        sentences_with_context = {(1, 0), (1, 1), (1, 2), (3, 1)}
+        for paragraph_position, paragraph in enumerate(document.paragraphs):
+            for sentence_position, sentence in enumerate(paragraph.sentences):
+                position = (paragraph_position, sentence_position)
+                assert _get_sentence_text_for_aspects(sentence, paragraph) == (
+                    _SENTENCES_TEXTS_SENT[position],
+                    position in sentences_with_context,
+                ), position
+        # The texts and the additional context are cleaned as the text of
+        # a paragraph is
+        assert "Services  agreement" in document.paragraphs[0].raw_text
+        assert document.paragraphs[1].sentences[1].additional_context == (
+            "List item  2 of 3"
+        )
+        # Additional context that a sentence shares with its paragraph, as
+        # a sentence segmented from the paragraph does, is given once, as that
+        # of the paragraph, also when it differs in what is cleaned off
+        paragraph = Paragraph(
+            raw_text="The notice shall be given in writing. It is sent by post.",
+            additional_context="Section  3. Termination",
+            sentences=[
+                Sentence(
+                    raw_text="The notice shall be given in writing.",
+                    additional_context="Section 3. Termination​",
+                ),
+                Sentence(raw_text="It is sent by post."),
+            ],
+        )
+        assert _get_sentence_text_for_aspects(paragraph.sentences[0], paragraph) == (
+            "Sentence: The notice shall be given in writing.\n\n"
+            "Paragraph that the sentence is from: The notice shall be given in "
+            "writing. It is sent by post.\n\n"
+            "Additional context of the paragraph: Section 3. Termination",
+            True,
+        )
+        # The additional context of the paragraph is given for each sentence
+        assert _get_sentence_text_for_aspects(paragraph.sentences[1], paragraph) == (
+            "Sentence: It is sent by post.\n\n"
+            "Paragraph that the sentence is from: The notice shall be given in "
+            "writing. It is sent by post.\n\n"
+            "Additional context of the paragraph: Section 3. Termination",
+            True,
+        )
+
+    def test_extract_aspects_with_sentence_reference_depth(self):
+        """
+        Tests the extraction of aspects with sentences as the extracted items
+        (``reference_depth="sentences"``) with a decision model, in two stages:
+        the requests sent, one for each paragraph and then one for each sentence
+        of the paragraphs that belong to such an aspect, and the items extracted,
+        with their values, probabilities, custom data and references.
+        """
+        # The probability that a paragraph, or a sentence, belongs to an aspect:
+        # 0.1 for those that are not listed
+        yes_probabilities: dict[str, dict[int | tuple[int, int], float]] = {
+            "Termination": {
+                1: 0.9,
+                # A paragraph with a probability of exactly 0.5 belongs to
+                # the aspect, while none of its sentences does
+                2: 0.5,
+                3: 0.6,
+                (1, 0): 0.95,
+                # A sentence with a probability of exactly 0.5 belongs to the aspect
+                (1, 1): 0.5,
+                (1, 2): 0.2,
+                (2, 0): 0.4,
+                (2, 1): 0.2,
+                (3, 0): 0.3,
+                (3, 1): 0.85,
+            },
+            # The aspect has a decision threshold of 0.7 of its own
+            "Payment": {
+                1: 0.75,
+                2: 0.8,
+                # A paragraph below the threshold: its sentences are not asked
+                # about for the aspect
+                3: 0.65,
+                (1, 2): 0.72,
+                (2, 0): 0.9,
+                # A sentence below the threshold
+                (2, 1): 0.69,
+            },
+            # No paragraph belongs to the aspect
+            "Governing law": {4: 0.4},
+        }
+
+        def create_document() -> Document:
+            """
+            Creates a document with three aspects that are extracted with
+            sentences as their items.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        reference_depth="sentences",
+                    ),
+                    Aspect(
+                        name="Payment",
+                        description="Clauses on the payment of fees",
+                        reference_depth="sentences",
+                        decision_threshold=0.7,
+                    ),
+                    Aspect(
+                        name="Governing law",
+                        description="Clauses on the governing law",
+                        reference_depth="sentences",
+                    ),
+                ]
+            )
+
+        def get_request_questions(
+            aspects: Sequence[_Aspect],
+            aspect_positions: list[int],
+            has_additional_context: bool,
+            text_unit: Literal["paragraph", "sentence"],
+        ) -> list[dict[str, Any]]:
+            """
+            Returns the questions expected in a request for a paragraph or
+            for a sentence.
+
+            :param aspects: The aspects of the call.
+            :type aspects: Sequence[_Aspect]
+            :param aspect_positions: The positions of the aspects that
+                the request has the questions of.
+            :type aspect_positions: list[int]
+            :param has_additional_context: Whether the text of the request has
+                additional context.
+            :type has_additional_context: bool
+            :param text_unit: What the request is for.
+            :type text_unit: Literal["paragraph", "sentence"]
+            :return: The questions of the request.
+            :rtype: list[dict[str, Any]]
+            """
+            questions = _build_aspect_questions(
+                aspects,
+                has_additional_context=has_additional_context,
+                text_unit=text_unit,
+            )
+            return [
+                {
+                    "type": "predicate",
+                    "name": questions[position].name,
+                    "instructions": questions[position].instructions,
+                }
+                for position in aspect_positions
+            ]
+
+        # The questions built for the requests: those built to check what
+        # a decision model can extract are built without the params
+        questions_built: list[tuple[int, bool, str]] = []
+
+        def build_aspect_questions(*args: Any, **kwargs: Any) -> Any:
+            """
+            Builds the questions of aspects, and records for how many aspects and
+            for which kind of text they are built.
+
+            :param args: Arguments of the function that builds the questions.
+            :type args: Any
+            :param kwargs: Keyword arguments of the function.
+            :type kwargs: Any
+            :return: The questions.
+            :rtype: Any
+            """
+            if "has_additional_context" in kwargs:
+                questions_built.append(
+                    (
+                        len(args[0]),
+                        kwargs["has_additional_context"],
+                        kwargs.get("text_unit", "paragraph"),
+                    )
+                )
+            return _build_aspect_questions(*args, **kwargs)
+
+        decision_model = _create_decision_model()
+        document = create_document()
+        paragraphs = document.paragraphs
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    _create_sentences_responder(yes_probabilities, input_tokens=20)
+                ]
+            }
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                decision_models_module,
+                "_build_aspect_questions",
+                new=build_aspect_questions,
+            ),
+        ):
+            extracted_aspects = decision_model.extract_aspects_from_document(document)
+        assert [aspect.name for aspect in extracted_aspects] == [
+            "Termination",
+            "Payment",
+            "Governing law",
+        ]
+        termination, payment, governing_law = document.aspects
+
+        # === The requests ===
+        # First, one request for each paragraph, with one question for each
+        # aspect, as for the aspects extracted with paragraphs as their items.
+        # Then, one request for each sentence of each paragraph that belongs to
+        # an aspect, with one question for each of the aspects that the paragraph
+        # belongs to, named by the position of the aspect in the call.
+        assert [
+            (request["input"], request["questions"])
+            for request in decisions_stub.requests
+        ] == [
+            *[
+                (
+                    text,
+                    get_request_questions(
+                        document.aspects,
+                        [0, 1, 2],
+                        # Only the second paragraph has additional context
+                        has_additional_context=position == 1,
+                        text_unit="paragraph",
+                    ),
+                )
+                for position, text in enumerate(_SENTENCES_PARAGRAPH_TEXTS_SENT)
+            ],
+            # The second paragraph belongs to the first two aspects. The text of
+            # each of its sentences has the additional context of the paragraph.
+            *[
+                (
+                    _SENTENCES_TEXTS_SENT[(1, sentence_position)],
+                    get_request_questions(document.aspects, [0, 1], True, "sentence"),
+                )
+                for sentence_position in range(3)
+            ],
+            # The third paragraph belongs to the first two aspects as well
+            *[
+                (
+                    _SENTENCES_TEXTS_SENT[(2, sentence_position)],
+                    get_request_questions(document.aspects, [0, 1], False, "sentence"),
+                )
+                for sentence_position in range(2)
+            ],
+            # The fourth paragraph belongs to the first aspect only. Its second
+            # sentence has additional context of its own.
+            (
+                _SENTENCES_TEXTS_SENT[(3, 0)],
+                get_request_questions(document.aspects, [0], False, "sentence"),
+            ),
+            (
+                _SENTENCES_TEXTS_SENT[(3, 1)],
+                get_request_questions(document.aspects, [0], True, "sentence"),
+            ),
+        ]
+        # The number of requests: the paragraphs, and the sentences of
+        # the paragraphs that belong to an aspect
+        assert len(decisions_stub.requests) == 5 + (3 + 2 + 2)
+        assert [
+            [question["name"] for question in request["questions"]]
+            for request in decisions_stub.requests
+        ] == [["A0", "A1", "A2"]] * 5 + [["A0", "A1"]] * 5 + [["A0"]] * 2
+        # The request for a paragraph of an aspect that is extracted with
+        # sentences is the one for an aspect that is extracted with paragraphs
+        assert decisions_stub.requests[0]["questions"] == [
+            {
+                "type": "predicate",
+                "name": question.name,
+                "instructions": question.instructions,
+            }
+            for question in _build_aspect_questions(
+                [
+                    Aspect(name=aspect.name, description=aspect.description)
+                    for aspect in document.aspects
+                ]
+            )
+        ]
+        # Each variant of the questions is built once per call, for all
+        # the aspects of the call, and only if a text is asked about with it
+        assert questions_built == [
+            (3, False, "paragraph"),
+            (3, True, "paragraph"),
+            (3, True, "sentence"),
+            (3, False, "sentence"),
+        ]
+
+        # === The items ===
+        # The sentences that belong to each aspect, by the positions of
+        # the paragraph and of the sentence in it, with their probabilities
+        expected_sentences: dict[str, list[tuple[tuple[int, int], float]]] = {
+            # No sentence of the third paragraph belongs to the aspect, i.e.
+            # the paragraph gives no items, while it belongs to the aspect
+            "Termination": [((1, 0), 0.95), ((1, 1), 0.5), ((3, 1), 0.85)],
+            "Payment": [((1, 2), 0.72), ((2, 0), 0.9)],
+            # An aspect that no paragraph belongs to is processed and has no items
+            "Governing law": [],
+        }
+        for aspect in document.aspects:
+            assert aspect._is_processed
+            aspect_sentences = expected_sentences[aspect.name]
+            # One item for each sentence, in the order of the document
+            assert len(aspect.extracted_items) == len(aspect_sentences)
+            for item, ((paragraph_position, sentence_position), probability) in zip(
+                aspect.extracted_items, aspect_sentences, strict=True
+            ):
+                paragraph = paragraphs[paragraph_position]
+                sentence = paragraph.sentences[sentence_position]
+                assert type(item) is _StringItem
+                # The text of the sentence as it is in the document
+                assert item.value == sentence.raw_text
+                # The probabilities of the sentence, not those of its paragraph
+                self.check_item_probabilities(
+                    item, {True: probability, False: 1 - probability}
+                )
+                assert item.reference_paragraphs == [paragraph]
+                assert item.reference_paragraphs[0] is paragraph
+                assert item.reference_sentences == [sentence]
+                assert item.reference_sentences[0] is sentence
+                # A decision model generates no text
+                assert item.justification is None
+                # The custom data of the sentence, not that of its paragraph
+                assert item.custom_data == sentence.custom_data
+            # The references of the aspect, as when an LLM extracts it:
+            # the paragraphs of its items, and the sentences of these paragraphs
+            reference_paragraphs = [
+                paragraphs[paragraph_position]
+                for paragraph_position in dict.fromkeys(
+                    paragraph_position
+                    for (paragraph_position, _), _ in aspect_sentences
+                )
+            ]
+            assert aspect.reference_paragraphs == reference_paragraphs
+            assert aspect.reference_sentences == [
+                sentence
+                for paragraph in reference_paragraphs
+                for sentence in paragraph.sentences
+            ]
+        assert [item.value for item in termination.extracted_items] == [
+            "Either party may terminate this agreement with a notice of 30 days.",
+            "The notice shall be given in writing.",
+            "Termination does not affect the accrued rights.",
+        ]
+        assert [item.custom_data for item in termination.extracted_items] == [
+            {},
+            {"line": 7},
+            {},
+        ]
+        assert paragraphs[1].custom_data == {"page": 2}
+        assert len(termination.reference_paragraphs) == 2
+        assert len(termination.reference_sentences) == 5
+        assert paragraphs[2] not in termination.reference_paragraphs
+        assert not governing_law.reference_paragraphs
+        assert not governing_law.reference_sentences
+        assert [item.value for item in payment.extracted_items] == [
+            "The fees paid are not refunded.",
+            "The client shall pay the fees every month.",
+        ]
+
+        # === The usage ===
+        # Each request is recorded as a call: those for the paragraphs, and then
+        # those for the sentences
+        usage = decision_model.get_usage()[0].usage
+        assert usage.input == 12 * 20
+        assert len(usage.calls) == 12
+        for call, request in zip(usage.calls, decisions_stub.requests, strict=True):
+            assert json.loads(call.prompt) == {
+                "model": _DECISION_MODEL,
+                "input": request["input"],
+                "questions": request["questions"],
+            }
+            assert call.timestamp_received is not None
+            assert call._input_tokens == 20
+        assert usage.calls[6].response is not None
+        assert json.loads(usage.calls[6].response) == [
+            {"type": "predicate", "name": "A0", "probability": 0.5},
+            {"type": "predicate", "name": "A1", "probability": 0.1},
+        ]
+
+        # === Serialization ===
+        self.check_instance_serialization_and_cloning(document)
+        for restored_document in [
+            Document.from_dict(document.to_dict()),
+            Document.from_json(document.to_json()),
+            document.clone(),
+        ]:
+            assert restored_document == document
+            for restored_aspect, aspect in zip(
+                restored_document.aspects, document.aspects, strict=True
+            ):
+                assert restored_aspect._is_processed
+                assert restored_aspect.extracted_items == aspect.extracted_items
+                assert restored_aspect.reference_paragraphs == (
+                    aspect.reference_paragraphs
+                )
+                assert restored_aspect.reference_sentences == (
+                    aspect.reference_sentences
+                )
+                for restored_item, item in zip(
+                    restored_aspect.extracted_items, aspect.extracted_items, strict=True
+                ):
+                    self.check_item_probabilities(restored_item, item.probabilities)
+                    assert restored_item.value == item.value
+                    assert restored_item.reference_paragraphs == (
+                        item.reference_paragraphs
+                    )
+                    assert restored_item.reference_sentences == (
+                        item.reference_sentences
+                    )
+                    assert restored_item.custom_data == item.custom_data
+
+        # === Already processed aspects ===
+        decisions_stub.requests.clear()
+        decisions_stub.outcomes[_DECISION_MODEL] = [
+            _create_sentences_responder(
+                {
+                    "Termination": {3: 0.9, (3, 0): 0.8},
+                    "Governing law": {4: 0.9, (4, 0): 0.7},
+                }
+            )
+        ]
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            # ... are not extracted again, before any request is sent
+            with pytest.raises(ValueError, match="already been processed"):
+                decision_model.extract_aspects_from_document(document)
+            assert not decisions_stub.requests
+            # ... unless they are to be overwritten: the references of an aspect
+            # are then those of its new items only
+            decision_model.extract_aspects_from_document(
+                document, overwrite_existing=True
+            )
+        assert [request["input"] for request in decisions_stub.requests] == [
+            *_SENTENCES_PARAGRAPH_TEXTS_SENT,
+            _SENTENCES_TEXTS_SENT[(3, 0)],
+            _SENTENCES_TEXTS_SENT[(3, 1)],
+            _SENTENCES_TEXTS_SENT[(4, 0)],
+        ]
+        assert [item.value for item in termination.extracted_items] == [
+            paragraphs[3].sentences[0].raw_text
+        ]
+        assert termination.reference_paragraphs == [paragraphs[3]]
+        assert termination.reference_sentences == paragraphs[3].sentences
+        assert payment._is_processed and not payment.extracted_items
+        assert not payment.reference_paragraphs
+        assert not payment.reference_sentences
+        assert [item.value for item in governing_law.extracted_items] == [
+            paragraphs[4].sentences[0].raw_text
+        ]
+        assert governing_law.reference_paragraphs == [paragraphs[4]]
+        assert governing_law.reference_sentences == paragraphs[4].sentences
+        # Without overwriting, the references that an aspect has are kept, and
+        # those of its items are added to them, as when an LLM extracts it
+        document = create_document()
+        paragraphs = document.paragraphs
+        termination = document.aspects[0]
+        termination.reference_paragraphs = [paragraphs[0]]
+        termination.reference_sentences = [paragraphs[0].sentences[0]]
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert [id(paragraph) for paragraph in termination.reference_paragraphs] == [
+            id(paragraphs[0]),
+            id(paragraphs[3]),
+        ]
+        assert [id(sentence) for sentence in termination.reference_sentences] == [
+            id(paragraphs[0].sentences[0]),
+            *[id(sentence) for sentence in paragraphs[3].sentences],
+        ]
+
+    def test_sentence_depth_aspects_decision_threshold(self):
+        """
+        Tests that the decision threshold applies at both stages of the extraction
+        of aspects with sentences as the extracted items: to the paragraphs, whose
+        sentences are asked about only if the paragraph belongs to the aspect, and
+        to the sentences. The threshold is that of the aspect, or that of
+        the decision model if the aspect has none of its own.
+        """
+        # The same probabilities for each aspect
+        probabilities: dict[int | tuple[int, int], float] = {
+            1: 0.9,
+            2: 0.6,
+            3: 0.4,
+            (1, 0): 0.9,
+            (1, 1): 0.6,
+            (1, 2): 0.4,
+            (2, 0): 0.8,
+            (2, 1): 0.35,
+            (3, 0): 0.75,
+            (3, 1): 0.3,
+        }
+        respond = _create_sentences_responder(
+            {
+                "Default": probabilities,
+                "Lenient": probabilities,
+                "Strict": probabilities,
+            }
+        )
+
+        def extract(
+            **model_kwargs: Any,
+        ) -> tuple[dict[str, list[tuple[int, int]]], dict[int, list[str]]]:
+            """
+            Extracts the aspects of a new document with a new decision model.
+
+            :param model_kwargs: Params of the decision model.
+            :type model_kwargs: Any
+            :return: The sentences extracted for each aspect, by the name of
+                the aspect, as the positions of the paragraph and of the sentence
+                in it, and the names of the questions asked on the sentences of
+                each paragraph, by the position of the paragraph.
+            :rtype: tuple[dict[str, list[tuple[int, int]]], dict[int, list[str]]]
+            """
+            decision_model = _create_decision_model(**model_kwargs)
+            document = _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name="Default",
+                        description="Clauses of the default kind",
+                        reference_depth="sentences",
+                    ),
+                    Aspect(
+                        name="Lenient",
+                        description="Clauses of the lenient kind",
+                        reference_depth="sentences",
+                        decision_threshold=0.3,
+                    ),
+                    Aspect(
+                        name="Strict",
+                        description="Clauses of the strict kind",
+                        reference_depth="sentences",
+                        decision_threshold=0.7,
+                    ),
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_aspects_from_document(document)
+            sentence_positions = {
+                id(sentence): (paragraph_position, sentence_position)
+                for paragraph_position, paragraph in enumerate(document.paragraphs)
+                for sentence_position, sentence in enumerate(paragraph.sentences)
+            }
+            extracted: dict[str, list[tuple[int, int]]] = {}
+            for aspect in document.aspects:
+                assert aspect._is_processed
+                extracted[aspect.name] = []
+                for item in aspect.extracted_items:
+                    (sentence,) = item.reference_sentences
+                    position = sentence_positions[id(sentence)]
+                    extracted[aspect.name].append(position)
+                    # The probabilities are those of the answer on the sentence,
+                    # whatever threshold the sentence is extracted with
+                    self.check_item_probabilities(
+                        item,
+                        {
+                            True: probabilities[position],
+                            False: 1 - probabilities[position],
+                        },
+                    )
+            questions_on_sentences: dict[int, list[str]] = {}
+            for request in decisions_stub.requests[5:]:
+                position = _get_sentences_request_position(request)
+                assert isinstance(position, tuple)
+                question_names = [question["name"] for question in request["questions"]]
+                # The same questions on each sentence of a paragraph
+                assert (
+                    questions_on_sentences.setdefault(position[0], question_names)
+                    == question_names
+                )
+            # Each sentence of the paragraphs that are asked about
+            assert len(decisions_stub.requests) == 5 + sum(
+                len(_SENTENCES_DOCUMENT_SENTENCE_TEXTS[paragraph_position])
+                for paragraph_position in questions_on_sentences
+            )
+            return extracted, questions_on_sentences
+
+        # The sentences that the aspects with a threshold of their own get,
+        # whatever the threshold of the decision model is
+        lenient_sentences = [(1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (3, 0), (3, 1)]
+        # The sentences with a probability above the threshold in the paragraphs
+        # that are below it are not asked about, i.e. are not extracted
+        strict_sentences = [(1, 0)]
+        assert probabilities[(2, 0)] > 0.7 > probabilities[2]
+
+        # === The default threshold of the decision model ===
+        extracted, questions_on_sentences = extract()
+        assert extracted == {
+            "Default": [(1, 0), (1, 1), (2, 0)],
+            "Lenient": lenient_sentences,
+            "Strict": strict_sentences,
+        }
+        # The sentences of a paragraph are asked about for the aspects that
+        # the paragraph belongs to, by the threshold of each aspect
+        assert questions_on_sentences == {
+            1: ["A0", "A1", "A2"],
+            2: ["A0", "A1"],
+            3: ["A1"],
+        }
+
+        # === A higher threshold of the decision model ===
+        # It applies to the aspect without a threshold of its own, at both stages
+        extracted, questions_on_sentences = extract(decision_threshold=0.8)
+        assert extracted == {
+            "Default": [(1, 0)],
+            "Lenient": lenient_sentences,
+            "Strict": strict_sentences,
+        }
+        assert questions_on_sentences == {1: ["A0", "A1", "A2"], 2: ["A1"], 3: ["A1"]}
+
+        # === A lower threshold of the decision model ===
+        extracted, questions_on_sentences = extract(decision_threshold=0.35)
+        assert extracted == {
+            "Default": [(1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (3, 0)],
+            "Lenient": lenient_sentences,
+            "Strict": strict_sentences,
+        }
+        assert questions_on_sentences == {
+            1: ["A0", "A1", "A2"],
+            2: ["A0", "A1"],
+            3: ["A0", "A1"],
+        }
+
+    def test_sentence_depth_sub_aspects_and_concepts_with_decision_model(self):
+        """
+        Tests that the sub-aspects and the concepts of an aspect that a decision
+        model extracts with sentences as the extracted items are extracted from
+        the paragraphs of the aspect, and that a sub-aspect is extracted with
+        sentences as its items, from the paragraphs of an aspect of any reference
+        depth.
+        """
+        yes_probabilities: dict[str, dict[int | tuple[int, int], float]] = {
+            "Termination": {
+                1: 0.9,
+                3: 0.6,
+                (1, 0): 0.9,
+                (1, 1): 0.8,
+                (3, 1): 0.7,
+            },
+            "Notice of termination": {1: 0.8, (1, 0): 0.3, (1, 1): 0.9},
+            "Effects of termination": {3: 0.7},
+            "Payment": {2: 0.8},
+            "Late payment": {2: 0.9, (2, 1): 0.85},
+        }
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request with the questions of aspects, asked on one
+            paragraph or on one sentence, or with the question of a concept.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            if request["questions"][0]["name"].startswith("C"):
+                return _answer_all_questions(request)
+            return _create_sentences_responder(yes_probabilities)(request)
+
+        def create_document() -> Document:
+            """
+            Creates a document with an aspect with sentences as its items, which
+            has a sub-aspect of each reference depth and a concept, and an aspect
+            with paragraphs as its items, which has a sub-aspect with sentences
+            as its items.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        reference_depth="sentences",
+                        aspects=[
+                            Aspect(
+                                name="Notice of termination",
+                                description="Clauses on the notice that terminates "
+                                "the agreement",
+                                reference_depth="sentences",
+                            ),
+                            Aspect(
+                                name="Effects of termination",
+                                description="Clauses on what follows the termination",
+                            ),
+                        ],
+                        concepts=[
+                            BooleanConcept(
+                                name="Written notice",
+                                description="A written notice is required",
+                            )
+                        ],
+                    ),
+                    Aspect(
+                        name="Payment",
+                        description="Clauses on the payment of fees",
+                        aspects=[
+                            Aspect(
+                                name="Late payment",
+                                description="Clauses on the payments that are late",
+                                reference_depth="sentences",
+                            )
+                        ],
+                    ),
+                ]
+            )
+
+        decision_model = _create_decision_model()
+        document = create_document()
+        paragraphs = document.paragraphs
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+
+        def get_instance_name(question: dict[str, Any]) -> str:
+            """
+            Returns the name of the aspect that the question is about.
+
+            :param question: The question of a request.
+            :type question: dict[str, Any]
+            :return: The name of the aspect.
+            :rtype: str
+            """
+            name_match = re.search(
+                r"^Aspect name: (.+)$", question["instructions"], flags=re.MULTILINE
+            )
+            assert name_match is not None, question
+            return name_match.group(1)
+
+        paragraph_texts = _SENTENCES_PARAGRAPH_TEXTS_SENT
+        sentence_texts = _SENTENCES_TEXTS_SENT
+        assert [
+            (
+                request["input"],
+                [get_instance_name(question) for question in request["questions"]],
+            )
+            for request in decisions_stub.requests
+        ] == [
+            # The aspect with sentences as its items: each paragraph of
+            # the document, and each sentence of the paragraphs that belong to it
+            *[(text, ["Termination"]) for text in paragraph_texts],
+            *[(sentence_texts[(1, i)], ["Termination"]) for i in range(3)],
+            *[(sentence_texts[(3, i)], ["Termination"]) for i in range(2)],
+            # The aspect with paragraphs as its items, in a call of its own
+            *[(text, ["Payment"]) for text in paragraph_texts],
+            # The sub-aspect with sentences as its items: each paragraph extracted
+            # for its aspect, and each sentence of the paragraph that belongs to it
+            (paragraph_texts[1], ["Notice of termination"]),
+            (paragraph_texts[3], ["Notice of termination"]),
+            *[(sentence_texts[(1, i)], ["Notice of termination"]) for i in range(3)],
+            # The sub-aspect with paragraphs as its items
+            (paragraph_texts[1], ["Effects of termination"]),
+            (paragraph_texts[3], ["Effects of termination"]),
+            # The sub-aspect of the aspect with paragraphs as its items
+            (paragraph_texts[2], ["Late payment"]),
+            *[(sentence_texts[(2, i)], ["Late payment"]) for i in range(2)],
+        ]
+
+        termination, payment = document.aspects
+        notice, effects = termination.aspects
+        (late_payment,) = payment.aspects
+        # What each aspect and sub-aspect gets: the sentences, by the positions
+        # of the paragraph and of the sentence in it, or the paragraphs, with
+        # the probabilities
+        expected_items: list[tuple[_Aspect, list[tuple[Any, float]]]] = [
+            (termination, [((1, 0), 0.9), ((1, 1), 0.8), ((3, 1), 0.7)]),
+            (notice, [((1, 1), 0.9)]),
+            (effects, [(3, 0.7)]),
+            (payment, [(2, 0.8)]),
+            (late_payment, [((2, 1), 0.85)]),
+        ]
+        for aspect, aspect_items in expected_items:
+            assert aspect._is_processed
+            assert len(aspect.extracted_items) == len(aspect_items), aspect.name
+            reference_paragraphs: list[_Paragraph] = []
+            for item, (position, probability) in zip(
+                aspect.extracted_items, aspect_items, strict=True
+            ):
+                self.check_item_probabilities(
+                    item, {True: probability, False: 1 - probability}
+                )
+                # The references are the paragraph and the sentence of the document:
+                # the same objects for an aspect of the document, and equal ones,
+                # with the same IDs, for a sub-aspect, as when an LLM extracts it
+                is_sub_aspect = aspect not in document.aspects
+                if isinstance(position, tuple):
+                    paragraph = paragraphs[position[0]]
+                    sentence = paragraph.sentences[position[1]]
+                    assert item.value == sentence.raw_text
+                    assert item.reference_sentences == [sentence]
+                    assert item.reference_sentences[0].unique_id == sentence.unique_id
+                    assert (item.reference_sentences[0] is sentence) is (
+                        not is_sub_aspect
+                    )
+                else:
+                    paragraph = paragraphs[position]
+                    assert item.value == paragraph.raw_text
+                    assert not item.reference_sentences
+                assert item.reference_paragraphs == [paragraph]
+                assert item.reference_paragraphs[0].unique_id == paragraph.unique_id
+                assert (item.reference_paragraphs[0] is paragraph) is (
+                    not is_sub_aspect
+                )
+                if paragraph not in reference_paragraphs:
+                    reference_paragraphs.append(paragraph)
+            assert aspect.reference_paragraphs == reference_paragraphs
+            # The sentences of the reference paragraphs, for an aspect with
+            # sentences as its items only
+            assert aspect.reference_sentences == (
+                [
+                    sentence
+                    for paragraph in reference_paragraphs
+                    for sentence in paragraph.sentences
+                ]
+                if aspect.reference_depth == "sentences"
+                else []
+            )
+        self.check_instance_serialization_and_cloning(document)
+
+        # === The concept of the aspect ===
+        # It is decided on the text of the paragraphs of the aspect, as for
+        # an aspect with paragraphs as its items
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_aspect(termination, document)
+        (request,) = decisions_stub.requests
+        assert request["input"] == (
+            f"{' '.join(_SENTENCES_DOCUMENT_SENTENCE_TEXTS[1])}\n\n"
+            f"{' '.join(_SENTENCES_DOCUMENT_SENTENCE_TEXTS[3])}"
+        )
+        assert [question["name"] for question in request["questions"]] == ["C0"]
+        (concept,) = termination.concepts
+        assert concept.extracted_items[0].value is True
+        self.check_item_probabilities(
+            concept.extracted_items[0], {True: 0.9, False: 1 - 0.9}
+        )
+
+        # === Everything that the document has ===
+        # The aspects, sub-aspects and concepts are extracted in the same way
+        other_document = create_document()
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            _create_decision_model().extract_all(other_document)
+        assert len(decisions_stub.requests) == 10 + 5 + 5 + 2 + 3 + 1
+
+        def get_values(document: Document) -> dict[str, list[Any]]:
+            """
+            Returns the values of the items of each aspect, sub-aspect and
+            concept of the document.
+
+            :param document: The document.
+            :type document: Document
+            :return: The values of the items, by the names of the instances.
+            :rtype: dict[str, list[Any]]
+            """
+            values: dict[str, list[Any]] = {}
+            for aspect in document.aspects:
+                for instance in [aspect, *aspect.aspects, *aspect.concepts]:
+                    assert instance._is_processed
+                    values[instance.name] = [
+                        item.value for item in instance.extracted_items
+                    ]
+            return values
+
+        assert get_values(other_document) == get_values(document)
+        assert len(get_values(document)) == 6
+
+    def test_sentence_depth_aspects_in_mixed_calls_and_segmentation(self):
+        """
+        Tests that it is the reference depth of each aspect that decides how
+        a decision model extracts the aspect, also when the aspects of one call
+        have different ones, that a paragraph without sentences gives no items of
+        an aspect with sentences as its items, and that the sentences are
+        segmented before such an aspect is extracted.
+        """
+        yes_probabilities: dict[str, dict[int | tuple[int, int], float]] = {
+            "Payment": {1: 0.6, 2: 0.8},
+            "Termination": {1: 0.9, 3: 0.6, (1, 0): 0.9, (3, 1): 0.7},
+        }
+        respond = _create_sentences_responder(yes_probabilities)
+
+        def create_document() -> Document:
+            """
+            Creates a document with an aspect with paragraphs as its items,
+            followed by an aspect with sentences as its items.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name="Payment", description="Clauses on the payment of fees"
+                    ),
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        reference_depth="sentences",
+                    ),
+                ]
+            )
+
+        def requests_sent(stub: _DecisionsAPIStub) -> list[tuple[str, list[str]]]:
+            """
+            Returns the text and the names of the questions of each request sent.
+
+            :param stub: The stub with the requests received.
+            :type stub: _DecisionsAPIStub
+            :return: The requests, in the order they were sent.
+            :rtype: list[tuple[str, list[str]]]
+            """
+            return [
+                (
+                    request["input"],
+                    [question["name"] for question in request["questions"]],
+                )
+                for request in stub.requests
+            ]
+
+        def check_items(document: Document) -> None:
+            """
+            Checks the items of the two aspects of the document: the paragraphs
+            of one, and the sentences of the other.
+
+            :param document: The document with the extracted aspects.
+            :type document: Document
+            """
+            paragraphs = document.paragraphs
+            payment, termination = document.aspects
+            assert payment._is_processed and termination._is_processed
+            assert [
+                (item.value, item.reference_paragraphs, item.reference_sentences)
+                for item in payment.extracted_items
+            ] == [
+                (paragraphs[1].raw_text, [paragraphs[1]], []),
+                (paragraphs[2].raw_text, [paragraphs[2]], []),
+            ]
+            self.check_item_probabilities(
+                payment.extracted_items[0], {True: 0.6, False: 1 - 0.6}
+            )
+            assert payment.reference_paragraphs == [paragraphs[1], paragraphs[2]]
+            assert not payment.reference_sentences
+            assert [
+                (item.value, item.reference_paragraphs, item.reference_sentences)
+                for item in termination.extracted_items
+            ] == [
+                (
+                    paragraphs[1].sentences[0].raw_text,
+                    [paragraphs[1]],
+                    [paragraphs[1].sentences[0]],
+                ),
+                (
+                    paragraphs[3].sentences[1].raw_text,
+                    [paragraphs[3]],
+                    [paragraphs[3].sentences[1]],
+                ),
+            ]
+            self.check_item_probabilities(
+                termination.extracted_items[1], {True: 0.7, False: 1 - 0.7}
+            )
+            assert termination.reference_paragraphs == [paragraphs[1], paragraphs[3]]
+            assert termination.reference_sentences == [
+                *paragraphs[1].sentences,
+                *paragraphs[3].sentences,
+            ]
+
+        # === Aspects of both reference depths in one call ===
+        # Each paragraph is asked about once, for both aspects, and the sentences
+        # for the aspect with sentences as its items only, whose question keeps
+        # the name that tells the position of the aspect in the call
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            extracted_aspects, usage = asyncio.run(
+                decision_model._extract_items_from_instances(
+                    extracted_item_type="aspect",
+                    source=document,
+                    llm=decision_model,
+                    instances_to_process=list(document.aspects),
+                    document=document,
+                )
+            )
+        assert extracted_aspects == list(document.aspects)
+        assert requests_sent(decisions_stub) == [
+            *[(text, ["A0", "A1"]) for text in _SENTENCES_PARAGRAPH_TEXTS_SENT],
+            *[(_SENTENCES_TEXTS_SENT[(1, i)], ["A1"]) for i in range(3)],
+            *[(_SENTENCES_TEXTS_SENT[(3, i)], ["A1"]) for i in range(2)],
+        ]
+        assert all(
+            "Aspect name: Termination\n" in request["questions"][0]["instructions"]
+            for request in decisions_stub.requests[5:]
+        )
+        assert len(usage.calls) == 10
+        check_items(document)
+
+        # === The same aspects, through an extraction method ===
+        # The aspects are split into the calls by the reference depth, as for
+        # an LLM: each call has its own requests for the paragraphs
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert requests_sent(decisions_stub) == [
+            *[(text, ["A0"]) for text in _SENTENCES_PARAGRAPH_TEXTS_SENT],
+            *[(text, ["A0"]) for text in _SENTENCES_PARAGRAPH_TEXTS_SENT],
+            *[(_SENTENCES_TEXTS_SENT[(1, i)], ["A0"]) for i in range(3)],
+            *[(_SENTENCES_TEXTS_SENT[(3, i)], ["A0"]) for i in range(2)],
+        ]
+        check_items(document)
+
+        # === Paragraphs without sentences ===
+        # A paragraph that belongs to the aspect gives no items if it has no
+        # sentences, which is possible only if the sentences are not segmented
+        # before the extraction, as the extraction methods do
+        decision_model = _create_decision_model()
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on the termination of the agreement",
+                    reference_depth="sentences",
+                )
+            ]
+        )
+        assert not document.sentences
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [_create_aspects_responder({"Termination": {2: 0.9}})]}
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            asyncio.run(
+                decision_model._extract_items_from_instances(
+                    extracted_item_type="aspect",
+                    source=document,
+                    llm=decision_model,
+                    instances_to_process=list(document.aspects),
+                    document=document,
+                )
+            )
+        assert [request["input"] for request in decisions_stub.requests] == (
+            _ASPECTS_PARAGRAPH_TEXTS_SENT
+        )
+        (aspect,) = document.aspects
+        assert aspect._is_processed
+        assert not aspect.extracted_items
+        assert not aspect.reference_paragraphs
+        assert not aspect.reference_sentences
+
+        # === Sentences segmented before the extraction ===
+        # An extraction method segments the sentences of a document that has
+        # an aspect with sentences as its items, as it does for an LLM. A sentence
+        # segmented from a paragraph has the additional context and the custom
+        # data of the paragraph.
+        segmented_texts: list[list[str]] = []
+
+        class SentenceSplitter:
+            """
+            Splits the paragraphs into sentences at the full stops, in place of
+            the model that segments the sentences.
+            """
+
+            def split(self, texts: list[str]) -> list[list[str]]:
+                """
+                Splits each of the texts into sentences.
+
+                :param texts: The texts of the paragraphs.
+                :type texts: list[str]
+                :return: The sentences of each paragraph.
+                :rtype: list[list[str]]
+                """
+                segmented_texts.append(texts)
+                return [re.split(r"(?<=\.) ", text) for text in texts]
+
+        paragraph_texts = [
+            "Services agreement",
+            "Either party may terminate this agreement. The notice shall be written.",
+        ]
+        document = Document(
+            paragraphs=[
+                Paragraph(raw_text=paragraph_texts[0]),
+                Paragraph(
+                    raw_text=paragraph_texts[1],
+                    additional_context="Section 3. Termination",
+                    custom_data={"page": 2},
+                ),
+            ]
+        )
+        document.aspects = [
+            Aspect(
+                name="Termination",
+                description="Clauses on the termination of the agreement",
+                reference_depth="sentences",
+            )
+        ]
+        assert not document.sentences
+
+        def respond_on_segmented(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request for a paragraph, or for a sentence, of
+            the document without sentences: the second paragraph and its second
+            sentence belong to the aspect.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            # The sentences are segmented before the first request is sent
+            assert segmented_texts == [paragraph_texts]
+            text = request["input"].split("\n\n")[0]
+            belongs = text in [
+                f"Paragraph: {paragraph_texts[1]}",
+                "Sentence: The notice shall be written.",
+            ]
+            return _create_decisions_response(
+                request["questions"], {"A0": 0.8 if belongs else 0.1}
+            )
+
+        decision_model = _create_decision_model()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_on_segmented]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                documents_module,
+                "_load_sat_model",
+                new=lambda model_id: SentenceSplitter(),
+            ),
+        ):
+            decision_model.extract_aspects_from_document(document)
+        assert segmented_texts == [paragraph_texts]
+        paragraph = document.paragraphs[1]
+        assert [
+            (sentence.raw_text, sentence.additional_context, sentence.custom_data)
+            for sentence in paragraph.sentences
+        ] == [
+            (
+                "Either party may terminate this agreement.",
+                "Section 3. Termination",
+                {"page": 2},
+            ),
+            ("The notice shall be written.", "Section 3. Termination", {"page": 2}),
+        ]
+        # The additional context that the sentences have from their paragraph is
+        # sent once with each of them, as that of the paragraph
+        context_sent = "Additional context of the paragraph: Section 3. Termination"
+        assert [request["input"] for request in decisions_stub.requests] == [
+            paragraph_texts[0],
+            f"Paragraph: {paragraph_texts[1]}\n\n{context_sent}",
+            "Sentence: Either party may terminate this agreement.\n\n"
+            f"Paragraph that the sentence is from: {paragraph_texts[1]}\n\n"
+            f"{context_sent}",
+            "Sentence: The notice shall be written.\n\n"
+            f"Paragraph that the sentence is from: {paragraph_texts[1]}\n\n"
+            f"{context_sent}",
+        ]
+        (aspect,) = document.aspects
+        (item,) = aspect.extracted_items
+        assert item.value == "The notice shall be written."
+        assert item.custom_data == {"page": 2}
+        assert item.reference_paragraphs == [paragraph]
+        assert item.reference_sentences == [paragraph.sentences[1]]
+        assert aspect.reference_sentences == paragraph.sentences
+
+    def test_decision_model_sentence_requests_concurrency(self):
+        """
+        Tests that the requests for the sentences, which the aspects with sentences
+        as the extracted items are extracted with by a decision model, are sent
+        after the requests for the paragraphs: one after another by default, and
+        concurrently, each paced by the limiter of the model, with concurrency
+        enabled, with the same items extracted.
+        """
+        yes_probabilities: dict[str, dict[int | tuple[int, int], float]] = {
+            "Termination": {1: 0.9, 3: 0.6, (1, 0): 0.9, (1, 1): 0.8, (3, 1): 0.7},
+            "Payment": {1: 0.7, 2: 0.8, (1, 2): 0.6, (2, 0): 0.9},
+        }
+        respond = _create_sentences_responder(yes_probabilities)
+        # The requests for the paragraphs, and those for the sentences of
+        # the paragraphs that belong to an aspect
+        n_requests = {"paragraph": 5, "sentence": 3 + 2 + 2}
+        requests_in_progress: dict[str, int] = {}
+        max_requests_in_progress: dict[str, int] = {}
+        completed: list[int | tuple[int, int]] = []
+        # The number of the requests for the paragraphs that are completed when
+        # each request for a sentence is sent
+        paragraphs_completed_before_sentences: list[int] = []
+        acquisitions: list[tuple[float, float]] = []
+        # Set when all the requests of a stage are in progress at the same time
+        all_sent: dict[str, asyncio.Event] = {}
+        concurrency_expected: list[bool] = [False]
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the config of the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                acquisitions.append((self.max_rate, self.time_period))
+                await super().acquire(amount)
+
+        async def respond_in_turn(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to the request, and records how many requests of its stage
+            are in progress at the same time. If the requests are expected to be
+            sent concurrently, the response comes when all the requests of
+            the stage are in progress.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            position = _get_sentences_request_position(request)
+            stage = "paragraph" if isinstance(position, int) else "sentence"
+            if stage == "sentence":
+                paragraphs_completed_before_sentences.append(
+                    len([i for i in completed if isinstance(i, int)])
+                )
+            requests_in_progress[stage] = requests_in_progress.get(stage, 0) + 1
+            max_requests_in_progress[stage] = max(
+                max_requests_in_progress.get(stage, 0), requests_in_progress[stage]
+            )
+            if concurrency_expected[0]:
+                if requests_in_progress[stage] == n_requests[stage]:
+                    all_sent[stage].set()
+                # Fails if the requests are not sent concurrently, so that
+                # the test does not hang
+                await asyncio.wait_for(all_sent[stage].wait(), timeout=10)
+            else:
+                # Let any other request be sent, if the requests are sent
+                # concurrently
+                for _ in range(3):
+                    await asyncio.sleep(0)
+            requests_in_progress[stage] -= 1
+            completed.append(position)
+            return respond(request)
+
+        def extract(
+            **extraction_kwargs: Any,
+        ) -> tuple[list[list[tuple[str, Any]]], _DecisionsAPIStub]:
+            """
+            Extracts the aspects of a new document with a new decision model.
+
+            :param extraction_kwargs: Params of the extraction method.
+            :type extraction_kwargs: Any
+            :return: The values and the probabilities of the items of each
+                aspect, and the stub with the requests received.
+            :rtype: tuple[list[list[tuple[str, Any]]], _DecisionsAPIStub]
+            """
+            decision_model = _create_decision_model(async_limiter=AsyncLimiter(20, 5))
+            document = _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name=name,
+                        description=f"Clauses on {name.lower()}",
+                        reference_depth="sentences",
+                    )
+                    for name in yes_probabilities
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_in_turn]})
+            requests_in_progress.clear()
+            max_requests_in_progress.clear()
+            completed.clear()
+            paragraphs_completed_before_sentences.clear()
+            acquisitions.clear()
+            concurrency_expected[0] = bool(extraction_kwargs.get("use_concurrency"))
+            # The events are used in the event loop of this extraction only
+            all_sent.clear()
+            for stage in n_requests:
+                all_sent[stage] = asyncio.Event()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+            ):
+                decision_model.extract_aspects_from_document(
+                    document, **extraction_kwargs
+                )
+            assert all(aspect._is_processed for aspect in document.aspects)
+            # The requests for the sentences are sent when the requests for all
+            # the paragraphs are completed, as they depend on the answers on them
+            assert paragraphs_completed_before_sentences == (
+                [n_requests["paragraph"]] * n_requests["sentence"]
+            )
+            # Each request is recorded as a call: those for the paragraphs, and
+            # then those for the sentences, in the order of the document, whatever
+            # the order in which the requests are completed
+            usage = decision_model.get_usage()[0].usage
+            assert [json.loads(call.prompt)["input"] for call in usage.calls] == [
+                *_SENTENCES_PARAGRAPH_TEXTS_SENT,
+                *[_SENTENCES_TEXTS_SENT[(1, i)] for i in range(3)],
+                *[_SENTENCES_TEXTS_SENT[(2, i)] for i in range(2)],
+                *[_SENTENCES_TEXTS_SENT[(3, i)] for i in range(2)],
+            ]
+            return (
+                [
+                    [
+                        (item.value, item.probabilities)
+                        for item in aspect.extracted_items
+                    ]
+                    for aspect in document.aspects
+                ],
+                decisions_stub,
+            )
+
+        # === Without concurrency ===
+        # The requests are sent one after another, with no limiter
+        expected_items, decisions_stub = extract()
+        assert len(decisions_stub.requests) == 12
+        assert max_requests_in_progress == {"paragraph": 1, "sentence": 1}
+        assert acquisitions == []
+        sentence_texts = _SENTENCES_DOCUMENT_SENTENCE_TEXTS
+        assert [[value for value, _ in items] for items in expected_items] == [
+            [sentence_texts[1][0], sentence_texts[1][1], sentence_texts[3][1]],
+            [sentence_texts[1][2], sentence_texts[2][0]],
+        ]
+
+        # === With concurrency ===
+        # The requests for the sentences are sent concurrently, as those for
+        # the paragraphs are, each paced by the limiter of the model. The items
+        # are in the order of the document, whatever the order in which
+        # the requests are completed.
+        items, decisions_stub = extract(use_concurrency=True, max_items_per_call=2)
+        assert len(decisions_stub.requests) == 12
+        assert max_requests_in_progress == n_requests
+        assert acquisitions == [(20, 5)] * 12
+        assert items == expected_items
+
+    def test_decision_model_sentence_request_failures(self):
+        """
+        Tests the extraction of aspects with sentences as the extracted items with
+        a decision model when the request for one of the sentences fails for good,
+        or gets a response that cannot be used, with and without concurrency:
+        no further requests are sent, the requests completed are counted in
+        the usage, a failed request is recorded as the last call, which is
+        unfinished, and a fallback model takes over. If a request for a paragraph
+        fails, no request for a sentence is sent.
+        """
+        auth_error = _create_api_error(litellm.AuthenticationError)
+        rate_limit_error = _create_api_error(litellm.RateLimitError)
+        yes_probabilities: dict[str, dict[int | tuple[int, int], float]] = {
+            "Termination": {1: 0.9, (1, 0): 0.9},
+            "Payment": {1: 0.7, 3: 0.8, (1, 2): 0.8, (3, 1): 0.6},
+        }
+        respond = _create_sentences_responder(yes_probabilities, input_tokens=20)
+        # The requests of an extraction in which each request gets a response:
+        # for the paragraphs, for the sentences of the second paragraph, which
+        # belongs to both aspects, and for those of the fourth one, which belongs
+        # to the second aspect only
+        all_positions: list[int | tuple[int, int]] = [
+            0,
+            1,
+            2,
+            3,
+            4,
+            (1, 0),
+            (1, 1),
+            (1, 2),
+            (3, 0),
+            (3, 1),
+        ]
+        failed_position = (1, 1)
+        n_requests_until_failed = all_positions.index(failed_position) + 1
+
+        def get_text_sent(position: int | tuple[int, int]) -> str:
+            """
+            Returns the text of the request for a paragraph or for a sentence.
+
+            :param position: The position of the paragraph, or the positions of
+                the paragraph and of the sentence in it.
+            :type position: int | tuple[int, int]
+            :return: The text of the request.
+            :rtype: str
+            """
+            if isinstance(position, int):
+                return _SENTENCES_PARAGRAPH_TEXTS_SENT[position]
+            return _SENTENCES_TEXTS_SENT[position]
+
+        def create_document() -> Document:
+            """
+            Creates a document with two aspects that are extracted with
+            sentences as their items.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name=name,
+                        description=f"Clauses on {name.lower()}",
+                        reference_depth="sentences",
+                    )
+                    for name in yes_probabilities
+                ]
+            )
+
+        def create_responder(
+            outcomes: dict[int | tuple[int, int], Any],
+        ) -> Callable[[dict[str, Any]], Any]:
+            """
+            Creates the function that responds to the request for a paragraph or
+            for a sentence.
+
+            :param outcomes: By the position of a paragraph, or by the positions
+                of a paragraph and of a sentence in it: an error to raise for its
+                request, or the answers to respond with instead of the valid ones.
+            :type outcomes: dict[int | tuple[int, int], Any]
+            :return: Function that responds to a request.
+            :rtype: Callable[[dict[str, Any]], Any]
+            """
+
+            def respond_to_request(request: dict[str, Any]) -> Any:
+                """
+                Responds to the request for a paragraph or for a sentence, or
+                fails it.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :return: Response of litellm.
+                :rtype: Any
+                """
+                outcome = outcomes.get(_get_sentences_request_position(request))
+                if isinstance(outcome, Exception):
+                    raise outcome
+                if outcome is not None:
+                    return _create_decisions_response(
+                        request["questions"], outcome, input_tokens=20
+                    )
+                return respond(request)
+
+            return respond_to_request
+
+        def check_usage(
+            model: DocumentDecisionModel,
+            finished_positions: list[int | tuple[int, int]],
+            failed_positions: list[int | tuple[int, int]],
+            usage_position: int = 0,
+        ) -> None:
+            """
+            Checks the calls recorded in the usage of the decision model, or of
+            its fallback model: first the requests that got a response, then
+            the requests that failed.
+
+            :param model: The decision model.
+            :type model: DocumentDecisionModel
+            :param finished_positions: What the requests that got a response
+                were for, in the order of the calls.
+            :type finished_positions: list[int | tuple[int, int]]
+            :param failed_positions: What the requests that failed were for, in
+                the order of the calls.
+            :type failed_positions: list[int | tuple[int, int]]
+            :param usage_position: The position of the model among the model and
+                its fallback models. Defaults to 0, i.e. the model itself.
+            :type usage_position: int
+            """
+            usage = model.get_usage()[usage_position].usage
+            assert [json.loads(call.prompt)["input"] for call in usage.calls] == [
+                get_text_sent(position)
+                for position in [*finished_positions, *failed_positions]
+            ]
+            assert [call.timestamp_received is not None for call in usage.calls] == (
+                [True] * len(finished_positions) + [False] * len(failed_positions)
+            )
+            assert usage.input == 20 * len(finished_positions)
+
+        def check_not_extracted(document: Document) -> None:
+            """
+            Checks that no aspect of the document is extracted.
+
+            :param document: The document.
+            :type document: Document
+            """
+            assert not any(aspect._is_processed for aspect in document.aspects)
+            assert not any(aspect.extracted_items for aspect in document.aspects)
+            assert not any(aspect.reference_paragraphs for aspect in document.aspects)
+            assert not any(aspect.reference_sentences for aspect in document.aspects)
+
+        def check_extracted(document: Document) -> None:
+            """
+            Checks that the aspects of the document are extracted, with
+            the sentences that belong to them as their items.
+
+            :param document: The document.
+            :type document: Document
+            """
+            sentence_texts = _SENTENCES_DOCUMENT_SENTENCE_TEXTS
+            assert [
+                [(item.value, item.probabilities) for item in aspect.extracted_items]
+                for aspect in document.aspects
+            ] == [
+                [(sentence_texts[1][0], {True: 0.9, False: 1 - 0.9})],
+                [
+                    (sentence_texts[1][2], {True: 0.8, False: 1 - 0.8}),
+                    (sentence_texts[3][1], {True: 0.6, False: 1 - 0.6}),
+                ],
+            ]
+
+        finished_before_failed = all_positions[: n_requests_until_failed - 1]
+        # With immediate responses, the requests sent concurrently are completed
+        # in the order they are sent, i.e. the outcome is the same in both modes:
+        # the requests for the sentences after the failed one are not sent
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            # === Each request gets a response ===
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert [
+                (
+                    request["input"],
+                    [question["name"] for question in request["questions"]],
+                )
+                for request in decisions_stub.requests
+            ] == [
+                *[(get_text_sent(position), ["A0", "A1"]) for position in range(5)],
+                *[(get_text_sent((1, i)), ["A0", "A1"]) for i in range(3)],
+                *[(get_text_sent((3, i)), ["A1"]) for i in range(2)],
+            ]
+            check_usage(decision_model, all_positions, [])
+            check_extracted(document)
+
+            # === The request for a sentence fails ===
+            # No fallback model: a model API error is raised
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder({failed_position: auth_error})]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(ModelAPIError) as exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert exc_info.value.original_error is auth_error
+            assert exc_info.value.retry_count == 0
+            assert [request["input"] for request in decisions_stub.requests] == [
+                get_text_sent(position)
+                for position in all_positions[:n_requests_until_failed]
+            ]
+            # The requests for the paragraphs and for the sentences before
+            # the failed one are counted, and the failed one is the last call
+            check_usage(decision_model, finished_before_failed, [failed_position])
+            check_not_extracted(document)
+
+            # ... or a warning is issued, if no exception is to be raised
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub.requests.clear()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                warnings.catch_warnings(record=True) as caught_warnings,
+            ):
+                warnings.simplefilter("always")
+                decision_model.extract_aspects_from_document(
+                    document,
+                    raise_exception_on_extraction_error=False,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            warning_messages = [
+                str(caught_warning.message)
+                for caught_warning in caught_warnings
+                if "aspects" in str(caught_warning.message)
+                or "API" in str(caught_warning.message)
+            ]
+            (warning_message,) = warning_messages
+            assert "calling decision model API" in warning_message
+            assert "(0 retries)" in warning_message
+            assert len(decisions_stub.requests) == n_requests_until_failed
+            check_usage(decision_model, finished_before_failed, [failed_position])
+            check_not_extracted(document)
+
+            # With a fallback model, the aspects are extracted by it: it asks
+            # about the paragraphs and the sentences itself
+            decision_model = _create_decision_model(
+                fallback_models=[
+                    _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                ]
+            )
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [create_responder({failed_position: auth_error})],
+                    _OTHER_DECISION_MODEL: [respond],
+                }
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert decisions_stub.requested_models() == (
+                [_DECISION_MODEL] * n_requests_until_failed
+                + [_OTHER_DECISION_MODEL] * len(all_positions)
+            )
+            check_usage(decision_model, finished_before_failed, [failed_position])
+            check_usage(decision_model, all_positions, [], usage_position=1)
+            check_extracted(document)
+
+            # === A response that cannot be used ===
+            # The response to the request for one sentence makes the whole call
+            # invalid: no further requests are sent, and each call is finished
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [
+                        create_responder(
+                            {failed_position: {"A0": 0.9, "A1": "refusal"}}
+                        )
+                    ]
+                }
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                pytest.raises(
+                    ModelExtractionError,
+                    match="Some aspects could not be processed due to "
+                    "an invalid response returned by decision model. "
+                    r"Failed aspects: \['Termination', 'Payment'\]",
+                ) as extraction_exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert extraction_exc_info.value.retry_count == 0
+            # The log names the aspect that the answer is for, and the sentence
+            # that the question was asked on, by its position in its paragraph,
+            # with the paragraph, by its position in the document
+            assert (
+                f"Decision model `{_DECISION_MODEL}` returned an invalid response "
+                "for aspect `Payment` on sentence 2 of 3 of paragraph 2 of 5 "
+                "(index 1), decision question `A1`: the model refused to answer."
+            ) in captured_logs, captured_logs
+            assert len(decisions_stub.requests) == n_requests_until_failed
+            check_usage(decision_model, all_positions[:n_requests_until_failed], [])
+            check_not_extracted(document)
+
+        # The question on a sentence is named by the position of its aspect in
+        # the call, also when the sentence is not asked about for the aspects
+        # before it: the log names the aspect that the answer is for
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [create_responder({(3, 0): {"A1": "refusal"}})]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            _capture_logs(stdlib_logging.ERROR) as captured_logs,
+            pytest.raises(ModelExtractionError),
+        ):
+            decision_model.extract_aspects_from_document(document)
+        assert (
+            f"Decision model `{_DECISION_MODEL}` returned an invalid response "
+            "for aspect `Payment` on sentence 1 of 2 of paragraph 4 of 5 "
+            "(index 3), decision question `A1`: the model refused to answer."
+        ) in captured_logs, captured_logs
+        assert len(decisions_stub.requests) == 9
+        check_not_extracted(document)
+
+        # A fallback model takes over after a response that cannot be used as well
+        decision_model = _create_decision_model(
+            fallback_models=[
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+            ]
+        )
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [create_responder({(3, 0): {"A1": "refusal"}})],
+                _OTHER_DECISION_MODEL: [respond],
+            }
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert decisions_stub.requested_models() == (
+            [_DECISION_MODEL] * 9 + [_OTHER_DECISION_MODEL] * len(all_positions)
+        )
+        check_extracted(document)
+
+        # === A transient error ===
+        # The request for a sentence is retried before it fails for good
+        decision_model = _create_decision_model(num_retries_failed_request=2)
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [create_responder({failed_position: rate_limit_error})]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                decision_models_module,
+                "_get_model_api_retry_delay",
+                new=lambda retry_number: 0.0,
+            ),
+            pytest.raises(ModelAPIError) as exc_info,
+        ):
+            decision_model.extract_aspects_from_document(document)
+        assert exc_info.value.original_error is rate_limit_error
+        assert exc_info.value.retry_count == 2
+        assert [request["input"] for request in decisions_stub.requests] == [
+            *[get_text_sent(position) for position in finished_before_failed],
+            *[get_text_sent(failed_position)] * 3,
+        ]
+        check_usage(decision_model, finished_before_failed, [failed_position])
+        check_not_extracted(document)
+
+        # === The request for a paragraph fails ===
+        # No request for a sentence is sent: which paragraphs belong to
+        # the aspects is not known
+        for outcome, error_class in [
+            (auth_error, ModelAPIError),
+            ({"A0": "refusal", "A1": 0.9}, ModelExtractionError),
+        ]:
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder({1: outcome})]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(error_class),
+            ):
+                decision_model.extract_aspects_from_document(document)
+            assert [request["input"] for request in decisions_stub.requests] == [
+                get_text_sent(0),
+                get_text_sent(1),
+            ]
+            check_not_extracted(document)
+
+    def test_decision_model_accepts_sentence_depth_aspects(self):
+        """
+        Tests that an aspect with sentences as the extracted items is accepted by
+        the checks made before any request is sent, and is extracted, wherever
+        a decision model is used: on its own, in a fallback chain with a model of
+        either kind, and in a model group, while references for concepts are
+        still rejected, whatever their depth is.
+        """
+        yes_probabilities: dict[str, dict[int | tuple[int, int], float]] = {
+            "Termination": {1: 0.9, (1, 0): 0.8},
+            "Late payment": {2: 0.9, (2, 1): 0.7},
+        }
+        respond = _create_sentences_responder(yes_probabilities)
+        sentence_texts = _SENTENCES_DOCUMENT_SENTENCE_TEXTS
+        auth_error = _create_api_error(litellm.AuthenticationError)
+        llm_auth_error = _create_api_error(litellm.AuthenticationError, _LLM_MODEL)
+        # The answer of an LLM for an aspect with sentences as its items
+        llm_answer = json.dumps(
+            [
+                {
+                    "aspect_id": "A0",
+                    "paragraphs": [
+                        {
+                            "paragraph_id": "P1",
+                            "sentences": [{"sentence_id": "P1-S0"}],
+                        }
+                    ],
+                }
+            ]
+        )
+
+        def create_aspect(name: str = "Termination", **kwargs: Any) -> Aspect:
+            """
+            Creates an aspect that is extracted with sentences as its items.
+
+            :param name: Name of the aspect. Defaults to "Termination".
+            :type name: str
+            :param kwargs: Other params of the aspect.
+            :type kwargs: Any
+            :return: Aspect.
+            :rtype: Aspect
+            """
+            return Aspect(
+                name=name,
+                description=f"Clauses on the {name.lower()} of the agreement",
+                reference_depth="sentences",
+                **kwargs,
+            )
+
+        def check_extracted(document: Document, with_probabilities: bool) -> None:
+            """
+            Checks that the first aspect of the document is extracted, with
+            the first sentence of the second paragraph as its item.
+
+            :param document: The document.
+            :type document: Document
+            :param with_probabilities: Whether the item is to have
+                the probabilities, as an item extracted by a decision model does.
+            :type with_probabilities: bool
+            """
+            aspect = document.aspects[0]
+            paragraph = document.paragraphs[1]
+            assert aspect._is_processed
+            (item,) = aspect.extracted_items
+            assert item.value == sentence_texts[1][0]
+            assert item.reference_paragraphs == [paragraph]
+            assert item.reference_sentences == [paragraph.sentences[0]]
+            self.check_item_probabilities(
+                item, {True: 0.8, False: 1 - 0.8} if with_probabilities else None
+            )
+            assert aspect.reference_paragraphs == [paragraph]
+            assert aspect.reference_sentences == paragraph.sentences
+
+        # === The check of what a decision model can extract ===
+        decision_model = _create_decision_model()
+        assert _DocumentDecisionModel._get_unservable_reasons(create_aspect()) == []
+        decision_model._check_instances_servable(
+            [create_aspect(), create_aspect(aspects=[create_aspect(name="Notices")])]
+        )
+        # ... which still rejects what a decision model cannot extract, with
+        # a summary that does not limit the aspects to a reference depth
+        with pytest.raises(
+            ValueError,
+            match=f"^Decision model `{_DECISION_MODEL}` cannot extract: aspect "
+            r"`Termination` \(justifications are not supported\)\. A decision "
+            "model extracts aspects, and Boolean, label and rating concepts from "
+            r"text without references, both without justifications\. Route the "
+            r"other aspects and concepts to an LLM, e\.g\. in a model group\.$",
+        ):
+            decision_model._check_instances_servable(
+                [create_aspect(add_justifications=True)]
+            )
+
+        # === A decision model used on its own ===
+        for extraction_method_name in ["extract_aspects_from_document", "extract_all"]:
+            for use_concurrency in [False, True]:
+                decision_model = _create_decision_model()
+                document = _create_sentences_document(aspects=[create_aspect()])
+                decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+                with patch.object(litellm, "adecisions", new=decisions_stub):
+                    getattr(decision_model, extraction_method_name)(
+                        document, use_concurrency=use_concurrency
+                    )
+                assert len(decisions_stub.requests) == 5 + 3
+                check_extracted(document, with_probabilities=True)
+
+        # === A decision model with a fallback decision model ===
+        decision_model = _create_decision_model(
+            fallback_models=[
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+            ]
+        )
+        document = _create_sentences_document(aspects=[create_aspect()])
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [auth_error], _OTHER_DECISION_MODEL: [respond]}
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert decisions_stub.requested_models() == (
+            [_DECISION_MODEL] + [_OTHER_DECISION_MODEL] * 8
+        )
+        check_extracted(document, with_probabilities=True)
+
+        # === A decision model with a fallback LLM ===
+        # The LLM extracts the aspect with sentences as its items, as it does on
+        # its own: its items have no probabilities
+        decision_model = _create_decision_model(
+            fallback_models=[_create_llm(is_fallback=True)]
+        )
+        document = _create_sentences_document(aspects=[create_aspect()])
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [auth_error]})
+        completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_answer]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            decision_model.extract_aspects_from_document(document)
+        assert len(decisions_stub.requests) == 1
+        assert len(completions_stub.requests) == 1
+        check_extracted(document, with_probabilities=False)
+
+        # === An LLM with a fallback decision model ===
+        # The check made before the request to the LLM accepts the aspect, and
+        # the decision model extracts it when the LLM fails
+        llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
+        document = _create_sentences_document(aspects=[create_aspect()])
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_auth_error]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            llm.extract_aspects_from_document(document)
+        assert len(completions_stub.requests) == 1
+        assert len(decisions_stub.requests) == 5 + 3
+        check_extracted(document, with_probabilities=True)
+
+        # === A decision model in a model group ===
+        # The aspect is routed to the decision model by its role, as is
+        # a sub-aspect, with sentences as its items, of an aspect that the LLM of
+        # the group extracts
+        model_group = DocumentModelGroup(
+            models=[_create_llm(), _create_decision_model(role="decide")]
+        )
+        document = _create_sentences_document(
+            aspects=[
+                create_aspect(model_role="decide"),
+                Aspect(
+                    name="Payment",
+                    description="Clauses on the payment of fees",
+                    aspects=[
+                        Aspect(
+                            name="Late payment",
+                            description="Clauses on the payments that are late",
+                            reference_depth="sentences",
+                            model_role="decide",
+                        )
+                    ],
+                ),
+            ]
+        )
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: ['[{"aspect_id": "A0", "paragraph_ids": ["P2"]}]']}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            model_group.extract_aspects_from_document(document)
+        # The LLM is asked about its aspect only
+        assert len(completions_stub.requests) == 1
+        assert [request["input"] for request in decisions_stub.requests] == [
+            # The aspect of the decision model: the paragraphs of the document,
+            # and the sentences of the paragraph that belongs to it
+            *_SENTENCES_PARAGRAPH_TEXTS_SENT,
+            *[_SENTENCES_TEXTS_SENT[(1, i)] for i in range(3)],
+            # Its sub-aspect: the paragraph that the LLM extracted for the aspect
+            # of the sub-aspect, and the sentences of that paragraph
+            _SENTENCES_PARAGRAPH_TEXTS_SENT[2],
+            *[_SENTENCES_TEXTS_SENT[(2, i)] for i in range(2)],
+        ]
+        check_extracted(document, with_probabilities=True)
+        payment = document.aspects[1]
+        assert [item.value for item in payment.extracted_items] == [
+            document.paragraphs[2].raw_text
+        ]
+        self.check_item_probabilities(payment.extracted_items[0], None)
+        (late_payment,) = payment.aspects
+        (item,) = late_payment.extracted_items
+        assert item.value == sentence_texts[2][1]
+        self.check_item_probabilities(item, {True: 0.7, False: 1 - 0.7})
+        assert item.reference_sentences == [document.paragraphs[2].sentences[1]]
+        assert late_payment.reference_sentences == document.paragraphs[2].sentences
+
+        # === References for concepts ===
+        # ... are still rejected, whatever their depth is
+        decision_model = _create_decision_model()
+        reference_depths: list[Literal["paragraphs", "sentences"]] = [
+            "paragraphs",
+            "sentences",
+        ]
+        for reference_depth in reference_depths:
+            document = _create_sentences_document()
+            document.concepts = [
+                BooleanConcept(
+                    name="Written notice",
+                    description="A written notice is required",
+                    add_references=True,
+                    reference_depth=reference_depth,
+                )
+            ]
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(
+                    ValueError,
+                    match=r"concept `Written notice` \(references are not "
+                    r"supported\)\. A decision model extracts aspects, and Boolean, "
+                    "label and rating concepts from text without references",
+                ),
+            ):
+                decision_model.extract_concepts_from_document(document)
+            assert not decisions_stub.requests
 
     def test_decision_model_aspect_requests_concurrency(self):
         """

@@ -113,7 +113,8 @@ class _Aspect(
         gt=0,
         le=1,
         description=(
-            "Lowest probability with which a decision model takes a paragraph as "
+            "Lowest probability with which a decision model takes a paragraph, or "
+            "a sentence of such a paragraph if the reference depth is 'sentences', as "
             "belonging to this aspect (0 < threshold <= 1). Defaults to None, in which "
             "case the `decision_threshold` of the decision model applies. Not passed on "
             "to the sub-aspects. Ignored when the aspect is extracted by an LLM."

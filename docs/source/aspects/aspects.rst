@@ -139,7 +139,7 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
    * - ``decision_threshold``
      - ``float | None``
      - ``None``
-     - Relevant when the aspect is extracted by a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`): the lowest probability (above 0, up to 1) with which a paragraph is taken as belonging to the aspect. With the default ``None``, the ``decision_threshold`` of the decision model applies. Not passed on to the sub-aspects. Ignored when the aspect is extracted by an LLM. See :ref:`decision-models-threshold-label`.
+     - Relevant when the aspect is extracted by a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`): the lowest probability (above 0, up to 1) with which a paragraph is taken as belonging to the aspect, and, with ``reference_depth="sentences"``, a sentence of such a paragraph. With the default ``None``, the ``decision_threshold`` of the decision model applies. Not passed on to the sub-aspects. Ignored when the aspect is extracted by an LLM. See :ref:`decision-models-threshold-label`.
 
 
 📊 Extracted Items
@@ -162,7 +162,7 @@ When an :class:`~contextgem.public.aspects.Aspect` is extracted, it is populated
      - Explanation of why this text segment was identified as relevant to the aspect (only if ``add_justifications=True``)
    * - ``probabilities``
      - dict[bool, float]
-     - Probabilities that the paragraph belongs to the aspect (``True``) and that it does not (``False``), e.g. ``{True: 0.91, False: 0.09}`` (only if the aspect is extracted by a decision model, ``None`` otherwise; see :ref:`decision-models-aspects-label`)
+     - Probabilities that the paragraph, or the sentence with ``reference_depth="sentences"``, belongs to the aspect (``True``) and that it does not (``False``), e.g. ``{True: 0.91, False: 0.09}`` (only if the aspect is extracted by a decision model, ``None`` otherwise; see :ref:`decision-models-aspects-label`)
    * - ``reference_paragraphs``
      - list[:class:`~contextgem.public.paragraphs.Paragraph`]
      - List of paragraph objects that contain the extracted aspect content (always populated for aspect's extracted items)

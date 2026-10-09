@@ -22,9 +22,9 @@ Module for handling processing logic using decision models.
 This module provides the class for using a decision model in document processing
 workflows. A decision model takes a text and a set of closed questions (yes/no, pick
 one option, rate on a scale) and returns the probabilities of the answers. It generates
-no text. It is used for what can be put as such questions: which paragraphs of
-a document belong to an aspect, and the concepts whose values come from a closed set
-of options. The probabilities are the model's own estimate of each answer.
+no text. It is used for what can be put as such questions: which paragraphs or
+sentences of a document belong to an aspect, and the concepts whose values come from
+a closed set of options. The probabilities are the model's own estimate of each answer.
 
 The requests are sent through the litellm library, which supports several providers
 of decision models. The module covers the configuration of a model, the requests to
@@ -44,7 +44,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
 
     A decision model answers closed questions on a text with probabilities and
     generates no text. It extracts aspects, by deciding on each paragraph whether
-    the paragraph belongs to an aspect, and the concepts whose values come from
+    the paragraph belongs to an aspect and, for an aspect with
+    ``reference_depth="sentences"``, on each sentence of such a paragraph whether
+    the sentence does, and the concepts whose values come from
     a closed set of options: ``BooleanConcept``, ``LabelConcept`` and
     ``RatingConcept``. Each extracted item has the probabilities of all the options
     in its ``probabilities`` attribute. A decision model can be used on its own or,
@@ -104,8 +106,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         i.e. its items have no probabilities. Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with
-        which a yes/no question is taken as answered "yes": a paragraph belongs to
-        an aspect, a ``BooleanConcept`` is ``True``, a label of a ``LabelConcept`` with
+        which a yes/no question is taken as answered "yes": a paragraph or a sentence
+        belongs to an aspect, a ``BooleanConcept`` is ``True``, a label of
+        a ``LabelConcept`` with
         ``classification_type="multi_label"`` is selected. A lower threshold extracts
         more, a higher one extracts only what the model is surer of. Applies unless
         the aspect or the concept has a ``decision_threshold`` of its own. Does not
@@ -127,8 +130,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     Note:
 
         - What a decision model extracts
-            Aspects, including sub-aspects, with the ``"paragraphs"`` reference depth
-            (``reference_depth="paragraphs"``), and ``BooleanConcept``, ``LabelConcept``
+            Aspects, including sub-aspects, with paragraphs or sentences as their
+            extracted items (``reference_depth="paragraphs"`` or
+            ``reference_depth="sentences"``), and ``BooleanConcept``, ``LabelConcept``
             and ``RatingConcept``, from text (``modality="text"``) and without
             references (``add_references=False``), from a document or from an aspect.
             Both without justifications (``add_justifications=False``).
@@ -156,6 +160,22 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             to has no items. The sub-aspects of an aspect are extracted from
             the paragraphs of that aspect.
 
+        - Extracted items of aspects with sentences as the items
+            An aspect with ``reference_depth="sentences"`` is extracted in two
+            stages. First, each paragraph is judged as above. Then, each sentence
+            of each paragraph that belongs to the aspect is judged: the text of
+            its request has the sentence and, as its context, the paragraph that
+            it is from, each with a label, with the ``additional_context`` of
+            the sentence and of the paragraph, if they have any. A sentence
+            belongs to the aspect if the probability of that is the decision
+            threshold or more, i.e. the same threshold applies at both stages.
+            Each such sentence becomes an item of the aspect, as when the aspect
+            is extracted by an LLM: the value of the item is the text of
+            the sentence, the sentence is its reference sentence, and
+            the paragraph is its reference paragraph. The ``probabilities`` of
+            the item are those of the sentence. A paragraph that belongs to
+            the aspect while none of its sentences does gives no items.
+
         - Extracted items of concepts
             A concept gets at most one item per document or aspect, with
             ``singular_occurrence=True`` and without it, or, if the text is sent
@@ -179,7 +199,14 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             of the aspect, or in one request for each part of that text, if it is
             sent in parts. Aspects: one request is sent for each paragraph of
             the document, with the text of the paragraph and one question for each
-            aspect extracted in the call. The number of aspects/concepts per call is
+            aspect extracted in the call. For the aspects with
+            ``reference_depth="sentences"``, one more request is then sent for each
+            sentence of each paragraph that belongs to such an aspect, with one
+            question for each of such aspects that the paragraph belongs to:
+            the number of requests is that of the paragraphs plus that of
+            the sentences in the paragraphs that belong. Aspects with different
+            ``reference_depth`` are extracted in separate calls. The number of
+            aspects/concepts per call is
             set with ``max_items_per_call``. With ``use_concurrency=True``, each
             aspect/concept is extracted in its own call by default, i.e. each text
             is sent, and is paid for, once per aspect/concept: set
@@ -187,9 +214,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             that a decision model does not use (``justification_depth``,
             ``justification_max_sents`` and, for concepts, ``reference_depth``)
             do not split the aspects/concepts into separate calls. The requests for
-            the paragraphs, and for the parts of a text, are sent one after another,
-            or concurrently with ``use_concurrency=True``, paced by
-            the ``async_limiter`` of the model.
+            the paragraphs, then those for the sentences, and those for the parts
+            of a text, are sent one after another, or concurrently with
+            ``use_concurrency=True``, paced by the ``async_limiter`` of the model.
             A response that cannot be used, e.g. with a refused answer, is not
             requested again: the call fails with ``ModelExtractionError``, unless
             a fallback model takes over.
