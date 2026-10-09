@@ -320,7 +320,7 @@ What follows from this:
 - **If two answers are equally probable**, the first one is taken: the first label in the order of the labels of the concept, or the lower level of the rating scale.
 - **At most one item is extracted** for a concept from a document or an aspect, with ``singular_occurrence=True`` and without it, unless the text is sent in parts: a concept then has one item for each part, and ``singular_occurrence=True`` is not accepted (see :ref:`below <decision-models-parts-label>`).
 
-By default, all the questions of the concepts processed in one call are sent in one request, together with the text: the text of the document for document-level concepts, or the text of the paragraphs extracted for the aspect for aspect-level concepts. As for LLMs, ``max_items_per_call`` sets how many concepts are processed in one call (all of them by default, or one with ``use_concurrency=True``).
+By default, all the questions of the concepts processed in one call are sent in one request, together with the text: the text of the document for document-level concepts, or the text of the paragraphs extracted for the aspect for aspect-level concepts. As for LLMs, ``max_items_per_call`` sets how many concepts are processed in one call (all of them by default, or one with ``use_concurrency=True``). With a local model, the number of the questions in a request can change the answers (see :ref:`decision-models-items-per-request-label`).
 
 .. _decision-models-parts-label:
 
@@ -502,7 +502,7 @@ What to know about the aspects with sentences as the extracted items:
    # )
 
 .. note::
-   **When you enable concurrency, also set the max items per call.** As for LLMs, each aspect and each concept is processed in a call of its own when ``use_concurrency=True`` is passed and ``max_items_per_call`` is not set. With a decision model, each text is then sent, and billed, once per aspect or concept: 3 aspects and 100 paragraphs take 300 requests instead of 100. To send each text once, with the questions of all the aspects or concepts, set ``max_items_per_call`` to the number of the aspects or concepts, or more.
+   **When you enable concurrency, also set the max items per call.** As for LLMs, each aspect and each concept is processed in a call of its own when ``use_concurrency=True`` is passed and ``max_items_per_call`` is not set. With a decision model, each text is then sent, and billed, once per aspect or concept: 3 aspects and 100 paragraphs take 300 requests instead of 100. To send each text once, with the questions of all the aspects or concepts, set ``max_items_per_call`` to the number of the aspects or concepts, or more. With a local model, check first that the answers do not change with the number of the questions in a request (see :ref:`decision-models-items-per-request-label`).
 
 ``max_paragraphs_to_analyze_per_call`` changes nothing in aspect extraction, as each paragraph is sent in a request of its own in any case. For concepts, it sets how many paragraphs a request has at most, i.e. in how many parts a text is sent (see :ref:`sending a long text in parts <decision-models-parts-label>`).
 
@@ -578,6 +578,29 @@ As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0``
 - The parameters that a decision model does not use do not split its calls: aspects and concepts that differ only in ``justification_depth`` or ``justification_max_sents``, and concepts that differ only in ``reference_depth``, are processed in the same call, while an LLM is called separately for each combination of these parameters.
 - More than 128 questions on a text are sent in several requests (see :ref:`decision-models-limits-label`).
 - With ``max_paragraphs_to_analyze_per_call``, the text of a call of concepts is spread over the requests for its parts, i.e. it is still sent once per call, while the questions of the call are sent, and billed, with each part (see :ref:`sending a long text in parts <decision-models-parts-label>`).
+
+**A request is billed for more than its text.** The questions are billed as input tokens too. In the requests recorded for the tests of ContextGem with ``typesafe/jev-latest`` in October 2026, a request with a text of about 75 tokens was billed 413 input tokens with one question and 993 with seven questions, and each request with a paragraph of 4 to 18 tokens and the questions of two aspects was billed 407 to 420 input tokens. That is about 250 input tokens per request beyond those of its text and questions, and about 75 to 150 input tokens per question, depending on its length. For short texts, such as the paragraphs in aspect extraction, the number of the requests and of the questions therefore weighs more in the cost than the length of the text. ``get_usage()`` shows the input tokens reported for each of your own requests.
+
+
+.. _decision-models-items-per-request-label:
+
+🔢 How Many Questions to Put in One Request
+----------------------------------------------
+
+All the questions of a call on a text are sent in one request, and ``max_items_per_call`` sets how many aspects or concepts a call has: all of them by default, or one with ``use_concurrency=True``. A Boolean, a single-label and a rating concept take one question each, a multi-label concept takes one question per label, and each aspect of the call takes one question in the request for a paragraph or for a sentence.
+
+The more questions a request has, the fewer requests a text is sent in, and the less the extraction costs (see :ref:`decision-models-cost-label`). Whether the answer to a question depends on the other questions of the request is a property of the model:
+
+- **Hosted Jev models are documented to answer each question on its own.** TypeSafe states that all the questions of a request see the same text and are evaluated independently and in parallel (`TypeSafe: building with System One <https://docs.typesafe.ai/concepts/how-to-build-with-system-one>`_), and a published experiment got the same probabilities for the same questions in requests with 6 to 400 questions (`jev-fanout <https://github.com/TheWebDevel/jev-fanout>`_). The tests of ContextGem do not check this. With such a model, process all the aspects, or all the concepts, in one call.
+- **A local model can answer differently in a request with many questions.** In a test of ContextGem with ``nimble`` served by Ollama 0.40.2, the answer to a clear yes/no question that followed 50 other yes/no questions changed with the number of the questions in the request: the probability of "yes" was 0.99 with 7 questions, 0.96 with 37, 0.77 with 47, 0.38 with 52 and 0.05 with 57, while the same question placed first was not affected. The input tokens grew from about 8,000 with 7 questions to about 400,000 with 57 questions on the same short text, i.e. each question was processed together with all the others. In the same test, ``kev-4b`` served by LM Studio 0.4.26 gave the same answers with 7 and with 57 questions, with the input tokens growing in proportion to the number of the questions.
+
+These were single tests on one short document: they show that the effect exists, not how large it is with your model and your documents. With a local model, before you rely on requests with many questions, extract a few of your aspects or concepts one per call (``max_items_per_call=1``) and all in one call, and compare the probabilities. If they differ, lower ``max_items_per_call``.
+
+.. code-block:: python
+   :caption: Limiting the number of concepts per call
+
+   # Each request has the questions of up to 20 concepts
+   decision_model.extract_concepts_from_document(document, max_items_per_call=20)
 
 
 .. _decision-models-limits-label:
