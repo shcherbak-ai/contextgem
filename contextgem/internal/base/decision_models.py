@@ -37,6 +37,7 @@ import importlib
 import json
 import warnings
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any, cast
 
 from aiolimiter import AsyncLimiter
@@ -187,6 +188,28 @@ def _get_question_rejection_reasons(question: _DecisionQuestion) -> list[str]:
     except Exception:
         return []
     return []
+
+
+@dataclass
+class _QuestionsOnText:
+    """
+    Questions to ask a decision model on one text, e.g. on one paragraph: what
+    the requests to the model are formed from.
+
+    :ivar text: The text to ask the questions on.
+    :vartype text: str
+    :ivar questions: The questions to ask on the text, with the names unique
+        among them. Different texts of the same call may have different questions.
+    :vartype questions: list[_DecisionQuestion]
+    :ivar location: Where the text is, as a part of the message on a response
+        that cannot be used, e.g. " on paragraph 3 of 5 (index 2)". Defaults to
+        an empty string, for a text that is not a part of a larger one.
+    :vartype location: str
+    """
+
+    text: str
+    questions: list[_DecisionQuestion]
+    location: str = ""
 
 
 def _get_request_question(question: _DecisionQuestion) -> dict[str, Any]:
@@ -851,44 +874,13 @@ class _DocumentDecisionModel(_DocumentModel):
         source_paragraphs = self._get_source_paragraphs(
             extracted_item_type=extracted_item_type, source=source, document=document
         )
-        paragraphs = source_paragraphs
-        if extracted_item_type == "aspect":
-            # Each paragraph is sent with its text as it is shown to an LLM for
-            # the extraction of aspects. A paragraph that has no such text is not
-            # shown to an LLM either, i.e. it belongs to no aspect.
-            paragraphs_with_texts = [
-                (paragraph, text)
-                for paragraph in paragraphs
-                if (
-                    text := _clean_text_for_llm_prompt(
-                        paragraph.raw_text, preserve_linebreaks=False, strip_text=True
-                    )
-                )
-            ]
-            paragraphs = [paragraph for paragraph, _ in paragraphs_with_texts]
-            texts = [text for _, text in paragraphs_with_texts]
-            # Safe cast: only aspects are extracted with the "aspect" item type
-            questions = _build_aspect_questions(
-                cast(list[_Aspect], instances_to_process)
-            )
-            # The requests for the paragraphs are sent concurrently if concurrency
-            # is enabled for the extraction, in which case a limiter is given
-            send_concurrently = async_limiter is not None
-            not_applied_reason = "each paragraph is sent to it in a request of its own"
-        else:
-            texts = [
-                self._get_text_for_concept_extraction(
-                    source=source, paragraphs_chunk=paragraphs
-                )
-            ]
-            # Safe cast: only concepts are extracted with the "concept" item type
-            questions = _build_concept_questions(
-                cast(list[_Concept], instances_to_process)
-            )
-            send_concurrently = False
-            not_applied_reason = "the text is sent to it as a whole"
 
         if max_paragraphs_to_analyze_per_call:
+            not_applied_reason = (
+                "each paragraph is sent to it in a request of its own"
+                if extracted_item_type == "aspect"
+                else "the text is sent to it as a whole"
+            )
             logger.info(
                 f"`max_paragraphs_to_analyze_per_call` is not applied to decision "
                 f"model `{self.model}`: {not_applied_reason}."
@@ -897,15 +889,33 @@ class _DocumentDecisionModel(_DocumentModel):
         # Ask the questions. Each request is recorded in the usage: with the tokens
         # used and the answers if it succeeds, or as an unfinished call if it fails.
         usage = _ModelUsage()
+        # The paragraphs that the questions of aspects are asked on, and the answers
+        # on each text: on each of these paragraphs for aspects, or on the text of
+        # the source for concepts
+        paragraphs: list[_Paragraph] = []
+        answers_of_texts: list[dict[str, _DecisionAnswer]]
         try:
-            answers_of_texts = await self._get_answers(
-                texts=texts,
-                questions=questions,
-                usage=usage,
-                num_retries_failed_request=num_retries_failed_request,
-                async_limiter=async_limiter,
-                send_concurrently=send_concurrently,
-            )
+            if extracted_item_type == "aspect":
+                paragraphs, answers_of_texts = await self._ask_about_aspects(
+                    # Safe cast: only aspects are extracted with the "aspect"
+                    # item type
+                    aspects=cast(list[_Aspect], instances_to_process),
+                    source_paragraphs=source_paragraphs,
+                    usage=usage,
+                    num_retries_failed_request=num_retries_failed_request,
+                    async_limiter=async_limiter,
+                )
+            else:
+                answers_of_texts = await self._ask_about_concepts(
+                    # Safe cast: only concepts are extracted with the "concept"
+                    # item type
+                    concepts=cast(list[_Concept], instances_to_process),
+                    source=source,
+                    source_paragraphs=source_paragraphs,
+                    usage=usage,
+                    num_retries_failed_request=num_retries_failed_request,
+                    async_limiter=async_limiter,
+                )
         except _InvalidDecisionResponseError as e:
             # The requests succeeded, i.e. their calls are recorded as finished
             logger.error(
@@ -913,9 +923,6 @@ class _DocumentDecisionModel(_DocumentModel):
                     error=e,
                     extracted_item_type=extracted_item_type,
                     instances=instances_to_process,
-                    # The questions of aspects are asked on each paragraph
-                    paragraphs=paragraphs if extracted_item_type == "aspect" else None,
-                    source_paragraphs=source_paragraphs,
                 )
             )
             return None, usage
@@ -970,7 +977,7 @@ class _DocumentDecisionModel(_DocumentModel):
                         # Safe cast: only concepts are extracted with the "concept"
                         # item type
                         concepts=cast(list[_Concept], instances_to_process),
-                        answers=answers_of_texts[0],
+                        answers_of_texts=answers_of_texts,
                         decision_threshold=self.decision_threshold,
                     )
             except ValueError as e:
@@ -1027,19 +1034,17 @@ class _DocumentDecisionModel(_DocumentModel):
         error: ValueError,
         extracted_item_type: ExtractedInstanceType,
         instances: Sequence[_Aspect | _Concept],
-        paragraphs: list[_Paragraph] | None = None,
-        source_paragraphs: list[_Paragraph] | None = None,
     ) -> str:
         """
         Returns the message on a response of the decision model that cannot be used.
 
         The message names what the answer that cannot be used is for, so that it
         can be found: the aspect or the concept, with the label if the question is
-        on one label of a concept, and the paragraph that the question was asked
-        on, if the questions of the call were asked on each paragraph, as
-        the questions of aspects are. The paragraph is given by its position among
-        the paragraphs that the aspects are extracted from, i.e. those of
-        the document, or of the parent aspect for sub-aspects.
+        on one label of a concept, and where the text that the question was asked
+        on is, if the error has its location, e.g. the paragraph, as the questions
+        of aspects are asked on each paragraph. The paragraph is given by its
+        position among the paragraphs that the aspects are extracted from, i.e.
+        those of the document, or of the parent aspect for sub-aspects.
 
         :param error: The error that tells what is wrong with the response.
         :type error: ValueError
@@ -1049,14 +1054,6 @@ class _DocumentDecisionModel(_DocumentModel):
         :param instances: The aspects or concepts that the questions of the call
             were built for, in the order of their questions.
         :type instances: Sequence[_Aspect | _Concept]
-        :param paragraphs: The paragraphs that the questions of the call were asked
-            on, each in a request of its own, in the order of the texts of the call.
-            Defaults to None, i.e. the questions were not asked on each paragraph.
-        :type paragraphs: list[_Paragraph] | None
-        :param source_paragraphs: The paragraphs that the aspects or concepts are
-            extracted from, which the positions of the paragraphs are given in.
-            Defaults to None.
-        :type source_paragraphs: list[_Paragraph] | None
         :return: The message.
         :rtype: str
         """
@@ -1084,48 +1081,153 @@ class _DocumentDecisionModel(_DocumentModel):
                     )
         subject = subjects.get(error.question_name, f"{extracted_item_type}s")
 
-        location = ""
-        if (
-            paragraphs is not None
-            and source_paragraphs is not None
-            and error.text_position is not None
-            and 0 <= error.text_position < len(paragraphs)
-        ):
-            paragraph = paragraphs[error.text_position]
-            # The paragraphs without text are not asked about, i.e. the position
-            # of the text is not the position of the paragraph in the source
-            paragraph_position = next(
-                (
-                    position
-                    for position, source_paragraph in enumerate(source_paragraphs)
-                    if source_paragraph is paragraph
-                ),
-                None,
-            )
-            if paragraph_position is not None:
-                location = (
-                    f" on paragraph {paragraph_position + 1} of "
-                    f"{len(source_paragraphs)} (index {paragraph_position})"
-                )
-
         return (
-            f"{intro} {subject}{location}, decision question "
+            f"{intro} {subject}{error.location}, decision question "
             f"`{error.question_name}`: {error.reason}"
+        )
+
+    async def _ask_about_aspects(
+        self,
+        *,
+        aspects: list[_Aspect],
+        source_paragraphs: list[_Paragraph],
+        usage: _ModelUsage,
+        num_retries_failed_request: int = 3,
+        async_limiter: AsyncLimiter | None = None,
+    ) -> tuple[list[_Paragraph], list[dict[str, _DecisionAnswer]]]:
+        """
+        Asks the decision model, on each paragraph of the source, whether
+        the paragraph belongs to each of the aspects.
+
+        One request is sent for each paragraph, with the text of the paragraph as
+        it is shown to an LLM for the extraction of aspects, and one question for
+        each aspect. A paragraph that has no such text is not shown to an LLM
+        either: it is not asked about, i.e. it belongs to no aspect.
+
+        The requests are sent concurrently if a limiter is given, which is the case
+        when concurrency is enabled for the extraction, and one after another
+        otherwise.
+
+        :param aspects: The aspects to ask about.
+        :type aspects: list[_Aspect]
+        :param source_paragraphs: The paragraphs that the aspects are extracted
+            from.
+        :type source_paragraphs: list[_Paragraph]
+        :param usage: The usage object to record the requests in.
+        :type usage: _ModelUsage
+        :param num_retries_failed_request: Number of retries when a request fails
+            with a transient error. Defaults to 3.
+        :type num_retries_failed_request: int
+        :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
+            controls the frequency of the requests, when concurrency is enabled.
+        :type async_limiter: AsyncLimiter | None
+        :return: The paragraphs that are asked about, in the order of
+            the paragraphs of the source, and for each of them, the answers of
+            the model by the names of the questions.
+        :rtype: tuple[list[_Paragraph], list[dict[str, _DecisionAnswer]]]
+        :raises _InvalidDecisionResponseError: If a response cannot be used.
+        :raises Exception: The error of the first request that failed for good.
+        """
+        # The same questions are asked on each paragraph
+        questions = _build_aspect_questions(aspects)
+        paragraphs: list[_Paragraph] = []
+        units: list[_QuestionsOnText] = []
+        for position, paragraph in enumerate(source_paragraphs):
+            text = _clean_text_for_llm_prompt(
+                paragraph.raw_text, preserve_linebreaks=False, strip_text=True
+            )
+            if not text:
+                continue
+            paragraphs.append(paragraph)
+            units.append(
+                _QuestionsOnText(
+                    text=text,
+                    questions=questions,
+                    # The paragraphs without text are not asked about, i.e.
+                    # the position of the paragraph is the one in the source
+                    location=(
+                        f" on paragraph {position + 1} of "
+                        f"{len(source_paragraphs)} (index {position})"
+                    ),
+                )
+            )
+        answers_of_paragraphs = await self._get_answers(
+            units=units,
+            usage=usage,
+            num_retries_failed_request=num_retries_failed_request,
+            async_limiter=async_limiter,
+            send_concurrently=async_limiter is not None,
+        )
+        return paragraphs, answers_of_paragraphs
+
+    async def _ask_about_concepts(
+        self,
+        *,
+        concepts: list[_Concept],
+        source: _Document | _Aspect,
+        source_paragraphs: list[_Paragraph],
+        usage: _ModelUsage,
+        num_retries_failed_request: int = 3,
+        async_limiter: AsyncLimiter | None = None,
+    ) -> list[dict[str, _DecisionAnswer]]:
+        """
+        Asks the decision model the questions of the concepts on the text of
+        the source.
+
+        The text of the source is sent as a whole, in one request, with
+        the questions of all the concepts.
+
+        :param concepts: The concepts to ask about.
+        :type concepts: list[_Concept]
+        :param source: The source that the concepts are extracted from.
+        :type source: _Document | _Aspect
+        :param source_paragraphs: The paragraphs that the concepts are extracted
+            from.
+        :type source_paragraphs: list[_Paragraph]
+        :param usage: The usage object to record the requests in.
+        :type usage: _ModelUsage
+        :param num_retries_failed_request: Number of retries when a request fails
+            with a transient error. Defaults to 3.
+        :type num_retries_failed_request: int
+        :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
+            controls the frequency of the requests, when concurrency is enabled.
+        :type async_limiter: AsyncLimiter | None
+        :return: For each text that the questions are asked on, the answers of
+            the model by the names of the questions.
+        :rtype: list[dict[str, _DecisionAnswer]]
+        :raises _InvalidDecisionResponseError: If a response cannot be used.
+        :raises Exception: The error of the first request that failed for good.
+        """
+        units = [
+            _QuestionsOnText(
+                text=self._get_text_for_concept_extraction(
+                    source=source, paragraphs_chunk=source_paragraphs
+                ),
+                questions=_build_concept_questions(concepts),
+            )
+        ]
+        return await self._get_answers(
+            units=units,
+            usage=usage,
+            num_retries_failed_request=num_retries_failed_request,
+            async_limiter=async_limiter,
+            send_concurrently=False,
         )
 
     @staticmethod
     def _get_concepts_items(
         concepts: list[_Concept],
-        answers: dict[str, _DecisionAnswer],
+        answers_of_texts: list[dict[str, _DecisionAnswer]],
         decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
     ) -> list[tuple[_Aspect | _Concept, list[_ExtractedItem]]]:
         """
         Converts the answers of the decision model to the questions of the concepts,
-        asked on the text of the source, to the items of each concept.
+        asked on each text, to the items of each concept.
 
-        A concept gets at most one item, whatever ``singular_occurrence`` of
-        the concept is set to, and no item if there is nothing to extract for it,
-        i.e. no label of the concept applies.
+        A concept gets at most one item for each text that the questions are asked
+        on, whatever ``singular_occurrence`` of the concept is set to, and no item
+        for a text if there is nothing to extract from it, i.e. no label of
+        the concept applies. The items of a concept are in the order of the texts.
 
         A yes/no question of a concept is taken as answered "yes" with a probability
         of the decision threshold of the concept or more, or of the given threshold
@@ -1133,8 +1235,9 @@ class _DocumentDecisionModel(_DocumentModel):
 
         :param concepts: The concepts that the questions were built for.
         :type concepts: list[_Concept]
-        :param answers: The answers of the decision model by the names of the questions.
-        :type answers: dict[str, _DecisionAnswer]
+        :param answers_of_texts: For each text that the questions were asked on,
+            the answers of the decision model by the names of the questions.
+        :type answers_of_texts: list[dict[str, _DecisionAnswer]]
         :param decision_threshold: The decision threshold of the decision model.
             Defaults to 0.5.
         :type decision_threshold: float
@@ -1146,19 +1249,22 @@ class _DocumentDecisionModel(_DocumentModel):
         concepts_and_items: list[tuple[_Aspect | _Concept, list[_ExtractedItem]]] = []
         for position, concept in enumerate(concepts):
             extracted_items: list[_ExtractedItem] = []
-            value_and_probabilities = _convert_concept_answers(
-                concept,
-                position,
-                answers,
-                decision_threshold=_get_decision_threshold(concept, decision_threshold),
-            )
-            # None if there is no item to extract, i.e. no label applies
-            if value_and_probabilities is not None:
-                value = value_and_probabilities[0]
-                probabilities: ItemProbabilities = value_and_probabilities[1]
-                extracted_items.append(
-                    concept._item_class(value=value, probabilities=probabilities)
+            for answers in answers_of_texts:
+                value_and_probabilities = _convert_concept_answers(
+                    concept,
+                    position,
+                    answers,
+                    decision_threshold=_get_decision_threshold(
+                        concept, decision_threshold
+                    ),
                 )
+                # None if there is no item to extract, i.e. no label applies
+                if value_and_probabilities is not None:
+                    value = value_and_probabilities[0]
+                    probabilities: ItemProbabilities = value_and_probabilities[1]
+                    extracted_items.append(
+                        concept._item_class(value=value, probabilities=probabilities)
+                    )
             concepts_and_items.append((concept, extracted_items))
         return concepts_and_items
 
@@ -1228,8 +1334,7 @@ class _DocumentDecisionModel(_DocumentModel):
     async def _get_answers(
         self,
         *,
-        texts: list[str],
-        questions: list[_DecisionQuestion],
+        units: list[_QuestionsOnText],
         usage: _ModelUsage,
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
@@ -1240,8 +1345,8 @@ class _DocumentDecisionModel(_DocumentModel):
         its answers on each text.
 
         The questions on a text are sent in one request. If there are more questions
-        than litellm accepts in a request, they are split into several requests on
-        the same text, and the answers are merged.
+        on a text than litellm accepts in a request, they are split into several
+        requests on the same text, and the answers are merged.
 
         The requests are sent one after another, or concurrently if specified.
         As soon as a request fails for good, or a response cannot be used, no further
@@ -1261,11 +1366,8 @@ class _DocumentDecisionModel(_DocumentModel):
         A request that is in flight when this method is cancelled is cancelled
         with it and is not recorded, as its outcome is not known.
 
-        :param texts: The texts to ask the questions on.
-        :type texts: list[str]
-        :param questions: The questions to ask on each text, with the names unique
-            among them.
-        :type questions: list[_DecisionQuestion]
+        :param units: The texts to ask the questions on, each with its questions.
+        :type units: list[_QuestionsOnText]
         :param usage: The usage object to record the requests in.
         :type usage: _ModelUsage
         :param num_retries_failed_request: Number of retries when a request fails
@@ -1284,24 +1386,25 @@ class _DocumentDecisionModel(_DocumentModel):
             its answers cannot be attributed to the questions of its request, or
             an answer is not usable (e.g. the model refused to answer), and no
             request failed. The call of each request is then recorded as finished.
-            The error has the position of the text that the response is for.
+            The error has the position and the location of the text that
+            the response is for.
         :raises Exception: The error of the first request that failed for good.
         """
         # The cap is the one of litellm, which rejects a request over it
         max_questions_per_request = _litellm_decision_types.MAX_DECISION_QUESTIONS
-        questions_chunks: list[list[_DecisionQuestion]] = _chunk_list(
-            questions, max_questions_per_request
-        )
-        # One request for each text and each chunk of the questions
-        requests = [
-            (text, questions_chunk)
-            for text in texts
-            for questions_chunk in questions_chunks
+        # One request for each text and each chunk of the questions on it, with
+        # the position of the text among the texts
+        requests: list[tuple[int, list[_DecisionQuestion]]] = [
+            (unit_position, questions_chunk)
+            for unit_position, unit in enumerate(units)
+            for questions_chunk in _chunk_list(
+                unit.questions, max_questions_per_request
+            )
         ]
         if len(requests) > 1:
             logger.debug(
-                f"Sending {len(questions)} questions on {len(texts)} text(s) to "
-                f"decision model `{self.model}` in {len(requests)} requests "
+                f"Sending the questions on {len(units)} text(s) to decision model "
+                f"`{self.model}` in {len(requests)} requests "
                 f"(max {max_questions_per_request} questions per request)."
             )
 
@@ -1345,7 +1448,8 @@ class _DocumentDecisionModel(_DocumentModel):
                 # The answers on all the texts are needed: the request is pointless
                 return
             sent_positions.add(position)
-            text, questions_chunk = requests[position]
+            unit_position, questions_chunk = requests[position]
+            text = units[unit_position].text
             request_questions = [
                 _get_request_question(question) for question in questions_chunk
             ]
@@ -1385,7 +1489,8 @@ class _DocumentDecisionModel(_DocumentModel):
                 answers_of_requests[position] = answers
             except _InvalidDecisionResponseError as e:
                 # The text that the questions of the request were asked on
-                e.text_position = position // len(questions_chunks)
+                e.text_position = unit_position
+                e.location = units[unit_position].location
                 response_errors.append(e)
                 stop_sending()
 
@@ -1447,16 +1552,9 @@ class _DocumentDecisionModel(_DocumentModel):
             raise response_errors[0]
 
         # Merge the answers of the requests on the same text
-        answers_of_texts: list[dict[str, _DecisionAnswer]] = []
-        n_requests_per_text = len(questions_chunks)
-        for text_position in range(len(texts)):
-            answers: dict[str, _DecisionAnswer] = {}
-            for position in range(
-                text_position * n_requests_per_text,
-                (text_position + 1) * n_requests_per_text,
-            ):
-                answers.update(answers_of_requests[position])
-            answers_of_texts.append(answers)
+        answers_of_texts: list[dict[str, _DecisionAnswer]] = [{} for _ in units]
+        for position, (unit_position, _) in enumerate(requests):
+            answers_of_texts[unit_position].update(answers_of_requests[position])
         return answers_of_texts
 
     async def _send_decisions_request(
