@@ -798,8 +798,15 @@ class _DocumentDecisionModel(_DocumentModel):
           so that it is told apart from a failed request.
 
         Concepts: all the questions of the concepts are sent in one request, with
-        the text of the source, which is always sent as a whole, i.e. it has to fit
-        in a request.
+        the text of the source, which is sent as a whole by default, i.e. it has to
+        fit in a request. If the max number of paragraphs to analyze per call is set
+        and the source has more paragraphs, the paragraphs are split into consecutive
+        parts of at most that many paragraphs, as they are for an LLM, and one
+        request is sent for each part, with the text of the part and the same
+        questions. Each concept then gets an item for each part, in the order of
+        the parts, each with the probabilities of its own answers: the answers on
+        different parts are not merged. The requests for the parts are sent
+        concurrently if a limiter is given, and one after another otherwise.
 
         Aspects: one request is sent for each paragraph of the source, with
         the text of the paragraph and one question for each aspect: whether
@@ -835,9 +842,11 @@ class _DocumentDecisionModel(_DocumentModel):
             processed aspects or concepts. Defaults to False.
         :type overwrite_existing: bool
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs
-            to analyze in a single LLM call. Not applied to a decision model, which
-            is sent each paragraph in a request of its own for aspects, and the text
-            of the source as a whole for concepts. Defaults to 0.
+            of the source whose text is sent in one request for concepts: a source
+            with more paragraphs is asked about in parts. Defaults to 0, in which
+            case the text of the source is sent as a whole. Has no effect on
+            aspects, for which each paragraph is sent in a request of its own,
+            i.e. any such limit is met.
         :type max_paragraphs_to_analyze_per_call: int
         :param num_retries_failed_request: Number of retries when a request fails
             with a transient error. Defaults to 3.
@@ -875,23 +884,12 @@ class _DocumentDecisionModel(_DocumentModel):
             extracted_item_type=extracted_item_type, source=source, document=document
         )
 
-        if max_paragraphs_to_analyze_per_call:
-            not_applied_reason = (
-                "each paragraph is sent to it in a request of its own"
-                if extracted_item_type == "aspect"
-                else "the text is sent to it as a whole"
-            )
-            logger.info(
-                f"`max_paragraphs_to_analyze_per_call` is not applied to decision "
-                f"model `{self.model}`: {not_applied_reason}."
-            )
-
         # Ask the questions. Each request is recorded in the usage: with the tokens
         # used and the answers if it succeeds, or as an unfinished call if it fails.
         usage = _ModelUsage()
         # The paragraphs that the questions of aspects are asked on, and the answers
         # on each text: on each of these paragraphs for aspects, or on the text of
-        # the source for concepts
+        # the source, or of each part of it, for concepts
         paragraphs: list[_Paragraph] = []
         answers_of_texts: list[dict[str, _DecisionAnswer]]
         try:
@@ -913,6 +911,7 @@ class _DocumentDecisionModel(_DocumentModel):
                     source=source,
                     source_paragraphs=source_paragraphs,
                     usage=usage,
+                    max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                     num_retries_failed_request=num_retries_failed_request,
                     async_limiter=async_limiter,
                 )
@@ -1044,7 +1043,9 @@ class _DocumentDecisionModel(_DocumentModel):
         on is, if the error has its location, e.g. the paragraph, as the questions
         of aspects are asked on each paragraph. The paragraph is given by its
         position among the paragraphs that the aspects are extracted from, i.e.
-        those of the document, or of the parent aspect for sub-aspects.
+        those of the document, or of the parent aspect for sub-aspects. For
+        the concepts whose questions are asked on the text in parts, it is
+        the part, given by its position among the parts of the text.
 
         :param error: The error that tells what is wrong with the response.
         :type error: ValueError
@@ -1167,6 +1168,7 @@ class _DocumentDecisionModel(_DocumentModel):
         source: _Document | _Aspect,
         source_paragraphs: list[_Paragraph],
         usage: _ModelUsage,
+        max_paragraphs_to_analyze_per_call: int = 0,
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
     ) -> list[dict[str, _DecisionAnswer]]:
@@ -1174,8 +1176,17 @@ class _DocumentDecisionModel(_DocumentModel):
         Asks the decision model the questions of the concepts on the text of
         the source.
 
-        The text of the source is sent as a whole, in one request, with
+        By default, the text of the source is sent as a whole, in one request, with
         the questions of all the concepts.
+
+        If the max number of paragraphs to analyze per call is set and the source
+        has more paragraphs, the paragraphs are split into consecutive parts of
+        at most that many paragraphs, as they are split for an LLM, and one request
+        is sent for each part, with the text of the part as it is shown to an LLM
+        and the questions of all the concepts. A part that has no such text is not
+        asked about. The requests for the parts are sent concurrently if a limiter
+        is given, which is the case when concurrency is enabled for the extraction,
+        and one after another otherwise.
 
         :param concepts: The concepts to ask about.
         :type concepts: list[_Concept]
@@ -1186,32 +1197,73 @@ class _DocumentDecisionModel(_DocumentModel):
         :type source_paragraphs: list[_Paragraph]
         :param usage: The usage object to record the requests in.
         :type usage: _ModelUsage
+        :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs
+            whose text is sent in one request. Defaults to 0, in which case
+            the text of the source is sent as a whole.
+        :type max_paragraphs_to_analyze_per_call: int
         :param num_retries_failed_request: Number of retries when a request fails
             with a transient error. Defaults to 3.
         :type num_retries_failed_request: int
         :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
             controls the frequency of the requests, when concurrency is enabled.
         :type async_limiter: AsyncLimiter | None
-        :return: For each text that the questions are asked on, the answers of
-            the model by the names of the questions.
+        :return: For each text that the questions are asked on, i.e. for the text
+            of the source, or for each of its parts that is asked about, in
+            the order of the parts, the answers of the model by the names of
+            the questions.
         :rtype: list[dict[str, _DecisionAnswer]]
         :raises _InvalidDecisionResponseError: If a response cannot be used.
         :raises Exception: The error of the first request that failed for good.
         """
-        units = [
-            _QuestionsOnText(
-                text=self._get_text_for_concept_extraction(
-                    source=source, paragraphs_chunk=source_paragraphs
-                ),
-                questions=_build_concept_questions(concepts),
+        # The same questions are asked on each text
+        questions = _build_concept_questions(concepts)
+        if 0 < max_paragraphs_to_analyze_per_call < len(source_paragraphs):
+            # The same parts as the ones that an LLM is sent in separate calls
+            parts: list[list[_Paragraph]] = _chunk_list(
+                source_paragraphs, max_paragraphs_to_analyze_per_call
             )
-        ]
+            logger.debug(
+                f"Sending the text to decision model `{self.model}` in "
+                f"{len(parts)} parts (max {max_paragraphs_to_analyze_per_call} "
+                f"paragraphs per part)."
+            )
+            units: list[_QuestionsOnText] = []
+            for position, part in enumerate(parts):
+                text = self._get_text_for_concept_extraction(
+                    source=source, paragraphs_chunk=part
+                )
+                # The texts of the paragraphs of a part are joined with blank lines
+                if not text.strip():
+                    continue
+                units.append(
+                    _QuestionsOnText(
+                        text=text,
+                        questions=questions,
+                        # The parts without text are not asked about, i.e.
+                        # the position of the part is the one in the source
+                        location=(
+                            f" on part {position + 1} of {len(parts)} of the text"
+                        ),
+                    )
+                )
+            send_concurrently = async_limiter is not None
+        else:
+            # The text of the source as a whole, in one request
+            units = [
+                _QuestionsOnText(
+                    text=self._get_text_for_concept_extraction(
+                        source=source, paragraphs_chunk=source_paragraphs
+                    ),
+                    questions=questions,
+                )
+            ]
+            send_concurrently = False
         return await self._get_answers(
             units=units,
             usage=usage,
             num_retries_failed_request=num_retries_failed_request,
             async_limiter=async_limiter,
-            send_concurrently=False,
+            send_concurrently=send_concurrently,
         )
 
     @staticmethod

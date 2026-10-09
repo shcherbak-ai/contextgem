@@ -151,7 +151,11 @@ class DocumentDecisionModel(_DocumentDecisionModel):
 
         - Extracted items of concepts
             A concept gets at most one item per document or aspect, whatever its
-            ``singular_occurrence`` is. A ``BooleanConcept`` always gets an item
+            ``singular_occurrence`` is, or, if the text is sent in parts (see
+            "Length of the text"), at most one item for each part, in the order
+            of the parts. The answers on different parts are not merged, i.e.
+            combining such items is up to the caller, and an item does not tell
+            which part it comes from. A ``BooleanConcept`` always gets an item
             (``True`` if the probability of "yes" is the decision threshold or more,
             0.5 by default). A ``LabelConcept`` with
             ``classification_type="multi_label"`` gets an item with the labels
@@ -164,7 +168,8 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         - Requests
             Concepts: the questions of all the concepts extracted in one call are
             sent in one request, with the text of the document or of the paragraphs
-            of the aspect. Aspects: one request is sent for each paragraph of
+            of the aspect, or in one request for each part of that text, if it is
+            sent in parts. Aspects: one request is sent for each paragraph of
             the document, with the text of the paragraph and one question for each
             aspect extracted in the call. The number of aspects/concepts per call is
             set with ``max_items_per_call``. With ``use_concurrency=True``, each
@@ -174,19 +179,25 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             that a decision model does not use (``justification_depth``,
             ``justification_max_sents`` and, for concepts, ``reference_depth``)
             do not split the aspects/concepts into separate calls. The requests for
-            the paragraphs are sent one after another, or concurrently with
-            ``use_concurrency=True``, paced by the ``async_limiter`` of the model.
+            the paragraphs, and for the parts of a text, are sent one after another,
+            or concurrently with ``use_concurrency=True``, paced by
+            the ``async_limiter`` of the model.
             A response that cannot be used, e.g. with a refused answer, is not
             requested again: the call fails with ``ModelExtractionError``, unless
             a fallback model takes over.
 
         - Length of the text
-            Concepts: the text of the document, or of the paragraphs of the aspect,
-            is sent in one request, i.e. it has to fit into the context window of
-            the model. For a long document, extract the concepts from aspects.
-            Aspects: each paragraph is sent in a request of its own, whatever
-            the length of the document. ``max_paragraphs_to_analyze_per_call`` is
-            not applied to a decision model.
+            Concepts: by default, the text of the document, or of the paragraphs of
+            the aspect, is sent in one request, i.e. it has to fit into the context
+            window of the model. For a longer text, pass
+            ``max_paragraphs_to_analyze_per_call`` to the extraction method:
+            a text with more paragraphs is then split into consecutive parts of at
+            most that many paragraphs, as for an LLM, and one request is sent for
+            each part. Each concept then gets an item for each part, with
+            the probabilities of the answers on that part. Extracting the concepts
+            from aspects also shortens the text. Aspects: each paragraph is sent
+            in a request of its own, whatever the length of the document, i.e.
+            ``max_paragraphs_to_analyze_per_call`` changes nothing for them.
 
         - Limits
             The limits on the number of options are those of ``litellm`` and of

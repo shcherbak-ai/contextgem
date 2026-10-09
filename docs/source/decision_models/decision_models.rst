@@ -163,7 +163,7 @@ What to know about local decision models:
 - **No API key and no prices.** A local server needs no ``api_key``. The tokens are counted as for any other decision model, and no cost is calculated unless you set ``pricing_details``.
 - **LM Studio serves only the models that it lists as decision models**, e.g. the GGUF builds that ``ggml-org`` publishes on Hugging Face, such as Kev 4B (``lms get https://huggingface.co/ggml-org/Kev-4B-GGUF``). A request for a model that LM Studio lists as an LLM is rejected, and the extraction fails with ``ModelAPIError``. The local server of LM Studio Bionic, which is a separate app, does not serve the endpoint as of its version 1.1.7 (October 2026).
 - **The choice of the model matters.** In the tests of ContextGem on a short and unambiguous document, ``nimble`` (9B, with Ollama 0.40) answered each question as expected, with probabilities above 0.99. ``kev-4b`` (4B, with LM Studio 0.4.26) answered as expected except for one of the two labels of a multi-label concept that apply, which got a probability of 0.31. The much smaller ``tev1:0.8b`` answered several of the same questions wrongly. Check a local model on your own documents before you rely on it.
-- **Shorter texts than with the cloud models.** A local model has a smaller context, and the text is not cut to fit it: both servers reject a request whose text and question exceed the context that the model is loaded with, Ollama also a request whose body exceeds 64 KiB, and the extraction fails with ``ModelAPIError``. A document-level concept is decided on the text of the whole document, so attach the concepts of a long document to aspects (see :ref:`decision-models-limits-label`).
+- **Shorter texts than with the cloud models.** A local model has a smaller context, and the text is not cut to fit it: both servers reject a request whose text and question exceed the context that the model is loaded with, Ollama also a request whose body exceeds 64 KiB, and the extraction fails with ``ModelAPIError``. By default, a document-level concept is decided on the text of the whole document, so send the text of a long document in parts, with ``max_paragraphs_to_analyze_per_call``, or attach its concepts to aspects (see :ref:`decision-models-limits-label`).
 
 
 📝 Configuration Parameters
@@ -316,9 +316,32 @@ What follows from this:
 - **A rating is the most probable level**, not an average over the levels. The levels are sent to the model as numbers (*"3 on a scale from 1 to 5"*), so describe in the concept description what the low and the high end of the scale mean.
 - **Labels are sent as they are.** A label has no description of its own, so make the labels self-explanatory.
 - **If two answers are equally probable**, the first one is taken: the first label in the order of the labels of the concept, or the lower level of the rating scale.
-- **At most one item is extracted** for a concept from a document or an aspect, whatever ``singular_occurrence`` is set to.
+- **At most one item is extracted** for a concept from a document or an aspect, whatever ``singular_occurrence`` is set to, unless the text is sent in parts: a concept then has one item for each part (see :ref:`below <decision-models-parts-label>`).
 
-All the questions of the concepts processed in one call are sent in one request, together with the text: the text of the document for document-level concepts, or the text of the paragraphs extracted for the aspect for aspect-level concepts. As for LLMs, ``max_items_per_call`` sets how many concepts are processed in one call (all of them by default, or one with ``use_concurrency=True``).
+By default, all the questions of the concepts processed in one call are sent in one request, together with the text: the text of the document for document-level concepts, or the text of the paragraphs extracted for the aspect for aspect-level concepts. As for LLMs, ``max_items_per_call`` sets how many concepts are processed in one call (all of them by default, or one with ``use_concurrency=True``).
+
+.. _decision-models-parts-label:
+
+**A long text can be sent in parts.** With ``max_paragraphs_to_analyze_per_call`` passed to the extraction method, a text with more paragraphs than that is not sent as a whole. Its paragraphs (those of the document for document-level concepts, those extracted for the aspect for aspect-level concepts) are split into consecutive parts of at most that many paragraphs, in the same way as for an LLM, and one request is sent for each part, with the text of the part and the questions of all the concepts of the call. A text with no more paragraphs than that is sent as a whole, as without the parameter.
+
+- **A concept then has one item for each part**, in the order of the parts, each with the probabilities of the answers on its part. The answers on the parts are not merged into one item: combining the items is up to you, e.g. taking a Boolean concept as true if it is true for any part, or taking the highest rating.
+- **Each part is decided on its own text.** The model is not sent the other parts. A Boolean concept is ``False`` for a part that does not support the statement, and a single-label and a rating concept get a label and a level for each part, including the parts that say nothing about the concept. A multi-label concept has no item for a part in which no label reaches the threshold, so it can have fewer items than there are parts.
+- **An item does not tell which part it comes from.** As any item of a concept extracted by a decision model, it has no references.
+- **The requests for the parts** are sent one after another, or concurrently with ``use_concurrency=True``, at the rate allowed by the ``async_limiter`` of the decision model, as the requests for the paragraphs in aspect extraction (see :ref:`decision-models-aspects-label`).
+
+.. code-block:: python
+   :caption: Extracting a concept from a long text in parts
+
+   # Each request has the text of up to 50 paragraphs
+   decision_model.extract_concepts_from_document(
+       document, max_paragraphs_to_analyze_per_call=50
+   )
+
+   # One item for each part: combine them as your task requires
+   is_true_for_any_part = any(item.value for item in boolean_concept.extracted_items)
+   highest_p_yes = max(
+       item.probabilities[True] for item in boolean_concept.extracted_items
+   )
 
 
 .. _decision-models-probabilities-label:
@@ -445,7 +468,7 @@ The sub-aspects of an aspect are extracted in the same way from the paragraphs e
 .. note::
    **When you enable concurrency, also set the max items per call.** As for LLMs, each aspect and each concept is processed in a call of its own when ``use_concurrency=True`` is passed and ``max_items_per_call`` is not set. With a decision model, each text is then sent, and billed, once per aspect or concept: 3 aspects and 100 paragraphs take 300 requests instead of 100. To send each text once, with the questions of all the aspects or concepts, set ``max_items_per_call`` to the number of the aspects or concepts, or more.
 
-``max_paragraphs_to_analyze_per_call`` is not applied to a decision model: for aspects, each paragraph is sent in a request of its own in any case, and for concepts, the text is sent as a whole (see :ref:`decision-models-limits-label`).
+``max_paragraphs_to_analyze_per_call`` changes nothing in aspect extraction, as each paragraph is sent in a request of its own in any case. For concepts, it sets how many paragraphs a request has at most, i.e. in how many parts a text is sent (see :ref:`sending a long text in parts <decision-models-parts-label>`).
 
 The length of the document does not limit aspect extraction, as each request has one paragraph only.
 
@@ -518,6 +541,7 @@ As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0``
 - With ``use_concurrency=True``, set ``max_items_per_call``, as each aspect and each concept is otherwise processed in a call of its own (see :ref:`decision-models-aspects-label`).
 - The parameters that a decision model does not use do not split its calls: aspects and concepts that differ only in ``justification_depth`` or ``justification_max_sents``, and concepts that differ only in ``reference_depth``, are processed in the same call, while an LLM is called separately for each combination of these parameters.
 - More than 128 questions on a text are sent in several requests (see :ref:`decision-models-limits-label`).
+- With ``max_paragraphs_to_analyze_per_call``, the text of a call of concepts is spread over the requests for its parts, i.e. it is still sent once per call, while the questions of the call are sent, and billed, with each part (see :ref:`sending a long text in parts <decision-models-parts-label>`).
 
 
 .. _decision-models-limits-label:
@@ -549,7 +573,10 @@ A concept over the limit on the options or on the levels is rejected as any othe
 
 ContextGem has no limits of its own on the options and the levels: it checks each question with the request types of the installed ``litellm`` version, so the limits are those of that version. Use an LLM for a concept over a limit, e.g. by routing it to an LLM in a model group.
 
-**The text must fit in one request.** A document-level concept is decided on the text of the whole document, which is sent in one request: the text is not split into parts, and its length is not checked before the request is sent. A request that the provider rejects for its length fails as any other rejected request. For Jev 1.13, TypeSafe documents a limit of 32k tokens for the text together with the longest question, and of 64k tokens per request (`TypeSafe models <https://docs.typesafe.ai/models>`_, as of October 2026). For a longer document, attach the concepts to aspects: the aspects are extracted paragraph by paragraph, and the concepts of an aspect are decided on the paragraphs of the aspect only, which also have to fit in one request.
+**The text of a request must fit the model.** By default, a document-level concept is decided on the text of the whole document, and an aspect-level concept on the text of all the paragraphs of the aspect, each sent in one request. The length of a text is not checked before the request is sent, and a text is not cut to fit. A request that the provider rejects for its length fails as any other rejected request. For Jev 1.13, TypeSafe documents a limit of 32k tokens for the text together with the longest question, and of 64k tokens per request (`TypeSafe models <https://docs.typesafe.ai/models>`_, as of October 2026). For a longer text, there are two ways, which can be combined:
+
+- **Send the text in parts**, with ``max_paragraphs_to_analyze_per_call`` passed to the extraction method: each request then has the text of at most that many paragraphs, and each concept gets one item for each part (see :ref:`sending a long text in parts <decision-models-parts-label>`). A part is measured in paragraphs, not in tokens, so set the number by the length of your paragraphs.
+- **Attach the concepts to aspects**: the aspects are extracted paragraph by paragraph, and the concepts of an aspect are decided on the paragraphs of the aspect only.
 
 Providers may set further limits of their own. See the documentation of your provider, e.g. the `TypeSafe documentation <https://docs.typesafe.ai/>`_ or the `OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_.
 
@@ -578,6 +605,7 @@ What to expect when a call fails:
 
 - **One answer that cannot be used fails the whole call.** No aspect or concept of that call gets its items, including those whose answers were valid. The aspects and concepts extracted in other calls keep their items.
 - **In aspect extraction, the answers on all the paragraphs are needed.** When a request for a paragraph fails for good, or its response cannot be used, the requests not yet sent are not sent, and no aspect of the call gets its items.
+- **For concepts extracted from a text in parts, the answers on all the parts are needed.** When a request for a part fails for good, or its response cannot be used, the requests not yet sent are not sent, and no concept of the call gets its items, including for the parts already answered. The logged error names the part, e.g. ``on part 2 of 3 of the text``.
 - **The requests made are recorded in the usage**, with their tokens, also when the call fails.
 - **A model that fails stops the other models of its group.** In a model group, with ``use_concurrency=True``, the models extract at the same time. When the extraction with one of them fails, the requests in flight of the other models are cancelled before the error is raised, and no request is sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
 - **A warning instead of an exception.** With ``raise_exception_on_extraction_error=False`` passed to the extraction method, a warning is issued instead of ``ModelAPIError`` or ``ModelExtractionError``, and the aspects or concepts of the failed call are left without items. The ``ValueError`` above is raised in any case.

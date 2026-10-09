@@ -2373,24 +2373,6 @@ class TestDecisionModels(BaseTest):
             0,
         ]
         for extraction_kwargs, expected_question_names in [
-            # The text is always sent as a whole: the number of paragraphs per call
-            # is not limited for a decision model
-            (
-                {"max_paragraphs_to_analyze_per_call": 1},
-                [
-                    [
-                        "C0",
-                        "C1",
-                        "C2",
-                        "C3-L0",
-                        "C3-L1",
-                        "C3-L2",
-                        "C4-L0",
-                        "C4-L1",
-                        "C5",
-                    ]
-                ],
-            ),
             # The number of concepts per call, i.e. per request, is limited. The names
             # of the questions follow the position of a concept in its request.
             (
@@ -2558,6 +2540,1239 @@ class TestDecisionModels(BaseTest):
         assert item.value == ["written"]
         self.check_item_probabilities(item, {"written": 0.6, "any": 0.4})
         self.check_instance_serialization_and_cloning(document)
+
+    @staticmethod
+    def _get_texts_of_parts(
+        n_paragraphs_per_part: int, paragraph_texts: list[str] | None = None
+    ) -> list[str]:
+        """
+        Returns the texts expected to be sent to a decision model for concepts
+        when the paragraphs are analyzed in parts: for each part, the texts of
+        its paragraphs, separated by a blank line.
+
+        :param n_paragraphs_per_part: The max number of paragraphs in a part.
+        :type n_paragraphs_per_part: int
+        :param paragraph_texts: The texts of the paragraphs, as they are sent.
+            Defaults to those of the document created by
+            :func:`_create_aspects_document`.
+        :type paragraph_texts: list[str] | None
+        :return: The text of each part, in the order of the parts.
+        :rtype: list[str]
+        """
+        if paragraph_texts is None:
+            paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        return [
+            "\n\n".join(paragraph_texts[start : start + n_paragraphs_per_part])
+            for start in range(0, len(paragraph_texts), n_paragraphs_per_part)
+        ]
+
+    @staticmethod
+    def _create_concepts_responder(
+        texts: list[str], answers_of_texts: list[dict[str, Any]], **usage_kwargs: int
+    ) -> Callable[[dict[str, Any]], OpenAIDecisionResponse]:
+        """
+        Creates the function that responds to a request with the questions of
+        concepts, asked on one of the given texts, e.g. on a part of a document,
+        with the answers given for that text.
+
+        :param texts: The texts that the requests are expected to be sent with.
+        :type texts: list[str]
+        :param answers_of_texts: For each text, what to answer (see
+            :func:`_create_decisions_response`) by the names of the concepts.
+            For a concept with a question on each label, what to answer by
+            the labels.
+        :type answers_of_texts: list[dict[str, Any]]
+        :param usage_kwargs: Token counts to report in the responses.
+        :type usage_kwargs: int
+        :return: Function that creates the response for a request.
+        :rtype: Callable[[dict[str, Any]], OpenAIDecisionResponse]
+        """
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Creates the response for the request.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            text_answers = answers_of_texts[texts.index(request["input"])]
+            answers: dict[str, Any] = {}
+            for question in request["questions"]:
+                concept_name_match = re.search(
+                    r"^Concept name: (.+)$",
+                    question["instructions"],
+                    flags=re.MULTILINE,
+                )
+                assert concept_name_match is not None, question
+                answer = text_answers[concept_name_match.group(1)]
+                label_match = re.search(
+                    r"^Label: (.+)$", question["instructions"], flags=re.MULTILINE
+                )
+                if label_match is not None:
+                    answer = answer[label_match.group(1)]
+                answers[question["name"]] = answer
+            return _create_decisions_response(
+                request["questions"], answers, **usage_kwargs
+            )
+
+        return respond
+
+    def test_extract_document_concepts_in_parts_with_decision_model(self):
+        """
+        Tests the extraction of the concepts of a document with a decision model
+        when the max number of paragraphs to analyze per call is set:
+        the paragraphs are split into parts as they are for an LLM, one request
+        is sent for each part, with the questions of all the concepts, and each
+        concept gets an item for each part, in the order of the parts.
+        The text is sent as a whole if the number is not set, or is not lower
+        than the number of the paragraphs.
+        """
+
+        def create_document() -> Document:
+            """
+            Creates a document with five paragraphs and a concept of each kind.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    ),
+                    LabelConcept(
+                        name="Notice form",
+                        description="Required form of the termination notice",
+                        labels=["written", "any"],
+                    ),
+                    LabelConcept(
+                        name="Topics",
+                        description="Topics covered by the text",
+                        labels=["confidentiality", "termination", "payment"],
+                        classification_type="multi_label",
+                    ),
+                    RatingConcept(
+                        name="Clarity",
+                        description="Clarity of the text",
+                        rating_scale=(1, 3),
+                    ),
+                ]
+            )
+
+        def check_items(
+            document: Document, expected_items: dict[str, list[tuple[Any, Any]]]
+        ) -> None:
+            """
+            Checks the items of each concept of the document.
+
+            :param document: The document with the extracted concepts.
+            :type document: Document
+            :param expected_items: The value and the probabilities of each item
+                expected, by the names of the concepts.
+            :type expected_items: dict[str, list[tuple[Any, Any]]]
+            """
+            for concept in document.concepts:
+                assert concept._is_processed
+                expected_concept_items = expected_items[concept.name]
+                assert len(concept.extracted_items) == len(expected_concept_items)
+                for item, (value, probabilities) in zip(
+                    concept.extracted_items, expected_concept_items, strict=True
+                ):
+                    assert item.value == value
+                    assert type(item.value) is type(value)
+                    self.check_item_probabilities(item, probabilities)
+                    # An item does not tell the part that it is extracted from,
+                    # as an item extracted by an LLM without references
+                    assert item.justification is None
+                    assert not item.reference_paragraphs
+                    assert not item.reference_sentences
+
+        def requests_sent(stub: _DecisionsAPIStub) -> list[tuple[str, list[str]]]:
+            """
+            Returns the text and the names of the questions of each request sent.
+
+            :param stub: The stub with the requests received.
+            :type stub: _DecisionsAPIStub
+            :return: The requests, in the order they were sent.
+            :rtype: list[tuple[str, list[str]]]
+            """
+            return [
+                (
+                    request["input"],
+                    [question["name"] for question in request["questions"]],
+                )
+                for request in stub.requests
+            ]
+
+        # Five paragraphs, up to two per part: three parts, the last one with
+        # the paragraph that is left
+        part_texts = self._get_texts_of_parts(2)
+        assert part_texts == [
+            "Non-disclosure agreement\n\n"
+            "The receiving party shall keep the information confidential.",
+            "Either party may terminate this agreement with a written notice "
+            "of 30 days.\n\n"
+            "The liability of each party is limited to the fees paid.",
+            "A notice of termination does not release a party from confidentiality.",
+        ]
+        answers_of_parts: list[dict[str, Any]] = [
+            {
+                "NDA check": 0.9,
+                "Notice form": {"written": 0.2, "any": 0.8},
+                "Topics": {"confidentiality": 0.9, "termination": 0.1, "payment": 0.2},
+                "Clarity": {"1": 0.1, "2": 0.2, "3": 0.7},
+            },
+            {
+                "NDA check": 0.2,
+                "Notice form": {"written": 0.7, "any": 0.3},
+                # No label has a probability of 0.5 or more
+                "Topics": {"confidentiality": 0.1, "termination": 0.4, "payment": 0.3},
+                "Clarity": {"1": 0.6, "2": 0.3, "3": 0.1},
+            },
+            {
+                "NDA check": 0.6,
+                "Notice form": {"written": 0.5, "any": 0.5},
+                "Topics": {"confidentiality": 0.5, "termination": 0.8, "payment": 0.0},
+                "Clarity": {"1": 0.2, "2": 0.5, "3": 0.3},
+            },
+        ]
+        # An item for each part, in the order of the parts, each with
+        # the probabilities of the answers on its part: the answers on different
+        # parts are not merged
+        expected_items: dict[str, list[tuple[Any, Any]]] = {
+            # A Boolean concept gets an item for each part, True or False
+            "NDA check": [
+                (True, {True: 0.9, False: 1 - 0.9}),
+                (False, {True: 0.2, False: 1 - 0.2}),
+                (True, {True: 0.6, False: 1 - 0.6}),
+            ],
+            "Notice form": [
+                (["any"], {"written": 0.2, "any": 0.8}),
+                (["written"], {"written": 0.7, "any": 0.3}),
+                (["written"], {"written": 0.5, "any": 0.5}),
+            ],
+            # No item for the part in which no label applies
+            "Topics": [
+                (
+                    ["confidentiality"],
+                    {"confidentiality": 0.9, "termination": 0.1, "payment": 0.2},
+                ),
+                (
+                    ["confidentiality", "termination"],
+                    {"confidentiality": 0.5, "termination": 0.8, "payment": 0.0},
+                ),
+            ],
+            "Clarity": [
+                (3, {1: 0.1, 2: 0.2, 3: 0.7}),
+                (1, {1: 0.6, 2: 0.3, 3: 0.1}),
+                (2, {1: 0.2, 2: 0.5, 3: 0.3}),
+            ],
+        }
+        respond = self._create_concepts_responder(
+            part_texts, answers_of_parts, input_tokens=50
+        )
+        all_question_names = ["C0", "C1", "C2-L0", "C2-L1", "C2-L2", "C3"]
+
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            _capture_logs() as captured_logs,
+        ):
+            extracted_concepts = decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+
+        # === The requests ===
+        # One request for each part, in the order of the parts, with the text of
+        # the part and the questions of all the concepts
+        assert requests_sent(decisions_stub) == [
+            (text, all_question_names) for text in part_texts
+        ]
+        expected_questions = [
+            decision_models_module._get_request_question(question)
+            for question in _build_concept_questions(document.concepts)
+        ]
+        assert all(
+            request["questions"] == expected_questions
+            for request in decisions_stub.requests
+        )
+        # The number of paragraphs per call is applied, i.e. there is no message
+        # that it is not
+        assert not any("is not applied" in log for log in captured_logs)
+
+        # === The items ===
+        assert extracted_concepts == document.concepts
+        check_items(document, expected_items)
+        self.check_instance_serialization_and_cloning(document)
+
+        # === The usage ===
+        # Each request is recorded as a call, in the order of the parts
+        usage = decision_model.get_usage()[0].usage
+        assert [json.loads(call.prompt)["input"] for call in usage.calls] == part_texts
+        assert all(call.timestamp_received is not None for call in usage.calls)
+        assert usage.input == 3 * 50
+
+        # === Several calls ===
+        # Each call sends a request for each part, with the questions of its
+        # concepts. The names of the questions follow the position of a concept
+        # in its call.
+        decisions_stub.requests.clear()
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(
+                document,
+                overwrite_existing=True,
+                max_items_per_call=3,
+                max_paragraphs_to_analyze_per_call=2,
+            )
+        assert requests_sent(decisions_stub) == [
+            *[(text, all_question_names[:-1]) for text in part_texts],
+            *[(text, ["C0"]) for text in part_texts],
+        ]
+        check_items(document, expected_items)
+
+        # === One paragraph per part ===
+        paragraph_texts = self._get_texts_of_parts(1)
+        assert paragraph_texts == _ASPECTS_PARAGRAPH_TEXTS_SENT
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(
+                document, overwrite_existing=True, max_paragraphs_to_analyze_per_call=1
+            )
+        assert requests_sent(decisions_stub) == [
+            (text, all_question_names) for text in paragraph_texts
+        ]
+        assert all(len(concept.extracted_items) == 5 for concept in document.concepts)
+
+        # === No parts ===
+        # The text of the document is sent as a whole, in one request, as it is
+        # without the number of paragraphs per call
+        whole_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        respond_on_whole_text = self._create_concepts_responder(
+            [whole_text], answers_of_parts[:1]
+        )
+        expected_whole_text_items = {
+            name: items[:1] for name, items in expected_items.items()
+        }
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_on_whole_text]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(
+                document, overwrite_existing=True
+            )
+        (whole_text_request,) = decisions_stub.requests
+        assert whole_text_request["input"] == whole_text
+        check_items(document, expected_whole_text_items)
+        # ... if the number is zero, or is not lower than the number of
+        # the paragraphs of the document
+        for max_paragraphs in [0, 5, 6, 100]:
+            decisions_stub.requests.clear()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs() as captured_logs,
+            ):
+                decision_model.extract_concepts_from_document(
+                    document,
+                    overwrite_existing=True,
+                    max_paragraphs_to_analyze_per_call=max_paragraphs,
+                )
+            assert decisions_stub.requests == [whole_text_request]
+            check_items(document, expected_whole_text_items)
+            assert not any("is not applied" in log for log in captured_logs)
+
+        # === A document created from a raw text ===
+        # The text of a part is built of the texts of its paragraphs, while
+        # the text sent as a whole is the text of the document, with its line breaks
+        for max_paragraphs, expected_texts in [
+            (
+                1,
+                [
+                    "Non-disclosure agreement",
+                    "The parties agree as follows.",
+                    "Either party may terminate this agreement with a written notice.",
+                ],
+            ),
+            (
+                2,
+                [
+                    "Non-disclosure agreement\n\nThe parties agree as follows.",
+                    "Either party may terminate this agreement with a written notice.",
+                ],
+            ),
+            (3, [_DOCUMENT_TEXT_SENT]),
+        ]:
+            document = _create_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    )
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [_answer_all_questions]}
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_concepts_from_document(
+                    document, max_paragraphs_to_analyze_per_call=max_paragraphs
+                )
+            assert requests_sent(decisions_stub) == [
+                (text, ["C0"]) for text in expected_texts
+            ]
+            assert [item.value for item in document.concepts[0].extracted_items] == [
+                True
+            ] * len(expected_texts)
+
+        # === A part without text ===
+        # Such a part is not asked about, and gives no items. A paragraph cannot
+        # be created without text: the text of one is replaced here.
+        document = create_document()
+        document.paragraphs[1].__dict__["raw_text"] = "​"
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=1
+            )
+        assert requests_sent(decisions_stub) == [
+            (text, all_question_names)
+            for text in [paragraph_texts[0], *paragraph_texts[2:]]
+        ]
+        assert all(len(concept.extracted_items) == 4 for concept in document.concepts)
+
+    def test_extract_aspect_concepts_in_parts_with_decision_model(self):
+        """
+        Tests the extraction of the concepts of an aspect with a decision model
+        when the max number of paragraphs to analyze per call is set:
+        the paragraphs extracted for the aspect are split into parts, and so are
+        those of a sub-aspect, for the concepts of the sub-aspect.
+        """
+        decision_model = _create_decision_model()
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(
+                    name="Termination",
+                    description="Clauses on the termination of the agreement",
+                    concepts=[
+                        BooleanConcept(
+                            name="Termination for convenience",
+                            description="Either party may terminate without cause",
+                        ),
+                        RatingConcept(
+                            name="Notice period",
+                            description="How long the notice period is",
+                            rating_scale=(1, 3),
+                        ),
+                    ],
+                    aspects=[
+                        Aspect(
+                            name="Notices",
+                            description="Clauses on the notices of termination",
+                            concepts=[
+                                LabelConcept(
+                                    name="Notice form",
+                                    description="Required form of the notice",
+                                    labels=["written", "any"],
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ]
+        )
+        (aspect,) = document.aspects
+        (sub_aspect,) = aspect.aspects
+        # The aspect has the last four paragraphs of the document, and
+        # the sub-aspect has the last two of them
+        _set_aspect_as_extracted(document, aspect)
+        sub_aspect_paragraphs = document.paragraphs[3:]
+        sub_aspect_items = []
+        for paragraph in sub_aspect_paragraphs:
+            sub_aspect_item = _StringItem(value=paragraph.raw_text)
+            sub_aspect_item.reference_paragraphs = [paragraph]
+            sub_aspect_items.append(sub_aspect_item)
+        sub_aspect.extracted_items = sub_aspect_items
+        sub_aspect.reference_paragraphs = sub_aspect_paragraphs
+        sub_aspect._is_processed = True
+        aspect_paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT[1:]
+        sub_aspect_text = "\n\n".join(_ASPECTS_PARAGRAPH_TEXTS_SENT[3:])
+
+        # === Up to three paragraphs per part ===
+        # The four paragraphs of the aspect are sent in two parts. The two
+        # paragraphs of the sub-aspect are within the limit: sent as a whole.
+        aspect_part_texts = self._get_texts_of_parts(3, aspect_paragraph_texts)
+        assert aspect_part_texts == [
+            "\n\n".join(aspect_paragraph_texts[:3]),
+            aspect_paragraph_texts[3],
+        ]
+        respond = self._create_concepts_responder(
+            [*aspect_part_texts, sub_aspect_text],
+            [
+                {
+                    "Termination for convenience": 0.8,
+                    "Notice period": {"1": 0.1, "2": 0.2, "3": 0.7},
+                },
+                {
+                    "Termination for convenience": 0.3,
+                    "Notice period": {"1": 0.5, "2": 0.4, "3": 0.1},
+                },
+                {"Notice form": {"written": 0.6, "any": 0.4}},
+            ],
+        )
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_aspect(
+                aspect, document, max_paragraphs_to_analyze_per_call=3
+            )
+        assert [
+            (request["input"], [question["name"] for question in request["questions"]])
+            for request in decisions_stub.requests
+        ] == [
+            *[(text, ["C0", "C1"]) for text in aspect_part_texts],
+            (sub_aspect_text, ["C0"]),
+        ]
+        # An item for each part of the text of the aspect, in the order of the parts
+        boolean_concept, rating_concept = aspect.concepts
+        first_item, second_item = boolean_concept.extracted_items
+        assert (first_item.value, second_item.value) == (True, False)
+        self.check_item_probabilities(first_item, {True: 0.8, False: 1 - 0.8})
+        self.check_item_probabilities(second_item, {True: 0.3, False: 1 - 0.3})
+        first_item, second_item = rating_concept.extracted_items
+        assert (first_item.value, second_item.value) == (3, 1)
+        self.check_item_probabilities(first_item, {1: 0.1, 2: 0.2, 3: 0.7})
+        self.check_item_probabilities(second_item, {1: 0.5, 2: 0.4, 3: 0.1})
+        # ... and one item for the text of the sub-aspect
+        (item,) = sub_aspect.concepts[0].extracted_items
+        assert item.value == ["written"]
+        self.check_item_probabilities(item, {"written": 0.6, "any": 0.4})
+        self.check_instance_serialization_and_cloning(document)
+
+        # === One paragraph per part ===
+        # Both the aspect and the sub-aspect are sent in parts, each in the parts
+        # of its own paragraphs
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_aspect(
+                aspect,
+                document,
+                overwrite_existing=True,
+                max_paragraphs_to_analyze_per_call=1,
+            )
+        assert [request["input"] for request in decisions_stub.requests] == [
+            *aspect_paragraph_texts,
+            *_ASPECTS_PARAGRAPH_TEXTS_SENT[3:],
+        ]
+        assert [len(concept.extracted_items) for concept in aspect.concepts] == [4, 4]
+        assert len(sub_aspect.concepts[0].extracted_items) == 2
+
+        # === No parts ===
+        # The text of the paragraphs of the aspect is sent as a whole if
+        # the number is not set, or is not lower than the number of its paragraphs
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_aspect(
+                aspect, document, overwrite_existing=True
+            )
+        whole_text_requests = list(decisions_stub.requests)
+        assert [request["input"] for request in whole_text_requests] == [
+            "\n\n".join(aspect_paragraph_texts),
+            sub_aspect_text,
+        ]
+        for max_paragraphs in [0, 4, 5]:
+            decisions_stub.requests.clear()
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_concepts_from_aspect(
+                    aspect,
+                    document,
+                    overwrite_existing=True,
+                    max_paragraphs_to_analyze_per_call=max_paragraphs,
+                )
+            # The requests are the same as without the number of paragraphs per call
+            assert decisions_stub.requests == whole_text_requests
+            assert [len(concept.extracted_items) for concept in aspect.concepts] == [
+                1,
+                1,
+            ]
+            assert len(sub_aspect.concepts[0].extracted_items) == 1
+
+    def test_decision_model_concept_parts_concurrency(self):
+        """
+        Tests that the requests for the parts of a text, which concepts are
+        extracted with by a decision model when the max number of paragraphs to
+        analyze per call is set, are sent one after another by default, and
+        concurrently, each paced by the limiter of the model, with concurrency
+        enabled, with the same items extracted.
+        """
+        part_texts = self._get_texts_of_parts(2)
+        n_parts = len(part_texts)
+        respond = self._create_concepts_responder(
+            part_texts,
+            [
+                {"NDA check": 0.9, "Clarity": {"1": 0.1, "2": 0.2, "3": 0.7}},
+                {"NDA check": 0.2, "Clarity": {"1": 0.6, "2": 0.3, "3": 0.1}},
+                {"NDA check": 0.6, "Clarity": {"1": 0.2, "2": 0.5, "3": 0.3}},
+            ],
+        )
+        requests_in_progress: list[str] = []
+        max_requests_in_progress: list[int] = []
+        completed_inputs: list[str] = []
+        acquisitions: list[tuple[float, float]] = []
+
+        class RecordingAsyncLimiter(AsyncLimiter):
+            """
+            Records the config of the limiter each time its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Records the acquisition and acquires the capacity.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                acquisitions.append((self.max_rate, self.time_period))
+                await super().acquire(amount)
+
+        # Set when the expected number of requests are in progress at the same
+        # time, and when a request for the part at each position is completed
+        events: dict[str | int, asyncio.Event] = {}
+        n_requests_at_once: list[int] = [1]
+
+        async def wait_for_event(event: asyncio.Event) -> None:
+            """
+            Waits for the event, or fails if it is not set in a reasonable time,
+            so that requests that are not sent as expected do not hang the test.
+
+            :param event: The event to wait for.
+            :type event: asyncio.Event
+            """
+            await asyncio.wait_for(event.wait(), timeout=10)
+
+        async def respond_in_turn(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to the request, and records how many requests are in progress
+            at the same time. If several requests are expected to be in progress at
+            the same time, the requests are responded to in the reverse order of
+            their parts: the response to a request for the last part comes when
+            all the requests are in progress, and the response to a request for
+            each of the other parts when a request for the part after it is
+            completed.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            requests_in_progress.append(request["input"])
+            max_requests_in_progress.append(len(requests_in_progress))
+            position = part_texts.index(request["input"])
+            if n_requests_at_once[0] == 1:
+                # Let any other request be sent, if the requests are sent concurrently
+                for _ in range(3):
+                    await asyncio.sleep(0)
+            else:
+                if len(requests_in_progress) == n_requests_at_once[0]:
+                    events["all_sent"].set()
+                await wait_for_event(
+                    events["all_sent"]
+                    if position == n_parts - 1
+                    else events[position + 1]
+                )
+            requests_in_progress.remove(request["input"])
+            completed_inputs.append(request["input"])
+            events[position].set()
+            return respond(request)
+
+        def extract(
+            n_requests_expected_at_once: int = 1, **extraction_kwargs: Any
+        ) -> tuple[Document, _DecisionsAPIStub]:
+            """
+            Extracts the concepts of a new document with a new decision model,
+            with up to two paragraphs per part.
+
+            :param n_requests_expected_at_once: The number of requests expected to
+                be in progress at the same time. Defaults to 1.
+            :type n_requests_expected_at_once: int
+            :param extraction_kwargs: Params of the extraction method.
+            :type extraction_kwargs: Any
+            :return: The document, and the stub with the requests received.
+            :rtype: tuple[Document, _DecisionsAPIStub]
+            """
+            decision_model = _create_decision_model(async_limiter=AsyncLimiter(20, 5))
+            document = _create_aspects_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    ),
+                    RatingConcept(
+                        name="Clarity",
+                        description="Clarity of the text",
+                        rating_scale=(1, 3),
+                    ),
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_in_turn]})
+            max_requests_in_progress.clear()
+            completed_inputs.clear()
+            acquisitions.clear()
+            # The events are used in the event loop of this extraction only
+            n_requests_at_once[0] = n_requests_expected_at_once
+            events.clear()
+            events["all_sent"] = asyncio.Event()
+            for position in range(n_parts):
+                events[position] = asyncio.Event()
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                patch.object(models_module, "AsyncLimiter", new=RecordingAsyncLimiter),
+            ):
+                decision_model.extract_concepts_from_document(
+                    document, max_paragraphs_to_analyze_per_call=2, **extraction_kwargs
+                )
+            # Each request is recorded as a call
+            usage = decision_model.get_usage()[0].usage
+            assert len(usage.calls) == len(decisions_stub.requests)
+            return document, decisions_stub
+
+        def get_items(document: Document) -> list[list[tuple[Any, Any]]]:
+            """
+            Returns the values and the probabilities of the items of each concept
+            of the document.
+
+            :param document: The document with the extracted concepts.
+            :type document: Document
+            :return: The items of each concept, in the order of the concepts.
+            :rtype: list[list[tuple[Any, Any]]]
+            """
+            assert all(concept._is_processed for concept in document.concepts)
+            return [
+                [(item.value, item.probabilities) for item in concept.extracted_items]
+                for concept in document.concepts
+            ]
+
+        # === Without concurrency ===
+        # The requests for the parts are sent one after another, with no limiter
+        document, decisions_stub = extract()
+        assert [request["input"] for request in decisions_stub.requests] == part_texts
+        assert max(max_requests_in_progress) == 1
+        assert completed_inputs == part_texts
+        assert acquisitions == []
+        expected_items = get_items(document)
+        assert [[value for value, _ in items] for items in expected_items] == [
+            [True, False, True],
+            [3, 1, 2],
+        ]
+
+        # === With concurrency ===
+        # The requests for the parts are sent concurrently, each paced by
+        # the limiter of the model. The items are in the order of the parts,
+        # whatever the order in which the requests are completed.
+        document, decisions_stub = extract(
+            n_requests_expected_at_once=n_parts,
+            use_concurrency=True,
+            max_items_per_call=2,
+        )
+        assert [request["input"] for request in decisions_stub.requests] == part_texts
+        assert all(
+            len(request["questions"]) == 2 for request in decisions_stub.requests
+        )
+        assert max(max_requests_in_progress) == n_parts
+        assert completed_inputs == part_texts[::-1]
+        assert acquisitions == [(20, 5)] * n_parts
+        assert get_items(document) == expected_items
+
+        # By default, each concept is extracted in its own call with concurrency,
+        # i.e. with its own requests for the parts
+        document, decisions_stub = extract(
+            n_requests_expected_at_once=2 * n_parts, use_concurrency=True
+        )
+        assert sorted(request["input"] for request in decisions_stub.requests) == (
+            sorted(part_texts * 2)
+        )
+        assert all(
+            [question["name"] for question in request["questions"]] == ["C0"]
+            for request in decisions_stub.requests
+        )
+        assert max(max_requests_in_progress) == 2 * n_parts
+        assert acquisitions == [(20, 5)] * 2 * n_parts
+        assert get_items(document) == expected_items
+
+    def test_decision_model_concept_part_failures(self):
+        """
+        Tests the extraction of concepts with a decision model in parts when
+        the request for one of the parts gets a response that cannot be used, or
+        fails for good, with and without concurrency: no further requests are
+        sent, the requests made are counted in the usage, no concept gets its
+        items, and a fallback model takes over.
+        """
+        part_texts = self._get_texts_of_parts(2)
+        n_parts = len(part_texts)
+        failed_position = 1
+        auth_error = _create_api_error(litellm.AuthenticationError)
+        valid_answers: dict[str, Any] = {
+            "NDA check": 0.9,
+            "Topics": {"confidentiality": 0.8, "termination": 0.6},
+        }
+
+        def create_document() -> Document:
+            """
+            Creates a document with five paragraphs and the concepts to extract.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    ),
+                    LabelConcept(
+                        name="Topics",
+                        description="Topics covered by the text",
+                        labels=["confidentiality", "termination"],
+                        classification_type="multi_label",
+                    ),
+                ]
+            )
+
+        def create_responder(
+            outcomes: dict[int, Any] | None = None,
+        ) -> Callable[[dict[str, Any]], OpenAIDecisionResponse]:
+            """
+            Creates the function that responds to the request for a part.
+
+            :param outcomes: By the position of a part: an error to raise for
+                its request, or the answers to respond with instead of the valid
+                ones, by the names of the concepts. Defaults to None.
+            :type outcomes: dict[int, Any] | None
+            :return: Function that responds to a request.
+            :rtype: Callable[[dict[str, Any]], OpenAIDecisionResponse]
+            """
+            outcomes = outcomes or {}
+            errors = {
+                position: outcome
+                for position, outcome in outcomes.items()
+                if isinstance(outcome, Exception)
+            }
+            respond = self._create_concepts_responder(
+                part_texts,
+                [
+                    valid_answers
+                    if position in errors
+                    else outcomes.get(position, valid_answers)
+                    for position in range(n_parts)
+                ],
+                input_tokens=30,
+            )
+
+            def respond_to_request(request: dict[str, Any]) -> OpenAIDecisionResponse:
+                """
+                Responds to the request for a part, or fails it.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                :return: Response of litellm.
+                :rtype: OpenAIDecisionResponse
+                """
+                error = errors.get(part_texts.index(request["input"]))
+                if error is not None:
+                    raise error
+                return respond(request)
+
+            return respond_to_request
+
+        def check_usage(
+            model: DocumentDecisionModel,
+            finished_positions: list[int],
+            failed_positions: list[int],
+        ) -> None:
+            """
+            Checks the calls recorded in the usage of the decision model: first
+            the requests that got a response, then the requests that failed.
+
+            :param model: The decision model.
+            :type model: DocumentDecisionModel
+            :param finished_positions: The positions of the parts whose requests
+                got a response, in the order of the calls.
+            :type finished_positions: list[int]
+            :param failed_positions: The positions of the parts whose requests
+                failed, in the order of the calls.
+            :type failed_positions: list[int]
+            """
+            usage = model.get_usage()[0].usage
+            assert [json.loads(call.prompt)["input"] for call in usage.calls] == [
+                part_texts[position]
+                for position in [*finished_positions, *failed_positions]
+            ]
+            assert [call.timestamp_received is not None for call in usage.calls] == (
+                [True] * len(finished_positions) + [False] * len(failed_positions)
+            )
+            assert usage.input == 30 * len(finished_positions)
+
+        def check_not_extracted(document: Document) -> None:
+            """
+            Checks that no concept of the document is extracted.
+
+            :param document: The document.
+            :type document: Document
+            """
+            assert not any(concept._is_processed for concept in document.concepts)
+            assert not any(concept.extracted_items for concept in document.concepts)
+
+        # With immediate responses, the requests sent concurrently are completed in
+        # the order they are sent, i.e. the outcome is the same in both modes:
+        # the requests for the parts after the failed one are not sent
+        for extraction_kwargs in [
+            {"max_paragraphs_to_analyze_per_call": 2},
+            {
+                "max_paragraphs_to_analyze_per_call": 2,
+                "use_concurrency": True,
+                "max_items_per_call": 2,
+            },
+        ]:
+            # === A response that cannot be used ===
+            # The response to the request for one part makes the whole call
+            # invalid: no further requests are sent, and each call is finished
+            for refused_answers, log_subject in [
+                (
+                    {**valid_answers, "NDA check": "refusal"},
+                    "concept `NDA check` on part 2 of 3 of the text, decision "
+                    "question `C0`",
+                ),
+                (
+                    {
+                        "NDA check": 0.1,
+                        "Topics": {"confidentiality": 0.8, "termination": "refusal"},
+                    },
+                    "concept `Topics` (label `termination`) on part 2 of 3 of "
+                    "the text, decision question `C1-L1`",
+                ),
+            ]:
+                decision_model = _create_decision_model()
+                document = create_document()
+                decisions_stub = _DecisionsAPIStub(
+                    {
+                        _DECISION_MODEL: [
+                            create_responder({failed_position: refused_answers})
+                        ]
+                    }
+                )
+                with (
+                    patch.object(litellm, "adecisions", new=decisions_stub),
+                    _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                    pytest.raises(
+                        ModelExtractionError,
+                        match="Some concepts could not be processed due to "
+                        "an invalid response returned by decision model. "
+                        r"Failed concepts: \['NDA check', 'Topics'\]",
+                    ) as extraction_exc_info,
+                ):
+                    decision_model.extract_concepts_from_document(
+                        document,
+                        **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                    )
+                assert extraction_exc_info.value.retry_count == 0
+                # The log names the concept that the answer is for, and the part
+                # of the text that the question was asked on
+                assert (
+                    f"Decision model `{_DECISION_MODEL}` returned an invalid "
+                    f"response for {log_subject}: the model refused to answer."
+                ) in captured_logs, captured_logs
+                assert [request["input"] for request in decisions_stub.requests] == (
+                    part_texts[: failed_position + 1]
+                )
+                check_usage(decision_model, [0, failed_position], [])
+                check_not_extracted(document)
+
+            # === A request that fails ===
+            # No fallback model: a model API error is raised
+            decision_model = _create_decision_model()
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [create_responder({failed_position: auth_error})]}
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                pytest.raises(ModelAPIError) as exc_info,
+            ):
+                decision_model.extract_concepts_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert exc_info.value.original_error is auth_error
+            assert exc_info.value.retry_count == 0
+            assert [request["input"] for request in decisions_stub.requests] == (
+                part_texts[: failed_position + 1]
+            )
+            # The failed request is the last call, which is unfinished
+            check_usage(decision_model, [0], [failed_position])
+            check_not_extracted(document)
+
+            # === A fallback decision model ===
+            # It is sent the text in the same parts, and its answers are the ones
+            # that the items are created from
+            for primary_outcome, finished_positions, failed_positions in [
+                (auth_error, [0], [failed_position]),
+                ({**valid_answers, "NDA check": "refusal"}, [0, failed_position], []),
+            ]:
+                decision_model = _create_decision_model(
+                    fallback_models=[
+                        _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                    ]
+                )
+                document = create_document()
+                decisions_stub = _DecisionsAPIStub(
+                    {
+                        _DECISION_MODEL: [
+                            create_responder({failed_position: primary_outcome})
+                        ],
+                        _OTHER_DECISION_MODEL: [
+                            create_responder({2: {**valid_answers, "NDA check": 0.4}})
+                        ],
+                    }
+                )
+                with patch.object(litellm, "adecisions", new=decisions_stub):
+                    decision_model.extract_concepts_from_document(
+                        document,
+                        **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                    )
+                assert decisions_stub.requested_models() == (
+                    [_DECISION_MODEL] * (failed_position + 1)
+                    + [_OTHER_DECISION_MODEL] * n_parts
+                )
+                assert [
+                    request["input"]
+                    for request in decisions_stub.requests[failed_position + 1 :]
+                ] == part_texts
+                check_usage(decision_model, finished_positions, failed_positions)
+                fallback_usage = decision_model.get_usage()[1].usage
+                assert fallback_usage.input == 30 * n_parts
+                assert len(fallback_usage.calls) == n_parts
+                boolean_concept, label_concept = document.concepts
+                assert [item.value for item in boolean_concept.extracted_items] == [
+                    True,
+                    True,
+                    False,
+                ]
+                assert [item.value for item in label_concept.extracted_items] == [
+                    ["confidentiality", "termination"]
+                ] * n_parts
+
+        # === A fallback LLM ===
+        # The number of paragraphs per call applies to the LLM as to any LLM: it
+        # is sent the same parts, in a call for each of them
+        decision_model = _create_decision_model(
+            fallback_models=[_create_llm(is_fallback=True)]
+        )
+        document = _create_aspects_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The text is of an NDA")
+            ]
+        )
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [create_responder({failed_position: auth_error})]}
+        )
+        completions_stub = _CompletionsAPIStub(
+            {_LLM_MODEL: ['[{"concept_id": "C0", "extracted_items": [true]}]']}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+        ):
+            decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+        assert len(decisions_stub.requests) == failed_position + 1
+        assert len(completions_stub.requests) == n_parts
+        for request, part_text in zip(
+            completions_stub.requests, part_texts, strict=True
+        ):
+            assert part_text in request["messages"][-1]["content"]
+        items = document.concepts[0].extracted_items
+        assert [item.value for item in items] == [True] * n_parts
+        assert all(item.probabilities is None for item in items)
+
+    def test_extract_all_in_parts_with_decision_model(self):
+        """
+        Tests the extraction of everything that a document has with a decision
+        model when the max number of paragraphs to analyze per call is set:
+        the aspects are extracted paragraph by paragraph, as without it, and
+        the concepts of the document, of an aspect and of a sub-aspect are each
+        extracted in the parts of their own text.
+        """
+
+        def create_document() -> Document:
+            """
+            Creates a document with aspects, a sub-aspect and concepts.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on the termination of the agreement",
+                        concepts=[
+                            BooleanConcept(
+                                name="Termination for convenience",
+                                description="Either party may terminate without cause",
+                            )
+                        ],
+                        aspects=[
+                            Aspect(
+                                name="Effects of termination",
+                                description="Clauses on what follows the termination",
+                                concepts=[
+                                    BooleanConcept(
+                                        name="Survival",
+                                        description="Some obligations survive "
+                                        "the termination",
+                                    )
+                                ],
+                            )
+                        ],
+                    ),
+                    Aspect(
+                        name="Payment",
+                        description="Clauses on the payment of fees",
+                        concepts=[
+                            BooleanConcept(
+                                name="Late fee",
+                                description="A fee is charged on late payments",
+                            )
+                        ],
+                    ),
+                ],
+                concepts=[
+                    RatingConcept(
+                        name="Clarity",
+                        description="Clarity of the text",
+                        rating_scale=(1, 3),
+                    ),
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    ),
+                ],
+            )
+
+        respond_on_aspects = _create_aspects_responder(
+            {
+                "Termination": {1: 0.8, 2: 0.9, 4: 0.7},
+                "Effects of termination": {2: 0.6, 4: 0.8},
+                "Payment": {},
+            }
+        )
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Responds to a request with the questions of aspects, asked on
+            a paragraph, or with the questions of concepts.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            if request["questions"][0]["name"].startswith("A"):
+                return respond_on_aspects(request)
+            return _answer_all_questions(request)
+
+        def get_items(document: Document) -> dict[str, list[tuple[Any, Any]]]:
+            """
+            Returns the values and the probabilities of the items of each aspect,
+            sub-aspect and concept of the document.
+
+            :param document: The document.
+            :type document: Document
+            :return: The items by the names of the aspects and concepts.
+            :rtype: dict[str, list[tuple[Any, Any]]]
+            """
+            instances: list[Any] = [*document.concepts]
+            for aspect in document.aspects:
+                instances.extend([aspect, *aspect.concepts])
+                for sub_aspect in aspect.aspects:
+                    instances.extend([sub_aspect, *sub_aspect.concepts])
+            return {
+                instance.name: [
+                    (item.value, item.probabilities)
+                    for item in instance.extracted_items
+                ]
+                for instance in instances
+            }
+
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            _capture_logs() as captured_logs,
+        ):
+            decision_model.extract_all(document, max_paragraphs_to_analyze_per_call=2)
+
+        paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        assert [
+            (request["input"], [question["name"] for question in request["questions"]])
+            for request in decisions_stub.requests
+        ] == [
+            # The aspects, on each paragraph of the document
+            *[(text, ["A0", "A1"]) for text in paragraph_texts],
+            # The sub-aspect, on each of the three paragraphs of its aspect
+            *[(paragraph_texts[position], ["A0"]) for position in [1, 2, 4]],
+            # The concept of the aspect, on the two parts of its three paragraphs
+            (f"{paragraph_texts[1]}\n\n{paragraph_texts[2]}", ["C0"]),
+            (paragraph_texts[4], ["C0"]),
+            # The concept of the sub-aspect, on the text of its two paragraphs,
+            # which are within the limit
+            (f"{paragraph_texts[2]}\n\n{paragraph_texts[4]}", ["C0"]),
+            # The concepts of the document, on the three parts of its paragraphs
+            *[(text, ["C0", "C1"]) for text in self._get_texts_of_parts(2)],
+        ]
+        assert not any(
+            "max_paragraphs_to_analyze_per_call" in log for log in captured_logs
+        )
+        paragraphs = document.paragraphs
+        true_item = (True, {True: 0.9, False: 1 - 0.9})
+        expected_items = {
+            "Termination": [
+                (paragraphs[1].raw_text, {True: 0.8, False: 1 - 0.8}),
+                (paragraphs[2].raw_text, {True: 0.9, False: 1 - 0.9}),
+                (paragraphs[4].raw_text, {True: 0.7, False: 1 - 0.7}),
+            ],
+            # An item for each part
+            "Termination for convenience": [true_item] * 2,
+            "Effects of termination": [
+                (paragraphs[2].raw_text, {True: 0.6, False: 1 - 0.6}),
+                (paragraphs[4].raw_text, {True: 0.8, False: 1 - 0.8}),
+            ],
+            "Survival": [true_item],
+            # No paragraph belongs to the aspect, i.e. there is no text to extract
+            # its concept from
+            "Payment": [],
+            "Late fee": [],
+            "Clarity": [(1, {1: 1.0, 2: 0.0, 3: 0.0})] * 3,
+            "NDA check": [true_item] * 3,
+        }
+        assert get_items(document) == expected_items
+        assert len(decision_model.get_usage()[0].usage.calls) == 14
+        self.check_instance_serialization_and_cloning(document)
+
+        # The same is extracted with concurrency, with each aspect and each concept
+        # extracted in its own call
+        decision_model = _create_decision_model()
+        document = create_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_all(
+                document, use_concurrency=True, max_paragraphs_to_analyze_per_call=2
+            )
+        assert get_items(document) == expected_items
+        assert all(
+            len(request["questions"]) == 1 for request in decisions_stub.requests
+        )
+        # 2 aspects on 5 paragraphs, the sub-aspect on 3 paragraphs, the concept
+        # of the aspect on 2 parts, the concept of the sub-aspect on its text,
+        # and 2 concepts of the document on 3 parts
+        assert len(decisions_stub.requests) == 2 * 5 + 3 + 2 + 1 + 2 * 3
 
     def test_decision_model_usage_and_cost(self):
         """
@@ -5376,8 +6591,9 @@ class TestDecisionModels(BaseTest):
                 for request in decisions_stub.requests
             )
 
-            # The number of paragraphs per call is not applied to a decision model:
-            # each paragraph is always sent in a request of its own
+            # The number of paragraphs per call changes nothing for aspects: each
+            # paragraph is always sent in a request of its own, i.e. any such limit
+            # is met, which there is no message about
             decisions_stub.requests.clear()
             with _capture_logs() as captured_logs:
                 decision_model.extract_aspects_from_document(
@@ -5388,10 +6604,8 @@ class TestDecisionModels(BaseTest):
             assert requests_sent() == [
                 (text, ["A0", "A1", "A2"]) for text in _ASPECTS_PARAGRAPH_TEXTS_SENT
             ]
-            assert (
-                f"`max_paragraphs_to_analyze_per_call` is not applied to decision "
-                f"model `{_DECISION_MODEL}`: each paragraph is sent to it in "
-                f"a request of its own." in captured_logs
+            assert not any(
+                "max_paragraphs_to_analyze_per_call" in log for log in captured_logs
             )
 
         # === More aspects than the questions that a request can hold ===
