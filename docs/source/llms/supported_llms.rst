@@ -61,3 +61,6 @@ For local LLMs, you'll need to specify the provider, model name, and the appropr
 
 
 For a complete list of configuration options available when initializing DocumentLLM instances, see the next section :doc:`llm_config`.
+
+.. seealso::
+   **Decision models** are not LLMs: they return the probabilities of the answers to typed questions and generate no text. They are configured with a separate class, :class:`~contextgem.public.decision_models.DocumentDecisionModel`, and have their own list of supported providers. See :doc:`../decision_models/decision_models`.

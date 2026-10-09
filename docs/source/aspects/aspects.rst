@@ -156,6 +156,9 @@ When an :class:`~contextgem.public.aspects.Aspect` is extracted, it is populated
    * - ``justification``
      - str
      - Explanation of why this text segment was identified as relevant to the aspect (only if ``add_justifications=True``)
+   * - ``probabilities``
+     - dict[bool, float]
+     - Probabilities that the paragraph belongs to the aspect (``True``) and that it does not (``False``), e.g. ``{True: 0.91, False: 0.09}`` (only if the aspect is extracted by a decision model, ``None`` otherwise; see :ref:`decision-models-aspects-label`)
    * - ``reference_paragraphs``
      - list[:class:`~contextgem.public.paragraphs.Paragraph`]
      - List of paragraph objects that contain the extracted aspect content (always populated for aspect's extracted items)

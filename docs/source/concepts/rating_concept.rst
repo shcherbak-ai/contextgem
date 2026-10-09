@@ -169,6 +169,9 @@ When a :class:`~contextgem.public.concepts.RatingConcept` is extracted, it is po
    * - ``justification``
      - str
      - Explanation of why this rating was extracted (only if ``add_justifications=True``)
+   * - ``probabilities``
+     - dict[int, float]
+     - Probability of each integer of the rating scale, e.g. ``{1: 0.05, 2: 0.25, 3: 0.7}`` (only if the concept is extracted by a decision model, ``None`` otherwise; see :ref:`decision-models-probabilities-label`)
    * - ``reference_paragraphs``
      - list[:class:`~contextgem.public.paragraphs.Paragraph`]
      - List of paragraph objects that influenced the rating determination (only if ``add_references=True``)

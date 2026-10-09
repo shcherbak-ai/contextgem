@@ -109,6 +109,22 @@ Only the names are changed by the renaming. The other changes to model groups, r
 
 The role names used in the example are changed as well, see :ref:`migration-v1-roles-label`.
 
+**Module of the model group.** The model group is also moved to another module, as it is not specific to LLMs: ``DocumentLLMGroup`` was defined in ``contextgem.public.llms``, while :class:`~contextgem.public.models.DocumentModelGroup` is defined in ``contextgem.public.models``. This affects only the code that imports the class from its module. Importing from ``contextgem``, as in the examples above, works as before:
+
+.. code-block:: python
+   :caption: Before v1.0
+
+   from contextgem.public.llms import DocumentLLMGroup
+
+.. code-block:: python
+   :caption: In v1.0
+
+   from contextgem import DocumentModelGroup
+
+   # or: from contextgem.public.models import DocumentModelGroup
+
+:class:`~contextgem.public.llms.DocumentLLM` stays in ``contextgem.public.llms``.
+
 **Serialized data.** The serialized data stores the names of the parameters and of the classes. Documents, pipelines, aspects and concepts serialized with the earlier versions have the ``llm_role`` key in each aspect and concept, and cannot be deserialized in v1.0 as is: a validation error is raised for the ``llm_role`` key. Rename the key before deserializing the data:
 
 .. code-block:: python
@@ -542,6 +558,16 @@ Serialized documents are not affected by the removal of ``DocumentPipeline``: a 
    document_json = document.to_json()
 
 The same function can be used for a serialized pipeline or aspect. For a concept that was serialized separately, replace the value of its ``rating_scale`` key in the same way. The rating scales that were defined as tuples are not affected.
+
+
+.. _migration-v1-probabilities-label:
+
+🎲 Probabilities of Extracted Items
+-------------------------------------
+
+In v1.0, each extracted item has the ``probabilities`` attribute. It holds the probabilities of the possible answers for an item extracted by a decision model, which is a new kind of model in v1.0 (see :doc:`decision_models/decision_models`), and is ``None`` for every item extracted by an LLM. No changes to the code are required.
+
+**Serialized data.** The serialized data of each extracted item now includes the ``probabilities`` key, with the ``null`` value for an item without probabilities. Documents, aspects and concepts serialized with the earlier versions have no such key, which needs no update: their items are deserialized with ``probabilities=None``, subject to the other sections of this guide. The reverse does not work: the data serialized in v1.0 cannot be deserialized with the earlier versions. If the serialized data is also read outside ContextGem, e.g. validated against a schema of your own, add the key there.
 
 
 .. _migration-v1-tools-label:

@@ -132,6 +132,25 @@ class TestUsageExamples(BaseTest):
             quickstart_concept,  # noqa: F401
         )
 
+    @pytest.mark.vcr
+    def test_decision_model_usage_examples(self):
+        """
+        Tests for usage examples of decision models in project's documentation.
+        The examples are kept in a test of their own, with its own cassette, so that
+        the cassette of the other usage examples does not depend on them.
+        Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
+        Note: A module is executed only when it is first imported, i.e. the modules
+        are not to be imported by another test.
+        """
+        from dev.usage_examples.docs.decision_models import (
+            decision_model_aspects,  # noqa: F401
+            decision_model_concepts,  # noqa: F401
+            decision_model_fallbacks,  # noqa: F401
+            decision_model_group,  # noqa: F401
+            decision_model_init,  # noqa: F401
+            decision_model_usage_and_cost,  # noqa: F401
+        )
+
     @pytest.mark.usefixtures("restore_logger_settings")
     def test_docstring_examples(self):
         """

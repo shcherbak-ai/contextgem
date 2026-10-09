@@ -121,6 +121,18 @@ An LLM can have one or more configurable fallback LLMs, which are tried in the g
 See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`concept-modality-label` for more details.
 
 
+⚖️ **DocumentDecisionModel**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**A single configurable decision model to extract the information that can be expressed as a closed question.**
+
+A decision model generates no text: it answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities. It extracts Boolean, label and rating concepts, as well as aspects, and each item it extracts has the probabilities of all the possible answers. It cannot extract the concepts with open values (e.g. strings, numbers, dates), does not extract from images, and provides no justifications.
+
+A decision model can be used on its own, in a model group together with LLMs, and in a fallback chain with LLMs.
+
+See :class:`~contextgem.public.decision_models.DocumentDecisionModel` and :doc:`decision_models/decision_models` for more details.
+
+
 🤖🤖 **DocumentModelGroup**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -131,6 +143,8 @@ For more complex and granular extraction workflows, a model group can be used to
 The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs in the group. For example, if an aspect/concept is assigned ``model_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``model_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
 
 Each LLM can have its own backend and configuration, and one or more fallback LLMs with the same role.
+
+A group can also include decision models, to which aspects/concepts are routed by their roles in the same way.
 
 See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-label` for more details.
 

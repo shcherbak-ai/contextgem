@@ -143,6 +143,9 @@ When a :class:`~contextgem.public.concepts.BooleanConcept` is extracted, it is p
    * - ``justification``
      - str
      - Explanation of why this boolean value was determined (only if ``add_justifications=True``)
+   * - ``probabilities``
+     - dict[bool, float]
+     - Probabilities of ``True`` and ``False``, e.g. ``{True: 0.83, False: 0.17}`` (only if the concept is extracted by a decision model, ``None`` otherwise; see :ref:`decision-models-probabilities-label`)
    * - ``reference_paragraphs``
      - list[:class:`~contextgem.public.paragraphs.Paragraph`]
      - List of paragraph objects that influenced the boolean determination (only if ``add_references=True``)

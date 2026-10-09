@@ -32,7 +32,8 @@ The following ContextGem objects support serialization:
 * :class:`~contextgem.public.documents.Document` - Contains document content and extracted information
 * :class:`~contextgem.public.pipelines.ExtractionPipeline` - Defines extraction structure and logic
 * :class:`~contextgem.public.llms.DocumentLLM` - Stores LLM configuration for document processing
-* :class:`~contextgem.public.models.DocumentModelGroup` - Stores the configuration of the LLMs in the group
+* :class:`~contextgem.public.decision_models.DocumentDecisionModel` - Stores decision model configuration for document processing
+* :class:`~contextgem.public.models.DocumentModelGroup` - Stores the configuration of the models in the group
 
 Each object supports three serialization methods:
 
@@ -76,6 +77,8 @@ A deserialized LLM therefore has no API credentials. Set them again before using
        fallback_llm.api_base = "<your-fallback-api-base>"  # if applicable
 
 For a deserialized :class:`~contextgem.public.models.DocumentModelGroup`, do the same for each LLM in its ``models``.
+
+The same applies to a :class:`~contextgem.public.decision_models.DocumentDecisionModel`: its ``api_key`` and ``api_base`` are not included in the serialized data either, whether it is serialized on its own, in a model group, or as a fallback model.
 
 📝 Example Usage
 -----------------

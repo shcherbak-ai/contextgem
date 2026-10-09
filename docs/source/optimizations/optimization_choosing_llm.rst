@@ -40,6 +40,9 @@ Since ContextGem specializes in deep single-document analysis, models with large
 .. seealso::
    **Small Model Issues?** If you're experiencing issues with smaller models (e.g. 8B parameter models), such as JSON validation errors or inconsistent results, see our :doc:`troubleshooting guide <optimization_small_llm_troubleshooting>` for specific solutions and workarounds.
 
+.. seealso::
+   **Yes/No Questions, Classifications or Ratings?** The concepts whose answers come from a closed set (:class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.LabelConcept`, :class:`~contextgem.public.concepts.RatingConcept`), as well as aspects, can be extracted with a decision model instead of an LLM. A decision model generates no text and returns the probabilities of the answers. See :doc:`../decision_models/decision_models` for when it is a good fit and when an LLM is the better choice.
+
 
 .. _model-roles-label:
 
@@ -67,6 +70,8 @@ A role is a label of your choice (e.g. ``"reasoner"``, ``"complex"``, ``"vision"
 In model groups, unique role assignments are especially important: each model in the group must have a distinct role (only one model can have no role), so routing can unambiguously send each aspect/concept to the intended model. If an aspect/concept is assigned a role that no LLM in the group has, an error is raised. This is checked before any requests are sent by the extraction method, including for the nested aspects/concepts that the method processes.
 
 For simple use cases, when working with a single LLM, you can skip the role assignments completely: a single LLM extracts all the aspects/concepts it is given, regardless of their ``model_role``.
+
+Roles route aspects/concepts to the decision models of a group in the same way, e.g. to have yes/no questions and classifications answered by a decision model, and the rest extracted by an LLM. See :ref:`decision-models-model-group-label`.
 
 .. seealso::
    **Upgrading from an earlier version?** Before v1.0, roles were predefined names that also determined the content to extract from. See :doc:`../migration_v1` for updating your code and serialized data.

@@ -22,9 +22,9 @@ Module for handling processing logic using decision models.
 This module provides the class for using a decision model in document processing
 workflows. A decision model takes a text and a set of closed questions (yes/no, pick
 one option, rate on a scale) and returns the probabilities of the answers. It generates
-no text, which makes it faster and cheaper than an LLM for what can be put as such
-questions: which paragraphs of a document belong to an aspect, and the concepts whose
-values come from a closed set of options. It also reports how sure it is of each answer.
+no text. It is used for what can be put as such questions: which paragraphs of
+a document belong to an aspect, and the concepts whose values come from a closed set
+of options. The probabilities are the model's own estimate of each answer.
 
 The requests are sent through the litellm library, which supports several providers
 of decision models. The module covers the configuration of a model, the requests to
@@ -80,8 +80,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         the price of the output tokens is to be set to ``0.0``. Defaults to None.
     :vartype pricing_details: ModelPricing | None
     :ivar auto_pricing: Enable automatic cost calculation using genai-prices. Cannot be
-        set together with ``pricing_details``. Not supported for self-hosted models
-        (``strands_decider/``) and for ``openai/`` models, for which genai-prices has
+        set together with ``pricing_details``. Not supported for the models whose
+        decision requests cannot be priced with it, e.g. self-hosted models
+        (``strands_decider/``) and ``openai/`` models, for which genai-prices has
         only the prices of the chat requests: set ``pricing_details`` for them
         instead. Defaults to ``False``.
     :vartype auto_pricing: bool
@@ -153,6 +154,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             ``max_items_per_call`` to send the texts fewer times. The requests for
             the paragraphs are sent one after another, or concurrently with
             ``use_concurrency=True``, paced by the ``async_limiter`` of the model.
+            A response that cannot be used, e.g. with a refused answer, is not
+            requested again: the call fails with ``ModelExtractionError``, unless
+            a fallback model takes over.
 
         - Length of the text
             Concepts: the text of the document, or of the paragraphs of the aspect,
@@ -165,7 +169,8 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         - Limits
             The limits on the number of options are those of ``litellm`` and of
             the model provider. For example, ``litellm`` rejects a rating scale
-            with more than 10 levels.
+            with more than 10 levels. More questions on a text than ``litellm``
+            accepts in a request (128) are sent in several requests on that text.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/decision_models/def_decision_model.py

@@ -285,7 +285,7 @@ Tests are split across the feature/integration test modules and two files for pu
   |--------|--------------|
   | `test_aspects_and_concepts.py` | Aspects, concepts, examples and extracted items; extraction of concepts of specific types |
   | `test_chat.py` | Messages, chat sessions, chat with LLMs and tool calling |
-  | `test_decision_models.py` | Decision models: questions for concepts and aspects, conversion of answers to item values and probabilities |
+  | `test_decision_models.py` | Decision models: questions for concepts and aspects, conversion of answers to item values and probabilities; extraction of aspects and concepts with decision models, on their own, in model groups and in fallback chains |
   | `test_documents.py` | Documents, paragraphs, sentences and extraction pipelines; text segmentation with SaT models |
   | `test_extraction.py` | Extraction of aspects and concepts from documents; extraction errors |
   | `test_images.py` | Images; extraction from images and multimodal documents |
@@ -399,6 +399,9 @@ Based on the test results and your changes, you'll fall into one of these four s
    # For OpenAI API tests
    CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
    
+   # For TypeSafe API tests (decision models)
+   TYPESAFE_API_KEY=your_typesafe_api_key
+   
    # For debugging output
    CONTEXTGEM_LOGGER_LEVEL=DEBUG
    ```
@@ -408,6 +411,8 @@ Based on the test results and your changes, you'll fall into one of these four s
    ```bash
    CONTEXTGEM_GOOGLE_AI_STUDIO_API_KEY=your_google_api_key
    ```
+
+   The key of TypeSafe is the exception to the prefix (see [Decision Model Testing](#decision-model-testing)).
 
 3. **Update dummy variables** in `tests/utils.py` by adding your new environment variables to the `default_env_vars` dictionary in `set_dummy_env_variables_for_testing_from_cassettes()`, mapped to a dummy value (e.g. "DUMMY")
 
@@ -489,12 +494,13 @@ Based on the test results and your changes, you'll fall into one of these four s
 **Automatically Redacted Variables:**
 
 - `CONTEXTGEM_OPENAI_API_KEY`
+- `TYPESAFE_API_KEY`
 
 The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
 
 **Adding New Variables:**
 
-- Use the `CONTEXTGEM_` prefix for new API keys
+- Use the `CONTEXTGEM_` prefix for new API keys (the key of TypeSafe is the exception, see [Decision Model Testing](#decision-model-testing))
 - Verify redaction in your cassette files
 - Update redaction logic in `tests/utils.py` if needed
 - Add dummy values to `set_dummy_env_variables_for_testing_from_cassettes()`
@@ -507,6 +513,17 @@ For local LLM testing, install the following tools and download the relevant mod
 - [LM Studio](https://lmstudio.ai/)
 
 > ⚠️ **Important:** Your system needs to have an appropriate GPU capacity to run such local LLMs.
+
+#### Decision Model Testing
+
+Most tests of decision models in `tests/test_decision_models.py` replace the API call of `litellm` with a stub and need no cassettes. The tests that send requests to the APIs of decision models are marked with `@pytest.mark.vcr`: the ones in `tests/test_decision_models.py`, and `test_decision_model_usage_examples` in `tests/test_usage_examples.py`, which runs the usage examples in `dev/usage_examples/docs/decision_models/`. Recording their cassettes needs:
+
+- **`TYPESAFE_API_KEY`** in your `.env` file, for the requests to TypeSafe (`typesafe/jev-latest`). This variable is the exception to the `CONTEXTGEM_` prefix: it has the name under which `litellm` itself reads the key of TypeSafe when no key is passed.
+- **`CONTEXTGEM_OPENAI_API_KEY`** in your `.env` file, for the requests to the Decisions API of OpenAI (`openai/gpt-6-luna` as a decision model), and to the LLM that is used next to the decision model in a model group.
+
+`litellm` rejects a request to a decision model that has no API key before the request is sent, i.e. before it can be replayed from a cassette. For this reason, a dummy `TYPESAFE_API_KEY` is set when no `.env` file is present. If your `.env` file has no `TYPESAFE_API_KEY`, add the variable with any value, otherwise these tests fail also in replay.
+
+The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed while recording. A test that sends requests to another provider of decision models needs the host of that provider added to that list (see [Network Egress Control](#network-egress-control)).
 
 #### Important Notes
 

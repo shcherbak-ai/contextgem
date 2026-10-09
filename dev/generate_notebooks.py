@@ -47,6 +47,7 @@ EXCLUDE_DIRS = [
     str(DOCS_INPUT_DIR / "serialization"),
     str(DOCS_INPUT_DIR / "llms" / "llm_init"),
     str(DOCS_INPUT_DIR / "llm_config"),
+    str(DOCS_INPUT_DIR / "decision_models"),
     str(DOCS_INPUT_DIR / "concepts" / "json_object_concept" / "structure"),
 ]
 

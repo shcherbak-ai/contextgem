@@ -210,6 +210,9 @@ When a :class:`~contextgem.public.concepts.LabelConcept` is extracted, it is pop
    * - ``justification``
      - str
      - Explanation of why these labels were selected (only if ``add_justifications=True``)
+   * - ``probabilities``
+     - dict[str, float]
+     - Probability of each label of the concept, e.g. ``{"NDA": 0.95, "Other": 0.05}`` (only if the concept is extracted by a decision model, ``None`` otherwise; see :ref:`decision-models-probabilities-label`)
    * - ``reference_paragraphs``
      - list[:class:`~contextgem.public.paragraphs.Paragraph`]
      - List of paragraph objects that informed the classification (only if ``add_references=True``)

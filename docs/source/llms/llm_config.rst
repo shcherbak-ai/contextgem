@@ -132,9 +132,9 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``False``
      - Indicates whether the LLM is a fallback model. Fallback LLMs are optionally assigned to the primary LLM instance and are used when the primary LLM fails.
    * - ``fallback_models``
-     - ``list[DocumentLLM]``
+     - ``list[DocumentLLM | DocumentDecisionModel]``
      - ``[]``
-     - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role, output language, system message, tools, ``tool_choice`` and ``parallel_tool_calls`` as the primary LLM.
+     - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role, output language, system message, tools, ``tool_choice`` and ``parallel_tool_calls`` as the primary LLM. A fallback can also be a decision model, if it can extract everything that the LLM is to extract (see :ref:`decision-models-fallbacks-label`).
    * - ``output_language``
      - ``str``
      - ``"en"``
@@ -196,6 +196,8 @@ Each fallback LLM must be created with ``is_fallback=True``, have the same ``rol
 The next fallback LLM is tried when the current LLM fails for good, i.e. when its request fails with a non-transient error, when the retries of its request are exhausted, when the prompt exceeds its context window, when it keeps returning invalid data during extraction, when its response is cut off at the max output tokens during extraction, or when it returns an empty response in a chat. See :ref:`llm-retries-label` for details.
 
 To change the ``system_message`` of an LLM that already has fallback LLMs, change it for the fallback LLMs first, and then for the primary LLM.
+
+A fallback of an LLM can also be a decision model, and an LLM can be a fallback of a decision model. A decision model extracts only aspects and the concepts whose answers come from a closed set, so an LLM can fall back to it only if it can extract everything that the LLM is to extract: this is checked when an extraction method is called, before any requests are sent. The requirements above for the output language, system message and tools apply between two LLMs only. In a chat, a fallback decision model is skipped. See :ref:`decision-models-fallbacks-label`.
 
 .. note::
    Each LLM applies its own retry settings and timeout before the next fallback LLM is tried, so the more fallback LLMs you configure, the longer a request can take to fail when all of the LLMs are unavailable.
@@ -339,6 +341,8 @@ For complex document processing, you can organize multiple LLMs with different r
 Each LLM in the group must have a unique ``role``, and only one LLM in the group can have no role. An aspect/concept is routed to the LLM with the ``role`` equal to the ``model_role`` of the aspect/concept, and an aspect/concept without ``model_role`` is routed to the LLM without ``role``. If an aspect/concept cannot be routed to any LLM in the group, an error is raised. For more details, see :ref:`model-roles-label`.
 
 See a practical example of using a model group in :ref:`multi-llm-pipeline-label`.
+
+A model group can also include decision models, to which aspects/concepts are routed by their roles in the same way. For example, a decision model can answer the yes/no questions and the classifications, while an LLM extracts the rest. The ``output_language`` of a group applies to its LLMs: a decision model has no output language. See :ref:`decision-models-model-group-label`.
 
 
 📊 Accessing Usage and Cost Statistics

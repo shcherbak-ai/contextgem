@@ -155,6 +155,23 @@ ContextGem is a free, open-source LLM framework that makes it radically easier t
             
             Explore LLMs
 
+    .. grid-item-card:: ⚖️ Decision Models
+        :link: decision_models/decision_models
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to extract yes/no, label and rating concepts, as well as aspects, with decision models, which return probabilities instead of generating text.
+
+        +++
+        .. button-ref:: decision_models/decision_models
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Explore Decision Models
+
     .. grid-item-card:: ⚡ Advanced Usage
         :link: advanced_usage
         :link-type: doc
@@ -297,6 +314,13 @@ Indices and tables
 
 .. toctree::
    :maxdepth: 2
+   :caption: Decision Models
+   :hidden:
+
+   decision_models/decision_models
+
+.. toctree::
+   :maxdepth: 2
    :caption: Advanced Usage
    :hidden:
    
@@ -339,6 +363,7 @@ Indices and tables
    api/concepts
    api/examples
    api/llms
+   api/decision_models
    api/models
    api/data_models
    api/utils
