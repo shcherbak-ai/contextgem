@@ -22,13 +22,19 @@ Migrating to v1.0
 
 This guide describes the changes in ContextGem v1.0 that require updating the code and the serialized data created with the earlier versions.
 
+The sections below end with what to do with the serialized data. Several of them can apply to the same data, and the updates are to be made in this order:
+
+- **A document or a pipeline without aspects and concepts** is deserialized as is.
+- **A document, a pipeline, an aspect or a concept.** Before deserializing the data: rename the role keys (:ref:`migration-v1-renames-label`), replace the rating scales stored as objects (:ref:`migration-v1-rating-scales-label`), and rename the class of a ``DocumentPipeline`` (:ref:`migration-v1-pipelines-label`). After deserializing it: update the roles and the modalities (:ref:`migration-v1-roles-label`).
+- **An LLM or a model group.** Before deserializing the data: update it with ``migrate_llm_dict()`` (:ref:`migration-v1-fallback-llms-label`). After deserializing it: update the roles (:ref:`migration-v1-roles-label`) and, if you want the defaults of v1.0, apply them (:ref:`migration-v1-llm-defaults-label`).
+
 
 .. _migration-v1-renames-label:
 
 ✏️ Renamed Classes and Parameters
 -----------------------------------
 
-In v1.0, the classes, parameters and attributes that are not specific to LLMs are renamed, so that their names refer to models in general. :class:`~contextgem.public.llms.DocumentLLM` keeps its name.
+In v1.0, the classes, parameters and attributes that are not specific to LLMs are renamed, so that their names refer to models in general. :class:`~contextgem.public.llms.DocumentLLM` and the ``LLMToolLoopLimitError`` exception keep their names.
 
 .. list-table:: Renamed classes, parameters and attributes
    :header-rows: 1
@@ -53,7 +59,7 @@ In v1.0, the classes, parameters and attributes that are not specific to LLMs ar
    * - ``LLMExtractionError``
      - ``ModelExtractionError``
 
-Only the names are changed by the renaming. The other changes to model groups, roles and fallback LLMs are described in the sections below. The old names are removed: using them raises an error.
+Only the names are changed by the renaming, except for ``model_roles``, which also reports the roles differently (see :ref:`migration-v1-roles-label`). The other changes to model groups, roles and fallback LLMs are described in the sections below. The old names are removed: using them raises an error.
 
 .. code-block:: python
    :caption: Before v1.0
@@ -125,7 +131,7 @@ The role names used in the example are changed as well, see :ref:`migration-v1-r
 
 :class:`~contextgem.public.llms.DocumentLLM` stays in ``contextgem.public.llms``.
 
-**Serialized data.** The serialized data stores the names of the parameters and of the classes. Documents, pipelines, aspects and concepts serialized with the earlier versions have the ``llm_role`` key in each aspect and concept, and cannot be deserialized in v1.0 as is: a validation error is raised for the ``llm_role`` key. Rename the key before deserializing the data:
+**Serialized data.** The serialized data stores the names of the parameters and of the classes. Aspects and concepts serialized with the earlier versions have the ``llm_role`` key, so they, and the documents and pipelines that have aspects or concepts, cannot be deserialized in v1.0 as is: a validation error is raised for the ``llm_role`` key (``from_disk()`` reports it as ``RuntimeError``). A document or a pipeline without aspects and concepts needs no update. Rename the key before deserializing the data:
 
 .. code-block:: python
    :caption: Renaming the role key in a document serialized before v1.0
@@ -252,19 +258,19 @@ Changes in Behavior
 ~~~~~~~~~~~~~~~~~~~~
 
 - **No default role name.** ``role`` and ``model_role`` default to ``None`` instead of ``"extractor_text"``. In a model group, an aspect/concept without ``model_role`` is routed to the LLM without ``role``. An aspect/concept with ``model_role="extractor_text"`` is no longer matched with an LLM that has no role specified, and vice versa.
-- **A single LLM extracts everything it is given.** An LLM used on its own (not in a group) extracts all the aspects/concepts it is given, regardless of their ``model_role``. Previously, it skipped the aspects/concepts with a ``model_role`` different from its own ``role``. To extract only some of the aspects/concepts with a single LLM, use the ``from_aspects`` / ``from_concepts`` parameters of the extraction methods.
+- **A single LLM extracts everything it is given.** An LLM used on its own (not in a group) extracts all the aspects/concepts it is given, regardless of their ``model_role``. Previously, it skipped the aspects/concepts with a ``model_role`` different from its own ``role``. To extract only some of the aspects/concepts with a single LLM, use the ``from_aspects`` / ``from_concepts`` parameters of ``extract_aspects_from_document()``, ``extract_concepts_from_document()`` and ``extract_concepts_from_aspect()``. ``extract_all()`` has no such parameters, and extracts everything.
 - **A model group does not skip aspects/concepts.** A model group raises an error when an aspect/concept cannot be routed to any LLM in the group, i.e. when no LLM in the group has the ``role`` equal to the ``model_role`` of the aspect/concept. Previously, such aspects/concepts were skipped.
 - **A role does not restrict what an LLM can process.** The same model no longer needs to be added to a model group several times, with different roles, to process both text and images. To use a dedicated model for images, give it a role of your choice (e.g. ``role="vision"``) and assign the same ``model_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.
 - **Model capabilities are not checked against the role.** The warnings about a model not being detected as vision-capable or reasoning-capable are no longer issued when an LLM with a specific role is created. Instead, an error is raised before any requests are sent, if the LLM that is to extract concepts from images, or any of its fallback LLMs, is not detected as vision-capable. See :doc:`llms/llm_config` for declaring the capability explicitly.
-- **The role passed to the usage and cost methods of a model group is validated.** The ``model_role`` argument of ``get_usage()``, ``get_cost()`` and ``reset_usage_and_cost()`` of a model group is validated in the same way as the roles assigned to LLMs: the surrounding whitespace is removed, and an invalid role raises an error. Previously, the argument was compared as passed, and an empty string selected all LLMs. Omit the argument to select all LLMs.
-- **Cached input tokens are priced separately.** The input tokens that the LLM provider reports as read from, or written to, its prompt cache are now priced at the cache prices of the model with ``auto_pricing=True``, so the calculated input costs are lower for the requests served from the cache, and can be higher for the requests written to it. Previously, all input tokens were priced as regular input tokens, which still applies with ``pricing_details``, unless the cache prices are set. See :ref:`llm-cached-tokens-label`.
+- **The role passed to the usage and cost methods of a model group is validated.** The ``model_role`` argument of ``get_usage()``, ``get_cost()`` and ``reset_usage_and_cost()`` of a model group is validated in the same way as the roles assigned to LLMs: the surrounding whitespace is removed, and an invalid role raises an error. Previously, the argument was compared as passed, and an empty string selected all LLMs. Omit the argument to select all LLMs. The LLM without a role, which was selected with ``llm_role="extractor_text"`` before v1.0, cannot be selected with ``model_role``: filter the returned entries (``[u for u in model_group.get_usage() if u.role is None]``), or call the method on that LLM.
+- **No role is reported as None.** The ``model_roles`` property of documents, pipelines and aspects (``llm_roles`` before v1.0) contains ``None`` if there are aspects/concepts without a role, where it contained ``"extractor_text"`` before, and now also includes the roles of sub-aspects and of their concepts. The ``list_roles`` property of an LLM or a model group, and the ``role`` of the entries returned by ``get_usage()`` and ``get_cost()``, are ``None`` for an LLM without a role. Code that expects strings, e.g. ``sorted(document.model_roles)``, has to handle ``None``.
 - **Aspects accept any role label.** As before, aspects and aspect-level concepts are extracted from text only: a concept with the ``"image"`` or ``"multimodal"`` modality cannot be assigned to an aspect.
 
 
 Updating the Serialized Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Documents and extraction pipelines serialized with the earlier versions cannot be deserialized in v1.0 as is: the role key of their aspects and concepts is to be renamed first, as described in :ref:`migration-v1-renames-label`. The data affected by the removal of ``RatingScale`` or ``DocumentPipeline`` is to be updated before deserializing as well, as described in :ref:`migration-v1-rating-scales-label` and :ref:`migration-v1-pipelines-label`.
+Documents and extraction pipelines that have aspects or concepts, serialized with the earlier versions, cannot be deserialized in v1.0 as is: the role key of their aspects and concepts is to be renamed first, as described in :ref:`migration-v1-renames-label`. The data affected by the removal of ``RatingScale`` or ``DocumentPipeline`` is to be updated before deserializing as well, as described in :ref:`migration-v1-rating-scales-label` and :ref:`migration-v1-pipelines-label`.
 
 The aspects and concepts of the deserialized documents and pipelines keep the predefined role names as regular role labels, and their concepts have the default ``"text"`` modality, as the serialized data has no modality. Update the roles and the modalities after deserializing the data, and serialize the data again:
 
@@ -299,13 +305,30 @@ The aspects and concepts of the deserialized documents and pipelines keep the pr
 
 
    document_dict = json.loads(document_json)  # serialized before v1.0
+   # If the data has rating scales stored as objects, apply migrate_rating_scales()
+   # to it first (see "Rating Scales")
    # rename_role_keys() is defined in "Renamed Classes and Parameters"
    document = Document.from_dict(rename_role_keys(document_dict))
    migrate_roles(document.aspects)
    migrate_roles(document.concepts)
    document_json = document.to_json()
 
-The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`. A serialized LLM or model group cannot be deserialized in v1.0 as is either: create the LLMs anew, or update the serialized data as described in :ref:`migration-v1-fallback-llms-label`, and then update the ``role`` of each deserialized LLM in the same way.
+The same applies to an :class:`~contextgem.public.pipelines.ExtractionPipeline`. A serialized LLM or model group cannot be deserialized in v1.0 as is either: create the LLMs anew, or update the serialized data as described in :ref:`migration-v1-fallback-llms-label`, and then update the roles of the deserialized LLMs. The fallback LLMs are to be updated first, as a fallback LLM must have the role of its primary LLM:
+
+.. code-block:: python
+   :caption: Updating the roles of an LLM or model group serialized before v1.0
+
+   def migrate_llm_roles(model):
+       """Updates the roles of a deserialized LLM, or of the LLMs of a model group."""
+       for llm in getattr(model, "models", [model]):
+           # The fallback LLMs first: each must have the role of its primary LLM
+           for fallback_llm in llm.fallback_models:
+               if fallback_llm.role in ROLES_MIGRATION:
+                   fallback_llm.role = ROLES_MIGRATION[fallback_llm.role][0]
+           if llm.role in ROLES_MIGRATION:
+               llm.role = ROLES_MIGRATION[llm.role][0]
+
+In a model group, only one LLM can have no role. If the serialized group has the same model under several roles, e.g. ``"extractor_text"`` and ``"extractor_vision"``, these roles become the same one, so remove the extra LLMs from the ``llms`` list of the serialized group before deserializing it. A group needs at least two LLMs: if only one is left, deserialize it as a single LLM.
 
 
 .. _migration-v1-fallback-llms-label:
@@ -339,7 +362,7 @@ The ``fallback_llm`` parameter and attribute of :class:`~contextgem.public.llms.
    llm.fallback_models = [other_fallback_llm]
    current_fallback_llm = llm.fallback_models[0] if llm.fallback_models else None
 
-Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the ``fallback_llm`` attribute, raises an error in v1.0.
+Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the ``fallback_llm`` attribute, raises an error in v1.0. ``fallback_models`` does not accept ``None``: where ``fallback_llm=None`` was passed or assigned before v1.0, e.g. to remove the fallback LLM, use an empty list (``llm.fallback_models = []``).
 
 **System message.** In v1.0, a fallback LLM must have the same ``system_message`` as the primary LLM, otherwise an error is raised when the fallback LLMs are set. An LLM created without ``system_message`` has the default system message, so if the primary LLM is created with ``system_message``, e.g. with an empty string to disable it for a chat, pass the same value to each of its fallback LLMs:
 
@@ -362,7 +385,9 @@ Passing ``fallback_llm`` to ``DocumentLLM``, as well as reading or assigning the
 
 Before v1.0, a fallback LLM could have another system message. A fallback LLM created without ``system_message`` then used the default system message, which is written for extraction, also in a chat for which the primary LLM had another system message or none.
 
-**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is: a validation error is raised for the ``fallback_llm`` key. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. A serialized LLM whose fallback LLM has another system message cannot be deserialized either: set the ``system_message`` key of the fallback LLM to the one of the primary LLM. A serialized LLM also has the ``max_completion_tokens`` key, which is removed in v1.0, and stores the output token limits used before v1.0 (see :ref:`migration-v1-llm-defaults-label`). As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
+**Checks before a chat.** In v1.0, ``chat()`` checks the fallback LLMs before any request is sent, and raises ``ValueError`` if a fallback LLM cannot take the request: if images are passed and it is not detected as vision-capable, if ``parallel_tool_calls`` is set and it is not detected as supporting parallel tool calls, or if its ``max_tokens`` exceeds the maximum output of its model. Before v1.0, this was checked only when the fallback LLM was to be used, so such a chat worked as long as the primary LLM answered. If the model has the capability, declare it on the fallback LLM (``_supports_vision = True``, ``_supports_parallel_tool_calls = True``); otherwise change the configuration.
+
+**Serialized data.** An LLM serialized with the earlier versions has the ``fallback_llm`` key, with the ``null`` value if no fallback LLM was assigned. This means that any serialized LLM or model group, with or without a fallback LLM, cannot be deserialized in v1.0 as is. The first error raised is ``TypeError`` for a class name used before v1.0 (``Class _LLMUsage does not match _ModelUsage``; for an LLM with pricing details, ``Class LLMPricing does not match ModelPricing``; for a group, ``Class DocumentLLMGroup does not match DocumentModelGroup``), and with the class names updated, a validation error is raised for the ``fallback_llm`` and ``max_completion_tokens`` keys. ``from_disk()`` reports these errors as ``RuntimeError``. A serialized model group and the serialized pricing details of an LLM also store the names used before v1.0 (see :ref:`migration-v1-renames-label`), and so do the usage and cost containers of a serialized LLM, which are always empty, as the usage and cost statistics are not included in the serialized data. A serialized LLM whose fallback LLM has another system message cannot be deserialized either: set the ``system_message`` key of the fallback LLM to the one of the primary LLM. A serialized LLM also has the ``max_completion_tokens`` key, which is removed in v1.0, and stores the output token limits used before v1.0 (see :ref:`migration-v1-llm-defaults-label`). As the API credentials are not included in the serialized data, the simplest option is to create the LLMs anew. Otherwise, update the data before deserializing it, and serialize the data again:
 
 .. code-block:: python
    :caption: Updating an LLM serialized before v1.0
@@ -439,14 +464,21 @@ Changes in behavior:
 - **Longer request timeout.** The default ``timeout`` is raised from 120 to 600 seconds, as a response has to be received in full within the timeout, and a long response of a reasoning model may take more than 120 seconds. A request that times out is retried as a transient error, so a request to an unresponsive endpoint takes longer to fail. Set ``timeout=120`` to keep the previous behavior.
 - **Higher default rate of concurrent requests.** With ``use_concurrency=True``, the default ``async_limiter`` of an LLM allows 10 requests per 10 seconds instead of 3. If you run into the rate limits of your LLM provider, set the limiter explicitly, e.g. ``llm.async_limiter = AsyncLimiter(3, 10)`` for the previous rate.
 - **The limiter paces all the concurrent requests to an LLM.** Before v1.0, with ``use_concurrency=True``, each extraction call had a limiter of its own. The calls that run concurrently, e.g. for the sub-aspects and for the concepts of different aspects in ``extract_all()``, or the extractions that your code runs concurrently with the async methods, together sent requests at several times the rate of ``async_limiter``. In v1.0, they share the rate. An extraction that relied on the higher rate takes longer: set the limiter to the rate limits of your provider account.
+- **A fallback LLM has a limiter of its own.** With ``use_concurrency=True``, the requests to a fallback LLM are paced by the ``async_limiter`` of that fallback LLM. Before v1.0, they were paced by the limiter of the primary LLM. If you lowered the rate on the primary LLM only, set it on its fallback LLMs as well.
+- **Only transient errors are retried.** ``num_retries_failed_request`` applies to request timeouts, rate limits, server and connection errors. Other API errors, e.g. an invalid request or a failed authentication, fail right away or are passed to the next fallback LLM; before v1.0, they were retried as well. ``retry_count`` of ``ModelAPIError`` is the number of retries attempted, not the configured number.
 
-**Serialized data.** An LLM serialized with the earlier versions has the ``max_completion_tokens`` key, for which a validation error is raised in v1.0, and the ``max_tokens`` key with the value used before v1.0, i.e. 4096 unless it was changed, which would now limit the output of a reasoning model as well. The ``migrate_llm_dict()`` function in :ref:`migration-v1-fallback-llms-label` removes both limits, so that the default of the model applies. The ``temperature``, the ``timeout`` and the ``async_limiter`` of a deserialized LLM keep the values the LLM was serialized with, i.e. the defaults used before v1.0 unless they were changed. This means that the temperature of 0.3 is now sent to a reasoning model as well. Set them anew to use the defaults of v1.0:
+**Serialized data.** An LLM serialized with the earlier versions has the ``max_completion_tokens`` key, which is not accepted in v1.0, and the ``max_tokens`` key with the value used before v1.0, i.e. 4096 unless it was changed, which would now limit the output of a reasoning model as well. The ``migrate_llm_dict()`` function in :ref:`migration-v1-fallback-llms-label` removes both limits, so that the default of the model applies. The ``temperature``, the ``timeout`` and the ``async_limiter`` of a deserialized LLM keep the values the LLM was serialized with, i.e. the defaults used before v1.0 unless they were changed. This means that the temperature of 0.3 is now sent to a reasoning model as well. Set them anew to use the defaults of v1.0:
 
 .. code-block:: python
    :caption: Applying the defaults of v1.0 to an LLM serialized before v1.0
 
+   import json
+
    from aiolimiter import AsyncLimiter
 
+   from contextgem import DocumentLLM
+
+   llm_dict = json.loads(llm_json)  # serialized before v1.0
    # migrate_llm_dict() is defined in "Fallback LLMs"
    llm = DocumentLLM.from_dict(migrate_llm_dict(llm_dict))
    llm.temperature = None
@@ -488,6 +520,8 @@ The same applies to each fallback LLM, and to each LLM of a deserialized model g
 
    pipeline_dict = json.loads(pipeline_json)  # serialized as DocumentPipeline
    pipeline_dict["__class__"] = "ExtractionPipeline"
+   # If the data has rating scales stored as objects, apply migrate_rating_scales()
+   # to it first (see "Rating Scales")
    # rename_role_keys() is defined in "Renamed Classes and Parameters"
    pipeline = ExtractionPipeline.from_dict(rename_role_keys(pipeline_dict))
    pipeline_json = pipeline.to_json()
@@ -568,7 +602,7 @@ The same function can be used for a serialized pipeline or aspect. For a concept
 
 In v1.0, each extracted item has the ``probabilities`` attribute. It holds the probabilities of the possible answers for an item extracted by a decision model, which is a new kind of model in v1.0 (see :doc:`decision_models/decision_models`), and is ``None`` for every item extracted by an LLM. No changes to the code are required.
 
-**Serialized data.** The serialized data of each extracted item now includes the ``probabilities`` key, with the ``null`` value for an item without probabilities. Documents, aspects and concepts serialized with the earlier versions have no such key, which needs no update: their items are deserialized with ``probabilities=None``, subject to the other sections of this guide. The reverse does not work: the data serialized in v1.0 cannot be deserialized with the earlier versions. If the serialized data is also read outside ContextGem, e.g. validated against a schema of your own, add the key there.
+**Serialized data.** The serialized data of each extracted item now includes the ``probabilities`` key, with the ``null`` value for an item without probabilities. Documents, aspects and concepts serialized with the earlier versions have no such key, which needs no update: their items are deserialized with ``probabilities=None``, subject to the other sections of this guide. The reverse does not work: the data serialized in v1.0 cannot be deserialized with the earlier versions. If the serialized data is also read outside ContextGem, e.g. validated against a schema of your own, add the key there. The same applies to the other keys added in v1.0: ``modality`` of concepts, ``decision_threshold`` of aspects, ``BooleanConcept`` and ``LabelConcept``, and ``cache_read_per_1m_tokens`` and ``cache_write_per_1m_tokens`` of pricing details.
 
 
 .. _migration-v1-tools-label:
@@ -578,7 +612,7 @@ In v1.0, each extracted item has the ``probabilities`` attribute. It holds the p
 
 In v1.0, a tool for chat is defined in a single way: as a function decorated with ``@register_tool``, which is passed to ``tools`` of the LLM. The tool schema sent to the LLM (the name, the description and the parameters of the tool) is generated from the function. See :doc:`llms/chat_with_tools`.
 
-**Tool schemas as dictionaries.** ``tools`` no longer accepts tool definitions as dictionaries in the OpenAI-compatible schema. Pass the functions instead, and move the details of each schema to the function: the description of the tool to the docstring, and the descriptions and constraints of the parameters to the docstring or to ``Annotated`` type hints.
+**Tool schemas as dictionaries.** ``tools`` no longer accepts tool definitions as dictionaries in the OpenAI-compatible schema. Pass the functions instead, and move the details of each schema to the function: the description of the tool to the docstring, the descriptions of the parameters to the docstring or to ``Annotated`` type hints, and their constraints to ``Annotated`` type hints with ``Field`` (an ``enum`` becomes a ``Literal`` type hint): a constraint written in a docstring is not a part of the schema.
 
 .. code-block:: python
    :caption: Before v1.0
@@ -634,6 +668,8 @@ Accordingly, ``llm.tools`` now returns the functions, not the tool schemas.
 
 **Requirements for tool functions.** ``@register_tool`` now raises an error for a function that has no docstring, or that accepts ``*args`` or ``**kwargs``. Before v1.0, such a function was accepted: a tool without a docstring was sent to the LLM without a description, and ``*args`` and ``**kwargs`` were ignored. A parameter without a type hint is reported when the function is decorated, rather than when the LLM is created.
 
+**Errors of tools.** A tool function must return a non-empty string: for an empty string, ``ValueError`` is raised from ``chat()``, and for a value of another type, ``TypeError``, where ``LLMAPIError`` was raised before v1.0. Tools with the same name are rejected when they are set on an LLM; before v1.0, the last of them replaced the others. The tools of an LLM are no longer sent with the requests of the extraction methods.
+
 **Serialized data.** LLMs with tools serialized with the earlier versions can be deserialized in v1.0, subject to the other sections of this guide. As before, the functions of the tools have to be decorated with ``@register_tool`` and be defined or imported, under their names, in the code that loads the LLM. The tool schemas stored in the serialized data are no longer used: the schemas are generated from the functions.
 
 
@@ -675,3 +711,17 @@ Markdown can be passed as ``raw_text``: it is sent to the LLM as it is. Keep in 
 - Use the default ``paragraph_segmentation_mode="newlines"``. The ``"sat"`` mode detects considerably fewer paragraph breaks in Markdown than in plain text.
 
 **Serialized data.** Documents serialized with the earlier versions, including the documents created with ``DocxConverter``, can be deserialized in v1.0, subject to the other sections of this guide. The Markdown text stored in such documents is ignored: text is extracted from ``raw_text``, and the Markdown text is not kept when the document is serialized again. The additional context of the paragraphs is preserved.
+
+
+.. _migration-v1-other-changes-label:
+
+⚙️ Other Changes in Behavior
+------------------------------
+
+These changes require no update of the code in most cases, but can change what the same code does:
+
+- **Whitespace between words is kept as a space.** A tab, a line break or another whitespace character between two words is now sent to the model as a space. Before v1.0, such a character was removed and the words around it were joined: ``Fee:<tab>5,000 EUR`` was sent as ``Fee:5,000 EUR``, and a paragraph with a line break inside it, e.g. one segmented with a SaT model or passed as a ``Paragraph``, was sent with the last word of a line joined to the first word of the next one. The prompts for such texts differ from those sent before v1.0: the responses cached or recorded for them no longer match, and the extracted values can differ. A text without such characters is sent unchanged.
+- **Negative per-call limits are rejected.** A negative ``max_paragraphs_to_analyze_per_call`` or ``max_images_to_analyze_per_call`` passed to an extraction method raises ``ValueError``. Before v1.0, such a value was ignored or made the LLM extract nothing without an error. Pass ``0``, the default, to set no limit.
+- **An empty response in a chat is an error.** For an empty response of the LLM, ``chat()`` tries the next fallback LLM, and raises ``ModelAPIError`` if there is none left to try. Before v1.0, a response without a text raised ``RuntimeError`` if there was no fallback LLM, and an empty text was returned as the answer.
+- **Validation errors of models do not show the values.** The text of a validation error of a ``DocumentLLM`` or a ``DocumentModelGroup`` no longer has ``input_value=..., input_type=...``, and an LLM no longer shows its ``api_key`` when printed. Code that matches the text of such errors, e.g. a test, is to be updated. The values are still returned by the ``errors()`` and ``json()`` methods of the error.
+- **Cached input tokens are priced separately.** The input tokens that the LLM provider reports as read from, or written to, its prompt cache are now priced at the cache prices of the model with ``auto_pricing=True``, so the calculated input costs are lower for the requests served from the cache, and can be higher for the requests written to it. Previously, all input tokens were priced as regular input tokens, which still applies with ``pricing_details``, unless the cache prices are set. See :ref:`llm-cached-tokens-label`.
