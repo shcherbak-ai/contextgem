@@ -1921,6 +1921,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         async_limiter: AsyncLimiter | None = None,
         raise_exception_on_extraction_error: bool = True,
         has_fallback_pending: bool = False,
+        unrecorded_usage: list[_ModelUsage] | None = None,
     ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
         """
         Extracts items from either aspects or concepts using a specified LLM.
@@ -1988,6 +1989,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             warned about, as it is not final. The same applies to a response cut off at
             the max output tokens. Defaults to False.
         :type has_fallback_pending: bool
+        :param unrecorded_usage: An optional list for the calling code to read if an error
+            is raised, in which case no usage is returned. It has the usage of the response
+            of an LLM that is being processed, i.e. the usage that the usage and cost of
+            the LLM are not updated with yet, and is empty otherwise. If an error other
+            than a model API error is raised, the calling code is to update the usage and
+            cost of the LLM with the usage on the list, which would be lost otherwise.
+            A model API error is raised when they are already updated. The list stays
+            empty for a decision model, which updates its usage and cost itself before
+            any error is raised.
+        :type unrecorded_usage: list[_ModelUsage] | None
 
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if LLM processing fails
@@ -2223,6 +2234,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             return existing
 
         all_usage_data: _ModelUsage | None = None
+        if unrecorded_usage is None:
+            unrecorded_usage = []
         sources_mapper: dict[
             str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
         ] = {}
@@ -2336,6 +2349,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             if all_usage_data is not None:
                 await llm._update_usage_and_cost((None, all_usage_data))
                 all_usage_data = None
+                unrecorded_usage.clear()
 
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
@@ -2347,6 +2361,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 raise_exception_on_model_api_error=raise_exception_on_extraction_error,
                 has_fallback_pending=has_fallback_pending,
             )
+            # The usage of the response is kept for the calling code as well, which
+            # updates the usage and cost of the LLM with it if an exception is raised
+            # while the response is processed, or before the next call is made
+            unrecorded_usage.append(usage_data)
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
             extracted_data = _validate_parsed_llm_output(
                 parsed_json=_parse_llm_output_as_json(
@@ -2950,6 +2968,35 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     f"Failed {instance_type}s: {instance_names}"
                 )
 
+            async def extract_items_keeping_usage(
+                **kwargs: Any,
+            ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
+                """
+                Extracts items in a single call, i.e. for a single chunk, and makes
+                sure that the usage of a request that got a response is not lost if
+                an error is raised afterwards, e.g. as an aspect or a concept is
+                found processed, by another extraction, when the response is
+                processed. No usage is returned in such case, so the usage and cost
+                of the model are updated here, before the error is raised.
+
+                :param kwargs: Keyword arguments of `_extract_items_from_instances`.
+                :type kwargs: Any
+                :return: The extraction result.
+                :rtype: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+                """
+                unrecorded_usage: list[_ModelUsage] = []
+                try:
+                    return await self._extract_items_from_instances(
+                        **kwargs, unrecorded_usage=unrecorded_usage
+                    )
+                except ModelAPIError:
+                    # Raised when the usage and cost of the model are already updated
+                    raise
+                except BaseException:
+                    for usage in unrecorded_usage:
+                        await kwargs["llm"]._update_usage_and_cost((None, usage))
+                    raise
+
             async def retry_processing_for_result(
                 llm_instance: _DocumentModel,
                 res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
@@ -2989,7 +3036,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             f"{llm_instance._invalid_output_desc} "
                             f"({i + 1}/{n_retries})"
                         )
-                        res = await self._extract_items_from_instances(
+                        res = await extract_items_keeping_usage(
                             extracted_item_type=instance_type,
                             source=context,
                             llm=llm_instance,
@@ -3183,7 +3230,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     :rtype: Any
                     """
                     try:
-                        result = await self._extract_items_from_instances(**kwargs)
+                        result = await extract_items_keeping_usage(**kwargs)
                     except ModelAPIError as e:
                         return e
                     completed_results.append(result)
@@ -3278,7 +3325,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             else:
                 # Process sequentially
                 for i, data in enumerate(data_list):
-                    result = await self._extract_items_from_instances(**data)  # ty: ignore[invalid-argument-type]
+                    result = await extract_items_keeping_usage(**data)
                     logger.debug(
                         f"Result for chunk ({i + 1}/{len(data_list)}) processed."
                     )

@@ -22,22 +22,34 @@ Module defining tests for usage, cost and pricing.
 
 from __future__ import annotations
 
+import asyncio
+import json
 import os
+import re
 import types
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
+from litellm.types.decisions import (
+    OpenAIDecisionInputTokensDetails,
+    OpenAIDecisionResponse,
+    OpenAIDecisionUsage,
+    OpenAIPredicateAnswer,
+)
 
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
+from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.data_models import _ModelCost, _ModelUsage
 from contextgem.internal.exceptions import ModelAPIError
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import _get_llm_cache_token_counts
 from contextgem.public import (
+    BooleanConcept,
     Document,
+    DocumentDecisionModel,
     DocumentLLM,
     DocumentModelGroup,
     ModelPricing,
@@ -208,6 +220,419 @@ class TestUsageAndCost(BaseTest):
         usage = llm.get_usage()[0].usage
         assert (usage.input, usage.output) == (10, 5)
         assert [bool(call.timestamp_received) for call in usage.calls] == [True, False]
+
+    def test_usage_recorded_when_error_is_raised_after_response(self):
+        """
+        Tests that the usage and cost of a request that got a response are recorded,
+        once, when an error is raised afterwards: when the response is processed,
+        e.g. as a concept is found processed by another extraction that ran
+        meanwhile, or before the next request is sent. This holds with and without
+        concurrency, for an LLM, a fallback LLM, a decision model and the models of
+        a group. A request that failed is recorded as a call without a response,
+        and a request cancelled in flight is not recorded.
+
+        The usage of a request to an LLM was lost in such case: no usage is returned
+        when an error is raised.
+
+        The model APIs are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        llm_model = "openai/gpt-6-luna"
+        fallback_llm_model = "openai/gpt-5.6-luna"
+        decision_model = "typesafe/jev-latest"
+        cut_off_answer = '[{"concept_id": "C0", "extracted_items": [tr'
+        # Each input token costs 1, and each output token costs 2
+        pricing = ModelPricing(
+            input_per_1m_tokens=1_000_000.0, output_per_1m_tokens=2_000_000.0
+        )
+        # What the request with a given number does before it is answered
+        actions: dict[int, Any] = {}
+        # The models of the requests sent, answered, failed and cancelled in flight
+        requests: list[str] = []
+        responses: list[str] = []
+        failed_requests: list[str] = []
+        cancelled_requests: list[str] = []
+
+        async def send_request(model: str) -> Any:
+            """
+            Records the request, and does what is set for the request with its
+            number before it is answered: raises the error, or calls the function,
+            waiting for what the function returns if it is to be waited for.
+            Returns what the function returns.
+            """
+            requests.append(model)
+            action = actions.get(len(requests))
+            if isinstance(action, Exception):
+                failed_requests.append(model)
+                raise action
+            result = action() if action else None
+            if asyncio.iscoroutine(result):
+                try:
+                    result = await result
+                except asyncio.CancelledError:
+                    cancelled_requests.append(model)
+                    raise
+            responses.append(model)
+            return result
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: responds with the text that the request is set
+            to be answered with, which is cut off if it is the cut-off answer, or
+            with an item for each concept of the prompt. Each response uses 10 input
+            tokens and 5 output tokens.
+            """
+            content = await send_request(kwargs["model"])
+            if content is None:
+                content = json.dumps(
+                    [
+                        {"concept_id": concept_id, "extracted_items": [True]}
+                        for concept_id in re.findall(
+                            r"<concept_id>(C\d+)</concept_id>",
+                            kwargs["messages"][-1]["content"],
+                        )
+                    ]
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content),
+                        finish_reason="length" if content == cut_off_answer else "stop",
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        async def adecisions_stub(**kwargs: Any):
+            """
+            Simulates the API of the decision model: answers "yes" to each question.
+            Each response uses 10 input tokens and no output tokens.
+            """
+            await send_request(kwargs["model"])
+            return OpenAIDecisionResponse(
+                model="jev-1.13.0",
+                answers=tuple(
+                    OpenAIPredicateAnswer(name=question["name"], probability=0.9)
+                    for question in kwargs["questions"]
+                ),
+                usage=OpenAIDecisionUsage(
+                    input_tokens=10,
+                    output_tokens=0,
+                    total_tokens=10,
+                    input_tokens_details=OpenAIDecisionInputTokensDetails(
+                        cached_tokens=0, cache_write_tokens=0
+                    ),
+                ),
+            )
+
+        def create_llm(model: str = llm_model, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with the pricing set.
+            """
+            return DocumentLLM(
+                model=model, api_key="test_api_key", pricing_details=pricing, **kwargs
+            )
+
+        def create_decision_model(**kwargs: Any) -> DocumentDecisionModel:
+            """
+            Creates a decision model with the pricing set.
+            """
+            return DocumentDecisionModel(
+                model=decision_model,
+                api_key="test_api_key",
+                pricing_details=pricing,
+                **kwargs,
+            )
+
+        def create_document(n_concepts: int = 1, n_paragraphs: int = 2) -> Document:
+            """
+            Creates a document with concepts that both an LLM and a decision model
+            can extract. In a model group, each second concept is routed to
+            the model with the role "other".
+            """
+            document = Document(
+                raw_text="\n\n".join(
+                    f"Paragraph {i} of the agreement." for i in range(n_paragraphs)
+                )
+            )
+            document.concepts = [
+                BooleanConcept(
+                    name=f"Concept {i}",
+                    description=f"Topic {i} is covered",
+                    model_role="other" if i % 2 else None,
+                )
+                for i in range(n_concepts)
+            ]
+            return document
+
+        def set_actions(request_actions: dict[int, Any]) -> None:
+            """
+            Sets what the requests do, by their numbers, and resets the records.
+            """
+            actions.clear()
+            actions.update(request_actions)
+            for record in (requests, responses, failed_requests, cancelled_requests):
+                record.clear()
+
+        def process_meanwhile(concept: _Concept) -> Any:
+            """
+            Returns the action of a request during which the concept is processed,
+            as by another extraction, i.e. the concept is found processed when
+            the response to the request is processed.
+            """
+
+            def mark_processed() -> None:
+                """
+                Marks the concept as processed.
+                """
+                concept._is_processed = True
+
+            return mark_processed
+
+        def process_when_extracted(concept: _Concept, other_concept: _Concept) -> Any:
+            """
+            Returns the action of a request that is answered when the other concept
+            is extracted by another call, the concept being processed meanwhile.
+            """
+
+            async def wait_and_mark_processed() -> None:
+                """
+                Waits for the other concept to be extracted, and marks the concept
+                as processed.
+                """
+                for _ in range(1000):
+                    if other_concept._is_processed:
+                        break
+                    await asyncio.sleep(0)
+                concept._is_processed = True
+
+            return wait_and_mark_processed
+
+        async def cancel_extraction() -> None:
+            """
+            The action of a request during which the extraction is cancelled, as
+            on a timeout set by the calling code.
+            """
+            # Safe cast: the request is sent in a task
+            cast(asyncio.Task, asyncio.current_task()).cancel()
+            await asyncio.sleep(0)
+
+        async def extract_twice(
+            model: DocumentLLM | DocumentDecisionModel, document: Document
+        ) -> tuple[Any, Any]:
+            """
+            Runs two extractions of the concepts of the document at the same time,
+            and returns what each extraction returns, or the error that it raises.
+            """
+            return await asyncio.gather(
+                model.extract_concepts_from_document_async(document),
+                model.extract_concepts_from_document_async(document),
+                return_exceptions=True,
+            )
+
+        def check_usage(
+            model: DocumentLLM | DocumentDecisionModel | DocumentModelGroup,
+            expected_responses: list[str],
+        ) -> None:
+            """
+            Checks that the requests of the given models, in this order, got
+            a response, and that the usage and cost recorded for the model, with
+            its fallback models, or for the models of the group, are those of
+            the requests made: each request that got a response is recorded once,
+            with its tokens and their cost, each request that failed is recorded
+            as a call without a response, and a request cancelled in flight is
+            not recorded.
+            """
+            assert responses == expected_responses
+            for usage_info, cost_info in zip(
+                model.get_usage(), model.get_cost(), strict=True
+            ):
+                usage = usage_info.usage
+                n_responses = responses.count(usage_info.model)
+                n_output_tokens = 0 if usage_info.model == decision_model else 5
+                assert usage.input == 10 * n_responses
+                assert usage.output == n_output_tokens * n_responses
+                assert cost_info.cost.total == usage.input + 2 * usage.output
+                assert [
+                    call.timestamp_received is not None for call in usage.calls
+                ].count(True) == n_responses
+                assert len(usage.calls) - n_responses == failed_requests.count(
+                    usage_info.model
+                )
+            assert len(requests) == (
+                len(responses) + len(failed_requests) + len(cancelled_requests)
+            )
+
+        api_error = litellm.AuthenticationError(
+            message="Simulated API error", model=llm_model, llm_provider="openai"
+        )
+        already_processed_error = "have already been processed"
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(litellm, "adecisions", new=adecisions_stub),
+        ):
+            # === Two extractions of the same concept that overlap ===
+            # The request of the first extraction is answered when the second
+            # extraction is completed, i.e. when the concept is processed
+            for create_model in (create_llm, create_decision_model):
+                model = create_model()
+                set_actions({1: lambda: asyncio.sleep(0)})
+                first_outcome, second_outcome = asyncio.run(
+                    extract_twice(model, create_document())
+                )
+                assert isinstance(first_outcome, ValueError)
+                assert already_processed_error in str(first_outcome)
+                assert not isinstance(second_outcome, BaseException)
+                # Both requests got a response
+                check_usage(model, [model.model] * 2)
+
+            # === A concept that is found processed when the response is processed ===
+            for create_model in (create_llm, create_decision_model):
+                # Without concurrency, and with it, in which case a single call
+                # is made as well
+                for use_concurrency in (False, True):
+                    model = create_model()
+                    document = create_document()
+                    set_actions({1: process_meanwhile(document.concepts[0])})
+                    with pytest.raises(ValueError, match=already_processed_error):
+                        model.extract_concepts_from_document(
+                            document, use_concurrency=use_concurrency
+                        )
+                    check_usage(model, [model.model])
+
+                # With concurrency and several calls: the request of the first
+                # call is answered when the second call is completed, and
+                # the request of the third call is in flight
+                model = create_model()
+                document = create_document(n_concepts=3)
+                set_actions(
+                    {
+                        1: process_when_extracted(*document.concepts[:2]),
+                        3: lambda: asyncio.sleep(5),
+                    }
+                )
+                with pytest.raises(ValueError, match=already_processed_error):
+                    model.extract_concepts_from_document(document, use_concurrency=True)
+                assert cancelled_requests == [model.model]
+                # The requests of the second and the first call got a response
+                check_usage(model, [model.model] * 2)
+
+            # === The request that is sent again, as the LLM returned invalid data ===
+            llm = create_llm()
+            document = create_document()
+            set_actions(
+                {
+                    1: lambda: "<<<not-json>>>",
+                    2: process_meanwhile(document.concepts[0]),
+                }
+            )
+            with pytest.raises(ValueError, match=already_processed_error):
+                llm.extract_concepts_from_document(document)
+            check_usage(llm, [llm_model] * 2)
+
+            # === The request to a fallback model, after the request to the LLM failed ===
+            for fallback_model in (
+                create_llm(fallback_llm_model, is_fallback=True),
+                create_decision_model(is_fallback=True),
+            ):
+                llm = create_llm(fallback_models=[fallback_model])
+                document = create_document()
+                set_actions({1: api_error, 2: process_meanwhile(document.concepts[0])})
+                with pytest.raises(ValueError, match=already_processed_error):
+                    llm.extract_concepts_from_document(document)
+                assert failed_requests == [llm_model]
+                check_usage(llm, [fallback_model.model])
+
+            # === A call that takes several requests, one for each paragraph ===
+            # The concept is found processed when the second response is processed
+            llm = create_llm()
+            document = create_document(n_paragraphs=3)
+            set_actions({2: process_meanwhile(document.concepts[0])})
+            with pytest.raises(ValueError, match=already_processed_error):
+                llm.extract_concepts_from_document(
+                    document, max_paragraphs_to_analyze_per_call=1
+                )
+            check_usage(llm, [llm_model] * 2)
+
+            # An error is raised after the first response is processed, when
+            # the second request is prepared
+            llm = create_llm()
+            build_user_message = DocumentLLM._build_user_message
+            error = RuntimeError("Simulated error")
+
+            def build_first_user_message(*args: Any, **kwargs: Any) -> Any:
+                """
+                Builds the user message of the first request, and fails to build
+                the message of the next one.
+                """
+                if requests:
+                    raise error
+                return build_user_message(*args, **kwargs)
+
+            set_actions({})
+            with (
+                patch.object(
+                    DocumentLLM, "_build_user_message", new=build_first_user_message
+                ),
+                pytest.raises(RuntimeError) as exc_info,
+            ):
+                llm.extract_concepts_from_document(
+                    create_document(n_paragraphs=3),
+                    max_paragraphs_to_analyze_per_call=1,
+                )
+            assert exc_info.value is error
+            check_usage(llm, [llm_model])
+
+            # The extraction is cancelled with the second request in flight:
+            # the first request, which the usage and cost of the LLM are already
+            # updated with, is not recorded again
+            llm = create_llm()
+            set_actions({2: cancel_extraction})
+            with pytest.raises(asyncio.CancelledError):
+                llm.extract_concepts_from_document(
+                    create_document(n_paragraphs=3),
+                    max_paragraphs_to_analyze_per_call=1,
+                )
+            assert cancelled_requests == [llm_model]
+            check_usage(llm, [llm_model])
+
+            # === A response cut off at the max output tokens ===
+            # It fails the call with a model API error, which is raised when
+            # the usage and cost of the LLM are already updated
+            llm = create_llm()
+            set_actions({1: lambda: cut_off_answer})
+            with pytest.raises(ModelAPIError, match="cut off at the max output tokens"):
+                llm.extract_concepts_from_document(create_document())
+            check_usage(llm, [llm_model])
+
+            # === An error of another type, raised when the response is processed ===
+            llm = create_llm()
+            set_actions({})
+            with (
+                patch.object(
+                    models_module, "_validate_parsed_llm_output", side_effect=error
+                ),
+                pytest.raises(RuntimeError) as exc_info,
+            ):
+                llm.extract_concepts_from_document(create_document())
+            assert exc_info.value is error
+            check_usage(llm, [llm_model])
+
+            # === A model group ===
+            # The concept of the decision model is extracted, and the concept of
+            # the LLM is found processed when the response of the LLM is processed
+            for use_concurrency in (False, True):
+                group = DocumentModelGroup(
+                    models=[create_decision_model(), create_llm(role="other")]
+                )
+                document = create_document(n_concepts=2)
+                set_actions({2: process_meanwhile(document.concepts[1])})
+                with pytest.raises(ValueError, match=already_processed_error):
+                    group.extract_concepts_from_document(
+                        document, use_concurrency=use_concurrency
+                    )
+                check_usage(group, [decision_model, llm_model])
 
     def test_cached_tokens_usage_and_cost(self):
         """
