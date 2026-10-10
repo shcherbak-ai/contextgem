@@ -182,7 +182,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
 
 **Return Value:**
 
-Returns a list of :class:`~contextgem.public.aspects.Aspect` instances that were processed during extraction. If ``from_aspects`` was specified, returns only those aspects; otherwise returns all aspects attached to the document. Each aspect in the returned list will have its ``extracted_items`` field populated with the extracted information, and its ``reference_paragraphs`` field will always be set. The ``reference_sentences`` field will only be populated when the aspect's ``reference_depth`` is set to ``"sentences"``.
+Returns a list of :class:`~contextgem.public.aspects.Aspect` instances that were processed during extraction. If ``from_aspects`` was specified, returns only those aspects; otherwise returns all aspects attached to the document. Each aspect in the returned list will have its ``extracted_items`` field populated with the extracted information, and its ``reference_paragraphs`` field will always be set. The ``reference_sentences`` field will only be populated when the aspect's ``reference_depth`` is set to ``"sentences"``: it then has the sentences extracted for the aspect, i.e. the reference sentences of its extracted items, and not the other sentences of its reference paragraphs.
 
 **Example Usage:**
 

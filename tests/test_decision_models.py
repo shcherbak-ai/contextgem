@@ -62,7 +62,7 @@ from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.decision_models import _DocumentDecisionModel
 from contextgem.internal.base.llms import _DocumentLLM
 from contextgem.internal.base.models import _COST_QUANT
-from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.data_models import _ModelCost, _ModelUsage
 from contextgem.internal.decisions import (
     _build_aspect_questions,
@@ -8172,8 +8172,12 @@ class TestDecisionModels(BaseTest):
                 assert item.justification is None
                 # The custom data of the sentence, not that of its paragraph
                 assert item.custom_data == sentence.custom_data
-            # The references of the aspect, as when an LLM extracts it:
-            # the paragraphs of its items, and the sentences of these paragraphs
+            # The references of the aspect, as when an LLM extracts it: those of
+            # its items, i.e. the paragraphs of the extracted sentences, each
+            # once, and the extracted sentences, in the order of the items. The
+            # sentences of these paragraphs that are not extracted, e.g. the third
+            # sentence of the second paragraph for the first aspect, are not
+            # among the reference sentences of the aspect.
             reference_paragraphs = [
                 paragraphs[paragraph_position]
                 for paragraph_position in dict.fromkeys(
@@ -8183,9 +8187,8 @@ class TestDecisionModels(BaseTest):
             ]
             assert aspect.reference_paragraphs == reference_paragraphs
             assert aspect.reference_sentences == [
-                sentence
-                for paragraph in reference_paragraphs
-                for sentence in paragraph.sentences
+                paragraphs[paragraph_position].sentences[sentence_position]
+                for (paragraph_position, sentence_position), _ in aspect_sentences
             ]
         assert [item.value for item in termination.extracted_items] == [
             "Either party may terminate this agreement with a notice of 30 days.",
@@ -8199,7 +8202,10 @@ class TestDecisionModels(BaseTest):
         ]
         assert paragraphs[1].custom_data == {"page": 2}
         assert len(termination.reference_paragraphs) == 2
-        assert len(termination.reference_sentences) == 5
+        # Three of the five sentences of the two reference paragraphs are
+        # extracted, and only these are the reference sentences of the aspect
+        assert len(paragraphs[1].sentences) + len(paragraphs[3].sentences) == 5
+        assert len(termination.reference_sentences) == 3
         assert paragraphs[2] not in termination.reference_paragraphs
         assert not governing_law.reference_paragraphs
         assert not governing_law.reference_sentences
@@ -8290,7 +8296,10 @@ class TestDecisionModels(BaseTest):
             paragraphs[3].sentences[0].raw_text
         ]
         assert termination.reference_paragraphs == [paragraphs[3]]
-        assert termination.reference_sentences == paragraphs[3].sentences
+        # The sentence of the new item: the second sentence of its paragraph is
+        # not extracted, i.e. it is not a reference sentence of the aspect
+        assert len(paragraphs[3].sentences) == 2
+        assert termination.reference_sentences == [paragraphs[3].sentences[0]]
         assert payment._is_processed and not payment.extracted_items
         assert not payment.reference_paragraphs
         assert not payment.reference_sentences
@@ -8298,7 +8307,7 @@ class TestDecisionModels(BaseTest):
             paragraphs[4].sentences[0].raw_text
         ]
         assert governing_law.reference_paragraphs == [paragraphs[4]]
-        assert governing_law.reference_sentences == paragraphs[4].sentences
+        assert governing_law.reference_sentences == [paragraphs[4].sentences[0]]
         # Without overwriting, the references that an aspect has are kept, and
         # those of its items are added to them, as when an LLM extracts it
         document = create_document()
@@ -8312,9 +8321,11 @@ class TestDecisionModels(BaseTest):
             id(paragraphs[0]),
             id(paragraphs[3]),
         ]
+        # ... i.e. the sentence of the new item, without the other sentence of
+        # its paragraph
         assert [id(sentence) for sentence in termination.reference_sentences] == [
             id(paragraphs[0].sentences[0]),
-            *[id(sentence) for sentence in paragraphs[3].sentences],
+            id(paragraphs[3].sentences[0]),
         ]
 
     def test_sentence_depth_aspects_decision_threshold(self):
@@ -8623,6 +8634,7 @@ class TestDecisionModels(BaseTest):
             assert aspect._is_processed
             assert len(aspect.extracted_items) == len(aspect_items), aspect.name
             reference_paragraphs: list[_Paragraph] = []
+            reference_sentences: list[_Sentence] = []
             for item, (position, probability) in zip(
                 aspect.extracted_items, aspect_items, strict=True
             ):
@@ -8642,6 +8654,7 @@ class TestDecisionModels(BaseTest):
                     assert (item.reference_sentences[0] is sentence) is (
                         not is_sub_aspect
                     )
+                    reference_sentences.append(sentence)
                 else:
                     paragraph = paragraphs[position]
                     assert item.value == paragraph.raw_text
@@ -8654,17 +8667,11 @@ class TestDecisionModels(BaseTest):
                 if paragraph not in reference_paragraphs:
                     reference_paragraphs.append(paragraph)
             assert aspect.reference_paragraphs == reference_paragraphs
-            # The sentences of the reference paragraphs, for an aspect with
-            # sentences as its items only
-            assert aspect.reference_sentences == (
-                [
-                    sentence
-                    for paragraph in reference_paragraphs
-                    for sentence in paragraph.sentences
-                ]
-                if aspect.reference_depth == "sentences"
-                else []
-            )
+            # The reference sentences of the items, i.e. the extracted sentences
+            # and not the other sentences of the reference paragraphs: an aspect
+            # with paragraphs as its items has none
+            assert aspect.reference_sentences == reference_sentences
+            assert bool(reference_sentences) is (aspect.reference_depth == "sentences")
         self.check_instance_serialization_and_cloning(document)
 
         # === The concept of the aspect ===
@@ -8809,9 +8816,11 @@ class TestDecisionModels(BaseTest):
                 termination.extracted_items[1], {True: 0.7, False: 1 - 0.7}
             )
             assert termination.reference_paragraphs == [paragraphs[1], paragraphs[3]]
+            # The two extracted sentences, and not the five sentences of
+            # the two reference paragraphs
             assert termination.reference_sentences == [
-                *paragraphs[1].sentences,
-                *paragraphs[3].sentences,
+                paragraphs[1].sentences[0],
+                paragraphs[3].sentences[1],
             ]
 
         # === Aspects of both reference depths in one call ===
@@ -9010,7 +9019,9 @@ class TestDecisionModels(BaseTest):
         assert item.custom_data == {"page": 2}
         assert item.reference_paragraphs == [paragraph]
         assert item.reference_sentences == [paragraph.sentences[1]]
-        assert aspect.reference_sentences == paragraph.sentences
+        # The reference sentence of the aspect is that of its item: the first
+        # sentence of the paragraph is not extracted
+        assert aspect.reference_sentences == [paragraph.sentences[1]]
 
     def test_decision_model_sentence_requests_concurrency(self):
         """
@@ -9666,7 +9677,10 @@ class TestDecisionModels(BaseTest):
                 item, {True: 0.8, False: 1 - 0.8} if with_probabilities else None
             )
             assert aspect.reference_paragraphs == [paragraph]
-            assert aspect.reference_sentences == paragraph.sentences
+            # The extracted sentence only, of the three sentences of the paragraph,
+            # whichever kind of model extracts the aspect
+            assert len(paragraph.sentences) == 3
+            assert aspect.reference_sentences == [paragraph.sentences[0]]
 
         # === The check of what a decision model can extract ===
         decision_model = _create_decision_model()
@@ -9808,7 +9822,9 @@ class TestDecisionModels(BaseTest):
         assert item.value == sentence_texts[2][1]
         self.check_item_probabilities(item, {True: 0.7, False: 1 - 0.7})
         assert item.reference_sentences == [document.paragraphs[2].sentences[1]]
-        assert late_payment.reference_sentences == document.paragraphs[2].sentences
+        # ... which is the only reference sentence of the sub-aspect: the first
+        # sentence of the paragraph is not extracted
+        assert late_payment.reference_sentences == item.reference_sentences
 
         # === References for concepts ===
         # ... are still rejected, whatever their depth is
@@ -13706,9 +13722,10 @@ class TestDecisionModels(BaseTest):
         assert item.reference_paragraphs == [fee_paragraph]
         assert item.reference_sentences == [fee_sentence]
         assert payment.reference_paragraphs == [fee_paragraph]
-        # As when an LLM extracts the aspect, its reference sentences are all
-        # the sentences of its reference paragraphs, not only the extracted ones
-        assert payment.reference_sentences == [fee_sentence, report_sentence]
+        # As when an LLM extracts the aspect, its reference sentences are those
+        # of its items, i.e. the extracted sentences: the sentence on the reports
+        # is in the reference paragraph, and is not a reference sentence
+        assert payment.reference_sentences == [fee_sentence]
 
         # === The aspect with paragraphs as its items ===
         # The paragraph on the notice is about the termination by its additional

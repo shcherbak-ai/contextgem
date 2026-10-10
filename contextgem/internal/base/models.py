@@ -458,7 +458,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         Extracts aspects from the provided document using predefined LLMs.
 
         If an aspect instance has ``extracted_items`` populated, the ``reference_paragraphs`` field will be
-        automatically populated from these items.
+        automatically populated from these items. For an aspect with the "sentences" reference depth,
+        the ``reference_sentences`` field is populated from them as well: with the extracted sentences,
+        and not with the other sentences of the reference paragraphs.
 
         This is the synchronous version of `extract_aspects_from_document_async()`.
 
@@ -519,7 +521,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         Extracts aspects from the provided document using predefined LLMs asynchronously.
 
         If an aspect instance has ``extracted_items`` populated, the ``reference_paragraphs`` field will be
-        automatically populated from these items.
+        automatically populated from these items. For an aspect with the "sentences" reference depth,
+        the ``reference_sentences`` field is populated from them as well: with the extracted sentences,
+        and not with the other sentences of the reference paragraphs.
 
         :param document: The document from which aspects are to be extracted.
         :type document: _Document
@@ -2759,15 +2763,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         for ref_para in ref_paras:
                             if ref_para not in source_instance.reference_paragraphs:
                                 source_instance.reference_paragraphs += [ref_para]
-                                if source_instance.reference_depth == "sentences":
-                                    for ref_sent in ref_para.sentences:
-                                        if (
-                                            ref_sent
-                                            not in source_instance.reference_sentences
-                                        ):
-                                            source_instance.reference_sentences += [
-                                                ref_sent
-                                            ]
+                        # The reference sentences of the aspect are those of its
+                        # items, i.e. the extracted sentences, and not all the sentences
+                        # of its reference paragraphs. A sentence is added also when
+                        # its paragraph is a reference paragraph already, e.g. that of
+                        # another sentence extracted from the same paragraph.
+                        if source_instance.reference_depth == "sentences":
+                            for ref_sent in ei.reference_sentences:
+                                if ref_sent not in source_instance.reference_sentences:
+                                    source_instance.reference_sentences += [ref_sent]
                 source_instance._is_processed = True
 
         return instances_to_process, all_usage_data or _ModelUsage()

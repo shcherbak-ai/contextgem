@@ -1085,17 +1085,15 @@ class _DocumentDecisionModel(_DocumentModel):
                             for ref_para in extracted_item.reference_paragraphs:
                                 if ref_para not in instance.reference_paragraphs:
                                     instance.reference_paragraphs += [ref_para]
-                                    # As when an LLM extracts the aspect:
-                                    # the sentences of each reference paragraph
-                                    if instance.reference_depth == "sentences":
-                                        for ref_sent in ref_para.sentences:
-                                            if (
-                                                ref_sent
-                                                not in instance.reference_sentences
-                                            ):
-                                                instance.reference_sentences += [
-                                                    ref_sent
-                                                ]
+                            # As when an LLM extracts the aspect: the reference
+                            # sentences of its items, i.e. the extracted sentences,
+                            # and not all the sentences of its reference paragraphs.
+                            # A sentence is added also when its paragraph is
+                            # a reference paragraph already.
+                            if instance.reference_depth == "sentences":
+                                for ref_sent in extracted_item.reference_sentences:
+                                    if ref_sent not in instance.reference_sentences:
+                                        instance.reference_sentences += [ref_sent]
                     instance._is_processed = True
         except Exception:
             # e.g. an aspect or a concept that was processed by another call while

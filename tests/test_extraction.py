@@ -2301,3 +2301,196 @@ class TestExtraction(BaseTest):
                             s.unique_id for s in document_paragraph.sentences
                         ]
                 segmented_texts.clear()
+
+    def test_aspect_reference_sentences_are_those_of_its_items(self):
+        """
+        Tests that the reference sentences of an aspect with sentences as its
+        items (``reference_depth="sentences"``) are the reference sentences of
+        its extracted items, in the order of the items, each once: when
+        the aspect is extracted, when it is extracted again with
+        ``overwrite_existing=True``, and when the references of its items are
+        added to those that the aspect already has.
+
+        The aspect had all the sentences of each of its reference paragraphs
+        instead, i.e. also those that were not extracted: five reference
+        sentences for a paragraph of five sentences of which one was extracted.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        # The sentences of each paragraph of the document
+        sentence_texts = [
+            ["Services agreement"],
+            [
+                "The client shall pay a fee of 5,000 euros every month.",
+                "The fee is paid in advance.",
+                "Invoices are sent by email.",
+                "Late payments bear interest.",
+                "The supplier reports on the services every quarter.",
+            ],
+            [
+                "Either party may terminate this agreement with a notice of 30 days.",
+                "The notice shall be given in writing.",
+                "Termination does not affect the accrued rights.",
+            ],
+            [
+                "This agreement is governed by the laws of Norway.",
+                "The courts of Oslo have jurisdiction.",
+            ],
+        ]
+        responses: list[str] = []
+        prompts: list[str] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: records the prompt, and returns the next
+            response of the queue.
+            """
+            prompts.append(kwargs["messages"][-1]["content"])
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=responses.pop(0))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document whose paragraphs have their sentences, up to
+            five in a paragraph, and an aspect whose items are sentences, with
+            a concept.
+            """
+            document = Document(
+                paragraphs=[
+                    Paragraph(
+                        raw_text=" ".join(texts),
+                        sentences=[Sentence(raw_text=text) for text in texts],
+                    )
+                    for texts in sentence_texts
+                ]
+            )
+            document.aspects = [
+                Aspect(
+                    name="Duties",
+                    description="Duties of the parties",
+                    reference_depth="sentences",
+                    concepts=[
+                        StringConcept(
+                            name="Notice period",
+                            description="Length of the notice period",
+                        )
+                    ],
+                )
+            ]
+            return document
+
+        def get_aspect_response(sentence_positions: list[tuple[int, int]]) -> str:
+            """
+            Returns the response of the LLM with the given sentences extracted
+            for the aspect, each given by the positions of its paragraph and of
+            the sentence in it.
+            """
+            sentences_of_paragraphs: dict[str, list[dict[str, str]]] = {}
+            for paragraph_position, sentence_position in sentence_positions:
+                paragraph_id = f"P{paragraph_position}"
+                sentences_of_paragraphs.setdefault(paragraph_id, []).append(
+                    {"sentence_id": f"{paragraph_id}-S{sentence_position}"}
+                )
+            paragraphs_listed = [
+                {"paragraph_id": paragraph_id, "sentences": sentences}
+                for paragraph_id, sentences in sentences_of_paragraphs.items()
+            ]
+            return json.dumps([{"aspect_id": "A0", "paragraphs": paragraphs_listed}])
+
+        def check_references(
+            document: Document,
+            paragraph_positions: list[int],
+            sentence_positions: list[tuple[int, int]],
+        ) -> None:
+            """
+            Checks that the references of the aspect of the document are
+            the given paragraphs and the given sentences of the document,
+            in the given order.
+            """
+            (aspect,) = document.aspects
+            paragraphs = document.paragraphs
+            assert [id(i) for i in aspect.reference_paragraphs] == [
+                id(paragraphs[position]) for position in paragraph_positions
+            ]
+            assert [id(i) for i in aspect.reference_sentences] == [
+                id(paragraphs[paragraph_position].sentences[sentence_position])
+                for paragraph_position, sentence_position in sentence_positions
+            ]
+
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        document = create_document()
+        (aspect,) = document.aspects
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # === The first extraction ===
+            # One of the five sentences of the second paragraph, and two of
+            # the three sentences of the third one
+            extracted_sentences = [(1, 0), (2, 0), (2, 2)]
+            responses.append(get_aspect_response(extracted_sentences))
+            llm.extract_aspects_from_document(document)
+            assert [i.value for i in aspect.extracted_items] == [
+                sentence_texts[paragraph_position][sentence_position]
+                for paragraph_position, sentence_position in extracted_sentences
+            ]
+            # The reference sentences of the aspect are the three extracted
+            # sentences, and not the eight sentences of its two reference
+            # paragraphs. A sentence is a reference sentence also when its
+            # paragraph is the one of a sentence extracted before it.
+            check_references(document, [1, 2], extracted_sentences)
+            # ... i.e. they are those of the items of the aspect
+            assert [id(i) for i in aspect.reference_sentences] == [
+                id(sentence)
+                for item in aspect.extracted_items
+                for sentence in item.reference_sentences
+            ]
+            # The concept of the aspect is extracted from the reference
+            # paragraphs of the aspect, i.e. also from their sentences that
+            # are not extracted for the aspect
+            prompts.clear()
+            responses.append('[{"concept_id": "C0", "extracted_items": ["30 days"]}]')
+            llm.extract_concepts_from_aspect(aspect, document)
+            (concept_prompt,) = prompts
+            assert all(
+                text in concept_prompt
+                for text in [*sentence_texts[1], *sentence_texts[2]]
+            )
+            assert not any(
+                text in concept_prompt
+                for text in [*sentence_texts[0], *sentence_texts[3]]
+            )
+
+            # === The aspect is extracted again, with other sentences ===
+            extracted_sentences = [(1, 4), (3, 1)]
+            responses.append(get_aspect_response(extracted_sentences))
+            llm.extract_aspects_from_document(document, overwrite_existing=True)
+            assert [i.value for i in aspect.extracted_items] == [
+                sentence_texts[paragraph_position][sentence_position]
+                for paragraph_position, sentence_position in extracted_sentences
+            ]
+            # The references are those of the new items only: the sentence of
+            # the second paragraph that was extracted before is not among them,
+            # while its paragraph is a reference paragraph again
+            check_references(document, [1, 3], extracted_sentences)
+
+            # === Without overwriting ===
+            # The references that an aspect has are kept, and those of its items
+            # are added to them: a sentence that the aspect already has is not
+            # added again, and a new sentence is added also when its paragraph
+            # is a reference paragraph already
+            document = create_document()
+            (aspect,) = document.aspects
+            paragraphs = document.paragraphs
+            aspect.reference_paragraphs = [paragraphs[2]]
+            aspect.reference_sentences = [paragraphs[2].sentences[1]]
+            responses.append(get_aspect_response([(1, 3), (2, 1), (2, 2)]))
+            llm.extract_aspects_from_document(document)
+            assert len(aspect.extracted_items) == 3
+            check_references(document, [2, 1], [(2, 1), (1, 3), (2, 2)])
+        assert not responses
