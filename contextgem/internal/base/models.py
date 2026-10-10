@@ -2432,10 +2432,17 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 para_sents_enumerated = dict(
                                     enumerate(ref_para.sentences)
                                 )
-                                for sent_dict in para_dict["sentences"]:
-                                    sent_dict["sentence_id"] = int(
-                                        sent_dict["sentence_id"].split("-S")[-1]
+                                try:
+                                    for sent_dict in para_dict["sentences"]:
+                                        sent_dict["sentence_id"] = int(
+                                            sent_dict["sentence_id"].split("-S")[-1]
+                                        )
+                                except ValueError:
+                                    logger.error(
+                                        f"Sentence ID returned by LLM "
+                                        f"for paragraph ID {para_id} is invalid"
                                     )
+                                    return None, all_usage_data
                                 for sent_dict in sorted(
                                     para_dict["sentences"],
                                     key=lambda x: x["sentence_id"],
@@ -2682,8 +2689,17 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     f"Error creating {relevant_concept._item_class.__name__}: {e}"
                                 )
                                 return None, all_usage_data
-                            extracted_item.reference_paragraphs = reference_paragraphs
-                            extracted_item.reference_sentences = reference_sentences
+                            try:
+                                extracted_item.reference_paragraphs = (
+                                    reference_paragraphs
+                                )
+                                extracted_item.reference_sentences = reference_sentences
+                            except ValueError as e:
+                                # E.g. the same reference listed twice for the item
+                                logger.error(
+                                    f"References returned by LLM are invalid: {e}"
+                                )
+                                return None, all_usage_data
                             # Safe cast: "extracted_items" key always contains a list
                             cast(
                                 list,
