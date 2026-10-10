@@ -168,6 +168,14 @@ class _InstanceSerializer(BaseModel):
 
         # Start with normal public fields serialization
         base_dict = super().model_dump()
+        if isinstance(self, _DocumentModel):
+            # The API key of a model is excluded from that serialization (see
+            # the field). The serialized data has the key as not set, in the place
+            # of the field, as it has the API base (see below).
+            base_dict = {
+                key: None if key == KEY_API_KEY_PUBLIC else base_dict[key]
+                for key in type(self).model_fields
+            }
 
         # Transform relevant public attributes
         for key in base_dict:

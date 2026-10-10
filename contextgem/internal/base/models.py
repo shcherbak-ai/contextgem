@@ -3520,11 +3520,17 @@ class _DocumentModel(_GenericModelProcessor):
     )
     api_key: NonEmptyStr | None = Field(
         default=None,
-        # The key is a secret: it is not shown when the model is printed, e.g.
-        # in logs, or in the error of a validation that the model is the input of.
-        # The errors of the validation of the model itself, which the key is
-        # an input of, show no inputs at all (see `model_config` below).
+        # The key is a secret. It is not shown when the model is printed (`repr`),
+        # e.g. in logs, or in the error of a validation that the model is the input
+        # of. It is not serialized by pydantic (`exclude`) either: the `json()`
+        # method of such an error, which writes the inputs out, writes the model
+        # out without the key, and the serialized data of the model (`to_dict()`)
+        # has the key as not set.
+        # In the validation of the model itself, the key is an input as it is
+        # passed, not as a part of a model: the text of the errors of that
+        # validation shows no inputs at all (see `model_config` below).
         repr=False,
+        exclude=True,
         description="API key for provider authentication; optional for local models.",
     )
     api_base: NonEmptyStr | None = Field(
@@ -3625,6 +3631,10 @@ class _DocumentModel(_GenericModelProcessor):
     # shown there. The error still names the param and tells what is wrong with it.
     # This applies to the text of the error only: the inputs are still returned by
     # its `errors()` and `json()` methods, unless `include_input=False` is passed.
+    # A model that is among the inputs is returned by `errors()` as it is, and is
+    # written out by `json()` without its key (see `api_key` above). A key that is
+    # among the inputs as it is passed, as in the two cases above, is returned in
+    # clear text by both methods.
     model_config = ConfigDict(hide_input_in_errors=True)
 
     def __init__(self, **data: Any):

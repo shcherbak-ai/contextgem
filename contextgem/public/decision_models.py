@@ -62,8 +62,13 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         Not included in the serialized model data, i.e. to be set again after
         deserialization. Not shown when the model is printed, nor in the text of
         a validation error of the model, which names the invalid parameter and
-        the reason without showing the values passed (these are still returned by
-        the ``errors()`` method of the error).
+        the reason without showing the values passed. The values are still returned
+        by the ``errors()`` and ``json()`` methods of the error, unless
+        ``include_input=False`` is passed: a model that is among them is returned by
+        ``errors()`` as it is, and is written out by ``json()`` without its key,
+        while a key that is passed as a value, e.g. a rejected key or the key among
+        the parameters that a model is created with, is returned in clear text by
+        both methods.
     :vartype api_key: str | None
     :ivar api_base: Base URL of the API endpoint. Not included in the serialized
         model data, i.e. to be set again after deserialization.

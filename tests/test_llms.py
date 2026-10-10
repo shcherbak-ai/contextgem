@@ -23,6 +23,7 @@ Module defining tests for LLMs.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import types
 from typing import Any
@@ -1399,8 +1400,12 @@ class TestLLMs(BaseTest):
         on its own, as a fallback LLM or in a model group, while its API base is,
         and that no part of the key is shown in the text of a validation error
         of an LLM or of a model group, which does not show the inputs of
-        the validation.
+        the validation, nor given by the ``errors()`` and ``json()`` methods of
+        the error for an LLM that is among the inputs.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
         """
+        litellm = llms_module.litellm
         api_key = "sk-test-SECRET-0123456789"
         api_base = "https://llm.example.com"
         llm = DocumentLLM(
@@ -1420,6 +1425,23 @@ class TestLLMs(BaseTest):
         # The key is set, and is sent with the requests
         assert llm.api_key == api_key
         assert llm.fallback_models[0].api_key == api_key
+        requests: list[dict[str, Any]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Records the request and returns a response to it.
+            """
+            requests.append(kwargs)
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(message=types.SimpleNamespace(content="4"))
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat("What's 2+2?") == "4"
+        assert [request["api_key"] for request in requests] == [api_key]
         for instance in [llm, other_llm, model_group]:
             for text in [repr(instance), str(instance), f"{instance}"]:
                 assert "SECRET" not in text
@@ -1432,7 +1454,8 @@ class TestLLMs(BaseTest):
             """
             Checks that the validation error does not show the key, neither in
             its text, which shows no inputs of the validation, nor in the inputs
-            that it reports, which the LLM is among.
+            that it reports, which the LLM is among: when what its ``errors()``
+            method returns is printed, and in what its ``json()`` method writes out.
 
             :param error: The validation error.
             :type error: ValidationError
@@ -1441,7 +1464,7 @@ class TestLLMs(BaseTest):
             """
             self.check_validation_error_hides_inputs(error, api_key, expected_texts)
             assert "DocumentLLM(" in repr(error.errors())
-            assert "SECRET" not in repr(error.errors())
+            self.check_validation_error_omits_model_keys(error, api_key)
 
         different_roles_error = ["models", "must have different roles"]
         output_language_error = ["must have the same value of `output_language`"]
@@ -1453,6 +1476,21 @@ class TestLLMs(BaseTest):
                 model="openai/gpt-6-luna", api_key=api_key, fallback_models=[other_llm]
             )
         check_error(e.value, ["fallback_models", "must be a fallback model"])
+        # The `errors()` method of the error returns the LLM as it is, i.e. with
+        # the key as its attribute, while its `json()` method writes the LLM out
+        # with all its params but the key
+        (error_details,) = e.value.errors()
+        assert error_details["input"][0] is other_llm
+        (written_error_details,) = json.loads(e.value.json())
+        (written_llm,) = written_error_details["input"]
+        assert list(written_llm) == [
+            param for param in DocumentLLM.model_fields if param != "api_key"
+        ]
+        assert written_llm["model"] == other_llm.model
+        assert written_llm["role"] == "other"
+        # ... unless the inputs are left out
+        (written_error_details,) = json.loads(e.value.json(include_input=False))
+        assert "input" not in written_error_details
         # ... and as an invalid LLM of a group: with the role of another LLM
         with pytest.raises(ValidationError) as e:
             DocumentModelGroup(models=[other_llm, other_llm])
@@ -1486,13 +1524,18 @@ class TestLLMs(BaseTest):
         # The LLM that is invalid itself, when it is created, changed or deserialized:
         # the key is among the inputs of its validation. For an LLM created with
         # the default system message, the input of a check that involves several
-        # params is the LLM, which is shown without the key. For an LLM created with
-        # a system message of its own, it is all the params that the LLM is created
-        # with: the key was shown if it was the first or the last of them.
-        for model_params in [
-            {"model": "openai/gpt-6-luna"},
-            {"model": "openai/gpt-6-luna", "system_message": "Be concise."},
-        ]:
+        # params is the LLM, which is shown, and written out, without the key.
+        # For an LLM created with a system message of its own, it is all the params
+        # that the LLM is created with: the key was shown if it was the first or
+        # the last of them.
+        model_params_cases: list[tuple[dict[str, Any], bool]] = [
+            ({"model": "openai/gpt-6-luna"}, True),
+            ({"model": "openai/gpt-6-luna", "system_message": "Be concise."}, False),
+        ]
+        for model_params, created_model_is_input in model_params_cases:
             self.check_model_validation_errors_hide_inputs(
-                DocumentLLM, model_params, api_key
+                DocumentLLM,
+                model_params,
+                api_key,
+                created_model_is_input=created_model_is_input,
             )
