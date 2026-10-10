@@ -33,6 +33,7 @@ from unittest.mock import patch
 import pytest
 from aiolimiter import AsyncLimiter
 
+from contextgem.internal.base import documents as documents_module
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.data_models import _Message, _ModelCall, _ModelUsage
@@ -2117,3 +2118,186 @@ class TestExtraction(BaseTest):
                     assert not any(i._is_processed for i in instances)
         # No request is sent
         assert not requests_sent
+
+    def test_concepts_with_sentence_references_after_aspects_are_extracted(self):
+        """
+        Tests that a concept with references to sentences is extracted from
+        an aspect, and from a sub-aspect, also when the sentences of the document
+        are segmented only after the aspects were extracted: when the concept is
+        attached after that, when the document is restored from its serialized
+        form in between, and when another call segmented the sentences in
+        between.
+
+        The paragraphs of a sub-aspect, and of any aspect of a restored document,
+        are copies of the paragraphs of the document, which the sentences
+        segmented later did not reach: the extraction from a sub-aspect failed
+        with an error that the sub-aspect is not assigned to the document, and
+        the prompt for an aspect of a restored document had no text.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        paragraph_texts = [
+            "The supplier delivers the goods. Delivery takes 30 days.",
+            "The buyer pays the price. Payment is due in 14 days.",
+            "This agreement is governed by the laws of Norway.",
+        ]
+        sentence_texts = [re.split(r"(?<=\.) ", text) for text in paragraph_texts]
+        # The texts that the sentence segmentation is run on, by each run
+        segmented_texts: list[list[str]] = []
+        prompts: list[str] = []
+
+        class SentenceSplitter:
+            """
+            Replaces the SaT model: splits a text after each full stop.
+            """
+
+            def split(self, texts: list[str]) -> list[list[str]]:
+                """
+                Splits each of the texts into sentences.
+
+                :param texts: The texts of the paragraphs.
+                :type texts: list[str]
+                :return: The sentences of each paragraph.
+                :rtype: list[list[str]]
+                """
+                segmented_texts.append(texts)
+                return [re.split(r"(?<=\.) ", text) for text in texts]
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: the first two paragraphs that a prompt lists
+            are extracted for each aspect, and each concept gets one item, with
+            the second sentence of the first paragraph listed as its reference.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            prompts.append(prompt)
+            concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            aspect_ids = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
+            content = (
+                [
+                    {
+                        "concept_id": concept_id,
+                        "extracted_items": [
+                            {
+                                "value": "30 days",
+                                "reference_paragraphs": [
+                                    {
+                                        "reference_paragraph_id": "P0",
+                                        "reference_sentence_ids": ["P0-S1"],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                    for concept_id in concept_ids
+                ]
+                if concept_ids
+                else [
+                    {"aspect_id": aspect_id, "paragraph_ids": ["P0", "P1"]}
+                    for aspect_id in aspect_ids
+                ]
+            )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_concept() -> StringConcept:
+            """
+            Creates a concept with references to sentences.
+            """
+            return StringConcept(
+                name="Number of days",
+                description="Number of days of a deadline",
+                add_references=True,
+                reference_depth="sentences",
+            )
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                documents_module,
+                "_load_sat_model",
+                new=lambda model_id: SentenceSplitter(),
+            ),
+        ):
+            for scenario in ("attached_after", "restored", "segmented_by_other_call"):
+                llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+                document = Document(raw_text="\n\n".join(paragraph_texts))
+                document.aspects = [
+                    Aspect(
+                        name="Duties",
+                        description="Duties of the parties",
+                        aspects=[
+                            Aspect(
+                                name="Deadlines",
+                                description="Deadlines of the duties",
+                            )
+                        ],
+                    )
+                ]
+                # Nothing requires sentences when the aspects are extracted
+                llm.extract_aspects_from_document(document)
+                assert not document.sentences
+                assert not segmented_texts
+
+                if scenario == "restored":
+                    document = Document.from_dict(document.to_dict())
+                    # The paragraphs of the aspect are not those of the document
+                    assert not any(
+                        paragraph is document_paragraph
+                        for paragraph in document.aspects[0].reference_paragraphs
+                        for document_paragraph in document.paragraphs
+                    )
+                elif scenario == "segmented_by_other_call":
+                    document.concepts = [create_concept()]
+                    llm.extract_concepts_from_document(document)
+                    assert document.sentences
+
+                (aspect,) = document.aspects
+                aspect.concepts = [create_concept()]
+                aspect.aspects[0].concepts = [create_concept()]
+                prompts.clear()
+                llm.extract_concepts_from_aspect(aspect, document)
+
+                # The sentences are segmented once, for the paragraphs of
+                # the document, and not for the copies of the paragraphs
+                assert segmented_texts == [paragraph_texts], scenario
+                # The aspect and the sub-aspect have the first two paragraphs:
+                # the prompt for the concept of each lists their sentences
+                assert len(prompts) == 2, scenario
+                for prompt in prompts:
+                    for paragraph_position, texts in enumerate(sentence_texts[:2]):
+                        for sentence_position, text in enumerate(texts):
+                            sentence_id = f"P{paragraph_position}-S{sentence_position}"
+                            assert f"<sentence_id>{sentence_id}</sentence_id>" in prompt
+                            assert text in prompt
+                    assert paragraph_texts[2] not in prompt
+
+                for instance in (aspect, aspect.aspects[0]):
+                    (concept,) = instance.concepts
+                    (item,) = concept.extracted_items
+                    assert item.value == "30 days"
+                    # The references of the item are found in the document
+                    (reference_paragraph,) = item.reference_paragraphs
+                    (reference_sentence,) = item.reference_sentences
+                    assert reference_sentence.raw_text == sentence_texts[0][1]
+                    assert document.get_paragraph_index(reference_paragraph) == 0
+                    assert document.get_sentence_index(reference_sentence) == (0, 1)
+                    # The paragraphs of the aspect have the sentences of
+                    # the paragraphs of the document
+                    assert len(instance.reference_paragraphs) == 2
+                    for paragraph in instance.reference_paragraphs:
+                        document_paragraph = document.paragraphs[
+                            document.get_paragraph_index(paragraph)
+                        ]
+                        assert paragraph == document_paragraph
+                        assert [s.unique_id for s in paragraph.sentences] == [
+                            s.unique_id for s in document_paragraph.sentences
+                        ]
+                segmented_texts.clear()

@@ -809,6 +809,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
             document._segment_sents()
+        # The paragraphs of the aspect and of its sub-aspects can be copies of
+        # the paragraphs of the document, without the sentences that were segmented
+        # after the aspect was extracted
+        document._share_sents_with_reference_paragraphs(aspect)
 
         # Tools are not used in extraction workflows
         self._warn_tools_ignored_if_enabled()

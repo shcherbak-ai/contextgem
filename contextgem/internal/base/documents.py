@@ -471,6 +471,41 @@ class _Document(_AssignedInstancesProcessor):
                     for i in sent_group
                 ]
 
+    def _share_sents_with_reference_paragraphs(self, aspect: _Aspect) -> None:
+        """
+        Gives the reference paragraphs of an aspect and of its sub-aspects
+        the sentences of the paragraphs of the document, where they have none.
+
+        The reference paragraphs of an aspect are the paragraphs of the document,
+        or equal copies of them with the same unique IDs: those of a sub-aspect,
+        and those of any aspect of a document restored from its serialized form.
+        Sentences that are segmented for the paragraphs of the document only after
+        the aspect was extracted do not reach such copies, while the concepts of
+        the aspect that are extracted with sentences need them.
+
+        :param aspect: The aspect of the document.
+        :type aspect: _Aspect
+        :return: None
+        :rtype: None
+        """
+        document_paragraphs = {
+            paragraph.unique_id: paragraph
+            for paragraph in self.paragraphs
+            if paragraph.sentences
+        }
+        if not document_paragraphs:
+            return
+        pending_aspects = [aspect]
+        while pending_aspects:
+            current_aspect = pending_aspects.pop()
+            for paragraph in current_aspect.reference_paragraphs:
+                if paragraph.sentences:
+                    continue
+                document_paragraph = document_paragraphs.get(paragraph.unique_id)
+                if document_paragraph is not None:
+                    paragraph.sentences = list(document_paragraph.sentences)
+            pending_aspects.extend(current_aspect.aspects)
+
     def _requires_sentence_segmentation(self) -> bool:
         """
         Check if any aspect, sub-aspect, or concept attached to the document requires
