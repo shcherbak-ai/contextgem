@@ -495,44 +495,28 @@ async def _async_multi_executor(
     """
     Executes an async function concurrently over a list of keyword-arg dictionaries.
 
+    An error raised by a call is raised as it is, i.e. it is not turned into
+    a result of the call, and only when no call is left running: on the first error
+    of a call, or when the caller is cancelled, the calls that are still running
+    are cancelled and waited for, as in `_run_async_calls`.
+
     :param func: An async function (i.e., defined with "async def").
                  It must accept keyword arguments that match each dict in data_list.
     :param data_list: A list of dictionaries to pass as keyword arguments to `func`.
     :return: A list of results corresponding to each input dictionary in `data_list`.
-             If a call raises an exception, that slot in the list is None.
     """
 
     if not data_list:
         logger.warning("No data to process in tasks.")
         return []
 
-    # Prepare a list to hold results (same size as data_list)
-    results = [None] * len(data_list)
-
-    async def worker(index: int, kwargs: dict[str, Any]) -> None:
-        """
-        Worker coroutine that executes a single async function call and stores the result.
-
-        :param index: Index position where the result should be stored in the results list.
-        :type index: int
-        :param kwargs: Keyword arguments to pass to the async function.
-        :type kwargs: dict[str, Any]
-        :return: None
-        :rtype: None
-        """
-        try:
-            results[index] = await func(**kwargs)
-        except Exception as e:
-            logger.error(f"Error in worker {index}: {e}")
-            results[index] = None
-
-    # Create one worker task per item in data_list
-    tasks = [asyncio.create_task(worker(i, data)) for i, data in enumerate(data_list)]
-
-    # Wait for all tasks to finish
-    logger.debug(f"Starting tasks ({len(tasks)})")
-    await asyncio.gather(*tasks)
-    logger.debug(f"Completed all tasks ({len(tasks)})")
+    # Run one call per item in data_list, and wait for all the calls to finish
+    logger.debug(f"Starting tasks ({len(data_list)})")
+    results = await _run_async_calls(
+        cals_and_kwargs=[(func, kwargs) for kwargs in data_list],
+        use_concurrency=True,
+    )
+    logger.debug(f"Completed all tasks ({len(data_list)})")
     return results
 
 
@@ -618,8 +602,9 @@ def _model_call_result_is_valid(res: tuple[Any, _ModelUsage] | None) -> bool:
 
     Determines if a result exists and contains validated data as a result of an LLM processing function.
     Result may be one of the following:
-    - None - if LLM processing failed (e.g. due to RateLimitError, or another uncaught exception).
-        In this case, token and cost calculation is not possible.
+    - None - if no result is received, in which case token and cost calculation is not possible.
+        An exception raised during LLM processing does not give such a result: it is raised
+        as it is, with and without concurrency.
     - None, _ModelUsage - if LLM processing failed due to a caught exception or failed data validation,
         e.g. invalid data returned by the LLM. In this case, token and cost calculation is still possible.
     - Any, _ModelUsage - if LLM processing was successful and result is validated. In this case,

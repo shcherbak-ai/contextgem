@@ -3148,8 +3148,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 async def extract_items_or_api_error(**kwargs: Any) -> Any:
                     """
                     Extracts items from a single chunk, returning a model API error
-                    instead of raising it, so that the error is not suppressed by
-                    the concurrent executor.
+                    instead of raising it, so that the other chunks are processed
+                    before the error is raised. Any other error is raised, which
+                    stops the processing of the other chunks.
 
                     :param kwargs: Keyword arguments of `_extract_items_from_instances`.
                     :type kwargs: Any
@@ -3171,11 +3172,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         func=extract_items_or_api_error,
                         data_list=data_list,
                     )
-                except asyncio.CancelledError:
-                    # The extraction is cancelled, e.g. on a timeout set by
-                    # the calling code, or as the extraction with another model of
-                    # the group failed. The calls completed by then are counted:
-                    # their results, with the usage, would be lost otherwise.
+                except BaseException:
+                    # Either a call raised an error that is not reported through
+                    # its result, e.g. for a prompt that exceeds the context window
+                    # of the model when there is no fallback model to try: the other
+                    # calls are stopped by then, and the error is raised unchanged,
+                    # as it is without concurrency. Or the extraction is cancelled,
+                    # e.g. on a timeout set by the calling code, or as the extraction
+                    # with another model of the group failed. In both cases, the calls
+                    # completed by then are counted: their results, with the usage,
+                    # would be lost otherwise.
                     for result in completed_results:
                         await llm._update_usage_and_cost(result)
                     raise

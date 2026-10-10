@@ -22,6 +22,7 @@ Module defining tests for the extraction of aspects and concepts.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -35,6 +36,7 @@ from aiolimiter import AsyncLimiter
 
 from contextgem.internal.base import documents as documents_module
 from contextgem.internal.base import llms as llms_module
+from contextgem.internal.base import models as models_module
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.data_models import _Message, _ModelCall, _ModelUsage
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
@@ -2118,6 +2120,338 @@ class TestExtraction(BaseTest):
                     assert not any(i._is_processed for i in instances)
         # No request is sent
         assert not requests_sent
+
+    def test_error_raised_in_concurrent_call_is_raised_as_it_is(self):
+        """
+        Tests that an error raised in an extraction call, other than a failure
+        of the model that is reported through the result of the call (a failed
+        API request, a cut-off response, an output that cannot be used), reaches
+        the calling code as it is with concurrency, as it does without it:
+        whatever the retries for invalid data are, with the concepts extracted
+        in one call and in several calls, whether or not an exception is to be
+        raised on an extraction error, and for an LLM, a decision model and
+        a model group. Such an error is the one for a prompt that exceeds
+        the context window of an LLM, when there is no fallback LLM left to try,
+        and any other error.
+
+        With concurrency and several calls, such an error was taken for
+        an output of the model that cannot be used: the call was made again,
+        or, with no retries for invalid data and no fallback model,
+        the extraction failed with an error on invalid JSON, or only warned
+        of it.
+
+        The APIs are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
+        n_concepts = 4
+        get_model_info = litellm.get_model_info
+        validate_parsed_llm_output = models_module._validate_parsed_llm_output
+        # The models that are given a context window too small for any prompt
+        small_context_window_models: set[str] = set()
+        requested_models: list[str] = []
+
+        def get_model_info_stub(model: str, *args: Any, **kwargs: Any) -> Any:
+            """
+            Returns the info of the model, with a context window of 10 tokens
+            for a model that is given a small one.
+            """
+            model_info = dict(get_model_info(model, *args, **kwargs))
+            if model in small_context_window_models:
+                model_info["max_input_tokens"] = 10
+            return model_info
+
+        def respond(request: dict[str, Any]) -> Any:
+            """
+            Creates the response of the LLM API to the request: an item for
+            each concept that the prompt lists.
+            """
+            prompt = request["messages"][-1]["content"]
+            content = [
+                {"concept_id": concept_id, "extracted_items": [True]}
+                for concept_id in re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            ]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: records the model of the request, and
+            responds to the request.
+            """
+            requested_models.append(kwargs["model"])
+            return respond(kwargs)
+
+        async def adecisions_stub(**kwargs: Any):
+            """
+            Records a request to a decision model, which is sent where none
+            is expected.
+            """
+            requested_models.append(kwargs["model"])
+            raise AssertionError("A request was sent")
+
+        def create_llm(
+            max_retries_invalid_data: int, with_fallback: bool = False
+        ) -> DocumentLLM:
+            """
+            Creates an LLM with the given number of retries for invalid data,
+            optionally with a fallback LLM.
+            """
+            llm = DocumentLLM(
+                model=primary_model,
+                api_key="test_api_key",
+                max_retries_invalid_data=max_retries_invalid_data,
+            )
+            if with_fallback:
+                llm.fallback_models = [
+                    DocumentLLM(
+                        model=fallback_model, api_key="test_api_key", is_fallback=True
+                    )
+                ]
+            return llm
+
+        def create_document(with_text: bool = True) -> Document:
+            """
+            Creates a document that has a text, or only an image, with concepts
+            that both an LLM and a decision model can extract from a text. In
+            a model group, half of the concepts are routed to the model with
+            the role "other".
+            """
+            document = (
+                Document(raw_text="Services agreement\n\nThe parties agree as follows.")
+                if with_text
+                else Document(images=[self.test_img_png_invoice])
+            )
+            document.concepts = [
+                BooleanConcept(
+                    name=f"Concept {i}",
+                    description=f"Topic {i} is covered",
+                    model_role="other" if i % 2 else None,
+                )
+                for i in range(n_concepts)
+            ]
+            return document
+
+        def get_context_window_error(model: str) -> str:
+            """
+            Returns the pattern of the error for a prompt that exceeds
+            the context window of the model.
+            """
+            return (
+                r"^Input messages contain \d+ tokens, which exceeds the model's "
+                rf"maximum input tokens of 10 for model `{re.escape(model)}`\. "
+            )
+
+        def check_error_is_raised_as_it_is(
+            model: DocumentLLM | DocumentDecisionModel | DocumentModelGroup,
+            error: str,
+            document_has_text: bool = True,
+        ) -> None:
+            """
+            Checks that the extraction of the concepts fails with the given
+            error, which is raised in a call before any request is sent, in
+            the same way with and without concurrency: with each concept
+            extracted in a call of its own and with all the concepts of a model
+            extracted in one call, and whether or not an exception is to be
+            raised on an extraction error.
+            """
+            for raise_exception in (True, False):
+                for max_items_per_call in (1, n_concepts):
+                    error_messages = []
+                    for use_concurrency in (False, True):
+                        document = create_document(with_text=document_has_text)
+                        requested_models.clear()
+                        with pytest.raises(ValueError, match=error) as exc_info:
+                            model.extract_concepts_from_document(
+                                document,
+                                max_items_per_call=max_items_per_call,
+                                use_concurrency=use_concurrency,
+                                raise_exception_on_extraction_error=raise_exception,
+                            )
+                        error_messages.append(str(exc_info.value))
+                        assert not requested_models
+                        assert not any(
+                            i.extracted_items or i._is_processed
+                            for i in document.concepts
+                        )
+                    # The same error with and without concurrency
+                    assert error_messages[0] == error_messages[1]
+
+        async def check_other_calls_are_stopped(
+            llm: DocumentLLM, raise_exception: bool
+        ) -> None:
+            """
+            Extracts the concepts concurrently, each in a call of its own, with
+            an error raised when the response for the first concept is
+            processed, and checks that the error is raised as it is when
+            the other calls are stopped. By the time of the error, the call of
+            the second concept is completed, and the requests of the other
+            calls are sent and not answered.
+            """
+            document = create_document()
+            failed, completed, *in_flight = document.concepts
+            error = RuntimeError("Simulated error")
+            requests: list[tuple[str, str]] = []
+            cancelled_requests: list[str] = []
+
+            async def answer_in_turn(**kwargs: Any):
+                """
+                Simulates the LLM API: the request for the second concept is
+                answered at once, the request for the first concept when
+                the second concept is extracted, and the other requests are
+                not answered.
+                """
+                (name,) = re.findall(
+                    r"<concept_name>(Concept \d)</concept_name>",
+                    kwargs["messages"][-1]["content"],
+                )
+                requests.append((kwargs["model"], name))
+                if name == failed.name:
+                    for _ in range(1000):
+                        if completed._is_processed:
+                            break
+                        await asyncio.sleep(0)
+                elif name != completed.name:
+                    try:
+                        await asyncio.sleep(5)
+                    except asyncio.CancelledError:
+                        cancelled_requests.append(name)
+                        raise
+                return respond(kwargs)
+
+            def validate_or_fail(**kwargs: Any) -> Any:
+                """
+                Fails the processing of the response for the first concept,
+                i.e. of the response that is received when the second concept
+                is extracted, and validates the response for the second one.
+                """
+                if completed._is_processed:
+                    raise error
+                return validate_parsed_llm_output(**kwargs)
+
+            with (
+                patch.object(litellm, "acompletion", new=answer_in_turn),
+                patch.object(
+                    models_module, "_validate_parsed_llm_output", new=validate_or_fail
+                ),
+                pytest.raises(RuntimeError) as exc_info,
+            ):
+                await llm.extract_concepts_from_document_async(
+                    document,
+                    use_concurrency=True,
+                    raise_exception_on_extraction_error=raise_exception,
+                )
+            assert exc_info.value is error
+            # The requests in flight are cancelled, and no task is left running
+            assert sorted(cancelled_requests) == [i.name for i in in_flight]
+            current_task = asyncio.current_task()
+            assert not [
+                task
+                for task in asyncio.all_tasks()
+                if task is not current_task and not task.done()
+            ]
+            # No call is made again, and no fallback LLM is tried
+            assert sorted(requests) == [
+                (primary_model, i.name) for i in document.concepts
+            ]
+            # The concept extracted by then keeps its item, and the request
+            # for it is counted in the usage
+            assert [i.value for i in completed.extracted_items] == [True]
+            assert not any(
+                i.extracted_items or i._is_processed for i in (failed, *in_flight)
+            )
+            usage = llm.get_usage()[0].usage
+            assert usage.input >= 10 and usage.output >= 5
+
+        # Without and with the retries for invalid data
+        llms = [create_llm(0), create_llm(3)]
+        llms_with_fallback = [
+            create_llm(0, with_fallback=True),
+            create_llm(3, with_fallback=True),
+        ]
+        decision_model = DocumentDecisionModel(
+            model="typesafe/jev-latest", api_key="test_api_key"
+        )
+        model_group = DocumentModelGroup(
+            models=[
+                create_llm(0),
+                DocumentDecisionModel(
+                    model="typesafe/jev-latest", api_key="test_api_key", role="other"
+                ),
+            ]
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(litellm, "adecisions", new=adecisions_stub),
+            patch.object(litellm, "get_model_info", new=get_model_info_stub),
+        ):
+            # === The prompt exceeds the context window of the LLM ===
+            # No fallback LLM: the error of the LLM is raised
+            small_context_window_models.add(primary_model)
+            for llm in llms:
+                check_error_is_raised_as_it_is(
+                    llm, error=get_context_window_error(primary_model)
+                )
+            # A call that fails in this way is not made again: with concurrency,
+            # each call is recorded once at most, as unfinished
+            llm = llms[1]
+            llm.reset_usage_and_cost()
+            with pytest.raises(ValueError):
+                llm.extract_concepts_from_document(
+                    create_document(), use_concurrency=True
+                )
+            calls = llm.get_usage()[0].usage.calls
+            assert 1 <= len(calls) <= n_concepts
+            assert all(call.timestamp_received is None for call in calls)
+
+            # A fallback LLM with a larger context window takes over
+            for llm in llms_with_fallback:
+                for max_items_per_call in (1, n_concepts):
+                    for use_concurrency in (False, True):
+                        document = create_document()
+                        requested_models.clear()
+                        llm.extract_concepts_from_document(
+                            document,
+                            max_items_per_call=max_items_per_call,
+                            use_concurrency=use_concurrency,
+                        )
+                        # A request for each call, to the fallback LLM only
+                        assert requested_models == [fallback_model] * (
+                            n_concepts // max_items_per_call
+                        )
+                        assert all(i.extracted_items for i in document.concepts)
+
+            # A fallback LLM whose context window is too small as well:
+            # the error of the fallback LLM, the last one to try, is raised
+            small_context_window_models.add(fallback_model)
+            for llm in llms_with_fallback:
+                check_error_is_raised_as_it_is(
+                    llm, error=get_context_window_error(fallback_model)
+                )
+            small_context_window_models.clear()
+
+            # === The document has no text to extract the concepts from ===
+            # The error is raised in each call, by a model of any kind
+            for model in [*llms, decision_model, model_group]:
+                check_error_is_raised_as_it_is(
+                    model,
+                    error=r"^Document lacks text or paragraphs for concept "
+                    r"extraction\.$",
+                    document_has_text=False,
+                )
+
+            # === An error of another type, raised when a response is processed ===
+            for llm in [*llms, llms_with_fallback[0]]:
+                for raise_exception in (True, False):
+                    llm.reset_usage_and_cost()
+                    asyncio.run(check_other_calls_are_stopped(llm, raise_exception))
 
     def test_concepts_with_sentence_references_after_aspects_are_extracted(self):
         """
