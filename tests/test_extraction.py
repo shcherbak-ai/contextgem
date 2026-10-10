@@ -2463,8 +2463,11 @@ class TestExtraction(BaseTest):
         a call is one whose API request fails, or whose response is cut off at
         the max output tokens, with no fallback model left to try, among
         the first calls and among the calls made again, for an LLM, a decision
-        model and in a model group. The same applies to a call made again whose
-        data is still invalid after the last retry.
+        model and in a model group. The same applies to a call whose data is
+        invalid and that is not made again: a call made again whose data is still
+        invalid after the last retry, and a call of a model that has no retries
+        for invalid data and no fallback model, i.e. of an LLM with
+        ``max_retries_invalid_data=0`` or of a decision model.
 
         A failure that does not fail the extraction changes nothing: the other
         calls go on when a fallback model is yet to be tried, and when
@@ -2558,16 +2561,22 @@ class TestExtraction(BaseTest):
         async def adecisions_stub(**kwargs: Any):
             """
             Simulates the API of the decision model, which answers "yes" to
-            the question of the request. A response uses 10 input tokens.
+            the question of the request, or gives no answer to it if the outcome
+            of the request is the invalid answer. A response uses 10 input
+            tokens.
             """
             (question,) = kwargs["questions"]
-            await send_request(kwargs["model"], question["instructions"])
+            outcome = await send_request(kwargs["model"], question["instructions"])
             return decision_types.OpenAIDecisionResponse(
                 model="jev-1.13.0",
                 answers=(
-                    decision_types.OpenAIPredicateAnswer(
-                        name=question["name"], probability=0.9
-                    ),
+                    ()
+                    if outcome == invalid_answer
+                    else (
+                        decision_types.OpenAIPredicateAnswer(
+                            name=question["name"], probability=0.9
+                        ),
+                    )
                 ),
                 usage=decision_types.OpenAIDecisionUsage(
                     input_tokens=10,
@@ -2835,6 +2844,59 @@ class TestExtraction(BaseTest):
                 extracted=completed_concepts,
             )
 
+            # === Invalid data, and the call is not made again ===
+            # The model has no retries for invalid data and no fallback model. It
+            # returns invalid data for the first concept when the call of
+            # the second concept is completed, with the other requests in flight.
+            for create_model, model_name, error_message in [
+                (
+                    lambda: create_llm(max_retries_invalid_data=0),
+                    primary_model,
+                    "invalid JSON returned by LLM",
+                ),
+                (
+                    create_decision_model,
+                    decision_model,
+                    "an invalid response returned by decision model",
+                ),
+            ]:
+                failed, completed, *unanswered_concepts = concept_names
+                # Without concurrency, the error is raised for the first call
+                model = create_model()
+                set_outcomes({(model_name, failed): [invalid_answer]})
+                with pytest.raises(ModelExtractionError) as exc_info:
+                    model.extract_concepts_from_document(
+                        create_document(), max_items_per_call=1
+                    )
+                assert requests == [(model_name, failed)]
+
+                model = create_model()
+                document = create_document()
+                set_outcomes(
+                    {
+                        (model_name, failed): [
+                            (
+                                lambda c=document.concepts[1]: c._is_processed,
+                                invalid_answer,
+                            )
+                        ],
+                        **{(model_name, i): [in_flight] for i in unanswered_concepts},
+                    }
+                )
+                error = asyncio.run(extract(model, document))
+                # The error is the one raised without concurrency
+                assert isinstance(error, ModelExtractionError)
+                assert error_message in str(error)
+                assert str(error) == str(exc_info.value)
+                assert error.retry_count == 0
+                check_outcome(
+                    model,
+                    document,
+                    expected_requests=[(model_name, i) for i in concept_names],
+                    cancelled=[(model_name, i) for i in unanswered_concepts],
+                    extracted=[completed],
+                )
+
             # === A model group ===
             # The request of the LLM for its first concept fails when its request
             # for its other concept, and the requests of the decision model, are
@@ -2890,6 +2952,50 @@ class TestExtraction(BaseTest):
                     # A warning is issued for the first concept
                     with pytest.warns(
                         UserWarning, match="Exception occurred while calling LLM API"
+                    ):
+                        error = asyncio.run(
+                            extract(
+                                llm, document, raise_exception_on_extraction_error=False
+                            )
+                        )
+                assert error is None
+                check_outcome(
+                    llm,
+                    document,
+                    expected_requests=[
+                        *((primary_model, i) for i in concept_names),
+                        *([(fallback_model, failed)] if with_fallback else []),
+                    ],
+                    cancelled=[],
+                    extracted=concept_names if with_fallback else other_concepts,
+                )
+
+            # The same for invalid data that an LLM without retries for it returns
+            # for the first concept: the other requests are answered after it
+            for with_fallback in (True, False):
+                llm = create_llm(
+                    with_fallback=with_fallback, max_retries_invalid_data=0
+                )
+                document = create_document()
+                failed, *other_concepts = concept_names
+                set_outcomes(
+                    {
+                        (primary_model, failed): [
+                            (lambda: len(requests) == 4, invalid_answer)
+                        ],
+                        **{
+                            (primary_model, i): [(lambda: bool(responses), None)]
+                            for i in other_concepts
+                        },
+                    }
+                )
+                if with_fallback:
+                    # The fallback LLM is tried for the first concept
+                    error = asyncio.run(extract(llm, document))
+                else:
+                    # A warning is issued for the first concept
+                    with pytest.warns(
+                        UserWarning, match=r"invalid JSON.*\(0 retries\)"
                     ):
                         error = asyncio.run(
                             extract(

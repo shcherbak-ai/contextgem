@@ -3174,6 +3174,36 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     result
                 ) or _model_call_result_is_output_truncated(result)
 
+            def report_invalid_output_of_call_not_made_again(
+                instances: list[_Aspect] | list[_Concept],
+            ) -> None:
+                """
+                Reports the output that cannot be used, returned by the model for
+                a call that is not made again, as the model has no retries for such
+                output and no fallback model: raises the error, or issues a warning
+                instead if `raise_exception_on_extraction_error` is False.
+
+                :param instances: The instances of the call, which could not be
+                    processed.
+                :type instances: list[_Aspect] | list[_Concept]
+                :raises ModelExtractionError: If `raise_exception_on_extraction_error`
+                    is True.
+                """
+                error_msg = get_invalid_output_error_msg(llm, instances)
+                if raise_exception_on_extraction_error:
+                    raise ModelExtractionError(error_msg, retry_count=0)
+                warning_msg = (
+                    error_msg
+                    + " (0 retries). "
+                    + " If you want to raise an exception instead, "
+                    "set `raise_exception_on_extraction_error` to True."
+                )
+                logger.warning(warning_msg)
+                warnings.warn(
+                    warning_msg,
+                    stacklevel=3,
+                )
+
             if use_concurrency:
                 # default - each item in a separate call
                 max_items_per_call_inner = max(1, max_items_per_call)
@@ -3222,15 +3252,30 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     its usage to be counted if the processing of the other chunks
                     is interrupted. An error raised for the chunk, e.g. a model API
                     error, which is raised only when it is final, stops
-                    the processing of the other chunks.
+                    the processing of the other chunks. So does an output that
+                    cannot be used, if the model has no retries for such output and
+                    no fallback model, i.e. the call is not made again: the error
+                    is raised here, and not when all the chunks are processed.
 
                     :param kwargs: Keyword arguments of `_extract_items_from_instances`.
                     :type kwargs: Any
                     :return: The extraction result.
                     :rtype: Any
+                    :raises ModelExtractionError: If the model returned an output
+                        that cannot be used, the call is not made again, and
+                        `raise_exception_on_extraction_error` is True.
                     """
                     result = await extract_items_keeping_usage(**kwargs)
                     completed_results.append(result)
+                    if (
+                        raise_exception_on_extraction_error
+                        and not (llm._retries_invalid_data > 0 or llm.fallback_models)
+                        and not _model_call_result_is_valid(result)
+                        and not is_reported_failure(result)
+                    ):
+                        report_invalid_output_of_call_not_made_again(
+                            kwargs["instances_to_process"]
+                        )
                     return result
 
                 # Process chunks concurrently
@@ -3244,15 +3289,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     # Either a call raised an error: a model API error, which is
                     # raised only when it is final, i.e. the retries of the failed
                     # request are already performed and there is no fallback model
-                    # to try, or an error that is not a failure of the model, e.g.
-                    # for a prompt that exceeds the context window of the model when
-                    # there is no fallback model to try. The other calls are stopped
-                    # by then, and the error is raised unchanged, as it is without
-                    # concurrency. Or the extraction is cancelled, e.g. on a timeout
-                    # set by the calling code, or as the extraction with another
-                    # model of the group failed. In both cases, the calls completed
-                    # by then are counted: their results, with the usage, would be
-                    # lost otherwise.
+                    # to try, an error for an output that cannot be used, when
+                    # the call is not made again, or an error that is not a failure
+                    # of the model, e.g. for a prompt that exceeds the context
+                    # window of the model when there is no fallback model to try.
+                    # The other calls are stopped by then, and the error is raised
+                    # unchanged, as it is without concurrency. Or the extraction is
+                    # cancelled, e.g. on a timeout set by the calling code, or as
+                    # the extraction with another model of the group failed. In both
+                    # cases, the calls completed by then are counted: their results,
+                    # with the usage, would be lost otherwise.
                     for result in completed_results:
                         await llm._update_usage_and_cost(result)
                     raise
@@ -3301,21 +3347,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                         "yet no exception was raised."
                                     )
                             elif not is_reported_failure(result):
-                                error_msg = get_invalid_output_error_msg(llm, chunk)
-                                if raise_exception_on_extraction_error:
-                                    raise ModelExtractionError(error_msg, retry_count=0)
-                                else:
-                                    warning_msg = (
-                                        error_msg
-                                        + " (0 retries). "
-                                        + " If you want to raise an exception instead, "
-                                        "set `raise_exception_on_extraction_error` to True."
-                                    )
-                                    logger.warning(warning_msg)
-                                    warnings.warn(
-                                        warning_msg,
-                                        stacklevel=2,
-                                    )
+                                # A warning: the error is raised by the call itself
+                                # (see above), which stops the other calls
+                                report_invalid_output_of_call_not_made_again(chunk)
             else:
                 # Process sequentially
                 for i, data in enumerate(data_list):
@@ -3344,24 +3378,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                         "yet no exception was raised."
                                     )
                             elif not is_reported_failure(result):
-                                error_msg = get_invalid_output_error_msg(
-                                    llm,
-                                    data["instances_to_process"],  # ty: ignore[invalid-argument-type]
+                                report_invalid_output_of_call_not_made_again(
+                                    data["instances_to_process"]  # ty: ignore[invalid-argument-type]
                                 )
-                                if raise_exception_on_extraction_error:
-                                    raise ModelExtractionError(error_msg, retry_count=0)
-                                else:
-                                    warning_msg = (
-                                        error_msg
-                                        + " (0 retries). "
-                                        + " If you want to raise an exception instead, "
-                                        "set `raise_exception_on_extraction_error` to True."
-                                    )
-                                    logger.warning(warning_msg)
-                                    warnings.warn(
-                                        warning_msg,
-                                        stacklevel=2,
-                                    )
 
         # Group instances for processing, based on the relevant params, with the relevant prompts.
         if instance_type == "aspect":
