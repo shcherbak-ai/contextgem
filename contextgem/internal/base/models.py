@@ -562,6 +562,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         if from_aspects is not None:
             from_aspects = _validate_sequence_is_list(from_aspects)
 
+        # Aspects and concepts are copied when they are assigned, together with
+        # the paragraphs and sentences that they reference: whatever was assigned
+        # since the last extraction is to reference those of the document again
+        document._relink_references()
+
         self._check_instances_and_llm_params(
             target=document,
             llm_or_group=self,
@@ -668,6 +673,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # as the sub-aspects were deep-copied when attached to
                 # the aspect document.
                 aspect.aspects = doc.aspects
+            # The sub-aspects are deep-copied again when they are assigned to
+            # the aspect, with the paragraphs and sentences that they reference
+            document._relink_references()
 
         return document_aspects  # ty: ignore[invalid-return-type]
 
@@ -801,6 +809,14 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         if from_concepts is not None:
             from_concepts = _validate_sequence_is_list(from_concepts)
 
+        # Aspects and concepts are copied when they are assigned, together with
+        # the paragraphs and sentences that they reference: whatever was assigned
+        # since the last extraction is to reference those of the document again.
+        # The paragraphs of the aspect and of its sub-aspects then get
+        # the sentences that are segmented for the paragraphs of the document,
+        # also when they are segmented after the aspect was extracted.
+        document._relink_references()
+
         self._check_instances_and_llm_params(
             target=aspect,
             llm_or_group=self,
@@ -813,10 +829,6 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
             document._segment_sents()
-        # The paragraphs of the aspect and of its sub-aspects can be copies of
-        # the paragraphs of the document, without the sentences that were segmented
-        # after the aspect was extracted
-        document._share_sents_with_reference_paragraphs(aspect)
 
         # Tools are not used in extraction workflows
         self._warn_tools_ignored_if_enabled()
@@ -910,16 +922,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     for sub_aspect, sub_aspect_document in sub_aspect_jobs
                 ]
                 cals_and_kwargs = cast(AsyncCalsAndKwargs, cals_and_kwargs)
-                results = await _run_async_calls(
+                # The concepts of a sub-aspect are extracted in place: each call
+                # is given the sub-aspect itself, and the copy of the sub-aspect
+                # in its document only stands for it there. They are not assigned
+                # to the sub-aspect again, which would replace them by deep
+                # copies, with copies of the paragraphs and sentences that their
+                # items reference.
+                await _run_async_calls(
                     cals_and_kwargs=cals_and_kwargs, use_concurrency=use_concurrency
                 )
-                for (sub_aspect, _), sub_aspect_concepts in zip(
-                    sub_aspect_jobs, results, strict=True
-                ):
-                    # Overwrite the sub-aspects with the newly extracted ones,
-                    # as the sub-aspects were deep-copied when attached to
-                    # the sub-aspect document.
-                    sub_aspect.concepts = sub_aspect_concepts
 
         # Explicitly return list of concepts for type checking
         return (
@@ -1056,6 +1067,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         if from_concepts is not None:
             from_concepts = _validate_sequence_is_list(from_concepts)
+
+        # Aspects and concepts are copied when they are assigned, together with
+        # the paragraphs and sentences that they reference: whatever was assigned
+        # since the last extraction is to reference those of the document again
+        document._relink_references()
 
         self._check_instances_and_llm_params(
             target=document,
@@ -2629,6 +2645,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 concept_extracted_item_kwargs[
                                     "reference_sentences"
                                 ] = []
+                                # The paragraphs and the sentences that the item
+                                # already references, by their unique IDs, which
+                                # is what the references are validated by
+                                item_paragraph_ids: set[str] = set()
+                                item_sentence_ids: set[str] = set()
                                 # Reference depth - sentence
                                 # Each extracted item will have reference paragraph in the list of
                                 # reference paragraphs, and reference sentence in the list of reference sentences
@@ -2701,12 +2722,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                         return None, all_usage_data
                                     # A paragraph or a sentence that is listed more
                                     # than once for the item is referenced once
-                                    if (
-                                        ref_para
-                                        not in concept_extracted_item_kwargs[
-                                            "reference_paragraphs"
-                                        ]
-                                    ):
+                                    if ref_para.unique_id not in item_paragraph_ids:
+                                        item_paragraph_ids.add(ref_para.unique_id)
                                         concept_extracted_item_kwargs[
                                             "reference_paragraphs"
                                         ].append(ref_para)
@@ -2734,11 +2751,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                                 )
                                                 return None, all_usage_data
                                             if (
-                                                ref_sent
-                                                not in concept_extracted_item_kwargs[
-                                                    "reference_sentences"
-                                                ]
+                                                ref_sent.unique_id
+                                                not in item_sentence_ids
                                             ):
+                                                item_sentence_ids.add(
+                                                    ref_sent.unique_id
+                                                )
                                                 concept_extracted_item_kwargs[
                                                     "reference_sentences"
                                                 ].append(ref_sent)
@@ -2819,35 +2837,22 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     list["_ExtractedItem"], source_data["extracted_items"]
                 )
                 if extracted_item_type == "aspect":
+                    # Safe cast: source_instance is always an _Aspect instance
+                    # because extracted_item_type is "aspect"
+                    source_instance = cast(_Aspect, source_instance)
                     if overwrite_existing:
                         # The references of an aspect that is extracted again are
                         # those of its new items only: the sub-aspects and the concepts
                         # of the aspect are extracted from its reference paragraphs.
-                        # Safe cast: source_instance is always an _Aspect instance
-                        # because extracted_item_type is "aspect"
-                        source_instance = cast(_Aspect, source_instance)
                         source_instance.reference_paragraphs = []
                         source_instance.reference_sentences = []
                     # References are automatically included for aspects, as paragraphs/sents'
-                    # texts are the values of extracted items for the aspects
-                    for ei in source_instance.extracted_items:
-                        # Safe cast: source_instance is always an _Aspect instance
-                        # because extracted_item_type is "aspect"
-                        source_instance = cast(_Aspect, source_instance)
-                        # Extracted items might have overlapping references
-                        ref_paras = ei.reference_paragraphs
-                        for ref_para in ref_paras:
-                            if ref_para not in source_instance.reference_paragraphs:
-                                source_instance.reference_paragraphs += [ref_para]
-                        # The reference sentences of the aspect are those of its
-                        # items, i.e. the extracted sentences, and not all the sentences
-                        # of its reference paragraphs. A sentence is added also when
-                        # its paragraph is a reference paragraph already, e.g. that of
-                        # another sentence extracted from the same paragraph.
-                        if source_instance.reference_depth == "sentences":
-                            for ref_sent in ei.reference_sentences:
-                                if ref_sent not in source_instance.reference_sentences:
-                                    source_instance.reference_sentences += [ref_sent]
+                    # texts are the values of extracted items for the aspects.
+                    # Extracted items might have overlapping references. The reference
+                    # sentences of the aspect are those of its items, i.e.
+                    # the extracted sentences, and not all the sentences of its
+                    # reference paragraphs.
+                    source_instance._add_references_of_extracted_items()
                 source_instance._is_processed = True
 
         return instances_to_process, all_usage_data or _ModelUsage()

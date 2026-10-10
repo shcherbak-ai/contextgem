@@ -3460,10 +3460,11 @@ class TestExtraction(BaseTest):
         between.
 
         The paragraphs of a sub-aspect, and of any aspect of a restored document,
-        are copies of the paragraphs of the document, which the sentences
+        were copies of the paragraphs of the document, which the sentences
         segmented later did not reach: the extraction from a sub-aspect failed
         with an error that the sub-aspect is not assigned to the document, and
-        the prompt for an aspect of a restored document had no text.
+        the prompt for an aspect of a restored document had no text. They are
+        the paragraphs of the document itself.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -3579,12 +3580,11 @@ class TestExtraction(BaseTest):
 
                 if scenario == "restored":
                     document = Document.from_dict(document.to_dict())
-                    # The paragraphs of the aspect are not those of the document
-                    assert not any(
-                        paragraph is document_paragraph
+                    # The paragraphs of the aspect are those of the document
+                    assert [
+                        id(paragraph)
                         for paragraph in document.aspects[0].reference_paragraphs
-                        for document_paragraph in document.paragraphs
-                    )
+                    ] == [id(paragraph) for paragraph in document.paragraphs[:2]]
                 elif scenario == "segmented_by_other_call":
                     document.concepts = [create_concept()]
                     llm.extract_concepts_from_document(document)
@@ -3597,7 +3597,7 @@ class TestExtraction(BaseTest):
                 llm.extract_concepts_from_aspect(aspect, document)
 
                 # The sentences are segmented once, for the paragraphs of
-                # the document, and not for the copies of the paragraphs
+                # the document, which are those of the aspect and of the sub-aspect
                 assert segmented_texts == [paragraph_texts], scenario
                 # The aspect and the sub-aspect have the first two paragraphs:
                 # the prompt for the concept of each lists their sentences
@@ -3620,17 +3620,18 @@ class TestExtraction(BaseTest):
                     assert reference_sentence.raw_text == sentence_texts[0][1]
                     assert document.get_paragraph_index(reference_paragraph) == 0
                     assert document.get_sentence_index(reference_sentence) == (0, 1)
-                    # The paragraphs of the aspect have the sentences of
-                    # the paragraphs of the document
+                    # The paragraphs of the aspect are the paragraphs of
+                    # the document, i.e. they have their sentences
                     assert len(instance.reference_paragraphs) == 2
                     for paragraph in instance.reference_paragraphs:
                         document_paragraph = document.paragraphs[
                             document.get_paragraph_index(paragraph)
                         ]
-                        assert paragraph == document_paragraph
-                        assert [s.unique_id for s in paragraph.sentences] == [
-                            s.unique_id for s in document_paragraph.sentences
-                        ]
+                        assert paragraph is document_paragraph
+                        assert paragraph.sentences
+                    # ... as are the references of the item
+                    assert reference_paragraph is document.paragraphs[0]
+                    assert reference_sentence is document.paragraphs[0].sentences[1]
                 segmented_texts.clear()
 
     def test_aspect_reference_sentences_are_those_of_its_items(self):
@@ -4159,3 +4160,1050 @@ class TestExtraction(BaseTest):
                 paragraphs[1].sentences[0],
                 paragraphs[1].sentences[1],
             ]
+
+    @pytest.mark.parametrize(
+        "flow",
+        [
+            "separate_methods",
+            "extract_all",
+            "overwrite_existing",
+            "added_instances",
+            "sentences_segmented_late",
+            "decision_model",
+        ],
+    )
+    @pytest.mark.parametrize("use_concurrency", [False, True])
+    def test_references_are_paragraphs_and_sentences_of_document(
+        self, flow: str, use_concurrency: bool
+    ):
+        """
+        Tests that the reference paragraphs and reference sentences of the aspects
+        of a document, of their sub-aspects, and of the extracted items of
+        the aspects and of the concepts at both levels, are the paragraphs and
+        sentences of the document itself, i.e. the same objects, after
+        an extraction: by the separate methods and by ``extract_all()``, with and
+        without concurrency, again with ``overwrite_existing=True``, of the aspects
+        and concepts added to a processed document, and with the sentences
+        segmented after the aspects were extracted. The same holds for the aspects
+        extracted by a decision model, and in a clone of the document, for
+        the paragraphs and sentences of the clone.
+
+        The sub-aspects and the items of their concepts held equal copies of
+        the paragraphs and sentences instead, with the same unique IDs, and so did
+        the aspects and concepts that a processed document already had, once
+        others were added to them.
+
+        Model API calls are stubbed, i.e. no cassette is required.
+        """
+        from litellm.types import decisions as decision_types
+
+        litellm = llms_module.litellm
+        # The sentences of each paragraph of the document
+        sentence_texts = [
+            ["The supplier delivers the goods.", "Delivery takes 30 days."],
+            ["The buyer pays the price.", "Payment is due in 14 days."],
+            ["Either party may terminate.", "The notice period is 60 days."],
+            ["This agreement is governed by the laws of Norway."],
+        ]
+        paragraph_texts = [" ".join(texts) for texts in sentence_texts]
+
+        class SentenceSplitter:
+            """
+            Replaces the SaT model: splits a text after each full stop.
+            """
+
+            def split(self, texts: list[str]) -> list[list[str]]:
+                """
+                Splits each of the texts into sentences.
+
+                :param texts: The texts of the paragraphs.
+                :type texts: list[str]
+                :return: The sentences of each paragraph.
+                :rtype: list[list[str]]
+                """
+                return [re.split(r"(?<=\.) ", text) for text in texts]
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API. An aspect gets two of the paragraphs that
+            the prompt lists, starting with the one at the position of the aspect
+            in the prompt, each with its first sentence if the prompt lists
+            sentences. A concept gets one item, which references the first
+            paragraph that the prompt lists, and its first sentence if
+            the prompt lists sentences.
+            """
+            # As with a real request, the call waits for the response: the calls
+            # made concurrently are all started before any of them is completed
+            await asyncio.sleep(0)
+            prompt = kwargs["messages"][-1]["content"]
+            concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            aspect_ids = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
+            n_paragraphs = len(re.findall(r"<paragraph_id>P\d+</paragraph_id>", prompt))
+            assert n_paragraphs >= 2
+            with_sentences = bool(
+                re.search(r"<sentence_id>P\d+-S\d+</sentence_id>", prompt)
+            )
+            content: list[dict[str, Any]] = []
+            for concept_id in concept_ids:
+                references: dict[str, Any] = (
+                    {
+                        "reference_paragraphs": [
+                            {
+                                "reference_paragraph_id": "P0",
+                                "reference_sentence_ids": ["P0-S0"],
+                            }
+                        ]
+                    }
+                    if with_sentences
+                    else {"reference_paragraph_ids": ["P0"]}
+                )
+                content.append(
+                    {
+                        "concept_id": concept_id,
+                        "extracted_items": [{"value": "30 days", **references}],
+                    }
+                )
+            for aspect_position, aspect_id in enumerate(aspect_ids):
+                paragraph_ids = sorted(
+                    f"P{(aspect_position + shift) % n_paragraphs}" for shift in range(2)
+                )
+                content.append(
+                    {
+                        "aspect_id": aspect_id,
+                        "paragraphs": [
+                            {
+                                "paragraph_id": paragraph_id,
+                                "sentences": [{"sentence_id": f"{paragraph_id}-S0"}],
+                            }
+                            for paragraph_id in paragraph_ids
+                        ],
+                    }
+                    if with_sentences
+                    else {"aspect_id": aspect_id, "paragraph_ids": paragraph_ids}
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        async def adecisions_stub(**kwargs: Any):
+            """
+            Simulates the API of the decision model, which answers "yes" to
+            each question of a request: each paragraph, and each sentence,
+            belongs to each aspect.
+            """
+            return decision_types.OpenAIDecisionResponse(
+                model="jev-1.13.0",
+                answers=tuple(
+                    decision_types.OpenAIPredicateAnswer(
+                        name=question["name"], probability=0.9
+                    )
+                    for question in kwargs["questions"]
+                ),
+                usage=decision_types.OpenAIDecisionUsage(
+                    input_tokens=10,
+                    output_tokens=0,
+                    total_tokens=10,
+                    input_tokens_details=decision_types.OpenAIDecisionInputTokensDetails(
+                        cached_tokens=0, cache_write_tokens=0
+                    ),
+                ),
+            )
+
+        def create_concept(
+            name: str, reference_depth: Literal["paragraphs", "sentences"]
+        ) -> StringConcept:
+            """
+            Creates a concept with references of the given depth.
+            """
+            return StringConcept(
+                name=name,
+                description=f"Description of {name}",
+                add_references=True,
+                reference_depth=reference_depth,
+            )
+
+        def create_aspect(
+            name: str,
+            reference_depth: Literal["paragraphs", "sentences"],
+            with_concepts: bool = True,
+        ) -> Aspect:
+            """
+            Creates an aspect with a sub-aspect, each with a concept, unless
+            they are to be created without concepts.
+            """
+            return Aspect(
+                name=name,
+                description=f"Description of {name}",
+                reference_depth=reference_depth,
+                concepts=[create_concept(f"Concept of {name}", reference_depth)]
+                if with_concepts
+                else [],
+                aspects=[
+                    Aspect(
+                        name=f"Sub-aspect of {name}",
+                        description=f"Description of the sub-aspect of {name}",
+                        reference_depth=reference_depth,
+                        concepts=[
+                            create_concept(
+                                f"Concept of the sub-aspect of {name}", reference_depth
+                            )
+                        ]
+                        if with_concepts
+                        else [],
+                    )
+                ],
+            )
+
+        def create_document(
+            reference_depth: Literal["paragraphs", "sentences"],
+        ) -> Document:
+            """
+            Creates a document of four paragraphs with their sentences, with
+            two aspects, each with a sub-aspect, and with a concept of
+            the document, of each aspect and of each sub-aspect.
+            """
+            document = Document(
+                paragraphs=[
+                    Paragraph(
+                        raw_text=" ".join(texts),
+                        sentences=[Sentence(raw_text=text) for text in texts],
+                    )
+                    for texts in sentence_texts
+                ]
+            )
+            document.aspects = [
+                create_aspect(f"Aspect {i}", reference_depth) for i in range(2)
+            ]
+            document.concepts = [create_concept("Document concept", reference_depth)]
+            return document
+
+        def check_references(document: Document) -> tuple[int, int, int]:
+            """
+            Checks that each reference paragraph and each reference sentence of
+            the aspects of the document, at both levels, and of the extracted
+            items of the aspects and of the concepts, is a paragraph or
+            a sentence of the document itself, i.e. the same object. Returns
+            the numbers of the aspects and items checked, of their reference
+            paragraphs, and of their reference sentences.
+            """
+            holders: list[Any] = []
+            concepts = list(document.concepts)
+            for aspect in document.aspects:
+                for instance in (aspect, *aspect.aspects):
+                    assert instance._is_processed
+                    holders.extend([instance, *instance.extracted_items])
+                    concepts.extend(instance.concepts)
+            for concept in concepts:
+                holders.extend(concept.extracted_items)
+            n_paragraphs = n_sentences = 0
+            for holder in holders:
+                for paragraph in holder.reference_paragraphs:
+                    position = document.get_paragraph_index(paragraph)
+                    assert paragraph is document.paragraphs[position]
+                    n_paragraphs += 1
+                for sentence in holder.reference_sentences:
+                    paragraph_position, position = document.get_sentence_index(sentence)
+                    document_paragraph = document.paragraphs[paragraph_position]
+                    assert sentence is document_paragraph.sentences[position]
+                    n_sentences += 1
+            return len(holders), n_paragraphs, n_sentences
+
+        def check_clone(document: Document) -> None:
+            """
+            Checks that the references in a clone of the document are
+            the paragraphs and sentences of the clone, and not of the document.
+            """
+            clone = document.clone()
+            assert clone == document
+            assert check_references(clone) == check_references(document)
+            assert not any(
+                paragraph is document_paragraph
+                for paragraph, document_paragraph in zip(
+                    clone.paragraphs, document.paragraphs, strict=True
+                )
+            )
+
+        def create_llm() -> DocumentLLM:
+            """
+            Creates an LLM whose requests are not held back by the limiter.
+            """
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            llm.async_limiter = AsyncLimiter(1000, 1)
+            return llm
+
+        def extract_by_separate_methods(
+            llm: DocumentLLM, document: Document, **kwargs: Any
+        ) -> None:
+            """
+            Extracts the aspects of the document, then the concepts of each
+            aspect, then the concepts of the document.
+            """
+            llm.extract_aspects_from_document(document, **kwargs)
+            for aspect in document.aspects:
+                llm.extract_concepts_from_aspect(aspect, document, **kwargs)
+            llm.extract_concepts_from_document(document, **kwargs)
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(litellm, "adecisions", new=adecisions_stub),
+            patch.object(
+                documents_module,
+                "_load_sat_model",
+                new=lambda model_id: SentenceSplitter(),
+            ),
+        ):
+            if flow == "sentences_segmented_late":
+                # Nothing requires sentences when the aspects are extracted: they
+                # are segmented when the concepts, attached afterwards, need them
+                llm = create_llm()
+                document = Document(raw_text="\n\n".join(paragraph_texts))
+                document.aspects = [
+                    create_aspect(f"Aspect {i}", "paragraphs", with_concepts=False)
+                    for i in range(2)
+                ]
+                llm.extract_aspects_from_document(
+                    document, use_concurrency=use_concurrency
+                )
+                assert not document.sentences
+                # 2 aspects and 2 sub-aspects, each with 2 paragraphs as its items
+                assert check_references(document) == (12, 16, 0)
+                document.concepts = [create_concept("Document concept", "sentences")]
+                for aspect in document.aspects:
+                    for instance in (aspect, *aspect.aspects):
+                        instance.concepts = [
+                            create_concept(f"Concept of {instance.name}", "sentences")
+                        ]
+                for aspect in document.aspects:
+                    llm.extract_concepts_from_aspect(
+                        aspect, document, use_concurrency=use_concurrency
+                    )
+                llm.extract_concepts_from_document(
+                    document, use_concurrency=use_concurrency
+                )
+                assert len(document.sentences) == 7
+                # ... and 5 concepts, each with an item that references a sentence
+                assert check_references(document) == (17, 21, 5)
+                check_clone(document)
+                return
+
+            for reference_depth in ("paragraphs", "sentences"):
+                # With sentences as the references, each item of an aspect and of
+                # a concept references a sentence, and each aspect the sentences
+                # of its two items
+                with_sentences = reference_depth == "sentences"
+                kwargs: dict[str, Any] = {"use_concurrency": use_concurrency}
+
+                if flow == "decision_model":
+                    # A decision model extracts the aspects and the sub-aspects:
+                    # each of the 4 paragraphs, or of the 7 sentences, is an item
+                    # of each of the 2 aspects and 2 sub-aspects
+                    decision_model = DocumentDecisionModel(
+                        model="typesafe/jev-latest", api_key="test_api_key"
+                    )
+                    decision_model.async_limiter = AsyncLimiter(1000, 1)
+                    document = create_document(reference_depth)
+                    document.remove_all_concepts()
+                    document.aspects = [
+                        create_aspect(
+                            f"Aspect {i}", reference_depth, with_concepts=False
+                        )
+                        for i in range(2)
+                    ]
+                    expected = (32, 44, 56) if with_sentences else (20, 32, 0)
+                    decision_model.extract_aspects_from_document(document, **kwargs)
+                    assert check_references(document) == expected
+                    decision_model.extract_aspects_from_document(
+                        document, overwrite_existing=True, **kwargs
+                    )
+                    assert check_references(document) == expected
+                    check_clone(document)
+                    continue
+
+                llm = create_llm()
+                document = create_document(reference_depth)
+                # 2 aspects and 2 sub-aspects, each with 2 items, and 5 concepts,
+                # each with an item
+                all_extracted = (17, 21, 21 if with_sentences else 0)
+
+                if flow == "separate_methods":
+                    llm.extract_aspects_from_document(document, **kwargs)
+                    assert check_references(document) == (
+                        12,
+                        16,
+                        16 if with_sentences else 0,
+                    )
+                    for aspect in document.aspects:
+                        llm.extract_concepts_from_aspect(aspect, document, **kwargs)
+                    llm.extract_concepts_from_document(document, **kwargs)
+                    assert check_references(document) == all_extracted
+
+                elif flow == "extract_all":
+                    llm.extract_all(document, **kwargs)
+                    assert check_references(document) == all_extracted
+
+                elif flow == "overwrite_existing":
+                    llm.extract_all(document, **kwargs)
+                    extract_by_separate_methods(
+                        llm, document, overwrite_existing=True, **kwargs
+                    )
+                    assert check_references(document) == all_extracted
+                    llm.extract_all(document, overwrite_existing=True, **kwargs)
+                    assert check_references(document) == all_extracted
+
+                elif flow == "added_instances":
+                    llm.extract_all(document, **kwargs)
+                    # An aspect with a sub-aspect, and a concept at each level, are
+                    # added to the processed document: the aspects and concepts
+                    # that it already has are copied with those that are added
+                    document.add_aspects(
+                        [create_aspect("Added aspect", reference_depth)]
+                    )
+                    document.add_concepts(
+                        [create_concept("Added document concept", reference_depth)]
+                    )
+                    for instance in (
+                        document.aspects[0],
+                        document.aspects[0].aspects[0],
+                    ):
+                        instance.add_concepts(
+                            [
+                                create_concept(
+                                    f"Added concept of {instance.name}", reference_depth
+                                )
+                            ]
+                        )
+                    added_aspect = document.get_aspect_by_name("Added aspect")
+                    llm.extract_aspects_from_document(
+                        document, from_aspects=[added_aspect], **kwargs
+                    )
+                    llm.extract_concepts_from_aspect(added_aspect, document, **kwargs)
+                    llm.extract_concepts_from_document(
+                        document,
+                        from_concepts=[
+                            document.get_concept_by_name("Added document concept")
+                        ],
+                        **kwargs,
+                    )
+                    # The concepts of the first aspect and of its sub-aspect are
+                    # extracted again, with those that are added to them
+                    llm.extract_concepts_from_aspect(
+                        document.aspects[0], document, overwrite_existing=True, **kwargs
+                    )
+                    # 3 aspects and 3 sub-aspects, each with 2 items, and
+                    # 10 concepts, each with an item
+                    assert check_references(document) == (
+                        28,
+                        34,
+                        34 if with_sentences else 0,
+                    )
+
+                check_clone(document)
+
+    def test_document_relinks_references_to_its_paragraphs_and_sentences(self):
+        """
+        Tests that a document replaces the copies of its paragraphs and sentences,
+        among the references of its aspects and of the extracted items, with
+        the paragraphs and sentences themselves: each copy is replaced with
+        the one that has the same unique ID, in place, also when the copy has
+        other content, e.g. no sentences; a reference that the document has no
+        paragraph or sentence with the same unique ID for is left as it is; and
+        the serialized document is the same before and after, when the copies are
+        equal to what they are copies of.
+
+        Such copies are made when aspects and concepts are assigned, as they are
+        copied with what they reference, and are replaced when the next extraction
+        starts: here, the aspect of a document is assigned to it again before
+        the sentences are segmented for a concept that is added to the aspect.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        sentence_texts = [
+            ["The supplier delivers the goods.", "Delivery takes 30 days."],
+            ["The buyer pays the price.", "Payment is due in 14 days."],
+            ["This agreement is governed by the laws of Norway."],
+        ]
+
+        def create_document(with_sentences: bool = True) -> Document:
+            """
+            Creates a document of three paragraphs, with their sentences unless
+            it is to be created without them, with an aspect and a concept that
+            have the references that an extraction gives them: the aspect has
+            the first two paragraphs and the second sentence of each, and
+            the item of the concept has the third paragraph and its sentence.
+            """
+            document = Document(
+                paragraphs=[
+                    Paragraph(
+                        raw_text=" ".join(texts),
+                        sentences=[Sentence(raw_text=text) for text in texts]
+                        if with_sentences
+                        else [],
+                    )
+                    for texts in sentence_texts
+                ]
+            )
+            document.aspects = [
+                Aspect(
+                    name="Duties",
+                    description="Duties of the parties",
+                    reference_depth="sentences" if with_sentences else "paragraphs",
+                )
+            ]
+            document.concepts = [
+                StringConcept(
+                    name="Governing law",
+                    description="Law that governs the agreement",
+                    add_references=True,
+                    reference_depth="sentences" if with_sentences else "paragraphs",
+                )
+            ]
+            (aspect,) = document.aspects
+            (concept,) = document.concepts
+            aspect_items = []
+            for paragraph in document.paragraphs[:2]:
+                item = aspect._item_class(value=paragraph.raw_text)
+                item.reference_paragraphs = [paragraph]
+                item.reference_sentences = paragraph.sentences[1:]
+                aspect_items.append(item)
+            aspect.extracted_items = aspect_items
+            aspect.reference_paragraphs = document.paragraphs[:2]
+            aspect.reference_sentences = [
+                sentence
+                for item in aspect_items
+                for sentence in item.reference_sentences
+            ]
+            concept_item = concept._item_class(value="Norway")
+            concept_item.reference_paragraphs = document.paragraphs[2:]
+            concept_item.reference_sentences = list(document.paragraphs[2].sentences)
+            concept.extracted_items = [concept_item]  # ty: ignore[invalid-assignment]
+            for instance in (aspect, concept):
+                instance._is_processed = True
+            return document
+
+        def get_holders(document: Document) -> list[Any]:
+            """
+            Returns the aspect of the document, its items and the item of
+            the concept, i.e. what holds references.
+            """
+            (aspect,) = document.aspects
+            (concept,) = document.concepts
+            return [aspect, *aspect.extracted_items, *concept.extracted_items]
+
+        def get_reference_lists(document: Document) -> list[list[Any]]:
+            """
+            Returns the lists of the reference paragraphs and of the reference
+            sentences of the aspect and of the items of the document.
+            """
+            return [
+                references
+                for holder in get_holders(document)
+                for references in (
+                    holder.reference_paragraphs,
+                    holder.reference_sentences,
+                )
+            ]
+
+        def replace_references_with_copies(document: Document) -> None:
+            """
+            Replaces each reference of the document with a copy of it.
+            """
+            for holder in get_holders(document):
+                holder.reference_paragraphs = [
+                    paragraph.clone() for paragraph in holder.reference_paragraphs
+                ]
+                holder.reference_sentences = [
+                    sentence.clone() for sentence in holder.reference_sentences
+                ]
+
+        def get_reference_positions(document: Document) -> list[Any]:
+            """
+            Checks that each reference of the document is a paragraph or
+            a sentence of the document itself, i.e. the same object, and returns
+            the positions of the references of each holder in the document.
+            """
+            positions = []
+            for holder in get_holders(document):
+                paragraph_positions = []
+                for paragraph in holder.reference_paragraphs:
+                    position = document.get_paragraph_index(paragraph)
+                    assert paragraph is document.paragraphs[position]
+                    paragraph_positions.append(position)
+                sentence_positions = []
+                for sentence in holder.reference_sentences:
+                    paragraph_position, position = document.get_sentence_index(sentence)
+                    document_paragraph = document.paragraphs[paragraph_position]
+                    assert sentence is document_paragraph.sentences[position]
+                    sentence_positions.append((paragraph_position, position))
+                positions.append((paragraph_positions, sentence_positions))
+            return positions
+
+        expected_positions = [
+            ([0, 1], [(0, 1), (1, 1)]),
+            ([0], [(0, 1)]),
+            ([1], [(1, 1)]),
+            ([2], [(2, 0)]),
+        ]
+
+        # === Equal copies are replaced, in place ===
+        document = create_document()
+        assert get_reference_positions(document) == expected_positions
+        serialized = document.to_dict()
+        replace_references_with_copies(document)
+        (aspect,) = document.aspects
+        assert aspect.reference_paragraphs[0] is not document.paragraphs[0]
+        assert aspect.reference_sentences[0] is not document.paragraphs[0].sentences[1]
+        # Equal copies are serialized as what they are copies of
+        assert document.to_dict() == serialized
+        reference_lists = get_reference_lists(document)
+        document._relink_references()
+        assert get_reference_positions(document) == expected_positions
+        assert document.to_dict() == serialized
+        assert document.to_json() == json.dumps(serialized, ensure_ascii=False)
+        # The copies are replaced in the lists that the aspect and the items have
+        assert all(
+            references is references_before
+            for references, references_before in zip(
+                get_reference_lists(document), reference_lists, strict=True
+            )
+        )
+        # Nothing changes when there is nothing to replace
+        document._relink_references()
+        assert get_reference_positions(document) == expected_positions
+        assert document.to_dict() == serialized
+
+        # === A reference with no counterpart in the document is left as it is ===
+        document = create_document()
+        replace_references_with_copies(document)
+        (aspect,) = document.aspects
+        other_paragraph = Paragraph(
+            raw_text="Another text. Of another document.",
+            sentences=[
+                Sentence(raw_text="Another text."),
+                Sentence(raw_text="Of another document."),
+            ],
+        )
+        aspect.reference_paragraphs = [
+            aspect.reference_paragraphs[0],
+            other_paragraph,
+            aspect.reference_paragraphs[1],
+        ]
+        aspect.reference_sentences = [
+            other_paragraph.sentences[1],
+            *aspect.reference_sentences,
+        ]
+        document._relink_references()
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(document.paragraphs[0]),
+            id(other_paragraph),
+            id(document.paragraphs[1]),
+        ]
+        assert [id(sentence) for sentence in aspect.reference_sentences] == [
+            id(other_paragraph.sentences[1]),
+            id(document.paragraphs[0].sentences[1]),
+            id(document.paragraphs[1].sentences[1]),
+        ]
+
+        # === A copy with other content is replaced as well ===
+        # The copies have what the paragraphs and sentences of the document had
+        # when they were copied, e.g. the custom data that is changed afterwards
+        document = create_document()
+        replace_references_with_copies(document)
+        document.paragraphs[0].custom_data = {"page": 1}
+        document.paragraphs[0].sentences[1].custom_data = {"page": 1}
+        (aspect,) = document.aspects
+        assert aspect.reference_paragraphs[0] != document.paragraphs[0]
+        assert aspect.reference_paragraphs[0].custom_data == {}
+        document._relink_references()
+        assert get_reference_positions(document) == expected_positions
+        assert aspect.reference_paragraphs[0].custom_data == {"page": 1}
+        assert aspect.extracted_items[0].reference_sentences[0].custom_data == {
+            "page": 1
+        }
+
+        # === Paragraphs without sentences, and a document without text ===
+        document = create_document(with_sentences=False)
+        serialized = document.to_dict()
+        replace_references_with_copies(document)
+        document._relink_references()
+        assert get_reference_positions(document) == [
+            ([0, 1], []),
+            ([0], []),
+            ([1], []),
+            ([2], []),
+        ]
+        assert document.to_dict() == serialized
+        image_document = Document(images=[self.test_img_png_invoice])
+        image_document.concepts = [
+            StringConcept(name="Title", description="Title of the document")
+        ]
+        image_document._relink_references()
+
+        # === Copies made by an assignment are replaced by the next extraction ===
+        # The aspect is assigned again, i.e. copied with its reference paragraphs,
+        # before the sentences are segmented: the copies would be left without
+        # the sentences that the concept of the aspect is extracted with
+        prompts: list[str] = []
+
+        class SentenceSplitter:
+            """
+            Replaces the SaT model: splits a text after each full stop.
+            """
+
+            def split(self, texts: list[str]) -> list[list[str]]:
+                """
+                Splits each of the texts into sentences.
+
+                :param texts: The texts of the paragraphs.
+                :type texts: list[str]
+                :return: The sentences of each paragraph.
+                :rtype: list[list[str]]
+                """
+                return [re.split(r"(?<=\.) ", text) for text in texts]
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: the concept gets an item that references
+            the second sentence of the first paragraph that the prompt lists.
+            """
+            prompts.append(kwargs["messages"][-1]["content"])
+            content = [
+                {
+                    "concept_id": "C0",
+                    "extracted_items": [
+                        {
+                            "value": "30 days",
+                            "reference_paragraphs": [
+                                {
+                                    "reference_paragraph_id": "P0",
+                                    "reference_sentence_ids": ["P0-S1"],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        document = create_document(with_sentences=False)
+        document.remove_all_concepts()
+        document.aspects = document.aspects
+        (aspect,) = document.aspects
+        aspect.concepts = [
+            StringConcept(
+                name="Delivery time",
+                description="Time that the delivery takes",
+                add_references=True,
+                reference_depth="sentences",
+            )
+        ]
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                documents_module,
+                "_load_sat_model",
+                new=lambda model_id: SentenceSplitter(),
+            ),
+        ):
+            (concept,) = llm.extract_concepts_from_aspect(aspect, document)
+        # The prompt lists the sentences of the paragraphs of the aspect
+        (prompt,) = prompts
+        assert all(text in prompt for text in [*sentence_texts[0], *sentence_texts[1]])
+        (item,) = concept.extracted_items
+        assert item.reference_paragraphs[0] is document.paragraphs[0]
+        assert item.reference_sentences[0] is document.paragraphs[0].sentences[1]
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraph) for paragraph in document.paragraphs[:2]
+        ]
+        for aspect_item, paragraph in zip(
+            aspect.extracted_items, document.paragraphs[:2], strict=True
+        ):
+            assert aspect_item.reference_paragraphs[0] is paragraph
+
+    def test_aspect_references_are_told_apart_by_unique_id(self):
+        """
+        Tests that the references of the extracted items of an aspect are added
+        to the references of the aspect by their unique IDs: a paragraph or
+        a sentence that the aspect already has a copy of, with the same unique ID
+        and other content, e.g. without the sentences of the original, is not
+        added again.
+
+        Such a copy is not equal to the original, so it was taken for another
+        reference: the list of the references of the aspect was extended in place
+        and then rejected, with ``ValueError`` for duplicates, and kept
+        the duplicate.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        sentence_texts = [
+            ["The supplier delivers the goods.", "Delivery takes 30 days."],
+            ["The buyer pays the price.", "Payment is due in 14 days."],
+        ]
+
+        def create_document() -> Document:
+            """
+            Creates a document of two paragraphs with their sentences, with
+            an aspect that has sentences as its items.
+            """
+            document = Document(
+                paragraphs=[
+                    Paragraph(
+                        raw_text=" ".join(texts),
+                        sentences=[Sentence(raw_text=text) for text in texts],
+                    )
+                    for texts in sentence_texts
+                ]
+            )
+            document.aspects = [
+                Aspect(
+                    name="Deadlines",
+                    description="Clauses on deadlines",
+                    reference_depth="sentences",
+                )
+            ]
+            return document
+
+        def create_copies(document: Document) -> tuple[Any, Any]:
+            """
+            Returns a copy of the first paragraph of the document without its
+            sentences, and a copy of its second sentence with other custom
+            data: each has the unique ID of the original, and is not equal to it.
+            """
+            paragraph = document.paragraphs[0]
+            paragraph_copy = Paragraph.from_dict(
+                {**paragraph.to_dict(), "sentences": []}
+            )
+            sentence_copy = paragraph.sentences[1].clone()
+            sentence_copy.custom_data = {"page": 1}
+            for original, copy in (
+                (paragraph, paragraph_copy),
+                (paragraph.sentences[1], sentence_copy),
+            ):
+                assert copy.unique_id == original.unique_id
+                assert copy != original
+                assert copy not in [original]
+            return paragraph_copy, sentence_copy
+
+        # === An aspect that has the copies as its references is extracted ===
+        # The references that an aspect has are kept, and those of its items
+        # are added to them
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: the second sentence of each paragraph is
+            extracted for the aspect.
+            """
+            content = [
+                {
+                    "aspect_id": "A0",
+                    "paragraphs": [
+                        {
+                            "paragraph_id": f"P{position}",
+                            "sentences": [{"sentence_id": f"P{position}-S1"}],
+                        }
+                        for position in range(2)
+                    ],
+                }
+            ]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        document = create_document()
+        (aspect,) = document.aspects
+        paragraphs = document.paragraphs
+        paragraph_copy, sentence_copy = create_copies(document)
+        aspect.reference_paragraphs = [paragraph_copy]
+        aspect.reference_sentences = [sentence_copy]
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            llm.extract_aspects_from_document(document)
+        assert [item.value for item in aspect.extracted_items] == [
+            sentence_texts[0][1],
+            sentence_texts[1][1],
+        ]
+        # Each paragraph and sentence is a reference of the aspect once: that
+        # of the document, which replaces its copy when the extraction starts
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraphs[0]),
+            id(paragraphs[1]),
+        ]
+        assert [id(sentence) for sentence in aspect.reference_sentences] == [
+            id(paragraphs[0].sentences[1]),
+            id(paragraphs[1].sentences[1]),
+        ]
+
+        # === The references of the items are added to an aspect that has copies ===
+        # Here, the copies are not replaced first, as they are when an extraction
+        # starts: the references of the items, some of which several items have,
+        # are added to those of the aspect as they are
+        document = create_document()
+        (aspect,) = document.aspects
+        paragraphs = document.paragraphs
+        paragraph_copy, sentence_copy = create_copies(document)
+        aspect.reference_paragraphs = [paragraph_copy]
+        aspect.reference_sentences = [sentence_copy]
+        references_before = (aspect.reference_paragraphs, aspect.reference_sentences)
+        items = []
+        for paragraph_position, sentence_position in [(1, 0), (0, 1), (0, 0), (1, 0)]:
+            sentence = paragraphs[paragraph_position].sentences[sentence_position]
+            item = aspect._item_class(value=sentence.raw_text)
+            item.reference_paragraphs = [paragraphs[paragraph_position]]
+            item.reference_sentences = [sentence]
+            items.append(item)
+        aspect.extracted_items = items
+        aspect._add_references_of_extracted_items()
+        # The copies that the aspect had are kept, and what they are copies of
+        # is not added: the other references follow in the order of the items
+        assert [id(paragraph) for paragraph in aspect.reference_paragraphs] == [
+            id(paragraph_copy),
+            id(paragraphs[1]),
+        ]
+        assert [id(sentence) for sentence in aspect.reference_sentences] == [
+            id(sentence_copy),
+            id(paragraphs[1].sentences[0]),
+            id(paragraphs[0].sentences[0]),
+        ]
+        # The lists that the aspect had are not extended in place
+        assert references_before == ([paragraph_copy], [sentence_copy])
+
+    def test_concepts_of_aspects_that_reference_another_document(self):
+        """
+        Tests that concepts are extracted from an aspect and from its sub-aspect
+        whose reference paragraphs are not paragraphs of the document, as when
+        the aspects were extracted from another document and assigned to this
+        one. Such references have no counterpart in the document and are left as
+        they are, also when a reference of an item of the sub-aspect is not equal
+        to the reference of the sub-aspect with the same unique ID. The items of
+        the concepts reference the paragraphs of the aspect and of the sub-aspect.
+
+        The concepts of a sub-aspect are extracted with a temporary document,
+        built from the paragraphs of the sub-aspect, which holds a copy of
+        the sub-aspect: the sub-aspect is to stay equal to that copy, so
+        the references of the copy are not replaced with the paragraphs of
+        the temporary document.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: each aspect gets the first two paragraphs that
+            the prompt lists, and each concept an item that references the first
+            one.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            aspect_ids = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
+            content = [
+                {
+                    "concept_id": concept_id,
+                    "extracted_items": [
+                        {"value": "30 days", "reference_paragraph_ids": ["P0"]}
+                    ],
+                }
+                for concept_id in concept_ids
+            ] or [
+                {"aspect_id": aspect_id, "paragraph_ids": ["P0", "P1"]}
+                for aspect_id in aspect_ids
+            ]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            for with_unequal_reference in (False, True):
+                llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+                source_document = Document(
+                    raw_text="The supplier delivers the goods in 30 days.\n\n"
+                    "The buyer pays the price in 14 days.\n\n"
+                    "This agreement is governed by the laws of Norway."
+                )
+                source_document.aspects = [
+                    Aspect(
+                        name="Duties",
+                        description="Duties of the parties",
+                        aspects=[
+                            Aspect(
+                                name="Deadlines",
+                                description="Deadlines of the duties",
+                            )
+                        ],
+                    )
+                ]
+                llm.extract_aspects_from_document(source_document)
+
+                # The aspects are assigned to a document with other paragraphs
+                document = Document(raw_text="Another text.\n\nOf another document.")
+                document.aspects = source_document.aspects
+                (aspect,) = document.aspects
+                (sub_aspect,) = aspect.aspects
+                unequal_reference = None
+                if with_unequal_reference:
+                    # A reference of an item of the sub-aspect has other content
+                    # than the reference of the sub-aspect with the same unique ID
+                    item = sub_aspect.extracted_items[0]
+                    unequal_reference = item.reference_paragraphs[0].clone()
+                    unequal_reference.custom_data = {"page": 1}
+                    item.reference_paragraphs = [unequal_reference]
+                    assert unequal_reference != sub_aspect.reference_paragraphs[0]
+                for instance in (aspect, sub_aspect):
+                    instance.concepts = [
+                        StringConcept(
+                            name=f"Delivery time in {instance.name}",
+                            description="Time that the delivery takes",
+                            add_references=True,
+                        )
+                    ]
+                references_before = [
+                    [id(paragraph) for paragraph in instance.reference_paragraphs]
+                    for instance in (aspect, sub_aspect)
+                ]
+                llm.extract_concepts_from_aspect(aspect, document)
+
+                for instance, reference_ids in zip(
+                    (aspect, sub_aspect), references_before, strict=True
+                ):
+                    # The references of the aspect are left as they are: none of
+                    # them is a paragraph of the document
+                    assert len(instance.reference_paragraphs) == 2
+                    assert [
+                        id(paragraph) for paragraph in instance.reference_paragraphs
+                    ] == reference_ids
+                    for paragraph in instance.reference_paragraphs:
+                        with pytest.raises(ValueError, match="was not found"):
+                            document.get_paragraph_index(paragraph)
+                    # The item of the concept references the first of them
+                    (concept,) = instance.concepts
+                    (concept_item,) = concept.extracted_items
+                    (reference_paragraph,) = concept_item.reference_paragraphs
+                    assert reference_paragraph is instance.reference_paragraphs[0]
+                if unequal_reference is not None:
+                    (reference_paragraph,) = sub_aspect.extracted_items[
+                        0
+                    ].reference_paragraphs
+                    assert reference_paragraph is unequal_reference

@@ -263,6 +263,47 @@ class _Aspect(
         for sub_aspect in self.aspects:
             sub_aspect._reset_nesting_levels(level + 1)
 
+    def _add_references_of_extracted_items(self) -> None:
+        """
+        Adds the references of the extracted items of the aspect to the references
+        of the aspect itself: the reference paragraphs of the items, and, for
+        an aspect with the "sentences" reference depth, their reference sentences,
+        i.e. the extracted sentences, and not all the sentences of the reference
+        paragraphs. A sentence is added also when its paragraph is a reference
+        paragraph already, e.g. that of another sentence extracted from it.
+
+        The references that the aspect already has are kept, and those of the items
+        follow them in the order of the items. The items may have overlapping
+        references: a paragraph or a sentence becomes a reference of the aspect
+        once. It is told from the others by its unique ID, as it is when
+        the references are assigned, and not by equality: a copy with the same
+        unique ID and other content, e.g. one without the sentences of
+        the original, is not equal to the original, while it is the same reference.
+        Each list is assigned when it is complete, so that it is validated before
+        the references of the aspect are changed.
+
+        :return: None
+        :rtype: None
+        """
+        with_sentences = self.reference_depth == "sentences"
+        reference_paragraphs = list(self.reference_paragraphs)
+        reference_sentences = list(self.reference_sentences)
+        paragraph_ids = {paragraph.unique_id for paragraph in reference_paragraphs}
+        sentence_ids = {sentence.unique_id for sentence in reference_sentences}
+        for extracted_item in self.extracted_items:
+            for paragraph in extracted_item.reference_paragraphs:
+                if paragraph.unique_id not in paragraph_ids:
+                    paragraph_ids.add(paragraph.unique_id)
+                    reference_paragraphs.append(paragraph)
+            if with_sentences:
+                for sentence in extracted_item.reference_sentences:
+                    if sentence.unique_id not in sentence_ids:
+                        sentence_ids.add(sentence.unique_id)
+                        reference_sentences.append(sentence)
+        self.reference_paragraphs = reference_paragraphs
+        if with_sentences:
+            self.reference_sentences = reference_sentences
+
     @model_validator(mode="after")
     def _validate_aspect_post(self) -> Self:
         """

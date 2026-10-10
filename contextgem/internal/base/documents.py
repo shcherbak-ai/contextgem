@@ -26,7 +26,7 @@ import itertools
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypeVar
 
 from pydantic import (
     BeforeValidator,
@@ -70,6 +70,44 @@ from contextgem.internal.utils import (
 _PARA_POS_CACHE_KEY = "_para_index_map"
 _SENT_POS_CACHE_KEY = "_sent_index_map"
 _POSITION_CACHE_KEYS = (_PARA_POS_CACHE_KEY, _SENT_POS_CACHE_KEY)
+
+# A paragraph or a sentence, i.e. what the references of aspects and items hold
+_ReferenceT = TypeVar("_ReferenceT", _Paragraph, _Sentence)
+
+
+def _replace_copies_with_originals(
+    reference_lists: list[list[_ReferenceT]], originals: list[_ReferenceT]
+) -> None:
+    """
+    Replaces, in each of the lists, each paragraph or sentence that is a copy of
+    one of the originals, i.e. another object with the same unique ID, with that
+    original. An object with no original of the same unique ID is left as it is.
+
+    The originals are told from their copies by identity, so the unique IDs, which
+    are slower to read, are read only when there is an object that is not
+    an original.
+
+    :param reference_lists: The lists of paragraphs or of sentences to go through.
+        They are changed in place.
+    :type reference_lists: list[list[_Paragraph]] | list[list[_Sentence]]
+    :param originals: The paragraphs or the sentences that the lists are to hold.
+    :type originals: list[_Paragraph] | list[_Sentence]
+    :return: None
+    :rtype: None
+    """
+    original_identities = {id(original) for original in originals}
+    originals_by_unique_id: dict[str, _ReferenceT] | None = None
+    for references in reference_lists:
+        for position, reference in enumerate(references):
+            if id(reference) in original_identities:
+                continue
+            if originals_by_unique_id is None:
+                originals_by_unique_id = {
+                    original.unique_id: original for original in originals
+                }
+            original = originals_by_unique_id.get(reference.unique_id)
+            if original is not None:
+                references[position] = original
 
 
 @_disable_direct_initialization
@@ -131,6 +169,8 @@ class _Document(_AssignedInstancesProcessor):
     # the extraction engine on the throwaway single-aspect documents it builds from
     # existing (already-nested) aspects, where the added aspect must keep its
     # nesting level so it still compares equal to the instance being processed.
+    # For the same reason, the references of the aspects of such a document are
+    # not relinked (see `_relink_references`).
     _suppress_aspect_nesting_normalization: bool = PrivateAttr(default=False)
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -358,6 +398,32 @@ class _Document(_AssignedInstancesProcessor):
         logger.info("Pipeline assigned to the document")
         return self
 
+    @classmethod
+    def from_dict(cls, obj_dict: dict[str, Any]) -> Self:
+        """
+        Reconstructs a document from its dictionary representation.
+
+        This method deserializes a dictionary containing the document's attributes
+        and values into a new document, including its paragraphs, sentences, images,
+        aspects, concepts and extracted items.
+
+        The serialized data stores each reference paragraph and reference sentence
+        of the aspects and of the extracted items on its own. In the restored
+        document, they are the paragraphs and sentences of the document itself,
+        i.e. the same objects as in ``document.paragraphs``, as they are when
+        the aspects and concepts are extracted. A reference that the document has
+        no paragraph or sentence with the same unique ID for is restored as
+        a separate object.
+
+        :param obj_dict: Dictionary containing the serialized document data.
+        :type obj_dict: dict[str, Any]
+        :return: A new document with restored attributes.
+        :rtype: Self
+        """
+        document = super().from_dict(obj_dict)
+        document._relink_references()
+        return document
+
     def _segment_document_text(self) -> None:
         """
         If no paragraphs are provided, but text exists, segments paragraphs in text,
@@ -471,40 +537,69 @@ class _Document(_AssignedInstancesProcessor):
                     for i in sent_group
                 ]
 
-    def _share_sents_with_reference_paragraphs(self, aspect: _Aspect) -> None:
+    def _relink_references(self) -> None:
         """
-        Gives the reference paragraphs of an aspect and of its sub-aspects
-        the sentences of the paragraphs of the document, where they have none.
+        Makes the references of the aspects and of the extracted items of
+        the document the paragraphs and sentences of the document itself.
 
-        The reference paragraphs of an aspect are the paragraphs of the document,
-        or equal copies of them with the same unique IDs: those of a sub-aspect,
-        and those of any aspect of a document restored from its serialized form.
-        Sentences that are segmented for the paragraphs of the document only after
-        the aspect was extracted do not reach such copies, while the concepts of
-        the aspect that are extracted with sentences need them.
+        A reference paragraph or a reference sentence is an object of the document
+        when it is extracted. It is replaced by an equal copy with the same unique
+        ID whenever the aspect or the concept that holds it is copied, as aspects
+        and concepts are when they are assigned (the sub-aspects extracted from
+        an aspect, the aspects and concepts that the calling code assigns to
+        a processed document or aspect, e.g. with ``add_aspects()``), and
+        whenever the document is restored from its serialized form, in which each
+        reference is stored on its own. Such copies take memory and go stale: what
+        changes in a paragraph of the document, e.g. the sentences segmented for it
+        later, does not reach them.
 
-        :param aspect: The aspect of the document.
-        :type aspect: _Aspect
+        The method goes through the aspects of the document and their sub-aspects,
+        through their extracted items, and through the extracted items of
+        the concepts of the document and of the aspects. Each reference paragraph
+        and reference sentence that is not an object of the document is replaced by
+        the paragraph or the sentence of the document with the same unique ID.
+        A reference with no counterpart in the document is left as it is. The lists
+        of references are changed in place: their order and length stay the same.
+
+        Nothing is done for a throwaway document that the extraction engine builds
+        from the paragraphs of an aspect, to extract its sub-aspects or
+        the concepts of a sub-aspect. Such a document holds copies of the aspects
+        that are being processed, which are to stay equal to them, also in what
+        they reference. The document that they are extracted for is relinked
+        before the copies are made, and after what is extracted is written back.
+
         :return: None
         :rtype: None
         """
-        document_paragraphs = {
-            paragraph.unique_id: paragraph
-            for paragraph in self.paragraphs
-            if paragraph.sentences
-        }
-        if not document_paragraphs:
+        if self._suppress_aspect_nesting_normalization or not self.paragraphs:
             return
-        pending_aspects = [aspect]
+
+        # Everything of the document that holds references: the aspects at all
+        # levels of nesting, and the extracted items of the aspects and of
+        # the concepts
+        pending_aspects = list(self.aspects)
+        concepts = list(self.concepts)
+        paragraph_lists: list[list[_Paragraph]] = []
+        sentence_lists: list[list[_Sentence]] = []
         while pending_aspects:
-            current_aspect = pending_aspects.pop()
-            for paragraph in current_aspect.reference_paragraphs:
-                if paragraph.sentences:
-                    continue
-                document_paragraph = document_paragraphs.get(paragraph.unique_id)
-                if document_paragraph is not None:
-                    paragraph.sentences = list(document_paragraph.sentences)
-            pending_aspects.extend(current_aspect.aspects)
+            aspect = pending_aspects.pop()
+            paragraph_lists.append(aspect.reference_paragraphs)
+            sentence_lists.append(aspect.reference_sentences)
+            for item in aspect.extracted_items:
+                paragraph_lists.append(item.reference_paragraphs)
+                sentence_lists.append(item.reference_sentences)
+            concepts.extend(aspect.concepts)
+            pending_aspects.extend(aspect.aspects)
+        for concept in concepts:
+            for item in concept.extracted_items:
+                paragraph_lists.append(item.reference_paragraphs)
+                sentence_lists.append(item.reference_sentences)
+
+        _replace_copies_with_originals(paragraph_lists, self.paragraphs)
+        # The sentences of the document are gathered only if any are referenced
+        sentence_lists = [sentences for sentences in sentence_lists if sentences]
+        if sentence_lists:
+            _replace_copies_with_originals(sentence_lists, self.sentences)
 
     def _requires_sentence_segmentation(self) -> bool:
         """

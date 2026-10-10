@@ -1080,20 +1080,11 @@ class _DocumentDecisionModel(_DocumentModel):
                             instance.reference_sentences = []
                         # References are automatically included for aspects, as
                         # paragraphs/sents' texts are the values of extracted items
-                        # for the aspects
-                        for extracted_item in instance.extracted_items:
-                            for ref_para in extracted_item.reference_paragraphs:
-                                if ref_para not in instance.reference_paragraphs:
-                                    instance.reference_paragraphs += [ref_para]
-                            # As when an LLM extracts the aspect: the reference
-                            # sentences of its items, i.e. the extracted sentences,
-                            # and not all the sentences of its reference paragraphs.
-                            # A sentence is added also when its paragraph is
-                            # a reference paragraph already.
-                            if instance.reference_depth == "sentences":
-                                for ref_sent in extracted_item.reference_sentences:
-                                    if ref_sent not in instance.reference_sentences:
-                                        instance.reference_sentences += [ref_sent]
+                        # for the aspects. As when an LLM extracts the aspect:
+                        # the reference paragraphs of its items, and the reference
+                        # sentences of its items, i.e. the extracted sentences,
+                        # and not all the sentences of its reference paragraphs.
+                        instance._add_references_of_extracted_items()
                     instance._is_processed = True
         except Exception:
             # e.g. an aspect or a concept that was processed by another call while

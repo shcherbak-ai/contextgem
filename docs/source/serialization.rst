@@ -51,7 +51,7 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 * ``from_disk(file_path)`` - Loads an object from a file on disk
 
 .. note::
-   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality. For LLMs, see :ref:`serialization-llm-credentials-label`.
+   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality. The serialized data stores each reference paragraph and reference sentence of the aspects and of the extracted items on its own, while in the restored document they are the paragraphs and sentences of the document itself, i.e. the same objects as in ``document.paragraphs``, as after an extraction (see :ref:`locating-paras-and-sents`). For LLMs, see :ref:`serialization-llm-credentials-label`.
 
 
 .. _serialization-llm-credentials-label:

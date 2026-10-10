@@ -120,7 +120,9 @@ Pass such paragraphs to the document via ``paragraphs``. The additional context:
 📍 Locating Paragraphs and Sentences
 --------------------------------------
 
-Extraction results reference the document's own :class:`~contextgem.public.paragraphs.Paragraph` and :class:`~contextgem.public.sentences.Sentence` objects (see e.g. :doc:`../aspects/aspects` for details on references). To find the position of such an object in the document, use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`:
+Extraction results reference the document's own :class:`~contextgem.public.paragraphs.Paragraph` and :class:`~contextgem.public.sentences.Sentence` objects (see e.g. :doc:`../aspects/aspects` for details on references): a paragraph in ``reference_paragraphs`` of an aspect, of a sub-aspect or of an extracted item is the same object as the paragraph in ``document.paragraphs``, and a sentence in ``reference_sentences`` is the same object as the sentence in the ``sentences`` of its paragraph. This holds after each extraction method, and in a document restored from its serialized form (see :doc:`../serialization`). What you change in such an object, e.g. its ``custom_data``, is therefore changed in the document, and the other way round.
+
+To find the position of such an object in the document, use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`:
 
 .. code-block:: python
 

@@ -8648,29 +8648,22 @@ class TestDecisionModels(BaseTest):
                 self.check_item_probabilities(
                     item, {True: probability, False: 1 - probability}
                 )
-                # The references are the paragraph and the sentence of the document:
-                # the same objects for an aspect of the document, and equal ones,
-                # with the same IDs, for a sub-aspect, as when an LLM extracts it
-                is_sub_aspect = aspect not in document.aspects
+                # The references are the paragraph and the sentence of the document
+                # itself, i.e. the same objects, for an aspect of the document and
+                # for a sub-aspect, as when an LLM extracts it
                 if isinstance(position, tuple):
                     paragraph = paragraphs[position[0]]
                     sentence = paragraph.sentences[position[1]]
                     assert item.value == sentence.raw_text
                     assert item.reference_sentences == [sentence]
-                    assert item.reference_sentences[0].unique_id == sentence.unique_id
-                    assert (item.reference_sentences[0] is sentence) is (
-                        not is_sub_aspect
-                    )
+                    assert item.reference_sentences[0] is sentence
                     reference_sentences.append(sentence)
                 else:
                     paragraph = paragraphs[position]
                     assert item.value == paragraph.raw_text
                     assert not item.reference_sentences
                 assert item.reference_paragraphs == [paragraph]
-                assert item.reference_paragraphs[0].unique_id == paragraph.unique_id
-                assert (item.reference_paragraphs[0] is paragraph) is (
-                    not is_sub_aspect
-                )
+                assert item.reference_paragraphs[0] is paragraph
                 if paragraph not in reference_paragraphs:
                     reference_paragraphs.append(paragraph)
             assert aspect.reference_paragraphs == reference_paragraphs
