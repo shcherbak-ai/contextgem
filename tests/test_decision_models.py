@@ -195,6 +195,27 @@ _RECORDED_ASPECTS_DOCUMENT_PARAGRAPH_TEXTS = [
     "Either party may terminate this agreement by giving a written notice of 60 days.",
     "This agreement is governed by the laws of Norway.",
 ]
+# The sentences of each paragraph of the document from which aspects with
+# sentences as their items are extracted: the second paragraph has a sentence on
+# a fee and one on another matter, and the third paragraph is about a termination
+# by its additional context only
+_RECORDED_SENTENCES_DOCUMENT_SENTENCE_TEXTS = [
+    [
+        "This agreement is made between Alpha Ltd, the client, and Beta Inc, the provider."
+    ],
+    [
+        "The client shall pay the provider a fee of 5,000 euros every month.",
+        "The provider shall send the client a report on its work every week.",
+    ],
+    ["A written notice of 60 days is required."],
+    [
+        "Either party may terminate this agreement if the other party is in material breach."
+    ],
+    ["This agreement is governed by the laws of Norway."],
+]
+_RECORDED_SENTENCES_DOCUMENT_ADDITIONAL_CONTEXT = (
+    "Section 5. Termination of the agreement by either party"
+)
 
 
 def _create_decisions_response(
@@ -13580,3 +13601,372 @@ class TestDecisionModels(BaseTest):
         decision_model.extract_concepts_from_document(document)
 
         self._check_concepts_of_recorded_tests(document, decision_model)
+
+    @staticmethod
+    def _create_decision_model_for_recorded_tests(
+        provider: Literal["typesafe", "openai", "ollama", "lm_studio"],
+    ) -> DocumentDecisionModel:
+        """
+        Creates the decision model of a provider for a test that sends its
+        requests to the API of the provider: with the API key and the prices of
+        a hosted model, or with the address of a local server, which needs no
+        API key and has no prices.
+
+        :param provider: The provider of the decision model.
+        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        :return: The decision model.
+        :rtype: DocumentDecisionModel
+        """
+        if provider == "typesafe":
+            return DocumentDecisionModel(
+                model="typesafe/jev-latest",
+                api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
+                pricing_details=ModelPricing(
+                    input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
+                ),
+            )
+        if provider == "openai":
+            return DocumentDecisionModel(
+                model="openai/gpt-6-luna",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                pricing_details=ModelPricing(
+                    input_per_1m_tokens=0.10, output_per_1m_tokens=0.0
+                ),
+            )
+        if provider == "ollama":
+            return DocumentDecisionModel(
+                model="strands_decider/nimble",
+                api_base="http://localhost:11434",
+            )
+        return DocumentDecisionModel(
+            model="strands_decider/kev-4b",
+            api_base="http://localhost:1234",
+        )
+
+    def _check_sentence_level_aspects_of_recorded_tests(
+        self, provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+    ) -> None:
+        """
+        Extracts, with the decision model of a provider through its API, an aspect
+        with sentences as its items and an aspect with paragraphs as its items
+        from a document in which a paragraph has additional context, and checks
+        the items, the requests sent, and the usage of the model (see
+        ``_RECORDED_SENTENCES_DOCUMENT_SENTENCE_TEXTS``).
+
+        The items are checked, as the answers are unambiguous. The probabilities
+        are checked for being consistent with the items: their exact values are
+        those of the model.
+
+        :param provider: The provider of the decision model.
+        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        :return: None
+        :rtype: None
+        """
+        decision_model = self._create_decision_model_for_recorded_tests(provider)
+        sentence_texts = _RECORDED_SENTENCES_DOCUMENT_SENTENCE_TEXTS
+        paragraph_texts = [" ".join(texts) for texts in sentence_texts]
+        context = _RECORDED_SENTENCES_DOCUMENT_ADDITIONAL_CONTEXT
+        # The sentences are given, so that they do not depend on a segmentation
+        document = Document(
+            paragraphs=[
+                Paragraph(
+                    raw_text=paragraph_text,
+                    sentences=[Sentence(raw_text=text) for text in texts],
+                    additional_context=context if position == 2 else None,
+                )
+                for position, (paragraph_text, texts) in enumerate(
+                    zip(paragraph_texts, sentence_texts, strict=True)
+                )
+            ]
+        )
+        document.aspects = [
+            Aspect(
+                name="Payment",
+                description="Clauses on the fees and on how the fees are paid",
+                reference_depth="sentences",
+            ),
+            Aspect(
+                name="Termination",
+                description="Clauses on how the agreement is terminated",
+            ),
+        ]
+
+        # Without concurrency, i.e. with the requests in the order of the paragraphs
+        decision_model.extract_aspects_from_document(document)
+
+        payment, termination = document.aspects
+        fee_paragraph, notice_paragraph, breach_paragraph = document.paragraphs[1:4]
+        fee_sentence, report_sentence = fee_paragraph.sentences
+
+        # === The aspect with sentences as its items ===
+        # Of the two sentences of the paragraph that belongs to the aspect,
+        # the one on the fee is extracted, and the one on the reports is not
+        (item,) = payment.extracted_items
+        assert item.value == fee_sentence.raw_text
+        assert item.reference_paragraphs == [fee_paragraph]
+        assert item.reference_sentences == [fee_sentence]
+        assert payment.reference_paragraphs == [fee_paragraph]
+        # As when an LLM extracts the aspect, its reference sentences are all
+        # the sentences of its reference paragraphs, not only the extracted ones
+        assert payment.reference_sentences == [fee_sentence, report_sentence]
+
+        # === The aspect with paragraphs as its items ===
+        # The paragraph on the notice is about the termination by its additional
+        # context only
+        assert [item.value for item in termination.extracted_items] == [
+            notice_paragraph.raw_text,
+            breach_paragraph.raw_text,
+        ]
+        assert termination.reference_paragraphs == [notice_paragraph, breach_paragraph]
+        assert not termination.reference_sentences
+        for item, paragraph in zip(
+            termination.extracted_items,
+            termination.reference_paragraphs,
+            strict=True,
+        ):
+            assert item.reference_paragraphs == [paragraph]
+            assert not item.reference_sentences
+
+        for aspect in document.aspects:
+            assert aspect._is_processed
+            for item in aspect.extracted_items:
+                # Whether the sentence or the paragraph belongs to the aspect:
+                # it does
+                assert item.probabilities is not None
+                assert list(item.probabilities) == [True, False]
+                assert 0.5 <= item.probabilities[True] <= 1
+                assert item.probabilities[False] == pytest.approx(
+                    1 - item.probabilities[True]
+                )
+                assert item.justification is None
+
+        # === The requests ===
+        # The aspects differ in what their items are, so each is extracted in
+        # a call of its own: a request for each paragraph and, for the aspect
+        # with sentences as its items, a request for each sentence of
+        # the paragraph that belongs to it. Each request has one question.
+        (usage_container,) = decision_model.get_usage()
+        usage = usage_container.usage
+        requests = [json.loads(call.prompt) for call in usage.calls]
+        paragraph_inputs = list(paragraph_texts)
+        # A paragraph with additional context is sent with it, each with a label
+        paragraph_inputs[2] = (
+            f"Paragraph: {paragraph_texts[2]}\n\n"
+            f"Additional context of the paragraph: {context}"
+        )
+        # A sentence is sent with its paragraph as its context
+        sentence_inputs = [
+            f"Sentence: {sentence.raw_text}\n\n"
+            f"Paragraph that the sentence is from: {fee_paragraph.raw_text}"
+            for sentence in (fee_sentence, report_sentence)
+        ]
+        assert [request["input"] for request in requests] == [
+            *paragraph_inputs,
+            *sentence_inputs,
+            *paragraph_inputs,
+        ]
+        assert all(len(request["questions"]) == 1 for request in requests)
+        assert usage.input > 0
+        assert all(call.timestamp_received is not None for call in usage.calls)
+        self._check_cost_of_recorded_tests(decision_model)
+        self.check_instance_serialization_and_cloning(document)
+
+        # === The paragraph on the notice, without its additional context ===
+        # The model is not more sure that the paragraph is about the termination
+        # than it is with the additional context
+        other_decision_model = self._create_decision_model_for_recorded_tests(provider)
+        other_document = Document(
+            paragraphs=[Paragraph(raw_text=notice_paragraph.raw_text)]
+        )
+        other_document.aspects = [
+            Aspect(
+                name="Termination",
+                description="Clauses on how the agreement is terminated",
+            )
+        ]
+        other_decision_model.extract_aspects_from_document(other_document)
+        (call,) = other_decision_model.get_usage()[0].usage.calls
+        assert json.loads(call.prompt)["input"] == notice_paragraph.raw_text
+        assert call.response is not None
+        (answer,) = json.loads(call.response)
+        probabilities_with_context = termination.extracted_items[0].probabilities
+        assert probabilities_with_context is not None
+        assert 0 <= answer["probability"] <= probabilities_with_context[True]
+
+    def _check_concepts_in_parts_of_recorded_tests(
+        self, provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+    ) -> None:
+        """
+        Extracts, with the decision model of a provider through its API, concepts
+        from a document in parts of two paragraphs, and checks the items of
+        the concepts, one for each part, the requests sent, and the usage of
+        the model (see ``_RECORDED_CONCEPTS_DOCUMENT_TEXT``).
+
+        The values are checked where the answers are unambiguous for the part.
+
+        :param provider: The provider of the decision model.
+        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        :return: None
+        :rtype: None
+        """
+        decision_model = self._create_decision_model_for_recorded_tests(provider)
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        paragraph_texts = [paragraph.raw_text for paragraph in document.paragraphs]
+        assert len(paragraph_texts) == 4
+        document.concepts = [
+            # The company is named in the first part only
+            BooleanConcept(
+                name="Mentions Alpha Ltd",
+                description="The text mentions the company Alpha Ltd",
+            ),
+            # The country is named in the second part only
+            BooleanConcept(
+                name="Mentions Norway",
+                description="The text mentions Norway",
+            ),
+            LabelConcept(
+                name="Topics",
+                description="Topics that the text covers",
+                labels=["confidentiality", "governing law", "salary", "real estate"],
+                classification_type="multi_label",
+            ),
+            # The rating is given in the second part only
+            RatingConcept(
+                name="Sensitivity",
+                description="Sensitivity of the confidential information, as rated "
+                "by the parties in the text",
+                rating_scale=(1, 5),
+            ),
+        ]
+
+        # Without concurrency, i.e. with the requests in the order of the parts
+        decision_model.extract_concepts_from_document(
+            document, max_paragraphs_to_analyze_per_call=2
+        )
+
+        # === The items: one for each part, in the order of the parts ===
+        alpha, norway, topics, sensitivity = document.concepts
+        assert [item.value for item in alpha.extracted_items] == [True, False]
+        assert [item.value for item in norway.extracted_items] == [False, True]
+        assert [item.value for item in topics.extracted_items] == [
+            ["confidentiality"],
+            ["confidentiality", "governing law"],
+        ]
+        # The first part gives no rating: the model picks a level for it anyway
+        rating_of_first_part, rating_of_second_part = sensitivity.extracted_items
+        assert rating_of_first_part.value in range(1, 6)
+        assert rating_of_second_part.value == 4
+        for concept in document.concepts:
+            assert concept._is_processed
+            for item in concept.extracted_items:
+                assert item.probabilities is not None
+                assert all(
+                    0 <= probability <= 1 for probability in item.probabilities.values()
+                )
+                assert item.justification is None
+        for item in [*alpha.extracted_items, *norway.extracted_items]:
+            assert item.probabilities is not None
+            assert list(item.probabilities) == [True, False]
+            assert item.value is (item.probabilities[True] >= 0.5)
+        for item in topics.extracted_items:
+            assert item.probabilities is not None
+            assert item.value == [
+                label
+                for label, probability in item.probabilities.items()
+                if probability >= 0.5
+            ]
+        for item in sensitivity.extracted_items:
+            assert item.probabilities is not None
+            assert list(item.probabilities) == [1, 2, 3, 4, 5]
+            assert item.probabilities[item.value] == max(item.probabilities.values())
+
+        # === The requests ===
+        # A request for each part, with the text of its two paragraphs and
+        # the questions of all the concepts: one of each concept, and one for
+        # each label of the concept with any number of labels to select
+        (usage_container,) = decision_model.get_usage()
+        usage = usage_container.usage
+        requests = [json.loads(call.prompt) for call in usage.calls]
+        assert [request["input"] for request in requests] == [
+            "\n\n".join(paragraph_texts[:2]),
+            "\n\n".join(paragraph_texts[2:]),
+        ]
+        assert [len(request["questions"]) for request in requests] == [7, 7]
+        assert usage.input > 0
+        assert all(call.timestamp_received is not None for call in usage.calls)
+        self._check_cost_of_recorded_tests(decision_model)
+        self.check_instance_serialization_and_cloning(document)
+
+    @pytest.mark.vcr
+    def test_extract_sentence_level_aspects_with_typesafe_api(self):
+        """
+        Tests the extraction of an aspect with sentences as its items, and of
+        a paragraph that is sent with its additional context, with a decision
+        model of TypeSafe, with the requests sent to its API.
+        """
+        self._check_sentence_level_aspects_of_recorded_tests("typesafe")
+
+    @pytest.mark.vcr
+    def test_extract_sentence_level_aspects_with_openai_decisions_api(self):
+        """
+        Tests the extraction of an aspect with sentences as its items, and of
+        a paragraph that is sent with its additional context, with a decision
+        model of OpenAI, with the requests sent to its Decisions API.
+        """
+        self._check_sentence_level_aspects_of_recorded_tests("openai")
+
+    @pytest.mark.vcr
+    def test_extract_sentence_level_aspects_with_ollama_api(self):
+        """
+        Tests the extraction of an aspect with sentences as its items, and of
+        a paragraph that is sent with its additional context, with a decision
+        model served by a local Ollama server, with the requests sent to
+        the server.
+        """
+        self._check_sentence_level_aspects_of_recorded_tests("ollama")
+
+    @pytest.mark.vcr
+    def test_extract_sentence_level_aspects_with_lm_studio_api(self):
+        """
+        Tests the extraction of an aspect with sentences as its items, and of
+        a paragraph that is sent with its additional context, with a decision
+        model served by a local LM Studio server, with the requests sent to
+        the server.
+        """
+        self._check_sentence_level_aspects_of_recorded_tests("lm_studio")
+
+    @pytest.mark.vcr
+    def test_extract_concepts_in_parts_with_typesafe_api(self):
+        """
+        Tests the extraction of concepts from a document in parts, with one
+        item of a concept for each part, with a decision model of TypeSafe,
+        with the requests sent to its API.
+        """
+        self._check_concepts_in_parts_of_recorded_tests("typesafe")
+
+    @pytest.mark.vcr
+    def test_extract_concepts_in_parts_with_openai_decisions_api(self):
+        """
+        Tests the extraction of concepts from a document in parts, with one
+        item of a concept for each part, with a decision model of OpenAI, with
+        the requests sent to its Decisions API.
+        """
+        self._check_concepts_in_parts_of_recorded_tests("openai")
+
+    @pytest.mark.vcr
+    def test_extract_concepts_in_parts_with_ollama_api(self):
+        """
+        Tests the extraction of concepts from a document in parts, with one
+        item of a concept for each part, with a decision model served by
+        a local Ollama server, with the requests sent to the server.
+        """
+        self._check_concepts_in_parts_of_recorded_tests("ollama")
+
+    @pytest.mark.vcr
+    def test_extract_concepts_in_parts_with_lm_studio_api(self):
+        """
+        Tests the extraction of concepts from a document in parts, with one
+        item of a concept for each part, with a decision model served by
+        a local LM Studio server, with the requests sent to the server.
+        """
+        self._check_concepts_in_parts_of_recorded_tests("lm_studio")

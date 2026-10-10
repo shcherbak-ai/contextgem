@@ -1,0 +1,155 @@
+interactions:
+- request:
+    body: '{"model":"nimble","state":"NON-DISCLOSURE AGREEMENT\n\nThis Non-Disclosure
+      Agreement is made between Alpha Ltd and Beta Inc. Each party shall keep the
+      confidential information of the other party secret and shall not disclose it
+      to any third party.","questions":{"C0":{"type":"noul","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: Mentions Alpha Ltd\nConcept description: The text mentions
+      the company Alpha Ltd\nAnswer \"yes\" if the text supports the statement. Answer
+      \"no\" if the text contradicts the statement or does not support it."},"C1":{"type":"noul","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: Mentions Norway\nConcept description: The text mentions
+      Norway\nAnswer \"yes\" if the text supports the statement. Answer \"no\" if
+      the text contradicts the statement or does not support it."},"C2-L0":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the text covers\nLabel: confidentiality\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},"C2-L1":{"type":"noul","instructions":"Decide whether the label
+      below applies to the text, based on the concept below.\nConcept name: Topics\nConcept
+      description: Topics that the text covers\nLabel: governing law\nAnswer \"yes\"
+      if the label applies to the text. Answer \"no\" if it does not. The other labels
+      of the concept are decided separately: several labels, or none, may apply."},"C2-L2":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the text covers\nLabel: salary\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},"C2-L3":{"type":"noul","instructions":"Decide whether the label
+      below applies to the text, based on the concept below.\nConcept name: Topics\nConcept
+      description: Topics that the text covers\nLabel: real estate\nAnswer \"yes\"
+      if the label applies to the text. Answer \"no\" if it does not. The other labels
+      of the concept are decided separately: several labels, or none, may apply."},"C3":{"type":"score","instructions":"Rate
+      the text on a scale from 1 to 5, based on the concept below.\nConcept name:
+      Sensitivity\nConcept description: Sensitivity of the confidential information,
+      as rated by the parties in the text\nSelect the level of the scale that fits
+      the text best.","criteria":["1: 1 on a scale from 1 to 5","2: 2 on a scale from
+      1 to 5","3: 3 on a scale from 1 to 5","4: 4 on a scale from 1 to 5","5: 5 on
+      a scale from 1 to 5"]}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2950'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.104.2
+    method: POST
+    uri: http://localhost:11434/v1/systemone
+  response:
+    body:
+      string: '{"model": "nimble", "answers": {"C0": {"type": "noul", "noul": 0.9993639881476376},
+        "C1": {"type": "noul", "noul": 0.003456383480423199}, "C2-L0": {"type": "noul",
+        "noul": 0.9985699058141774}, "C2-L1": {"type": "noul", "noul": 0.012123026056314837},
+        "C2-L2": {"type": "noul", "noul": 0.0018972664715096231}, "C2-L3": {"type":
+        "noul", "noul": 0.012245614178225846}, "C3": {"type": "score", "score": 1.8142830542502961,
+        "legend": {"0": "1: 1 on a scale from 1 to 5", "1": "2: 2 on a scale from
+        1 to 5", "2": "3: 3 on a scale from 1 to 5", "3": "4: 4 on a scale from 1
+        to 5", "4": "5: 5 on a scale from 1 to 5"}, "probabilities": {"0": 0.1474729653857736,
+        "1": 0.23967925972867027, "2": 0.3685781663403595, "3": 0.13963097233988012,
+        "4": 0.10463863620531659}, "confidence": 0.06574675472454461}}, "usage": {"input_tokens":
+        7757, "output_tokens": 8}}'
+    headers:
+      content-length:
+      - '780'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"nimble","state":"The parties rate the sensitivity of the confidential
+      information as 4 on a scale from 1 to 5.\n\nThis agreement is governed by the
+      laws of Norway.","questions":{"C0":{"type":"noul","instructions":"Decide whether
+      the statement in the concept description below is true according to the text.\nConcept
+      name: Mentions Alpha Ltd\nConcept description: The text mentions the company
+      Alpha Ltd\nAnswer \"yes\" if the text supports the statement. Answer \"no\"
+      if the text contradicts the statement or does not support it."},"C1":{"type":"noul","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: Mentions Norway\nConcept description: The text mentions
+      Norway\nAnswer \"yes\" if the text supports the statement. Answer \"no\" if
+      the text contradicts the statement or does not support it."},"C2-L0":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the text covers\nLabel: confidentiality\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},"C2-L1":{"type":"noul","instructions":"Decide whether the label
+      below applies to the text, based on the concept below.\nConcept name: Topics\nConcept
+      description: Topics that the text covers\nLabel: governing law\nAnswer \"yes\"
+      if the label applies to the text. Answer \"no\" if it does not. The other labels
+      of the concept are decided separately: several labels, or none, may apply."},"C2-L2":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the text covers\nLabel: salary\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},"C2-L3":{"type":"noul","instructions":"Decide whether the label
+      below applies to the text, based on the concept below.\nConcept name: Topics\nConcept
+      description: Topics that the text covers\nLabel: real estate\nAnswer \"yes\"
+      if the label applies to the text. Answer \"no\" if it does not. The other labels
+      of the concept are decided separately: several labels, or none, may apply."},"C3":{"type":"score","instructions":"Rate
+      the text on a scale from 1 to 5, based on the concept below.\nConcept name:
+      Sensitivity\nConcept description: Sensitivity of the confidential information,
+      as rated by the parties in the text\nSelect the level of the scale that fits
+      the text best.","criteria":["1: 1 on a scale from 1 to 5","2: 2 on a scale from
+      1 to 5","3: 3 on a scale from 1 to 5","4: 4 on a scale from 1 to 5","5: 5 on
+      a scale from 1 to 5"]}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2876'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.104.2
+    method: POST
+    uri: http://localhost:11434/v1/systemone
+  response:
+    body:
+      string: '{"model": "nimble", "answers": {"C0": {"type": "noul", "noul": 0.022906910315873018},
+        "C1": {"type": "noul", "noul": 0.9996521006293214}, "C2-L0": {"type": "noul",
+        "noul": 0.9820082648112355}, "C2-L1": {"type": "noul", "noul": 0.9981287184052913},
+        "C2-L2": {"type": "noul", "noul": 0.004244595967874217}, "C2-L3": {"type":
+        "noul", "noul": 0.003515189123385194}, "C3": {"type": "score", "score": 3.006497536875406,
+        "legend": {"0": "1: 1 on a scale from 1 to 5", "1": "2: 2 on a scale from
+        1 to 5", "2": "3: 3 on a scale from 1 to 5", "3": "4: 4 on a scale from 1
+        to 5", "4": "5: 5 on a scale from 1 to 5"}, "probabilities": {"0": 9.233496151985624e-05,
+        "1": 0.0003221282727162191, "2": 0.0002028880393231925, "3": 0.99176096238172,
+        "4": 0.007621686344720857}, "confidence": 0.9685932961756486}}, "usage": {"input_tokens":
+        7673, "output_tokens": 8}}'
+    headers:
+      content-length:
+      - '782'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1
