@@ -2226,6 +2226,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         sources_mapper: dict[
             str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
         ] = {}
+        # The paragraphs, or the sentences, that are already extracted for each
+        # aspect, by their unique IDs: the LLM is instructed to list each ID once,
+        # and one that it lists more than once for an aspect gives one item
+        aspect_reference_ids: dict[str, set[str]] = {}
         instances_enumerated = dict(enumerate(instances_to_process))
 
         # Each item on the list is a message kwargs dict for each extraction, based on specific context chunks.
@@ -2403,6 +2407,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             "source": relevant_aspect,
                             "extracted_items": [],
                         }
+                    extracted_reference_ids = aspect_reference_ids.setdefault(
+                        relevant_aspect.unique_id, set()
+                    )
                     if add_justifications or reference_depth == "sentences":
                         # References are automatically included for aspects, as paragraphs/sents'
                         # texts are the values of extracted items for the aspects
@@ -2456,6 +2463,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                             f"for paragraph ID {para_id} is invalid"
                                         )
                                         return None, all_usage_data
+                                    if ref_sent.unique_id in extracted_reference_ids:
+                                        # The sentence is listed more than once
+                                        continue
+                                    extracted_reference_ids.add(ref_sent.unique_id)
                                     extracted_item_kwargs = {
                                         "value": ref_sent.raw_text,
                                         "custom_data": ref_sent.custom_data,
@@ -2481,6 +2492,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             # Each extracted item will have the reference paragraph text as value,
                             # reference paragraph in the list of reference paragraphs, and no reference sentences
                             else:
+                                if ref_para.unique_id in extracted_reference_ids:
+                                    # The paragraph is listed more than once
+                                    continue
+                                extracted_reference_ids.add(ref_para.unique_id)
                                 extracted_item = _StringItem(
                                     value=ref_para.raw_text,
                                     justification=para_dict["justification"],
@@ -2512,6 +2527,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             except KeyError:
                                 logger.error("Paragraph ID returned by LLM is invalid")
                                 return None, all_usage_data
+                            if ref_para.unique_id in extracted_reference_ids:
+                                # The paragraph is listed more than once
+                                continue
+                            extracted_reference_ids.add(ref_para.unique_id)
                             extracted_item = _StringItem(
                                 value=ref_para.raw_text,
                                 custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
@@ -2644,9 +2663,17 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                             "Reference paragraph ID returned by LLM is invalid"
                                         )
                                         return None, all_usage_data
-                                    concept_extracted_item_kwargs[
-                                        "reference_paragraphs"
-                                    ].append(ref_para)
+                                    # A paragraph or a sentence that is listed more
+                                    # than once for the item is referenced once
+                                    if (
+                                        ref_para
+                                        not in concept_extracted_item_kwargs[
+                                            "reference_paragraphs"
+                                        ]
+                                    ):
+                                        concept_extracted_item_kwargs[
+                                            "reference_paragraphs"
+                                        ].append(ref_para)
                                     # Reference depth - sentence
                                     if reference_depth == "sentences":
                                         para_sents_enumerated = dict(
@@ -2670,9 +2697,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                                     f"for paragraph ID {para_id} is invalid"
                                                 )
                                                 return None, all_usage_data
-                                            concept_extracted_item_kwargs[
-                                                "reference_sentences"
-                                            ].append(ref_sent)
+                                            if (
+                                                ref_sent
+                                                not in concept_extracted_item_kwargs[
+                                                    "reference_sentences"
+                                                ]
+                                            ):
+                                                concept_extracted_item_kwargs[
+                                                    "reference_sentences"
+                                                ].append(ref_sent)
 
                             reference_paragraphs = concept_extracted_item_kwargs.pop(
                                 "reference_paragraphs", []
@@ -2689,17 +2722,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     f"Error creating {relevant_concept._item_class.__name__}: {e}"
                                 )
                                 return None, all_usage_data
-                            try:
-                                extracted_item.reference_paragraphs = (
-                                    reference_paragraphs
-                                )
-                                extracted_item.reference_sentences = reference_sentences
-                            except ValueError as e:
-                                # E.g. the same reference listed twice for the item
-                                logger.error(
-                                    f"References returned by LLM are invalid: {e}"
-                                )
-                                return None, all_usage_data
+                            extracted_item.reference_paragraphs = reference_paragraphs
+                            extracted_item.reference_sentences = reference_sentences
                             # Safe cast: "extracted_items" key always contains a list
                             cast(
                                 list,

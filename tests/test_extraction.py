@@ -28,7 +28,7 @@ import os
 import re
 import types
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Literal
 from unittest.mock import patch
 
 import pytest
@@ -2829,15 +2829,15 @@ class TestExtraction(BaseTest):
             check_references(document, [2, 1], [(2, 1), (1, 3), (2, 2)])
         assert not responses
 
-    def test_malformed_references_in_llm_output_are_invalid_data(self):
+    def test_malformed_sentence_id_in_llm_output_is_invalid_data(self):
         """
         Tests that an ID of a sentence that is not a number, in the output of
-        an LLM for an aspect, and a reference that is listed twice for an item
-        of a concept, are handled as any other invalid data returned by the LLM:
-        the call is made again, up to ``max_retries_invalid_data`` times, and
-        ``ModelExtractionError`` is raised, or a warning is issued, if the data
-        stays invalid. Such output raised ``ValueError`` from the code that reads
-        it, without the call being made again.
+        an LLM for an aspect with sentences as its items, is handled as any other
+        invalid data returned by the LLM: the call is made again, up to
+        ``max_retries_invalid_data`` times, and ``ModelExtractionError`` is
+        raised, or a warning is issued, if the data stays invalid. Such output
+        raised ``ValueError`` from the code that reads it, without the call being
+        made again.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -2861,7 +2861,7 @@ class TestExtraction(BaseTest):
                 usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
             )
 
-        def get_aspect_response(sentence_id: str) -> str:
+        def get_response(sentence_id: str) -> str:
             """
             Returns the response of the LLM with a sentence of the first
             paragraph extracted for the aspect.
@@ -2880,24 +2880,9 @@ class TestExtraction(BaseTest):
                 ]
             )
 
-        def get_concept_response(references: dict[str, Any]) -> str:
+        def create_document() -> Document:
             """
-            Returns the response of the LLM with one item of the concept, with
-            the given references.
-            """
-            return json.dumps(
-                [
-                    {
-                        "concept_id": "C0",
-                        "extracted_items": [{"value": "30 days", **references}],
-                    }
-                ]
-            )
-
-        def create_document(kind: str) -> Document:
-            """
-            Creates a document with an aspect with sentences as its items, or
-            with a concept with references to paragraphs or to sentences.
+            Creates a document with an aspect with sentences as its items.
             """
             document = Document(
                 paragraphs=[
@@ -2908,108 +2893,272 @@ class TestExtraction(BaseTest):
                     for texts in sentence_texts
                 ]
             )
-            if kind == "aspect":
-                document.aspects = [
-                    Aspect(
-                        name="Delivery",
-                        description="Clauses on the delivery",
-                        reference_depth="sentences",
-                    )
-                ]
-            else:
-                document.concepts = [
-                    StringConcept(
-                        name="Delivery time",
-                        description="Time that the delivery takes",
-                        add_references=True,
-                        reference_depth=(
-                            "sentences" if kind == "concept_sentences" else "paragraphs"
-                        ),
-                    )
-                ]
+            document.aspects = [
+                Aspect(
+                    name="Delivery",
+                    description="Clauses on the delivery",
+                    reference_depth="sentences",
+                )
+            ]
             return document
 
-        def extract(llm: DocumentLLM, document: Document, **kwargs: Any) -> Any:
-            """
-            Extracts the aspect or the concept of the document, and returns it.
-            """
-            if document.aspects:
-                (instance,) = llm.extract_aspects_from_document(document, **kwargs)
-            else:
-                (instance,) = llm.extract_concepts_from_document(document, **kwargs)
-            return instance
+        malformed_response = get_response("P0-Sx")
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # === The call is made again, and the valid data is extracted ===
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            assert llm.max_retries_invalid_data == 3
+            document = create_document()
+            responses.extend([malformed_response, get_response("P0-S1")])
+            (aspect,) = llm.extract_aspects_from_document(document)
+            assert not responses
+            (item,) = aspect.extracted_items
+            assert item.reference_sentences == [document.paragraphs[0].sentences[1]]
+            assert len(llm.get_usage()[0].usage.calls) == 2
 
-        # The malformed and the valid response for each kind of extraction
-        cases = {
-            # The ID of the sentence is not a number
-            "aspect": (get_aspect_response("P0-Sx"), get_aspect_response("P0-S1")),
-            # The same paragraph is listed twice
-            "concept_paragraphs": (
-                get_concept_response({"reference_paragraph_ids": ["P0", "P0"]}),
-                get_concept_response({"reference_paragraph_ids": ["P0"]}),
-            ),
-            # The same sentence is listed twice
-            "concept_sentences": (
-                get_concept_response(
-                    {
-                        "reference_paragraphs": [
-                            {
-                                "reference_paragraph_id": "P0",
-                                "reference_sentence_ids": ["P0-S1", "P0-S1"],
-                            }
-                        ]
-                    }
-                ),
-                get_concept_response(
-                    {
-                        "reference_paragraphs": [
-                            {
-                                "reference_paragraph_id": "P0",
-                                "reference_sentence_ids": ["P0-S1"],
-                            }
-                        ]
-                    }
-                ),
-            ),
-        }
+            # === Without retries, the extraction fails for invalid data ===
+            llm = DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key="test_api_key",
+                max_retries_invalid_data=0,
+            )
+            document = create_document()
+            responses.append(malformed_response)
+            with pytest.raises(ModelExtractionError, match="invalid JSON"):
+                llm.extract_aspects_from_document(document)
+            assert not responses
+
+            # ... or a warning is issued, and nothing is extracted
+            document = create_document()
+            responses.append(malformed_response)
+            with pytest.warns(UserWarning, match="invalid JSON"):
+                (aspect,) = llm.extract_aspects_from_document(
+                    document, raise_exception_on_extraction_error=False
+                )
+            assert not responses
+            assert not aspect.extracted_items
+
+    def test_ids_repeated_in_llm_output_are_used_once(self):
+        """
+        Tests that an ID of a paragraph or of a sentence that an LLM lists more
+        than once, among those of an aspect or among the references of an item
+        of a concept, is used once, as the LLM is instructed to list each ID
+        once: an aspect gets one item for the paragraph or the sentence, and
+        an item of a concept references it once. The output is taken as it is,
+        i.e. the call is not made again. An aspect got an item for each time that
+        the ID was listed, and for a concept ``ValueError`` was raised.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        sentence_texts = [
+            ["The supplier delivers the goods.", "Delivery takes 30 days."],
+            ["The buyer pays the price.", "Payment is due in 14 days."],
+            ["This agreement is governed by the laws of Norway."],
+        ]
+        responses: list[str] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: returns the next response of the queue.
+            """
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=responses.pop(0))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document of three paragraphs with their sentences given.
+            """
+            return Document(
+                paragraphs=[
+                    Paragraph(
+                        raw_text=" ".join(texts),
+                        sentences=[Sentence(raw_text=text) for text in texts],
+                    )
+                    for texts in sentence_texts
+                ]
+            )
+
+        def extract_aspect(response: list[dict[str, Any]], **aspect_kwargs: Any):
+            """
+            Extracts an aspect with the given response of the LLM, in one request,
+            and returns the document and the aspect.
+            """
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            document = create_document()
+            document.aspects = [
+                Aspect(
+                    name="Deadlines",
+                    description="Clauses on deadlines",
+                    **aspect_kwargs,
+                )
+            ]
+            responses.append(json.dumps(response))
+            (aspect,) = llm.extract_aspects_from_document(document)
+            assert not responses
+            # The output is used as it is: the call is not made again
+            assert len(llm.get_usage()[0].usage.calls) == 1
+            return document, aspect
+
+        def extract_concept(
+            references: dict[str, Any],
+            reference_depth: Literal["paragraphs", "sentences"],
+        ):
+            """
+            Extracts a concept with references, with an item that has the given
+            references in the response of the LLM, in one request, and returns
+            the document and the item.
+            """
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            document = create_document()
+            document.concepts = [
+                StringConcept(
+                    name="Delivery time",
+                    description="Time that the delivery takes",
+                    add_references=True,
+                    reference_depth=reference_depth,
+                )
+            ]
+            responses.append(
+                json.dumps(
+                    [
+                        {
+                            "concept_id": "C0",
+                            "extracted_items": [{"value": "30 days", **references}],
+                        }
+                    ]
+                )
+            )
+            (concept,) = llm.extract_concepts_from_document(document)
+            assert not responses
+            assert len(llm.get_usage()[0].usage.calls) == 1
+            (item,) = concept.extracted_items
+            return document, item
 
         with patch.object(litellm, "acompletion", new=acompletion_stub):
-            for kind, (malformed_response, valid_response) in cases.items():
-                # === The call is made again, and the valid data is extracted ===
-                llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
-                assert llm.max_retries_invalid_data == 3
-                document = create_document(kind)
-                responses.extend([malformed_response, valid_response])
-                instance = extract(llm, document)
-                assert not responses, kind
-                (item,) = instance.extracted_items
-                (paragraph,) = item.reference_paragraphs
-                assert paragraph is document.paragraphs[0], kind
-                if kind == "concept_paragraphs":
-                    assert not item.reference_sentences
-                else:
-                    (sentence,) = item.reference_sentences
-                    assert sentence is document.paragraphs[0].sentences[1], kind
-                assert len(llm.get_usage()[0].usage.calls) == 2, kind
+            # === Aspect, paragraphs as items: a paragraph listed twice ===
+            document, aspect = extract_aspect(
+                [{"aspect_id": "A0", "paragraph_ids": ["P1", "P0", "P1", "P0"]}]
+            )
+            paragraphs = document.paragraphs
+            assert [item.value for item in aspect.extracted_items] == [
+                paragraphs[0].raw_text,
+                paragraphs[1].raw_text,
+            ]
+            assert aspect.reference_paragraphs == paragraphs[:2]
 
-                # === Without retries, the extraction fails for invalid data ===
-                llm = DocumentLLM(
-                    model="openai/gpt-6-luna",
-                    api_key="test_api_key",
-                    max_retries_invalid_data=0,
-                )
-                document = create_document(kind)
-                responses.append(malformed_response)
-                with pytest.raises(ModelExtractionError, match="invalid JSON"):
-                    extract(llm, document)
-                assert not responses, kind
+            # ... also when the aspect itself is listed twice
+            document, aspect = extract_aspect(
+                [
+                    {"aspect_id": "A0", "paragraph_ids": ["P0", "P1"]},
+                    {"aspect_id": "A0", "paragraph_ids": ["P1", "P2"]},
+                ]
+            )
+            assert [item.value for item in aspect.extracted_items] == [
+                paragraph.raw_text for paragraph in document.paragraphs
+            ]
 
-                # ... or a warning is issued, and nothing is extracted
-                document = create_document(kind)
-                responses.append(malformed_response)
-                with pytest.warns(UserWarning, match="invalid JSON"):
-                    instance = extract(
-                        llm, document, raise_exception_on_extraction_error=False
-                    )
-                assert not responses, kind
-                assert not instance.extracted_items, kind
+            # ... and with justifications: that of the first listing is kept
+            document, aspect = extract_aspect(
+                [
+                    {
+                        "aspect_id": "A0",
+                        "paragraphs": [
+                            {"paragraph_id": "P0", "justification": "First"},
+                            {"paragraph_id": "P0", "justification": "Second"},
+                            {"paragraph_id": "P1", "justification": "Third"},
+                        ],
+                    }
+                ],
+                add_justifications=True,
+            )
+            assert [
+                (item.value, item.justification) for item in aspect.extracted_items
+            ] == [
+                (document.paragraphs[0].raw_text, "First"),
+                (document.paragraphs[1].raw_text, "Third"),
+            ]
+
+            # === Aspect, sentences as items: a sentence listed twice, for one
+            # listing of its paragraph and for two ===
+            document, aspect = extract_aspect(
+                [
+                    {
+                        "aspect_id": "A0",
+                        "paragraphs": [
+                            {
+                                "paragraph_id": "P0",
+                                "sentences": [
+                                    {"sentence_id": "P0-S1"},
+                                    {"sentence_id": "P0-S1"},
+                                ],
+                            },
+                            {
+                                "paragraph_id": "P1",
+                                "sentences": [{"sentence_id": "P1-S1"}],
+                            },
+                            {
+                                "paragraph_id": "P1",
+                                "sentences": [
+                                    {"sentence_id": "P1-S1"},
+                                    {"sentence_id": "P1-S0"},
+                                ],
+                            },
+                        ],
+                    }
+                ],
+                reference_depth="sentences",
+            )
+            paragraphs = document.paragraphs
+            assert [item.value for item in aspect.extracted_items] == [
+                sentence_texts[0][1],
+                sentence_texts[1][1],
+                sentence_texts[1][0],
+            ]
+            assert aspect.reference_paragraphs == paragraphs[:2]
+            assert aspect.reference_sentences == [
+                paragraphs[0].sentences[1],
+                paragraphs[1].sentences[1],
+                paragraphs[1].sentences[0],
+            ]
+
+            # === Concept, references to paragraphs: a paragraph listed twice ===
+            document, item = extract_concept(
+                {"reference_paragraph_ids": ["P0", "P1", "P0"]}, "paragraphs"
+            )
+            assert item.reference_paragraphs == document.paragraphs[:2]
+            assert not item.reference_sentences
+
+            # === Concept, references to sentences: a sentence listed twice, for
+            # one listing of its paragraph and for two ===
+            document, item = extract_concept(
+                {
+                    "reference_paragraphs": [
+                        {
+                            "reference_paragraph_id": "P0",
+                            "reference_sentence_ids": ["P0-S1", "P0-S1"],
+                        },
+                        {
+                            "reference_paragraph_id": "P1",
+                            "reference_sentence_ids": ["P1-S0"],
+                        },
+                        {
+                            "reference_paragraph_id": "P1",
+                            "reference_sentence_ids": ["P1-S0", "P1-S1"],
+                        },
+                    ]
+                },
+                "sentences",
+            )
+            paragraphs = document.paragraphs
+            assert item.reference_paragraphs == paragraphs[:2]
+            assert item.reference_sentences == [
+                paragraphs[0].sentences[1],
+                paragraphs[1].sentences[0],
+                paragraphs[1].sentences[1],
+            ]
