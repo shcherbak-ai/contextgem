@@ -126,7 +126,7 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. This is particularly useful for global document classifications where only one classification result is expected.
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. This is particularly useful for global document classifications where only one classification result is expected. With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
    * - ``custom_data``
      - ``dict``
      - ``{}``

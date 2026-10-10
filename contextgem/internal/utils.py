@@ -97,6 +97,21 @@ _RE_CONTROL_CHARS_PRESERVE_NEWLINES = re.compile(
 _RE_CONTROL_CHARS_ALL = re.compile(
     r"[\x00-\x1F\x7F-\x9F\u200B-\u200F\u2028-\u202F\uFEFF]"
 )
+# The control characters above that are not whitespace, e.g. zero-width ones.
+_RE_NON_WHITESPACE_CONTROL_CHARS = re.compile(
+    r"[\x00-\x08\x0E-\x1B\x7F-\x84\x86-\x9F\u200B-\u200F\u202A-\u202E\uFEFF]"
+)
+# The other control characters above, i.e. whitespace such as the tab, the line
+# feed and the form feed, where they are all that separates two words. In a text
+# cleaned for a prompt, they are replaced with a space before the control
+# characters are removed, so that the words are not joined: all of them, or all
+# but the line feed where the line breaks are preserved.
+_RE_WHITESPACE_CONTROL_CHARS_BETWEEN_WORDS = re.compile(
+    r"(?<=\S)[\x09-\x0D\x1C-\x1F\x85\u2028\u2029\u202F]+(?=\S)"
+)
+_RE_WHITESPACE_CONTROL_CHARS_BETWEEN_WORDS_EXCEPT_NEWLINES = re.compile(
+    r"(?<=\S)[\x09\x0B-\x0D\x1C-\x1F\x85\u2028\u2029\u202F]+(?=\S)"
+)
 _RE_NORMALIZE_NEWLINES = re.compile(r"\r\n|\r")
 _RE_HORIZONTAL_WHITESPACE = re.compile(r"[ \t]+")
 _RE_EXTRA_BLANK_LINES = re.compile(r"\n{3,}")
@@ -267,6 +282,11 @@ def _clean_text_for_llm_prompt(
     Removes control characters and other problematic elements from text
     to make it suitable for LLM input.
 
+    The words that a tab, a line break or another whitespace character separates
+    stay separated: where such a character is all that separates two words, it is
+    replaced with a space, or kept as a line break, and is not removed with
+    the control characters.
+
     :param text: The input string to be cleaned.
     :type text: str
     :param preserve_linebreaks: Whether to preserve linebreaks in the text.
@@ -283,7 +303,17 @@ def _clean_text_for_llm_prompt(
         # Normalize newlines to \n
         cleaned = _RE_NORMALIZE_NEWLINES.sub("\n", text)
 
-        # Remove control characters except newlines
+        # Remove the control characters that are not whitespace
+        cleaned = _RE_NON_WHITESPACE_CONTROL_CHARS.sub("", cleaned)
+
+        # Replace the whitespace that would be removed with the control characters,
+        # e.g. a tab, with a space where it is all that separates two words, so that
+        # the words are not joined
+        cleaned = _RE_WHITESPACE_CONTROL_CHARS_BETWEEN_WORDS_EXCEPT_NEWLINES.sub(
+            " ", cleaned
+        )
+
+        # Remove the remaining control characters except newlines
         cleaned = _clean_control_characters(
             cleaned, preserve_newlines=True, strip_text=strip_text
         )
@@ -296,9 +326,17 @@ def _clean_text_for_llm_prompt(
         cleaned = _RE_EXTRA_BLANK_LINES.sub("\n\n", cleaned)
 
     else:
-        # Remove all control characters including newlines
+        # Remove the control characters that are not whitespace
+        cleaned = _RE_NON_WHITESPACE_CONTROL_CHARS.sub("", text)
+
+        # Replace the whitespace that would be removed with the control characters,
+        # e.g. a tab or a line break, with a space where it is all that separates
+        # two words, so that the words are not joined
+        cleaned = _RE_WHITESPACE_CONTROL_CHARS_BETWEEN_WORDS.sub(" ", cleaned)
+
+        # Remove the remaining control characters including newlines
         cleaned = _clean_control_characters(
-            text, preserve_newlines=False, strip_text=strip_text
+            cleaned, preserve_newlines=False, strip_text=strip_text
         )
 
         # Remove all whitespace sequences with a single space

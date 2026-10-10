@@ -30,6 +30,7 @@ JSON, paragraph splitting).
 from __future__ import annotations
 
 import json
+import sys
 from types import SimpleNamespace
 from typing import Any, Union
 
@@ -40,6 +41,7 @@ from hypothesis import strategies as st
 from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
 from contextgem.internal.typings.types_to_strings import _serialize_type_hint
 from contextgem.internal.utils import (
+    _RE_CONTROL_CHARS_ALL,
     _are_prompt_template_brackets_balanced,
     _are_prompt_template_xml_tags_balanced,
     _chunk_list,
@@ -60,6 +62,13 @@ _PROPERTY_SETTINGS = settings(
     max_examples=200,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
+
+# All the characters that are whitespace, i.e. that separate words
+_WHITESPACE_CHARS = [
+    chr(code_point)
+    for code_point in range(sys.maxunicode + 1)
+    if chr(code_point).isspace()
+]
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +193,109 @@ def test_clean_text_for_llm_prompt_strip_removes_edge_whitespace(text: str) -> N
     cleaned = _clean_text_for_llm_prompt(text, strip_text=True)
     if cleaned:
         assert cleaned == cleaned.strip()
+
+
+@_PROPERTY_SETTINGS
+@given(
+    words_and_separators=st.lists(
+        st.tuples(
+            st.text(alphabet=st.characters(categories=["L", "N"]), min_size=1),
+            st.text(alphabet=st.sampled_from(_WHITESPACE_CHARS), min_size=1),
+        ),
+        min_size=1,
+        max_size=10,
+    )
+)
+@example(words_and_separators=[("Fee", "\t"), ("5000", " "), ("EUR", "\n")])
+@example(words_and_separators=[("line", "\n"), ("break", "\r\n"), ("page", "\x0c")])
+def test_clean_text_for_llm_prompt_keeps_words_separated(
+    words_and_separators: list[tuple[str, str]],
+) -> None:
+    """
+    Words that whitespace separates stay separate words: whitespace that is
+    a control character, e.g. a tab or a line break, is not removed where it is
+    all that separates two words.
+    """
+    words = [word for word, _ in words_and_separators]
+    text = "".join(word + separator for word, separator in words_and_separators)
+    for preserve_linebreaks in (True, False):
+        cleaned = _clean_text_for_llm_prompt(
+            text, preserve_linebreaks=preserve_linebreaks
+        )
+        assert cleaned.split() == words, (
+            f"Words joined or changed for preserve_linebreaks={preserve_linebreaks}: "
+            f"input={text!r}, cleaned={cleaned!r}"
+        )
+
+
+@pytest.mark.parametrize(
+    ("text", "with_linebreaks", "without_linebreaks"),
+    [
+        # A tab is replaced with a space
+        ("Fee:\t5,000 EUR", "Fee: 5,000 EUR", "Fee: 5,000 EUR"),
+        ("Fee:\t\t 5,000 EUR", "Fee: 5,000 EUR", "Fee: 5,000 EUR"),
+        # A line break is kept, or replaced with a space
+        ("line one\nline two", "line one\nline two", "line one line two"),
+        ("line one\r\nline two", "line one\nline two", "line one line two"),
+        ("line one \n line two", "line one \n line two", "line one line two"),
+        # Other whitespace among the control characters is replaced with a space
+        ("page one\x0cpage two", "page one page two", "page one page two"),
+        ("line one\u2028line two", "line one line two", "line one line two"),
+        ("5\u202f000 EUR", "5 000 EUR", "5 000 EUR"),
+        # Whitespace that does not separate two words on its own is removed with
+        # the control characters, as before
+        ("Fee: \t5,000 EUR", "Fee: 5,000 EUR", "Fee: 5,000 EUR"),
+        ("\tIndented\n\tline\t", "Indented\nline", "Indented line"),
+        ("a\n\t\n\t\nb", "a\n\nb", "a b"),
+        # ... also where a control character that is not whitespace is next to it
+        ("a\t\u200b\nb", "a\nb", "a b"),
+        ("a\x00\tb", "a b", "a b"),
+        # Control characters that are not whitespace are removed
+        ("zero\u200bwidth", "zerowidth", "zerowidth"),
+        ("a \u200b b\x00c", "a bc", "a bc"),
+    ],
+)
+def test_clean_text_for_llm_prompt_whitespace(
+    text: str, with_linebreaks: str, without_linebreaks: str
+) -> None:
+    """
+    Whitespace between two words is replaced with a space, or kept as a line
+    break, and is not removed.
+    """
+    assert _clean_text_for_llm_prompt(text, preserve_linebreaks=True) == with_linebreaks
+    assert (
+        _clean_text_for_llm_prompt(text, preserve_linebreaks=False)
+        == without_linebreaks
+    )
+
+
+def test_clean_text_for_llm_prompt_handles_each_removed_char() -> None:
+    """
+    Each whitespace character among the control characters that are removed from
+    a text is replaced with a space between two words, or kept as a line break,
+    and each of the other control characters is removed.
+    """
+    removed_chars = [
+        chr(code_point)
+        for code_point in range(sys.maxunicode + 1)
+        if _RE_CONTROL_CHARS_ALL.fullmatch(chr(code_point))
+    ]
+    assert {"\t", "\n", "\r"} < {char for char in removed_chars if char.isspace()}
+    for char in removed_chars:
+        text = f"a{char}b"
+        if not char.isspace():
+            with_linebreaks = without_linebreaks = "ab"
+        else:
+            with_linebreaks = "a\nb" if char in "\r\n" else "a b"
+            without_linebreaks = "a b"
+        assert (
+            _clean_text_for_llm_prompt(text, preserve_linebreaks=True)
+            == with_linebreaks
+        ), f"U+{ord(char):04X}"
+        assert (
+            _clean_text_for_llm_prompt(text, preserve_linebreaks=False)
+            == without_linebreaks
+        ), f"U+{ord(char):04X}"
 
 
 # ---------------------------------------------------------------------------

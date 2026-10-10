@@ -135,7 +135,11 @@ class BooleanConcept(_BooleanConcept):
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "contains confidential information"
-        vs "compliance violations").
+        vs "compliance violations"). A decision model
+        (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
+        unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
+        the extraction method): it then returns an item for each part, and rejects
+        a concept with ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: StrictBool
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with which
         a decision model (``DocumentDecisionModel``) sets the value of the concept to True.
@@ -248,7 +252,11 @@ class RatingConcept(_RatingConcept):
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "product rating score" vs
-        "customer satisfaction ratings").
+        "customer satisfaction ratings"). A decision model
+        (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
+        unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
+        the extraction method): it then returns an item for each part, and rejects
+        a concept with ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: StrictBool
 
     Example:
@@ -450,7 +458,11 @@ class LabelConcept(_LabelConcept):
         extracted items are allowed). Note that with advanced LLMs, this constraint may not be
         strictly required as they can often infer the appropriate number of items to extract
         from the concept's name, description, and type (e.g., "document type" vs
-        "content topics").
+        "content topics"). A decision model
+        (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
+        unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
+        the extraction method): it then returns an item for each part, and rejects
+        a concept with ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: bool
     :ivar decision_threshold: The lowest probability (above 0, up to 1) with which
         a decision model (``DocumentDecisionModel``) selects a label of the concept.

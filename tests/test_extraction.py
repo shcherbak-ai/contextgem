@@ -44,6 +44,7 @@ from contextgem.public import (
     BooleanConcept,
     DateConcept,
     Document,
+    DocumentDecisionModel,
     DocumentLLM,
     DocumentModelGroup,
     JsonObjectConcept,
@@ -2001,3 +2002,118 @@ class TestExtraction(BaseTest):
                 id(paragraphs[2].sentences[0]),
             ]
         assert not responses
+
+    def test_negative_max_per_call_params_are_rejected(self):
+        """
+        Tests that a negative max number of paragraphs or of images to analyze
+        per call is rejected by each extraction method that takes it, before any
+        request is sent and before anything else is checked, for an LLM,
+        a decision model and a model group. With a negative max number of
+        paragraphs, an LLM was sent nothing and extracted nothing, without
+        an error.
+
+        The APIs are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        requests_sent: list[dict[str, Any]] = []
+
+        async def api_stub(**kwargs: Any):
+            """
+            Records a request, which is sent where none is expected.
+            """
+            requests_sent.append(kwargs)
+            raise AssertionError("A request was sent")
+
+        def create_document() -> Document:
+            """
+            Creates a document with an aspect that has a concept, and with
+            a document-level concept, all of which a decision model can extract.
+            """
+            document = Document(
+                raw_text="Services agreement\n\nThe parties agree as follows."
+            )
+            document.aspects = [
+                Aspect(
+                    name="Parties",
+                    description="Clauses on the parties",
+                    concepts=[
+                        BooleanConcept(
+                            name="Parties named",
+                            description="The parties are named",
+                        )
+                    ],
+                )
+            ]
+            document.concepts = [
+                BooleanConcept(
+                    name="Agreement", description="The document is an agreement"
+                )
+            ]
+            return document
+
+        models = [
+            DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key"),
+            DocumentDecisionModel(model="typesafe/jev-latest", api_key="test_api_key"),
+            DocumentModelGroup(
+                models=[
+                    DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key"),
+                    DocumentDecisionModel(
+                        model="typesafe/jev-latest",
+                        api_key="test_api_key",
+                        role="other",
+                    ),
+                ]
+            ),
+        ]
+        with (
+            patch.object(litellm, "acompletion", new=api_stub),
+            patch.object(litellm, "adecisions", new=api_stub),
+        ):
+            for model in models:
+                for value in (-1, -50):
+                    # === Max number of paragraphs ===
+                    document = create_document()
+                    (aspect,) = document.aspects
+                    error = (
+                        rf"^`max_paragraphs_to_analyze_per_call` cannot be negative: "
+                        rf"got {value}\. Use 0, the default, to set no limit\.$"
+                    )
+                    with pytest.raises(ValueError, match=error):
+                        model.extract_all(
+                            document, max_paragraphs_to_analyze_per_call=value
+                        )
+                    with pytest.raises(ValueError, match=error):
+                        model.extract_aspects_from_document(
+                            document, max_paragraphs_to_analyze_per_call=value
+                        )
+                    # The aspect is not extracted yet, which is checked only
+                    # after the max number
+                    with pytest.raises(ValueError, match=error):
+                        model.extract_concepts_from_aspect(
+                            aspect, document, max_paragraphs_to_analyze_per_call=value
+                        )
+                    with pytest.raises(ValueError, match=error):
+                        model.extract_concepts_from_document(
+                            document, max_paragraphs_to_analyze_per_call=value
+                        )
+
+                    # === Max number of images ===
+                    error = (
+                        rf"^`max_images_to_analyze_per_call` cannot be negative: "
+                        rf"got {value}\. Use 0, the default, to set no limit\.$"
+                    )
+                    with pytest.raises(ValueError, match=error):
+                        model.extract_all(
+                            document, max_images_to_analyze_per_call=value
+                        )
+                    with pytest.raises(ValueError, match=error):
+                        model.extract_concepts_from_document(
+                            document, max_images_to_analyze_per_call=value
+                        )
+
+                    # Nothing is extracted, and nothing is marked as processed
+                    instances = [aspect, *aspect.concepts, *document.concepts]
+                    assert not any(i.extracted_items for i in instances)
+                    assert not any(i._is_processed for i in instances)
+        # No request is sent
+        assert not requests_sent

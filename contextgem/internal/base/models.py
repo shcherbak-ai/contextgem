@@ -291,10 +291,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             requests. Defaults to False.
         :type use_concurrency: bool, optional
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
-            single LLM prompt. Defaults to 0 (all paragraphs).
+            single LLM prompt. A decision model is sent each paragraph in a request of
+            its own for aspects, whatever the value. For concepts, it is sent a text
+            with more paragraphs in parts of at most that many paragraphs, each in
+            a request of its own: a concept then gets an extracted item for each part,
+            and a concept with ``singular_occurrence=True`` is rejected with
+            ``ValueError``. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int, optional
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
-            Defaults to 0 (all images). Relevant only for document-level concepts.
+            Defaults to 0 (all images). Cannot be negative. Relevant only for document-level
+            concepts.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -350,10 +356,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             requests. Defaults to False.
         :type use_concurrency: bool, optional
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
-            single LLM prompt. Defaults to 0 (all paragraphs).
+            single LLM prompt. A decision model is sent each paragraph in a request of
+            its own for aspects, whatever the value. For concepts, it is sent a text
+            with more paragraphs in parts of at most that many paragraphs, each in
+            a request of its own: a concept then gets an extracted item for each part,
+            and a concept with ``singular_occurrence=True`` is rejected with
+            ``ValueError``. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int, optional
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
-            Defaults to 0 (all images). Relevant only for document-level concepts.
+            Defaults to 0 (all images). Cannot be negative. Relevant only for document-level
+            concepts.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -363,6 +375,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :rtype: _Document
         """
 
+        self._check_max_per_call_params(
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+            max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+        )
         self._check_model_roles_before_extract_all(document)
         self._check_vision_support_for_concepts(
             document=document, concepts=document.concepts
@@ -463,8 +479,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             with LLM providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
-        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
-            Defaults to 0 (all paragraphs).
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
+            prompt. Changes nothing for a decision model, which is sent each paragraph in
+            a request of its own. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -522,8 +539,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             with LLM providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
-        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
-            Defaults to 0 (all paragraphs).
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
+            prompt. Changes nothing for a decision model, which is sent each paragraph in
+            a request of its own. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -532,6 +550,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :return: List of processed _Aspect objects with extracted items.
         :rtype: list[_Aspect]
         """
+
+        self._check_max_per_call_params(
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+        )
 
         if from_aspects is not None:
             from_aspects = _validate_sequence_is_list(from_aspects)
@@ -687,7 +709,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
-            single LLM prompt. Defaults to 0 (all paragraphs).
+            single LLM prompt. A decision model is sent a text with more
+            paragraphs in parts of at most that many paragraphs, each in a request of
+            its own: a concept then gets an extracted item for each part, and
+            a concept with ``singular_occurrence=True`` is rejected with ``ValueError``.
+            Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -750,7 +776,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
-            single LLM prompt. Defaults to 0 (all paragraphs).
+            single LLM prompt. A decision model is sent a text with more
+            paragraphs in parts of at most that many paragraphs, each in a request of
+            its own: a concept then gets an extracted item for each part, and
+            a concept with ``singular_occurrence=True`` is rejected with ``ValueError``.
+            Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -759,6 +789,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :return: List of processed concept objects.
         :rtype: list[_Concept]
         """
+
+        self._check_max_per_call_params(
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+        )
 
         if from_concepts is not None:
             from_concepts = _validate_sequence_is_list(from_concepts)
@@ -921,11 +955,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             with LLM providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
-        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
-            Defaults to 0 (all paragraphs).
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
+            prompt. A decision model is sent a text with more
+            paragraphs in parts of at most that many paragraphs, each in a request of
+            its own: a concept then gets an extracted item for each part, and
+            a concept with ``singular_occurrence=True`` is rejected with ``ValueError``.
+            Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
-            Defaults to 0 (all images).
+            Defaults to 0 (all images). Cannot be negative.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -985,11 +1023,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             with LLM providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
-        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM prompt.
-            Defaults to 0 (all paragraphs).
+        :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
+            prompt. A decision model is sent a text with more
+            paragraphs in parts of at most that many paragraphs, each in a request of
+            its own: a concept then gets an extracted item for each part, and
+            a concept with ``singular_occurrence=True`` is rejected with ``ValueError``.
+            Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param max_images_to_analyze_per_call: Maximum images to include in a single LLM prompt.
-            Defaults to 0 (all images).
+            Defaults to 0 (all images). Cannot be negative.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
@@ -998,6 +1040,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :return: List of processed Concept objects with extracted items.
         :rtype: list[_Concept]
         """
+
+        self._check_max_per_call_params(
+            max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+            max_images_to_analyze_per_call=max_images_to_analyze_per_call,
+        )
 
         if from_concepts is not None:
             from_concepts = _validate_sequence_is_list(from_concepts)
@@ -1218,6 +1265,37 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     f"the following concepts from images{condition}: {concept_names}. "
                     f"To override this detection, manually set `_supports_vision=True` "
                     f"on the LLM instance."
+                )
+
+    @staticmethod
+    def _check_max_per_call_params(
+        max_paragraphs_to_analyze_per_call: int = 0,
+        max_images_to_analyze_per_call: int = 0,
+    ) -> None:
+        """
+        Checks the max numbers of paragraphs and of images to analyze per call that
+        an extraction method is called with. With a negative number, no paragraphs
+        or images would be left to send to an LLM, i.e. nothing would be extracted,
+        without an error.
+
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs to
+            analyze per call. Defaults to 0 (all paragraphs).
+        :type max_paragraphs_to_analyze_per_call: int
+        :param max_images_to_analyze_per_call: The max number of images to analyze
+            per call. Defaults to 0 (all images).
+        :type max_images_to_analyze_per_call: int
+        :return: None
+        :rtype: None
+        :raises ValueError: If any of the numbers is negative.
+        """
+        for param_name, value in (
+            ("max_paragraphs_to_analyze_per_call", max_paragraphs_to_analyze_per_call),
+            ("max_images_to_analyze_per_call", max_images_to_analyze_per_call),
+        ):
+            if value < 0:
+                raise ValueError(
+                    f"`{param_name}` cannot be negative: got {value}. "
+                    f"Use 0, the default, to set no limit."
                 )
 
     def _check_instances_and_llm_params(
@@ -1878,7 +1956,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             from text. Defaults to "text".
         :type modality: Modality
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
-            LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
+            LLM call (prompt), or whose text is sent to a decision model in one request for concepts.
+            Defaults to 0, in which case all the paragraphs are analyzed.
         :type max_paragraphs_to_analyze_per_call: int
         :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
@@ -2729,7 +2808,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
-            LLM call (prompt). Defaults to 0, in which case all the paragraphs are analyzed.
+            LLM call (prompt), or whose text is sent to a decision model in one request for concepts.
+            Defaults to 0, in which case all the paragraphs are analyzed.
         :type max_paragraphs_to_analyze_per_call: int
         :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
