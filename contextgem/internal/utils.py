@@ -29,6 +29,7 @@ import random
 import re
 from collections import defaultdict
 from collections.abc import Callable, Coroutine, Sequence
+from functools import cache
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
@@ -119,6 +120,7 @@ _RE_ANY_WHITESPACE = re.compile(r"\s+")
 _RE_JSON_CODE_BLOCK = re.compile(r"^```json\s*([\s\S]*?)\s*```$")
 
 
+@cache
 def _get_template(
     template_name: str,
     template_type: Literal["prompt", "system"] = "prompt",
@@ -128,6 +130,20 @@ def _get_template(
     Retrieves a template based on the given parameters. The template is read from a specific file path determined
     by the `template_type` and its content is either processed as a Jinja2 template or returned as plain text based
     on the `template_extension`.
+
+    The template is read, validated and compiled once: the calls that follow with
+    the same params return the same object. Compiling the templates of the built-in
+    prompts takes tens of milliseconds, which each LLM would otherwise spend when it
+    is created. The object returned is thus shared, e.g. by all the LLMs that use
+    the built-in prompts, and must not be modified. Rendering a compiled template
+    does not change it: each rendering has a context of its own, so that a template
+    can be rendered for several LLMs, and from several threads, at the same time.
+    A template that replaces a built-in one for an LLM is compiled for that LLM
+    (see ``_DocumentLLM._update_default_prompt``).
+
+    Threads that request a template for the first time at the same moment may each
+    compile it. The templates they get are then separate objects with the same
+    content, one of which is returned by the calls that follow.
 
     :param template_name: The name of the template to be retrieved. This is the base name of the file without any
         extensions.

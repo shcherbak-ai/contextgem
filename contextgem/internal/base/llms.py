@@ -805,9 +805,11 @@ class _DocumentLLM(_DocumentModel):
         certain attributes that require special handling.
 
         Note that, by default, the reconstructed deserialized _DocumentLLM will be only partially
-        equal (==) to the original one, as the api credentials are redacted, and the attached prompt
-        templates, async limiter, and async lock are not serialized and point to different objects
-        in memory post-initialization. Also, usage and cost are reset by default pre-serialization.
+        equal (==) to the original one, as the api credentials are redacted, and the async limiter
+        and the async lock are not serialized and point to different objects in memory
+        post-initialization. The attached prompt templates are not serialized either:
+        the deserialized _DocumentLLM has the built-in ones, which the LLMs share, i.e. a custom
+        prompt has to be set again. Also, usage and cost are reset by default pre-serialization.
 
         :param other: Another _DocumentLLM instance to compare with
         :type other: _DocumentLLM
@@ -2016,6 +2018,11 @@ class _DocumentLLM(_DocumentModel):
     def _set_prompts(self) -> None:
         """
         Sets up prompt templates for various extraction tasks.
+
+        The templates of the built-in prompts are compiled once and shared by
+        the LLMs (see ``_get_template``): they are only rendered. A custom prompt
+        replaces the template of the LLM it is set for, and of no other LLM
+        (see ``_update_default_prompt``).
 
         :return: None
         :rtype: None

@@ -28,6 +28,7 @@ import json
 import os
 import types
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from unittest.mock import patch
 
@@ -35,6 +36,7 @@ import pytest
 from aiolimiter import AsyncLimiter
 from pydantic import ValidationError
 
+from contextgem.internal import utils as utils_module
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
@@ -50,6 +52,7 @@ from contextgem.public import (
     DocumentLLM,
     DocumentModelGroup,
     ModelPricing,
+    Paragraph,
     StringConcept,
     register_tool,
 )
@@ -1612,3 +1615,133 @@ class TestLLMs(BaseTest):
                 api_key,
                 created_model_is_input=created_model_is_input,
             )
+
+    def test_built_in_prompt_templates_compiled_once(self):
+        """
+        Tests that the templates of the built-in prompts are compiled once and
+        shared by the LLMs, instead of being compiled for each LLM that is created,
+        and that a shared template carries nothing from one LLM, or from one
+        rendering, to another: a custom prompt set for an LLM does not reach
+        the other LLMs, and the LLMs created in several threads each render
+        the prompt with the data of their own.
+
+        No LLM API is called, i.e. no cassette is required.
+        """
+        llm_kwargs: dict[str, Any] = {
+            "model": "openai/gpt-6-luna",
+            "api_key": "test_api_key",
+        }
+        # The built-in templates are compiled when this LLM is created, at the latest
+        llm = DocumentLLM(**llm_kwargs)
+        default_prompts = (
+            llm._extract_aspect_items_prompt.render(),
+            llm._extract_concept_items_prompt.render(),
+        )
+
+        # No template is compiled for the LLMs created afterwards, nor when an LLM
+        # is validated again as one of its params is changed
+        with patch.object(
+            utils_module,
+            "_setup_jinja2_template",
+            wraps=utils_module._setup_jinja2_template,
+        ) as setup_template_mock:
+            other_llms = [
+                DocumentLLM(**llm_kwargs),
+                DocumentLLM(**llm_kwargs, output_language="adapt"),
+                DocumentLLM(
+                    **llm_kwargs,
+                    fallback_models=[
+                        DocumentLLM(
+                            model="openai/gpt-5.6-luna",
+                            api_key="test_api_key",
+                            is_fallback=True,
+                        )
+                    ],
+                ),
+            ]
+            with pytest.warns(
+                UserWarning, match="`output_language` parameter will take no effect"
+            ):
+                other_llms.append(
+                    DocumentLLM(**llm_kwargs, system_message="Be concise.")
+                )
+            other_llms[0].temperature = 0.5
+        assert setup_template_mock.call_count == 0
+        for other_llm in [*other_llms, other_llms[2].fallback_models[0]]:
+            assert isinstance(other_llm, DocumentLLM)
+            assert (
+                other_llm._extract_aspect_items_prompt
+                is llm._extract_aspect_items_prompt
+            )
+            assert (
+                other_llm._extract_concept_items_prompt
+                is llm._extract_concept_items_prompt
+            )
+
+        # A custom prompt replaces the template of the LLM that it is set for,
+        # and of no other LLM, whether created before or after
+        custom_prompts_path = get_project_root_path() / "tests" / "custom_prompts"
+        llm_with_custom_prompts = other_llms[0]
+        llm_with_custom_prompts._update_default_prompt(
+            prompt_path=custom_prompts_path / "custom_prompt_aspects_with_tags.j2",
+            prompt_type="aspect",  # type: ignore
+        )
+        llm_with_custom_prompts._update_default_prompt(
+            prompt_path=custom_prompts_path / "custom_prompt_concepts_with_tags.j2",
+            prompt_type="concept",  # type: ignore
+        )
+        assert (
+            "test custom prompt template for aspects"
+            in llm_with_custom_prompts._extract_aspect_items_prompt.render()
+        )
+        assert (
+            "test custom prompt template for concepts"
+            in llm_with_custom_prompts._extract_concept_items_prompt.render()
+        )
+        for unaffected_llm in [llm, *other_llms[1:], DocumentLLM(**llm_kwargs)]:
+            assert (
+                unaffected_llm._extract_aspect_items_prompt.render(),
+                unaffected_llm._extract_concept_items_prompt.render(),
+            ) == default_prompts
+
+        # The LLMs created in several threads render the shared template at
+        # the same time, each with the data of its own only
+        n_threads = 8
+
+        def render_aspects_prompt(index: int) -> str:
+            """
+            Creates an LLM and renders its prompt for an aspect and a paragraph
+            that are named after the index.
+
+            :param index: The index that the aspect and the paragraph are named after.
+            :type index: int
+            :return: The rendered prompt.
+            :rtype: str
+            """
+            thread_llm = DocumentLLM(**llm_kwargs)
+            return thread_llm._extract_aspect_items_prompt.render(
+                aspects=[
+                    Aspect(
+                        name=f"Topic of thread {index}",
+                        description=f"Clauses on the topic of thread {index}",
+                    )
+                ],
+                paragraphs=[Paragraph(raw_text=f"Text of thread {index}.")],
+                add_justifications=False,
+                justification_depth="brief",
+                justification_max_sents=2,
+                reference_depth="paragraphs",
+                output_language="en",
+                supports_reasoning=False,
+            )
+
+        with ThreadPoolExecutor(max_workers=n_threads) as executor:
+            prompts = list(executor.map(render_aspects_prompt, range(n_threads)))
+        for index, prompt in enumerate(prompts):
+            self.check_rendered_prompt(prompt)
+            for other_index in range(n_threads):
+                is_own_data = other_index == index
+                assert (f"Topic of thread {other_index}" in prompt) is is_own_data
+                assert (f"Text of thread {other_index}." in prompt) is is_own_data
+            # ... i.e. the same prompt as the one rendered on its own
+            assert prompt == render_aspects_prompt(index)
