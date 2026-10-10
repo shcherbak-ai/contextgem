@@ -30,6 +30,7 @@ group, are defined in the ``models`` module of this package.
 from __future__ import annotations
 
 import asyncio
+import functools
 import inspect
 import json
 import warnings
@@ -1674,7 +1675,12 @@ class _DocumentLLM(_DocumentModel):
             :return: The tuple containing the answer text and the tool calls.
             :rtype: tuple[str | None, list[Any] | None]
             """
-            send_completion_coro = self._send_non_streaming_completion(
+            # The coroutine of the request is created only when it is awaited, i.e.
+            # when the limiter lets the request through: a coroutine created before
+            # that is never awaited if the call is cancelled while it waits for
+            # the limiter, for which Python issues a warning.
+            send_completion = functools.partial(
+                self._send_non_streaming_completion,
                 request_config=request_config,
                 messages_payload=request_messages,
                 num_retries_failed_request=num_retries_failed_request,
@@ -1685,9 +1691,9 @@ class _DocumentLLM(_DocumentModel):
             try:
                 if async_limiter:
                     async with async_limiter:
-                        chat_completion = await send_completion_coro
+                        chat_completion = await send_completion()
                 else:
-                    chat_completion = await send_completion_coro
+                    chat_completion = await send_completion()
                 answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
                 self._record_usage_call(
                     usage=usage,

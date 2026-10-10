@@ -23,9 +23,11 @@ Module defining tests for LLMs.
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
 import os
 import types
+import warnings
 from typing import Any
 from unittest.mock import patch
 
@@ -1393,6 +1395,69 @@ class TestLLMs(BaseTest):
             check_extracted(document)
             (limiter,) = {id(i): i for i in limiters}.values()
             assert (limiter.max_rate, limiter.time_period) == (2000, 1)
+
+    def test_request_cancelled_at_async_limiter_leaves_no_coroutine(self):
+        """
+        Tests that a request to an LLM that is cancelled while it waits for
+        the limiter leaves no coroutine that was never awaited: the coroutine of
+        the request is created only when the limiter lets the request through.
+        Otherwise, Python issues a ``RuntimeWarning`` for each such request, e.g.
+        when the extraction is cancelled on a timeout set by the calling code, or
+        as another call of the extraction failed.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        # One request is let through, and the other requests wait for the limiter
+        llm.async_limiter = AsyncLimiter(1, 60)
+        n_requests_sent = 0
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API with a request that takes long to complete.
+            """
+            nonlocal n_requests_sent
+            n_requests_sent += 1
+            await asyncio.sleep(60)
+
+        document = Document(
+            raw_text="Services agreement\n\nThe parties agree as follows."
+        )
+        document.concepts = [
+            StringConcept(name=f"Concept {i}", description=f"Detail {i}")
+            for i in range(3)
+        ]
+
+        async def extract_with_timeout() -> None:
+            """
+            Runs the extraction, a concept per call, with a timeout that cancels
+            it while one request is in flight and the others wait for the limiter.
+            """
+            await asyncio.wait_for(
+                llm.extract_concepts_from_document_async(
+                    document, use_concurrency=True
+                ),
+                timeout=0.5,
+            )
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            warnings.catch_warnings(record=True) as caught_warnings,
+        ):
+            warnings.simplefilter("always")
+            with pytest.raises(asyncio.TimeoutError):
+                asyncio.run(extract_with_timeout())
+            # The warning is issued when a coroutine that was never awaited
+            # is destroyed
+            gc.collect()
+        assert n_requests_sent == 1
+        never_awaited = [
+            str(warning.message)
+            for warning in caught_warnings
+            if "was never awaited" in str(warning.message)
+        ]
+        assert not never_awaited, never_awaited
 
     def test_api_key_not_shown(self):
         """
