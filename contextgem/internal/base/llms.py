@@ -1854,7 +1854,8 @@ class _DocumentLLM(_DocumentModel):
                 await self._update_usage_and_cost((None, usage))
                 raise
             logger.error(f"The request is not sent to the LLM: {e}")
-            logger.info("The call will be retried with a fallback LLM.")
+            # The fallback model that is tried next is not necessarily an LLM
+            logger.info("The call will be retried with a fallback model.")
             return None, usage
         self._validate_output_tokens()
 
@@ -1938,12 +1939,18 @@ class _DocumentLLM(_DocumentModel):
                 # If drop_params was already True and we still got UnsupportedParamsError,
                 # fall through to regular error handling
                 record_failed_call()
+                # Logged as any other failed request is: the warning below is
+                # not a part of the log, which would otherwise say only that
+                # the request is sent without the unsupported params
+                logger.error(
+                    f"Exception occurred while calling LLM API with drop_params=True: {e}"
+                )
                 warnings.warn(
                     f"Exception occurred while calling LLM API with drop_params=True: {e}",
                     stacklevel=2,
                 )
                 if has_fallback_pending:
-                    logger.info("The call will be retried with a fallback LLM.")
+                    logger.info("The call will be retried with a fallback model.")
                 else:
                     n_retries = getattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, 0)
                     if raise_exception_on_model_api_error:
@@ -1982,7 +1989,7 @@ class _DocumentLLM(_DocumentModel):
             record_failed_call()
             logger.error(f"Exception occurred while calling LLM API: {e}")
             if has_fallback_pending:
-                logger.info("The call will be retried with a fallback LLM.")
+                logger.info("The call will be retried with a fallback model.")
             else:
                 n_retries = getattr(e, _MODEL_API_RETRIES_ATTEMPTED_ATTR, 0)
                 if raise_exception_on_model_api_error:

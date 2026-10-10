@@ -2366,15 +2366,31 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             # while the response is processed, or before the next call is made
             unrecorded_usage.append(usage_data)
             all_usage_data = merge_usage_data(all_usage_data, usage_data)
-            extracted_data = _validate_parsed_llm_output(
-                parsed_json=_parse_llm_output_as_json(
-                    _remove_thinking_content_from_llm_output(extracted_data)
-                ),
-                extracted_item_type=extracted_item_type,
-                justification_provided=add_justifications,
-                references_provided=references_apply,
-                reference_depth=reference_depth,
+            if _model_call_result_is_api_failure((extracted_data, usage_data)):
+                # The LLM returned nothing: its API request failed, or was not
+                # sent, as the prompt exceeds its context window. This is reported
+                # by the LLM when it occurs (see `_query_llm`), and is returned as
+                # a result only when it is not final, i.e. a fallback model is yet
+                # to be tried, or when a warning is issued for it instead of
+                # an exception. There is no response to process, and the failure
+                # is not to be reported as invalid JSON returned by the LLM as well.
+                return None, all_usage_data
+            parsed_data = _parse_llm_output_as_json(
+                _remove_thinking_content_from_llm_output(extracted_data)
             )
+            if parsed_data is None and model_call_obj._output_truncated:
+                # A response cut off at the max output tokens is not a valid JSON
+                # as a rule. It is reported as cut off below, and not as a JSON
+                # that failed the validation as well.
+                extracted_data = None
+            else:
+                extracted_data = _validate_parsed_llm_output(
+                    parsed_json=parsed_data,
+                    extracted_item_type=extracted_item_type,
+                    justification_provided=add_justifications,
+                    references_provided=references_apply,
+                    reference_depth=reference_depth,
+                )
             if extracted_data is None:
                 if model_call_obj._output_truncated:
                     # The response was cut off at the max output tokens, i.e. the same
@@ -2391,7 +2407,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     )
                     logger.error(error_msg)
                     if has_fallback_pending:
-                        logger.info("The call will be retried with a fallback LLM.")
+                        # The fallback model that is tried next is not
+                        # necessarily an LLM
+                        logger.info("The call will be retried with a fallback model.")
                     elif raise_exception_on_extraction_error:
                         await llm._update_usage_and_cost((None, all_usage_data))
                         raise ModelAPIError(error_msg)
@@ -3018,7 +3036,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :type res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
                 :param instances: List of processed instances associated with the result.
                 :type instances: list[_Aspect] | list[_Concept]
-                :param n_retries: Number of retries to perform.
+                :param n_retries: Number of times to call the model at most: the retries
+                    of the model that returned the result, or, for a fallback model,
+                    its first call and its retries.
                 :type n_retries: int
                 :param retry_is_final: Whether the retry is final and will not be repeated by
                     a (next) fallback LLM.
@@ -3030,12 +3050,20 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 if n_retries <= 0:
                     return False
                 if not _model_call_result_is_valid(res):
+                    # A fallback model is called for the first time here, which
+                    # is logged where it is tried, and whatever the failure it is
+                    # tried for. Only the calls after that one are its retries.
+                    n_first_calls = 0 if llm_instance is llm else 1
                     for i in range(n_retries):
-                        logger.info(
-                            f"Retrying {instance_type}s with "
-                            f"{llm_instance._invalid_output_desc} "
-                            f"({i + 1}/{n_retries})"
-                        )
+                        if i >= n_first_calls:
+                            # A call is made again only for invalid data returned
+                            # by this model: for the result given if the model is
+                            # the one that returned it, or in the previous call
+                            logger.info(
+                                f"Retrying {instance_type}s with "
+                                f"{llm_instance._invalid_output_desc} "
+                                f"({i + 1 - n_first_calls}/{n_retries - n_first_calls})"
+                            )
                         res = await extract_items_keeping_usage(
                             extracted_item_type=instance_type,
                             source=context,

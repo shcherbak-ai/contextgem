@@ -3016,6 +3016,440 @@ class TestExtraction(BaseTest):
                     extracted=concept_names if with_fallback else other_concepts,
                 )
 
+    def test_log_of_failed_call_tells_what_happened(self):
+        """
+        Tests that the log of an extraction tells what happened to a call that
+        failed, for aspects and for concepts, with and without concurrency, for
+        an LLM and a decision model, each with a fallback model of either kind:
+
+        - a call is logged as one whose LLM did not return valid JSON only when
+          the LLM returned a response that is not such a JSON;
+        - a call is logged as retried for invalid data only when it is made again
+          with the model that returned invalid data for it, numbered among
+          the retries of that model;
+        - the fallback model to be tried is not announced as an LLM, which
+          a fallback decision model is not.
+
+        A prompt that exceeds the context window of the LLM, and a failed API
+        request, were also logged as an LLM that did not return valid JSON, when
+        a fallback model was yet to be tried or a warning was issued instead of
+        an exception, although the LLM returned nothing. A response cut off at
+        the max output tokens was also logged as a JSON that failed
+        the validation. The first call of a fallback model was logged as a retry
+        for the invalid output of that model, whatever the failure it was tried
+        for. A request that still failed for its params after they were dropped
+        was not logged as failed.
+
+        The APIs are stubbed, i.e. no cassette is required.
+        """
+        import logging as stdlib_logging
+
+        # The types of the responses of litellm to a decision model
+        from litellm.types import decisions as decision_types
+
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
+        decision_model = "typesafe/jev-latest"
+        fallback_decision_model = "typesafe/jev-1.13.0"
+        n_instances = 2
+        invalid_answer = "<<<not-json>>>"
+        cut_off_answer = '[{"concept_id": "C0", "extracted_items": [tr'
+        api_error = litellm.AuthenticationError(
+            message="Simulated API error", model=primary_model, llm_provider="openai"
+        )
+        unsupported_params_error = litellm.UnsupportedParamsError(
+            message="Simulated error", model=primary_model, llm_provider="openai"
+        )
+        get_model_info = litellm.get_model_info
+        # Whether the LLM is given a context window too small for any prompt
+        small_context_window: list[bool] = [False]
+        # The outcomes of the requests that a model is sent for an aspect or
+        # a concept, in turn, by the model: an error to raise, or a text for
+        # the model to return. A request with no outcome set is answered with
+        # an item for the aspect or the concept.
+        outcomes: dict[str, list[Any]] = {}
+        # The number of the requests sent, by the model and the name of the aspect
+        # or the concept
+        n_requests: dict[tuple[str, str], int] = {}
+
+        @contextmanager
+        def capture_logs():
+            """
+            Captures the lines logged for the calls of an extraction, i.e. at
+            the INFO, WARNING and ERROR levels, each as its level and its message.
+            """
+            captured_logs: list[str] = []
+
+            class CaptureHandler(stdlib_logging.Handler):
+                """
+                Handler to capture log messages for testing.
+                """
+
+                def emit(self, record):
+                    """
+                    Adds the level and the message of the record to the captured ones.
+                    """
+                    if record.levelname in ("INFO", "WARNING", "ERROR"):
+                        captured_logs.append(
+                            f"{record.levelname}: {record.getMessage()}"
+                        )
+
+            capture_handler = CaptureHandler()
+            capture_handler.setLevel(stdlib_logging.INFO)
+            logger.addHandler(capture_handler)
+            try:
+                yield captured_logs
+            finally:
+                logger.removeHandler(capture_handler)
+
+        def get_model_info_stub(model: str, *args: Any, **kwargs: Any) -> Any:
+            """
+            Returns the info of the model, with a context window of 10 tokens
+            for the LLM when it is given a small one.
+            """
+            model_info = dict(get_model_info(model, *args, **kwargs))
+            if model == primary_model and small_context_window[0]:
+                model_info["max_input_tokens"] = 10
+            return model_info
+
+        def get_outcome(model: str, text: str) -> Any:
+            """
+            Gives the outcome of the next request of the model for the aspect or
+            the concept that the text names: raises the error, or returns
+            the text to answer with, or None for the answer with an item.
+            """
+            (name,) = set(re.findall(r"Topic \d", text))
+            position = n_requests.get((model, name), 0)
+            n_requests[(model, name)] = position + 1
+            model_outcomes = outcomes.get(model, [])
+            outcome = (
+                model_outcomes[position] if position < len(model_outcomes) else None
+            )
+            if isinstance(outcome, Exception):
+                raise outcome
+            return outcome
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API. A response is cut off if its text is
+            the cut-off answer.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            content = get_outcome(kwargs["model"], prompt)
+            if content is None:
+                content = json.dumps(
+                    [{"concept_id": "C0", "extracted_items": [True]}]
+                    if re.search(r"<concept_id>C0</concept_id>", prompt)
+                    else [{"aspect_id": "A0", "paragraph_ids": ["P0"]}]
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content),
+                        finish_reason="length" if content == cut_off_answer else "stop",
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        async def adecisions_stub(**kwargs: Any):
+            """
+            Simulates the API of the decision model, which answers "yes" to
+            the question of the request, or gives no answer to it if the outcome
+            of the request is the invalid answer.
+            """
+            (question,) = kwargs["questions"]
+            outcome = get_outcome(kwargs["model"], question["instructions"])
+            return decision_types.OpenAIDecisionResponse(
+                model="jev-1.13.0",
+                answers=(
+                    ()
+                    if outcome == invalid_answer
+                    else (
+                        decision_types.OpenAIPredicateAnswer(
+                            name=question["name"], probability=0.9
+                        ),
+                    )
+                ),
+                usage=decision_types.OpenAIDecisionUsage(
+                    input_tokens=10,
+                    output_tokens=0,
+                    total_tokens=10,
+                    input_tokens_details=decision_types.OpenAIDecisionInputTokensDetails(
+                        cached_tokens=0, cache_write_tokens=0
+                    ),
+                ),
+            )
+
+        def create_model(
+            model: str, **kwargs: Any
+        ) -> DocumentLLM | DocumentDecisionModel:
+            """
+            Creates an LLM or a decision model, by the provider of the model.
+            """
+            model_class = (
+                DocumentDecisionModel if model.startswith("typesafe/") else DocumentLLM
+            )
+            return model_class(model=model, api_key="test_api_key", **kwargs)
+
+        def create_document(instance_type: str) -> Document:
+            """
+            Creates a document of one paragraph with two aspects, or with two
+            concepts, that both an LLM and a decision model can extract.
+            """
+            document = Document(raw_text="The parties agree as follows.")
+            if instance_type == "aspect":
+                document.aspects = [
+                    Aspect(name=f"Topic {i}", description=f"Clauses on Topic {i}")
+                    for i in range(n_instances)
+                ]
+            else:
+                document.concepts = [
+                    BooleanConcept(
+                        name=f"Topic {i}", description=f"Topic {i} is covered"
+                    )
+                    for i in range(n_instances)
+                ]
+            return document
+
+        def check_log(
+            models: list[str],
+            expected_log: list[str],
+            request_outcomes: dict[str, list[Any]] | None = None,
+            with_small_context_window: bool = False,
+            raise_exception: bool = True,
+            expected_warning: str | None = None,
+            extracted: bool = True,
+            **model_kwargs: Any,
+        ) -> None:
+            """
+            Extracts the aspects, and the concepts, of a document with the first
+            of the models, which has the other ones as its fallback models, each
+            aspect or concept in a call of its own, without and with concurrency.
+            Checks that each call is logged with the expected lines, and that
+            nothing else is logged. A line is expected by its level and
+            the beginning of its message, with the type of what is extracted
+            in place of ``{type}``.
+            """
+            for instance_type in ("aspect", "concept"):
+                expected = [line.format(type=instance_type) for line in expected_log]
+                for use_concurrency in (False, True):
+                    outcomes.clear()
+                    outcomes.update(request_outcomes or {})
+                    n_requests.clear()
+                    small_context_window[0] = with_small_context_window
+                    model = create_model(models[0], **model_kwargs)
+                    model.fallback_models = [
+                        create_model(fallback, is_fallback=True)
+                        for fallback in models[1:]
+                    ]
+                    document = create_document(instance_type)
+                    extract = (
+                        model.extract_aspects_from_document
+                        if instance_type == "aspect"
+                        else model.extract_concepts_from_document
+                    )
+                    extraction_kwargs: dict[str, Any] = {
+                        "max_items_per_call": 1,
+                        "use_concurrency": use_concurrency,
+                        "raise_exception_on_extraction_error": raise_exception,
+                    }
+                    with capture_logs() as captured_logs:
+                        if expected_warning:
+                            with pytest.warns(UserWarning, match=expected_warning):
+                                extract(document, **extraction_kwargs)
+                        else:
+                            extract(document, **extraction_kwargs)
+                    # Each line logged, as the expected line it begins with, if any
+                    logged = [
+                        next(
+                            (
+                                line
+                                for line in sorted(expected, key=len, reverse=True)
+                                if captured_line.startswith(line)
+                            ),
+                            captured_line,
+                        )
+                        for captured_line in captured_logs
+                    ]
+                    # The lines of each call, and no other lines. The calls are
+                    # logged one after another without concurrency.
+                    if use_concurrency:
+                        assert sorted(logged) == sorted(expected * n_instances), (
+                            captured_logs
+                        )
+                    else:
+                        assert logged == expected * n_instances, captured_logs
+                    instances = (
+                        document.aspects
+                        if instance_type == "aspect"
+                        else document.concepts
+                    )
+                    assert all(bool(i.extracted_items) == extracted for i in instances)
+
+        # The lines logged for the failures, and for what follows them
+        prompt_not_sent = "ERROR: The request is not sent to the LLM: Input messages "
+        llm_api_error = "Exception occurred while calling LLM API: litellm.Auth"
+        cut_off_response = (
+            f"ERROR: The response of LLM `{primary_model}` was cut off at the max "
+            f"output tokens"
+        )
+        # An LLM that returned a response that is not a valid JSON
+        not_valid_json = [
+            "ERROR: Error when validating parsed JSON: parsed_json is None",
+            "ERROR: LLM did not return valid JSON for {type}s",
+        ]
+        fallback_pending = "INFO: The call will be retried with a fallback model."
+        trying_fallback_llm = f"INFO: Trying with fallback LLM {fallback_model} (1/1)"
+        trying_fallback_decision_model = (
+            f"INFO: Trying with fallback decision model {fallback_decision_model} (1/1)"
+        )
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(litellm, "adecisions", new=adecisions_stub),
+            patch.object(litellm, "get_model_info", new=get_model_info_stub),
+        ):
+            # === The prompt exceeds the context window of the LLM ===
+            # No request is sent, i.e. the LLM returns nothing, and the fallback
+            # model is called for the first time
+            for fallback, trying_fallback in [
+                (fallback_model, trying_fallback_llm),
+                (fallback_decision_model, trying_fallback_decision_model),
+            ]:
+                check_log(
+                    [primary_model, fallback],
+                    [prompt_not_sent, fallback_pending, trying_fallback],
+                    with_small_context_window=True,
+                )
+
+            # === The API request of the LLM fails ===
+            for fallback, trying_fallback in [
+                (fallback_model, trying_fallback_llm),
+                (fallback_decision_model, trying_fallback_decision_model),
+            ]:
+                check_log(
+                    [primary_model, fallback],
+                    [f"ERROR: {llm_api_error}", fallback_pending, trying_fallback],
+                    request_outcomes={primary_model: [api_error]},
+                )
+            # The request of the fallback LLM fails too, and a warning is issued
+            check_log(
+                [primary_model, fallback_model],
+                [
+                    f"ERROR: {llm_api_error}",
+                    fallback_pending,
+                    trying_fallback_llm,
+                    f"ERROR: {llm_api_error}",
+                    f"WARNING: {llm_api_error}",
+                ],
+                request_outcomes={
+                    primary_model: [api_error],
+                    fallback_model: [api_error],
+                },
+                raise_exception=False,
+                expected_warning=r"calling LLM API.*\(0 retries\)",
+                extracted=False,
+            )
+            # No fallback model, and a warning is issued
+            check_log(
+                [primary_model],
+                [f"ERROR: {llm_api_error}", f"WARNING: {llm_api_error}"],
+                request_outcomes={primary_model: [api_error]},
+                raise_exception=False,
+                expected_warning=r"calling LLM API.*\(0 retries\)",
+                extracted=False,
+            )
+            # The params of the request are not supported for the model, and
+            # the request fails for them also when it is sent without them
+            check_log(
+                [primary_model, fallback_model],
+                [
+                    f"WARNING: The request to LLM `{primary_model}` has params that "
+                    f"are not supported for the model, and is sent without them: ",
+                    "ERROR: Exception occurred while calling LLM API with "
+                    "drop_params=True: ",
+                    fallback_pending,
+                    trying_fallback_llm,
+                ],
+                request_outcomes={primary_model: [unsupported_params_error] * 2},
+                expected_warning="calling LLM API with drop_params=True",
+            )
+
+            # === The response of the LLM is cut off at the max output tokens ===
+            check_log(
+                [primary_model, fallback_model],
+                [cut_off_response, fallback_pending, trying_fallback_llm],
+                request_outcomes={primary_model: [cut_off_answer]},
+            )
+            # No fallback model, and a warning is issued
+            check_log(
+                [primary_model],
+                [cut_off_response],
+                request_outcomes={primary_model: [cut_off_answer]},
+                raise_exception=False,
+                expected_warning="was cut off at the max output tokens",
+                extracted=False,
+            )
+
+            # === The LLM returns invalid data ===
+            # The call is made again twice with the LLM, and then with
+            # the fallback LLM, which returns invalid data for its first call,
+            # i.e. is called again: its first retry of the two it has, as it is
+            # called three times at most
+            check_log(
+                [primary_model, fallback_model],
+                [
+                    *not_valid_json,
+                    "INFO: Retrying {type}s with invalid JSON (1/2)",
+                    *not_valid_json,
+                    "INFO: Retrying {type}s with invalid JSON (2/2)",
+                    *not_valid_json,
+                    trying_fallback_llm,
+                    *not_valid_json,
+                    "INFO: Retrying {type}s with invalid JSON (1/2)",
+                ],
+                request_outcomes={
+                    primary_model: [invalid_answer] * 3,
+                    fallback_model: [invalid_answer],
+                },
+                max_retries_invalid_data=2,
+            )
+            # The call is not made again with the LLM, and the fallback decision
+            # model, which did not return an invalid response, is called once
+            check_log(
+                [primary_model, fallback_decision_model],
+                [*not_valid_json, trying_fallback_decision_model],
+                request_outcomes={primary_model: [invalid_answer]},
+                max_retries_invalid_data=0,
+            )
+
+            # === A decision model ===
+            # Its API request fails, and the fallback LLM is called for the first
+            # time, i.e. not for a JSON that is not valid
+            check_log(
+                [decision_model, fallback_model],
+                [
+                    "ERROR: Exception occurred while calling decision model API: ",
+                    fallback_pending,
+                    trying_fallback_llm,
+                ],
+                request_outcomes={decision_model: [api_error]},
+            )
+            # It returns an invalid response, and the fallback decision model is
+            # called once
+            check_log(
+                [decision_model, fallback_decision_model],
+                [
+                    "ERROR: Decision model `"
+                    + decision_model
+                    + "` returned an invalid response for {type} `Topic ",
+                    trying_fallback_decision_model,
+                ],
+                request_outcomes={decision_model: [invalid_answer]},
+            )
+
     def test_concepts_with_sentence_references_after_aspects_are_extracted(self):
         """
         Tests that a concept with references to sentences is extracted from
