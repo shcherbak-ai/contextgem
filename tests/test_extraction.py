@@ -2453,6 +2453,461 @@ class TestExtraction(BaseTest):
                     llm.reset_usage_and_cost()
                     asyncio.run(check_other_calls_are_stopped(llm, raise_exception))
 
+    def test_failed_concurrent_call_stops_other_calls(self):
+        """
+        Tests that, with concurrency, a call that fails the extraction stops
+        the other calls of the same model before its error is raised, as an error
+        that is not a failure of the model does: the requests in flight are
+        cancelled, no request is sent afterwards, no task is left running, and
+        the items and the usage of the calls completed by then are kept. Such
+        a call is one whose API request fails, or whose response is cut off at
+        the max output tokens, with no fallback model left to try, among
+        the first calls and among the calls made again, for an LLM, a decision
+        model and in a model group. The same applies to a call made again whose
+        data is still invalid after the last retry.
+
+        A failure that does not fail the extraction changes nothing: the other
+        calls go on when a fallback model is yet to be tried, and when
+        the failure is only warned of.
+
+        The other calls were completed, and the requests not yet sent were
+        sent, before the error of such a call was raised.
+
+        The APIs are stubbed, i.e. no cassette is required.
+        """
+        # The types of the responses of litellm to a decision model, which only
+        # this test of the module builds
+        from litellm.types import decisions as decision_types
+
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
+        decision_model = "typesafe/jev-latest"
+        concept_names = [f"Concept {i}" for i in range(4)]
+        invalid_answer = "<<<not-json>>>"
+        cut_off_answer = '[{"concept_id": "C0", "extracted_items": [tr'
+        api_error = litellm.AuthenticationError(
+            message="Simulated API error", model=primary_model, llm_provider="openai"
+        )
+        # The outcome of a request that is not answered, i.e. stays in flight
+        in_flight = object()
+        # The outcomes of the requests to a model for a concept, in turn, by
+        # the model and the name of the concept: an error to raise, a text for
+        # the LLM to return, or a request in flight, optionally with a condition
+        # that the request waits for. A request with no outcome set is answered
+        # at once, with an item for the concept.
+        outcomes: dict[tuple[str, str], list[Any]] = {}
+        # The requests sent, answered, failed and cancelled in flight, each as
+        # the model and the name of the concept
+        requests: list[tuple[str, str]] = []
+        responses: list[tuple[str, str]] = []
+        failed_requests: list[tuple[str, str]] = []
+        cancelled_requests: list[tuple[str, str]] = []
+
+        async def send_request(model: str, text: str) -> Any:
+            """
+            Records the request of the model for the concept that the text names,
+            and gives its outcome, when the condition of the outcome is met:
+            raises the error, or returns the text to answer with, or None for
+            the answer with an item. A request in flight is answered only if it
+            is not cancelled within five seconds.
+            """
+            (name,) = set(re.findall(r"Concept \d", text))
+            request = (model, name)
+            requests.append(request)
+            outcome = outcomes[request].pop(0) if outcomes.get(request) else None
+            if isinstance(outcome, tuple):
+                condition, outcome = outcome
+                for _ in range(1000):
+                    if condition():
+                        break
+                    await asyncio.sleep(0)
+            if outcome is in_flight:
+                try:
+                    await asyncio.sleep(5)
+                except asyncio.CancelledError:
+                    cancelled_requests.append(request)
+                    raise
+                outcome = None
+            if isinstance(outcome, Exception):
+                failed_requests.append(request)
+                raise outcome
+            responses.append(request)
+            return outcome
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API. A response uses 10 input tokens, and is cut
+            off if its text is the cut-off answer.
+            """
+            content = await send_request(
+                kwargs["model"], kwargs["messages"][-1]["content"]
+            )
+            if content is None:
+                content = json.dumps([{"concept_id": "C0", "extracted_items": [True]}])
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content),
+                        finish_reason="length" if content == cut_off_answer else "stop",
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        async def adecisions_stub(**kwargs: Any):
+            """
+            Simulates the API of the decision model, which answers "yes" to
+            the question of the request. A response uses 10 input tokens.
+            """
+            (question,) = kwargs["questions"]
+            await send_request(kwargs["model"], question["instructions"])
+            return decision_types.OpenAIDecisionResponse(
+                model="jev-1.13.0",
+                answers=(
+                    decision_types.OpenAIPredicateAnswer(
+                        name=question["name"], probability=0.9
+                    ),
+                ),
+                usage=decision_types.OpenAIDecisionUsage(
+                    input_tokens=10,
+                    output_tokens=0,
+                    total_tokens=10,
+                    input_tokens_details=decision_types.OpenAIDecisionInputTokensDetails(
+                        cached_tokens=0, cache_write_tokens=0
+                    ),
+                ),
+            )
+
+        def create_llm(with_fallback: bool = False, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM, optionally with a fallback LLM.
+            """
+            llm = DocumentLLM(model=primary_model, api_key="test_api_key", **kwargs)
+            if with_fallback:
+                llm.fallback_models = [
+                    DocumentLLM(
+                        model=fallback_model, api_key="test_api_key", is_fallback=True
+                    )
+                ]
+            return llm
+
+        def create_decision_model(**kwargs: Any) -> DocumentDecisionModel:
+            """
+            Creates a decision model.
+            """
+            return DocumentDecisionModel(
+                model=decision_model, api_key="test_api_key", **kwargs
+            )
+
+        def create_document() -> Document:
+            """
+            Creates a document of two paragraphs with four concepts that both
+            an LLM and a decision model can extract. In a model group, each second
+            concept is routed to the model with the role "other".
+            """
+            document = Document(
+                raw_text="Services agreement\n\nThe parties agree as follows."
+            )
+            document.concepts = [
+                BooleanConcept(
+                    name=name,
+                    description=f"Topic {i} is covered",
+                    model_role="other" if i % 2 else None,
+                )
+                for i, name in enumerate(concept_names)
+            ]
+            return document
+
+        def set_outcomes(request_outcomes: dict[tuple[str, str], list[Any]]) -> None:
+            """
+            Sets the outcomes of the requests to a model for a concept, and
+            resets the records.
+            """
+            outcomes.clear()
+            outcomes.update(request_outcomes)
+            for record in (requests, responses, failed_requests, cancelled_requests):
+                record.clear()
+
+        async def extract(
+            model: DocumentLLM | DocumentDecisionModel | DocumentModelGroup,
+            document: Document,
+            **kwargs: Any,
+        ) -> Exception | None:
+            """
+            Extracts the concepts of the document concurrently, each in a call
+            of its own, and returns the error raised, if any. Checks that
+            the extraction leaves no task running, i.e. that nothing is sent
+            after it.
+            """
+            tasks_before = asyncio.all_tasks()
+            error = None
+            try:
+                await model.extract_concepts_from_document_async(
+                    document, use_concurrency=True, **kwargs
+                )
+            except Exception as e:
+                error = e
+            assert not [
+                task for task in asyncio.all_tasks() - tasks_before if not task.done()
+            ]
+            return error
+
+        def check_outcome(
+            model: DocumentLLM | DocumentDecisionModel | DocumentModelGroup,
+            document: Document,
+            expected_requests: list[tuple[str, str]],
+            cancelled: list[tuple[str, str]],
+            extracted: list[str],
+        ) -> None:
+            """
+            Checks the requests sent, the requests cancelled in flight, and
+            the concepts extracted, by their names. Checks that the usage recorded
+            for the model, with its fallback models, or for the models of
+            the group, is that of the requests completed: each request that got
+            a response with its tokens, and each request that failed as a call
+            without a response. A request cancelled in flight is not recorded.
+            """
+            assert sorted(requests) == sorted(expected_requests)
+            assert sorted(cancelled_requests) == sorted(cancelled)
+            for concept in document.concepts:
+                is_extracted = concept.name in extracted
+                assert bool(concept.extracted_items) == is_extracted
+                assert concept._is_processed == is_extracted
+            for usage_info in model.get_usage():
+                usage = usage_info.usage
+                n_responses = [m for m, _ in responses].count(usage_info.model)
+                n_failed = [m for m, _ in failed_requests].count(usage_info.model)
+                assert usage.input == 10 * n_responses
+                assert len(usage.calls) == n_responses + n_failed
+                assert [
+                    call.timestamp_received is not None for call in usage.calls
+                ].count(True) == n_responses
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(litellm, "adecisions", new=adecisions_stub),
+        ):
+            # === A failed API request and a cut-off response of an LLM ===
+            # Each call takes two requests, one for each paragraph. The request for
+            # the first concept fails, or is answered with a cut-off response,
+            # when the call of the second concept is completed. By then, the LLM
+            # returned invalid data for the third concept, and the first request
+            # for the fourth concept is in flight.
+            for failure, error_message in [
+                (api_error, r"^Exception occurred while calling LLM API"),
+                (cut_off_answer, r"was cut off at the max output tokens"),
+            ]:
+                llm = create_llm()
+                document = create_document()
+                failed, completed, invalid, unanswered = concept_names
+                set_outcomes(
+                    {
+                        (primary_model, failed): [
+                            (
+                                lambda c=document.concepts[1]: c._is_processed,
+                                failure,
+                            )
+                        ],
+                        (primary_model, invalid): [invalid_answer],
+                        (primary_model, unanswered): [in_flight],
+                    }
+                )
+                error = asyncio.run(
+                    extract(llm, document, max_paragraphs_to_analyze_per_call=1)
+                )
+                # The error is the one that such a failure raises
+                assert isinstance(error, ModelAPIError)
+                assert re.search(error_message, str(error))
+                if failure is api_error:
+                    assert error.original_error is api_error
+                    assert error.retry_count == 0
+                # The request in flight is cancelled, and no request is sent
+                # afterwards: neither the second request for the fourth concept,
+                # nor the request for the third concept again
+                check_outcome(
+                    llm,
+                    document,
+                    expected_requests=[
+                        (primary_model, failed),
+                        (primary_model, completed),
+                        (primary_model, completed),
+                        (primary_model, invalid),
+                        (primary_model, unanswered),
+                    ],
+                    cancelled=[(primary_model, unanswered)],
+                    extracted=[completed],
+                )
+
+            # === A failed API request of a decision model ===
+            # The request for the first concept fails when the call of the second
+            # concept is completed, with the other requests in flight
+            model = create_decision_model()
+            document = create_document()
+            failed, completed, *unanswered_concepts = concept_names
+            set_outcomes(
+                {
+                    (decision_model, failed): [
+                        (lambda c=document.concepts[1]: c._is_processed, api_error)
+                    ],
+                    **{(decision_model, i): [in_flight] for i in unanswered_concepts},
+                }
+            )
+            error = asyncio.run(extract(model, document))
+            assert isinstance(error, ModelAPIError)
+            assert re.search(
+                r"^Exception occurred while calling decision model API", str(error)
+            )
+            assert error.original_error is api_error
+            assert error.retry_count == 0
+            check_outcome(
+                model,
+                document,
+                expected_requests=[(decision_model, i) for i in concept_names],
+                cancelled=[(decision_model, i) for i in unanswered_concepts],
+                extracted=[completed],
+            )
+
+            # === A call made again: the fallback LLM fails as well ===
+            # The requests of the LLM for the first two concepts fail. The request
+            # of the fallback LLM for the first concept fails when its request
+            # for the second concept is in flight.
+            llm = create_llm(with_fallback=True)
+            document = create_document()
+            failed, unanswered, *completed_concepts = concept_names
+            set_outcomes(
+                {
+                    (primary_model, failed): [api_error],
+                    (primary_model, unanswered): [api_error],
+                    (fallback_model, failed): [
+                        (lambda: (fallback_model, unanswered) in requests, api_error)
+                    ],
+                    (fallback_model, unanswered): [in_flight],
+                }
+            )
+            error = asyncio.run(extract(llm, document))
+            assert isinstance(error, ModelAPIError)
+            assert error.original_error is api_error
+            check_outcome(
+                llm,
+                document,
+                expected_requests=[
+                    *((primary_model, i) for i in concept_names),
+                    (fallback_model, failed),
+                    (fallback_model, unanswered),
+                ],
+                cancelled=[(fallback_model, unanswered)],
+                extracted=completed_concepts,
+            )
+
+            # === A call made again: the data is still invalid after the last retry ===
+            # The LLM returns invalid data for the first two concepts. Requested
+            # again, it returns invalid data for the first concept when
+            # the request sent again for the second concept is in flight.
+            llm = create_llm(max_retries_invalid_data=1)
+            document = create_document()
+            failed, unanswered, *completed_concepts = concept_names
+            set_outcomes(
+                {
+                    (primary_model, failed): [
+                        invalid_answer,
+                        (
+                            lambda: requests.count((primary_model, unanswered)) == 2,
+                            invalid_answer,
+                        ),
+                    ],
+                    (primary_model, unanswered): [invalid_answer, in_flight],
+                }
+            )
+            error = asyncio.run(extract(llm, document))
+            assert isinstance(error, ModelExtractionError)
+            assert "invalid JSON" in str(error)
+            assert error.retry_count == 1
+            check_outcome(
+                llm,
+                document,
+                expected_requests=[
+                    *((primary_model, i) for i in concept_names),
+                    (primary_model, failed),
+                    (primary_model, unanswered),
+                ],
+                cancelled=[(primary_model, unanswered)],
+                extracted=completed_concepts,
+            )
+
+            # === A model group ===
+            # The request of the LLM for its first concept fails when its request
+            # for its other concept, and the requests of the decision model, are
+            # in flight: the other call of the LLM is stopped, as the calls of
+            # the decision model are
+            group = DocumentModelGroup(
+                models=[create_llm(), create_decision_model(role="other")]
+            )
+            document = create_document()
+            failed_request, *unanswered_requests = [
+                (decision_model if concept.model_role else primary_model, concept.name)
+                for concept in document.concepts
+            ]
+            set_outcomes(
+                {
+                    failed_request: [(lambda: len(requests) == 4, api_error)],
+                    **{request: [in_flight] for request in unanswered_requests},
+                }
+            )
+            error = asyncio.run(extract(group, document))
+            assert isinstance(error, ModelAPIError)
+            assert error.original_error is api_error
+            check_outcome(
+                group,
+                document,
+                expected_requests=[failed_request, *unanswered_requests],
+                cancelled=unanswered_requests,
+                extracted=[],
+            )
+
+            # === A failure that does not fail the extraction ===
+            # The request of the LLM for the first concept fails when the other
+            # requests are in flight, and they are answered afterwards
+            for with_fallback in (True, False):
+                llm = create_llm(with_fallback=with_fallback)
+                document = create_document()
+                failed, *other_concepts = concept_names
+                set_outcomes(
+                    {
+                        (primary_model, failed): [
+                            (lambda: len(requests) == 4, api_error)
+                        ],
+                        **{
+                            (primary_model, i): [(lambda: bool(failed_requests), None)]
+                            for i in other_concepts
+                        },
+                    }
+                )
+                if with_fallback:
+                    # The fallback LLM is tried for the first concept
+                    error = asyncio.run(extract(llm, document))
+                else:
+                    # A warning is issued for the first concept
+                    with pytest.warns(
+                        UserWarning, match="Exception occurred while calling LLM API"
+                    ):
+                        error = asyncio.run(
+                            extract(
+                                llm, document, raise_exception_on_extraction_error=False
+                            )
+                        )
+                assert error is None
+                check_outcome(
+                    llm,
+                    document,
+                    expected_requests=[
+                        *((primary_model, i) for i in concept_names),
+                        *([(fallback_model, failed)] if with_fallback else []),
+                    ],
+                    cancelled=[],
+                    extracted=concept_names if with_fallback else other_concepts,
+                )
+
     def test_concepts_with_sentence_references_after_aspects_are_extracted(self):
         """
         Tests that a concept with references to sentences is extracted from

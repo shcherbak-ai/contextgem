@@ -3216,23 +3216,20 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 use_concurrency and len(data_list) > 1
             ):  # Disable overhead if a single call
 
-                async def extract_items_or_api_error(**kwargs: Any) -> Any:
+                async def extract_items_and_keep_result(**kwargs: Any) -> Any:
                     """
-                    Extracts items from a single chunk, returning a model API error
-                    instead of raising it, so that the other chunks are processed
-                    before the error is raised. Any other error is raised, which
-                    stops the processing of the other chunks.
+                    Extracts items from a single chunk, and keeps the result for
+                    its usage to be counted if the processing of the other chunks
+                    is interrupted. An error raised for the chunk, e.g. a model API
+                    error, which is raised only when it is final, stops
+                    the processing of the other chunks.
 
                     :param kwargs: Keyword arguments of `_extract_items_from_instances`.
                     :type kwargs: Any
-                    :return: The extraction result, or the model API error raised
-                        during the extraction.
+                    :return: The extraction result.
                     :rtype: Any
                     """
-                    try:
-                        result = await extract_items_keeping_usage(**kwargs)
-                    except ModelAPIError as e:
-                        return e
+                    result = await extract_items_keeping_usage(**kwargs)
                     completed_results.append(result)
                     return result
 
@@ -3240,19 +3237,22 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 completed_results: list[Any] = []
                 try:
                     results = await _async_multi_executor(
-                        func=extract_items_or_api_error,
+                        func=extract_items_and_keep_result,
                         data_list=data_list,
                     )
                 except BaseException:
-                    # Either a call raised an error that is not reported through
-                    # its result, e.g. for a prompt that exceeds the context window
-                    # of the model when there is no fallback model to try: the other
-                    # calls are stopped by then, and the error is raised unchanged,
-                    # as it is without concurrency. Or the extraction is cancelled,
-                    # e.g. on a timeout set by the calling code, or as the extraction
-                    # with another model of the group failed. In both cases, the calls
-                    # completed by then are counted: their results, with the usage,
-                    # would be lost otherwise.
+                    # Either a call raised an error: a model API error, which is
+                    # raised only when it is final, i.e. the retries of the failed
+                    # request are already performed and there is no fallback model
+                    # to try, or an error that is not a failure of the model, e.g.
+                    # for a prompt that exceeds the context window of the model when
+                    # there is no fallback model to try. The other calls are stopped
+                    # by then, and the error is raised unchanged, as it is without
+                    # concurrency. Or the extraction is cancelled, e.g. on a timeout
+                    # set by the calling code, or as the extraction with another
+                    # model of the group failed. In both cases, the calls completed
+                    # by then are counted: their results, with the usage, would be
+                    # lost otherwise.
                     for result in completed_results:
                         await llm._update_usage_and_cost(result)
                     raise
@@ -3264,38 +3264,32 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
                 # Update usage stats and cost
                 for result in results:
-                    if not isinstance(result, ModelAPIError):
-                        await llm._update_usage_and_cost(result)
+                    await llm._update_usage_and_cost(result)
 
-                # A model API error is raised only when it is final, i.e. the retries
-                # of the failed request are already performed and there is no fallback
-                # LLM to try. Re-raise the first such error by chunk index, instead of
-                # sending the failed request again.
-                for result in results:
-                    if isinstance(result, ModelAPIError):
-                        raise result
-
-                # Retry failed chunks concurrently. Original chunk order is preserved
-                # in `failed_pairs` so post-gather handling raises the first failure
-                # by chunk index, matching prior sequential semantics.
+                # Retry failed chunks concurrently. An error raised for a chunk,
+                # i.e. a failure that no retry and no fallback model is left for,
+                # stops the retries of the other chunks, as it stops the processing
+                # of the other chunks above. The usage of the calls completed by
+                # then is counted, as each call made again is counted when it is
+                # completed. Original chunk order is preserved in `failed_pairs`,
+                # so the failures that are not raised by the retries are handled
+                # below in the order of the chunks.
                 failed_pairs = [
                     (chunk, result)
                     for chunk, result in zip(data_chunks, results, strict=True)
                     if not _model_call_result_is_valid(result)
                 ]
                 if failed_pairs:
-                    retry_outcomes = await asyncio.gather(
-                        *(
-                            retry_chunk_with_fallbacks(chunk, result)
+                    retry_outcomes = await _async_multi_executor(
+                        func=retry_chunk_with_fallbacks,
+                        data_list=[
+                            {"chunk": chunk, "result": result}
                             for chunk, result in failed_pairs
-                        ),
-                        return_exceptions=True,
+                        ],
                     )
                     for (chunk, result), outcome in zip(
                         failed_pairs, retry_outcomes, strict=True
                     ):
-                        if isinstance(outcome, BaseException):
-                            raise outcome
                         if not outcome:
                             if llm._retries_invalid_data > 0 or llm.fallback_models:
                                 if raise_exception_on_extraction_error:

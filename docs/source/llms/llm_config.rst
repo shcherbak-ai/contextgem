@@ -217,6 +217,8 @@ Retries are configured per LLM, which also applies to each fallback LLM, and dep
 
 When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request, for a response cut off at the max output tokens during extraction, or for an empty response in a chat, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method. A prompt that exceeds the context window of the last LLM to try raises ``ValueError``.
 
+With ``use_concurrency=True``, the aspects or concepts are extracted in several calls at the same time. When ``ModelAPIError`` is to be raised for one of the calls, the other calls are stopped first: their requests in flight are cancelled, and no requests are sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
+
 .. note::
    ``max_retries_failed_request`` sets the number of retries performed by the LLM provider's SDK, where supported (e.g. for OpenAI), in addition to the retries described above. It applies to the first attempt of a request only.
 

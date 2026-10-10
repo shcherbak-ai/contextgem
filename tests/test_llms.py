@@ -909,14 +909,19 @@ class TestLLMs(BaseTest):
             assert document.concepts[0].extracted_items[0].value == "Item"
 
             # Extraction with concurrency: a final API error is raised as is,
-            # without sending the failed requests again
+            # without sending the failed requests again. Such an error stops
+            # the other calls (see `test_failed_concurrent_call_stops_other_calls`
+            # in the extraction tests). Here, the request for the other concept is
+            # sent nevertheless: each call sends its request as soon as it starts,
+            # and the stubbed API fails the first request without waiting, i.e.
+            # before the call of the other concept can be stopped.
             set_outcomes({primary_model: [auth_error]})
             with pytest.raises(ModelAPIError) as exc_info:
                 create_llm().extract_concepts_from_document(
                     create_document(n_concepts=2), use_concurrency=True
                 )
             assert exc_info.value.original_error is auth_error
-            assert requested_models() == [primary_model] * 2  # one per concept
+            assert requested_models() == [primary_model] * 2  # each sent once
 
             # Extraction: a warning is issued if `raise_exception_on_extraction_error`
             # is False, without sending the failed request again
@@ -1082,13 +1087,16 @@ class TestLLMs(BaseTest):
             assert requests == [primary_model] * 4
 
             # With concurrency, the error is raised as is, without sending
-            # the requests again
+            # the requests again. It stops the other calls, as a failed API request
+            # does; the request for the other concept is sent nevertheless, as each
+            # call sends its request as soon as it starts, and the stubbed API
+            # answers the first request without waiting.
             set_outcomes({primary_model: [(cut_off_answer, "length")]})
             with pytest.raises(ModelAPIError, match="cut off at the max output tokens"):
                 create_llm().extract_concepts_from_document(
                     create_document(n_concepts=2), use_concurrency=True
                 )
-            assert requests == [primary_model] * 2  # one per concept
+            assert requests == [primary_model] * 2  # each sent once
 
             # A warning is issued if `raise_exception_on_extraction_error` is False,
             # without sending the request again
