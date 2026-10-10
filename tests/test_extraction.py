@@ -2361,14 +2361,16 @@ class TestExtraction(BaseTest):
             assert sorted(requests) == [
                 (primary_model, i.name) for i in document.concepts
             ]
-            # The concept extracted by then keeps its item, and the request
-            # for it is counted in the usage
+            # The concept extracted by then keeps its item. The usage counts
+            # the request for it, and the request whose response the error was
+            # raised for; the requests cancelled in flight are not counted.
             assert [i.value for i in completed.extracted_items] == [True]
             assert not any(
                 i.extracted_items or i._is_processed for i in (failed, *in_flight)
             )
             usage = llm.get_usage()[0].usage
-            assert usage.input >= 10 and usage.output >= 5
+            assert (usage.input, usage.output) == (20, 10)
+            assert len(usage.calls) == 2
 
         # Without and with the retries for invalid data
         llms = [create_llm(0), create_llm(3)]

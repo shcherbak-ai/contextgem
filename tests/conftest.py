@@ -25,6 +25,7 @@ for running ContextGem tests, including VCR cassette handling.
 
 from __future__ import annotations
 
+import asyncio
 import os
 from unittest.mock import patch
 
@@ -268,6 +269,30 @@ def _tethered_network_guard(request):
     tethered.deactivate(lock_token=_TETHERED_LOCK)
 
 
+def _run_tasks_left_on_event_loop() -> None:
+    """
+    Runs the tasks that are left pending on the event loop of the thread, if any.
+
+    With nest_asyncio applied, ``asyncio.run()`` neither cancels the tasks that
+    a coroutine leaves pending nor closes the event loop, which the next call
+    uses again. The sync ``litellm.completion()``, which the VCR-marked tests
+    route ``acompletion()`` to, reports the timing of the call in a task of
+    the running loop. The task of the last call of a test stays pending until
+    the next test runs the loop, or, if no test does, e.g. when the test is run
+    on its own, until the interpreter exits, which then prints
+    "Task was destroyed but it is pending!".
+    """
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        # No event loop in the thread, i.e. nothing was run
+        return
+    if loop.is_closed() or loop.is_running():
+        return
+    if asyncio.all_tasks(loop):
+        loop.run_until_complete(asyncio.sleep(0))
+
+
 @pytest.fixture(autouse=True)
 def vcr_compatible_acompletion(request):
     """
@@ -338,5 +363,7 @@ def vcr_compatible_acompletion(request):
             patch.object(litellm, "adecisions", vcr_compatible_adecisions_fn),
         ):
             yield
+        # The sync calls leave tasks of litellm on the event loop
+        _run_tasks_left_on_event_loop()
     else:
         yield
