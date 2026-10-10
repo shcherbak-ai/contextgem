@@ -2585,7 +2585,13 @@ class TestDecisionModels(BaseTest):
         ]
         with patch.object(litellm, "adecisions", new=decisions_stub):
             # ... are not extracted again, before any request is sent
-            with pytest.raises(ValueError, match="already been processed"):
+            with pytest.raises(
+                ValueError,
+                match=(
+                    r"^Some concepts have already been processed: \[.+\]\. "
+                    r"Set `overwrite_existing=True` to overwrite them\.$"
+                ),
+            ):
                 decision_model.extract_concepts_from_document(document)
             assert not decisions_stub.requests
             # ... unless they are to be overwritten

@@ -1549,7 +1549,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     already_processed_names.append(i.name)
             if already_processed_names:
                 raise ValueError(
-                    f"Some {instance_type}s have already been processed: {already_processed_names}."
+                    f"Some {instance_type}s have already been processed: {already_processed_names}. "
                     "Set `overwrite_existing=True` to overwrite them."
                 )
 
