@@ -29,16 +29,19 @@ import os
 import types
 import warnings
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
 import pytest
 from aiolimiter import AsyncLimiter
 from pydantic import ValidationError
+from pydantic_core import PydanticCustomError
 
 from contextgem.internal import utils as utils_module
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
+from contextgem.internal.base.mixins import _redact_api_key_in_validation_error
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import (
@@ -57,7 +60,7 @@ from contextgem.public import (
     register_tool,
 )
 from tests.base import BaseTest
-from tests.utils import get_project_root_path
+from tests.utils import REDACTED_VALUE, get_project_root_path
 
 
 class TestLLMs(BaseTest):
@@ -1470,14 +1473,15 @@ class TestLLMs(BaseTest):
         ]
         assert not never_awaited, never_awaited
 
-    def test_api_key_not_shown(self):
+    def test_api_key_not_shown(self, tmp_path: Path):
         """
         Tests that the API key of an LLM is not shown when the LLM is printed,
         on its own, as a fallback LLM or in a model group, while its API base is,
         and that no part of the key is shown in the text of a validation error
         of an LLM or of a model group, which does not show the inputs of
         the validation, nor given by the ``errors()`` and ``json()`` methods of
-        the error for an LLM that is among the inputs.
+        the error: neither for an LLM that is among the inputs, nor for a key
+        that is among them as it is passed, which is reported as redacted.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -1585,7 +1589,30 @@ class TestLLMs(BaseTest):
         assert model_group.output_language == "en"
 
         # The key that is passed to a group by mistake: a group has no such param,
-        # as the key is set for each of its LLMs
+        # as the key is set for each of its LLMs. The error that rejects the key
+        # reports the redacted value in its place.
+        key_rejected_texts = ["api_key", "Extra inputs are not permitted"]
+        key_rejected_details = {
+            "type": "extra_forbidden",
+            "loc": ("api_key",),
+            "msg": "Extra inputs are not permitted",
+            "input": REDACTED_VALUE,
+        }
+
+        def check_group_error(error: BaseException | None) -> None:
+            """
+            Checks that the validation error of a group that the key is passed
+            to does not give the key, and reports nothing else as invalid.
+
+            :param error: The validation error.
+            :type error: BaseException | None
+            """
+            assert isinstance(error, ValidationError)
+            self.check_validation_error_hides_inputs(error, api_key, key_rejected_texts)
+            self.check_validation_error_omits_model_keys(error, api_key)
+            assert error.title == "DocumentModelGroup"
+            assert error.errors(include_url=False) == [key_rejected_details]
+
         invalid_group_params: list[dict[str, Any]] = [
             {"api_key": api_key, "models": [llm, other_llm]},
             {"models": [llm, other_llm], "api_key": api_key},
@@ -1593,17 +1620,83 @@ class TestLLMs(BaseTest):
         for group_params in invalid_group_params:
             with pytest.raises(ValidationError) as e:
                 DocumentModelGroup(**group_params)
-            self.check_validation_error_hides_inputs(
-                e.value, api_key, ["api_key", "Extra inputs are not permitted"]
-            )
+            check_group_error(e.value)
+        # ... also when the group is invalid otherwise. Without its LLMs, the input
+        # is all the params that are passed, i.e. the key.
+        with pytest.raises(ValidationError) as e:
+            DocumentModelGroup(api_key=api_key)
+        self.check_validation_error_hides_inputs(
+            e.value, api_key, ["models", "Field required", *key_rejected_texts]
+        )
+        self.check_validation_error_omits_model_keys(e.value, api_key)
+        assert e.value.errors(include_url=False) == [
+            {
+                "type": "missing",
+                "loc": ("models",),
+                "msg": "Field required",
+                "input": {"api_key": REDACTED_VALUE},
+            },
+            key_rejected_details,
+        ]
+        # With a single LLM, the LLM is reported as it is
+        single_llm = [llm]
+        with pytest.raises(ValidationError) as e:
+            DocumentModelGroup(models=single_llm, api_key=api_key)
+        self.check_validation_error_hides_inputs(
+            e.value, api_key, ["models", "at least 2 items", *key_rejected_texts]
+        )
+        self.check_validation_error_omits_model_keys(e.value, api_key)
+        assert e.value.errors(include_url=False) == [
+            {
+                "type": "too_short",
+                "loc": ("models",),
+                "msg": "List should have at least 2 items after validation, not 1",
+                "input": single_llm,
+                "ctx": {"field_type": "List", "min_length": 2, "actual_length": 1},
+            },
+            key_rejected_details,
+        ]
+        assert e.value.errors()[0]["input"] is single_llm
+        # ... and when the group is deserialized from the data that the key is
+        # added to
+        serialized_group = {**model_group.to_dict(), "api_key": api_key}
+        with pytest.raises(ValidationError) as e:
+            DocumentModelGroup.from_dict(serialized_group)
+        check_group_error(e.value)
+        with pytest.raises(ValidationError) as e:
+            DocumentModelGroup.from_json(json.dumps(serialized_group))
+        check_group_error(e.value)
+        disk_path = tmp_path / "model_group.json"
+        disk_path.write_text(json.dumps(serialized_group), encoding="utf-8")
+        with pytest.raises(RuntimeError) as runtime_exc_info:
+            DocumentModelGroup.from_disk(disk_path)
+        assert "SECRET" not in str(runtime_exc_info.value)
+        check_group_error(runtime_exc_info.value.__cause__)
+        # ... and when the key is assigned to the group
+        key_param = "api_key"
+        with pytest.raises(ValidationError) as e:
+            setattr(model_group, key_param, api_key)
+        self.check_validation_error_hides_inputs(
+            e.value, api_key, ["api_key", "Object has no attribute"]
+        )
+        self.check_validation_error_omits_model_keys(e.value, api_key)
+        assert e.value.errors(include_url=False) == [
+            {
+                "type": "no_such_attribute",
+                "loc": ("api_key",),
+                "msg": "Object has no attribute 'api_key'",
+                "input": REDACTED_VALUE,
+                "ctx": {"attribute": "api_key"},
+            }
+        ]
+        assert not hasattr(model_group, key_param)
 
         # The LLM that is invalid itself, when it is created, changed or deserialized:
         # the key is among the inputs of its validation. For an LLM created with
         # the default system message, the input of a check that involves several
         # params is the LLM, which is shown, and written out, without the key.
         # For an LLM created with a system message of its own, it is all the params
-        # that the LLM is created with: the key was shown if it was the first or
-        # the last of them.
+        # that the LLM is created with: the key is reported as redacted.
         model_params_cases: list[tuple[dict[str, Any], bool]] = [
             ({"model": "openai/gpt-6-luna"}, True),
             ({"model": "openai/gpt-6-luna", "system_message": "Be concise."}, False),
@@ -1614,7 +1707,207 @@ class TestLLMs(BaseTest):
                 model_params,
                 api_key,
                 created_model_is_input=created_model_is_input,
+                tmp_path=tmp_path,
             )
+
+    def test_api_key_redacted_in_validation_error_inputs(self):
+        """
+        Tests that the API key is redacted in the inputs that a validation error
+        of an LLM reports wherever the key is in them: in the values passed as
+        dicts and lists, at any depth, which are not changed themselves, and that
+        the error is rebuilt with nothing else changed, whatever errors it has.
+        """
+        api_key = "sk-test-SECRET-0123456789"
+
+        # The key in the params that are passed as a dict, under a name that
+        # does not exist. The input of the error for a required param that is not
+        # passed is all the params: the key is redacted in the dict as well.
+        pricing_params = {
+            "input_per_1m_tokens": 1.0,
+            "output_per_1m_tokens": 2.0,
+            "apikey": api_key,
+        }
+        llm_params: dict[str, Any] = {
+            "api_key": api_key,
+            "pricing_details": pricing_params,
+        }
+        with pytest.raises(ValidationError) as e:
+            DocumentLLM(**llm_params)
+        self.check_validation_error_omits_model_keys(e.value, api_key)
+        assert e.value.errors(include_url=False) == [
+            {
+                "type": "missing",
+                "loc": ("model",),
+                "msg": "Field required",
+                "input": {
+                    "api_key": REDACTED_VALUE,
+                    "pricing_details": {**pricing_params, "apikey": REDACTED_VALUE},
+                },
+            },
+            {
+                "type": "extra_forbidden",
+                "loc": ("pricing_details", "apikey"),
+                "msg": "Extra inputs are not permitted",
+                "input": REDACTED_VALUE,
+            },
+        ]
+        # ... and in the dicts of a list
+        tools: list[Any] = [
+            {"type": "function", "api_key": api_key},
+            {"type": "function"},
+        ]
+        with pytest.raises(ValidationError) as e:
+            DocumentLLM(model="openai/gpt-6-luna", api_key=api_key, tools=tools)
+        self.check_validation_error_omits_model_keys(e.value, api_key)
+        (error_details,) = e.value.errors()
+        assert error_details["loc"] == ("tools",)
+        assert error_details["input"] == [
+            {"type": "function", "api_key": REDACTED_VALUE},
+            {"type": "function"},
+        ]
+        # What has no key is reported as it is passed, i.e. as the same object
+        assert error_details["input"][1] is tools[1]
+        # The values that are passed are not changed
+        assert pricing_params["apikey"] == api_key
+        assert tools[0] == {"type": "function", "api_key": api_key}
+
+        # An error with errors of different kinds: of the types of Pydantic, with
+        # and without a context, with an exception in the context, and of a custom
+        # type. The key is in the params that are the input of the first error,
+        # which also hold themselves.
+        other_input = {"timeout": -1, "names": ["api_key"]}
+        nested_params = {"api_key": api_key, "apikey": api_key, "n": 1}
+        params: dict[str, Any] = {
+            "api_key": api_key,
+            "items": [1, (nested_params,)],
+            "read_only": types.MappingProxyType({"api_key": api_key, "n": 2}),
+            "other": other_input,
+            "not_set": {"api_key": None},
+        }
+        params["itself"] = params
+        value_error = ValueError("A value is invalid.")
+        line_errors: list[Any] = [
+            {"type": "missing", "loc": ("model",), "input": params},
+            {"type": "extra_forbidden", "loc": ("items", 1, 0, "apikey"), "input": 1},
+            {
+                "type": "string_type",
+                "loc": ("fallback_models", 0, "api_key"),
+                "input": 2,
+            },
+            {
+                "type": "greater_than_equal",
+                "loc": ("other", "timeout"),
+                "input": other_input,
+                "ctx": {"ge": 0},
+            },
+            {
+                "type": "value_error",
+                "loc": (),
+                "input": other_input,
+                "ctx": {"error": value_error},
+            },
+            {
+                "type": PydanticCustomError(
+                    "custom_type", "A custom error of {what}", {"what": "a kind"}
+                ),
+                "loc": ("other",),
+                "input": other_input,
+            },
+            {
+                "type": PydanticCustomError("no_context_type", "No {context} here"),
+                "loc": ("other", 0),
+                "input": None,
+            },
+            # A custom error that is given a type of Pydantic
+            {
+                "type": PydanticCustomError("value_error", "A custom value error"),
+                "loc": ("other", 1),
+                "input": other_input,
+            },
+        ]
+        for hide_input in [True, False]:
+            error = ValidationError.from_exception_data(
+                "Title", line_errors, hide_input=hide_input
+            )
+            assert api_key in repr(error.errors())
+            redacted_error = _redact_api_key_in_validation_error(
+                error, hide_input=hide_input
+            )
+            assert type(redacted_error) is ValidationError
+            assert redacted_error is not error
+            self.check_validation_error_omits_model_keys(redacted_error, api_key)
+            # The error is the same, except for its inputs
+            assert redacted_error.title == error.title == "Title"
+            assert redacted_error.error_count() == error.error_count() == 8
+            assert redacted_error.errors(include_input=False) == error.errors(
+                include_input=False
+            )
+            assert redacted_error.json(include_input=False) == error.json(
+                include_input=False
+            )
+            assert [
+                (details["type"], details["msg"], details.get("ctx"))
+                for details in redacted_error.errors()
+            ] == [
+                ("missing", "Field required", None),
+                ("extra_forbidden", "Extra inputs are not permitted", None),
+                ("string_type", "Input should be a valid string", None),
+                (
+                    "greater_than_equal",
+                    "Input should be greater than or equal to 0",
+                    {"ge": 0},
+                ),
+                (
+                    "value_error",
+                    "Value error, A value is invalid.",
+                    {"error": value_error},
+                ),
+                ("custom_type", "A custom error of a kind", {"what": "a kind"}),
+                ("no_context_type", "No {context} here", None),
+                ("value_error", "A custom value error", None),
+            ]
+            # The text of the error shows the inputs, or does not, as the original
+            assert ("input_value" in str(redacted_error)) is not hide_input
+            if hide_input:
+                assert str(redacted_error) == str(error)
+            reported_inputs = [details["input"] for details in redacted_error.errors()]
+            # The key is redacted at any depth, in a dict and in a mapping of
+            # another type, under the name of its param and under the name that
+            # is rejected as not existing. A key that is not set is not redacted,
+            # and the params that hold themselves are not looked through again.
+            assert reported_inputs[0] == {
+                "api_key": REDACTED_VALUE,
+                "items": [
+                    1,
+                    ({"api_key": REDACTED_VALUE, "apikey": REDACTED_VALUE, "n": 1},),
+                ],
+                "read_only": {"api_key": REDACTED_VALUE, "n": 2},
+                "other": other_input,
+                "not_set": {"api_key": None},
+                "itself": REDACTED_VALUE,
+            }
+            # The inputs of the errors for these params are redacted, whatever
+            # they are
+            assert reported_inputs[1:3] == [REDACTED_VALUE, REDACTED_VALUE]
+            # The other inputs are reported as they are, i.e. as the same objects
+            assert reported_inputs[0]["other"] is other_input
+            assert reported_inputs[0]["not_set"] is params["not_set"]
+            assert all(
+                reported_input is other_input
+                for reported_input in [*reported_inputs[3:6], reported_inputs[7]]
+            )
+            assert reported_inputs[6] is None
+            # The same error is given when it is redacted once more
+            redacted_again_error = _redact_api_key_in_validation_error(
+                redacted_error, hide_input=hide_input
+            )
+            assert redacted_again_error.errors() == redacted_error.errors()
+        # The params are not changed
+        assert params["api_key"] == api_key
+        assert params["items"] == [1, (nested_params,)]
+        assert nested_params == {"api_key": api_key, "apikey": api_key, "n": 1}
+        assert params["read_only"]["api_key"] == api_key
+        assert params["itself"] is params
 
     def test_built_in_prompt_templates_compiled_once(self):
         """

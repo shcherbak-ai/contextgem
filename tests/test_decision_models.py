@@ -108,6 +108,7 @@ from contextgem.public import (
     register_tool,
 )
 from tests.base import BaseTest
+from tests.utils import REDACTED_VALUE
 
 
 # The module object that the decision model calls the Decisions API through,
@@ -12876,14 +12877,16 @@ class TestDecisionModels(BaseTest):
             ["any"],
         ]
 
-    def test_decision_model_api_key_not_shown(self):
+    def test_decision_model_api_key_not_shown(self, tmp_path: Path):
         """
         Tests that the API key of a decision model is not shown when the model
         is printed, while its API base is, and that no part of the key is shown
         in the text of a validation error of a decision model, or of an LLM or
         a model group that the decision model is passed to, which does not show
         the inputs of the validation, nor given by the ``errors()`` and ``json()``
-        methods of the error for a decision model that is among the inputs.
+        methods of the error: neither for a decision model that is among
+        the inputs, nor for a key that is among them as it is passed, which is
+        reported as redacted.
         """
         api_key = "sk-test-SECRET-0123456789"
         api_base = "https://decisions.example.com"
@@ -12986,7 +12989,8 @@ class TestDecisionModels(BaseTest):
 
         # A fallback LLM that is not valid for the decision model: with another
         # role. The input of this check is all the params that the decision model
-        # is created with, i.e. the key, if it is the first or the last of them.
+        # is created with, i.e. the key, which is reported as redacted, whether
+        # it is the first or the last of them.
         fallback_llm = DocumentLLM(
             model=_LLM_MODEL, api_key=api_key, is_fallback=True, role="other"
         )
@@ -13010,6 +13014,25 @@ class TestDecisionModels(BaseTest):
                 api_key,
                 ["The fallback LLM must have the same role `None` as the main one"],
             )
+            self.check_validation_error_omits_model_keys(exc_info.value, api_key)
+            # The other params are reported as they are passed, in their order:
+            # the fallback LLM is reported as it is, i.e. holds its key
+            (error_details,) = exc_info.value.errors()
+            assert error_details["input"] == {**model_params, "api_key": REDACTED_VALUE}
+            assert list(error_details["input"]) == list(model_params)
+            assert error_details["input"]["fallback_models"][0] is fallback_llm
+            assert fallback_llm.api_key == api_key
+            # The rest of the error is as it is raised by the validation
+            assert error_details["type"] == "value_error"
+            assert error_details["loc"] == ()
+            assert error_details["msg"] == (
+                "Value error, The fallback LLM must have the same role `None` "
+                "as the main one."
+            )
+            assert isinstance(error_details["ctx"]["error"], ValueError)
+            assert error_details["url"].endswith("/v/value_error")
+            assert exc_info.value.title == "DocumentDecisionModel"
+            assert exc_info.value.error_count() == 1
 
         # The decision model that is invalid itself, when it is created, changed or
         # deserialized: the key is among the inputs of its validation. The input
@@ -13020,6 +13043,7 @@ class TestDecisionModels(BaseTest):
             {"model": _DECISION_MODEL},
             api_key,
             created_model_is_input=False,
+            tmp_path=tmp_path,
         )
 
     def test_decision_model_image_concepts_rejected(self):

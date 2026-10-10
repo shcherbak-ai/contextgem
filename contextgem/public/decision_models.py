@@ -64,11 +64,14 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         a validation error of the model, which names the invalid parameter and
         the reason without showing the values passed. The values are still returned
         by the ``errors()`` and ``json()`` methods of the error, unless
-        ``include_input=False`` is passed: a model that is among them is returned by
-        ``errors()`` as it is, and is written out by ``json()`` without its key,
-        while a key that is passed as a value, e.g. a rejected key or the key among
-        the parameters that a model is created with, is returned in clear text by
-        both methods.
+        ``include_input=False`` is passed, with ``'**********'`` in place of a key
+        that is passed as a value, e.g. a rejected key or the key among
+        the parameters that a model is created with, and in place of the value of
+        any parameter that a model does not have, as it may be the key passed under
+        a misspelled name. A model that is among the values is returned by
+        ``errors()`` as it is, i.e. with the key as its attribute, and is written
+        out by ``json()`` without its key. A key that is passed as the value of
+        another parameter, e.g. of ``model``, is returned as any other value.
     :vartype api_key: str | None
     :ivar api_base: Base URL of the API endpoint. Not included in the serialized
         model data, i.e. to be set again after deserialization.

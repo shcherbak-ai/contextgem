@@ -3640,7 +3640,9 @@ class _DocumentModel(_GenericModelProcessor):
         # has the key as not set.
         # In the validation of the model itself, the key is an input as it is
         # passed, not as a part of a model: the text of the errors of that
-        # validation shows no inputs at all (see `model_config` below).
+        # validation shows no inputs at all (see `model_config` below), and
+        # the inputs that such an error reports have the key redacted (see
+        # `_ApiKeyRedactionMixin`).
         repr=False,
         exclude=True,
         description="API key for provider authentication; optional for local models.",
@@ -3745,8 +3747,8 @@ class _DocumentModel(_GenericModelProcessor):
     # its `errors()` and `json()` methods, unless `include_input=False` is passed.
     # A model that is among the inputs is returned by `errors()` as it is, and is
     # written out by `json()` without its key (see `api_key` above). A key that is
-    # among the inputs as it is passed, as in the two cases above, is returned in
-    # clear text by both methods.
+    # among the inputs as it is passed, as in the two cases above, is redacted in
+    # what both methods return (see `_ApiKeyRedactionMixin`).
     model_config = ConfigDict(hide_input_in_errors=True)
 
     def __init__(self, **data: Any):
@@ -4750,6 +4752,8 @@ class _DocumentModelGroup(_GenericModelProcessor):
     # keys, but an API key that is passed to the group itself by mistake (a group
     # has no such param: the key is set for each model) would be shown in the text
     # of the error that rejects it, as the value of any input that is not a model.
+    # Such a key is also redacted in the inputs that the `errors()` and `json()`
+    # methods of the error return (see `_ApiKeyRedactionMixin`).
     model_config = ConfigDict(hide_input_in_errors=True)
 
     def _set_private_attrs(self) -> None:

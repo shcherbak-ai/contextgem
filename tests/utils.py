@@ -106,6 +106,10 @@ VCR_FILTER_HEADERS = {
 }
 assert len(set(VCR_FILTER_HEADERS)) == len(VCR_FILTER_HEADERS)
 
+# What a validation error of a model or of a model group reports in place of
+# an input that is, or may be, an API key
+REDACTED_VALUE = "**********"
+
 
 def vcr_count_recording(response):
     """
@@ -693,19 +697,21 @@ class TestUtils:
         error: ValidationError, api_key: str
     ) -> None:
         """
-        Checks that a validation error does not give the API key of the models that
-        are among the inputs of the validation: neither in what its ``errors()``
-        method returns, when printed, nor in what its ``json()`` method writes out.
+        Checks that a validation error does not give the API key that is among
+        the inputs of the validation: neither in what its ``errors()`` method
+        returns, when printed, nor in what its ``json()`` method writes out.
         Both methods are called with their defaults, i.e. the inputs are included.
 
-        This is to be checked for an error that has the key as a part of a model
-        only. A key that is among the inputs as it is passed, e.g. a key of a wrong
-        type or one of the params that a model is created with, is returned by both
-        methods.
+        This holds for the key of a model that is among the inputs, which is
+        printed and written out without its key, and for a key that is among
+        the inputs as it is passed, e.g. a key of a wrong type or one of the params
+        that a model is created with, in place of which the error reports
+        ``REDACTED_VALUE``. No other error, which would report the key, is to be
+        attached to the error.
 
         :param error: The validation error to check.
         :type error: ValidationError
-        :param api_key: The API key of the models that are among the inputs.
+        :param api_key: The API key that is among the inputs of the validation.
         :type api_key: str
         :return: None
         """
@@ -724,6 +730,10 @@ class TestUtils:
         # The inputs are included, i.e. the key is not left out together with them
         assert all("input" in details for details in error.errors())
         assert all("input" in details for details in json.loads(error.json()))
+        # The error is not raised from the error that reports the key as it is
+        # passed, nor while that error is handled
+        assert error.__cause__ is None
+        assert error.__context__ is None
 
     def check_model_validation_errors_hide_inputs(
         self,
@@ -731,16 +741,21 @@ class TestUtils:
         model_params: dict[str, Any],
         api_key: str,
         created_model_is_input: bool,
+        tmp_path: Path,
     ) -> None:
         """
-        Checks that the text of the errors of the validation of a model of the given
-        class does not show the inputs of the validation, which the API key of
-        the model is among: when a model is created, when a value is assigned to its
+        Checks that the errors of the validation of a model of the given class do
+        not give the API key of the model, which is among the inputs of
+        the validation: when a model is created, when a value is assigned to its
         param, and when it is deserialized, for a fallback model as well.
 
-        Also checks that the ``errors()`` and ``json()`` methods of such an error
-        do not give the key, when the key is not among the inputs as it is passed:
-        the input is the model, which holds the key, or a value without the key.
+        The text of such an error does not show the inputs at all, and its
+        ``errors()`` and ``json()`` methods give ``REDACTED_VALUE`` in place of
+        the key that is among the inputs as it is passed: a key that is rejected
+        itself, a value passed in a param that the model does not have, and the key
+        among all the params that the model is created with. The other inputs are
+        given as they are, including a model, which holds its key as an attribute
+        and is printed and written out without it.
 
         :param model_class: The class of the model.
         :type model_class: type[DocumentLLM] | type[DocumentDecisionModel]
@@ -755,6 +770,8 @@ class TestUtils:
             all the params that the model is created with, i.e. the key as it is
             passed. For a model that a value is assigned to, it is always the model.
         :type created_model_is_input: bool
+        :param tmp_path: The directory for the files that a model is loaded from.
+        :type tmp_path: Path
         :return: None
         """
 
@@ -777,24 +794,34 @@ class TestUtils:
                 return model_class(api_key=key, **params)
             return model_class(**params, api_key=key)
 
-        def check_error(
-            error: ValidationError, expected_texts: list[str], key_is_input: bool
-        ) -> None:
+        def check_error(error: ValidationError, expected_texts: list[str]) -> Any:
             """
-            Checks that the text of the validation error does not show the inputs
-            and that, unless the key is among the inputs as it is passed,
-            the ``errors()`` and ``json()`` methods of the error do not give it.
+            Checks that the validation error, which is to have a single invalid
+            input, does not give the key: neither in its text, which shows no
+            inputs, nor in what its ``errors()`` and ``json()`` methods return.
 
             :param error: The validation error.
             :type error: ValidationError
             :param expected_texts: The texts that the error is to have.
             :type expected_texts: list[str]
-            :param key_is_input: Whether the key is among the inputs as it is passed.
-            :type key_is_input: bool
+            :return: The invalid input that the error reports.
+            :rtype: Any
             """
             self.check_validation_error_hides_inputs(error, api_key, expected_texts)
-            if not key_is_input:
-                self.check_validation_error_omits_model_keys(error, api_key)
+            self.check_validation_error_omits_model_keys(error, api_key)
+            (error_details,) = error.errors()
+            return error_details["input"]
+
+        def check_model_is_input(reported_input: Any) -> None:
+            """
+            Checks that the input that a validation error reports is the model,
+            which is reported as it is, i.e. holds the key as its attribute.
+
+            :param reported_input: The input that the error reports.
+            :type reported_input: Any
+            """
+            assert isinstance(reported_input, model_class)
+            assert reported_input.api_key == api_key
 
         pricing = ModelPricing(input_per_1m_tokens=1.0, output_per_1m_tokens=2.0)
         # A key of a wrong type, e.g. a tuple that a trailing comma makes of the key
@@ -808,70 +835,171 @@ class TestUtils:
         pricing_error = ["`pricing_details` cannot be set together with `auto_pricing"]
         own_fallbacks_error = ["cannot have its own fallback"]
         fallback_role_error = ["must have the same role `None` as the main one"]
+        same_config_error = ["must not have the exact same config params as the main"]
 
-        # A model that is created with invalid params. The input of a check that
-        # involves several params is all the params that the model is created with,
-        # unless it is the model (see `created_model_is_input`): it is cut in
-        # the middle in the text of an error, i.e. the key was shown there if it
-        # was the first or the last param.
-        # The last item of a case tells whether the key is among the inputs as it
-        # is passed.
-        params_are_input = not created_model_is_input
-        invalid_params: list[tuple[dict[str, Any], list[str], bool]] = [
-            ({"timeout": "x"}, timeout_error, False),
-            ({"api_key": invalid_key}, key_error, True),
+        # A model that is created with invalid params. The last item of a case is
+        # the input that the error reports: the invalid value as it is, or
+        # the redacted one if the value is passed as the key or in a param that
+        # the model does not have. The input of a check that involves several
+        # params (`all_params`) is all the params that the model is created with,
+        # which are reported with the key redacted, unless it is the model (see
+        # `created_model_is_input`).
+        all_params = object()
+        invalid_params: list[tuple[dict[str, Any], list[str], Any]] = [
+            ({"timeout": "x"}, timeout_error, "x"),
+            ({"api_key": invalid_key}, key_error, REDACTED_VALUE),
+            ({"api_key": [api_key]}, key_error, REDACTED_VALUE),
             # A value of a wrong type passed as the key, which has no key in it
-            ({"api_key": 12345}, key_error, False),
-            # The key passed in a param that the model does not have
-            ({"apikey": api_key}, ["apikey", "Extra inputs are not permitted"], True),
+            ({"api_key": 12345}, key_error, REDACTED_VALUE),
+            # The key passed in a param that the model does not have. Any value of
+            # such a param is redacted, as it is not known to be something else,
+            # unless there is no value.
+            (
+                {"apikey": api_key},
+                ["apikey", "Extra inputs are not permitted"],
+                REDACTED_VALUE,
+            ),
+            ({"no_such_param": 0.5}, ["no_such_param", "Extra inputs"], REDACTED_VALUE),
+            ({"no_such_param": None}, ["no_such_param", "Extra inputs"], None),
             (
                 {"pricing_details": pricing, "auto_pricing": True},
                 pricing_error,
-                params_are_input,
+                all_params,
             ),
             # A fallback model that is invalid itself, one that has a fallback model
-            # of its own, and one that is not valid for the model that it is passed to
-            ({"is_fallback": True, "timeout": "x"}, timeout_error, False),
+            # of its own, and the ones that are not valid for the model that they
+            # are passed to
+            ({"is_fallback": True, "timeout": "x"}, timeout_error, "x"),
             (
                 {"is_fallback": True, "fallback_models": [fallback_model]},
                 own_fallbacks_error,
-                params_are_input,
+                all_params,
             ),
             (
                 {"fallback_models": [fallback_of_other_role]},
                 fallback_role_error,
-                params_are_input,
+                all_params,
             ),
+            ({"fallback_models": [fallback_model]}, same_config_error, all_params),
         ]
-        for params, expected_texts, key_is_input in invalid_params:
+        for params, expected_texts, expected_input in invalid_params:
             for key_first in [True, False]:
                 with pytest.raises(ValidationError) as exc_info:
                     create_model(key_first=key_first, **params)
-                check_error(exc_info.value, expected_texts, key_is_input)
+                reported_input = check_error(exc_info.value, expected_texts)
+                if expected_input is not all_params:
+                    assert reported_input == expected_input
+                elif created_model_is_input:
+                    check_model_is_input(reported_input)
+                else:
+                    # The other params are reported as they are passed
+                    assert reported_input == {
+                        **model_params,
+                        **params,
+                        "api_key": REDACTED_VALUE,
+                    }
+                    for param, value in params.items():
+                        assert reported_input[param] is value
+
+        # A model that is created without a required param: the input is all
+        # the params that are passed, i.e. the key, also when it is passed in
+        # a param that the model does not have, which is rejected as well
+        params_without_model = {
+            param: value for param, value in model_params.items() if param != "model"
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            model_class(api_key=api_key, **params_without_model)
+        assert check_error(exc_info.value, ["model", "Field required"]) == {
+            **params_without_model,
+            "api_key": REDACTED_VALUE,
+        }
+        misspelled_key_params: dict[str, Any] = {
+            **params_without_model,
+            "apikey": api_key,
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            model_class(**misspelled_key_params)
+        self.check_validation_error_hides_inputs(
+            exc_info.value, api_key, ["model", "Field required", "apikey"]
+        )
+        self.check_validation_error_omits_model_keys(exc_info.value, api_key)
+        # The rest of what the errors report is not changed
+        assert exc_info.value.title == model_class.__name__
+        assert exc_info.value.errors(include_url=False) == [
+            {
+                "type": "missing",
+                "loc": ("model",),
+                "msg": "Field required",
+                "input": {**params_without_model, "apikey": REDACTED_VALUE},
+            },
+            {
+                "type": "extra_forbidden",
+                "loc": ("apikey",),
+                "msg": "Extra inputs are not permitted",
+                "input": REDACTED_VALUE,
+            },
+        ]
+        for details in exc_info.value.errors():
+            assert details["url"].endswith(f"/v/{details['type']}")
+        # A key that is not passed is not reported as a redacted one
+        with pytest.raises(ValidationError) as exc_info:
+            model_class(api_key=None, **params_without_model)
+        assert check_error(exc_info.value, ["model", "Field required"]) == {
+            **params_without_model,
+            "api_key": None,
+        }
 
         # A model, and its fallback model, that an invalid value is assigned to.
         # The input of a check that involves several params is the model, which
         # holds the key.
         model = create_model(pricing_details=pricing, fallback_models=[fallback_model])
-        invalid_assignments: list[tuple[Any, str, Any, list[str], bool]] = [
-            (model, "timeout", "x", timeout_error, False),
-            (model, "api_key", invalid_key, key_error, True),
-            (model, "auto_pricing", True, pricing_error, False),
-            (model, "is_fallback", True, own_fallbacks_error, False),
+        model_is_input = object()
+        invalid_assignments: list[tuple[Any, str, Any, list[str], Any]] = [
+            (model, "timeout", "x", timeout_error, "x"),
+            (model, "api_key", invalid_key, key_error, REDACTED_VALUE),
+            (model, "auto_pricing", True, pricing_error, model_is_input),
+            (model, "is_fallback", True, own_fallbacks_error, model_is_input),
             (
                 model,
                 "fallback_models",
                 [fallback_of_other_role],
                 fallback_role_error,
-                False,
+                model_is_input,
             ),
-            (fallback_model, "timeout", "x", timeout_error, False),
-            (fallback_model, "api_key", invalid_key, key_error, True),
+            (fallback_model, "timeout", "x", timeout_error, "x"),
+            (fallback_model, "api_key", invalid_key, key_error, REDACTED_VALUE),
         ]
-        for instance, param, value, expected_texts, key_is_input in invalid_assignments:
+        for (
+            instance,
+            param,
+            value,
+            expected_texts,
+            expected_input,
+        ) in invalid_assignments:
             with pytest.raises(ValidationError) as exc_info:
                 setattr(instance, param, value)
-            check_error(exc_info.value, expected_texts, key_is_input)
+            reported_input = check_error(exc_info.value, expected_texts)
+            if expected_input is model_is_input:
+                check_model_is_input(reported_input)
+                assert reported_input is instance
+            else:
+                assert reported_input == expected_input
+        # The key that is assigned to a param that the model does not have
+        misspelled_param = "apikey"
+        with pytest.raises(ValidationError) as exc_info:
+            setattr(model, misspelled_param, api_key)
+        assert check_error(exc_info.value, ["apikey", "Object has no attribute"]) == (
+            REDACTED_VALUE
+        )
+        assert exc_info.value.errors(include_url=False, include_input=False) == [
+            {
+                "type": "no_such_attribute",
+                "loc": ("apikey",),
+                "msg": "Object has no attribute 'apikey'",
+                "ctx": {"attribute": "apikey"},
+            }
+        ]
+        assert not hasattr(model, misspelled_param)
         # The models are left as they were
         assert model.api_key == fallback_model.api_key == api_key
         assert model.fallback_models == [fallback_model]
@@ -904,26 +1032,73 @@ class TestUtils:
         deserialized_model = model_class.from_dict(get_serialized_model())
         assert deserialized_model.api_key == api_key
         assert deserialized_model.fallback_models[0].api_key == api_key
-        invalid_data: list[tuple[dict[str, Any], list[str], bool]] = []
-        for param, value, expected_texts, key_is_input in [
-            ("timeout", "x", timeout_error, False),
-            ("api_key", [api_key], key_error, True),
-            ("auto_pricing", True, pricing_error, True),
+        invalid_data: list[tuple[dict[str, Any], list[str], Any]] = []
+        for param, value, expected_texts, expected_input in [
+            ("timeout", "x", timeout_error, "x"),
+            ("api_key", [api_key], key_error, REDACTED_VALUE),
+            ("apikey", api_key, ["apikey", "Extra inputs"], REDACTED_VALUE),
+            ("auto_pricing", True, pricing_error, all_params),
         ]:
             serialized_model = get_serialized_model()
             serialized_model[param] = value
-            invalid_data.append((serialized_model, expected_texts, key_is_input))
+            invalid_data.append((serialized_model, expected_texts, expected_input))
         # ... and from the data in which its fallback model is invalid
         serialized_model = get_serialized_model()
         serialized_model["fallback_models"][0]["timeout"] = "x"
-        invalid_data.append((serialized_model, timeout_error, False))
-        for serialized_model, expected_texts, key_is_input in invalid_data:
+        invalid_data.append((serialized_model, timeout_error, "x"))
+        serialized_model = get_serialized_model()
+        serialized_model["fallback_models"][0]["api_key"] = [api_key]
+        invalid_data.append((serialized_model, key_error, REDACTED_VALUE))
+
+        def check_data_error(error: BaseException | None, case_index: int) -> None:
+            """
+            Checks the validation error of the model deserialized from the invalid
+            data of the given case.
+
+            :param error: The validation error.
+            :type error: BaseException | None
+            :param case_index: The index of the case of the invalid data.
+            :type case_index: int
+            """
+            _, expected_texts, expected_input = invalid_data[case_index]
+            assert isinstance(error, ValidationError)
+            reported_input = check_error(error, expected_texts)
+            if expected_input is not all_params:
+                assert reported_input == expected_input
+                return
+            # The data of the model, with its key redacted and with its fallback
+            # model, which is a model by now, i.e. holds its key
+            assert list(reported_input) == list(model_class.model_fields)
+            assert reported_input["api_key"] == REDACTED_VALUE
+            assert reported_input["model"] == model.model
+            assert reported_input["auto_pricing"] is True
+            (restored_fallback_model,) = reported_input["fallback_models"]
+            check_model_is_input(restored_fallback_model)
+
+        for case_index, (serialized_model, _, _) in enumerate(invalid_data):
             with pytest.raises(ValidationError) as exc_info:
                 model_class.from_dict(serialized_model)
-            check_error(exc_info.value, expected_texts, key_is_input)
+            check_data_error(exc_info.value, case_index)
             with pytest.raises(ValidationError) as exc_info:
                 model_class.from_json(json.dumps(serialized_model))
-            check_error(exc_info.value, expected_texts, key_is_input)
+            check_data_error(exc_info.value, case_index)
+            # The error of loading from a file has the text of the validation
+            # error, which it is raised from
+            disk_path = tmp_path / f"{model_class.__name__}_{uuid4()}.json"
+            disk_path.write_text(json.dumps(serialized_model), encoding="utf-8")
+            with pytest.raises(RuntimeError) as runtime_exc_info:
+                model_class.from_disk(disk_path)
+            assert not any(
+                fragment in str(runtime_exc_info.value)
+                for fragment in self.get_api_key_fragments(api_key)
+            )
+            check_data_error(runtime_exc_info.value.__cause__, case_index)
+        # The data without the keys is reported as it is, i.e. with the key not set
+        serialized_model = model.to_dict()
+        serialized_model["auto_pricing"] = True
+        with pytest.raises(ValidationError) as exc_info:
+            model_class.from_dict(serialized_model)
+        assert check_error(exc_info.value, pricing_error)["api_key"] is None
 
     def check_instance_container_states(
         self,

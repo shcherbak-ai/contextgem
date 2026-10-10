@@ -11,6 +11,7 @@ from pydantic import ConfigDict, Field, PrivateAttr
 from ulid import ULID
 
 from contextgem.internal.base.mixins import (
+    _ApiKeyRedactionMixin,
     _AssignmentRollbackMixin,
     _PostInitCollectorMixin,
 )
@@ -51,10 +52,17 @@ class _AbstractInstanceBase(
 
 
 class _AbstractGenericModelProcessor(
-    _PostInitCollectorMixin, _AssignmentRollbackMixin, _InstanceSerializer, ABC
+    _ApiKeyRedactionMixin,
+    _PostInitCollectorMixin,
+    _AssignmentRollbackMixin,
+    _InstanceSerializer,
+    ABC,
 ):
     """
     Abstract base for model-backed processors (single or grouped).
+
+    A validation error of a processor does not give the API key in the inputs
+    that it reports (see ``_ApiKeyRedactionMixin``).
     """
 
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
