@@ -1,0 +1,1262 @@
+[
+  {
+    "case": "complex_dpa",
+    "model": "azure_ai/ms-decision-model",
+    "mode": "decision_default",
+    "runs": 2,
+    "aspect_f1": [
+      0.7679624813771154,
+      0.7739564873711214
+    ],
+    "aspect_precision": [
+      0.6498260073260074,
+      0.6595482295482296
+    ],
+    "aspect_recall": [
+      0.9801587301587302,
+      0.9801587301587302
+    ],
+    "concepts_correct": [
+      5,
+      5
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null,
+      null
+    ],
+    "requests": [
+      157,
+      157
+    ],
+    "input_tokens": [
+      109118,
+      109249
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      934,
+      934
+    ],
+    "cost_total": [
+      "0.00458",
+      "0.00459"
+    ],
+    "seconds": [
+      53.1,
+      55.8
+    ],
+    "retries": [
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "ollama_chat/llama3.1:8b",
+    "mode": "default",
+    "runs": 2,
+    "aspect_f1": [
+      0.0,
+      0.0
+    ],
+    "aspect_precision": [
+      0.0,
+      0.0
+    ],
+    "aspect_recall": [
+      0.0,
+      0.0
+    ],
+    "concepts_correct": [
+      1,
+      1
+    ],
+    "n_concepts_scored": 22,
+    "reference_f1": [
+      0.0,
+      0.0
+    ],
+    "requests": [
+      4,
+      4
+    ],
+    "input_tokens": [
+      53660,
+      53660
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      3388,
+      3419
+    ],
+    "cost_total": [
+      "0.00000",
+      "0.00000"
+    ],
+    "seconds": [
+      37.0,
+      36.1
+    ],
+    "retries": [
+      3,
+      3
+    ],
+    "errors": [
+      "ValueError: Aspect `Amendment effectiveness and precedence` is not yet processed. Use `extract_aspects_from_document` first.`",
+      "ValueError: Aspect `Amendment effectiveness and precedence` is not yet processed. Use `extract_aspects_from_document` first.`"
+    ],
+    "warnings": 2
+  },
+  {
+    "case": "complex_dpa",
+    "model": "ollama_chat/mistral-small:24b",
+    "mode": "default",
+    "runs": 2,
+    "aspect_f1": [
+      0.6241798325131659,
+      0.6514234222567555
+    ],
+    "aspect_precision": [
+      0.9722222222222222,
+      0.9444444444444445
+    ],
+    "aspect_recall": [
+      0.47242063492063496,
+      0.5057539682539682
+    ],
+    "concepts_correct": [
+      8,
+      8
+    ],
+    "n_concepts_scored": 22,
+    "reference_f1": [
+      0.22420634920634921,
+      0.3325396825396825
+    ],
+    "requests": [
+      13,
+      13
+    ],
+    "input_tokens": [
+      82227,
+      82238
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      4389,
+      4555
+    ],
+    "cost_total": [
+      "0.00000",
+      "0.00000"
+    ],
+    "seconds": [
+      284.8,
+      274.3
+    ],
+    "retries": [
+      6,
+      6
+    ],
+    "errors": [],
+    "warnings": 4
+  },
+  {
+    "case": "complex_dpa",
+    "model": "openai/gpt-5.6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9404104798739318,
+      0.9814814814814815,
+      0.9814814814814815
+    ],
+    "aspect_precision": [
+      0.9666666666666667,
+      1.0,
+      1.0
+    ],
+    "aspect_recall": [
+      0.9162698412698412,
+      0.9666666666666667,
+      0.9666666666666667
+    ],
+    "concepts_correct": [
+      19,
+      21,
+      21
+    ],
+    "n_concepts_scored": 22,
+    "reference_f1": [
+      0.8195767195767196,
+      0.7801704014939309,
+      0.8121693121693121
+    ],
+    "requests": [
+      7,
+      7,
+      7
+    ],
+    "input_tokens": [
+      57569,
+      57846,
+      57274
+    ],
+    "cache_read_tokens": [
+      9569,
+      39036,
+      39036
+    ],
+    "output_tokens": [
+      5331,
+      5412,
+      5901
+    ],
+    "cost_total": [
+      "0.01859",
+      "0.01197",
+      "0.01242"
+    ],
+    "seconds": [
+      49.2,
+      52.2,
+      53.5
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "openai/gpt-6-luna",
+    "mode": "concurrent",
+    "runs": 3,
+    "aspect_f1": [
+      0.9614764802311689,
+      0.9610852110852112,
+      0.9577766916476594
+    ],
+    "aspect_precision": [
+      0.9630124777183601,
+      0.9616977225672878,
+      0.9560954816709293
+    ],
+    "aspect_recall": [
+      0.9666666666666667,
+      0.9666666666666667,
+      0.9666666666666667
+    ],
+    "concepts_correct": [
+      22,
+      22,
+      22
+    ],
+    "n_concepts_scored": 22,
+    "reference_f1": [
+      0.9037388537388537,
+      0.8996984496984496,
+      0.9084295334295334
+    ],
+    "requests": [
+      30,
+      30,
+      30
+    ],
+    "input_tokens": [
+      260073,
+      260046,
+      261316
+    ],
+    "cache_read_tokens": [
+      48836,
+      201373,
+      201373
+    ],
+    "output_tokens": [
+      12718,
+      11334,
+      13357
+    ],
+    "cost_total": [
+      "0.03325",
+      "0.01502",
+      "0.01618"
+    ],
+    "seconds": [
+      32.7,
+      25.7,
+      32.1
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "openai/gpt-6-luna",
+    "mode": "decision_default",
+    "runs": 2,
+    "aspect_f1": [
+      0.8323636511592168,
+      0.8323636511592168
+    ],
+    "aspect_precision": [
+      0.8615468409586057,
+      0.8615468409586057
+    ],
+    "aspect_recall": [
+      0.8170634920634922,
+      0.8170634920634922
+    ],
+    "concepts_correct": [
+      5,
+      5
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null,
+      null
+    ],
+    "requests": [
+      157,
+      157
+    ],
+    "input_tokens": [
+      222085,
+      222085
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      0,
+      0
+    ],
+    "cost_total": [
+      "0.02221",
+      "0.02221"
+    ],
+    "seconds": [
+      38.2,
+      37.7
+    ],
+    "retries": [
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9614764802311689,
+      0.9620544644838244,
+      0.9814814814814815
+    ],
+    "aspect_precision": [
+      0.9630124777183601,
+      0.9627946127946129,
+      1.0
+    ],
+    "aspect_recall": [
+      0.9666666666666667,
+      0.9666666666666667,
+      0.9666666666666667
+    ],
+    "concepts_correct": [
+      22,
+      22,
+      22
+    ],
+    "n_concepts_scored": 22,
+    "reference_f1": [
+      0.9254981129981129,
+      0.8603174603174604,
+      0.8682720057720057
+    ],
+    "requests": [
+      7,
+      7,
+      8
+    ],
+    "input_tokens": [
+      57974,
+      57840,
+      68176
+    ],
+    "cache_read_tokens": [
+      9569,
+      39036,
+      49588
+    ],
+    "output_tokens": [
+      8158,
+      7217,
+      9227
+    ],
+    "cost_total": [
+      "0.01023",
+      "0.00635",
+      "0.00743"
+    ],
+    "seconds": [
+      69.3,
+      57.4,
+      69.8
+    ],
+    "retries": [
+      0,
+      0,
+      1
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "openai/gpt-6.1-sol",
+    "mode": "default",
+    "runs": 1,
+    "aspect_f1": [
+      0.9414061861467191
+    ],
+    "aspect_precision": [
+      0.8923342670401494
+    ],
+    "aspect_recall": [
+      1.0
+    ],
+    "concepts_correct": [
+      22
+    ],
+    "n_concepts_scored": 22,
+    "reference_f1": [
+      0.9463407365581279
+    ],
+    "requests": [
+      7
+    ],
+    "input_tokens": [
+      58774
+    ],
+    "cache_read_tokens": [
+      9569
+    ],
+    "output_tokens": [
+      3850
+    ],
+    "cost_total": [
+      "0.16246"
+    ],
+    "seconds": [
+      63.9
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "strands_decider/kev-4b",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.7184705353126405
+    ],
+    "aspect_precision": [
+      0.739227207977208
+    ],
+    "aspect_recall": [
+      0.7607142857142857
+    ],
+    "concepts_correct": [
+      4
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      157
+    ],
+    "input_tokens": [
+      153347
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      0
+    ],
+    "cost_total": [
+      "0.00000"
+    ],
+    "seconds": [
+      138.5
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "strands_decider/nimble",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.697306481071961
+    ],
+    "aspect_precision": [
+      0.7185185185185184
+    ],
+    "aspect_recall": [
+      0.7632936507936509
+    ],
+    "concepts_correct": [
+      5
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      157
+    ],
+    "input_tokens": [
+      929099
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      1090
+    ],
+    "cost_total": [
+      "0.00000"
+    ],
+    "seconds": [
+      99.3
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_dpa",
+    "model": "typesafe/jev-latest",
+    "mode": "decision_default",
+    "runs": 2,
+    "aspect_f1": [
+      0.7873716153127918,
+      0.7943891591724409
+    ],
+    "aspect_precision": [
+      0.7559523809523809,
+      0.766053391053391
+    ],
+    "aspect_recall": [
+      0.8829365079365079,
+      0.8829365079365079
+    ],
+    "concepts_correct": [
+      5,
+      5
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null,
+      null
+    ],
+    "requests": [
+      157,
+      157
+    ],
+    "input_tokens": [
+      144032,
+      144032
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      16545,
+      16545
+    ],
+    "cost_total": [
+      "0.00605",
+      "0.00605"
+    ],
+    "seconds": [
+      36.4,
+      37.1
+    ],
+    "retries": [
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "azure_ai/ms-decision-model",
+    "mode": "decision_default",
+    "runs": 2,
+    "aspect_f1": [
+      0.7839446380278761,
+      0.7777377354103697
+    ],
+    "aspect_precision": [
+      0.6649877899877901,
+      0.6531692406692406
+    ],
+    "aspect_recall": [
+      0.9821428571428572,
+      0.9821428571428572
+    ],
+    "concepts_correct": [
+      4,
+      4
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null,
+      null
+    ],
+    "requests": [
+      76,
+      76
+    ],
+    "input_tokens": [
+      50878,
+      50838
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      312,
+      312
+    ],
+    "cost_total": [
+      "0.00214",
+      "0.00214"
+    ],
+    "seconds": [
+      25.8,
+      27.6
+    ],
+    "retries": [
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "ollama_chat/llama3.1:8b",
+    "mode": "default",
+    "runs": 2,
+    "aspect_f1": [
+      0.0,
+      0.0
+    ],
+    "aspect_precision": [
+      0.0,
+      0.0
+    ],
+    "aspect_recall": [
+      0.0,
+      0.0
+    ],
+    "concepts_correct": [
+      1,
+      1
+    ],
+    "n_concepts_scored": 18,
+    "reference_f1": [
+      0.0,
+      0.0
+    ],
+    "requests": [
+      4,
+      4
+    ],
+    "input_tokens": [
+      40576,
+      40576
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      2276,
+      5946
+    ],
+    "cost_total": [
+      "0.00000",
+      "0.00000"
+    ],
+    "seconds": [
+      36.7,
+      53.8
+    ],
+    "retries": [
+      3,
+      3
+    ],
+    "errors": [
+      "ValueError: Aspect `NDA information protection` is not yet processed. Use `extract_aspects_from_document` first.`",
+      "ValueError: Aspect `NDA information protection` is not yet processed. Use `extract_aspects_from_document` first.`"
+    ],
+    "warnings": 2
+  },
+  {
+    "case": "complex_nda",
+    "model": "ollama_chat/mistral-small:24b",
+    "mode": "default",
+    "runs": 2,
+    "aspect_f1": [
+      0.7711660996424865,
+      0.7711660996424865
+    ],
+    "aspect_precision": [
+      0.825,
+      0.825
+    ],
+    "aspect_recall": [
+      0.8384920634920635,
+      0.8384920634920635
+    ],
+    "concepts_correct": [
+      7,
+      7
+    ],
+    "n_concepts_scored": 18,
+    "reference_f1": [
+      0.3759523809523809,
+      0.3919507101086048
+    ],
+    "requests": [
+      13,
+      12
+    ],
+    "input_tokens": [
+      93535,
+      81860
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      6034,
+      5600
+    ],
+    "cost_total": [
+      "0.00000",
+      "0.00000"
+    ],
+    "seconds": [
+      313.5,
+      326.4
+    ],
+    "retries": [
+      7,
+      6
+    ],
+    "errors": [],
+    "warnings": 4
+  },
+  {
+    "case": "complex_nda",
+    "model": "openai/gpt-5.6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "aspect_precision": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "aspect_recall": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "concepts_correct": [
+      17,
+      18,
+      17
+    ],
+    "n_concepts_scored": 18,
+    "reference_f1": [
+      0.819486346986347,
+      0.8022971472971474,
+      0.7961804861804862
+    ],
+    "requests": [
+      6,
+      6,
+      6
+    ],
+    "input_tokens": [
+      48034,
+      48355,
+      48297
+    ],
+    "cache_read_tokens": [
+      6835,
+      37336,
+      43236
+    ],
+    "output_tokens": [
+      4713,
+      4861,
+      4703
+    ],
+    "cost_total": [
+      "0.01610",
+      "0.00933",
+      "0.00777"
+    ],
+    "seconds": [
+      44.2,
+      45.0,
+      43.3
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "openai/gpt-6-luna",
+    "mode": "concurrent",
+    "runs": 3,
+    "aspect_f1": [
+      0.9385982795408839,
+      0.9428801532366897,
+      0.985178727114211
+    ],
+    "aspect_precision": [
+      0.8990970072239421,
+      0.8924107142857143,
+      0.9712171052631579
+    ],
+    "aspect_recall": [
+      0.9821428571428572,
+      1.0,
+      1.0
+    ],
+    "concepts_correct": [
+      18,
+      18,
+      18
+    ],
+    "n_concepts_scored": 18,
+    "reference_f1": [
+      0.8586688311688311,
+      0.8760396085396085,
+      0.8564193518899401
+    ],
+    "requests": [
+      25,
+      25,
+      25
+    ],
+    "input_tokens": [
+      198367,
+      199328,
+      197141
+    ],
+    "cache_read_tokens": [
+      34175,
+      133079,
+      121250
+    ],
+    "output_tokens": [
+      8899,
+      8309,
+      8793
+    ],
+    "cost_total": [
+      "0.02531",
+      "0.01376",
+      "0.01510"
+    ],
+    "seconds": [
+      25.4,
+      22.7,
+      23.1
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "openai/gpt-6-luna",
+    "mode": "decision_default",
+    "runs": 2,
+    "aspect_f1": [
+      0.8664285714285714,
+      0.8664285714285714
+    ],
+    "aspect_precision": [
+      0.8810160427807487,
+      0.8810160427807487
+    ],
+    "aspect_recall": [
+      0.8630952380952381,
+      0.8630952380952381
+    ],
+    "concepts_correct": [
+      4,
+      4
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null,
+      null
+    ],
+    "requests": [
+      76,
+      76
+    ],
+    "input_tokens": [
+      86361,
+      86361
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      0,
+      0
+    ],
+    "cost_total": [
+      "0.00864",
+      "0.00864"
+    ],
+    "seconds": [
+      19.0,
+      18.8
+    ],
+    "retries": [
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.985178727114211,
+      0.9720208323773689,
+      1.0
+    ],
+    "aspect_precision": [
+      0.9712171052631579,
+      0.9462171052631578,
+      1.0
+    ],
+    "aspect_recall": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "concepts_correct": [
+      18,
+      18,
+      18
+    ],
+    "n_concepts_scored": 18,
+    "reference_f1": [
+      0.845574814074814,
+      0.8747782169521301,
+      0.8898420098420099
+    ],
+    "requests": [
+      6,
+      6,
+      6
+    ],
+    "input_tokens": [
+      48332,
+      48460,
+      48248
+    ],
+    "cache_read_tokens": [
+      6835,
+      33138,
+      32342
+    ],
+    "output_tokens": [
+      5500,
+      6064,
+      6351
+    ],
+    "cost_total": [
+      "0.00801",
+      "0.00528",
+      "0.00549"
+    ],
+    "seconds": [
+      46.7,
+      48.9,
+      50.5
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "openai/gpt-6.1-sol",
+    "mode": "default",
+    "runs": 1,
+    "aspect_f1": [
+      1.0
+    ],
+    "aspect_precision": [
+      1.0
+    ],
+    "aspect_recall": [
+      1.0
+    ],
+    "concepts_correct": [
+      18
+    ],
+    "n_concepts_scored": 18,
+    "reference_f1": [
+      0.8990135999006966
+    ],
+    "requests": [
+      6
+    ],
+    "input_tokens": [
+      48358
+    ],
+    "cache_read_tokens": [
+      6835
+    ],
+    "output_tokens": [
+      3567
+    ],
+    "cost_total": [
+      "0.14015"
+    ],
+    "seconds": [
+      55.5
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "strands_decider/kev-4b",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.7679969925993256
+    ],
+    "aspect_precision": [
+      0.6977962255136169
+    ],
+    "aspect_recall": [
+      0.8714285714285714
+    ],
+    "concepts_correct": [
+      4
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      76
+    ],
+    "input_tokens": [
+      98623
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      0
+    ],
+    "cost_total": [
+      "0.00000"
+    ],
+    "seconds": [
+      67.1
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "strands_decider/nimble",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.692495126705653
+    ],
+    "aspect_precision": [
+      0.6881410256410256
+    ],
+    "aspect_recall": [
+      0.7257936507936508
+    ],
+    "concepts_correct": [
+      3
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      76
+    ],
+    "input_tokens": [
+      286023
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      388
+    ],
+    "cost_total": [
+      "0.00000"
+    ],
+    "seconds": [
+      43.9
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_nda",
+    "model": "typesafe/jev-latest",
+    "mode": "decision_default",
+    "runs": 2,
+    "aspect_f1": [
+      0.8168927754168029,
+      0.8304846293156375
+    ],
+    "aspect_precision": [
+      0.85625,
+      0.8630434782608696
+    ],
+    "aspect_recall": [
+      0.807936507936508,
+      0.8246031746031746
+    ],
+    "concepts_correct": [
+      3,
+      3
+    ],
+    "n_concepts_scored": 6,
+    "reference_f1": [
+      null,
+      null
+    ],
+    "requests": [
+      76,
+      76
+    ],
+    "input_tokens": [
+      65318,
+      65306
+    ],
+    "cache_read_tokens": [
+      0,
+      0
+    ],
+    "output_tokens": [
+      5652,
+      5652
+    ],
+    "cost_total": [
+      "0.00274",
+      "0.00274"
+    ],
+    "seconds": [
+      18.3,
+      17.5
+    ],
+    "retries": [
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  }
+]

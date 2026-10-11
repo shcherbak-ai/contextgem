@@ -1,0 +1,744 @@
+{
+  "case": "complex_nda",
+  "model": "openai/gpt-6-luna",
+  "kind": "llm",
+  "mode": "concurrent",
+  "label": "baseline",
+  "run": 2,
+  "error": null,
+  "seconds": 22.7,
+  "usage": {
+    "requests": 25,
+    "requests_without_response": 0,
+    "input_tokens": 199328,
+    "output_tokens": 8309,
+    "cache_read_tokens": 133079,
+    "cache_write_tokens": 66174,
+    "cost_total": "0.01376"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.0",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "extract_aspect_items.j2": "ac2264ca3de5",
+      "extract_concept_items.j2": "7a1acbc5355f"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9428801532366897,
+      "aspect_precision": 0.8924107142857143,
+      "aspect_recall": 1.0,
+      "concept_accuracy": 1.0,
+      "n_concepts_scored": 18,
+      "n_concepts_correct": 18,
+      "string_exact": 0.6666666666666666,
+      "n_strings": 3,
+      "reference_f1": 0.8760396085396085,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "NDA information protection",
+        "n_predicted": 21,
+        "n_gold": 18,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          4,
+          5,
+          7,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          16,
+          17,
+          18,
+          19,
+          41,
+          42,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51
+        ],
+        "precision": 0.8571428571428571,
+        "recall": 1.0,
+        "f1": 0.923076923076923
+      },
+      {
+        "name": "NDA recipient permissions",
+        "n_predicted": 16,
+        "n_gold": 15,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          3,
+          4,
+          7,
+          21,
+          22,
+          23,
+          24,
+          25,
+          41,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61
+        ],
+        "precision": 0.9375,
+        "recall": 1.0,
+        "f1": 0.967741935483871
+      },
+      {
+        "name": "NDA compulsory disclosure Q-27",
+        "n_predicted": 10,
+        "n_gold": 9,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          1,
+          11,
+          12,
+          31,
+          32,
+          33,
+          34,
+          63,
+          64,
+          65
+        ],
+        "precision": 0.9,
+        "recall": 1.0,
+        "f1": 0.9473684210526316
+      },
+      {
+        "name": "NDA exit obligations X-27",
+        "n_predicted": 16,
+        "n_gold": 14,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          4,
+          5,
+          11,
+          12,
+          13,
+          14,
+          27,
+          28,
+          29,
+          36,
+          37,
+          38,
+          39,
+          67,
+          68,
+          69,
+          70,
+          71
+        ],
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333333333333333
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "NDA effective date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-02-01"
+        ],
+        "gold": [
+          "2027-02-01"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          4,
+          7
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "document",
+        "name": "NDA permitted purpose",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "evaluating a possible minority investment by the recipient in the discloser's marine sensor business under project glassfinch."
+        ],
+        "gold": [
+          "evaluating a possible minority investment by the recipient in the discloser's marine sensor business under project glassfinch."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          4
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "document",
+        "name": "NDA disclosure window end",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-11-30"
+        ],
+        "gold": [
+          "2027-11-30"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          5,
+          67
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "document",
+        "name": "NDA contractual forum",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "courts of oslo"
+        ],
+        "gold": [
+          "courts of oslo"
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          6
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "document",
+        "name": "NDA signatory entities",
+        "type": "JsonObjectConcept",
+        "n_items": 2,
+        "n_gold_items": 2,
+        "predicted": [
+          {
+            "country": "norway",
+            "name": "fjordsignal as",
+            "role": "discloser"
+          },
+          {
+            "country": "sweden",
+            "name": "talus ventures ab",
+            "role": "recipient"
+          }
+        ],
+        "gold": [
+          {
+            "country": "norway",
+            "name": "fjordsignal as",
+            "role": "discloser"
+          },
+          {
+            "country": "sweden",
+            "name": "talus ventures ab",
+            "role": "recipient"
+          }
+        ],
+        "scoring": "names_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [
+          3
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "Protected assets at the April snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "basalt",
+            "cedar",
+            "lumen",
+            "shore"
+          ]
+        ],
+        "gold": [
+          [
+            "basalt",
+            "cedar",
+            "lumen",
+            "shore"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          10,
+          16,
+          17,
+          18,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6875,
+          "f1": 0.8148148148148148
+        }
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "ORACLE timely confirmation deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-05"
+        ],
+        "gold": [
+          "2027-04-05"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          10,
+          11,
+          44
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "ORACLE protection timeline",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "protection was not continuous through acceptance. oracle was provisionally protected from its oral disclosure on 25 march 2027 at 14:00 until the five-business-day confirmation deadline, 5 april at 17:00 utc. the confirmation was sent before that deadline but arrived in the recipient’s mailbox on 6 april at 09:05, so it was late; sending did not satisfy the delivery requirement. protection therefore lapsed at the deadline and resumed prospectively when the recipient accepted the confirmation on 8 april at 10:00, leaving a gap in between."
+        ],
+        "gold": [
+          "oracle is provisionally protected from the 25 march oral disclosure until 5 april 2027 at 17:00 utc. confirmation sent before that deadline arrived late on 6 april at 09:05, so protection lapses after the deadline. it resumes prospectively when the recipient expressly accepts on 8 april at 10:00 utc; the gap is not cured retroactively."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          10,
+          11,
+          12,
+          44,
+          45
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "Entire SHORE package excluded by prior possession",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          17,
+          47,
+          51
+        ],
+        "references": {
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "f1": 0.6666666666666666
+        }
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "CEDAR end of protection",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-06-15"
+        ],
+        "gold": [
+          "2027-06-15"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          13,
+          18,
+          48
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        }
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "People permitted LUMEN access at the September snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "elin",
+            "marek",
+            "oskar"
+          ]
+        ],
+        "gold": [
+          [
+            "elin",
+            "marek",
+            "oskar"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          21,
+          22,
+          23,
+          24,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8571428571428571,
+          "f1": 0.923076923076923
+        }
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "Talus Research qualifying voting percentage",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          52.0
+        ],
+        "gold": [
+          52.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          22,
+          53
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "Marek earliest authorised LUMEN access",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-09-14"
+        ],
+        "gold": [
+          "2027-09-14"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          21,
+          22,
+          23,
+          53,
+          56
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "Executed competitor consent date for Pia",
+        "type": "DateConcept",
+        "n_items": 0,
+        "n_gold_items": 0,
+        "predicted": [],
+        "gold": [],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": []
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 notice deadline date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-07-05"
+        ],
+        "gold": [
+          "2027-07-05"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          32,
+          63
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        }
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 notice lateness in minutes",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          35.0
+        ],
+        "gold": [
+          35.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          32,
+          63,
+          65
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6,
+          "f1": 0.7499999999999999
+        }
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 permitted production units",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "p1",
+            "p3a"
+          ]
+        ],
+        "gold": [
+          [
+            "p1",
+            "p3a"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          64
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        }
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "WORK-1 deletion deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-12-08"
+        ],
+        "gold": [
+          "2027-12-08"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          11,
+          36,
+          37,
+          67,
+          68,
+          69
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        }
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "BK-1 deletion deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-12-30"
+        ],
+        "gold": [
+          "2027-12-30"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          11,
+          36,
+          37,
+          67,
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8333333333333334,
+          "f1": 0.9090909090909091
+        }
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "Artifacts permitted retention at the December snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "arch-1",
+            "bk-1",
+            "hold-1"
+          ]
+        ],
+        "gold": [
+          [
+            "arch-1",
+            "bk-1",
+            "hold-1"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          37,
+          38,
+          68,
+          69,
+          70,
+          71
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        }
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "NOTE-1 model training permitted as residual knowledge",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          27,
+          28,
+          70
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        }
+      }
+    ]
+  }
+}

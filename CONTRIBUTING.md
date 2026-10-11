@@ -127,6 +127,7 @@ contextgem/
 │
 ├── dev/
 │   ├── usage_examples/           # 📝 Code examples for docs
+│   ├── evals/                    # 📊 Extraction evaluation harness, cases & baseline results
 │   ├── notebooks/                # 📓 Notebooks (auto-generated)
 │   ├── readme.template.md        # ✏️ Edit this, not README.md
 │   └── ...                       # 🛠️ Development scripts

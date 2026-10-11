@@ -1,0 +1,276 @@
+{
+  "case": "complex_nda",
+  "model": "openai/gpt-6-luna",
+  "kind": "decision",
+  "mode": "decision_default",
+  "label": "baseline",
+  "run": 2,
+  "error": null,
+  "seconds": 18.8,
+  "usage": {
+    "requests": 76,
+    "requests_without_response": 0,
+    "input_tokens": 86361,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.00864"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `NDA information protection` on 1 of 72 paragraphs (indices: [1]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `NDA recipient permissions` on 1 of 72 paragraphs (indices: [20]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `NDA compulsory disclosure Q-27` on 1 of 72 paragraphs (indices: [26]). These are not included in the aspect."
+  ],
+  "provenance": {
+    "litellm": "1.105.0",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "extract_aspect_items.j2": "ac2264ca3de5",
+      "extract_concept_items.j2": "7a1acbc5355f"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.8664285714285714,
+      "aspect_precision": 0.8810160427807487,
+      "aspect_recall": 0.8630952380952381,
+      "concept_accuracy": 0.6666666666666666,
+      "n_concepts_scored": 6,
+      "n_concepts_correct": 4,
+      "string_exact": null,
+      "n_strings": 0,
+      "reference_f1": null,
+      "n_concepts_without_items": 1
+    },
+    "aspects": [
+      {
+        "name": "NDA information protection",
+        "n_predicted": 17,
+        "n_gold": 18,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          9,
+          10,
+          11,
+          13,
+          14,
+          16,
+          17,
+          19,
+          25,
+          34,
+          35,
+          44,
+          45,
+          48,
+          49,
+          65,
+          67,
+          68
+        ],
+        "precision": 0.7058823529411765,
+        "recall": 0.6666666666666666,
+        "f1": 0.6857142857142857
+      },
+      {
+        "name": "NDA recipient permissions",
+        "n_predicted": 15,
+        "n_gold": 15,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          7,
+          21,
+          22,
+          23,
+          24,
+          25,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "NDA compulsory disclosure Q-27",
+        "n_predicted": 11,
+        "n_gold": 9,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          11,
+          12,
+          19,
+          31,
+          32,
+          33,
+          34,
+          45,
+          62,
+          63,
+          64,
+          65
+        ],
+        "precision": 0.8181818181818182,
+        "recall": 1.0,
+        "f1": 0.9
+      },
+      {
+        "name": "NDA exit obligations X-27",
+        "n_predicted": 11,
+        "n_gold": 14,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          12,
+          26,
+          28,
+          29,
+          36,
+          37,
+          38,
+          39,
+          67,
+          68,
+          70,
+          71
+        ],
+        "precision": 1.0,
+        "recall": 0.7857142857142857,
+        "f1": 0.88
+      }
+    ],
+    "concepts": [
+      {
+        "context": "aspect: NDA information protection",
+        "name": "Protected assets at the April snapshot",
+        "type": "LabelConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          [
+            "basalt",
+            "cedar",
+            "lumen",
+            "shore"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": []
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "Entire SHORE package excluded by prior possession",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": []
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "People permitted LUMEN access at the September snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "elin",
+            "marek",
+            "oskar"
+          ]
+        ],
+        "gold": [
+          [
+            "elin",
+            "marek",
+            "oskar"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": []
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 permitted production units",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "p1",
+            "p3a"
+          ]
+        ],
+        "gold": [
+          [
+            "p1",
+            "p3a"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": []
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "Artifacts permitted retention at the December snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "bk-1",
+            "hold-1"
+          ]
+        ],
+        "gold": [
+          [
+            "arch-1",
+            "bk-1",
+            "hold-1"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": []
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "NOTE-1 model training permitted as residual knowledge",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": []
+      }
+    ]
+  }
+}
