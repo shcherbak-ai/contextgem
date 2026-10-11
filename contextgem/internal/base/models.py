@@ -2033,6 +2033,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             """
             Raises ValueError if an Aspect is not assigned to the given Document.
 
+            The aspect is told from the other aspects by its unique ID, and not
+            by equality. This check is made for each call, and the aspect changes
+            while its concepts are extracted: a call gives the concepts of
+            the call their items. For a sub-aspect, the document is the one that
+            is built from the paragraphs of its parent aspect, which holds a copy
+            of the sub-aspect made before the extraction: after the first call,
+            the sub-aspect is no longer equal to that copy, while it has
+            the unique ID of the copy throughout.
+
             :param source: The source to validate (_Document or _Aspect)
             :type source: _Document | _Aspect
             :param document: The document containing the source.
@@ -2040,7 +2049,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             :return: None
             :rtype: None
             """
-            if isinstance(source, _Aspect) and source not in document.aspects:
+            if isinstance(source, _Aspect) and not any(
+                aspect.unique_id == source.unique_id for aspect in document.aspects
+            ):
                 raise ValueError(
                     f"Aspect `{source.name}` must be assigned to the document"
                 )

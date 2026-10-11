@@ -5207,3 +5207,183 @@ class TestExtraction(BaseTest):
                         0
                     ].reference_paragraphs
                     assert reference_paragraph is unequal_reference
+
+    def test_concepts_of_sub_aspect_extracted_in_several_calls(self):
+        """
+        Tests that the concepts of a sub-aspect are extracted also when it takes
+        more than one call: a call per concept (``max_items_per_call=1``), a call
+        for each group of concepts with the same extraction params, and a call
+        that is made again after another call for the sub-aspect is completed.
+
+        Each call checks that the aspect is assigned to the document. For
+        a sub-aspect, the document is one built from the paragraphs of its parent
+        aspect, which holds a copy of the sub-aspect made before the extraction.
+        The sub-aspect is told from the other aspects by its unique ID. It was
+        compared with the copy, which it was no longer equal to once a call had
+        given a concept its items: ``ValueError`` was raised for the next call.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        justified_concept_name = "Notice period"
+        # The names of the concepts that are extracted with justifications
+        justified_concept_names: set[str] = set()
+        # The names of the concepts of each request, and the names of the concepts
+        # that the first response is invalid for
+        requests: list[list[str]] = []
+        invalid_first_response_for: set[str] = set()
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: each aspect gets the paragraphs of the prompt,
+            and each concept gets one item, with a justification for the concept
+            that is extracted with justifications. As for a real request,
+            the call is suspended until the response arrives.
+            """
+            await asyncio.sleep(0)
+            prompt = kwargs["messages"][-1]["content"]
+            concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            concept_names = re.findall(r"<concept_name>(.+?)</concept_name>", prompt)
+            if concept_ids:
+                requests.append(concept_names)
+                item: Any = "30 days"
+                if justified_concept_names.intersection(concept_names):
+                    item = {"value": "30 days", "justification": "Stated in the text."}
+                content = json.dumps(
+                    [
+                        {"concept_id": concept_id, "extracted_items": [item]}
+                        for concept_id in concept_ids
+                    ]
+                )
+                invalid_names = invalid_first_response_for.intersection(concept_names)
+                if invalid_names:
+                    invalid_first_response_for.difference_update(invalid_names)
+                    content = "<<<not-json>>>"
+            else:
+                content = json.dumps(
+                    [
+                        {"aspect_id": aspect_id, "paragraph_ids": ["P0", "P1"]}
+                        for aspect_id in re.findall(
+                            r"<aspect_id>(A\d+)</aspect_id>", prompt
+                        )
+                    ]
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content)
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def create_document(with_justified_concept: bool = False) -> Document:
+            """
+            Creates a document with an aspect that has a concept and a sub-aspect
+            with two concepts, the second of which is optionally extracted with
+            justifications, i.e. in a call of its own.
+            """
+            justified_concept_names.clear()
+            if with_justified_concept:
+                justified_concept_names.add(justified_concept_name)
+            document = Document(
+                raw_text="The supplier delivers the goods in 30 days.\n\n"
+                "Either party may terminate with a notice of 30 days."
+            )
+            document.aspects = [
+                Aspect(
+                    name="Duties",
+                    description="Duties of the parties",
+                    concepts=[
+                        StringConcept(
+                            name="Parties", description="Parties that have duties"
+                        )
+                    ],
+                    aspects=[
+                        Aspect(
+                            name="Deadlines",
+                            description="Deadlines of the duties",
+                            concepts=[
+                                StringConcept(
+                                    name="Delivery time",
+                                    description="Time that the delivery takes",
+                                ),
+                                StringConcept(
+                                    name=justified_concept_name,
+                                    description="Period of the notice of termination",
+                                    add_justifications=with_justified_concept,
+                                ),
+                            ],
+                        )
+                    ],
+                )
+            ]
+            return document
+
+        def check_concepts_extracted(document: Document) -> None:
+            """
+            Checks that each concept of the aspect and of its sub-aspect has
+            its item.
+            """
+            (aspect,) = document.aspects
+            (sub_aspect,) = aspect.aspects
+            for concept in [*aspect.concepts, *sub_aspect.concepts]:
+                (item,) = concept.extracted_items
+                assert item.value == "30 days", concept.name
+                assert (item.justification is not None) == concept.add_justifications
+
+        sub_aspect_requests = [["Delivery time"], [justified_concept_name]]
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            for use_extract_all in (False, True):
+
+                def extract(document: Document, **kwargs: Any) -> None:
+                    """
+                    Extracts the concepts of the aspect and of its sub-aspect,
+                    after the aspects, with the methods of each step or with
+                    the method that does all of them.
+                    """
+                    llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+                    requests.clear()
+                    if use_extract_all:  # noqa: B023
+                        llm.extract_all(document, **kwargs)
+                    else:
+                        llm.extract_aspects_from_document(document, **kwargs)
+                        llm.extract_concepts_from_aspect(
+                            document.aspects[0], document, **kwargs
+                        )
+
+                # === A call per concept ===
+                document = create_document()
+                extract(document, max_items_per_call=1)
+                check_concepts_extracted(document)
+                assert requests == [["Parties"], *sub_aspect_requests]
+
+                # === A call for each group of concepts with the same params ===
+                document = create_document(with_justified_concept=True)
+                extract(document)
+                check_concepts_extracted(document)
+                assert requests == [["Parties"], *sub_aspect_requests]
+
+                # === A call that is made again when another call is completed ===
+                # With concurrency, each concept is extracted in a call of its
+                # own, and the calls with invalid data are made again when all
+                # the calls are made
+                document = create_document()
+                invalid_first_response_for.add("Delivery time")
+                extract(document, use_concurrency=True)
+                assert not invalid_first_response_for
+                check_concepts_extracted(document)
+                assert sorted(requests) == sorted(
+                    [["Parties"], *sub_aspect_requests, ["Delivery time"]]
+                )
+
+            # === An aspect of another document is rejected, as before ===
+            document = create_document()
+            other_document = create_document()
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            llm.extract_aspects_from_document(other_document)
+            llm.extract_aspects_from_document(document)
+            requests.clear()
+            with pytest.raises(ValueError, match="must be assigned to the document"):
+                llm.extract_concepts_from_aspect(other_document.aspects[0], document)
+            assert not requests
