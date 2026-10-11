@@ -139,7 +139,10 @@ class _DocumentLLM(_DocumentModel):
     max_retries_invalid_data: StrictInt = Field(
         default=3,
         ge=0,
-        description="Retries when the model returns invalid or unparsable data.",
+        description=(
+            "Retries when the model returns invalid or unparsable data; "
+            "a fallback LLM has its own, after it is asked for the first time."
+        ),
     )
     output_language: LanguageRequirement = Field(
         default="en",
@@ -252,7 +255,8 @@ class _DocumentLLM(_DocumentModel):
     def _retries_invalid_data(self) -> int:
         """
         Returns the number of times that a call is made again when the LLM returns
-        invalid data for it, as set for the LLM.
+        invalid data for it, as set for the LLM. A fallback LLM has the same number
+        of retries, after the first call that is made with it.
 
         :return: The number of retries of a call with invalid data returned.
         :rtype: int

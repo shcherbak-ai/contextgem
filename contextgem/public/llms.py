@@ -110,7 +110,9 @@ class DocumentLLM(_DocumentLLM):
         attempt of a request only. Defaults to 0.
     :vartype max_retries_failed_request: int
     :ivar max_retries_invalid_data: Number of retries when LLM request succeeds but LLM returns
-        invalid data. Each retry is a new request. Defaults to 3.
+        invalid data. Each retry is a new request, i.e. the LLM is asked for the same
+        data up to ``1 + max_retries_invalid_data`` times. A fallback LLM has the retries
+        set for it, after it is asked for the first time. Defaults to 3.
     :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for LLM API calls. As responses are not streamed,
         the whole response has to be received within the timeout. Defaults to 600 seconds.
@@ -136,7 +138,10 @@ class DocumentLLM(_DocumentLLM):
         (``DocumentDecisionModel``) with ``is_fallback=True`` and the same role can
         also be a fallback: it replaces the LLM only in the extraction, provided that
         a decision model can extract everything the LLM is to extract, and is skipped
-        in a chat. Defaults to an empty list.
+        in a chat. Each fallback applies its own retry settings: a fallback LLM that
+        returns invalid data during extraction is asked again up to its
+        ``max_retries_invalid_data`` times, as the current LLM is, and a fallback
+        decision model is asked once. Defaults to an empty list.
     :vartype fallback_models: list[DocumentLLM | DocumentDecisionModel]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".

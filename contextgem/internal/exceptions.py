@@ -88,7 +88,9 @@ class ModelExtractionError(_BaseModelError):
 
     :ivar message: Human-readable error description
     :vartype message: str
-    :ivar retry_count: Number of retries attempted before failure
+    :ivar retry_count: Number of times that the model the error is for, i.e. the last
+        model that was tried, was called again after it returned invalid data.
+        The first call of the model, also of a fallback model, is not counted.
     :vartype retry_count: int or None
     :ivar original_error: The underlying exception that caused the failure
     :vartype original_error: Exception or None

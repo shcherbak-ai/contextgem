@@ -3396,8 +3396,8 @@ class TestExtraction(BaseTest):
             # === The LLM returns invalid data ===
             # The call is made again twice with the LLM, and then with
             # the fallback LLM, which returns invalid data for its first call,
-            # i.e. is called again: its first retry of the two it has, as it is
-            # called three times at most
+            # i.e. is called again: its first retry of the three it has by
+            # default, after its first call, as a primary LLM has
             check_log(
                 [primary_model, fallback_model],
                 [
@@ -3408,7 +3408,7 @@ class TestExtraction(BaseTest):
                     *not_valid_json,
                     trying_fallback_llm,
                     *not_valid_json,
-                    "INFO: Retrying {type}s with invalid JSON (1/2)",
+                    "INFO: Retrying {type}s with invalid JSON (1/3)",
                 ],
                 request_outcomes={
                     primary_model: [invalid_answer] * 3,
@@ -3449,6 +3449,458 @@ class TestExtraction(BaseTest):
                 ],
                 request_outcomes={decision_model: [invalid_answer]},
             )
+
+    def test_fallback_model_has_its_own_retries_for_invalid_data(self):
+        """
+        Tests that a fallback model that returns invalid data during extraction is
+        called as a primary model with the same setting is: once, and then again
+        as many times as it has retries for invalid data, i.e. a fallback LLM up
+        to ``1 + max_retries_invalid_data`` times, and a fallback decision model,
+        which has no such retries, once. Also tests that the number of retries
+        reported when the data stays invalid, in ``ModelExtractionError`` and in
+        the warning issued instead of it, is the number of times that the model
+        the report is for, i.e. the last one tried, was called again, and that
+        each of these calls is logged as a retry of that model.
+
+        A fallback LLM was called one time fewer than a primary LLM with the same
+        ``max_retries_invalid_data``: three times with the default of 3, and not
+        again at all with 1. The first call of a fallback model was reported as
+        a retry, e.g. one retry for a fallback decision model, which is called
+        once.
+
+        Checked for aspects and for concepts, with and without concurrency, with
+        an exception raised and with a warning issued instead of it. The APIs are
+        stubbed, i.e. no cassette is required.
+        """
+        import logging as stdlib_logging
+
+        # The types of the responses of litellm to a decision model
+        from litellm.types import decisions as decision_types
+
+        litellm = llms_module.litellm
+        llm_model = "openai/gpt-6-luna"
+        decision_model = "typesafe/jev-latest"
+        n_instances = 2
+        invalid_answer = "<<<not-json>>>"
+        cut_off_answer = '[{"concept_id": "C0", "extracted_items": [tr'
+        api_error = litellm.AuthenticationError(
+            message="Simulated API error", model=llm_model, llm_provider="openai"
+        )
+        # The outcomes of the requests that a model is sent for an aspect or
+        # a concept, in turn, by the position of the model in the chain (0 for
+        # the primary model): an error to raise, a text for the model to return,
+        # or None for an answer with an item. The last outcome is that of all
+        # the further requests.
+        outcomes: dict[int, list[Any]] = {}
+        # The requests sent, each as the position of the model in the chain and
+        # the name of the aspect or the concept
+        requests: list[tuple[int, str]] = []
+        # The lines logged on the fallback models tried and on the retries
+        logged: list[str] = []
+
+        class CaptureHandler(stdlib_logging.Handler):
+            """
+            Handler to capture log messages for testing.
+            """
+
+            def emit(self, record):
+                """
+                Adds the message of the record to the captured ones, if it tells
+                that a fallback model is tried or that a call is made again.
+                """
+                message = record.getMessage()
+                if message.startswith(("Trying with fallback ", "Retrying ")):
+                    logged.append(message)
+
+        def get_outcome(api_key: str, text: str) -> Any:
+            """
+            Records the request of a model for the aspect or the concept that
+            the text names, and gives its outcome: raises the error, or returns
+            the text to answer with, or None for the answer with an item.
+            The API key of a model tells its position in the chain.
+            """
+            position = int(api_key.removeprefix("key-"))
+            (name,) = set(re.findall(r"Topic \d", text))
+            n_previous_requests = requests.count((position, name))
+            requests.append((position, name))
+            model_outcomes = outcomes[position]
+            outcome = model_outcomes[min(n_previous_requests, len(model_outcomes) - 1)]
+            if isinstance(outcome, Exception):
+                raise outcome
+            return outcome
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API. A response is cut off if its text is
+            the cut-off answer.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            content = get_outcome(kwargs["api_key"], prompt)
+            if content is None:
+                content = json.dumps(
+                    [{"concept_id": "C0", "extracted_items": [True]}]
+                    if re.search(r"<concept_id>C0</concept_id>", prompt)
+                    else [{"aspect_id": "A0", "paragraph_ids": ["P0"]}]
+                )
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content),
+                        finish_reason="length" if content == cut_off_answer else "stop",
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        async def adecisions_stub(**kwargs: Any):
+            """
+            Simulates the API of the decision model, which answers "yes" to
+            the question of the request, or gives no answer to it if the outcome
+            of the request is the invalid answer.
+            """
+            (question,) = kwargs["questions"]
+            outcome = get_outcome(kwargs["api_key"], question["instructions"])
+            return decision_types.OpenAIDecisionResponse(
+                model="jev-1.13.0",
+                answers=(
+                    ()
+                    if outcome == invalid_answer
+                    else (
+                        decision_types.OpenAIPredicateAnswer(
+                            name=question["name"], probability=0.9
+                        ),
+                    )
+                ),
+                usage=decision_types.OpenAIDecisionUsage(
+                    input_tokens=10,
+                    output_tokens=0,
+                    total_tokens=10,
+                    input_tokens_details=decision_types.OpenAIDecisionInputTokensDetails(
+                        cached_tokens=0, cache_write_tokens=0
+                    ),
+                ),
+            )
+
+        def create_model(
+            chain: list[int | None],
+        ) -> DocumentLLM | DocumentDecisionModel:
+            """
+            Creates the primary model of a chain, with the other models of
+            the chain as its fallback models. A model of the chain is given as
+            the ``max_retries_invalid_data`` of an LLM, or as None for a decision
+            model, which has no retries for invalid data.
+            """
+            models: list[DocumentLLM | DocumentDecisionModel] = []
+            for position, retries in enumerate(chain):
+                model_kwargs: dict[str, Any] = {
+                    "api_key": f"key-{position}",
+                    "is_fallback": position > 0,
+                }
+                model = (
+                    DocumentDecisionModel(model=decision_model, **model_kwargs)
+                    if retries is None
+                    else DocumentLLM(
+                        model=llm_model,
+                        max_retries_invalid_data=retries,
+                        **model_kwargs,
+                    )
+                )
+                # The requests to the stubbed APIs are not to be paced
+                model.async_limiter = AsyncLimiter(1000, 1)
+                models.append(model)
+            models[0].fallback_models = [*models[1:]]
+            return models[0]
+
+        def create_document(instance_type: str) -> Document:
+            """
+            Creates a document of one paragraph with two aspects, or with two
+            concepts, that both an LLM and a decision model can extract.
+            """
+            document = Document(raw_text="The parties agree as follows.")
+            if instance_type == "aspect":
+                document.aspects = [
+                    Aspect(name=f"Topic {i}", description=f"Clauses on Topic {i}")
+                    for i in range(n_instances)
+                ]
+            else:
+                document.concepts = [
+                    BooleanConcept(
+                        name=f"Topic {i}", description=f"Topic {i} is covered"
+                    )
+                    for i in range(n_instances)
+                ]
+            return document
+
+        def extract(
+            chain: list[int | None],
+            instance_type: str,
+            use_concurrency: bool,
+            raise_exception: bool = True,
+            request_outcomes: dict[int, list[Any]] | None = None,
+        ) -> Document:
+            """
+            Extracts the aspects, or the concepts, of a document with the primary
+            model of the chain, each aspect or concept in a call of its own.
+            Each model returns invalid data for each request, unless other
+            outcomes of the requests are given.
+            """
+            outcomes.clear()
+            outcomes.update(
+                request_outcomes
+                or {position: [invalid_answer] for position in range(len(chain))}
+            )
+            requests.clear()
+            logged.clear()
+            model = create_model(chain)
+            document = create_document(instance_type)
+            extract_instances = (
+                model.extract_aspects_from_document
+                if instance_type == "aspect"
+                else model.extract_concepts_from_document
+            )
+            extract_instances(
+                document,
+                max_items_per_call=1,
+                use_concurrency=use_concurrency,
+                raise_exception_on_extraction_error=raise_exception,
+            )
+            return document
+
+        def get_calls() -> list[list[int]]:
+            """
+            Returns the positions of the models in the order of the requests
+            sent to them, for each aspect or concept, i.e. for each call.
+            """
+            return [
+                [position for position, name in requests if name == f"Topic {i}"]
+                for i in range(n_instances)
+            ]
+
+        def get_expected_call(chain: list[int | None]) -> list[int]:
+            """
+            Returns the positions of the models in the order of the requests of
+            a call for which each model of the chain returns invalid data: each
+            model in turn is sent a request, and then as many requests again as
+            it has retries for invalid data.
+            """
+            return [
+                position
+                for position, retries in enumerate(chain)
+                for _ in range(1 + (retries or 0))
+            ]
+
+        def get_expected_log(chain: list[int | None], instance_type: str) -> list[str]:
+            """
+            Returns the lines logged for such a call: a line for each fallback
+            model tried, and a line for each retry of a model, numbered among
+            the retries of that model.
+            """
+            expected_log: list[str] = []
+            for position, retries in enumerate(chain):
+                if position > 0:
+                    fallback = (
+                        f"decision model {decision_model}"
+                        if retries is None
+                        else f"LLM {llm_model}"
+                    )
+                    expected_log.append(
+                        f"Trying with fallback {fallback} ({position}/{len(chain) - 1})"
+                    )
+                expected_log += [
+                    f"Retrying {instance_type}s with invalid JSON ({i + 1}/{retries})"
+                    for i in range(retries or 0)
+                ]
+            return expected_log
+
+        chains: list[list[int | None]] = [
+            # A primary model on its own: an LLM with 0, 1 or 3 retries for
+            # invalid data, or a decision model
+            *[[primary] for primary in (0, 1, 3, None)],
+            # A fallback LLM with 0, 1 or 3 retries
+            *[
+                [primary, fallback]
+                for primary in (0, 1, 3, None)
+                for fallback in (0, 1, 3)
+            ],
+            # A fallback decision model
+            *[[primary, None] for primary in (0, 1, 3, None)],
+            # Two fallback models
+            [0, 0, 0],
+            [1, 1, 1],
+            [3, 3, 3],
+            [3, 1, 0],
+            [1, None, 3],
+            [1, 3, None],
+            [None, 1, 3],
+            [None, None, 1],
+        ]
+        combinations = [
+            (instance_type, use_concurrency)
+            for instance_type in ("aspect", "concept")
+            for use_concurrency in (False, True)
+        ]
+
+        capture_handler = CaptureHandler()
+        capture_handler.setLevel(stdlib_logging.INFO)
+        logger.addHandler(capture_handler)
+        try:
+            with (
+                patch.object(litellm, "acompletion", new=acompletion_stub),
+                patch.object(litellm, "adecisions", new=adecisions_stub),
+            ):
+                # === Each model of the chain returns invalid data ===
+                for chain in chains:
+                    expected_call = get_expected_call(chain)
+                    # The model that failed last, which the report is for:
+                    # the kind of the model, what it returned, and the number
+                    # of times that it was called again
+                    last_retries = chain[-1] or 0
+                    reported = (
+                        "due to an invalid response returned by decision model"
+                        if chain[-1] is None
+                        else "due to invalid JSON returned by LLM"
+                    )
+                    for instance_type, use_concurrency in combinations:
+                        expected_log = get_expected_log(chain, instance_type)
+
+                        # An exception is raised for the first call that fails
+                        with pytest.raises(
+                            ModelExtractionError,
+                            match=rf"{reported}\. .*\(after {last_retries} retries\)$",
+                        ) as exc_info:
+                            extract(chain, instance_type, use_concurrency)
+                        assert exc_info.value.retry_count == last_retries
+                        if use_concurrency:
+                            # The call that failed is made with each model of
+                            # the chain, and is logged in full. The other call
+                            # is stopped at some point.
+                            assert expected_call in get_calls()
+                            assert all(
+                                call == expected_call[: len(call)]
+                                for call in get_calls()
+                            )
+                            assert set(logged) == set(expected_log)
+                        else:
+                            # The other call is not made
+                            assert get_calls() == [expected_call, []]
+                            assert logged == expected_log
+
+                        # A warning is issued for each call instead
+                        with pytest.warns(UserWarning) as warning_records:
+                            document = extract(
+                                chain,
+                                instance_type,
+                                use_concurrency,
+                                raise_exception=False,
+                            )
+                        warning_messages = [
+                            str(record.message)
+                            for record in warning_records
+                            if "could not be processed" in str(record.message)
+                        ]
+                        assert len(warning_messages) == n_instances
+                        assert all(
+                            re.search(
+                                rf"{reported}\. .*\] \({last_retries} retries\)\. ",
+                                message,
+                            )
+                            for message in warning_messages
+                        ), warning_messages
+                        assert get_calls() == [expected_call] * n_instances
+                        if use_concurrency:
+                            assert sorted(logged) == sorted(expected_log * n_instances)
+                        else:
+                            assert logged == expected_log * n_instances
+                        instances = (
+                            document.aspects
+                            if instance_type == "aspect"
+                            else document.concepts
+                        )
+                        assert not any(i.extracted_items for i in instances)
+
+                # === A fallback LLM returns valid data in the last call it has ===
+                # I.e. in its last retry: nothing fails, and nothing is reported
+                valid_last_call_chains: list[list[int | None]] = [
+                    [0, 1],
+                    [3, 3],
+                    [None, 1],
+                    [1, 1, 3],
+                ]
+                for chain in valid_last_call_chains:
+                    last_position = len(chain) - 1
+                    request_outcomes: dict[int, list[Any]] = {
+                        position: [invalid_answer] for position in range(last_position)
+                    }
+                    request_outcomes[last_position] = [
+                        *([invalid_answer] * (chain[-1] or 0)),
+                        None,
+                    ]
+                    for instance_type, use_concurrency in combinations:
+                        document = extract(
+                            chain,
+                            instance_type,
+                            use_concurrency,
+                            request_outcomes=request_outcomes,
+                        )
+                        assert get_calls() == [get_expected_call(chain)] * n_instances
+                        instances = (
+                            document.aspects
+                            if instance_type == "aspect"
+                            else document.concepts
+                        )
+                        assert all(i.extracted_items for i in instances)
+
+                # === The failures other than invalid data ===
+                # A fallback LLM whose API request fails, or whose response is
+                # cut off at the max output tokens, is not called again, whether
+                # this happens in its first call or in a retry
+                fallback_outcomes_and_n_calls: list[tuple[list[Any], int]] = [
+                    ([api_error], 1),
+                    ([cut_off_answer], 1),
+                    ([invalid_answer, api_error], 2),
+                    ([invalid_answer, cut_off_answer], 2),
+                ]
+                for (
+                    fallback_outcomes,
+                    n_fallback_calls,
+                ) in fallback_outcomes_and_n_calls:
+                    for instance_type, use_concurrency in combinations:
+                        with pytest.raises(ModelAPIError):
+                            extract(
+                                [1, 3],
+                                instance_type,
+                                use_concurrency,
+                                request_outcomes={
+                                    0: [invalid_answer],
+                                    1: fallback_outcomes,
+                                },
+                            )
+                        assert [0, 0] + [1] * n_fallback_calls in get_calls()
+                        assert all(
+                            call.count(1) <= n_fallback_calls for call in get_calls()
+                        )
+                # The primary LLM that fails in such a way is not called again
+                # either, and the fallback LLM has its retries for invalid data
+                # whatever the failure that it is tried for
+                for primary_outcome in (api_error, cut_off_answer):
+                    for instance_type, use_concurrency in combinations:
+                        with pytest.raises(
+                            ModelExtractionError, match=r"\(after 1 retries\)$"
+                        ) as exc_info:
+                            extract(
+                                [3, 1],
+                                instance_type,
+                                use_concurrency,
+                                request_outcomes={
+                                    0: [primary_outcome],
+                                    1: [invalid_answer],
+                                },
+                            )
+                        assert exc_info.value.retry_count == 1
+                        assert [0, 1, 1] in get_calls()
+                        assert all(call.count(0) <= 1 for call in get_calls())
+        finally:
+            logger.removeHandler(capture_handler)
 
     def test_concepts_with_sentence_references_after_aspects_are_extracted(self):
         """

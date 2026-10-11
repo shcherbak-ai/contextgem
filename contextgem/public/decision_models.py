@@ -111,7 +111,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         Each must have ``is_fallback=True`` and the same role as the current model, and
         must differ from the current model and from each other in at least one config
         param. A fallback LLM extracts the same aspects/concepts with its prompts,
-        i.e. its items have no probabilities. Defaults to an empty list.
+        i.e. its items have no probabilities, and is asked again when it returns
+        invalid data, up to its ``max_retries_invalid_data`` times, while a fallback
+        decision model is asked once. Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with
         which a yes/no question is taken as answered "yes": a paragraph or a sentence

@@ -3039,7 +3039,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 retry_is_final: bool = False,
             ) -> bool:
                 """
-                Checks the processed result for validity and retries it if invalid.
+                Checks the processed result for validity and, if it is invalid, makes
+                the call with the model given: again, if the model is the one that
+                returned the result, or for the first time, if it is a fallback model,
+                which is then called again for the invalid data that it returns itself.
 
                 The retries stop as soon as an LLM API request fails, as such request
                 is already retried (if the error is transient) when it is sent, or as
@@ -3052,9 +3055,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :type res: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
                 :param instances: List of processed instances associated with the result.
                 :type instances: list[_Aspect] | list[_Concept]
-                :param n_retries: Number of times to call the model at most: the retries
-                    of the model that returned the result, or, for a fallback model,
-                    its first call and its retries.
+                :param n_retries: Number of times to call the model again at most, for
+                    invalid data that it returned. The first call of a fallback model
+                    is not one of them: a fallback model is called once more than that.
+                    Reported as the number of retries if the data stays invalid.
                 :type n_retries: int
                 :param retry_is_final: Whether the retry is final and will not be repeated by
                     a (next) fallback LLM.
@@ -3063,14 +3067,15 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :rtype: bool
                 """
 
-                if n_retries <= 0:
+                # A fallback model is called for the first time here, which
+                # is logged where it is tried, and whatever the failure it is
+                # tried for. Only the calls after that one are its retries.
+                n_first_calls = 0 if llm_instance is llm else 1
+                n_calls = n_first_calls + n_retries
+                if n_calls <= 0:
                     return False
                 if not _model_call_result_is_valid(res):
-                    # A fallback model is called for the first time here, which
-                    # is logged where it is tried, and whatever the failure it is
-                    # tried for. Only the calls after that one are its retries.
-                    n_first_calls = 0 if llm_instance is llm else 1
-                    for i in range(n_retries):
+                    for i in range(n_calls):
                         if i >= n_first_calls:
                             # A call is made again only for invalid data returned
                             # by this model: for the result given if the model is
@@ -3078,7 +3083,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             logger.info(
                                 f"Retrying {instance_type}s with "
                                 f"{llm_instance._invalid_output_desc} "
-                                f"({i + 1 - n_first_calls}/{n_retries - n_first_calls})"
+                                f"({i + 1 - n_first_calls}/{n_retries})"
                             )
                         res = await extract_items_keeping_usage(
                             extracted_item_type=instance_type,
@@ -3153,6 +3158,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 fallback LLM in order (if configured), returning whether any
                 retry path produced a valid result.
 
+                Each model is called again for invalid data that it returns as many
+                times as it has retries for such data (an LLM: as set for it,
+                a decision model: none), a fallback model after its first call,
+                i.e. a fallback model is called as many times as a primary model
+                with the same setting.
+
                 :param chunk: The chunk of instances to retry.
                 :type chunk: list[_Aspect] | list[_Concept]
                 :param result: The original failed extraction result.
@@ -3185,14 +3196,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         f"Trying with fallback {fallback_llm._kind_name} "
                         f"{fallback_llm.model} ({i + 1}/{n_fallbacks})"
                     )
+                    # The fallback model is called once, and then again for invalid
+                    # data that it returns, as many times as it has retries for it
                     retry_successful = await retry_processing_for_result(
                         llm_instance=fallback_llm,
                         res=result,
                         instances=chunk,
-                        n_retries=max(
-                            fallback_llm._retries_invalid_data,
-                            1,
-                        ),  # retry with each fallback LLM at least once
+                        n_retries=fallback_llm._retries_invalid_data,
                         retry_is_final=i == n_fallbacks - 1,
                     )
                 return retry_successful
@@ -3703,7 +3713,8 @@ class _DocumentModel(_GenericModelProcessor):
         default_factory=list,
         description=(
             "Fallback LLMs to try, in the given order, if this one fails; "
-            "each must have the same role and output_language."
+            "each must have the same role and output_language, and applies "
+            "its own retry settings."
         ),
     )
     # Auto-pricing via genai-prices (optional)
@@ -3945,7 +3956,8 @@ class _DocumentModel(_GenericModelProcessor):
         Returns the number of times that a call is made again when the model returns
         invalid data for it. Zero by default, i.e. such a call is not made again:
         to be overridden in the subclasses of the kinds of models that may return
-        valid data when the same call is repeated, as an LLM may.
+        valid data when the same call is repeated, as an LLM may. A fallback model
+        has the same number of retries, after the first call that is made with it.
 
         :return: The number of retries of a call with invalid data returned.
         :rtype: int

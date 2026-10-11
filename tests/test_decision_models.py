@@ -5002,16 +5002,20 @@ class TestDecisionModels(BaseTest):
         )
         assert requested_models == [_DECISION_MODEL, _LLM_MODEL, _LLM_MODEL]
         assert document.concepts[0].extracted_items[0].value is True
-        # ... and the error is the one of the LLM when it is the last model to fail
+        # ... as many times as it has retries for invalid data, i.e. twice after
+        # its first call, and the error is the one of the LLM when it is the last
+        # model to fail, with the number of the retries of the LLM
         with pytest.raises(
-            ModelExtractionError, match=r"invalid JSON returned by LLM.*2 retries"
-        ):
+            ModelExtractionError,
+            match=r"invalid JSON returned by LLM.*\(after 2 retries\)",
+        ) as extraction_exc_info:
             extract(
                 create_decision_model_with_llm_fallback(),
                 {_DECISION_MODEL: [refusal]},
                 {_LLM_MODEL: [invalid_llm_answer]},
             )
-        assert requested_models == [_DECISION_MODEL, _LLM_MODEL, _LLM_MODEL]
+        assert extraction_exc_info.value.retry_count == 2
+        assert requested_models == [_DECISION_MODEL] + [_LLM_MODEL] * 3
         with pytest.raises(ModelAPIError, match="calling LLM API") as exc_info:
             extract(
                 create_decision_model_with_llm_fallback(),
@@ -5070,16 +5074,21 @@ class TestDecisionModels(BaseTest):
             ]
             assert usage_containers[1].usage.input == 100
         # The fallback decision model is not asked again either, and the error is
-        # the one of the last model to fail
+        # the one of the last model to fail, which was called once, i.e. had
+        # no retries
         with pytest.raises(
             ModelExtractionError,
-            match="an invalid response returned by decision model",
-        ):
+            match=(
+                r"an invalid response returned by decision model"
+                r".*\(after 0 retries\)"
+            ),
+        ) as extraction_exc_info:
             extract(
                 create_decision_model_with_decision_model_fallback(),
                 {_DECISION_MODEL: [auth_error], _OTHER_DECISION_MODEL: [refusal]},
                 {},
             )
+        assert extraction_exc_info.value.retry_count == 0
         assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL]
         other_auth_error = _create_api_error(
             litellm.AuthenticationError, _OTHER_DECISION_MODEL
@@ -5133,16 +5142,21 @@ class TestDecisionModels(BaseTest):
                 for container in usage_containers
             ] == [(_LLM_MODEL, False), (_DECISION_MODEL, True)]
             assert usage_containers[1].usage.input == 100
-        # The fallback decision model is the last model to fail
+        # The fallback decision model is the last model to fail: it is called once,
+        # i.e. the error has no retries, whatever the retries of the LLM
         with pytest.raises(
             ModelExtractionError,
-            match=r"an invalid response returned by decision model.*1 retries",
-        ):
+            match=(
+                r"an invalid response returned by decision model"
+                r".*\(after 0 retries\)"
+            ),
+        ) as extraction_exc_info:
             extract(
                 create_llm_with_decision_model_fallback(),
                 {_DECISION_MODEL: [refusal]},
                 {_LLM_MODEL: [llm_auth_error]},
             )
+        assert extraction_exc_info.value.retry_count == 0
         assert requested_models == [_LLM_MODEL, _DECISION_MODEL]
         with pytest.raises(ModelAPIError, match="decision model API") as exc_info:
             extract(

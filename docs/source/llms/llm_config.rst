@@ -114,7 +114,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``max_retries_invalid_data``
      - ``int``
      - ``3``
-     - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails). Each retry is a new request.
+     - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails). Each retry is a new request, i.e. the LLM is asked for the same data up to ``1 + max_retries_invalid_data`` times. A fallback LLM has the retries set for it, after it is asked for the first time. See :ref:`llm-retries-label`.
    * - ``pricing_details``
      - ``ModelPricing | None``
      - ``None``
@@ -212,10 +212,10 @@ Retries are configured per LLM, which also applies to each fallback LLM, and dep
 
 - **Transient API errors** (request timeout, rate limit, server or connection error) are retried up to ``num_retries_failed_request`` times. The delay between the retries grows exponentially (about 1, 2, 4, 8 seconds, capped at 10 seconds) and is randomly shortened by up to a half (jitter), so that concurrent requests that failed together are not all retried at the same moment.
 - **Non-transient API errors** (e.g. invalid request, failed authentication, exceeded context window, content policy violation) are not retried, as the same request would fail again in the same way. A prompt that is found to exceed the context window of the model before the request is sent is handled in the same way: the request is not sent.
-- **Invalid data** returned by the LLM during extraction (the response cannot be parsed or validated) is requested again up to ``max_retries_invalid_data`` times, without a delay.
+- **Invalid data** returned by the LLM during extraction (the response cannot be parsed or validated) is requested again up to ``max_retries_invalid_data`` times, without a delay. A fallback LLM is asked again in the same way: after it is asked for the first time, up to its own ``max_retries_invalid_data`` times, i.e. as many times in total as a primary LLM with the same setting. A fallback LLM with ``max_retries_invalid_data=0`` is asked once.
 - **A response cut off at the max output tokens** during extraction is not requested again, as the same request would be cut off in the same way (see :ref:`llm-max-output-tokens-label`).
 
-When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request, for a response cut off at the max output tokens during extraction, or for an empty response in a chat, or ``ModelExtractionError`` for invalid data. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method. A prompt that exceeds the context window of the last LLM to try raises ``ValueError``.
+When a request to an LLM fails for good, it is not sent to that LLM again: the next fallback LLM is tried, if configured. If there are no more fallback LLMs to try, ``ModelAPIError`` is raised for a failed API request, for a response cut off at the max output tokens during extraction, or for an empty response in a chat, or ``ModelExtractionError`` for invalid data. The error is the one of the last LLM that was tried: the ``retry_count`` of ``ModelExtractionError`` is the number of times that this LLM was asked again for invalid data, i.e. it does not count the first time the LLM was asked. During extraction, a warning is issued instead if ``raise_exception_on_extraction_error=False`` is passed to the extraction method, with the same number of retries in its text. A prompt that exceeds the context window of the last LLM to try raises ``ValueError``.
 
 With ``use_concurrency=True``, the aspects or concepts are extracted in several calls at the same time. When ``ModelAPIError`` or ``ModelExtractionError`` is to be raised for one of the calls, the other calls are stopped first: their requests in flight are cancelled, and no requests are sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
 
