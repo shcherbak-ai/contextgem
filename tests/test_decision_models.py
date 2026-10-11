@@ -1539,7 +1539,8 @@ class TestDecisionModels(BaseTest):
     def test_convert_aspect_answer(self):
         """
         Tests the conversion of the answer to the question of an aspect, asked on
-        one paragraph, including the probability of exactly 0.5.
+        one paragraph, including the probability of exactly 0.5, and a refused
+        answer, with which the paragraph is not included in the aspect.
         """
         for probability, expected_belongs in [
             (0.93, True),
@@ -1549,9 +1550,11 @@ class TestDecisionModels(BaseTest):
             (1.0, True),
             (1, True),
         ]:
-            belongs, probabilities = _convert_aspect_answer(
+            converted_answer = _convert_aspect_answer(
                 0, {"A0": _predicate_answer("A0", probability=probability)}
             )
+            assert converted_answer is not None
+            belongs, probabilities = converted_answer
             assert belongs is expected_belongs
             assert probabilities == pytest.approx(
                 {True: probability, False: 1 - probability}
@@ -1574,6 +1577,18 @@ class TestDecisionModels(BaseTest):
             True,
             pytest.approx({True: 0.7, False: 0.3}),
         )
+
+        # A refused answer: it is not known whether the paragraph belongs to
+        # the aspect, whatever the decision threshold is
+        answers["A1"] = _predicate_answer("A1", refused=True)
+        for decision_threshold in [0.0, 0.5, 1.0]:
+            assert (
+                _convert_aspect_answer(
+                    1, answers, decision_threshold=decision_threshold
+                )
+                is None
+            )
+        assert _convert_aspect_answer(0, answers) is not None
 
     def test_convert_answers_with_decision_threshold(self):
         """
@@ -1709,7 +1724,7 @@ class TestDecisionModels(BaseTest):
         """
         Tests that an answer to a predicate that cannot be used is rejected as
         an invalid response, for a Boolean concept, for a label of a label concept
-        and for an aspect.
+        and for an aspect, for which a refused answer is not such an answer.
         """
         boolean_concept = BooleanConcept(
             name="Is a contract", description="Document is a contract"
@@ -1757,20 +1772,24 @@ class TestDecisionModels(BaseTest):
             (convert_multi_label, "C1-L1"),
             (convert_aspect, "A2"),
         ]:
-            # Refused
-            _check_invalid_answer(
-                convert,
-                {name: _predicate_answer(name, refused=True)},
-                name,
-                "the model refused to answer",
-            )
-            # Refused, even if answered as well
-            _check_invalid_answer(
-                convert,
-                {name: _predicate_answer(name, probability=0.9, refused=True)},
-                name,
-                "the model refused to answer",
-            )
+            # Refused, also if answered as well, or of another kind than
+            # the question
+            for refused_answer in [
+                _predicate_answer(name, refused=True),
+                _predicate_answer(name, probability=0.9, refused=True),
+                _choice_answer(name, option_probabilities={"yes": 0.9}, refused=True),
+            ]:
+                if convert is convert_aspect:
+                    # It is not known whether the paragraph belongs to the aspect:
+                    # the paragraph is not included, and the response is used
+                    assert convert({name: refused_answer}) is None
+                else:
+                    _check_invalid_answer(
+                        convert,
+                        {name: refused_answer},
+                        name,
+                        "the model refused to answer",
+                    )
             # Of another kind than the question
             _check_invalid_answer(
                 convert,
@@ -2099,6 +2118,28 @@ class TestDecisionModels(BaseTest):
         )
         # No questions: nothing to validate
         assert _validate_answers([], {}) is None
+        # A refused answer is accepted only if specified, as for the questions
+        # of aspects, while any other answer that cannot be used is rejected
+        refused_answers = {
+            **valid_answers,
+            "A0": _predicate_answer("A0", refused=True),
+            "C1": _choice_answer("C1", refused=True),
+        }
+        assert (
+            _validate_answers(questions, refused_answers, accept_refusals=True) is None
+        )
+        _check_invalid_answer(
+            lambda answers: _validate_answers(questions, answers),
+            refused_answers,
+            "C1",
+            "the model refused to answer",
+        )
+        _check_invalid_answer(
+            lambda answers: _validate_answers(questions, answers, accept_refusals=True),
+            {**refused_answers, "C0": _predicate_answer("C0", probability=1.5)},
+            "C0",
+            r"is not a number within \[0, 1\]",
+        )
 
         def validate(answers: dict[str, _DecisionAnswer]) -> Any:
             """
@@ -7714,28 +7755,28 @@ class TestDecisionModels(BaseTest):
             decision_model = _create_decision_model()
             document = create_document()
 
-            def respond_or_refuse(
+            def respond_or_fail(
                 request: dict[str, Any], failed_position: int = failed_position
             ) -> OpenAIDecisionResponse:
                 """
-                Responds to the request for a paragraph, with a refused answer
-                to the second question on one of the paragraphs.
+                Responds to the request for a paragraph, with an answer that
+                cannot be used to the second question on one of the paragraphs.
 
                 :param request: Keyword arguments of the request.
                 :type request: dict[str, Any]
                 :param failed_position: The position of the paragraph with
-                    the refused answer.
+                    the answer that cannot be used.
                 :type failed_position: int
                 :return: Response of litellm.
                 :rtype: OpenAIDecisionResponse
                 """
                 if request["input"] == texts_sent[failed_position]:
                     return _create_decisions_response(
-                        request["questions"], {"A0": 0.9, "A1": "refusal"}
+                        request["questions"], {"A0": 0.9, "A1": 1.5}
                     )
                 return respond(request)
 
-            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_or_refuse]})
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_or_fail]})
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
                 _capture_logs(stdlib_logging.ERROR) as captured_logs,
@@ -7746,7 +7787,7 @@ class TestDecisionModels(BaseTest):
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
                 f"for aspect `Payment` on paragraph {failed_position + 1} of 4 "
                 f"(index {failed_position}), decision question `A1`: "
-                "the model refused to answer."
+                "the probability 1.5 is not a number within [0, 1]."
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == failed_position + 1
             assert not any(aspect._is_processed for aspect in document.aspects)
@@ -9496,9 +9537,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub = _DecisionsAPIStub(
                 {
                     _DECISION_MODEL: [
-                        create_responder(
-                            {failed_position: {"A0": 0.9, "A1": "refusal"}}
-                        )
+                        create_responder({failed_position: {"A0": 0.9, "A1": 1.5}})
                     ]
                 }
             )
@@ -9523,7 +9562,7 @@ class TestDecisionModels(BaseTest):
             assert (
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
                 "for aspect `Payment` on sentence 2 of 3 of paragraph 2 of 5 "
-                "(index 1), decision question `A1`: the model refused to answer."
+                "(index 1), decision question `A1`: the probability 1.5 is not a number within [0, 1]."
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == n_requests_until_failed
             check_usage(decision_model, all_positions[:n_requests_until_failed], [])
@@ -9535,7 +9574,7 @@ class TestDecisionModels(BaseTest):
         decision_model = _create_decision_model()
         document = create_document()
         decisions_stub = _DecisionsAPIStub(
-            {_DECISION_MODEL: [create_responder({(3, 0): {"A1": "refusal"}})]}
+            {_DECISION_MODEL: [create_responder({(3, 0): {"A1": 1.5}})]}
         )
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
@@ -9546,7 +9585,7 @@ class TestDecisionModels(BaseTest):
         assert (
             f"Decision model `{_DECISION_MODEL}` returned an invalid response "
             "for aspect `Payment` on sentence 1 of 2 of paragraph 4 of 5 "
-            "(index 3), decision question `A1`: the model refused to answer."
+            "(index 3), decision question `A1`: the probability 1.5 is not a number within [0, 1]."
         ) in captured_logs, captured_logs
         assert len(decisions_stub.requests) == 9
         check_not_extracted(document)
@@ -9560,7 +9599,7 @@ class TestDecisionModels(BaseTest):
         document = create_document()
         decisions_stub = _DecisionsAPIStub(
             {
-                _DECISION_MODEL: [create_responder({(3, 0): {"A1": "refusal"}})],
+                _DECISION_MODEL: [create_responder({(3, 0): {"A1": 1.5}})],
                 _OTHER_DECISION_MODEL: [respond],
             }
         )
@@ -9602,7 +9641,7 @@ class TestDecisionModels(BaseTest):
         # the aspects is not known
         for outcome, error_class in [
             (auth_error, ModelAPIError),
-            ({"A0": "refusal", "A1": 0.9}, ModelExtractionError),
+            ({"A0": 1.5, "A1": 0.9}, ModelExtractionError),
         ]:
             decision_model = _create_decision_model()
             document = create_document()
@@ -10746,9 +10785,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub = _DecisionsAPIStub(
                 {
                     _DECISION_MODEL: [
-                        create_responder(
-                            {failed_position: {"A0": 0.9, "A1": "refusal"}}
-                        )
+                        create_responder({failed_position: {"A0": 0.9, "A1": 1.5}})
                     ]
                 }
             )
@@ -10773,7 +10810,7 @@ class TestDecisionModels(BaseTest):
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
                 f"for aspect `Payment` on paragraph {failed_position + 1} of "
                 f"{n_paragraphs} (index {failed_position}), decision question `A1`: "
-                "the model refused to answer."
+                "the probability 1.5 is not a number within [0, 1]."
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == failed_position + 1
             check_usage(decision_model, [0, 1, failed_position], [])
@@ -10814,7 +10851,7 @@ class TestDecisionModels(BaseTest):
             {
                 _DECISION_MODEL: [
                     create_responder(
-                        {1: {"A0": "refusal", "A1": 0.1}, 3: auth_error},
+                        {1: {"A0": 1.5, "A1": 0.1}, 3: auth_error},
                         delays={0: 0.05, 1: 0.01, 2: 0.05, 3: 0.03, 4: 0.05},
                     )
                 ]
@@ -11040,6 +11077,409 @@ class TestDecisionModels(BaseTest):
             assert len(decisions_stub.requests) == expected_n_requests
             check_usage(decision_model, [0, 1], [])
             check_not_extracted(document)
+
+    def test_decision_model_refused_aspect_answers(self):
+        """
+        Tests the extraction of aspects with a decision model that refuses to
+        answer the question of an aspect on some of the paragraphs, or of
+        the sentences: these are not included in the aspect, the other answers are
+        used, a warning names the aspect and what the model refused to answer on,
+        and no request is sent again. An aspect that the model refuses to answer
+        about on every paragraph is not extracted: its call fails as one with
+        a response that cannot be used.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+
+        def create_document(
+            yes_probabilities: dict[str, Any], sub_aspect_name: str | None = None
+        ) -> Document:
+            """
+            Creates a document with the aspects to extract.
+
+            :param yes_probabilities: The answers by the names of the aspects.
+            :type yes_probabilities: dict[str, Any]
+            :param sub_aspect_name: The name of the aspect to assign as
+                a sub-aspect of the first aspect. Defaults to None.
+            :type sub_aspect_name: str | None
+            :return: Document.
+            :rtype: Document
+            """
+            aspects = [
+                Aspect(name=name, description=f"Clauses on {name.lower()}")
+                for name in yes_probabilities
+                if name != sub_aspect_name
+            ]
+            if sub_aspect_name:
+                aspects[0].aspects = [
+                    Aspect(
+                        name=sub_aspect_name,
+                        description=f"Clauses on {sub_aspect_name.lower()}",
+                    )
+                ]
+            return _create_aspects_document(aspects=aspects)
+
+        def extract_aspects(
+            model: DocumentDecisionModel,
+            document: Document,
+            decisions_stub: _DecisionsAPIStub,
+            **extraction_kwargs: Any,
+        ) -> tuple[list[str], list[str]]:
+            """
+            Extracts the aspects of the document with the decision model.
+
+            :param model: The decision model.
+            :type model: DocumentDecisionModel
+            :param document: The document.
+            :type document: Document
+            :param decisions_stub: The stub of the Decisions API.
+            :type decisions_stub: _DecisionsAPIStub
+            :param extraction_kwargs: Params of the extraction method.
+            :type extraction_kwargs: Any
+            :return: The warnings issued on what is not included in an aspect for
+                a refused answer, and the messages logged on that.
+            :rtype: tuple[list[str], list[str]]
+            """
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                warnings.catch_warnings(record=True) as caught_warnings,
+            ):
+                warnings.simplefilter("always")
+                model.extract_aspects_from_document(document, **extraction_kwargs)
+            return (
+                [
+                    str(caught_warning.message)
+                    for caught_warning in caught_warnings
+                    if "not included in the aspect" in str(caught_warning.message)
+                ],
+                [log for log in captured_logs if "not included in the aspect" in log],
+            )
+
+        def get_refusal_warning(aspect_name: str, refused: str) -> str:
+            """
+            Returns the warning expected for an aspect with refused answers.
+
+            :param aspect_name: The name of the aspect.
+            :type aspect_name: str
+            :param refused: What the model refused to answer on.
+            :type refused: str
+            :return: The warning message.
+            :rtype: str
+            """
+            return (
+                f"Decision model `{_DECISION_MODEL}` refused to answer the question "
+                f"of aspect `{aspect_name}` on {refused}. These are not included in "
+                "the aspect."
+            )
+
+        # === Refused answers on some of the paragraphs ===
+        yes_probabilities: dict[str, Any] = {
+            "Termination": {0: "refusal", 2: 0.9, 4: 0.7},
+            "Payment": {1: "refusal", 3: 0.8, 4: "refusal"},
+        }
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            decision_model = _create_decision_model()
+            document = create_document(yes_probabilities)
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [_create_aspects_responder(yes_probabilities)]}
+            )
+            refusal_warnings, refusal_logs = extract_aspects(
+                decision_model, document, decisions_stub, **extraction_kwargs
+            )
+            # Each paragraph is asked about once: a refused answer neither stops
+            # the other requests, nor is requested again
+            assert [request["input"] for request in decisions_stub.requests] == (
+                _ASPECTS_PARAGRAPH_TEXTS_SENT
+            )
+            # The paragraphs with a refused answer are not included in the aspect
+            # that the answer is for, while they can belong to another aspect
+            termination, payment = document.aspects
+            paragraphs = document.paragraphs
+            assert termination._is_processed and payment._is_processed
+            assert [item.value for item in termination.extracted_items] == [
+                paragraphs[2].raw_text,
+                paragraphs[4].raw_text,
+            ]
+            assert termination.reference_paragraphs == [paragraphs[2], paragraphs[4]]
+            assert [item.value for item in payment.extracted_items] == [
+                paragraphs[3].raw_text
+            ]
+            assert payment.reference_paragraphs == [paragraphs[3]]
+            self.check_item_probabilities(
+                termination.extracted_items[1], {True: 0.7, False: 1 - 0.7}
+            )
+            # One warning for each aspect with refused answers, which names
+            # the aspect and the paragraphs, by their indices in the document
+            assert (
+                refusal_warnings
+                == refusal_logs
+                == [
+                    get_refusal_warning(
+                        "Termination", "1 of 5 paragraphs (indices: [0])"
+                    ),
+                    get_refusal_warning(
+                        "Payment", "2 of 5 paragraphs (indices: [1, 4])"
+                    ),
+                ]
+            )
+            # The refused answers are recorded in the usage as returned
+            usage = decision_model.get_usage()[0].usage
+            assert len(usage.calls) == n_paragraphs
+            assert all(call.timestamp_received is not None for call in usage.calls)
+            assert usage.calls[0].response is not None
+            assert json.loads(usage.calls[0].response) == [
+                {"type": "refusal", "name": "A0"},
+                {"type": "predicate", "name": "A1", "probability": 0.1},
+            ]
+            self.check_instance_serialization_and_cloning(document)
+
+        # No warning if the model answers each question
+        answered_probabilities = {"Termination": {2: 0.9}, "Payment": {3: 0.8}}
+        document = create_document(answered_probabilities)
+        assert extract_aspects(
+            _create_decision_model(),
+            document,
+            _DecisionsAPIStub(
+                {_DECISION_MODEL: [_create_aspects_responder(answered_probabilities)]}
+            ),
+        ) == ([], [])
+
+        # === A sub-aspect: the paragraphs are those of its parent aspect ===
+        yes_probabilities = {
+            "Termination": {2: 0.9, 4: 0.7},
+            "Notice of termination": {2: 0.8, 4: "refusal"},
+        }
+        decision_model = _create_decision_model()
+        document = create_document(
+            yes_probabilities, sub_aspect_name="Notice of termination"
+        )
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [_create_aspects_responder(yes_probabilities)]}
+        )
+        refusal_warnings, refusal_logs = extract_aspects(
+            decision_model, document, decisions_stub
+        )
+        (termination,) = document.aspects
+        (notice,) = termination.aspects
+        assert [item.value for item in notice.extracted_items] == [
+            document.paragraphs[2].raw_text
+        ]
+        # The index is the one among the two paragraphs extracted for the parent
+        assert (
+            refusal_warnings
+            == refusal_logs
+            == [
+                get_refusal_warning(
+                    "Notice of termination", "1 of 2 paragraphs (indices: [1])"
+                )
+            ]
+        )
+
+        # === Refused answers on every paragraph, for one of the aspects ===
+        # Nothing is known about the aspect, i.e. the response cannot be used:
+        # no aspect of the call is extracted
+        yes_probabilities = {
+            "Termination": {2: 0.9, 4: 0.7},
+            "Payment": dict.fromkeys(range(n_paragraphs), "refusal"),
+        }
+        respond_refusing = _create_aspects_responder(yes_probabilities)
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            decision_model = _create_decision_model()
+            document = create_document(yes_probabilities)
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_refusing]})
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                pytest.raises(
+                    ModelExtractionError,
+                    match="Some aspects could not be processed due to "
+                    "an invalid response returned by decision model. "
+                    r"Failed aspects: \['Termination', 'Payment'\]",
+                ) as extraction_exc_info,
+            ):
+                decision_model.extract_aspects_from_document(
+                    document,
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            assert extraction_exc_info.value.retry_count == 0
+            assert (
+                f"Decision model `{_DECISION_MODEL}` returned an invalid response "
+                "for aspect `Payment`, decision question `A1`: the model refused "
+                "to answer on every paragraph (5 asked about)."
+            ) in captured_logs, captured_logs
+            # No warning on the paragraphs left out, as no aspect is extracted
+            assert not any("not included" in log for log in captured_logs)
+            # Each paragraph is asked about, once
+            assert [request["input"] for request in decisions_stub.requests] == (
+                _ASPECTS_PARAGRAPH_TEXTS_SENT
+            )
+            usage = decision_model.get_usage()[0].usage
+            assert all(call.timestamp_received is not None for call in usage.calls)
+            assert len(usage.calls) == n_paragraphs
+            assert not any(aspect._is_processed for aspect in document.aspects)
+            assert not any(aspect.extracted_items for aspect in document.aspects)
+
+        # A fallback model takes over, as after any response that cannot be used
+        answered_probabilities = {"Termination": {2: 0.9, 4: 0.7}, "Payment": {3: 0.8}}
+        decision_model = _create_decision_model(
+            fallback_models=[
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+            ]
+        )
+        document = create_document(yes_probabilities)
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [respond_refusing],
+                _OTHER_DECISION_MODEL: [
+                    _create_aspects_responder(answered_probabilities)
+                ],
+            }
+        )
+        assert extract_aspects(decision_model, document, decisions_stub) == ([], [])
+        assert decisions_stub.requested_models() == (
+            [_DECISION_MODEL] * n_paragraphs + [_OTHER_DECISION_MODEL] * n_paragraphs
+        )
+        termination, payment = document.aspects
+        assert [item.value for item in payment.extracted_items] == [
+            document.paragraphs[3].raw_text
+        ]
+        assert len(termination.extracted_items) == 2
+
+        # A warning is issued instead, if no exception is to be raised
+        decision_model = _create_decision_model()
+        document = create_document(yes_probabilities)
+        with (
+            patch.object(
+                litellm,
+                "adecisions",
+                new=_DecisionsAPIStub({_DECISION_MODEL: [respond_refusing]}),
+            ),
+            pytest.warns(UserWarning, match="Some aspects could not be processed"),
+        ):
+            decision_model.extract_aspects_from_document(
+                document, raise_exception_on_extraction_error=False
+            )
+        assert not any(aspect._is_processed for aspect in document.aspects)
+
+        # === Aspects with sentences as their items ===
+        # A paragraph with a refused answer is not included, i.e. its sentences
+        # are not asked about, and a sentence with a refused answer is not included
+        sentence_probabilities: dict[str, Any] = {
+            "Termination": {
+                0: "refusal",
+                1: 0.9,
+                (1, 0): 0.8,
+                (1, 1): "refusal",
+                3: 0.9,
+                (3, 0): "refusal",
+                (3, 1): 0.7,
+            },
+            "Payment": {2: 0.9, (2, 0): 0.8, (2, 1): 0.6, 4: "refusal"},
+        }
+
+        def create_sentences_document(names: list[str]) -> Document:
+            """
+            Creates a document with the aspects to extract with sentences as
+            their items.
+
+            :param names: The names of the aspects.
+            :type names: list[str]
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name=name,
+                        description=f"Clauses on {name.lower()}",
+                        reference_depth="sentences",
+                    )
+                    for name in names
+                ]
+            )
+
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            decision_model = _create_decision_model()
+            document = create_sentences_document(["Termination", "Payment"])
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [_create_sentences_responder(sentence_probabilities)]}
+            )
+            refusal_warnings, refusal_logs = extract_aspects(
+                decision_model, document, decisions_stub, **extraction_kwargs
+            )
+            # The paragraphs, then the sentences of the paragraphs that belong to
+            # an aspect, with the question of that aspect
+            assert [
+                (
+                    _get_sentences_request_position(request),
+                    [question["name"] for question in request["questions"]],
+                )
+                for request in decisions_stub.requests
+            ] == [
+                *[(position, ["A0", "A1"]) for position in range(5)],
+                *[((1, position), ["A0"]) for position in range(3)],
+                *[((2, position), ["A1"]) for position in range(2)],
+                *[((3, position), ["A0"]) for position in range(2)],
+            ]
+            termination, payment = document.aspects
+            paragraphs = document.paragraphs
+            assert [
+                [item.reference_sentences for item in aspect.extracted_items]
+                for aspect in [termination, payment]
+            ] == [
+                [[paragraphs[1].sentences[0]], [paragraphs[3].sentences[1]]],
+                [[paragraphs[2].sentences[0]], [paragraphs[2].sentences[1]]],
+            ]
+            assert termination.reference_paragraphs == [paragraphs[1], paragraphs[3]]
+            # The sentences are counted out of those asked about for the aspect,
+            # and each is given by the indices of its paragraph and of itself
+            assert (
+                refusal_warnings
+                == refusal_logs
+                == [
+                    get_refusal_warning(
+                        "Termination",
+                        "1 of 5 paragraphs (indices: [0]) and on 2 of 5 sentences "
+                        "(paragraph index, sentence index: [(1, 1), (3, 0)])",
+                    ),
+                    get_refusal_warning("Payment", "1 of 5 paragraphs (indices: [4])"),
+                ]
+            )
+            self.check_instance_serialization_and_cloning(document)
+
+        # Refused answers on every sentence asked about: the aspect is extracted,
+        # as the model answered about it on the paragraphs, and has no items
+        sentence_probabilities = {
+            "Termination": {
+                1: 0.9,
+                **dict.fromkeys([(1, 0), (1, 1), (1, 2)], "refusal"),
+            }
+        }
+        decision_model = _create_decision_model()
+        document = create_sentences_document(["Termination"])
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [_create_sentences_responder(sentence_probabilities)]}
+        )
+        refusal_warnings, _ = extract_aspects(decision_model, document, decisions_stub)
+        (termination,) = document.aspects
+        assert termination._is_processed and not termination.extracted_items
+        assert len(decisions_stub.requests) == 5 + 3
+        assert refusal_warnings == [
+            get_refusal_warning(
+                "Termination",
+                "3 of 3 sentences (paragraph index, sentence index: "
+                "[(1, 0), (1, 1), (1, 2)])",
+            )
+        ]
 
     def test_extract_all_with_decision_model(self):
         """
@@ -11393,7 +11833,7 @@ class TestDecisionModels(BaseTest):
             # The request for the paragraph in the middle fails
             {2: auth_error},
             # The response to it cannot be used
-            {2: {"A0": 0.9, "A1": "refusal"}},
+            {2: {"A0": 0.9, "A1": 1.5}},
         ]:
             decision_model = _create_decision_model(
                 fallback_models=[_create_llm(is_fallback=True)]

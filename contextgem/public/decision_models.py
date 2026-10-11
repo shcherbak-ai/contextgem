@@ -227,9 +227,13 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             the paragraphs, then those for the sentences, and those for the parts
             of a text, are sent one after another, or concurrently with
             ``use_concurrency=True``, paced by the ``async_limiter`` of the model.
-            A response that cannot be used, e.g. with a refused answer, is not
-            requested again: the call fails with ``ModelExtractionError``, unless
-            a fallback model takes over.
+            A response that cannot be used, e.g. with a refused answer to
+            a question of a concept, is not requested again: the call fails with
+            ``ModelExtractionError``, unless a fallback model takes over.
+            A paragraph or a sentence that the model refuses to answer on for
+            an aspect is not included in that aspect, and a warning names
+            the aspect and what was refused: the call fails only if the model
+            refuses to answer on every paragraph for an aspect.
 
         - Length of the text
             Concepts: by default, the text of the document, or of the paragraphs of

@@ -171,7 +171,9 @@ class _InvalidDecisionResponseError(ValueError):
     cannot be used, which makes the whole response of the model invalid: the answer
     is missing, refused, of another kind than the question, without the needed
     probabilities, with a probability outside [0, 1], with options other than
-    the options offered, or with a zero probability of each option.
+    the options offered, or with a zero probability of each option. A refused
+    answer to the question of an aspect can be used, as "not included in
+    the aspect", unless the model refused to answer the question on every paragraph.
 
     :ivar question_name: Name of the question whose answer cannot be used
     :vartype question_name: str

@@ -70,6 +70,7 @@ from contextgem.internal.decisions import (
     _get_decision_threshold,
     _get_paragraph_text_for_aspects,
     _get_sentence_text_for_aspects,
+    _is_refused_answer,
     _validate_answers,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -832,8 +833,8 @@ class _DocumentDecisionModel(_DocumentModel):
           recorded in the usage is unfinished (no response received), unless
           an exception is raised;
         - if a response cannot be used, e.g. the model refused to answer
-          a question, the instances are None and each call is recorded as finished,
-          so that it is told apart from a failed request.
+          a question of a concept, the instances are None and each call is recorded
+          as finished, so that it is told apart from a failed request.
 
         Concepts: all the questions of the concepts are sent in one request, with
         the text of the source, which is sent as a whole by default, i.e. it has to
@@ -873,6 +874,15 @@ class _DocumentDecisionModel(_DocumentModel):
         are recorded in the same usage. They are not sent if the first stage fails.
         It is the reference depth of each aspect that decides how the aspect is
         extracted, i.e. the aspects of a call may have different ones.
+
+        A refused answer to the question of an aspect is not a response that cannot
+        be used: the paragraph, or the sentence, that the model refused to answer
+        on is not included in the aspect, the other answers are used, and a warning
+        is issued for each aspect with such answers, which names the aspect and
+        what the model refused to answer on. The request is not sent again.
+        Only if the model refuses to answer the question of an aspect on every
+        paragraph, the response cannot be used, as nothing is known about
+        the aspect. A refused answer to a question of a concept cannot be used.
 
         If there are more questions on a text than a request can hold, they are
         sent in several requests on the same text.
@@ -1047,10 +1057,10 @@ class _DocumentDecisionModel(_DocumentModel):
                         decision_threshold=self.decision_threshold,
                     )
             except ValueError as e:
-                # An answer that cannot be used (missing, refused, of another kind
-                # than its question, without the probabilities of the options
-                # offered), or a value that the item of the aspect or concept
-                # does not accept
+                # An answer that cannot be used (missing, refused for a concept,
+                # of another kind than its question, without the probabilities of
+                # the options offered), or a value that the item of the aspect or
+                # concept does not accept
                 logger.error(
                     self._get_invalid_response_msg(
                         error=e,
@@ -1086,6 +1096,20 @@ class _DocumentDecisionModel(_DocumentModel):
                         # and not all the sentences of its reference paragraphs.
                         instance._add_references_of_extracted_items()
                     instance._is_processed = True
+
+            # The aspects are extracted without what the model refused to answer on
+            if extracted_item_type == "aspect":
+                for warning_msg in self._get_refused_answers_msgs(
+                    # Safe cast: only aspects are extracted with the "aspect"
+                    # item type
+                    aspects=cast(list[_Aspect], instances_to_process),
+                    source_paragraphs=source_paragraphs,
+                    paragraphs=paragraphs,
+                    answers_of_paragraphs=answers_of_texts,
+                    answers_of_sentences=answers_of_sentences,
+                ):
+                    logger.warning(warning_msg)
+                    warnings.warn(warning_msg, stacklevel=2)
         except Exception:
             # e.g. an aspect or a concept that was processed by another call while
             # the requests of this call were made. No usage is returned when
@@ -1156,6 +1180,98 @@ class _DocumentDecisionModel(_DocumentModel):
             f"`{error.question_name}`: {error.reason}"
         )
 
+    def _get_refused_answers_msgs(
+        self,
+        *,
+        aspects: list[_Aspect],
+        source_paragraphs: list[_Paragraph],
+        paragraphs: list[_Paragraph],
+        answers_of_paragraphs: list[dict[str, _DecisionAnswer]],
+        answers_of_sentences: list[_AnswersOnSentences],
+    ) -> list[str]:
+        """
+        Returns the messages on the answers that the decision model refused to give
+        to the questions of the aspects: one message for each aspect with such
+        answers, which names the aspect and what the model refused to answer on,
+        i.e. what is not included in the aspect for that reason.
+
+        A paragraph is given by its index among the paragraphs that the aspects
+        are extracted from, i.e. those of the document, or of the parent aspect
+        for sub-aspects, and a sentence by the index of its paragraph and its own
+        index among the sentences of that paragraph. The paragraphs and
+        the sentences are counted out of those that the model was asked about
+        for the aspect.
+
+        :param aspects: The aspects that the questions of the call were built for,
+            in the order of their questions.
+        :type aspects: list[_Aspect]
+        :param source_paragraphs: The paragraphs that the aspects are extracted
+            from.
+        :type source_paragraphs: list[_Paragraph]
+        :param paragraphs: The paragraphs that the questions were asked on.
+        :type paragraphs: list[_Paragraph]
+        :param answers_of_paragraphs: For each of these paragraphs, the answers of
+            the model by the names of the questions.
+        :type answers_of_paragraphs: list[dict[str, _DecisionAnswer]]
+        :param answers_of_sentences: For each of these paragraphs, the sentences
+            that the questions were asked on, each with the answers of the model
+            by the names of the questions.
+        :type answers_of_sentences:
+            list[list[tuple[_Sentence, dict[str, _DecisionAnswer]]]]
+        :return: The messages, in the order of the aspects. Empty if the model
+            answered each question.
+        :rtype: list[str]
+        """
+        # The paragraphs of the source are distinct objects
+        source_positions = {
+            id(paragraph): position
+            for position, paragraph in enumerate(source_paragraphs)
+        }
+        msgs: list[str] = []
+        for position, aspect in enumerate(aspects):
+            question_name = _get_aspect_question_name(position)
+            refused_paragraphs: list[int] = []
+            refused_sentences: list[tuple[int, int]] = []
+            n_sentences_asked_about = 0
+            for paragraph, answers, sentences_answers in zip(
+                paragraphs, answers_of_paragraphs, answers_of_sentences, strict=True
+            ):
+                source_position = source_positions[id(paragraph)]
+                if _is_refused_answer(answers, question_name):
+                    refused_paragraphs.append(source_position)
+                for sentence, sentence_answers in sentences_answers:
+                    if question_name not in sentence_answers:
+                        # The sentence is asked about for other aspects only
+                        continue
+                    n_sentences_asked_about += 1
+                    if _is_refused_answer(sentence_answers, question_name):
+                        sentence_position = next(
+                            sentence_position
+                            for sentence_position, paragraph_sentence in enumerate(
+                                paragraph.sentences
+                            )
+                            if paragraph_sentence is sentence
+                        )
+                        refused_sentences.append((source_position, sentence_position))
+            refused: list[str] = []
+            if refused_paragraphs:
+                refused.append(
+                    f"{len(refused_paragraphs)} of {len(paragraphs)} paragraphs "
+                    f"(indices: {refused_paragraphs})"
+                )
+            if refused_sentences:
+                refused.append(
+                    f"{len(refused_sentences)} of {n_sentences_asked_about} "
+                    f"sentences (paragraph index, sentence index: {refused_sentences})"
+                )
+            if refused:
+                msgs.append(
+                    f"Decision model `{self.model}` refused to answer the question "
+                    f"of aspect `{aspect.name}` on {' and on '.join(refused)}. "
+                    f"These are not included in the aspect."
+                )
+        return msgs
+
     async def _ask_about_aspects(
         self,
         *,
@@ -1189,6 +1305,12 @@ class _DocumentDecisionModel(_DocumentModel):
         (see ``_get_paragraph_text_for_aspects`` and ``_build_aspect_questions``).
         A paragraph without additional context is sent as its text alone.
 
+        A refused answer on a paragraph is returned with the other answers:
+        the paragraph is then not included in the aspect, i.e. its sentences are
+        not asked about for that aspect. If the model refuses to answer
+        the question of an aspect on every paragraph, the response cannot be used,
+        as nothing is known about the aspect.
+
         The requests are sent concurrently if a limiter is given, which is the case
         when concurrency is enabled for the extraction, and one after another
         otherwise.
@@ -1213,7 +1335,8 @@ class _DocumentDecisionModel(_DocumentModel):
             by the names of the questions.
         :rtype: tuple[list[_Paragraph], list[dict[str, _DecisionAnswer]],
             list[list[tuple[_Sentence, dict[str, _DecisionAnswer]]]]]
-        :raises _InvalidDecisionResponseError: If a response cannot be used.
+        :raises _InvalidDecisionResponseError: If a response cannot be used, or if
+            the model refused to answer the question of an aspect on every paragraph.
         :raises Exception: The error of the first request that failed for good.
         """
         # The same questions are asked on each paragraph with additional context,
@@ -1249,7 +1372,24 @@ class _DocumentDecisionModel(_DocumentModel):
             num_retries_failed_request=num_retries_failed_request,
             async_limiter=async_limiter,
             send_concurrently=async_limiter is not None,
+            accept_refusals=True,
         )
+        # A refused answer leaves its paragraph out of the aspect. An aspect that
+        # the model answered about on no paragraph is not extracted, though:
+        # nothing is known about it, which is not the same as no paragraph belonging
+        # to it. litellm also returns a refusal for a question that a model left
+        # unanswered, i.e. this is also what a model that does not answer gives.
+        for position in range(len(aspects)):
+            question_name = _get_aspect_question_name(position)
+            if answers_of_paragraphs and all(
+                _is_refused_answer(answers, question_name)
+                for answers in answers_of_paragraphs
+            ):
+                raise _InvalidDecisionResponseError(
+                    question_name,
+                    f"the model refused to answer on every paragraph "
+                    f"({len(answers_of_paragraphs)} asked about).",
+                )
         # The second stage, for the aspects extracted with sentences as their items
         answers_of_sentences = await self._ask_about_sentences(
             aspects=aspects,
@@ -1292,7 +1432,11 @@ class _DocumentDecisionModel(_DocumentModel):
         No request is sent for an aspect with another reference depth, for
         a paragraph that belongs to no aspect with the "sentences" reference depth,
         for a paragraph without sentences, or for a sentence without a text to
-        show to a model.
+        show to a model. A paragraph that the model refused to answer on for
+        an aspect does not belong to that aspect.
+
+        A refused answer on a sentence is returned with the other answers:
+        the sentence is then not included in the aspect.
 
         The requests are sent concurrently if a limiter is given, which is the case
         when concurrency is enabled for the extraction, and one after another
@@ -1352,13 +1496,15 @@ class _DocumentDecisionModel(_DocumentModel):
         for paragraph_position, (paragraph, answers) in enumerate(
             zip(paragraphs, answers_of_paragraphs, strict=True)
         ):
-            aspect_positions = [
-                position
-                for position, decision_threshold in decision_thresholds.items()
-                if _convert_aspect_answer(
+            aspect_positions: list[int] = []
+            for position, decision_threshold in decision_thresholds.items():
+                converted_answer = _convert_aspect_answer(
                     position, answers, decision_threshold=decision_threshold
-                )[0]
-            ]
+                )
+                # None for a refused answer: the paragraph is not included in
+                # the aspect, i.e. its sentences are not asked about for it
+                if converted_answer is not None and converted_answer[0]:
+                    aspect_positions.append(position)
             if not aspect_positions:
                 continue
             source_position = source_positions[id(paragraph)]
@@ -1401,6 +1547,7 @@ class _DocumentDecisionModel(_DocumentModel):
             num_retries_failed_request=num_retries_failed_request,
             async_limiter=async_limiter,
             send_concurrently=async_limiter is not None,
+            accept_refusals=True,
         )
         for (paragraph_position, sentence), answers in zip(
             sentences, answers_of_units, strict=True
@@ -1606,6 +1753,9 @@ class _DocumentDecisionModel(_DocumentModel):
         belonging and not belonging to the aspect. The items are in the order of
         the paragraphs and of the sentences in them.
 
+        A paragraph, or a sentence, that the model refused to answer on for
+        an aspect gives no item of that aspect, as one that does not belong to it.
+
         :param aspects: The aspects that the questions were built for.
         :type aspects: list[_Aspect]
         :param paragraphs: The paragraphs that the questions were asked on.
@@ -1640,29 +1790,35 @@ class _DocumentDecisionModel(_DocumentModel):
             for position in range(len(aspects)):
                 # The answer on each paragraph is checked for each aspect, i.e.
                 # also the answer that the paragraph does not belong to the aspect
-                belongs, answer_probabilities = _convert_aspect_answer(
+                converted_answer = _convert_aspect_answer(
                     position,
                     answers,
                     decision_threshold=decision_thresholds[position],
                 )
-                if not belongs:
+                # None for a refused answer: the paragraph is not included
+                if converted_answer is None or not converted_answer[0]:
                     continue
+                answer_probabilities = converted_answer[1]
                 if aspects[position].reference_depth == "sentences":
                     # Reference depth - sentence
                     # Each extracted item has the reference sentence text as value,
                     # the reference paragraph in the list of reference paragraphs,
                     # and the reference sentence in the list of reference sentences
                     for sentence, sentence_answers in sentences_answers:
-                        sentence_belongs, sentence_probabilities = (
-                            _convert_aspect_answer(
-                                position,
-                                sentence_answers,
-                                decision_threshold=decision_thresholds[position],
-                            )
+                        converted_sentence_answer = _convert_aspect_answer(
+                            position,
+                            sentence_answers,
+                            decision_threshold=decision_thresholds[position],
                         )
-                        if not sentence_belongs:
+                        # None for a refused answer: the sentence is not included
+                        if (
+                            converted_sentence_answer is None
+                            or not converted_sentence_answer[0]
+                        ):
                             continue
-                        item_probabilities: ItemProbabilities = sentence_probabilities
+                        item_probabilities: ItemProbabilities = (
+                            converted_sentence_answer[1]
+                        )
                         extracted_item = _StringItem(
                             value=sentence.raw_text,
                             custom_data=sentence.custom_data,  # inherit custom data from sentence object
@@ -1691,6 +1847,7 @@ class _DocumentDecisionModel(_DocumentModel):
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
         send_concurrently: bool = False,
+        accept_refusals: bool = False,
     ) -> list[dict[str, _DecisionAnswer]]:
         """
         Asks the decision model the questions on each of the texts and returns
@@ -1732,11 +1889,17 @@ class _DocumentDecisionModel(_DocumentModel):
             paced by the limiter, if it is given. Defaults to False, in which case
             the requests are sent one after another.
         :type send_concurrently: bool
+        :param accept_refusals: Whether a refused answer is accepted, as it is for
+            the questions of aspects: the answers returned then include the refused
+            ones. Defaults to False, in which case a refused answer makes its
+            response one that cannot be used.
+        :type accept_refusals: bool
         :return: For each text, the answers by the names of the questions.
         :rtype: list[dict[str, _DecisionAnswer]]
         :raises _InvalidDecisionResponseError: If a response cannot be used, i.e.
             its answers cannot be attributed to the questions of its request, or
-            an answer is not usable (e.g. the model refused to answer), and no
+            an answer is not usable (e.g. it has no valid probability, or the model
+            refused to answer while refusals are not accepted), and no
             request failed. The call of each request is then recorded as finished.
             The error has the position and the location of the text that
             the response is for.
@@ -1835,9 +1998,12 @@ class _DocumentDecisionModel(_DocumentModel):
                 answers = _get_answers_by_question_names(
                     questions_chunk, getattr(response, "answers", None)
                 )
-                # Each answer is checked for being usable right away, e.g. for not
-                # being a refusal, so that no further requests are sent if it is not
-                _validate_answers(questions_chunk, answers)
+                # Each answer is checked for being usable right away, e.g. for
+                # having a valid probability, so that no further requests are sent
+                # if it is not
+                _validate_answers(
+                    questions_chunk, answers, accept_refusals=accept_refusals
+                )
                 answers_of_requests[position] = answers
             except _InvalidDecisionResponseError as e:
                 # The text that the questions of the request were asked on

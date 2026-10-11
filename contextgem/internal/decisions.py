@@ -149,8 +149,10 @@ class _DecisionAnswer:
         to a "choice" or a "score" question. Defaults to None.
     :vartype option_probabilities: Mapping[str, float] | None
     :ivar refused: Whether the model refused to answer the question. A refused
-        answer cannot be used, whatever its kind and probabilities are.
-        Defaults to False.
+        answer tells nothing, whatever its kind and probabilities are: the text
+        that the question of an aspect was asked on is then not included in
+        the aspect (see :func:`_convert_aspect_answer`), while a refused answer
+        to a question of a concept cannot be used. Defaults to False.
     :vartype refused: bool
     :ivar chosen_option: Label of the option that the model picked, for the answer
         to a "choice" question that names it. It must be one of the options of
@@ -539,7 +541,7 @@ def _convert_aspect_answer(
     position: int,
     answers: Mapping[str, _DecisionAnswer],
     decision_threshold: float = _DEFAULT_DECISION_THRESHOLD,
-) -> tuple[bool, _DecisionProbabilities]:
+) -> tuple[bool, _DecisionProbabilities] | None:
     """
     Converts the answer of a decision model to the question of an aspect
     (see :func:`_build_aspect_questions`), asked on one paragraph, to whether
@@ -547,6 +549,11 @@ def _convert_aspect_answer(
 
     The answer to the question of an aspect asked on one sentence is converted in
     the same way, to whether the sentence belongs to the aspect.
+
+    A refused answer is not an error: it is not known whether the paragraph
+    belongs to the aspect, i.e. the paragraph is not to be included in the aspect,
+    while the answers on the other paragraphs are used. A model refuses, for
+    example, to judge a text that has too little to judge, such as a bare heading.
 
     Only the answer to the question of the aspect is read, i.e. the mapping may hold
     the answers to the questions of all the aspects of a request.
@@ -562,15 +569,17 @@ def _convert_aspect_answer(
         Defaults to 0.5.
     :type decision_threshold: float
     :return: Whether the paragraph belongs to the aspect, i.e. the probability ``p``
-        of "yes" is the decision threshold or more, and ``{True: p, False: 1 - p}``.
-    :rtype: tuple[bool, dict[bool | int | str, float]]
+        of "yes" is the decision threshold or more, and ``{True: p, False: 1 - p}``,
+        or None if the model refused to answer the question.
+    :rtype: tuple[bool, dict[bool | int | str, float]] | None
     :raises _InvalidDecisionResponseError: If the answer to the question of the aspect
-        is missing, refused, of another kind than a predicate, without a probability,
-        or with a probability that is not a number within [0, 1].
+        is missing, of another kind than a predicate, without a probability, or
+        with a probability that is not a number within [0, 1].
     """
-    probability = _get_predicate_probability(
-        answers, _get_aspect_question_name(position)
-    )
+    question_name = _get_aspect_question_name(position)
+    if _is_refused_answer(answers, question_name):
+        return None
+    probability = _get_predicate_probability(answers, question_name)
     probabilities: _DecisionProbabilities = {True: probability, False: 1 - probability}
     return probability >= decision_threshold, probabilities
 
@@ -603,6 +612,7 @@ def _get_decision_threshold(
 def _validate_answers(
     questions: Sequence[_DecisionQuestion],
     answers: Mapping[str, _DecisionAnswer],
+    accept_refusals: bool = False,
 ) -> None:
     """
     Validates that each of the questions has an answer that can be used, i.e.
@@ -620,15 +630,21 @@ def _validate_answers(
     :type questions: Sequence[_DecisionQuestion]
     :param answers: Answers of the decision model by the names of the questions.
     :type answers: Mapping[str, _DecisionAnswer]
+    :param accept_refusals: Whether a refused answer is accepted, as it is for
+        the questions of aspects, whose conversion accepts it. Defaults to False,
+        as for the questions of concepts.
+    :type accept_refusals: bool
     :return: None
     :rtype: None
     :raises _InvalidDecisionResponseError: If the answer to a question is missing,
-        refused, of another kind than the question, without the needed
-        probabilities, with a probability that is not a number within [0, 1],
-        with options other than the options of the question, or with a zero
-        probability of each option.
+        refused while refusals are not accepted, of another kind than the question,
+        without the needed probabilities, with a probability that is not a number
+        within [0, 1], with options other than the options of the question, or
+        with a zero probability of each option.
     """
     for question in questions:
+        if accept_refusals and _is_refused_answer(answers, question.name):
+            continue
         if question.kind == "predicate":
             _get_predicate_probability(answers, question.name)
         else:
@@ -814,6 +830,24 @@ def _is_probability(value: object) -> bool:
         and not isinstance(value, bool)
         and 0 <= value <= 1
     )
+
+
+def _is_refused_answer(
+    answers: Mapping[str, _DecisionAnswer], question_name: str
+) -> bool:
+    """
+    Checks whether the model refused to answer a question.
+
+    :param answers: Answers of the decision model by the names of the questions.
+    :type answers: Mapping[str, _DecisionAnswer]
+    :param question_name: Name of the question.
+    :type question_name: str
+    :return: True if the question has a refused answer, False otherwise, also if
+        the question has no answer.
+    :rtype: bool
+    """
+    answer = answers.get(question_name)
+    return answer is not None and answer.refused
 
 
 def _get_answer(

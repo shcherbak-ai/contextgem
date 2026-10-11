@@ -443,6 +443,7 @@ A decision model extracts aspects one paragraph at a time. The paragraphs are th
 - **The additional context of a paragraph is sent with it.** If a paragraph has ``additional_context``, e.g. its heading level, list context or table position (see :ref:`paragraph-additional-context`), the text of its request has both, each with a label, and the question tells the model that the text has the additional context of the paragraph, and that the paragraph is what it is to judge. A paragraph without additional context is sent as its text alone. As a decision model is not sent the neighbouring paragraphs, the additional context is the only context of a paragraph that it gets.
 - **A paragraph with a probability of the decision threshold or more becomes an extracted item** of the aspect. The threshold is 0.5 by default, and can be set for the decision model and for each aspect (see :ref:`decision-models-threshold-label`). As for LLMs, the value of the item is the text of the paragraph, and ``reference_paragraphs`` of the item has the paragraph. A paragraph can belong to several aspects.
 - **An aspect that no paragraph belongs to has no extracted items.** Its sub-aspects and concepts are then not extracted, as for LLMs.
+- **A paragraph that the model refuses to answer on is not included in the aspect.** A decision model can refuse to answer a question on a text, e.g. on a bare section heading. The paragraph is then left out of the aspect that the question is for, the other answers are used, and a warning names the aspect and the paragraphs (see :ref:`decision-models-errors-label`). The request is not sent again.
 
 The text of the request for a paragraph that has additional context looks like this:
 
@@ -477,6 +478,7 @@ What to know about the aspects with sentences as the extracted items:
 
 - **A sentence with a probability of the decision threshold or more becomes an extracted item** of the aspect. The same threshold applies at both stages: to the paragraphs, and to their sentences. As for LLMs, the value of the item is the text of the sentence, ``reference_sentences`` of the item has the sentence, and ``reference_paragraphs`` has its paragraph. The ``probabilities`` of the item are those of the sentence.
 - **A paragraph that belongs to the aspect gives no item itself.** If none of its sentences belongs to the aspect, the paragraph is not among the paragraphs of the aspect, i.e. the sub-aspects and the concepts of the aspect are not extracted from it.
+- **A sentence that the model refuses to answer on is not included in the aspect**, as a paragraph is not: the other answers are used, and a warning names the aspect and the sentences. The sentences of a paragraph that the model refused to answer on are not asked about.
 - **The number of requests** is the number of the paragraphs plus the number of the sentences in the paragraphs that belong to the aspect. For example, a document of 100 paragraphs, of which 10 belong to the aspect, with about 3 sentences each, takes about 130 requests: 100 for the paragraphs, and about 30 for the sentences. The text of a paragraph that belongs to the aspect is sent, and billed, once more with each of its sentences.
 - **The sentences are segmented before the extraction**, as for LLMs. A sentence segmented from a paragraph has the ``additional_context`` of the paragraph, which is sent once with the sentence, as that of the paragraph.
 - **The requests for the sentences are sent after those for the paragraphs**, one after another or, with ``use_concurrency=True``, concurrently, as the requests for the paragraphs are.
@@ -656,9 +658,20 @@ Providers may set further limits of their own. See the documentation of your pro
    * - ``ModelAPIError``
      - A request failed for good: with a non-transient error, or with a transient error after ``num_retries_failed_request`` retries. This includes the requests that ``litellm`` rejects before sending them, e.g. for a missing API key or API base. The error has the number of retries made (``retry_count``) and the error of the request (``original_error``).
    * - ``ModelExtractionError``
-     - A response cannot be used: the model refused to answer a question, an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The request is not sent again, as the same response is expected.
+     - A response cannot be used: the model refused to answer a question of a concept, or the question of an aspect on every paragraph, an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The request is not sent again, as the same response is expected.
 
 ``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`).
+
+**A refused answer in aspect extraction is not an error.** When the model refuses to answer the question of an aspect on a paragraph, or on a sentence for an aspect with ``reference_depth="sentences"``, that paragraph or sentence is not included in the aspect, and the extraction goes on with the other answers. ``litellm`` also reports a question that the model left unanswered as a refused one. A warning is issued for each aspect with refused answers:
+
+.. code-block:: text
+   :caption: The warning on the answers that the model refused to give for an aspect
+
+   Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Confidentiality` on 2 of 72 paragraphs (indices: [1, 13]) and on 1 of 9 sentences (paragraph index, sentence index: [(20, 0)]). These are not included in the aspect.
+
+The indices are those among the paragraphs that the aspect is extracted from: the paragraphs of the document, or, for a sub-aspect, the paragraphs extracted for its parent aspect. The paragraphs and the sentences are counted out of those that the model was asked about for the aspect. Check the paragraphs named in the warning if you need each of them decided: a fallback model is not tried for them, and the request is not sent again.
+
+The call fails with ``ModelExtractionError`` only when the model refuses to answer the question of an aspect on every paragraph, as nothing is then known about the aspect. A refused answer to a question of a concept fails the call in any case: a concept is decided by its answers on one text, so there is nothing else to go on.
 
 What to expect when a call fails:
 
