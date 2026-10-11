@@ -134,7 +134,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``fallback_models``
      - ``list[DocumentLLM | DocumentDecisionModel]``
      - ``[]``
-     - :class:`~contextgem.public.llms.DocumentLLM` instances to use as fallbacks if the current one fails. Fallback LLMs are tried in the given order until one of them succeeds. Each must have ``is_fallback=True`` and the same role, output language, system message, tools, ``tool_choice`` and ``parallel_tool_calls`` as the primary LLM. A fallback can also be a decision model, if it can extract everything that the LLM is to extract (see :ref:`decision-models-fallbacks-label`).
+     - Models to use as fallbacks if the current one fails. Fallback models are tried in the given order until one of them succeeds. Each fallback LLM must have ``is_fallback=True`` and the same role, output language, system message, tools, ``tool_choice`` and ``parallel_tool_calls`` as the primary LLM. A fallback can also be a decision model, if it can extract everything that the LLM is to extract (see :ref:`decision-models-fallbacks-label`).
    * - ``output_language``
      - ``str``
      - ``"en"``

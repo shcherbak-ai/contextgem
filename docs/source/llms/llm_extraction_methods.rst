@@ -72,7 +72,7 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``overwrite_existing``
      - ``bool``
      - ``False``
-     - Whether to overwrite already processed :class:`~contextgem.public.aspects.Aspect` and :class:`~contextgem.internal.base.concepts._Concept` instances with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
+     - Whether to overwrite already processed :class:`~contextgem.public.aspects.Aspect` and :class:`~contextgem.internal.base.concepts._Concept` instances with newly extracted information. This is particularly useful when reprocessing documents with updated models or extraction parameters.
    * - ``max_items_per_call``
      - ``int``
      - ``0``
@@ -92,7 +92,7 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, ``ModelExtractionError`` will be raised, and if the model API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -160,7 +160,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``overwrite_existing``
      - ``bool``
      - ``False``
-     - Whether to overwrite already processed aspects with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
+     - Whether to overwrite already processed aspects with newly extracted information. This is particularly useful when reprocessing documents with updated models or extraction parameters.
    * - ``max_items_per_call``
      - ``int``
      - ``0``
@@ -176,7 +176,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, ``ModelExtractionError`` will be raised, and if the model API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -248,7 +248,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``overwrite_existing``
      - ``bool``
      - ``False``
-     - Whether to overwrite already processed concepts with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
+     - Whether to overwrite already processed concepts with newly extracted information. This is particularly useful when reprocessing documents with updated models or extraction parameters.
    * - ``max_items_per_call``
      - ``int``
      - ``0``
@@ -268,7 +268,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, ``ModelExtractionError`` will be raised, and if the model API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 
@@ -341,7 +341,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``overwrite_existing``
      - ``bool``
      - ``False``
-     - Whether to overwrite already processed concepts with newly extracted information. This is particularly useful when reprocessing documents with updated LLMs or extraction parameters.
+     - Whether to overwrite already processed concepts with newly extracted information. This is particularly useful when reprocessing documents with updated models or extraction parameters.
    * - ``max_items_per_call``
      - ``int``
      - ``0``
@@ -357,7 +357,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by an LLM or an error in the LLM API. If True (default): if the LLM returns invalid data, ``ModelExtractionError`` will be raised, and if the LLM API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, ``ModelExtractionError`` will be raised, and if the model API call fails, ``ModelAPIError`` will be raised. If False, a warning will be issued instead, and no extracted items will be returned.
 
 |
 

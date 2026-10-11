@@ -33,7 +33,7 @@ nda_pipeline = ExtractionPipeline(
         StringConcept(
             name="Anomaly",
             description="Anomaly in the contract, e.g. out-of-context or nonsensical clauses",
-            model_role="reasoner",  # Route this aspect to the LLM with the "reasoner" role
+            model_role="reasoner",  # Route this aspect to the model with the "reasoner" role
             add_references=True,  # Add references to the source text
             reference_depth="sentences",  # Reference to the sentence level
             add_justifications=True,  # Add justifications for the anomaly
@@ -44,7 +44,7 @@ nda_pipeline = ExtractionPipeline(
             name="Is mutual",
             description="Whether the NDA is mutual (bidirectional) or one-way",
             singular_occurrence=True,
-            model_role="reasoner",  # Route this concept to the LLM with the "reasoner" role
+            model_role="reasoner",  # Route this concept to the model with the "reasoner" role
         ),
         DateConcept(
             name="Effective date",
@@ -72,5 +72,5 @@ nda_document.assign_pipeline(nda_pipeline)
 # The document can be processed to extract the defined aspects and concepts
 
 # Extract all aspects and concepts from the NDA using a model group that has
-# an LLM with the role "reasoner" and an LLM without a role (for all other tasks).
+# a model with the role "reasoner" and a model without a role (for all other tasks).
 # model_group.extract_all(nda_document)

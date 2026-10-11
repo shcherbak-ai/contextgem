@@ -94,7 +94,7 @@ The following example demonstrates how to use ContextGem to extract **anomalies*
 </thead>
 <tbody>
 <tr>
-<td>Create a Document that contains text and/or visual content representing your document (contract, invoice, report, CV, etc.), from which an LLM extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config/">Learn more</a></td>
+<td>Create a Document that contains text and/or visual content representing your document (contract, invoice, report, CV, etc.), from which a model extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config/">Learn more</a></td>
 </tr>
 </tbody>
 </table>
@@ -161,7 +161,7 @@ document.add_concepts([concept])
 <tbody>
 <tr>
 <td>Configure a cloud or local LLM that will extract aspects and/or concepts from the document. DocumentLLM supports fallback models and role-based task routing for optimal performance. <a href="https://contextgem.dev/llms/llm_extraction_methods/">Learn more</a></td>
-<td>Configure a group of LLMs with unique roles for complex extraction workflows. You can route different aspects and/or concepts to specialized LLMs (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config/#llm-groups">Learn more</a></td>
+<td>Configure a group of models with unique roles for complex extraction workflows. You can route different aspects and/or concepts to specialized models (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config/#model-groups">Learn more</a></td>
 </tr>
 </tbody>
 </table>
@@ -233,11 +233,11 @@ ContextGem documentation offers guidance on optimization strategies to maximize 
 
 ## 💾 Serializing results
 
-ContextGem allows you to save and load Document objects, pipelines, and LLM configurations with built-in serialization methods:
+ContextGem allows you to save and load Document objects, pipelines, and model configurations with built-in serialization methods:
 
-- Save processed documents to avoid repeating expensive LLM calls
+- Save processed documents to avoid repeating expensive model calls
 - Transfer extraction results between systems
-- Persist pipeline and LLM configurations for later reuse
+- Persist pipeline and model configurations for later reuse
 
 📖 Learn more about [serialization options](https://contextgem.dev/serialization/) in the documentation.
 

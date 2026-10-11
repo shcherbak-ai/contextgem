@@ -39,8 +39,8 @@ model_group = DocumentModelGroup(
     models=[extractor, reasoner, vision_extractor],
     output_language="en",  # All LLMs must have the same output language ("en" is default)
 )
-# This group will have 4 LLMs: three main ones, with different roles,
-# and one fallback LLM for a specific LLM. Each LLM can have one or more fallback LLMs.
+# This group will have 4 LLMs: three main ones, with different roles, and one
+# fallback LLM for a specific LLM. Each LLM can have one or more fallback models.
 
 # Get usage statistics for the whole group or for a specific role
 group_usage = model_group.get_usage()
