@@ -22,11 +22,21 @@ Module defining tests for the logger.
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 
 from contextgem.internal.loggers import LOGGER_LEVEL_ENV_VAR_NAME, logger
+from contextgem.internal.suppressions import _SuppressLiteLLMNoiseFilter
 from contextgem.public import reload_logger_settings
 from tests.base import BaseTest
+
+
+# Loggers that the filter of the noisy logs of litellm is installed on
+_LITELLM_NOISE_FILTER_LOGGER_NAMES = ("LiteLLM", "litellm", "asyncio")
+
+# Environment variable that the filter of the noisy logs of litellm is disabled with
+_SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME = "CONTEXTGEM_SUPPRESS_LITELLM_NOISE"
 
 
 @pytest.mark.usefixtures("restore_logger_settings")
@@ -155,3 +165,118 @@ class TestLogging(BaseTest):
             reload_logger_settings()
             print()
             log_messages()
+
+    @pytest.mark.parametrize(
+        ("first_level", "second_level"),
+        [
+            # The logger is disabled first, i.e. when the package is imported
+            ("OFF", "INFO"),
+            # ... or after it was enabled
+            ("INFO", "OFF"),
+            ("OFF", "OFF"),
+        ],
+    )
+    def test_litellm_noise_filter_installed_at_any_level(
+        self, monkeypatch, first_level, second_level
+    ):
+        """
+        Tests that the filter of the noisy logs of litellm is installed whatever
+        the level of the logger is, including when the logger is disabled, and
+        in whichever order the levels are set: with the logger disabled, the logs
+        of litellm would otherwise be shown, while they are hidden at other levels.
+        """
+        monkeypatch.delenv(_SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME, raising=False)
+        loggers = [
+            logging.getLogger(name) for name in _LITELLM_NOISE_FILTER_LOGGER_NAMES
+        ]
+        filters_before_test = [list(lg.filters) for lg in loggers]
+
+        def get_noise_filters(lg: logging.Logger) -> list[logging.Filter]:
+            """
+            Returns the filters of the noisy logs of litellm that a logger has.
+
+            :param lg: The logger.
+            :type lg: logging.Logger
+            :return: The filters.
+            :rtype: list[logging.Filter]
+            """
+            return [f for f in lg.filters if isinstance(f, _SuppressLiteLLMNoiseFilter)]
+
+        def create_record(name: str, message: str) -> logging.LogRecord:
+            """
+            Creates a warning of a logger.
+
+            :param name: The name of the logger.
+            :type name: str
+            :param message: The message of the warning.
+            :type message: str
+            :return: The log record.
+            :rtype: logging.LogRecord
+            """
+            return logging.LogRecord(
+                name, logging.WARNING, __file__, 0, message, None, None
+            )
+
+        try:
+            # As when the package is imported: no filter is installed yet
+            for lg in loggers:
+                for noise_filter in get_noise_filters(lg):
+                    lg.removeFilter(noise_filter)
+                assert not get_noise_filters(lg)
+
+            for level in (first_level, second_level):
+                monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, level)
+                reload_logger_settings()
+                # Installed once on each logger, also when the settings are
+                # reloaded
+                for lg in loggers:
+                    assert len(get_noise_filters(lg)) == 1
+                # The warning that litellm logs when its async calls are made from
+                # another event loop, as each call of a sync method does, is hidden
+                litellm_logger = logging.getLogger("LiteLLM")
+                assert not litellm_logger.filter(
+                    create_record(
+                        "LiteLLM",
+                        "LoggingWorker: event loop changed; carried 1 pending and "
+                        "revived 0 dequeued logging task(s) onto the new loop",
+                    )
+                )
+                # ... while the other logs of litellm are not
+                assert litellm_logger.filter(
+                    create_record("LiteLLM", "Request failed with status 500")
+                )
+        finally:
+            for lg, filters in zip(loggers, filters_before_test, strict=True):
+                lg.filters[:] = filters
+
+    @pytest.mark.parametrize("level", ["OFF", "INFO"])
+    def test_litellm_noise_filter_not_installed_when_disabled(self, monkeypatch, level):
+        """
+        Tests that the filter of the noisy logs of litellm is not installed if it
+        is disabled with its environment variable, whatever the level of
+        the logger is: the variable, and not the level, decides on the filter.
+        """
+        monkeypatch.setenv(_SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME, "0")
+        loggers = [
+            logging.getLogger(name) for name in _LITELLM_NOISE_FILTER_LOGGER_NAMES
+        ]
+        filters_before_test = [list(lg.filters) for lg in loggers]
+        try:
+            # As when the package is imported: no filter is installed yet
+            for lg in loggers:
+                lg.filters[:] = [
+                    f
+                    for f in lg.filters
+                    if not isinstance(f, _SuppressLiteLLMNoiseFilter)
+                ]
+
+            monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, level)
+            reload_logger_settings()
+
+            for lg in loggers:
+                assert not any(
+                    isinstance(f, _SuppressLiteLLMNoiseFilter) for f in lg.filters
+                )
+        finally:
+            for lg, filters in zip(loggers, filters_before_test, strict=True):
+                lg.filters[:] = filters

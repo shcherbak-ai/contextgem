@@ -216,7 +216,9 @@ def _configure_logger_from_env():
     Configures the contextgem logger based on environment variables.
     This can be called at import time (once) or re-called any time.
 
-    This function only affects the 'contextgem' logger and is thread-safe.
+    This function is thread-safe. Besides the 'contextgem' logger, it only installs
+    the filters that suppress the noisy logs of third-party dependencies, which
+    are installed whatever the level of the logger is, including OFF.
 
     :return: None
     :rtype: None
@@ -225,6 +227,11 @@ def _configure_logger_from_env():
 
     with _handler_lock:
         disable_logger, level_str = _read_env_vars()
+
+        # Install filters to suppress noisy third-party dependency logs.
+        # They do not depend on the level, which is that of our logger only:
+        # with our logger disabled, such logs would otherwise still be shown
+        _install_litellm_noise_filters()
 
         # Remove our previous handler if it exists
         if _contextgem_handler is not None:
@@ -261,9 +268,6 @@ def _configure_logger_from_env():
         handler.setFormatter(_get_colored_formatter())
         logger.addHandler(handler)
         _contextgem_handler = handler
-
-        # Install filters to suppress noisy third-party dependency logs
-        _install_litellm_noise_filters()
 
 
 # Configure on import
