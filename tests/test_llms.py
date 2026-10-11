@@ -1192,6 +1192,120 @@ class TestLLMs(BaseTest):
             assert llm.chat("What's 2+2?") == "4"
             assert sent_params() == [(None, False)]
 
+    def test_unsupported_request_params_failure_warned_of_once(self):
+        """
+        Tests that a request that still fails for its params when it is sent
+        again with the unsupported params to be dropped is warned of as any
+        other failed request is: only when the warning is issued instead of
+        the exception, i.e. with ``raise_exception_on_extraction_error=False``
+        and no fallback LLM left to try, and once. A warning was also issued
+        when a fallback LLM took over and when the exception was raised, and
+        two warnings when they were issued instead of the exception.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
+        warning_start = "Exception occurred while calling LLM API with drop_params=True"
+        requests: list[tuple[str, bool]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates litellm, which raises the error for the params of
+            a request to the primary LLM also when it is told to drop
+            the unsupported ones. The fallback LLM extracts the concept.
+            """
+            requests.append((kwargs["model"], kwargs["drop_params"]))
+            if kwargs["model"] == primary_model:
+                raise litellm.UnsupportedParamsError(
+                    message="Simulated error: a param is not supported",
+                    model=primary_model,
+                    llm_provider="openai",
+                )
+            content = json.dumps([{"concept_id": "C0", "extracted_items": ["Item"]}])
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content)
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        def extract(
+            with_fallback: bool, raise_exception: bool
+        ) -> tuple[Exception | None, list[Any], list[str]]:
+            """
+            Extracts a concept. Returns the error raised, if any, the items
+            extracted, and the warnings issued for the request that failed with
+            the unsupported params dropped.
+            """
+            llm = DocumentLLM(model=primary_model, api_key="test_api_key")
+            if with_fallback:
+                llm.fallback_models = [
+                    DocumentLLM(
+                        model=fallback_model, api_key="test_api_key", is_fallback=True
+                    )
+                ]
+            document = Document(raw_text="Services agreement")
+            document.concepts = [
+                StringConcept(name="Title", description="Title of the document")
+            ]
+            requests.clear()
+            error = None
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                warnings.simplefilter("always")
+                try:
+                    llm.extract_concepts_from_document(
+                        document, raise_exception_on_extraction_error=raise_exception
+                    )
+                except ModelAPIError as e:
+                    error = e
+            return (
+                error,
+                [item.value for item in document.concepts[0].extracted_items],
+                [
+                    str(warning.message)
+                    for warning in caught_warnings
+                    if warning_start in str(warning.message)
+                ],
+            )
+
+        failed_requests = [(primary_model, False), (primary_model, True)]
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # A fallback LLM takes over: nothing is warned of
+            for raise_exception in (True, False):
+                error, values, warnings_issued = extract(
+                    with_fallback=True, raise_exception=raise_exception
+                )
+                assert error is None
+                assert values == ["Item"]
+                assert requests == [*failed_requests, (fallback_model, False)]
+                assert not warnings_issued
+
+            # No fallback LLM: the exception is raised, without a warning
+            error, values, warnings_issued = extract(
+                with_fallback=False, raise_exception=True
+            )
+            assert isinstance(error, ModelAPIError)
+            assert isinstance(error.original_error, litellm.UnsupportedParamsError)
+            assert requests == failed_requests
+            assert not values
+            assert not warnings_issued
+
+            # ... or one warning is issued instead of the exception
+            error, values, warnings_issued = extract(
+                with_fallback=False, raise_exception=False
+            )
+            assert error is None
+            assert requests == failed_requests
+            assert not values
+            (warning,) = warnings_issued
+            assert warning.startswith(f"{warning_start}: ")
+            assert warning.endswith(" (0 retries).")
+
     def test_async_limiter_per_llm(self):
         """
         Tests that, with concurrency enabled, the requests to each LLM, including

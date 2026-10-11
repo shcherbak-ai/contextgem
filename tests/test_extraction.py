@@ -3375,7 +3375,6 @@ class TestExtraction(BaseTest):
                     trying_fallback_llm,
                 ],
                 request_outcomes={primary_model: [unsupported_params_error] * 2},
-                expected_warning="calling LLM API with drop_params=True",
             )
 
             # === The response of the LLM is cut off at the max output tokens ===

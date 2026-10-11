@@ -1941,15 +1941,13 @@ class _DocumentLLM(_DocumentModel):
                 # If drop_params was already True and we still got UnsupportedParamsError,
                 # fall through to regular error handling
                 record_failed_call()
-                # Logged as any other failed request is: the warning below is
-                # not a part of the log, which would otherwise say only that
-                # the request is sent without the unsupported params
+                # Logged, and warned of, as any other failed request is:
+                # the log would otherwise say only that the request is sent
+                # without the unsupported params, and a warning is issued only
+                # instead of the exception, i.e. not when a fallback model is
+                # yet to be tried and not when the exception is raised
                 logger.error(
                     f"Exception occurred while calling LLM API with drop_params=True: {e}"
-                )
-                warnings.warn(
-                    f"Exception occurred while calling LLM API with drop_params=True: {e}",
-                    stacklevel=2,
                 )
                 if has_fallback_pending:
                     logger.info("The call will be retried with a fallback model.")
