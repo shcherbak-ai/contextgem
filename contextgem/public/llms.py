@@ -123,7 +123,9 @@ class DocumentLLM(_DocumentLLM):
         Defaults to None.
     :vartype pricing_details: ModelPricing | None
     :ivar auto_pricing: Enable automatic LLM cost calculation using genai-prices.
-        Ignored when ``pricing_details`` is provided. Defaults to ``False``.
+        Cannot be set together with ``pricing_details``, and is not supported for
+        local models (e.g. ``ollama/``, ``ollama_chat/``, ``lm_studio/``): both
+        raise ``ValueError``. Defaults to ``False``.
     :vartype auto_pricing: bool
     :ivar auto_pricing_refresh: Whether genai-prices should auto-refresh its cached
         pricing data, e.g. to price a recently released model that the bundled
