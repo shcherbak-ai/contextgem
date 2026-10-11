@@ -29,11 +29,11 @@ from contextgem.internal.decorators import _expose_in_registry
 @_expose_in_registry(additional_key=_ModelPricing)  # ty: ignore[too-many-positional-arguments]
 class ModelPricing(_ModelPricing):
     """
-    Represents the pricing details for an LLM.
+    Represents the pricing details for a model.
 
     Defines the cost structure for processing input tokens and generating output tokens,
     with prices specified per million tokens. Optionally, defines separate prices for
-    the input tokens that the LLM provider reads from, or writes to, its prompt cache.
+    the input tokens that the model provider reads from, or writes to, its prompt cache.
 
     :ivar input_per_1m_tokens: The cost in currency units for processing 1M input tokens.
     :vartype input_per_1m_tokens: StrictFloat

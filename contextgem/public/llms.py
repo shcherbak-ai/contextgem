@@ -153,7 +153,7 @@ class DocumentLLM(_DocumentLLM):
         Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues.
         The rate applies to all the requests to the LLM that are sent concurrently, i.e.
         the extraction calls that run at the same time share it.
-        Requests to a fallback LLM are controlled by the limiter of that fallback LLM.
+        Requests to a fallback model are controlled by the limiter of that fallback model.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
     :ivar seed: Seed for random number generation to help produce more consistent outputs
@@ -170,17 +170,17 @@ class DocumentLLM(_DocumentLLM):
 
         - Model groups
             Refer to the :class:`~contextgem.public.models.DocumentModelGroup` class for more information on constructing model groups,
-            which are a collection of LLMs with unique roles, used for complex document processing tasks.
+            which are a collection of models with unique roles, used for complex document processing tasks.
 
         - Model role
-            The ``role`` of an LLM is a free-form label used to route aspects/concepts to the LLMs
+            The ``role`` of an LLM is a free-form label used to route aspects/concepts to the models
             of a :class:`~contextgem.public.models.DocumentModelGroup`. For example, if an aspect/concept is assigned
             ``model_role="complex"``, it means that the aspect/concept is extracted from the document
-            using the LLM in the group with the ``role`` set to "complex", while the aspects/concepts
-            without ``model_role`` are extracted using the LLM without ``role``. This helps to channel
-            different tasks to different LLMs, ensuring that the task is handled by the most
+            using the model in the group with the ``role`` set to "complex", while the aspects/concepts
+            without ``model_role`` are extracted using the model without ``role``. This helps to channel
+            different tasks to different models, ensuring that the task is handled by the most
             appropriate model. Usually, domain expertise is required to determine the most appropriate
-            LLM for a specific aspect/concept. A role is just a label and implies no capabilities
+            model for a specific aspect/concept. A role is just a label and implies no capabilities
             of the model. When an LLM is used on its own, i.e. not in a group, you can skip the role
             assignment completely: the LLM extracts all aspects/concepts, regardless of their ``model_role``.
 

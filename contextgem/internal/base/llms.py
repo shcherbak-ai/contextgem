@@ -1820,7 +1820,7 @@ class _DocumentLLM(_DocumentModel):
         :param chat_session: Optional chat session object used to persist tool messages during the
             tool-calling loop. If provided, assistant and tool messages are recorded on the session.
         :type chat_session: _ChatSession | None
-        :param has_fallback_pending: Whether a fallback LLM will be tried if this call fails.
+        :param has_fallback_pending: Whether a fallback model will be tried if this call fails.
             If True, an error in the LLM API is logged without being raised or warned about,
             as it is not final. The same applies to the messages that exceed the context
             window of the model. Defaults to False.
@@ -1833,9 +1833,9 @@ class _DocumentLLM(_DocumentModel):
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _ModelUsage]
         :raises ValueError: If the messages exceed the context window of the model,
-            and no fallback LLM is yet to be tried.
+            and no fallback model is yet to be tried.
         :raises ModelAPIError: If the LLM call fails due to an error in the LLM API,
-            no fallback LLM is yet to be tried, and exceptions are to be raised.
+            no fallback model is yet to be tried, and exceptions are to be raised.
         :raises LLMToolLoopLimitError: If the LLM keeps requesting tool calls after
             the configured max rounds.
         """
@@ -1853,7 +1853,7 @@ class _DocumentLLM(_DocumentModel):
         except ValueError as e:
             # The messages exceed the context window of the model, i.e. the request
             # would fail with a non-transient error. As any such error, it is not final
-            # while a fallback LLM, which may have a larger context window, is yet to be tried.
+            # while a fallback model, e.g. an LLM with a larger context window, is yet to be tried.
             # The call is recorded as unfinished, although no request is sent.
             usage.calls.append(model_call_obj)
             if not has_fallback_pending:

@@ -73,7 +73,7 @@ class _AbstractGenericModelProcessor(
         """
         Abstract property, to be implemented by subclasses.
 
-        Whether the LLM is a single instance or a group.
+        Whether the model is a single instance or a group.
         """
         pass
 
@@ -83,8 +83,8 @@ class _AbstractGenericModelProcessor(
         """
         Abstract property, to be implemented by subclasses.
 
-        Returns the list of all model roles in the model group or LLM.
-        None on the list stands for an LLM without a role.
+        Returns the list of all model roles in the model group or single model.
+        None on the list stands for a model without a role.
         """
         pass
 
@@ -93,7 +93,7 @@ class _AbstractGenericModelProcessor(
         """
         Abstract method, to be implemented by subclasses.
 
-        Sets private attributes for the model group or LLM, e.g. prompts, capabilities, etc.
+        Sets private attributes for the model group or single model, e.g. prompts, capabilities, etc.
         """
         pass
 
@@ -102,7 +102,7 @@ class _AbstractGenericModelProcessor(
         """
         Abstract method, to be implemented by subclasses.
 
-        Returns the usage data for the model group or LLM.
+        Returns the usage data for the model group or single model.
         """
         pass
 
@@ -111,7 +111,7 @@ class _AbstractGenericModelProcessor(
         """
         Abstract method, to be implemented by subclasses.
 
-        Returns the cost data for the model group or LLM as a list of
+        Returns the cost data for the model group or single model as a list of
         `_ModelCostOutputContainer` entries. Implementations may accept optional
         filter parameters (e.g., role) where applicable.
         """
@@ -122,7 +122,7 @@ class _AbstractGenericModelProcessor(
         """
         Abstract method, to be implemented by subclasses.
 
-        Resets the usage and cost data for the model group or LLM. Implementations
+        Resets the usage and cost data for the model group or single model. Implementations
         may support optional filters (e.g., by role) where applicable.
         """
         pass

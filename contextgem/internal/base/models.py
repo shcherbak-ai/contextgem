@@ -387,12 +387,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             newly extracted information. Defaults to False.
         :type overwrite_existing: bool, optional
         :param max_items_per_call: Maximum number of items with the same extraction params to process
-            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled, defaults to 1.
+            in each call. Defaults to 0 (all items in one call). If concurrency is enabled, defaults to 1.
             For complex tasks, you should not set a high value, in order to avoid prompt overloading.
         :type max_items_per_call: int, optional
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool, optional
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
@@ -408,7 +408,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             concepts.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
@@ -451,13 +451,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             newly extracted information. Defaults to False.
         :type overwrite_existing: bool, optional
         :param max_items_per_call: Maximum number of items with the same extraction params to process
-            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            in each call. Defaults to 0 (all items in one call). If concurrency is enabled,
             defaults to 1. For complex tasks, you should not set a high value, in order to avoid
             prompt overloading.
         :type max_items_per_call: int, optional
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool, optional
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
@@ -473,7 +473,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             concepts.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
@@ -560,7 +560,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
     ) -> list[_Aspect]:
         """
-        Extracts aspects from the provided document using predefined LLMs.
+        Extracts aspects from the provided document using predefined models.
 
         If an aspect instance has ``extracted_items`` populated, the ``reference_paragraphs`` field will be
         automatically populated from these items. For an aspect with the "sentences" reference depth,
@@ -577,13 +577,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
             Defaults to False.
         :type overwrite_existing: bool
-        :param max_items_per_call: Maximum items with the same extraction params to process per LLM call.
+        :param max_items_per_call: Maximum items with the same extraction params to process per call.
             Defaults to 0 (all items in single call). For complex tasks, you should not set a value, to avoid
             prompt overloading. If concurrency is enabled, defaults to 1 (each item processed separately).
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
@@ -591,7 +591,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             a request of its own. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed _Aspect objects with extracted items.
@@ -623,7 +623,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
     ) -> list[_Aspect]:
         """
-        Extracts aspects from the provided document using predefined LLMs asynchronously.
+        Extracts aspects from the provided document using predefined models asynchronously.
 
         If an aspect instance has ``extracted_items`` populated, the ``reference_paragraphs`` field will be
         automatically populated from these items. For an aspect with the "sentences" reference depth,
@@ -639,13 +639,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
-            per LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            per call. Defaults to 0 (all items in one call). If concurrency is enabled,
             defaults to 1. For complex tasks, you should not set a high value, in order to avoid
             prompt overloading.
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
@@ -653,7 +653,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             a request of its own. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed _Aspect objects with extracted items.
@@ -800,7 +800,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         """
         Extracts concepts associated with a given aspect in a document.
 
-        This method processes an aspect to extract related concepts using LLMs.
+        This method processes an aspect to extract related concepts using models.
         If the aspect has not been previously processed, a ValueError is raised.
 
         This is the synchronous version of `extract_concepts_from_aspect_async()`.
@@ -816,13 +816,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             extracted information. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
-            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            in each call. Defaults to 0 (all items in one call). If concurrency is enabled,
             defaults to 1. For complex tasks, you should not set a high value, in order to avoid
             prompt overloading.
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
@@ -833,7 +833,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed concept objects.
@@ -867,9 +867,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
-        Asynchronously extracts concepts from a specified aspect using LLMs.
+        Asynchronously extracts concepts from a specified aspect using models.
 
-        This method processes an aspect to extract related concepts using LLMs.
+        This method processes an aspect to extract related concepts using models.
         If the aspect has not been previously processed, a ValueError is raised.
 
         :param aspect: The aspect from which to extract concepts.
@@ -883,13 +883,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             extracted information. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
-            in each LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            in each call. Defaults to 0 (all items in one call). If concurrency is enabled,
             defaults to 1. For complex tasks, you should not set a high value, in order to avoid
             prompt overloading.
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to include in a
@@ -900,7 +900,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed concept objects.
@@ -1058,7 +1058,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
-        Extracts concepts from the provided document using predefined LLMs.
+        Extracts concepts from the provided document using predefined models.
 
         This is the synchronous version of `extract_concepts_from_document_async()`.
 
@@ -1070,13 +1070,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param overwrite_existing: Whether to overwrite already processed concepts with
             newly extracted information. Defaults to False.
         :type overwrite_existing: bool
-        :param max_items_per_call: Maximum items with the same extraction params to process per LLM call.
+        :param max_items_per_call: Maximum items with the same extraction params to process per call.
             Defaults to 0 (all items in single call). For complex tasks, you should not set a value, to avoid
             prompt overloading. If concurrency is enabled, defaults to 1 (each item processed separately).
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
@@ -1090,7 +1090,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all images). Cannot be negative.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Concept objects with extracted items.
@@ -1124,9 +1124,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
     ) -> list[_Concept]:
         """
-        Extracts concepts from the provided document using predefined LLMs asynchronously.
+        Extracts concepts from the provided document using predefined models asynchronously.
 
-        This method processes a document to extract concepts using configured LLMs.
+        This method processes a document to extract concepts using configured models.
 
         :param document: The document from which concepts are to be extracted.
         :type document: _Document
@@ -1138,13 +1138,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
-            per LLM call. Defaults to 0 (all items in one call). If concurrency is enabled,
+            per call. Defaults to 0 (all items in one call). If concurrency is enabled,
             defaults to 1. For complex tasks, you should not set a high value, in order to avoid
             prompt overloading.
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: Maximum paragraphs to analyze in a single LLM
@@ -1158,7 +1158,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all images). Cannot be negative.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Concept objects with extracted items.
@@ -1239,10 +1239,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         """
         Checks, before the full extraction method extract_all() is run with a model group,
         that all aspects and concepts assigned to the given document, including sub-aspects
-        and aspect-level concepts, can be routed to the LLMs in the group. This ensures
-        that no LLM calls are made for the extraction that cannot be completed.
+        and aspect-level concepts, can be routed to the models in the group. This ensures
+        that no model calls are made for the extraction that cannot be completed.
 
-        The check does not apply to a standalone LLM, which extracts all aspects
+        The check does not apply to a standalone model, which extracts all aspects
         and concepts, regardless of their model roles.
 
         :param document: The document object to check for model role assignments.
@@ -1250,7 +1250,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :return: None
         :rtype: None
         :raises ValueError: If the document contains aspects or concepts with model roles
-            that no LLM in the group has.
+            that no model in the group has.
         """
 
         if self.is_group:
@@ -1259,16 +1259,16 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
     def _check_model_roles_are_routable(self, model_roles: set[str | None]) -> None:
         """
         Checks that each of the given model roles, assigned to aspects or concepts,
-        is the role of exactly one LLM in the current model group. An aspect or concept
-        is routed to the LLM in the group with the same role, and an aspect or concept
-        without a role (None) is routed to the LLM without a role.
+        is the role of exactly one model in the current model group. An aspect or concept
+        is routed to the model in the group with the same role, and an aspect or concept
+        without a role (None) is routed to the model without a role.
 
         :param model_roles: Model roles assigned to the aspects or concepts to be extracted.
         :type model_roles: set[str | None]
         :return: None
         :rtype: None
-        :raises ValueError: If several LLMs in the group have the same role, or if any
-            of the given model roles is not the role of an LLM in the group.
+        :raises ValueError: If several models in the group have the same role, or if any
+            of the given model roles is not the role of a model in the group.
         """
 
         def format_roles(roles: set[str | None]) -> str:
@@ -1290,9 +1290,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         # Safe cast: the roles are routed only in a model group
         kind = _get_common_kind_name(cast("_DocumentModelGroup", self).models)
 
-        # The roles of the LLMs are validated to be unique when a group is created
-        # or its LLMs are reassigned. However, the role of an LLM can be changed after
-        # the LLM is added to a group, which the group is not notified of.
+        # The roles of the models are validated to be unique when a group is created
+        # or its models are reassigned. However, the role of a model can be changed after
+        # the model is added to a group, which the group is not notified of.
         roles_of_llms = self.list_roles
         duplicate_roles = {
             role for role in roles_of_llms if roles_of_llms.count(role) > 1
@@ -1331,7 +1331,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         If the document has images, the concepts with the "image" and "multimodal"
         modalities are extracted from them. In a model group, each concept is extracted
-        by the LLM that the concept is routed to by the role, i.e. the roles must be
+        by the model that the concept is routed to by the role, i.e. the roles must be
         checked to be routable before this check.
 
         :param document: The document that the concepts are extracted from.
@@ -1364,8 +1364,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             llms = [cast("_DocumentModel", self)]
 
         for llm in llms:
-            # In a model group, a concept is extracted by the LLM with the same role.
-            # A standalone LLM extracts all the concepts, regardless of their roles.
+            # In a model group, a concept is extracted by the model with the same role.
+            # A standalone model extracts all the concepts, regardless of their roles.
             llm_image_concepts = [
                 i
                 for i in image_concepts
@@ -1439,7 +1439,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         max_paragraphs_to_analyze_per_call: int = 0,
     ) -> None:
         """
-        Validates instances and LLM parameters, ensuring compatibility with the target
+        Validates instances and model parameters, ensuring compatibility with the target
         and configurations provided. For a model group, validates the roles of all
         descendants that this extraction will process before any requests are sent.
         Aspect extraction checks aspect roles only; concept extraction from an aspect
@@ -1535,7 +1535,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 instances_in_scope.extend(aspect.concepts)
             pending_aspects.extend(aspect.aspects)
 
-        # Check DocumentModelGroup. A standalone DocumentLLM extracts all the instances,
+        # Check DocumentModelGroup. A standalone model extracts all the instances,
         # regardless of their model roles, i.e. requires no check of the model roles.
         if llm_or_group.is_group:
             # Safe cast: llm_or_group is a _DocumentModelGroup because `is_group` is True
@@ -2046,7 +2046,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         partial_extraction: _PartialExtraction | None = None,
     ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
         """
-        Extracts items from either aspects or concepts using a specified LLM.
+        Extracts items from either aspects or concepts using a specified model.
         This unified method handles extraction from both documents and aspects,
         supporting both text and images as the content to extract from.
 
@@ -2093,17 +2093,17 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param max_images_to_analyze_per_call: The maximum number of images to analyze in a single
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
         :type max_images_to_analyze_per_call: int
-        :param num_retries_failed_request: Optional number of retries when LLM request fails. Defaults to 3.
+        :param num_retries_failed_request: Optional number of retries when model request fails. Defaults to 3.
         :type num_retries_failed_request: int
         :param max_retries_failed_request: Specific to certain provider APIs (e.g. OpenAI). Optional number of
             retries when LLM request fails. Defaults to 0.
         :type max_retries_failed_request: int
         :param async_limiter: An optional aiolimiter.AsyncLimiter instance that controls the frequency of
-            async LLM API requests, when concurrency is enabled for certain tasks. If not provided,
+            async model API requests, when concurrency is enabled for certain tasks. If not provided,
             such requests will be sent synchronously.
         :type async_limiter: AsyncLimiter | None
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :param has_fallback_pending: Whether a fallback model will be tried if the call to the
@@ -2131,7 +2131,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :type partial_extraction: _PartialExtraction | None
 
         :return: A tuple containing:
-            (0) List of processed instances with extracted items, or None if LLM processing fails
+            (0) List of processed instances with extracted items, or None if model processing fails
             (1) _ModelUsage instance with the model usage information that the usage and
                 cost of the LLM are yet to be updated with, i.e. with the usage of
                 the last LLM call made. If the context is processed in several LLM calls,
@@ -3011,7 +3011,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
     ) -> None:
         """
-        Extracts aspects or concepts from a context (document or aspect) using a specified LLM.
+        Extracts aspects or concepts from a context (document or aspect) using a specified model.
 
         :param context: The context (document or aspect) from which to extract instances
         :type context: _Document | _Aspect
@@ -3026,13 +3026,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param overwrite_existing: If True, overwrites existing instances with newly extracted information
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process per
-            LLM call. Defaults to 0, in which case all the items are processed in a single call.
+            call. Defaults to 0, in which case all the items are processed in a single call.
             (If concurrency is enabled, defaults to 1, i.e. each item is processed in a separate call.)
             For complex tasks, you should not set a high value, in order to avoid prompt overloading.
         :type max_items_per_call: int
         :param use_concurrency: If True, enables concurrent processing of multiple items.
             Concurrency can considerably reduce processing time, but may cause rate limit errors
-            with LLM providers. Use this option when API rate limits allow for multiple concurrent
+            with model providers. Use this option when API rate limits allow for multiple concurrent
             requests. Defaults to False.
         :type use_concurrency: bool
         :param max_paragraphs_to_analyze_per_call: The maximum number of paragraphs to analyze in a single
@@ -3043,7 +3043,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
         :type max_images_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
+            due to invalid data returned by a model or an error in the model API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: None
@@ -3075,7 +3075,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             modality: Modality = "text",
         ) -> None:
             """
-            Utility function for extracting instances using the provided LLM.
+            Utility function for extracting instances using the provided model.
 
             :param instances_to_process: List of instances to extract
             :type instances_to_process: list[_Aspect] | list[_Concept]
@@ -3173,7 +3173,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 returned the result, or for the first time, if it is a fallback model,
                 which is then called again for the invalid data that it returns itself.
 
-                The retries stop as soon as an LLM API request fails, as such request
+                The retries stop as soon as a model API request fails, as such request
                 is already retried (if the error is transient) when it is sent, or as
                 soon as a response is cut off at the max output tokens, as the same
                 request would be cut off again.
@@ -3251,12 +3251,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         ) or _model_call_result_is_output_truncated(res):
                             # The retries of the failed request are already performed,
                             # or the response was cut off at the max output tokens,
-                            # i.e. sending it to the same LLM again is pointless
+                            # i.e. sending it to the same model again is pointless
                             break
                     if _model_call_result_is_valid(res):
                         return True
                     else:
-                        # A failed LLM API request, as well as a response cut off
+                        # A failed model API request, as well as a response cut off
                         # at the max output tokens, is already reported at this point
                         if retry_is_final and not (
                             _model_call_result_is_api_failure(res)
@@ -3627,8 +3627,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         else:
             instances_to_process = all_instances
 
-        # First, select the instances to be extracted by the current LLM. In a model group,
-        # an instance is routed to the LLM with the same role. A standalone LLM extracts
+        # First, select the instances to be extracted by the current model. In a model group,
+        # an instance is routed to the model with the same role. A standalone model extracts
         # all the instances, regardless of their model roles.
         if self.is_group:
             filtered_instances = [
@@ -3756,8 +3756,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         """
 
         info_containers = []
-        # For individual LLM, use self and its fallbacks
-        # For group, iterate through all LLMs in self.models
+        # For individual model, use self and its fallbacks
+        # For group, iterate through all models in self.models
         llms_to_process = self.models if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         # Safe cast: llms_to_process contains only single models, of any kind
         llms_to_process = cast(list["_DocumentModel"], llms_to_process)
@@ -3783,7 +3783,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 info_containers.append(info_container)
 
         if model_role is not None:
-            # Validate the role in the same way as the roles assigned to LLMs,
+            # Validate the role in the same way as the roles assigned to models,
             # e.g. remove the surrounding whitespace
             model_role = _validate_model_role(model_role)
             info_containers = [
@@ -3842,10 +3842,10 @@ class _DocumentModel(_GenericModelProcessor):
         default=None,
         description=(
             "Free-form role label (up to 64 printable characters) used for routing "
-            "in a DocumentModelGroup: the LLM extracts the aspects/concepts with "
+            "in a DocumentModelGroup: the model extracts the aspects/concepts with "
             "the same `model_role`. Defaults to None, "
-            "i.e. the LLM extracts the aspects/concepts without `model_role`. Ignored "
-            "when the LLM is used on its own, as it then extracts all aspects/concepts."
+            "i.e. the model extracts the aspects/concepts without `model_role`. Ignored "
+            "when the model is used on its own, as it then extracts all aspects/concepts."
         ),
     )
     num_retries_failed_request: StrictInt = Field(
@@ -3868,7 +3868,7 @@ class _DocumentModel(_GenericModelProcessor):
     )
     is_fallback: StrictBool = Field(
         default=False,
-        description="Marks this LLM as a fallback model.",
+        description="Marks this model as a fallback model.",
     )
     fallback_models: list[_DocumentModel] = Field(
         default_factory=list,
@@ -3954,7 +3954,7 @@ class _DocumentModel(_GenericModelProcessor):
     def _post_init(self, __context: Any):
         """
         Post-initialization method that logs model information and API configuration,
-        as well as emits warnings for specific LLM configurations.
+        as well as emits warnings for specific model configurations.
 
         :param __context: Pydantic context (unused).
         :type __context: Any
@@ -3991,7 +3991,7 @@ class _DocumentModel(_GenericModelProcessor):
 
     def _set_private_attrs(self) -> None:
         """
-        Initializes and configures private attributes for the LLM instance.
+        Initializes and configures private attributes for the model instance.
         Runs only once.
 
         :return: None
@@ -4022,7 +4022,7 @@ class _DocumentModel(_GenericModelProcessor):
     @property
     def async_limiter(self) -> AsyncLimiter:
         """
-        Gets the async rate limiter for this LLM.
+        Gets the async rate limiter for this model.
 
         :return: The AsyncLimiter instance controlling request rate limits.
         :rtype: AsyncLimiter
@@ -4032,7 +4032,7 @@ class _DocumentModel(_GenericModelProcessor):
     @async_limiter.setter
     def async_limiter(self, value: AsyncLimiter) -> None:
         """
-        Sets the async rate limiter for this LLM.
+        Sets the async rate limiter for this model.
 
         :param value: The AsyncLimiter instance to set.
         :type value: AsyncLimiter
@@ -4067,9 +4067,9 @@ class _DocumentModel(_GenericModelProcessor):
     @property
     def is_group(self) -> bool:
         """
-        Returns False indicating this is a single LLM, not a group.
+        Returns False indicating this is a single model, not a group.
 
-        :return: Always False for DocumentLLM instances.
+        :return: Always False for single models.
         :rtype: bool
         """
         return False
@@ -4077,13 +4077,13 @@ class _DocumentModel(_GenericModelProcessor):
     @property
     def list_roles(self) -> list[str | None]:
         """
-        Returns a list containing the role of this LLM.
+        Returns a list containing the role of this model.
 
-        (For a single LLM, this returns a list with just one element - the LLM's role,
-        or None if the LLM has no role. For model groups, the method implementation returns
-        roles of all LLMs in the group.)
+        (For a single model, this returns a list with just one element - the model's role,
+        or None if the model has no role. For model groups, the method implementation returns
+        roles of all models in the group.)
 
-        :return: A list containing the role of this LLM.
+        :return: A list containing the role of this model.
         :rtype: list[str | None]
         """
         return [self.role]
@@ -4266,7 +4266,7 @@ class _DocumentModel(_GenericModelProcessor):
         """
         Ensures private attributes are available for any code in/after this validator.
 
-        :return: The instance of the current LLM model after setting private attributes.
+        :return: The instance of the current model after setting private attributes.
         :rtype: Self
         """
         self._set_private_attrs()
@@ -4335,11 +4335,11 @@ class _DocumentModel(_GenericModelProcessor):
 
         def get_config_params(llm: _DocumentModel) -> dict[str, Any]:
             """
-            Returns the config params of the LLM to compare it with another LLM:
+            Returns the config params of the model to compare it with another model:
             without the `is_fallback` and `fallback_models` params, and with the tools
             as a set, as the order of the tools makes no difference.
 
-            :param llm: The LLM to get the config params of.
+            :param llm: The model to get the config params of.
             :type llm: _DocumentModel
             :return: The config params by name.
             :rtype: dict[str, Any]
@@ -4541,22 +4541,22 @@ class _DocumentModel(_GenericModelProcessor):
 
     def _get_raw_usage(self) -> _ModelUsage:
         """
-        Retrieves the raw usage information of the LLM.
+        Retrieves the raw usage information of the model.
 
-        :return: _ModelUsage object containing usage data for the LLM.
+        :return: _ModelUsage object containing usage data for the model.
         :rtype: _ModelUsage
         """
         return self._usage
 
     def _get_raw_cost(self) -> _ModelCost:
         """
-        Retrieves the cost information of the LLM, quantized for reporting.
+        Retrieves the cost information of the model, quantized for reporting.
 
         The internal accumulators keep full precision. Quantization is applied
         only on access to ensure stable presentation while avoiding stepwise
         rounding errors during accumulation.
 
-        :return: _ModelCost object containing quantized cost data for the LLM.
+        :return: _ModelCost object containing quantized cost data for the model.
         :rtype: _ModelCost
         """
 
@@ -4724,7 +4724,7 @@ class _DocumentModel(_GenericModelProcessor):
         """
         Calculates and increments the self._cost attribute values based on
         the additional usage details provided. Relevant only if the user has
-        provided pricing details for the LLM or if auto-pricing is enabled.
+        provided pricing details for the model or if auto-pricing is enabled.
 
         :param usage: _ModelUsage instance containing usage information on
                       additional number of input and output tokens processed,
@@ -4822,7 +4822,7 @@ class _DocumentModel(_GenericModelProcessor):
     ) -> None:
         """
         Updates the model usage and cost details based on the given processing result.
-        This method modifies the LLM instance's usage statistics, whether or not pricing
+        This method modifies the model instance's usage statistics, whether or not pricing
         params are provided, and increments the associated cost if they are provided.
 
         :param result: A tuple containing an optional value and usage data. The usage
@@ -4854,7 +4854,7 @@ class _DocumentModel(_GenericModelProcessor):
         it is suggested first, as the pricing data bundled with genai-prices may not
         include a recently released model.
 
-        :return: Advice on getting the costs of the LLM calculated
+        :return: Advice on getting the costs of the model calculated
         :rtype: str
         """
 
@@ -4928,9 +4928,9 @@ class _DocumentModelGroup(_GenericModelProcessor):
         ...,
         min_length=2,
         description=(
-            "List of DocumentLLM instances with unique roles, i.e. at most one LLM "
-            "without a role; minimum 2. An aspect/concept is routed to the LLM with "
-            "the `role` equal to the `model_role` of the aspect/concept."
+            "List of models (LLMs, decision models, or both) with unique roles, i.e. "
+            "at most one model without a role; minimum 2. An aspect/concept is routed "
+            "to the model with the `role` equal to the `model_role` of the aspect/concept."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -4965,7 +4965,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
     @property
     def is_group(self) -> bool:
         """
-        Returns True indicating this is a group of LLMs.
+        Returns True indicating this is a group of models.
 
         :return: Always True for DocumentModelGroup instances.
         :rtype: bool
@@ -4975,9 +4975,9 @@ class _DocumentModelGroup(_GenericModelProcessor):
     @property
     def list_roles(self) -> list[str | None]:
         """
-        Returns a list of all roles assigned to the LLMs in this group.
+        Returns a list of all roles assigned to the models in this group.
 
-        :return: A list of model roles, with None standing for the LLM without a role
+        :return: A list of model roles, with None standing for the model without a role
         :rtype: list[str | None]
         """
         return [i.role for i in self.models]
@@ -5058,10 +5058,10 @@ class _DocumentModelGroup(_GenericModelProcessor):
     @classmethod
     def _validate_models(cls, models: list[_DocumentModel]) -> list[_DocumentModel]:
         """
-        Validates the provided list of _DocumentLLMs ensuring that each
-        LLM has a unique role within the group, so that each aspect/concept
-        is routed to a single LLM. No role (None) also counts as a role,
-        i.e. only one LLM in the group can have no role.
+        Validates the provided list of models ensuring that each
+        model has a unique role within the group, so that each aspect/concept
+        is routed to a single model. No role (None) also counts as a role,
+        i.e. only one model in the group can have no role.
 
         :param models: A list of `_DocumentModel` instances to be validated.
         :type models: list[_DocumentModel]
@@ -5082,17 +5082,17 @@ class _DocumentModelGroup(_GenericModelProcessor):
         self, model_role: str | None = None
     ) -> list[_ModelUsageOutputContainer]:
         """
-        Retrieves the usage information of the LLMs in the group, filtered by the specified
+        Retrieves the usage information of the models in the group, filtered by the specified
         model role if provided.
 
-        :param model_role: Optional; A string representing the role of the LLM to filter
-            the usage data, validated in the same way as the roles assigned to LLMs.
-            If None, returns usage for all LLMs in the group, including the LLM
+        :param model_role: Optional; A string representing the role of the model to filter
+            the usage data, validated in the same way as the roles assigned to models.
+            If None, returns usage for all models in the group, including the model
             without a role.
         :type model_role: str | None
-        :return: A list of usage statistics containers for the specified LLMs and their fallbacks.
+        :return: A list of usage statistics containers for the specified models and their fallbacks.
         :rtype: list[_ModelUsageOutputContainer]
-        :raises ValueError: If the specified role is invalid, or if no LLM with
+        :raises ValueError: If the specified role is invalid, or if no model with
             the specified role exists in the group.
         """
         # Safe cast: _get_usage_or_cost with retrieval_type="usage"
@@ -5106,17 +5106,17 @@ class _DocumentModelGroup(_GenericModelProcessor):
         self, model_role: str | None = None
     ) -> list[_ModelCostOutputContainer]:
         """
-        Retrieves the accumulated cost information of the LLMs in the group, filtered by the specified
+        Retrieves the accumulated cost information of the models in the group, filtered by the specified
         model role if provided.
 
-        :param model_role: Optional; A string representing the role of the LLM to filter
-            the cost data, validated in the same way as the roles assigned to LLMs.
-            If None, returns cost for all LLMs in the group, including the LLM
+        :param model_role: Optional; A string representing the role of the model to filter
+            the cost data, validated in the same way as the roles assigned to models.
+            If None, returns cost for all models in the group, including the model
             without a role.
         :type model_role: str | None
-        :return: A list of cost statistics containers for the specified LLMs and their fallbacks.
+        :return: A list of cost statistics containers for the specified models and their fallbacks.
         :rtype: list[_ModelCostOutputContainer]
-        :raises ValueError: If the specified role is invalid, or if no LLM with
+        :raises ValueError: If the specified role is invalid, or if no model with
             the specified role exists in the group.
         """
         # Safe cast: _get_usage_or_cost with retrieval_type="cost"
@@ -5128,23 +5128,23 @@ class _DocumentModelGroup(_GenericModelProcessor):
 
     def reset_usage_and_cost(self, model_role: str | None = None) -> None:
         """
-        Resets the usage and cost statistics for LLMs in the group.
+        Resets the usage and cost statistics for models in the group.
 
         This method clears accumulated usage and cost data, which is useful when processing
         multiple documents sequentially and tracking metrics for each document separately.
 
-        :param model_role: Optional; A string representing the role of the LLM to reset statistics for,
-            validated in the same way as the roles assigned to LLMs. If None, resets statistics
-            for all LLMs in the group, including the LLM without a role.
+        :param model_role: Optional; A string representing the role of the model to reset statistics for,
+            validated in the same way as the roles assigned to models. If None, resets statistics
+            for all models in the group, including the model without a role.
         :type model_role: str | None
         :return: None
         :rtype: None
-        :raises ValueError: If the specified role is invalid, or if no LLM with
+        :raises ValueError: If the specified role is invalid, or if no model with
             the specified role exists in the group.
         """
 
         if model_role is not None:
-            # Validate the role in the same way as the roles assigned to LLMs,
+            # Validate the role in the same way as the roles assigned to models,
             # e.g. remove the surrounding whitespace
             model_role = _validate_model_role(model_role)
             try:

@@ -34,20 +34,20 @@ from contextgem.internal.decorators import _expose_in_registry
 @_expose_in_registry(additional_key=_DocumentModelGroup)  # ty: ignore[too-many-positional-arguments]
 class DocumentModelGroup(_DocumentModelGroup):
     """
-    Represents a group of DocumentLLMs with unique roles for processing document content.
+    Represents a group of models with unique roles for processing document content.
 
-    This class manages multiple LLMs, each of which extracts the aspects and concepts routed
+    This class manages multiple models, each of which extracts the aspects and concepts routed
     to it by its role, e.g. to use a smaller model for simpler tasks and a more capable
     model for more complex ones. A group can also have decision models
     (``DocumentDecisionModel``) next to its LLMs: a decision model extracts the aspects
     routed to it, and the concepts routed to it that have values from a closed set
     of options.
 
-    :ivar models: A list of DocumentLLM instances, each with a unique ``role``. An aspect/concept
-        is extracted by the LLM with the ``role`` equal to the ``model_role`` of the aspect/concept,
-        and an aspect/concept without ``model_role`` is extracted by the LLM without ``role``.
-        Only one LLM in the group can have no role. At least 2 instances are required.
-        The same applies to the DocumentDecisionModel instances on the list.
+    :ivar models: A list of models (DocumentLLM instances, DocumentDecisionModel instances,
+        or both), each with a unique ``role``. An aspect/concept
+        is extracted by the model with the ``role`` equal to the ``model_role`` of the aspect/concept,
+        and an aspect/concept without ``model_role`` is extracted by the model without ``role``.
+        Only one model in the group can have no role. At least 2 instances are required.
     :vartype models: list[DocumentLLM | DocumentDecisionModel]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Values: "en" (always English) or "adapt" (matches document/image language).

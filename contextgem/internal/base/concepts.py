@@ -97,10 +97,10 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     model_role: ModelRole | None = Field(
         default=None,
         description=(
-            "Role label of the LLM that extracts this concept when a DocumentModelGroup "
-            "is used: the concept is routed to the LLM in the group with the same `role`. "
-            "Defaults to None, which routes to the LLM without a role. "
-            "Ignored by a standalone DocumentLLM, which extracts every concept it is given."
+            "Role label of the model that extracts this concept when a DocumentModelGroup "
+            "is used: the concept is routed to the model in the group with the same `role`. "
+            "Defaults to None, which routes to the model without a role. "
+            "Ignored by a standalone model, which extracts every concept it is given."
         ),
     )
     modality: Modality = Field(

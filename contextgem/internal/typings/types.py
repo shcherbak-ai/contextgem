@@ -53,7 +53,7 @@ NonEmptyStr = Annotated[
     StrictStr, StringConstraints(strip_whitespace=True, min_length=1)
 ]
 
-# Free-form label that routes aspects/concepts to an LLM in a model group
+# Free-form label that routes aspects/concepts to a model in a model group
 ModelRole = Annotated[StrictStr, AfterValidator(_validate_model_role)]
 
 Modality = Literal["text", "image", "multimodal"]

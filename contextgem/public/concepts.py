@@ -21,7 +21,7 @@ Module for handling concepts at aspect and document levels.
 
 This module provides classes for defining different types of concepts that can be
 extracted from documents and aspects. Concepts represent specific pieces of information
-to be identified and extracted by LLMs, such as strings, numbers, boolean values,
+to be identified and extracted by models, such as strings, numbers, boolean values,
 JSON objects, and ratings.
 
 Each concept type has specific properties and behaviors tailored to the kind of data
@@ -58,10 +58,10 @@ class StringConcept(_StringConcept):
     :vartype description: str
     :ivar examples: Example strings illustrating the concept usage.
     :vartype examples: list[StringExample]
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",
@@ -108,10 +108,10 @@ class BooleanConcept(_BooleanConcept):
     :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",
@@ -171,10 +171,10 @@ class NumericalConcept(_NumericalConcept):
     :ivar numeric_type: Type constraint for extracted numbers ("int", "float", or "any").
         Defaults to "any" for auto-detection.
     :vartype numeric_type: Literal["int", "float", "any"]
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",
@@ -225,10 +225,10 @@ class RatingConcept(_RatingConcept):
     :ivar rating_scale: The rating scale defining valid value boundaries, as a tuple of
         (start, end) integers.
     :vartype rating_scale: tuple[int, int]
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",
@@ -313,10 +313,10 @@ class JsonObjectConcept(_JsonObjectConcept):
     :vartype structure: type | dict[str, Any]
     :ivar examples: Example JSON objects illustrating the concept usage.
     :vartype examples: list[JsonObjectExample]
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",
@@ -364,10 +364,10 @@ class DateConcept(_DateConcept):
     :vartype name: str
     :ivar description: A brief description of the concept (non-empty string, stripped).
     :vartype description: str
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",
@@ -431,10 +431,10 @@ class LabelConcept(_LabelConcept):
     :ivar classification_type: Classification mode - "multi_class" for single label selection,
         "multi_label" for multiple label selection. Defaults to "multi_class".
     :vartype classification_type: ClassificationType
-    :ivar model_role: The role label of the LLM that extracts the concept when
-        a ``DocumentModelGroup`` is used: the concept is routed to the LLM in the group
-        with the same ``role``. Defaults to None, which routes the concept to the LLM
-        without a role. Ignored by a standalone ``DocumentLLM``, which extracts every
+    :ivar model_role: The role label of the model that extracts the concept when
+        a ``DocumentModelGroup`` is used: the concept is routed to the model in the group
+        with the same ``role``. Defaults to None, which routes the concept to the model
+        without a role. Ignored by a standalone model, which extracts every
         concept it is given.
     :vartype model_role: str | None
     :ivar modality: The document content the concept is extracted from: "text", "image",

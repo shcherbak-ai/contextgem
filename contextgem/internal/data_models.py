@@ -203,7 +203,7 @@ class _ModelCostOutputContainer(BaseModel):
     Container class for storing the cost data storage unit for a model,
     i.e. part of the list returned by the model's get_cost() method.
 
-    :ivar model: The name of the language model being used.
+    :ivar model: The name of the model being used.
     :vartype model: str
     :ivar role: The role label of the model, or None if the model has no role.
     :vartype role: str | None

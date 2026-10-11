@@ -37,7 +37,7 @@ _MAX_MODEL_ROLE_LENGTH = 64
 def _validate_model_role(v: str) -> str:
     """
     Validator function for a model role, i.e. a free-form label that routes
-    aspects/concepts to an LLM in a model group. Ensures that the role is a non-empty
+    aspects/concepts to a model in a model group. Ensures that the role is a non-empty
     string of a limited length that consists of printable characters only, so that
     it remains readable in error messages, logs, and usage data.
 

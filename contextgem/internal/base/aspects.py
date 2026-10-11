@@ -95,10 +95,10 @@ class _Aspect(
     model_role: ModelRole | None = Field(
         default=None,
         description=(
-            "Role label of the LLM that extracts this aspect when a DocumentModelGroup "
-            "is used: the aspect is routed to the LLM in the group with the same `role`. "
-            "Defaults to None, which routes to the LLM without a role. "
-            "Ignored by a standalone DocumentLLM, which extracts every aspect it is given."
+            "Role label of the model that extracts this aspect when a DocumentModelGroup "
+            "is used: the aspect is routed to the model in the group with the same `role`. "
+            "Defaults to None, which routes to the model without a role. "
+            "Ignored by a standalone model, which extracts every aspect it is given."
         ),
     )
     reference_depth: ReferenceDepth = Field(

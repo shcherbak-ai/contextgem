@@ -62,7 +62,7 @@ KEY_IMAGES_PUBLIC = "images"
 KEY_PARAGRAPHS_PUBLIC = "paragraphs"
 KEY_SENTENCES_PUBLIC = "sentences"
 KEY_PROBABILITIES_PUBLIC = "probabilities"
-# LLM attrs
+# Model attrs
 KEY_API_KEY_PUBLIC = "api_key"  # always redacted
 KEY_API_BASE_PUBLIC = "api_base"  # always redacted
 KEY_FALLBACK_MODELS_PUBLIC = "fallback_models"
@@ -78,7 +78,7 @@ KEY_REFERENCE_SENTENCES_PRIVATE = "_reference_sentences"
 KEY_IS_PROCESSED_PRIVATE = "_is_processed"
 KEY_NESTING_LEVEL_PRIVATE = "_nesting_level"
 KEY_CLASS_PRIVATE = "__class__"
-# LLM attrs
+# Model attrs
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
 KEY_MODEL_USAGE_PRIVATE = "_usage"
 KEY_MODEL_COST_PRIVATE = "_cost"
@@ -117,7 +117,7 @@ def _is_deserialization_in_progress() -> bool:
     Checks whether an instance is currently being created from its serialized data.
 
     Serialized data is the data of an instance that was valid when it was serialized,
-    but not all of that data is serialized, e.g. the API credentials of an LLM are
+    but not all of that data is serialized, e.g. the API credentials of a model are
     removed. The validation that relies on the removed data gives a wrong result
     for the serialized data, and is to be skipped while such data is deserialized.
 
@@ -134,7 +134,7 @@ class _InstanceSerializer(BaseModel):
     This class serves as a foundation for converting document objects between their native Python
     representation and serialized formats like dictionaries and JSON. It implements common
     serialization and deserialization logic that can be inherited by various document components
-    and LLMs.
+    and models.
     """
 
     def to_dict(self) -> dict[str, Any]:
@@ -145,7 +145,7 @@ class _InstanceSerializer(BaseModel):
         - All public attributes
         - Special handling for specific public and private attributes
 
-        When an LLM or model group is serialized, its API credentials and usage/cost stats are removed.
+        When a model or model group is serialized, its API credentials and usage/cost stats are removed.
 
         :return: A dictionary representation of the current object with all necessary data for serialization
         :rtype: dict[str, Any]
@@ -213,7 +213,7 @@ class _InstanceSerializer(BaseModel):
                 base_dict[key] = val.to_dict() if val is not None else val
 
             elif key in [KEY_API_KEY_PUBLIC, KEY_API_BASE_PUBLIC]:
-                # Reset API credentials when LLM is serialized
+                # Reset API credentials when model is serialized
                 base_dict[key] = None
 
             elif key == KEY_TOOLS_PUBLIC and isinstance(self, _DocumentLLM):
@@ -261,11 +261,11 @@ class _InstanceSerializer(BaseModel):
                 }
 
             elif key == KEY_MODEL_USAGE_PRIVATE:
-                # Reset usage stats when LLM is serialized
+                # Reset usage stats when model is serialized
                 base_dict[key] = _ModelUsage().to_dict()
 
             elif key == KEY_MODEL_COST_PRIVATE:
-                # Reset cost stats when LLM is serialized
+                # Reset cost stats when model is serialized
                 cost_dict = _ModelCost().to_dict()
                 # Convert Decimal objects to floats in the cost dictionary
                 base_dict[key] = self._convert_decimal_to_float(cost_dict)
@@ -487,7 +487,7 @@ class _InstanceSerializer(BaseModel):
         into a new instance of the class. It handles complex nested structures like aspects,
         concepts, and extracted items, properly reconstructing each component.
 
-        A deserialized LLM or model group has no API credentials, as they are not
+        A deserialized model or model group has no API credentials, as they are not
         included in the serialized data, i.e. they are to be set again.
 
         :param obj_dict: Dictionary containing the serialized object data.
@@ -599,7 +599,7 @@ class _InstanceSerializer(BaseModel):
             KEY_PROBABILITIES_PUBLIC: lambda val: (
                 cls._deserialize_probabilities(val) if val is not None else val
             ),
-            # LLM attrs
+            # Model attrs
             KEY_MODEL_PRICING_PUBLIC: lambda val: (
                 _resolve_public_type(_ModelPricing).from_dict(val)
                 if val is not None
@@ -611,7 +611,7 @@ class _InstanceSerializer(BaseModel):
             KEY_EXTRACTED_ITEMS_PRIVATE: lambda_list_val(),
             KEY_REFERENCE_PARAGRAPHS_PRIVATE: lambda_list_val(),
             KEY_REFERENCE_SENTENCES_PRIVATE: lambda_list_val(),
-            # LLM attrs
+            # Model attrs
             KEY_MODEL_USAGE_PRIVATE: lambda val: _ModelUsage.from_dict(val),
             KEY_MODEL_COST_PRIVATE: lambda val: cls._convert_model_cost_dict(val),
             KEY_ASYNC_LIMITER_PRIVATE: lambda val: AsyncLimiter(
