@@ -60,7 +60,7 @@ Modality = Literal["text", "image", "multimodal"]
 
 AssignedInstancesAttrName = Literal["aspects", "concepts"]
 
-DefaultPromptType = Literal["aspects", "concepts"]
+DefaultPromptType = Literal["aspect", "concept"]
 
 ExtractedInstanceType = Literal["aspect", "concept"]
 

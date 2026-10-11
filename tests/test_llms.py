@@ -516,16 +516,16 @@ class TestLLMs(BaseTest):
         with pytest.raises(ValueError, match="no Jinja2 tags"):
             llm_with_updated_prompts._update_default_prompt(
                 prompt_path=prompt_aspects_without_tags_path,
-                prompt_type="aspect",  # type: ignore
+                prompt_type="aspect",
             )
         with pytest.raises(ValueError, match="no Jinja2 tags"):
             llm_with_updated_prompts._update_default_prompt(
                 prompt_path=prompt_concepts_without_tags_path,
-                prompt_type="concept",  # type: ignore
+                prompt_type="concept",
             )
         llm_with_updated_prompts._update_default_prompt(
             prompt_path=prompt_aspects_with_tags_path,
-            prompt_type="aspect",  # type: ignore
+            prompt_type="aspect",
         )
         assert (
             "test custom prompt template for aspects"
@@ -533,12 +533,18 @@ class TestLLMs(BaseTest):
         )
         llm_with_updated_prompts._update_default_prompt(
             prompt_path=prompt_concepts_with_tags_path,
-            prompt_type="concept",  # type: ignore
+            prompt_type="concept",
         )
         assert (
             "test custom prompt template for concepts"
             in llm_with_updated_prompts._extract_concept_items_prompt.render()
         )
+        # A prompt type is the singular name of what the prompt extracts
+        with pytest.raises(ValueError, match="Invalid prompt type: aspects"):
+            llm_with_updated_prompts._update_default_prompt(
+                prompt_path=prompt_aspects_with_tags_path,
+                prompt_type="aspects",  # ty: ignore[invalid-argument-type]
+            )
 
     def test_input_output_token_validation(self):
         """
@@ -1977,11 +1983,11 @@ class TestLLMs(BaseTest):
         llm_with_custom_prompts = other_llms[0]
         llm_with_custom_prompts._update_default_prompt(
             prompt_path=custom_prompts_path / "custom_prompt_aspects_with_tags.j2",
-            prompt_type="aspect",  # type: ignore
+            prompt_type="aspect",
         )
         llm_with_custom_prompts._update_default_prompt(
             prompt_path=custom_prompts_path / "custom_prompt_concepts_with_tags.j2",
-            prompt_type="concept",  # type: ignore
+            prompt_type="concept",
         )
         assert (
             "test custom prompt template for aspects"
