@@ -2106,8 +2106,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             due to invalid data returned by an LLM or an error in the LLM API. If False, a warning will
             be issued instead, and no extracted items will be returned. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
-        :param has_fallback_pending: Whether a fallback LLM will be tried if the call to the
-            specified LLM fails. If True, a model API error is logged without being raised or
+        :param has_fallback_pending: Whether a fallback model will be tried if the call to the
+            specified model fails. If True, a model API error is logged without being raised or
             warned about, as it is not final. The same applies to a response cut off at
             the max output tokens. Defaults to False.
         :type has_fallback_pending: bool
@@ -2550,7 +2550,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     # The response was cut off at the max output tokens, i.e. the same
                     # request to the same LLM would be cut off again. As a failed LLM
                     # API request, it is not requested again, and is not final while
-                    # a fallback LLM, which may have a higher limit, is yet to be tried.
+                    # a fallback model, e.g. an LLM with a higher limit, is yet to be
+                    # tried.
                     error_msg = (
                         f"{llm._get_output_truncated_msg()} "
                         f"To get less output per LLM call, consider setting "
@@ -3189,7 +3190,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     Reported as the number of retries if the data stays invalid.
                 :type n_retries: int
                 :param retry_is_final: Whether the retry is final and will not be repeated by
-                    a (next) fallback LLM.
+                    a (next) fallback model.
                 :type retry_is_final: bool
                 :param partial_extraction: The state of the call with this model, which
                     keeps what is extracted from the parts of the content that are
@@ -3290,8 +3291,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 partial_extraction: _PartialExtraction,
             ) -> bool:
                 """
-                Retries a single failed chunk on the primary LLM and then on each
-                fallback LLM in order (if configured), returning whether any
+                Retries a single failed chunk on the primary model and then on each
+                fallback model in order (if configured), returning whether any
                 retry path produced a valid result.
 
                 Each model is called again for invalid data that it returns as many
@@ -3313,7 +3314,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :rtype: bool
                 """
                 retry_successful = False
-                # Retry on the primary LLM only if it returned invalid data. If its API
+                # Retry on the primary model only if it returned invalid data. If its API
                 # request failed, the retries of that request are already performed.
                 # If its response was cut off at the max output tokens, the same
                 # request would be cut off again.
@@ -3574,7 +3575,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     # Update usage stats and cost
                     await llm._update_usage_and_cost(result)
 
-                    # Retry if needed, including with fallback LLMs if they are provided
+                    # Retry if needed, including with fallback models if they are provided
                     if not _model_call_result_is_valid(result):
                         retry_successful = await retry_chunk_with_fallbacks(
                             chunk=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
@@ -3734,22 +3735,22 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         model_role: str | None = None,
     ) -> list[_ModelUsageOutputContainer | _ModelCostOutputContainer]:
         """
-        Retrieves specified information (usage or cost) for either a single LLM or LLMs in a group.
-        For groups, optionally filters the results by the specified model role.
-        Iterates through primary LLMs and their fallback counterparts, collecting
+        Retrieves specified information (usage or cost) for either a single model or
+        the models of a group. For groups, optionally filters the results by the specified
+        model role. Iterates through primary models and their fallback models, collecting
         details about their usage or cost based on the specified retrieval type.
 
         :param retrieval_type: Determines the type of information to retrieve. Must be either
             "usage" to collect model usage statistics or "cost" to collect cost details.
         :type retrieval_type: Literal["usage", "cost"]
-        :param model_role: The optional role of the LLM to filter the results. If provided,
-            only results associated with LLMs matching this role are returned. If no LLM with
-            the specified role exists, an exception is raised. If the matching LLM has
-            fallback LLMs, their usage or cost details are also collected. The role is
-            validated in the same way as the roles assigned to LLMs. Defaults to None.
+        :param model_role: The optional role of the model to filter the results. If provided,
+            only results associated with models matching this role are returned. If no model
+            with the specified role exists, an exception is raised. If the matching model has
+            fallback models, their usage or cost details are also collected. The role is
+            validated in the same way as the roles assigned to models. Defaults to None.
         :type model_role: str | None
         :return: A list of containers, each representing usage or cost information for
-            a primary LLM and its fallback LLMs, if any, in the order they are tried.
+            a primary model and its fallback models, if any, in the order they are tried.
             The specific container type depends on the retrieval type.
         :rtype: list[_ModelUsageOutputContainer | _ModelCostOutputContainer]
         """
@@ -3787,7 +3788,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             model_role = _validate_model_role(model_role)
             info_containers = [
                 i for i in info_containers if i.role == model_role
-            ]  # for both main and fallback LLMs
+            ]  # for both main and fallback models
             if not info_containers:
                 raise ValueError(
                     f"No {_get_common_kind_name(llms_to_process)} with the given role "
@@ -3872,9 +3873,10 @@ class _DocumentModel(_GenericModelProcessor):
     fallback_models: list[_DocumentModel] = Field(
         default_factory=list,
         description=(
-            "Fallback LLMs to try, in the given order, if this one fails; "
-            "each must have the same role and output_language, and applies "
-            "its own retry settings."
+            "Fallback models (LLMs, decision models, or both) to try, in the given "
+            "order, if this one fails; each must have the same role, and applies "
+            "its own retry settings. A fallback LLM of an LLM must also have "
+            "the same output_language, system_message and tools configuration."
         ),
     )
     # Auto-pricing via genai-prices (optional)
@@ -3911,9 +3913,9 @@ class _DocumentModel(_GenericModelProcessor):
     # Async lock to guard shared state during async updates
     _async_lock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
 
-    # Fallback LLMs as of the last validation. The config params of the fallback LLMs
-    # are checked for redundancy when the fallback LLMs are set, not each time
-    # another param of the LLM is assigned.
+    # Fallback models as of the last validation. The config params of the fallback
+    # models are checked for redundancy when the fallback models are set, not each
+    # time another param of the model is assigned.
     _validated_fallback_models: tuple[_DocumentModel, ...] = PrivateAttr(default=())
 
     # Private attributes must be set only once before model validation.
@@ -4241,8 +4243,8 @@ class _DocumentModel(_GenericModelProcessor):
         fallback_models: list[_DocumentModel],
     ) -> list[_DocumentModel]:
         """
-        Validates the ``fallback_models`` input to ensure each LLM meets the expected
-        condition of being a fallback LLM model.
+        Validates the ``fallback_models`` input to ensure each model meets the expected
+        condition of being a fallback model.
 
         :param fallback_models: The list of _DocumentModel instances to be validated.
         :type fallback_models: list[_DocumentModel]
@@ -4309,16 +4311,16 @@ class _DocumentModel(_GenericModelProcessor):
                 f"and must be attached to a non-fallback model."
             )
 
-        # A fallback LLM with the same config params as the main LLM or as another
-        # fallback LLM is redundant. This is checked when the fallback LLMs are set,
-        # i.e. when the LLM is created with them or they are assigned, except when
-        # the LLM is deserialized: the API credentials are removed from the serialized
-        # data, i.e. the LLMs that differ only in `api_key` or `api_base` (e.g. the same
-        # model served from another endpoint) have the same config params in such data.
-        # For the same reason, this is not checked when another param is assigned:
-        # the API credentials of a deserialized LLM and of its fallback LLMs are set
-        # again one by one, i.e. some of these LLMs have the same config params
-        # until all the credentials are set.
+        # A fallback model with the same config params as the main model or as another
+        # fallback model is redundant. This is checked when the fallback models are
+        # set, i.e. when the model is created with them or they are assigned, except
+        # when the model is deserialized: the API credentials are removed from
+        # the serialized data, i.e. the models that differ only in `api_key` or
+        # `api_base` (e.g. the same model served from another endpoint) have the same
+        # config params in such data. For the same reason, this is not checked when
+        # another param is assigned: the API credentials of a deserialized model and
+        # of its fallback models are set again one by one, i.e. some of these models
+        # have the same config params until all the credentials are set.
         fallback_models_are_set = len(self.fallback_models) != len(
             self._validated_fallback_models
         ) or any(
@@ -4353,14 +4355,14 @@ class _DocumentModel(_GenericModelProcessor):
             config_params["__class__"] = type(llm)
             return config_params
 
-        # Config params of the main LLM and of the fallback LLMs validated so far
+        # Config params of the main model and of the fallback models validated so far
         main_llm_dict = get_config_params(self)
         fallback_llm_dicts: list[dict[str, Any]] = []
 
         for fallback_llm in self.fallback_models:
             fallback_kind = fallback_llm._kind_name
 
-            # Check for the consistency of the fallback LLM role
+            # Check for the consistency of the fallback model role
             if fallback_llm.role != self.role:
                 raise ValueError(
                     f"The fallback {fallback_kind} must have the same role `{self.role}` as the main one."
@@ -4370,8 +4372,9 @@ class _DocumentModel(_GenericModelProcessor):
             # fallback models to share with it, e.g. the output language of an LLM
             self._validate_kind_specific_fallback(fallback_llm)
 
-            # Check that the fallback LLM is not the replica of the main LLM or of another
-            # fallback LLM, just with different `is_fallback` and `fallback_models` params.
+            # Check that the fallback model is not the replica of the main model or of
+            # another fallback model, just with different `is_fallback` and
+            # `fallback_models` params.
             # Only the models of the same kind can have the same config params.
             fallback_llm_dict = get_config_params(fallback_llm)
             if check_same_config:
@@ -4385,7 +4388,7 @@ class _DocumentModel(_GenericModelProcessor):
                     )
             fallback_llm_dicts.append(fallback_llm_dict)
 
-        # The fallback LLMs are valid, i.e. are not to be checked for redundancy again
+        # The fallback models are valid, i.e. are not to be checked for redundancy again
         self._validated_fallback_models = tuple(self.fallback_models)
 
         # Update the state derived from the params of the specific kind of the model,
@@ -4573,12 +4576,14 @@ class _DocumentModel(_GenericModelProcessor):
 
     def get_usage(self) -> list[_ModelUsageOutputContainer]:
         """
-        Retrieves the usage information of the LLM and its fallback LLM if configured.
+        Retrieves the usage information of the model and of its fallback models,
+        if configured.
 
-        This method collects token usage statistics for the current LLM instance and its
-        fallback LLM (if configured), providing insights into API consumption.
+        This method collects token usage statistics for the current model instance and
+        for its fallback models (if configured), providing insights into API consumption.
 
-        :return: A list of usage statistics containers for the LLM and its fallback.
+        :return: A list of usage statistics containers for the model and its
+            fallback models.
         :rtype: list[_ModelUsageOutputContainer]
         """
 
@@ -4591,12 +4596,14 @@ class _DocumentModel(_GenericModelProcessor):
 
     def get_cost(self) -> list[_ModelCostOutputContainer]:
         """
-        Retrieves the accumulated cost information of the LLM and its fallback LLM if configured.
+        Retrieves the accumulated cost information of the model and of its fallback
+        models, if configured.
 
-        This method collects cost statistics for the current LLM instance and its
-        fallback LLM (if configured), providing insights into API usage expenses.
+        This method collects cost statistics for the current model instance and for its
+        fallback models (if configured), providing insights into API usage expenses.
 
-        :return: A list of cost statistics containers for the LLM and its fallback.
+        :return: A list of cost statistics containers for the model and its
+            fallback models.
         :rtype: list[_ModelCostOutputContainer]
         """
 
@@ -4609,7 +4616,8 @@ class _DocumentModel(_GenericModelProcessor):
 
     def reset_usage_and_cost(self) -> None:
         """
-        Resets the usage and cost statistics for the LLM and its fallback LLMs (if configured).
+        Resets the usage and cost statistics for the model and its fallback models
+        (if configured).
 
         This method clears accumulated usage and cost data, which is useful when processing
         multiple documents sequentially and tracking metrics for each document separately.
