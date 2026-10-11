@@ -112,7 +112,9 @@ class DocumentLLM(_DocumentLLM):
     :ivar max_retries_invalid_data: Number of retries when LLM request succeeds but LLM returns
         invalid data. Each retry is a new request, i.e. the LLM is asked for the same
         data up to ``1 + max_retries_invalid_data`` times. A fallback LLM has the retries
-        set for it, after it is asked for the first time. Defaults to 3.
+        set for it, after it is asked for the first time. If the content of a call is sent
+        in parts, a retry is a request for the part that the invalid data was returned
+        for, i.e. the parts answered with valid data are not sent again. Defaults to 3.
     :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for LLM API calls. As responses are not streamed,
         the whole response has to be received within the timeout. Defaults to 600 seconds.

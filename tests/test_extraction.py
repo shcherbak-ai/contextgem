@@ -5839,3 +5839,264 @@ class TestExtraction(BaseTest):
             with pytest.raises(ValueError, match="must be assigned to the document"):
                 llm.extract_concepts_from_aspect(other_document.aspects[0], document)
             assert not requests
+
+    def test_call_made_again_continues_from_part_that_failed(self):
+        """
+        Tests that a call whose content is sent to an LLM in parts, i.e. with
+        a max number of paragraphs per call, is continued from the part that
+        the LLM returned invalid data for when the call is made again:
+        the parts that were answered with valid data are not sent again, and what
+        was extracted from them is kept. Nothing of the failed attempt for a part
+        is kept. The retries are those of the call, not of each part, and
+        a fallback LLM extracts from all the parts, with retries continued in
+        the same way.
+
+        Each time such a call was made again, all its parts were sent again.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        primary_model = "openai/gpt-6-luna"
+        fallback_model = "openai/gpt-5.6-luna"
+        n_parts = 4
+        paragraph_texts = [
+            f"Clause {number}: a duty of the parties." for number in range(1, 5)
+        ]
+        invalid = "<<<not-json>>>"
+        # The responses to the requests of a model for an aspect or a concept and
+        # a part, in turn, by the model, the name of the aspect or concept and
+        # the number of the clause of the part: the invalid text, or a response
+        # to give instead of the default one, with an item for the part
+        responses: dict[tuple[str, str, int], list[Any]] = {}
+        # The requests sent: the model, the name, and the number of the clause
+        requests: list[tuple[str, str, int]] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API, which is sent one paragraph in each request.
+            """
+            await asyncio.sleep(0)
+            prompt = kwargs["messages"][-1]["content"]
+            model = kwargs["model"]
+            (clause,) = {int(number) for number in re.findall(r"Clause (\d)", prompt)}
+            concept_names = re.findall(r"<concept_name>(.+?)</concept_name>", prompt)
+            aspect_names = re.findall(r"<aspect_name>(.+?)</aspect_name>", prompt)
+            (name,) = concept_names or aspect_names
+            request = (model, name, clause)
+            requests.append(request)
+            content = responses[request].pop(0) if responses.get(request) else None
+            if content is None:
+                content = (
+                    [{"concept_id": "C0", "extracted_items": [f"{model}: {clause}"]}]
+                    if concept_names
+                    else [{"aspect_id": "A0", "paragraph_ids": ["P0"]}]
+                )
+            if content != invalid:
+                content = json.dumps(content)
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=content)
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+            )
+
+        def create_llm(with_fallback: bool = False, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM, optionally with a fallback LLM.
+            """
+            llm = DocumentLLM(model=primary_model, api_key="test_api_key", **kwargs)
+            if with_fallback:
+                llm.fallback_models = [
+                    DocumentLLM(
+                        model=fallback_model, api_key="test_api_key", is_fallback=True
+                    )
+                ]
+            return llm
+
+        def create_document(**concept_kwargs: Any) -> Document:
+            """
+            Creates a document of four paragraphs with a concept.
+            """
+            document = Document(raw_text="\n\n".join(paragraph_texts))
+            document.concepts = [
+                StringConcept(
+                    name="Duty", description="Duty of the parties", **concept_kwargs
+                )
+            ]
+            return document
+
+        def set_responses(
+            request_responses: dict[tuple[str, str, int], list[Any]],
+        ) -> None:
+            """
+            Sets the responses to give instead of the default ones, and resets
+            the record of the requests.
+            """
+            responses.clear()
+            responses.update(request_responses)
+            requests.clear()
+
+        def sent_parts(model: str, name: str = "Duty") -> list[int]:
+            """
+            Returns the numbers of the clauses of the parts sent to the model
+            for the aspect or concept, in the order of the requests.
+            """
+            return [
+                clause
+                for request_model, request_name, clause in requests
+                if (request_model, request_name) == (model, name)
+            ]
+
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            # === Invalid data for a part: the call is continued from that part ===
+            llm = create_llm()
+            document = create_document()
+            set_responses({(primary_model, "Duty", 3): [invalid]})
+            (concept,) = llm.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=1
+            )
+            assert sent_parts(primary_model) == [1, 2, 3, 3, 4]
+            # An item from each part, in the order of the parts
+            assert [item.value for item in concept.extracted_items] == [
+                f"{primary_model}: {clause}" for clause in range(1, n_parts + 1)
+            ]
+            usage = llm.get_usage()[0].usage
+            assert len(usage.calls) == 5
+            assert (usage.input, usage.output) == (50, 25)
+
+            # === Nothing of a failed attempt for a part is kept ===
+            # The response for the second part gives an item, and is then found
+            # invalid for a paragraph that the part does not have
+            llm = create_llm()
+            document = Document(raw_text="\n\n".join(paragraph_texts))
+            document.aspects = [
+                Aspect(
+                    name="Duties",
+                    description="Duties of the parties",
+                    add_justifications=True,
+                )
+            ]
+
+            def get_aspect_response(*paragraphs: tuple[str, str]) -> list[Any]:
+                """
+                Returns the response with the given paragraphs for the aspect,
+                each as its ID and the justification.
+                """
+                return [
+                    {
+                        "aspect_id": "A0",
+                        "paragraphs": [
+                            {"paragraph_id": paragraph_id, "justification": text}
+                            for paragraph_id, text in paragraphs
+                        ],
+                    }
+                ]
+
+            set_responses(
+                {
+                    (primary_model, "Duties", clause): [
+                        get_aspect_response(("P0", f"Justification {clause}"))
+                    ]
+                    for clause in (1, 3, 4)
+                }
+                | {
+                    (primary_model, "Duties", 2): [
+                        get_aspect_response(("P0", "Failed attempt"), ("P7", "None")),
+                        get_aspect_response(("P0", "Justification 2")),
+                    ]
+                }
+            )
+            (aspect,) = llm.extract_aspects_from_document(
+                document, max_paragraphs_to_analyze_per_call=1
+            )
+            assert sent_parts(primary_model, "Duties") == [1, 2, 2, 3, 4]
+            assert [
+                (item.value, item.justification) for item in aspect.extracted_items
+            ] == [
+                (text, f"Justification {position + 1}")
+                for position, text in enumerate(paragraph_texts)
+            ]
+            assert aspect.reference_paragraphs == document.paragraphs
+
+            # === The retries are those of the call, not of each part ===
+            llm = create_llm(max_retries_invalid_data=1)
+            document = create_document()
+            set_responses(
+                {
+                    (primary_model, "Duty", 2): [invalid],
+                    (primary_model, "Duty", 3): [invalid],
+                }
+            )
+            with pytest.raises(ModelExtractionError) as exc_info:
+                llm.extract_concepts_from_document(
+                    document, max_paragraphs_to_analyze_per_call=1
+                )
+            assert exc_info.value.retry_count == 1
+            assert sent_parts(primary_model) == [1, 2, 2, 3]
+            assert not document.concepts[0].extracted_items
+
+            # === A concept with a single occurrence ===
+            # The first part has no item; the parts after the one that gives
+            # the item are not sent, as before
+            llm = create_llm()
+            document = create_document(singular_occurrence=True)
+            set_responses(
+                {
+                    (primary_model, "Duty", 1): [
+                        [{"concept_id": "C0", "extracted_items": []}]
+                    ],
+                    (primary_model, "Duty", 2): [invalid],
+                }
+            )
+            (concept,) = llm.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=1
+            )
+            assert sent_parts(primary_model) == [1, 2, 2]
+            assert [item.value for item in concept.extracted_items] == [
+                f"{primary_model}: 2"
+            ]
+
+            # === A fallback LLM extracts from all the parts ===
+            # ... and is continued from the part that it fails for
+            llm = create_llm(with_fallback=True, max_retries_invalid_data=0)
+            document = create_document()
+            set_responses(
+                {
+                    (primary_model, "Duty", 2): [invalid],
+                    (fallback_model, "Duty", 3): [invalid],
+                }
+            )
+            (concept,) = llm.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=1
+            )
+            assert sent_parts(primary_model) == [1, 2]
+            assert sent_parts(fallback_model) == [1, 2, 3, 3, 4]
+            # The items are those of the fallback LLM only
+            assert [item.value for item in concept.extracted_items] == [
+                f"{fallback_model}: {clause}" for clause in range(1, n_parts + 1)
+            ]
+
+            # === With concurrency: each call is continued on its own ===
+            llm = create_llm()
+            document = Document(raw_text="\n\n".join(paragraph_texts))
+            document.concepts = [
+                StringConcept(name=name, description=f"{name} of the parties")
+                for name in ("Duty", "Right")
+            ]
+            set_responses(
+                {
+                    (primary_model, "Duty", 2): [invalid],
+                    (primary_model, "Right", 4): [invalid],
+                }
+            )
+            llm.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=1, use_concurrency=True
+            )
+            assert sent_parts(primary_model, "Duty") == [1, 2, 2, 3, 4]
+            assert sent_parts(primary_model, "Right") == [1, 2, 3, 4, 4]
+            for concept in document.concepts:
+                assert [item.value for item in concept.extracted_items] == [
+                    f"{primary_model}: {clause}" for clause in range(1, n_parts + 1)
+                ]

@@ -140,6 +140,111 @@ _GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 _ANY_KIND_NAME = "model"
 
 
+class _PartialExtraction:
+    """
+    Keeps what an LLM extracted from the first parts of the content of a call,
+    for the call to be continued from the part that failed when it is made again.
+
+    The content that a call extracts from is sent to an LLM in parts when a max
+    number of paragraphs or of images per call is set: a request for each part.
+    When the LLM returns invalid data for one of the parts, the call fails, and it
+    is made again if the LLM has retries for invalid data. The parts that were
+    answered with valid data are not sent again then: the call is continued from
+    the part that failed, with what was extracted from the parts before it.
+
+    This applies to a call that is made again with the same LLM. A fallback model
+    is given no such state, i.e. it extracts from all the parts.
+
+    :ivar n_parts_processed: The number of the parts, counted from the first one,
+        that are processed, i.e. the position of the part to continue from.
+    :vartype n_parts_processed: int
+    """
+
+    def __init__(self) -> None:
+        self.n_parts_processed: int = 0
+        self._sources_mapper: dict[
+            str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
+        ] = {}
+        self._aspect_reference_ids: dict[str, set[str]] = {}
+
+    @staticmethod
+    def _copy_sources_mapper(
+        sources_mapper: dict[str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]],
+    ) -> dict[str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]]:
+        """
+        Copies the items gathered for each aspect or concept: the lists of the items
+        are copied, and not the items, nor the aspects and concepts.
+
+        :param sources_mapper: The aspect or concept and the items gathered for it,
+            by the unique ID of the aspect or concept.
+        :type sources_mapper: dict[str, dict[str, _Aspect | _Concept |
+            list[_ExtractedItem]]]
+        :return: The copy.
+        :rtype: dict[str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]]
+        """
+        return {
+            unique_id: {
+                key: list(value) if isinstance(value, list) else value
+                for key, value in source_data.items()
+            }
+            for unique_id, source_data in sources_mapper.items()
+        }
+
+    def save(
+        self,
+        n_parts_processed: int,
+        sources_mapper: dict[str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]],
+        aspect_reference_ids: dict[str, set[str]],
+    ) -> None:
+        """
+        Saves what is extracted from the parts that are processed. Copies are
+        saved, as the processing of the next part adds to what is given, also when
+        that part turns out to be answered with invalid data.
+
+        :param n_parts_processed: The number of the parts that are processed.
+        :type n_parts_processed: int
+        :param sources_mapper: The aspect or concept and the items gathered for it
+            from these parts, by the unique ID of the aspect or concept.
+        :type sources_mapper: dict[str, dict[str, _Aspect | _Concept |
+            list[_ExtractedItem]]]
+        :param aspect_reference_ids: The unique IDs of the paragraphs or sentences
+            extracted from these parts for each aspect, by the unique ID of the aspect.
+        :type aspect_reference_ids: dict[str, set[str]]
+        :return: None
+        :rtype: None
+        """
+        self.n_parts_processed = n_parts_processed
+        self._sources_mapper = self._copy_sources_mapper(sources_mapper)
+        self._aspect_reference_ids = {
+            unique_id: set(reference_ids)
+            for unique_id, reference_ids in aspect_reference_ids.items()
+        }
+
+    def load(
+        self,
+    ) -> tuple[
+        dict[str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]],
+        dict[str, set[str]],
+    ]:
+        """
+        Returns what is extracted from the parts that are processed, as copies to
+        go on with: nothing for a call that is made for the first time.
+
+        :return: The aspect or concept and the items gathered for it, by the unique
+            ID of the aspect or concept, and the unique IDs of the paragraphs or
+            sentences extracted for each aspect, by the unique ID of the aspect.
+        :rtype: tuple[dict[str, dict[str, _Aspect | _Concept |
+            list[_ExtractedItem]]], dict[str, set[str]]]
+        """
+        return (
+            self._copy_sources_mapper(self._sources_mapper),
+            {
+                unique_id: set(reference_ids)
+                for unique_id, reference_ids in self._aspect_reference_ids.items()
+            },
+        )
+
+
 class _LoopAsyncLimiters:
     """
     Keeps the limiters that pace the requests to a model: one limiter for each
@@ -1938,6 +2043,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         raise_exception_on_extraction_error: bool = True,
         has_fallback_pending: bool = False,
         unrecorded_usage: list[_ModelUsage] | None = None,
+        partial_extraction: _PartialExtraction | None = None,
     ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
         """
         Extracts items from either aspects or concepts using a specified LLM.
@@ -2015,6 +2121,14 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             empty for a decision model, which updates its usage and cost itself before
             any error is raised.
         :type unrecorded_usage: list[_ModelUsage] | None
+        :param partial_extraction: An optional state for a call that an LLM makes
+            in several requests, i.e. whose content is sent in parts. The call keeps
+            in it what is extracted from the parts that are answered with valid data.
+            If the same state is given when the call is made again, for invalid
+            data returned for one of the parts, the call is continued from that
+            part: the parts before it are not sent again. Not used by a decision
+            model, which is not asked again for a response that cannot be used.
+        :type partial_extraction: _PartialExtraction | None
 
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if LLM processing fails
@@ -2263,17 +2377,30 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         all_usage_data: _ModelUsage | None = None
         if unrecorded_usage is None:
             unrecorded_usage = []
-        sources_mapper: dict[
-            str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
-        ] = {}
-        # The paragraphs, or the sentences, that are already extracted for each
-        # aspect, by their unique IDs: the LLM is instructed to list each ID once,
-        # and one that it lists more than once for an aspect gives one item
-        aspect_reference_ids: dict[str, set[str]] = {}
+        if partial_extraction is None:
+            partial_extraction = _PartialExtraction()
+        # The items gathered for each aspect or concept, and the paragraphs, or
+        # the sentences, that are already extracted for each aspect, by their unique
+        # IDs: the LLM is instructed to list each ID once, and one that it lists
+        # more than once for an aspect gives one item. If the call is made again,
+        # these are what the call extracted before from the parts of the content
+        # that were answered with valid data.
+        sources_mapper, aspect_reference_ids = partial_extraction.load()
         instances_enumerated = dict(enumerate(instances_to_process))
 
         # Each item on the list is a message kwargs dict for each extraction, based on specific context chunks.
         for idx, message_kwargs in enumerate(message_kwargs_list):
+            if idx < partial_extraction.n_parts_processed:
+                # The call is made again, for invalid data returned for a later
+                # chunk: this chunk was answered with valid data, and is not sent again
+                logger.debug(
+                    f"Skipping messages chunk {idx + 1}/{len(message_kwargs_list)}, "
+                    f"which is already processed"
+                )
+                continue
+            # The chunks before this one are processed: what they gave is kept,
+            # for the call to be continued from this chunk if it is made again
+            partial_extraction.save(idx, sources_mapper, aspect_reference_ids)
             logger.debug(
                 f"Processing messages chunk {idx + 1}/{len(message_kwargs_list)}"
             )
@@ -3037,6 +3164,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 instances: list[_Aspect] | list[_Concept],
                 n_retries: int = 0,
                 retry_is_final: bool = False,
+                partial_extraction: _PartialExtraction | None = None,
             ) -> bool:
                 """
                 Checks the processed result for validity and, if it is invalid, makes
@@ -3063,6 +3191,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :param retry_is_final: Whether the retry is final and will not be repeated by
                     a (next) fallback LLM.
                 :type retry_is_final: bool
+                :param partial_extraction: The state of the call with this model, which
+                    keeps what is extracted from the parts of the content that are
+                    answered with valid data: each time the call is made again, it is
+                    continued from the part that failed. For the model that returned
+                    the result, it is the state of the call that gave the result.
+                :type partial_extraction: _PartialExtraction | None
                 :return: True if retry was successful, False otherwise.
                 :rtype: bool
                 """
@@ -3105,6 +3239,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             async_limiter=async_limiters.get(id(llm_instance)),
                             raise_exception_on_extraction_error=raise_exception_on_extraction_error,
                             has_fallback_pending=not retry_is_final,
+                            partial_extraction=partial_extraction,
                         )
                         # Update usage stats and cost
                         await llm_instance._update_usage_and_cost(res)
@@ -3152,6 +3287,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             async def retry_chunk_with_fallbacks(
                 chunk: list[_Aspect] | list[_Concept],
                 result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage],
+                partial_extraction: _PartialExtraction,
             ) -> bool:
                 """
                 Retries a single failed chunk on the primary LLM and then on each
@@ -3168,6 +3304,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :type chunk: list[_Aspect] | list[_Concept]
                 :param result: The original failed extraction result.
                 :type result: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+                :param partial_extraction: The state of the call that gave the result,
+                    with which the primary model continues the call from the part of
+                    the content that failed. A fallback model starts the call over,
+                    with a state of its own for the retries of that model.
+                :type partial_extraction: _PartialExtraction
                 :return: True if any retry succeeded, False otherwise.
                 :rtype: bool
                 """
@@ -3187,6 +3328,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         instances=chunk,
                         n_retries=llm._retries_invalid_data,
                         retry_is_final=not llm.fallback_models,
+                        partial_extraction=partial_extraction,
                     )
                 n_fallbacks = len(llm.fallback_models)
                 for i, fallback_llm in enumerate(llm.fallback_models):
@@ -3204,6 +3346,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         instances=chunk,
                         n_retries=fallback_llm._retries_invalid_data,
                         retry_is_final=i == n_fallbacks - 1,
+                        partial_extraction=_PartialExtraction(),
                     )
                 return retry_successful
 
@@ -3292,8 +3435,18 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
                 "has_fallback_pending": bool(llm.fallback_models),
             }
+            # Each call has a state of its own, with which the call is continued from
+            # the part of the content that failed if it is made again
+            partial_extractions = [_PartialExtraction() for _ in data_chunks]
             data_list = [
-                {**base_params, "instances_to_process": chunk} for chunk in data_chunks
+                {
+                    **base_params,
+                    "instances_to_process": chunk,
+                    "partial_extraction": partial_extraction,
+                }
+                for chunk, partial_extraction in zip(
+                    data_chunks, partial_extractions, strict=True
+                )
             ]
 
             if (
@@ -3371,24 +3524,30 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # stops the retries of the other chunks, as it stops the processing
                 # of the other chunks above. The usage of the calls completed by
                 # then is counted, as each call made again is counted when it is
-                # completed. Original chunk order is preserved in `failed_pairs`,
+                # completed. Original chunk order is preserved in `failed_calls`,
                 # so the failures that are not raised by the retries are handled
                 # below in the order of the chunks.
-                failed_pairs = [
-                    (chunk, result)
-                    for chunk, result in zip(data_chunks, results, strict=True)
+                failed_calls = [
+                    (chunk, result, partial_extraction)
+                    for chunk, result, partial_extraction in zip(
+                        data_chunks, results, partial_extractions, strict=True
+                    )
                     if not _model_call_result_is_valid(result)
                 ]
-                if failed_pairs:
+                if failed_calls:
                     retry_outcomes = await _async_multi_executor(
                         func=retry_chunk_with_fallbacks,
                         data_list=[
-                            {"chunk": chunk, "result": result}
-                            for chunk, result in failed_pairs
+                            {
+                                "chunk": chunk,
+                                "result": result,
+                                "partial_extraction": partial_extraction,
+                            }
+                            for chunk, result, partial_extraction in failed_calls
                         ],
                     )
-                    for (chunk, result), outcome in zip(
-                        failed_pairs, retry_outcomes, strict=True
+                    for (chunk, result, _), outcome in zip(
+                        failed_calls, retry_outcomes, strict=True
                     ):
                         if not outcome:
                             if llm._retries_invalid_data > 0 or llm.fallback_models:
@@ -3420,6 +3579,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         retry_successful = await retry_chunk_with_fallbacks(
                             chunk=data["instances_to_process"],  # ty: ignore[invalid-argument-type]
                             result=result,
+                            partial_extraction=data["partial_extraction"],  # ty: ignore[invalid-argument-type]
                         )
                         if not retry_successful:
                             if llm._retries_invalid_data > 0 or llm.fallback_models:
