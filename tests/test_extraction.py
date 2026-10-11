@@ -2997,7 +2997,8 @@ class TestExtraction(BaseTest):
                 else:
                     # A warning is issued for the first concept
                     with pytest.warns(
-                        UserWarning, match=r"invalid JSON.*\(0 retries\)"
+                        UserWarning,
+                        match=r"invalid JSON.*\(0 retries\)\. If you want to raise",
                     ):
                         error = asyncio.run(
                             extract(

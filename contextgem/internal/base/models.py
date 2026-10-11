@@ -3122,7 +3122,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 warning_msg = (
                                     error_msg
                                     + f" ({n_retries} retries). "
-                                    + " If you want to raise an exception instead, "
+                                    + "If you want to raise an exception instead, "
                                     "set `raise_exception_on_extraction_error` to True."
                                 )
                                 logger.warning(warning_msg)
@@ -3228,7 +3228,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 warning_msg = (
                     error_msg
                     + " (0 retries). "
-                    + " If you want to raise an exception instead, "
+                    + "If you want to raise an exception instead, "
                     "set `raise_exception_on_extraction_error` to True."
                 )
                 logger.warning(warning_msg)
