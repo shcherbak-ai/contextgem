@@ -191,7 +191,7 @@ document = llm.extract_all(document)
 
 🚀 **Advanced usage:**
 
-- [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-with-concepts)
+- [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-containing-concepts)
 - [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage/#extracting-aspects-and-concepts-from-a-document)
 - [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
 
