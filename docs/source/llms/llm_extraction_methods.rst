@@ -45,11 +45,13 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    def extract_all(
        self,
        document: Document,
+       *,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
        max_paragraphs_to_analyze_per_call: int = 0,
        max_images_to_analyze_per_call: int = 0,
+       raise_exception_on_extraction_error: bool = True,
    ) -> Document
 
 .. note::
@@ -129,11 +131,13 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    def extract_aspects_from_document(
        self,
        document: Document,
+       *,
        from_aspects: list[Aspect] | None = None,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
        max_paragraphs_to_analyze_per_call: int = 0,
+       raise_exception_on_extraction_error: bool = True,
    ) -> list[Aspect]
 
 .. note::
@@ -216,12 +220,14 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    def extract_concepts_from_document(
        self,
        document: Document,
+       *,
        from_concepts: list[_Concept] | None = None,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
        max_paragraphs_to_analyze_per_call: int = 0,
        max_images_to_analyze_per_call: int = 0,
+       raise_exception_on_extraction_error: bool = True,
    ) -> list[_Concept]
 
 .. note::
@@ -306,11 +312,13 @@ The aspect must be previously processed before concept extraction can occur. Thi
        self,
        aspect: Aspect,
        document: Document,
+       *,
        from_concepts: list[_Concept] | None = None,
        overwrite_existing: bool = False,
        max_items_per_call: int = 0,
        use_concurrency: bool = False,
        max_paragraphs_to_analyze_per_call: int = 0,
+       raise_exception_on_extraction_error: bool = True,
    ) -> list[_Concept]
 
 .. note::
