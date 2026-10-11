@@ -33,7 +33,7 @@ import threading
 import warnings
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
 import tethered
 from aiolimiter import AsyncLimiter
@@ -49,7 +49,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
 
 from contextgem.internal.base.abstract import _AbstractGenericModelProcessor
 from contextgem.internal.base.aspects import _Aspect

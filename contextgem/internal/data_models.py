@@ -23,7 +23,7 @@ Module defining internal data validation models.
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -274,9 +274,7 @@ class _Message(_AbstractInstanceBase):
     # Optional for tool messages: function name for the tool response
     name: NonEmptyStr | None = Field(default=None, frozen=True)
 
-    _time_created: datetime = PrivateAttr(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    _time_created: datetime = PrivateAttr(default_factory=lambda: datetime.now(UTC))
     _response_succeeded: StrictBool | None = PrivateAttr(default=None)
 
     def __setattr__(self, name: str, value: Any) -> None:

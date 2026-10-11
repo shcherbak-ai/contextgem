@@ -106,7 +106,7 @@ def create_deterministic_metadata() -> dict[str, Any]:
             "name": "python",
             "nbconvert_exporter": "python",
             "pygments_lexer": "ipython3",
-            "version": "3.10.0",
+            "version": "3.11.0",
         },
     }
 

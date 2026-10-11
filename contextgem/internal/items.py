@@ -27,10 +27,9 @@ and handling for values extracted during aspect and concept analysis.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, Self
 
 from pydantic import Field, StrictBool, StrictFloat, StrictInt, field_validator
-from typing_extensions import Self
 
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.decorators import _expose_in_registry

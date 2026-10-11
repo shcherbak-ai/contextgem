@@ -35,11 +35,10 @@ from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from aiolimiter import AsyncLimiter
 from pydantic import BaseModel
-from typing_extensions import Self
 
 from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _resolve_public_type

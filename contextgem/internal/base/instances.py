@@ -28,10 +28,9 @@ custom data storage, and instance cloning capabilities.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from pydantic import field_validator
-from typing_extensions import Self
 
 from contextgem.internal.base.abstract import _AbstractInstanceBase
 from contextgem.internal.utils import _is_text_content_empty

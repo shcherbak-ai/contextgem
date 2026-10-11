@@ -40,6 +40,7 @@ from typing import (  # noqa: UP035
     Dict,
     List,
     Literal,
+    NotRequired,
     Optional,
     TypedDict,
     Union,
@@ -48,7 +49,6 @@ from typing import (  # noqa: UP035
 
 import pytest
 from pydantic import Field, StringConstraints
-from typing_extensions import NotRequired
 from vcr.request import Request as VCRRequest
 
 from contextgem import Aspect, Document, StringConcept

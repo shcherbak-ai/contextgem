@@ -84,6 +84,8 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Removed the special handling of system messages for the retired OpenAI `o1-preview` and `o1-mini` models, for which the system message was left out of the request, with a warning. The system message is now sent to any model.
 - Removed the warning issued when `parallel_tool_calls=True` was set for a model with the `openai/gpt-5` or `azure/gpt-5` name prefix. The warning was hardcoded for the first GPT-5 models, and was also issued for the later models with the same prefix.
 - **Breaking:** Removed the `max_completion_tokens` parameter and attribute of `DocumentLLM`. Use `max_tokens` instead, which now applies to all models (see "Changed"). Passing `max_completion_tokens` to `DocumentLLM`, or reading or assigning the attribute, now raises an error. An LLM or model group serialized by earlier versions has the `max_completion_tokens` key in each LLM, and can no longer be deserialized as is.
+- **Breaking:** Removed support for Python 3.10, which has reached its end of life. ContextGem now requires Python 3.11–3.14. On Python 3.10, package installers such as `pip` and `uv` do not install this version, and resolve to the latest earlier one. The `onnxruntime<1.24.0` constraint, which applied to Python 3.10 only, is removed as well.
+- Removed the `typing-extensions` dependency, which was used only for the typing features that are in the standard library as of Python 3.11.
 
 ### Fixed
 

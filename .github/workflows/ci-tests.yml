@@ -42,10 +42,10 @@ jobs:
 
   prefetch-models:
     # Download the SaT model ONCE on a single runner and publish the warmed
-    # HuggingFace cache for the test matrix to restore. Without this, the five
+    # HuggingFace cache for the test matrix to restore. Without this, the four
     # matrix jobs start with a cold cache simultaneously and download from
     # HuggingFace in parallel — `actions/cache` only writes in its post-job
-    # step, so there is no shared cache to hit on the first run. Five concurrent
+    # step, so there is no shared cache to hit on the first run. Four concurrent
     # cold downloads from one runner IP pool is exactly what trips HF's 429 and
     # aborts pytest collection. Serializing the download here removes that race.
     runs-on: ubuntu-latest
@@ -92,14 +92,14 @@ jobs:
   tests-with-vcr:
 
     # Wait for the single prefetch job to warm the shared HF cache before the
-    # matrix fans out, so the five jobs restore the cache instead of racing to
+    # matrix fans out, so the four jobs restore the cache instead of racing to
     # download the model concurrently.
     needs: prefetch-models
 
     strategy:
       matrix:
         os: [ "ubuntu-latest" ]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     defaults:
       run:

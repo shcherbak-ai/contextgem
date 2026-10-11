@@ -23,7 +23,7 @@ Module defining the base classes for Aspect class.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, Self, cast
 
 from pydantic import (
     BeforeValidator,
@@ -35,7 +35,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
 
 from contextgem.internal.base.attrs import (
     _AssignedInstancesProcessor,

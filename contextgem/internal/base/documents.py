@@ -26,7 +26,7 @@ import itertools
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Annotated, Any, Literal, TypeVar
+from typing import Annotated, Any, Literal, Self, TypeVar
 
 from pydantic import (
     BeforeValidator,
@@ -35,7 +35,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
 
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.attrs import _AssignedInstancesProcessor

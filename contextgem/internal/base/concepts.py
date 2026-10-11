@@ -25,7 +25,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from datetime import date, datetime
 from types import UnionType
-from typing import Any, List, Literal, Union, get_args, get_origin  # noqa: UP035
+from typing import Any, List, Literal, Self, Union, get_args, get_origin  # noqa: UP035
 
 from pydantic import (
     BaseModel,
@@ -37,7 +37,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
 
 from contextgem.internal.base.attrs import _ExtractedItemsAttributeProcessor
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample

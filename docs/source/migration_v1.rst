@@ -22,6 +22,8 @@ Migrating to v1.0
 
 This guide describes the changes in ContextGem v1.0 that require updating the code and the serialized data created with the earlier versions.
 
+ContextGem v1.0 requires Python 3.11-3.14. Python 3.10, which has reached its end of life, is no longer supported: on Python 3.10, package installers such as ``pip`` and ``uv`` do not install v1.0, and resolve to the latest earlier version.
+
 The sections below end with what to do with the serialized data. Several of them can apply to the same data, and the updates are to be made in this order:
 
 - **A document or a pipeline without aspects and concepts** is deserialized as is.

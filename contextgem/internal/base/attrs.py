@@ -33,10 +33,9 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from pydantic import Field, StrictBool, StrictInt
-from typing_extensions import Self
 
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence

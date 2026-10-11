@@ -22,10 +22,9 @@ Module providing base classes for document paragraphs and sentences.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Self
 
 from pydantic import Field, field_validator, model_validator
-from typing_extensions import Self
 
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.decorators import _disable_direct_initialization
