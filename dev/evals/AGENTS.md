@@ -95,6 +95,40 @@ Recorded on 2026-10-11 with `litellm` 1.105.0, after the first part of the revie
 - **Decision models**: `typesafe/jev-latest` (2), `openai/gpt-6-luna` (2), `azure_ai/ms-decision-model`, a deployment of Microsoft-Decision-1 in Microsoft Foundry (2), `strands_decider/nimble` on Ollama (1) and `strands_decider/kev-4b` on LM Studio (1).
 - **Probabilities of the decision models** (`decision_probabilities/`): recorded earlier the same day, one pass per model and case. They do not depend on the reference answers, so they were kept; they have no `provenance`. Those of `openai/gpt-6-luna` were recorded with `litellm` 1.104.2.
 
+## Tried and Rejected
+
+Experiments that changed nothing in the library, recorded so that they are not run again without a new reason.
+
+### Wording of the aspect question of the decision models (2026-10-12)
+
+Three wordings of `decision_question_aspect.j2`, each with one change, were compared with the current one on the five decision models of the baseline and both cases, in one pass of `decision_probabilities` each:
+
+- **Exclusion**: the sentence on "no" ends with "including when it is about another subject and only mentions the aspect."
+- **Narrower criterion**: "belongs to the aspect" and "is a part of what the aspect covers, as its name and description define it", in place of "is relevant to" and "addresses or clearly relates to".
+- **Question**: "Does the paragraph address the aspect above or clearly relate to it?" at the end, in place of the instruction to decide and the criteria for "yes" and "no".
+
+Aspect F1 at the threshold of 0.5, mean of the two cases. The current wording was run again for this, at the same time as the others:
+
+| Model | Current | Exclusion | Narrower criterion | Question |
+|-------|---------|-----------|--------------------|----------|
+| `openai/gpt-6-luna` | 0.849 | 0.849 | 0.850 | 0.733 |
+| `typesafe/jev-latest` | 0.815 | 0.808 | 0.777 | 0.773 |
+| `azure_ai/ms-decision-model` | 0.772 | 0.797 | 0.726 | 0.832 |
+| `strands_decider/kev-4b` | 0.747 | 0.744 | 0.769 | 0.699 |
+| `strands_decider/nimble` | 0.695 | 0.682 | 0.675 | 0.688 |
+| Mean | 0.776 | 0.776 | 0.759 | 0.745 |
+| Mean, at the best threshold of each model | 0.820 | 0.814 | 0.810 | 0.780 |
+
+No wording is better across the models:
+
+- **A wording moves the probabilities of each model in its own direction**, e.g. the question form gains 0.06 for the model in Microsoft Foundry and loses 0.12 for `openai/gpt-6-luna`. The decision threshold of a model makes such a shift for that model only.
+- **No wording tells the paragraphs of the reference answers from the others better**: the mean at the best threshold of each model is not higher for any of the three.
+- **The paragraphs that four or five models extract beyond the reference answers stay**: of the 35 answers behind these seven paragraph-aspect pairs, 31 are "yes" with the current wording, and 30, 31 and 26 with the three others.
+
+The differences are not the variation between passes: with the current wording, three of the models give the same answers as in the baseline, and the other two differ in about 10 of 1,206 answers, i.e. by 0.003 or less in F1.
+
+Not tested: the questions of concepts (each case has six concepts that a decision model extracts, too few to compare wordings), and aspects extracted with sentences or with additional context. The recorded probabilities were not kept: the numbers above are the record.
+
 ## Adding a Case
 
 Add the three files of the case to `cases/`, register its pipeline builder in `_PIPELINE_BUILDERS` of `harness.py`, and run `check_scorer`. The paragraphs of the text, split by line, must be those of the reference answers.
