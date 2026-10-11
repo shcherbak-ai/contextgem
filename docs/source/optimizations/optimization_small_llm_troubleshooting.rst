@@ -47,7 +47,7 @@ Small language models (e.g. 8B parameter models) often struggle with ContextGem'
 ---------------------------------
 
 **Minimum Recommended Performance**
-    All ContextGem tests use models with performance equivalent to or exceeding ``openai/gpt-4o-mini``. For reliable structured extraction, your model should:
+    ContextGem is tested with ``openai/gpt-6-luna`` as the baseline model. For reliable structured extraction, your model should:
     
     - Be able to follow detailed JSON schema instructions consistently
     - Have a sufficient context window to ingest the detailed prompt and the document content
@@ -58,7 +58,7 @@ Small language models (e.g. 8B parameter models) often struggle with ContextGem'
 -------------------------------------------
 
 .. important::
-   **The most effective solution is usually to upgrade to a larger, more capable model** (such as ``gpt-4o-mini`` or larger). The strategies below are workarounds for situations where upgrading isn't possible.
+   **The most effective solution is usually to upgrade to a larger, more capable model** (such as ``gpt-6-luna`` or larger). The strategies below are workarounds for situations where upgrading isn't possible.
 
 If you must use a smaller model, try these approaches individually or in combination:
 
