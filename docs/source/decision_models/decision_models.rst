@@ -103,7 +103,7 @@ The example below extracts four concepts from a document with a decision model, 
 🔌 Supported Providers and Models
 -----------------------------------
 
-A decision model is identified in the same way as an LLM, in the format ``<provider>/<model_name>``. ContextGem supports the providers that LiteLLM serves through its Decisions API. With the pinned ``litellm`` version (1.104.2), these are:
+A decision model is identified in the same way as an LLM, in the format ``<provider>/<model_name>``. ContextGem supports the providers that LiteLLM serves through its Decisions API. With the pinned ``litellm`` version (1.105.0), these are:
 
 .. list-table:: Providers of decision models
    :header-rows: 1
@@ -118,6 +118,9 @@ A decision model is identified in the same way as an LLM, in the format ``<provi
    * - OpenAI
      - ``openai/gpt-6-luna``
      - ``api_key``. The requests go to the Decisions API of OpenAI, which was in public beta as of October 2026. The same model name is used for chat and extraction with :class:`~contextgem.public.llms.DocumentLLM`: it is the class, not the model name, that makes it a decision model.
+   * - Microsoft Foundry
+     - ``azure_ai/<deployment_name>``
+     - ``api_key``, and ``api_base``: the endpoint of your Foundry resource, as ``https://<resource>.services.ai.azure.com``. The part after ``azure_ai/`` is the name of your deployment of the model, not the name of the model.
    * - Perplexity
      - ``perplexity/pplx-decider-v1-27b``
      - ``api_key``.
@@ -130,6 +133,9 @@ A decision model is identified in the same way as an LLM, in the format ``<provi
    * - Local or self-hosted server
      - ``strands_decider/<model_name>``
      - ``api_base``: the address of the server. No API key is needed. The requests are sent to ``POST <api_base>/v1/systemone``. This is how a decision model served by Ollama or LM Studio is reached, see :ref:`decision-models-local-label`.
+   * - Self-hosted vLLM server
+     - ``hosted_vllm/<model_name>``
+     - ``api_base``: the address of the server. An API key is not required. The requests are sent to ``POST <api_base>/v1/systemone``.
 
 The model names above are the ones in the model list of this ``litellm`` version.
 
@@ -567,9 +573,9 @@ Token usage is tracked for every decision model, while costs are calculated only
 
 **How pricing is set:**
 
-- ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.1.9), these are the TypeSafe models listed above.
-- For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.1.9, this is the case for the decision models of Perplexity, OpenRouter and Cloudflare listed above: set ``pricing_details`` to get the costs of these models.
-- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.9, this is the case for ``gpt-6-luna``, whose chat prices differ from its prices on the Decisions API, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``). ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
+- ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.1.10), these are the TypeSafe models listed above, ``perplexity/pplx-decider-v1-27b``, ``openrouter/typesafe/jev-1.13``, ``cloudflare/clef`` and ``cloudflare/clef-flash``.
+- For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.1.10, this is the case for a model deployed in Microsoft Foundry (``azure_ai/``) and for a model of a self-hosted vLLM server (``hosted_vllm/``): set ``pricing_details`` to get the costs of these models.
+- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.10, this is the case for ``gpt-6-luna``, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``): the prices found for the model under its provider are its chat prices, which differ from its prices on the Decisions API. ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
 - With ``pricing_details``, :class:`~contextgem.public.data_models.ModelPricing` requires both ``input_per_1m_tokens`` and ``output_per_1m_tokens``. Set ``output_per_1m_tokens=0.0`` for a provider that does not charge for output.
 
 As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0`` (`TypeSafe models <https://docs.typesafe.ai/models>`_), and OpenAI lists $0.10 per 1M input tokens for ``gpt-6-luna`` on the Decisions API (`OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_). Neither charges for output tokens. Check the pricing page of your provider for the current prices.
@@ -610,7 +616,7 @@ These were single tests on one short document: they show that the effect exists,
 📏 Limits
 -----------
 
-**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.104.2), these are:
+**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.105.0), these are:
 
 .. list-table::
    :header-rows: 1
