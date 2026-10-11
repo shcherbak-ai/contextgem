@@ -764,6 +764,72 @@ class TestSerialization(BaseTest):
             assert len(restored_items) == 6
             assert all(item.probabilities is None for item in restored_items.values())
 
+    def test_from_json_error_does_not_hold_string(self, tmp_path: Path):
+        """
+        Tests that the error raised for a string that is not a valid JSON,
+        when an instance is created from it with ``from_json()`` or from a file
+        with ``from_disk()``, does not hold the string, e.g. the data of an LLM
+        that an API key was added to: the error of the JSON parser keeps the whole
+        string as its ``doc`` attribute. The rest of the error, i.e. its message
+        and the position of what is invalid, is the same.
+        """
+        api_key = "sk-test-SECRET-0123456789"
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key=api_key)
+        other_llm = DocumentLLM(
+            model="openai/gpt-6-luna", api_key=api_key, role="other"
+        )
+        document = Document(raw_text="Services agreement")
+        instances_and_fields = [
+            (llm, "api_key"),
+            (DocumentModelGroup(models=[llm, other_llm]), "note"),
+            (document, "note"),
+        ]
+        for instance, field in instances_and_fields:
+            # The data with the key added to it, which is cut off
+            data = instance.to_dict()
+            data[field] = api_key
+            json_string = json.dumps(data, indent=2)
+            assert api_key in json_string
+            invalid_json_string = json_string[
+                : json_string.index(api_key) + len(api_key)
+            ]
+            assert api_key in invalid_json_string
+
+            # The error that the JSON parser raises holds the string
+            with pytest.raises(json.JSONDecodeError) as parser_exc_info:
+                json.loads(invalid_json_string)
+            parser_error = parser_exc_info.value
+            assert parser_error.doc == invalid_json_string
+
+            with pytest.raises(json.JSONDecodeError) as exc_info:
+                type(instance).from_json(invalid_json_string)
+            error = exc_info.value
+            assert error.doc == ""
+            for text in (str(error), repr(error), repr(error.args)):
+                assert api_key not in text
+            # The rest of the error is the same
+            assert str(error) == str(parser_error)
+            assert (error.msg, error.pos, error.lineno, error.colno) == (
+                parser_error.msg,
+                parser_error.pos,
+                parser_error.lineno,
+                parser_error.colno,
+            )
+
+            # The error for a file has the same error as its cause
+            file_path = tmp_path / f"{type(instance).__name__}.json"
+            file_path.write_text(invalid_json_string, encoding="utf-8")
+            with pytest.raises(RuntimeError, match="Failed to load") as exc_info:
+                type(instance).from_disk(file_path)
+            assert api_key not in str(exc_info.value)
+            cause = exc_info.value.__cause__
+            assert isinstance(cause, json.JSONDecodeError)
+            assert cause.doc == ""
+            assert str(cause) == str(parser_error)
+
+        # A valid string is restored as before
+        assert Document.from_json(document.to_json()) == document
+
     def test_document_serialization_with_item_probabilities(self, tmp_path: Path):
         """
         Tests that the probabilities of the extracted items of the aspects and

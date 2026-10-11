@@ -689,9 +689,21 @@ class _InstanceSerializer(BaseModel):
         :type json_string: str
         :return: A new instance of the class with restored state.
         :rtype: Self
+        :raises json.JSONDecodeError: If the string is not a valid JSON. The error
+            gives the position of what is invalid, and does not hold the string.
         :raises TypeError: If the class name in the serialized data doesn't match.
         """
-        obj_dict = json.loads(json_string)
+        try:
+            obj_dict = json.loads(json_string)
+        except json.JSONDecodeError as e:
+            # The error holds the whole string that failed to be parsed, as its
+            # `doc` attribute: the data of a model, with an API key if one was
+            # added to the data, or of a document, with all its text. The error
+            # is raised without it, e.g. for the code that reports the attributes
+            # of an error. Its message, with the position of what is invalid
+            # in the string, and its other attributes stay as they are.
+            e.doc = ""
+            raise
         if obj_dict[KEY_CLASS_PRIVATE] != cls.__name__:
             raise TypeError(
                 f"Class {obj_dict[KEY_CLASS_PRIVATE]} does not match {cls.__name__}"
