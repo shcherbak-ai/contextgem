@@ -125,6 +125,8 @@ _DECISIONS_API_KEY_ENV_VARS = [
     "OPENROUTER_API_KEY",
     "CLOUDFLARE_API_KEY",
     "OPENAI_API_KEY",
+    "HOSTED_VLLM_API_KEY",
+    "AZURE_AI_API_KEY",
 ]
 
 # Models used in the tests. No requests are sent to them.
@@ -1023,8 +1025,8 @@ class TestDecisionModels(BaseTest):
         # the same name, i.e. its module is reached through `sys.modules`
         monkeypatch.setattr(
             sys.modules["litellm.decisions.main"],
-            "_prepare_request",
-            create_failure("litellm.decisions.main._prepare_request"),
+            "_prepare_decisions_call",
+            create_failure("litellm.decisions.main._prepare_decisions_call"),
         )
         yield
         assert not unstubbed_calls, (
@@ -2446,16 +2448,28 @@ class TestDecisionModels(BaseTest):
             Decimal("0.042"),
             Decimal("0"),
         )
+        # ... whichever provider serves the model
+        with pytest.warns(UserWarning, match="Auto-pricing"):
+            other_decision_model = _create_decision_model(
+                "perplexity/pplx-decider-v1-27b", auto_pricing=True
+            )
+        input_cost, output_cost = other_decision_model._calculate_auto_pricing_costs(
+            1_000_000, 1_000_000
+        )
+        assert input_cost > 0
+        assert output_cost == Decimal("0")
         # A model that genai-prices has no prices for is accepted as well, with
-        # a warning that its costs are not calculated, as for an LLM
+        # a warning that its costs are not calculated, as for an LLM: e.g. a model
+        # deployed in Microsoft Foundry, which is identified by the name that
+        # its deployment was given
         with warnings.catch_warnings(record=True) as caught_warnings:
             warnings.simplefilter("always")
             decision_model_without_prices = _create_decision_model(
-                "perplexity/pplx-decider-v1-27b", auto_pricing=True
+                "azure_ai/decision-deployment", auto_pricing=True
             )
         assert decision_model_without_prices.auto_pricing is True
         assert any(
-            "Unable to fetch pricing data for model `perplexity/pplx-decider-v1-27b`"
+            "Unable to fetch pricing data for model `azure_ai/decision-deployment`"
             in str(caught_warning.message)
             for caught_warning in caught_warnings
         )
@@ -13090,9 +13104,9 @@ class TestDecisionModels(BaseTest):
         """
         # The providers, as litellm lists them itself
         supported_providers = list(
-            sys.modules["litellm.decisions.main"].DECISIONS_ENDPOINTS
+            sys.modules["litellm.decisions.call"].supported_decisions_providers()
         )
-        assert {"typesafe", "openai"} <= set(supported_providers)
+        assert {"typesafe", "openai", "azure_ai"} <= set(supported_providers)
         assert decision_models_module._get_supported_decision_providers() == tuple(
             supported_providers
         )
@@ -13144,18 +13158,36 @@ class TestDecisionModels(BaseTest):
             DocumentDecisionModel(model="nimble")
 
         # === The providers cannot be read from litellm ===
+        def fail_to_list() -> tuple[str, ...]:
+            """
+            Fails as a function of litellm that cannot list the providers.
+
+            :return: Nothing: an error is raised.
+            :rtype: tuple[str, ...]
+            """
+            raise RuntimeError("The providers cannot be listed.")
+
         # The provider is not checked: a model that litellm cannot serve fails
         # at its first request
         for decisions_module in [
             # The module is not there, or cannot be imported
             None,
-            # The providers are not where they are expected, or are not providers
+            # The function that returns the providers is not where it is expected,
+            # is not a function, fails, or returns what are not providers
             types.SimpleNamespace(),
-            types.SimpleNamespace(DECISIONS_ENDPOINTS=None),
-            types.SimpleNamespace(DECISIONS_ENDPOINTS={}),
-            types.SimpleNamespace(DECISIONS_ENDPOINTS={1: "typesafe", "": "x"}),
+            types.SimpleNamespace(supported_decisions_providers=None),
+            types.SimpleNamespace(supported_decisions_providers=("typesafe",)),
+            types.SimpleNamespace(supported_decisions_providers=fail_to_list),
+            types.SimpleNamespace(supported_decisions_providers=lambda: None),
+            types.SimpleNamespace(supported_decisions_providers=lambda: ()),
+            types.SimpleNamespace(
+                supported_decisions_providers=lambda: (1, "typesafe")
+            ),
+            types.SimpleNamespace(
+                supported_decisions_providers=lambda: ("typesafe", "")
+            ),
         ]:
-            with patch.dict(sys.modules, {"litellm.decisions.main": decisions_module}):
+            with patch.dict(sys.modules, {"litellm.decisions.call": decisions_module}):
                 assert decision_models_module._get_supported_decision_providers() is (
                     None
                 )

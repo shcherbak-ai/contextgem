@@ -105,10 +105,11 @@ _SELF_HOSTED_DECISION_MODEL_PROVIDERS = [
     "strands_decider/",
 ]
 
-# Module of litellm that serves its Decisions API, and the name of the mapping
-# in it that is keyed by the providers of decision models that litellm supports
-_LITELLM_DECISIONS_MODULE_NAME = "litellm.decisions.main"
-_LITELLM_DECISION_PROVIDERS_ATTR = "DECISIONS_ENDPOINTS"
+# Module of litellm that prepares the requests to its Decisions API, and the name
+# of the function in it that returns the providers of decision models that
+# litellm supports
+_LITELLM_DECISIONS_MODULE_NAME = "litellm.decisions.call"
+_LITELLM_DECISION_PROVIDERS_FUNC_NAME = "supported_decisions_providers"
 
 # Names of the types that litellm validates the questions of a request with,
 # in the OpenAI format, by the kinds of the questions
@@ -137,10 +138,11 @@ def _get_supported_decision_providers() -> tuple[str, ...] | None:
     the provider prefixes of the model identifiers that its Decisions API accepts,
     as litellm lists them itself.
 
-    The list is read from the module of litellm that serves its Decisions API.
-    The module is imported by its full name: ``litellm.decisions`` is the function
-    that sends a request, which shadows the package of the same name, i.e.
-    the module cannot be reached as an attribute of ``litellm``.
+    The list is returned by a function of the module of litellm that prepares
+    the requests to its Decisions API. The module is imported by its full name:
+    ``litellm.decisions`` is the function that sends a request, which shadows
+    the package of the same name, i.e. the module cannot be reached as an attribute
+    of ``litellm``.
 
     :return: The providers, or None if they cannot be read from the installed
         version of litellm, in which case the provider of a model cannot be checked
@@ -149,7 +151,9 @@ def _get_supported_decision_providers() -> tuple[str, ...] | None:
     """
     try:
         decisions_module = importlib.import_module(_LITELLM_DECISIONS_MODULE_NAME)
-        providers = tuple(getattr(decisions_module, _LITELLM_DECISION_PROVIDERS_ATTR))
+        providers = tuple(
+            getattr(decisions_module, _LITELLM_DECISION_PROVIDERS_FUNC_NAME)()
+        )
     except Exception:
         return None
     if not providers or not all(
