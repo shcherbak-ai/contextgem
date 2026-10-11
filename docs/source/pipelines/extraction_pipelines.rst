@@ -242,5 +242,5 @@ Research Paper Analysis Pipeline
 * :doc:`../aspects/aspects` - Learn about aspect extraction
 * :doc:`../concepts/supported_concepts` - Explore available concept types and how to use them
 * :doc:`../advanced_usage` - See advanced pipeline usage examples
-* :doc:`../llms/llm_extraction_methods` - Understand LLM extraction methods
+* :doc:`../llms/llm_extraction_methods` - Understand the extraction methods
 * :doc:`../serialization` - Learn about pipeline serialization and storage

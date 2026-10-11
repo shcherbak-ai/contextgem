@@ -83,7 +83,7 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
 🎯 Adding Aspects and Concepts for Extraction
 -----------------------------------------------
 
-Before extracting information from a document with an LLM, you must define and add **aspects** and **concepts** to your document instance. These components serve as the foundation for targeted analysis and structured information extraction.
+Before extracting information from a document with a model, you must define and add **aspects** and **concepts** to your document instance. These components serve as the foundation for targeted analysis and structured information extraction.
 
 **Aspects** define the text segments (sections, topics, themes) to be extracted from the document. They can be combined with concepts for comprehensive analysis.
 
@@ -100,7 +100,7 @@ For detailed guidance on creating and configuring these components, see:
 🧩 Providing Additional Context for Paragraphs
 -----------------------------------------------
 
-When you create the paragraphs yourself, e.g. from the structured output of a document conversion tool, you can describe each paragraph in its ``additional_context``: its structural role, formatting, or position in the document. This lets the LLM take the structure of the document into account, while the text of the paragraphs, which is returned in references, stays clean:
+When you create the paragraphs yourself, e.g. from the structured output of a document conversion tool, you can describe each paragraph in its ``additional_context``: its structural role, formatting, or position in the document. This lets the model take the structure of the document into account, while the text of the paragraphs, which is returned in references, stays clean:
 
 .. literalinclude:: ../../../dev/usage_examples/docstrings/paragraphs/def_paragraph.py
    :language: python

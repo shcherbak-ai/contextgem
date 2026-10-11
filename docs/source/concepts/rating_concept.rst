@@ -84,7 +84,7 @@ When creating a ``RatingConcept``, you can specify the following parameters:
    * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the LLM that extracts the concept when a model group is used: the concept is routed to the LLM in the group with the same ``role``. With the default ``None``, the concept is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every concept it is given. For more details, see :ref:`model-roles-label`.
+     - The role label of the model that extracts the concept when a model group is used: the concept is routed to the model in the group with the same ``role``. With the default ``None``, the concept is routed to the model without a role. Ignored when a single model is used, as it extracts every concept it is given. For more details, see :ref:`model-roles-label`.
    * - ``modality``
      - ``str``
      - ``"text"``

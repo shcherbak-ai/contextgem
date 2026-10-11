@@ -119,7 +119,7 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
    * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the LLM that extracts the aspect when a model group is used: the aspect is routed to the LLM in the group with the same ``role``. With the default ``None``, the aspect is routed to the LLM without a role. Ignored when a single LLM is used, as it extracts every aspect it is given. For more details, see :ref:`model-roles-label`. Note that aspects only support text-based extraction. For this reason, concepts with the ``"image"`` or ``"multimodal"`` modality cannot be used within aspects.
+     - The role label of the model that extracts the aspect when a model group is used: the aspect is routed to the model in the group with the same ``role``. With the default ``None``, the aspect is routed to the model without a role. Ignored when a single model is used, as it extracts every aspect it is given. For more details, see :ref:`model-roles-label`. Note that aspects only support text-based extraction. For this reason, concepts with the ``"image"`` or ``"multimodal"`` modality cannot be used within aspects.
    * - ``reference_depth``
      - ``str``
      - ``"paragraphs"``

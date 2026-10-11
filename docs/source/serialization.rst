@@ -51,17 +51,17 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 * ``from_disk(file_path)`` - Loads an object from a file on disk
 
 .. note::
-   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality. The serialized data stores each reference paragraph and reference sentence of the aspects and of the extracted items on its own, while in the restored document they are the paragraphs and sentences of the document itself, i.e. the same objects as in ``document.paragraphs``, as after an extraction (see :ref:`locating-paras-and-sents`). For LLMs, see :ref:`serialization-llm-credentials-label`.
+   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality. The serialized data stores each reference paragraph and reference sentence of the aspects and of the extracted items on its own, while in the restored document they are the paragraphs and sentences of the document itself, i.e. the same objects as in ``document.paragraphs``, as after an extraction (see :ref:`locating-paras-and-sents`). For models, see :ref:`serialization-llm-credentials-label`.
 
 
 .. _serialization-llm-credentials-label:
 
-🔑 API Credentials of LLMs
----------------------------
+🔑 API Credentials of Models
+-----------------------------
 
-The API credentials of an LLM, i.e. its ``api_key`` and ``api_base``, are never included in the serialized data, so that they do not end up in the files, logs or other systems that the serialized data is passed to. The usage and cost statistics of an LLM are not included either. The other configuration parameters of the LLM are preserved, together with its fallback LLMs.
+The API credentials of a model, i.e. its ``api_key`` and ``api_base``, are never included in the serialized data, so that they do not end up in the files, logs or other systems that the serialized data is passed to. The usage and cost statistics of a model are not included either. The other configuration parameters of the model are preserved, together with its fallback models.
 
-A deserialized LLM therefore has no API credentials. Set them again before using the LLM, both for the LLM and for each of its fallback LLMs:
+A deserialized model therefore has no API credentials. Set them again before using the model, both for the model and for each of its fallback models:
 
 .. code-block:: python
    :caption: Setting the API credentials of a deserialized LLM
@@ -76,7 +76,7 @@ A deserialized LLM therefore has no API credentials. Set them again before using
        fallback_llm.api_key = "<your-fallback-api-key>"
        fallback_llm.api_base = "<your-fallback-api-base>"  # if applicable
 
-For a deserialized :class:`~contextgem.public.models.DocumentModelGroup`, do the same for each LLM in its ``models``.
+For a deserialized :class:`~contextgem.public.models.DocumentModelGroup`, do the same for each model in its ``models``.
 
 The same applies to a :class:`~contextgem.public.decision_models.DocumentDecisionModel`: its ``api_key`` and ``api_base`` are not included in the serialized data either, whether it is serialized on its own, in a model group, or as a fallback model.
 
@@ -89,7 +89,7 @@ The same applies to a :class:`~contextgem.public.decision_models.DocumentDecisio
 🚀 Use Cases
 -------------
 
-* **Caching Results**: Save processed documents to avoid repeating expensive LLM calls
+* **Caching Results**: Save processed documents to avoid repeating expensive model calls
 * **Transfer Between Systems**: Export results from one environment and import in another
 * **API Integration**: Convert objects to JSON for API responses
 * **Workflow Persistence**: Save pipeline configurations for later reuse

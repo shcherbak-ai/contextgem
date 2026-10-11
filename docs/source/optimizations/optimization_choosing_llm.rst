@@ -49,27 +49,27 @@ Since ContextGem specializes in deep single-document analysis, models with large
 🏷️ Model Roles
 --------------
 
-The ``role`` of an LLM is a free-form label used to route aspects/concepts to different LLMs in a :class:`~contextgem.public.models.DocumentModelGroup`. For example, if an aspect/concept is assigned ``model_role="reasoner"``, this aspect/concept is extracted from the document using the LLM with ``role="reasoner"``, while the aspects/concepts without ``model_role`` are extracted using the LLM without ``role``. This helps to channel different tasks to different LLMs, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate LLM for a specific aspect/concept.
+The ``role`` of a model is a free-form label used to route aspects/concepts to different models in a :class:`~contextgem.public.models.DocumentModelGroup`. For example, if an aspect/concept is assigned ``model_role="reasoner"``, this aspect/concept is extracted from the document using the model with ``role="reasoner"``, while the aspects/concepts without ``model_role`` are extracted using the model without ``role``. This helps to channel different tasks to different models, ensuring that the task is handled by the most appropriate model. Usually, domain expertise is required to determine the most appropriate model for a specific aspect/concept.
 
 A role is a label of your choice (e.g. ``"reasoner"``, ``"complex"``, ``"vision"``) and implies no capabilities of the model: it is you who decides which model stands behind each role. A role is a string of up to 64 printable characters: the surrounding whitespace is removed, and line breaks, tabs, and other control or invisible characters are not allowed. Roles are compared exactly, i.e. they are case-sensitive.
 
-.. list-table:: Routing of aspects/concepts to LLMs
+.. list-table:: Routing of aspects/concepts to models
    :header-rows: 1
    :widths: 30 35 35
 
    * - Extraction with
      - Aspect/concept without ``model_role``
      - Aspect/concept with ``model_role="reasoner"``
-   * - Single LLM
-     - Extracted by the LLM
-     - Extracted by the LLM
+   * - Single model
+     - Extracted by the model
+     - Extracted by the model
    * - Model group
-     - Extracted by the LLM without ``role``
-     - Extracted by the LLM with ``role="reasoner"``
+     - Extracted by the model without ``role``
+     - Extracted by the model with ``role="reasoner"``
 
-In model groups, unique role assignments are especially important: each model in the group must have a distinct role (only one model can have no role), so routing can unambiguously send each aspect/concept to the intended model. If an aspect/concept is assigned a role that no LLM in the group has, an error is raised. This is checked before any requests are sent by the extraction method, including for the nested aspects/concepts that the method processes.
+In model groups, unique role assignments are especially important: each model in the group must have a distinct role (only one model can have no role), so routing can unambiguously send each aspect/concept to the intended model. If an aspect/concept is assigned a role that no model in the group has, an error is raised. This is checked before any requests are sent by the extraction method, including for the nested aspects/concepts that the method processes.
 
-For simple use cases, when working with a single LLM, you can skip the role assignments completely: a single LLM extracts all the aspects/concepts it is given, regardless of their ``model_role``.
+For simple use cases, when working with a single model, you can skip the role assignments completely: a single model extracts all the aspects/concepts it is given, regardless of their ``model_role``.
 
 Roles route aspects/concepts to the decision models of a group in the same way, e.g. to have yes/no questions and classifications answered by a decision model, and the rest extracted by an LLM. See :ref:`decision-models-model-group-label`.
 
