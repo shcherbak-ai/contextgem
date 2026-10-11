@@ -1135,7 +1135,6 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
             newly extracted information. Defaults to False.
-            Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             per call. Defaults to 0 (all items in one call). If concurrency is enabled,
@@ -1738,7 +1737,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         max_images_to_analyze_per_call: int = 0,
     ) -> list[dict[str, dict | list[_Paragraph] | list[_Image]]]:
         """
-        Prepares the list of the message kwargs required for querying a LLM to extract aspects or concepts
+        Prepares the list of the message kwargs required for querying an LLM to extract aspects or concepts
         from a document or its associated entities like aspects.
 
         Each item on the list is a kwargs dict for each extraction, based on specific context chunks.
@@ -2069,7 +2068,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param add_justifications: Whether to include justification for extracted items.
             Defaults to False.
         :type add_justifications: bool
-        :param justification_depth: The level of detail of justifications. Details to "brief".
+        :param justification_depth: The level of detail of justifications. Defaults to "brief".
         :type justification_depth: JustificationDepth
         :param justification_max_sents: The maximum number of sentences in a justification.
             Defaults to 2.
@@ -3083,7 +3082,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             :type add_justifications: bool
             :param add_references: Whether to provide references for extracted items
             :type add_references: bool
-            :param justification_depth: The level of detail of justifications. Details to "brief".
+            :param justification_depth: The level of detail of justifications. Defaults to "brief".
             :type justification_depth: JustificationDepth
             :param justification_max_sents: The maximum number of sentences in a justification.
                 Defaults to 2.

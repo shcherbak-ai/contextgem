@@ -663,7 +663,7 @@ def _model_call_result_is_output_truncated(
     res: tuple[Any, _ModelUsage] | None,
 ) -> bool:
     """
-    Determines whether the result from a LLM call is invalid because the response
+    Determines whether the result from an LLM call is invalid because the response
     of the LLM was cut off at the max output tokens, as opposed to the LLM returning
     invalid data in a complete response.
 

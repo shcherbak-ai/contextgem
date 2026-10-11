@@ -40,7 +40,7 @@ class DocumentLLM(_DocumentLLM):
     """
     Handles processing documents with a specific LLM.
 
-    This class serves as an abstraction for interacting with a LLM. It provides functionality
+    This class serves as an abstraction for interacting with an LLM. It provides functionality
     for querying the LLM with text or image inputs, and manages prompt preparation and token
     usage tracking. An LLM can be used on its own or, with a role assigned, as a part of
     a model group.
