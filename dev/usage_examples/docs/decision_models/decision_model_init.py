@@ -13,6 +13,14 @@ decision_model_openai = DocumentDecisionModel(
     api_key="<your-openai-api-key>",
 )
 
+# Microsoft Foundry: the name after the prefix is the name of your deployment,
+# and the API base is the endpoint of your Foundry resource
+decision_model_foundry = DocumentDecisionModel(
+    model="azure_ai/<your-deployment-name>",
+    api_key="<your-foundry-api-key>",
+    api_base="https://<your-resource>.services.ai.azure.com",
+)
+
 # Cloudflare: the API base has the ID of your account
 decision_model_cloudflare = DocumentDecisionModel(
     model="cloudflare/clef",

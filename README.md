@@ -280,7 +280,7 @@ ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://gi
 
 ## ⚖️ Decision models
 
-Besides LLMs, ContextGem supports decision models (e.g. TypeSafe Jev, OpenAI Decisions API) through the same [LiteLLM](https://github.com/BerriAI/litellm) integration. A decision model answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts `BooleanConcept`, `LabelConcept` and `RatingConcept`, as well as aspects, and can be used on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers. Concepts with open values (text, numbers, dates, JSON objects), justifications, references for concepts and extraction from images require an LLM.
+Besides LLMs, ContextGem supports decision models (e.g. TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry) through the same [LiteLLM](https://github.com/BerriAI/litellm) integration. A decision model answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts `BooleanConcept`, `LabelConcept` and `RatingConcept`, as well as aspects, and can be used on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers. Concepts with open values (text, numbers, dates, JSON objects), justifications, references for concepts and extraction from images require an LLM.
 
 📖 Learn more about [decision models](https://contextgem.dev/decision_models/decision_models/) in the documentation.
 

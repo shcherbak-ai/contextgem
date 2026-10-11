@@ -56,7 +56,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     :ivar model: Model identifier in format {model_provider}/{model_name}, e.g.
         ``"typesafe/jev-latest"``. The model has to be served by one of the providers
         of decision models that ``litellm`` supports: a model of another provider
-        is rejected when the decision model is created.
+        is rejected when the decision model is created. For a model deployed in
+        Microsoft Foundry, the name of the deployment takes the place of the model
+        name, i.e. ``"azure_ai/<deployment_name>"``.
     :vartype model: str
     :ivar api_key: API key for authentication. Not required for self-hosted models.
         Not included in the serialized model data, i.e. to be set again after
@@ -73,8 +75,10 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         out by ``json()`` without its key. A key that is passed as the value of
         another parameter, e.g. of ``model``, is returned as any other value.
     :vartype api_key: str | None
-    :ivar api_base: Base URL of the API endpoint. Not included in the serialized
-        model data, i.e. to be set again after deserialization.
+    :ivar api_base: Base URL of the API endpoint, e.g. the address of a self-hosted
+        server, or the endpoint of the Microsoft Foundry resource that the model is
+        deployed in. Not included in the serialized model data, i.e. to be set
+        again after deserialization.
     :vartype api_base: str | None
     :ivar role: Free-form role label of the model (up to 64 printable characters), used
         for routing in a ``DocumentModelGroup``: the model extracts the aspects/concepts
@@ -98,7 +102,10 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         genai-prices has the prices of a text-generating model, i.e. a price of
         output tokens, which are the prices of the chat requests to the model
         (e.g. ``gpt-6-luna``), and for self-hosted models (``strands_decider/``):
-        set ``pricing_details`` for them instead. Defaults to ``False``.
+        set ``pricing_details`` for them instead. For a model that genai-prices
+        has no prices for, e.g. a model deployed in Microsoft Foundry, a warning
+        is issued and the costs stay at zero: ``pricing_details`` is to be set
+        instead for such a model too. Defaults to ``False``.
     :vartype auto_pricing: bool
     :ivar auto_pricing_refresh: Whether genai-prices should auto-refresh its cached
         pricing data, e.g. to price a recently released model that the bundled

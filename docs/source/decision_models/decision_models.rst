@@ -120,7 +120,7 @@ A decision model is identified in the same way as an LLM, in the format ``<provi
      - ``api_key``. The requests go to the Decisions API of OpenAI, which was in public beta as of October 2026. The same model name is used for chat and extraction with :class:`~contextgem.public.llms.DocumentLLM`: it is the class, not the model name, that makes it a decision model.
    * - Microsoft Foundry
      - ``azure_ai/<deployment_name>``
-     - ``api_key``, and ``api_base``: the endpoint of your Foundry resource, as ``https://<resource>.services.ai.azure.com``. The part after ``azure_ai/`` is the name of your deployment of the model, not the name of the model.
+     - ``api_key``, and ``api_base``: the endpoint of your Foundry resource, as ``https://<resource>.services.ai.azure.com``. The part after ``azure_ai/`` is the name of your deployment of the model, not the name of the model, see :ref:`decision-models-foundry-label`.
    * - Perplexity
      - ``perplexity/pplx-decider-v1-27b``
      - ``api_key``.
@@ -147,9 +147,47 @@ What to know about the providers:
 
 - **The provider is checked when a decision model is created.** A model of a provider that the installed LiteLLM version serves no decision models of, e.g. ``anthropic/...``, is rejected with a validation error (a ``ValueError``) that lists the supported providers, also when ``model`` is assigned later. The model name is not checked: a name that the provider does not serve, a missing API key and a missing API base all fail at the first request, with ``ModelAPIError`` (see :ref:`decision-models-errors-label`).
 - **API keys in the environment.** If ``api_key`` is not passed, LiteLLM reads the key from the environment variable of the provider, if it is set, e.g. ``TYPESAFE_API_KEY`` or ``OPENAI_API_KEY``.
-- **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``), to the Decisions API of OpenAI (``openai/gpt-6-luna``), and to the local servers of Ollama (``strands_decider/nimble``) and LM Studio (``strands_decider/kev-4b``). The other providers are reached through the same LiteLLM call and are not tested with ContextGem.
+- **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``), to the Decisions API of OpenAI (``openai/gpt-6-luna``), to a deployment of Microsoft-Decision-1 in Microsoft Foundry, and to the local servers of Ollama (``strands_decider/nimble``) and LM Studio (``strands_decider/kev-4b``). The other providers (Perplexity, OpenRouter, Cloudflare and a self-hosted vLLM server) are reached through the same LiteLLM call and are not tested with ContextGem.
 
 ContextGem sends only text to a decision model. Concepts with the ``"image"`` or ``"multimodal"`` modality are not supported, whichever provider is used.
+
+
+.. _decision-models-foundry-label:
+
+☁️ Decision Models in Microsoft Foundry
+------------------------------------------
+
+Microsoft Foundry serves Microsoft-Decision-1, a decision model that Microsoft announced on 9 October 2026 (`announcement of Microsoft-Decision-1 <https://commandline.microsoft.com/microsoft-decision-1-model-foundry/>`_, `model catalog of Foundry <https://ai.azure.com/catalog/models/Microsoft-Decision-1>`_). Microsoft describes it as a model post-trained from Qwen3.5-9B, with text-only input and a context of 32,768 tokens. Azure lists it as a preview model as of October 2026.
+
+In Foundry, a model is called through a deployment, which you create and name. Deploy the model in a Microsoft Foundry resource. Then create the decision model with the ``azure_ai/`` prefix followed by the name of your deployment, and with the endpoint of the resource as ``api_base``:
+
+.. code-block:: python
+   :caption: Using a decision model deployed in Microsoft Foundry
+
+   from contextgem import DocumentDecisionModel, ModelPricing
+
+   decision_model = DocumentDecisionModel(
+       model="azure_ai/<your-deployment-name>",  # the name of your deployment
+       api_key="<your-foundry-api-key>",
+       # The endpoint of your Foundry resource
+       api_base="https://<your-resource>.services.ai.azure.com",
+       # The prices that Microsoft lists for Microsoft-Decision-1 (October 2026)
+       pricing_details=ModelPricing(
+           input_per_1m_tokens=0.042,
+           output_per_1m_tokens=0.0,
+       ),
+   )
+
+What to know about decision models in Microsoft Foundry:
+
+- **The model is identified by the name of your deployment, not by the name of the model.** With a deployment named ``my-decision-model``, the model is ``azure_ai/my-decision-model``. With the name of the model in its place (``azure_ai/Microsoft-Decision-1``), Foundry answers that the deployment does not exist (HTTP 404), and the extraction fails with ``ModelAPIError``. The name is not checked when the decision model is created.
+- **The prefix is** ``azure_ai/``, **not** ``azure/``. LiteLLM serves no decision models under the ``azure/`` prefix: a decision model created with it is rejected with a validation error (a ``ValueError``) that lists the supported providers.
+- **The API base is the endpoint of the Foundry resource**, as ``https://<resource>.services.ai.azure.com``. LiteLLM sends the requests to ``POST <resource endpoint>/providers/microsoft/v1/systemone``, with the API key as a bearer token. It also accepts the endpoint as Foundry shows it for other APIs, i.e. ending with ``/models``, ``/openai/v1``, ``/openai``, ``/v1`` or ``/api/projects/<project>``, or with a query string, and removes these parts. Pass the plain endpoint of the resource.
+- **The key and the endpoint in the environment.** LiteLLM reads the key from the ``AZURE_AI_API_KEY`` environment variable if ``api_key`` is not passed, and the endpoint from ``AZURE_AI_API_BASE`` if ``api_base`` is not passed. Without an API base, passed or in the environment, the first request fails with ``ModelAPIError``: the message of LiteLLM names ``AZURE_AI_API_BASE``.
+- **Set the prices with** ``pricing_details``. ``genai-prices`` has no prices for a model deployed in Foundry, and the name of the deployment is your own. With ``auto_pricing=True``, a warning is therefore issued, and the costs stay at zero (see :ref:`decision-models-cost-label`). As of October 2026, Microsoft lists $0.042 per 1M input tokens for Microsoft-Decision-1, with output tokens free (`announcement of Microsoft-Decision-1 <https://commandline.microsoft.com/microsoft-decision-1-model-foundry/>`_). The usage that the API reports for a request can have output tokens: with ``output_per_1m_tokens=0.0``, they cost nothing.
+- **The rate limits are those of your deployment**, i.e. of its capacity. Azure reports them for each deployment. A request that is rejected for the rate limit is retried as any other transient error, up to ``num_retries_failed_request`` times. With ``use_concurrency=True``, set the ``async_limiter`` of the decision model to the rate of your deployment (see :ref:`decision-models-aspects-label`).
+- **The context of the model is 32,768 tokens**, according to Microsoft, and a text is not cut to fit it. By default, a document-level concept is decided on the text of the whole document, so send the text of a long document in parts, with ``max_paragraphs_to_analyze_per_call``, or attach its concepts to aspects (see :ref:`decision-models-limits-label`).
+- **The rest of this page applies.** The requests and the answers have the same format as for the other providers, so concepts, aspects, decision thresholds, model groups, fallback chains and the limits work as described on this page.
 
 
 .. _decision-models-local-label:
@@ -188,7 +226,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
    * - ``model``
      - ``str``
      - (Required)
-     - Model identifier in format ``<provider>/<model_name>``. See :ref:`decision-models-providers-label`.
+     - Model identifier in format ``<provider>/<model_name>``. For a model deployed in Microsoft Foundry, the name of your deployment takes the place of the model name. See :ref:`decision-models-providers-label`.
    * - ``api_key``
      - ``str | None``
      - ``None``
@@ -196,7 +234,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
    * - ``api_base``
      - ``str | None``
      - ``None``
-     - Base URL of the API endpoint. Required for a self-hosted server. Not included in the serialized data.
+     - Base URL of the API endpoint. Required for a self-hosted server. For a model deployed in Microsoft Foundry, the endpoint of the Foundry resource (see :ref:`decision-models-foundry-label`). Not included in the serialized data.
    * - ``role``
      - ``str | None``
      - ``None``
@@ -574,7 +612,7 @@ Token usage is tracked for every decision model, while costs are calculated only
 **How pricing is set:**
 
 - ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.1.10), these are the TypeSafe models listed above, ``perplexity/pplx-decider-v1-27b``, ``openrouter/typesafe/jev-1.13``, ``cloudflare/clef`` and ``cloudflare/clef-flash``.
-- For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.1.10, this is the case for a model deployed in Microsoft Foundry (``azure_ai/``) and for a model of a self-hosted vLLM server (``hosted_vllm/``): set ``pricing_details`` to get the costs of these models.
+- For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.1.10, this is the case for a model deployed in Microsoft Foundry (``azure_ai/``) and for a model of a self-hosted vLLM server (``hosted_vllm/``): set ``pricing_details`` to get the costs of these models (for the prices of the model in Foundry, see :ref:`decision-models-foundry-label`).
 - ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.10, this is the case for ``gpt-6-luna``, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``): the prices found for the model under its provider are its chat prices, which differ from its prices on the Decisions API. ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
 - With ``pricing_details``, :class:`~contextgem.public.data_models.ModelPricing` requires both ``input_per_1m_tokens`` and ``output_per_1m_tokens``. Set ``output_per_1m_tokens=0.0`` for a provider that does not charge for output.
 
@@ -600,6 +638,7 @@ All the questions of a call on a text are sent in one request, and ``max_items_p
 The more questions a request has, the fewer requests a text is sent in, and the less the extraction costs (see :ref:`decision-models-cost-label`). Whether the answer to a question depends on the other questions of the request is a property of the model:
 
 - **Hosted Jev models are documented to answer each question on its own.** TypeSafe states that all the questions of a request see the same text and are evaluated independently and in parallel (`TypeSafe: building with System One <https://docs.typesafe.ai/concepts/how-to-build-with-system-one>`_), and a published experiment got the same probabilities for the same questions in requests with 6 to 400 questions (`jev-fanout <https://github.com/TheWebDevel/jev-fanout>`_). The tests of ContextGem do not check this. With such a model, process all the aspects, or all the concepts, in one call.
+- **Microsoft-Decision-1 answered the same in a test with many questions.** In a test of ContextGem with a deployment of Microsoft-Decision-1 in Microsoft Foundry (October 2026), the 7 questions of 4 concepts were sent on a short document in one request together with up to 114 other yes/no questions. With 7, 37, 57 and 121 questions in the request, and with the 7 questions before or after the other ones, the values were the same and the probabilities stayed within 0.01, with the input tokens growing in proportion to the number of the questions.
 - **A local model can answer differently in a request with many questions.** In a test of ContextGem with ``nimble`` served by Ollama 0.40.2, the 7 questions of 4 concepts were sent on a short document in one request together with up to 50 other yes/no questions. When the 7 questions came after the other questions, the probability of "yes" for a concept that is clearly true fell with the number of the questions in the request: 0.99 with 7 questions, 0.96 with 37, 0.77 with 47, 0.38 with 52 and 0.05 with 57, i.e. the concept became false. When the 7 questions came first, their probabilities changed by less than 0.01. The input tokens grew from about 8,000 with 7 questions to about 400,000 with 57 questions, i.e. each question was processed together with all the others. In the same test, ``kev-4b`` served by LM Studio 0.4.26 gave the same values with 57 questions as with 7, in either order, with the probabilities within 0.03, and with the input tokens growing in proportion to the number of the questions.
 
 These were single tests on one short document: they show that the effect exists, not how large it is with your model and your documents. With a local model, before you rely on requests with many questions, extract a few of your aspects or concepts one per call (``max_items_per_call=1``) and all in one call, and compare the probabilities. If they differ, lower ``max_items_per_call``.
