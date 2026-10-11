@@ -33,7 +33,7 @@ from typing import Protocol
 
 import colorlog
 
-from contextgem.internal.suppressions import _install_litellm_noise_filters
+from contextgem.internal.suppressions import _configure_litellm_noise_filters
 
 
 class _LoggerProtocol(Protocol):
@@ -218,7 +218,8 @@ def _configure_logger_from_env():
 
     This function is thread-safe. Besides the 'contextgem' logger, it only installs
     the filters that suppress the noisy logs of third-party dependencies, which
-    are installed whatever the level of the logger is, including OFF.
+    are installed whatever the level of the logger is, including OFF, or removes
+    them if the suppression is disabled.
 
     :return: None
     :rtype: None
@@ -228,10 +229,11 @@ def _configure_logger_from_env():
     with _handler_lock:
         disable_logger, level_str = _read_env_vars()
 
-        # Install filters to suppress noisy third-party dependency logs.
+        # Install filters to suppress noisy third-party dependency logs, or
+        # remove them if the suppression is disabled.
         # They do not depend on the level, which is that of our logger only:
         # with our logger disabled, such logs would otherwise still be shown
-        _install_litellm_noise_filters()
+        _configure_litellm_noise_filters()
 
         # Remove our previous handler if it exists
         if _contextgem_handler is not None:

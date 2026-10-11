@@ -49,6 +49,10 @@ F = TypeVar("F", bound=Callable[..., Any])
 # Singleton used to avoid adding duplicate LiteLLM suppression filters on reloads
 _CONTEXTGEM_SUPPRESS_LITELLM_NOISE_FILTER: _SuppressLiteLLMNoiseFilter | None = None
 
+# Loggers that the LiteLLM suppression filter is attached to: the LiteLLM-related
+# loggers and asyncio (for logging worker noise), to avoid global side effects
+_LITELLM_NOISE_FILTER_LOGGER_NAMES = ("LiteLLM", "litellm", "asyncio")
+
 
 class _SuppressLiteLLMNoiseFilter(logging.Filter):
     """
@@ -69,6 +73,8 @@ class _SuppressLiteLLMNoiseFilter(logging.Filter):
       side effects. For `asyncio`, suppression is limited to entries clearly tied to LiteLLM
       (requires "litellm" in the message or traceback frames from litellm).
     - Suppression can be disabled by env var `CONTEXTGEM_SUPPRESS_LITELLM_NOISE=0`.
+      The variable is read each time the logger settings are loaded, i.e. it also
+      takes effect when it is changed later and the settings are reloaded.
     """
 
     PROXY_DEP_MISSING_KEYWORDS = (
@@ -174,28 +180,34 @@ class _SuppressLiteLLMNoiseFilter(logging.Filter):
         return not is_logging_worker_noise
 
 
-def _install_litellm_noise_filters() -> None:
+def _configure_litellm_noise_filters() -> None:
     """
-    Install standard-logging filters to hide noisy, non-actionable dependency logs.
+    Install standard-logging filters to hide noisy, non-actionable dependency logs,
+    or remove them if the suppression is disabled.
 
     Controlled by env var `CONTEXTGEM_SUPPRESS_LITELLM_NOISE` (default: "1").
-    Set to "0" to disable suppression.
+    Set to "0" to disable suppression. The variable is read on each call, so
+    the filters installed by an earlier call are removed once it is set to "0",
+    and installed again once it is no longer.
 
     :return: None
     :rtype: None
     """
+    global _CONTEXTGEM_SUPPRESS_LITELLM_NOISE_FILTER
 
     suppress = os.getenv("CONTEXTGEM_SUPPRESS_LITELLM_NOISE", "1") != "0"
     if not suppress:
+        for name in _LITELLM_NOISE_FILTER_LOGGER_NAMES:
+            lg = logging.getLogger(name)
+            for existing_filter in list(getattr(lg, "filters", [])):
+                if isinstance(existing_filter, _SuppressLiteLLMNoiseFilter):
+                    lg.removeFilter(existing_filter)
         return
 
-    global _CONTEXTGEM_SUPPRESS_LITELLM_NOISE_FILTER
     if _CONTEXTGEM_SUPPRESS_LITELLM_NOISE_FILTER is None:
         _CONTEXTGEM_SUPPRESS_LITELLM_NOISE_FILTER = _SuppressLiteLLMNoiseFilter()
 
-    # Apply only to LiteLLM-related loggers and asyncio (for logging worker noise)
-    # to avoid global side effects
-    for name in ("LiteLLM", "litellm", "asyncio"):
+    for name in _LITELLM_NOISE_FILTER_LOGGER_NAMES:
         lg = logging.getLogger(name)
         existing_filters = getattr(lg, "filters", [])
         if not any(

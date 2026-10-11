@@ -280,3 +280,57 @@ class TestLogging(BaseTest):
         finally:
             for lg, filters in zip(loggers, filters_before_test, strict=True):
                 lg.filters[:] = filters
+
+    @pytest.mark.parametrize("level", ["OFF", "INFO"])
+    def test_litellm_noise_filter_follows_its_variable_on_reload(
+        self, monkeypatch, level
+    ):
+        """
+        Tests that the filter of the noisy logs of litellm follows its environment
+        variable when the logger settings are reloaded, whatever the level of
+        the logger is: a filter that is installed is removed once the variable
+        disables it, and is installed again once the variable no longer does.
+        The other filters of the same loggers are left as they are.
+        """
+        monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, level)
+        loggers = [
+            logging.getLogger(name) for name in _LITELLM_NOISE_FILTER_LOGGER_NAMES
+        ]
+        filters_before_test = [list(lg.filters) for lg in loggers]
+        # A filter of another kind, e.g. one that the application has added
+        other_filter = logging.Filter()
+        try:
+            for lg in loggers:
+                lg.addFilter(other_filter)
+
+            # The value of the variable (None if it is not set), and whether
+            # the filter is installed after the settings are reloaded with it
+            for value, is_installed in [
+                (None, True),
+                # Disabled after it was installed: removed
+                ("0", False),
+                # ... and not installed when the settings are reloaded again
+                ("0", False),
+                # No longer disabled: installed again
+                ("1", True),
+                ("0", False),
+                (None, True),
+                # Reloading the settings does not install it twice
+                (None, True),
+            ]:
+                if value is None:
+                    monkeypatch.delenv(
+                        _SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME, raising=False
+                    )
+                else:
+                    monkeypatch.setenv(_SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME, value)
+                reload_logger_settings()
+                for lg in loggers:
+                    n_noise_filters = sum(
+                        isinstance(f, _SuppressLiteLLMNoiseFilter) for f in lg.filters
+                    )
+                    assert n_noise_filters == (1 if is_installed else 0)
+                    assert other_filter in lg.filters
+        finally:
+            for lg, filters in zip(loggers, filters_before_test, strict=True):
+                lg.filters[:] = filters
