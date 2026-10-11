@@ -205,15 +205,17 @@ def _get_tethered_recording_allow() -> list[str]:
     The host of a resource has the name of the resource, i.e. it differs for
     each contributor, so it is read from the environment and not listed above.
     It is read when a test starts: the ``.env`` file is loaded after this module.
-    It is approved only if it is the host of a Microsoft Foundry resource, i.e.
-    the variable cannot open the network to a host of another kind.
+    It is approved only if it is the host of a Microsoft Foundry resource, in
+    an HTTPS endpoint, i.e. the variable cannot open the network to a host of
+    another kind, and the key of the resource is not sent unencrypted.
 
     :return: The approved network destinations.
     :rtype: list[str]
     """
     allow = list(_TETHERED_RECORDING_ALLOW)
     try:
-        foundry_host = urlsplit(os.getenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, "")).hostname
+        endpoint = urlsplit(os.getenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, ""))
+        foundry_host = endpoint.hostname if endpoint.scheme == "https" else None
     except ValueError:
         # Not a URL
         foundry_host = None

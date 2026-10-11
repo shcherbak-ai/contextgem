@@ -71,6 +71,7 @@ from tests.conftest import (
     _FOUNDRY_API_BASE_ENV_VAR_NAME,
     _TETHERED_RECORDING_ALLOW,
     VCR_DUMMY_ENDPOINT_PREFIX,
+    VCR_REDACTION_MARKER,
     _get_tethered_recording_allow,
 )
 from tests.utils import redact_home_dir, vcr_before_record_request
@@ -1237,6 +1238,27 @@ _FOUNDRY_DECISIONS_PATH = "providers/microsoft/v1/systemone"
             f"https://My-Resource.Services.AI.Azure.com:443/{_FOUNDRY_DECISIONS_PATH}",
             f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
         ),
+        # ... whichever the scheme is, and under each of the domains that
+        # a resource has a host in
+        (
+            f"http://my-resource.services.ai.azure.com/{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+        ),
+        (
+            f"https://my-resource.cognitiveservices.azure.com/{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+        ),
+        (
+            f"https://my-resource.openai.azure.com/{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+        ),
+        # ... together with the name of a project of the resource
+        (
+            "https://my-resource.services.ai.azure.com/api/projects/my-project/"
+            f"extra/{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}api/projects/{VCR_REDACTION_MARKER}/"
+            f"extra/{_FOUNDRY_DECISIONS_PATH}",
+        ),
         # The dummy host, i.e. the one of a replayed request, is left as it is
         (
             f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
@@ -1249,6 +1271,11 @@ _FOUNDRY_DECISIONS_PATH = "providers/microsoft/v1/systemone"
             "https://api.typesafe.ai/v1/systemone",
         ),
         ("http://localhost:11434/v1/systemone", "http://localhost:11434/v1/systemone"),
+        # ... including a path that only looks like the one of a project
+        (
+            "https://api.example.com/api/projects/my-project/items",
+            "https://api.example.com/api/projects/my-project/items",
+        ),
         # ... and a URI that has the domain of the Foundry resources elsewhere
         # than at the end of its host
         (
@@ -1286,8 +1313,13 @@ def test_vcr_request_redaction_of_foundry_resource(uri: str, expected: str) -> N
         (None, None),
         ("", None),
         (VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"), None),
+        # An endpoint that is not an HTTPS one is not approved: the key would
+        # be sent unencrypted
+        ("http://my-resource.services.ai.azure.com", None),
         # A host of another kind is not approved, whatever the endpoint is
         ("https://example.com", None),
+        ("https://my-resource.cognitiveservices.azure.com", None),
+        ("https://my-resource.openai.azure.com", None),
         ("https://services.ai.azure.com.example.com", None),
         ("https://example.com/my-resource.services.ai.azure.com", None),
         ("https://services.ai.azure.com", None),
@@ -1306,9 +1338,8 @@ def test_recording_allowlist_has_foundry_resource_of_environment(
         monkeypatch.delenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, raising=False)
     else:
         monkeypatch.setenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, api_base)
+    listed = list(_TETHERED_RECORDING_ALLOW)
     allow = _get_tethered_recording_allow()
-    n_listed = len(_TETHERED_RECORDING_ALLOW)
-    assert allow[:n_listed] == _TETHERED_RECORDING_ALLOW
-    assert allow[n_listed:] == ([foundry_host] if foundry_host else [])
+    assert allow == [*listed, *([foundry_host] if foundry_host else [])]
     # The list of the approved destinations is not changed itself
-    assert len(_TETHERED_RECORDING_ALLOW) == n_listed
+    assert listed == _TETHERED_RECORDING_ALLOW

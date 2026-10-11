@@ -108,6 +108,7 @@ from contextgem.public import (
     register_tool,
 )
 from tests.base import BaseTest
+from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
 from tests.utils import REDACTED_VALUE
 
 
@@ -224,6 +225,27 @@ _RECORDED_SENTENCES_DOCUMENT_SENTENCE_TEXTS = [
 _RECORDED_SENTENCES_DOCUMENT_ADDITIONAL_CONTEXT = (
     "Section 5. Termination of the agreement by either party"
 )
+
+
+def _get_foundry_api_key_and_base() -> tuple[str, str]:
+    """
+    Returns the API key and the endpoint of the Microsoft Foundry resource that
+    the recorded tests send their requests to, as set in the environment.
+
+    If either is not set, e.g. in a ``.env`` file that has the keys of other APIs
+    only, the dummy one is returned instead, which is enough to replay the requests
+    from the cassettes: litellm rejects a request without a key or an endpoint
+    before it is sent, and the host of a resource is replaced with the dummy one
+    in the cassettes.
+
+    :return: The API key and the endpoint.
+    :rtype: tuple[str, str]
+    """
+    return (
+        os.getenv("CONTEXTGEM_AZURE_AI_API_KEY") or VCR_REDACTION_MARKER,
+        os.getenv("CONTEXTGEM_AZURE_AI_API_BASE")
+        or VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"),
+    )
 
 
 def _create_decisions_response(
@@ -975,10 +997,12 @@ class TestDecisionModels(BaseTest):
 
         A test stubs the API calls that it expects, on the same module object that
         the framework calls them through. Without a stub, the calls of litellm to
-        its Decisions and chat completions APIs are replaced with a failure here.
-        The function of litellm that prepares each request to its Decisions API is
-        replaced as well, i.e. a request cannot be prepared even if the framework
-        gets to litellm in another way than through the calls replaced.
+        its Decisions API, in either request format, and to its chat completions
+        API are replaced with a failure here. The function of litellm that
+        prepares each request to its Decisions API is replaced as well, in each
+        module that calls it, i.e. a request cannot be prepared even if
+        the framework gets to litellm in another way than through the calls
+        replaced.
 
         The failure is not an ``Exception``, so that it is not handled as an error
         of a model API (retried, passed to a fallback model, or converted into
@@ -1024,15 +1048,24 @@ class TestDecisionModels(BaseTest):
 
         for env_var_name in _DECISIONS_API_KEY_ENV_VARS:
             monkeypatch.delenv(env_var_name, raising=False)
-        for name in ["adecisions", "decisions", "acompletion", "completion"]:
+        for name in [
+            "adecisions",
+            "decisions",
+            "asystemone",
+            "systemone",
+            "acompletion",
+            "completion",
+        ]:
             monkeypatch.setattr(litellm, name, create_failure(f"litellm.{name}"))
-        # `litellm.decisions` is the function, which shadows the package of
-        # the same name, i.e. its module is reached through `sys.modules`
-        monkeypatch.setattr(
-            sys.modules["litellm.decisions.main"],
-            "_prepare_decisions_call",
-            create_failure("litellm.decisions.main._prepare_decisions_call"),
-        )
+        # `litellm.decisions` and `litellm.systemone` are the functions, which
+        # shadow the packages of the same names, i.e. their modules are reached
+        # through `sys.modules`
+        for module_name in ["litellm.decisions.main", "litellm.systemone.main"]:
+            monkeypatch.setattr(
+                sys.modules[module_name],
+                "prepare_call",
+                create_failure(f"{module_name}.prepare_call"),
+            )
         yield
         assert not unstubbed_calls, (
             f"Model API calls not stubbed by the test: {unstubbed_calls}"
@@ -14201,7 +14234,6 @@ class TestDecisionModels(BaseTest):
         decision_model = self._create_decision_model_for_recorded_tests(
             "microsoft_foundry"
         )
-        assert decision_model.model == _FOUNDRY_DECISION_MODEL
         document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
         document.concepts = self._create_concepts_for_recorded_tests()
 
@@ -14217,10 +14249,9 @@ class TestDecisionModels(BaseTest):
         The name of the model is such a deployment: a model deployed in Microsoft
         Foundry is requested by the name of its deployment.
         """
+        api_key, api_base = _get_foundry_api_key_and_base()
         decision_model = DocumentDecisionModel(
-            model="azure_ai/Microsoft-Decision-1",
-            api_key=os.getenv("CONTEXTGEM_AZURE_AI_API_KEY"),
-            api_base=os.getenv("CONTEXTGEM_AZURE_AI_API_BASE"),
+            model="azure_ai/Microsoft-Decision-1", api_key=api_key, api_base=api_base
         )
         document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
         document.concepts = [
@@ -14238,8 +14269,9 @@ class TestDecisionModels(BaseTest):
         assert "DeploymentNotFound" in str(original_error)
         assert not document.concepts[0]._is_processed
         assert not document.concepts[0].extracted_items
-        # The error is not a transient one: the request is sent once, and is
-        # recorded as a failed one
+        # The error is not a transient one: the request is not sent again, and
+        # is recorded as a failed one
+        assert exc_info.value.retry_count == 0
         (call,) = decision_model.get_usage()[0].usage.calls
         assert call.timestamp_received is None
         assert call.response is None
@@ -14264,10 +14296,11 @@ class TestDecisionModels(BaseTest):
         :rtype: DocumentDecisionModel
         """
         if provider == "microsoft_foundry":
+            api_key, api_base = _get_foundry_api_key_and_base()
             return DocumentDecisionModel(
                 model=_FOUNDRY_DECISION_MODEL,
-                api_key=os.getenv("CONTEXTGEM_AZURE_AI_API_KEY"),
-                api_base=os.getenv("CONTEXTGEM_AZURE_AI_API_BASE"),
+                api_key=api_key,
+                api_base=api_base,
                 pricing_details=ModelPricing(
                     input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
                 ),

@@ -120,9 +120,16 @@ assert len(set(VCR_FILTER_HEADERS)) == len(VCR_FILTER_HEADERS)
 REDACTED_VALUE = "**********"
 
 # Start of the URI of a request to a Microsoft Foundry resource: the host has
-# the name of the resource
+# the name of the resource, under any of the domains that a resource has a host
+# in, and whichever the scheme is
 _FOUNDRY_RESOURCE_URI_START_PATTERN = re.compile(
-    r"^https://[^/?#]+\.services\.ai\.azure\.com(?::\d+)?/", flags=re.IGNORECASE
+    r"^https?://[^/?#]+\.(?:services\.ai|cognitiveservices|openai)\.azure\.com"
+    r"(?::\d+)?/",
+    flags=re.IGNORECASE,
+)
+# Name of a project of a Microsoft Foundry resource, in the path of a URI
+_FOUNDRY_PROJECT_PATH_PATTERN = re.compile(
+    r"/api/projects/[^/?#]+", flags=re.IGNORECASE
 )
 
 
@@ -144,20 +151,27 @@ def vcr_before_record_request(request):
 
     Redacts Azure OpenAI domain and deployment names from request URIs
     to protect sensitive configuration details in VCR cassettes, and the host
-    of a Microsoft Foundry resource, which has the name of the resource.
+    of a Microsoft Foundry resource, which has the name of the resource, with
+    the name of a project of the resource, if the URI has it.
 
     VCR also applies the function to a request before the request is matched
-    with the recorded ones, i.e. a request to a resource is replayed whatever
-    the resource is, including the dummy one that is set when no ``.env`` file
-    is found.
+    with the recorded ones, i.e. a request to a Microsoft Foundry resource is
+    replayed whatever the resource is, as is a request to the dummy endpoint,
+    which is used when no endpoint of a resource is set.
 
     :param request: The VCR request object to process.
     :return: The modified request object with redacted URI.
     """
     # Redact the host of the Microsoft Foundry resource
-    request.uri = _FOUNDRY_RESOURCE_URI_START_PATTERN.sub(
+    uri, n_hosts_redacted = _FOUNDRY_RESOURCE_URI_START_PATTERN.subn(
         VCR_DUMMY_ENDPOINT_PREFIX, request.uri
     )
+    if n_hosts_redacted:
+        # ... and the name of a project of the resource
+        uri = _FOUNDRY_PROJECT_PATH_PATTERN.sub(
+            f"/api/projects/{VCR_REDACTION_MARKER}", uri
+        )
+        request.uri = uri
 
     # Redact the Azure OpenAI domain & deployment name
     path_parts = request.uri.split("/openai/deployments/")
