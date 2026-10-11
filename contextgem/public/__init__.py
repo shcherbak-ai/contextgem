@@ -71,10 +71,11 @@ __all__ = (
     "JsonObjectExample",
     # LLMs
     "DocumentLLM",
-    "DocumentModelGroup",
     "ChatSession",
     # Decision models
     "DocumentDecisionModel",
+    # Model groups
+    "DocumentModelGroup",
     # Data models
     "ModelPricing",
     # Utils

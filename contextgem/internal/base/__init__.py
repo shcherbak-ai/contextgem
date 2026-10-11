@@ -64,13 +64,14 @@ __all__ = (
     # Images
     "_Image",
     # LLMs
-    "_COST_QUANT",
-    "_LOCAL_MODEL_PROVIDERS",
     "_ChatSession",
     "_DocumentLLM",
-    "_DocumentModelGroup",
     # Decision models
     "_DocumentDecisionModel",
+    # Models (shared)
+    "_COST_QUANT",
+    "_LOCAL_MODEL_PROVIDERS",
+    "_DocumentModelGroup",
     # Paragraphs and sentences
     "_Paragraph",
     "_Sentence",

@@ -79,9 +79,10 @@ __all__ = (
     # LLMs
     "ChatSession",
     "DocumentLLM",
-    "DocumentModelGroup",
     # Decision models
     "DocumentDecisionModel",
+    # Model groups
+    "DocumentModelGroup",
     # Data models
     "ModelPricing",
     # Utils

@@ -52,15 +52,22 @@ from contextgem.internal.typings.types import (
 
 class _ModelCall(BaseModel):
     """
-    Holds data on an individual call to the model.
+    Holds data on an individual call to the model, i.e. on one request sent to
+    an LLM or to a decision model.
 
-    :ivar timestamp_sent: The epoch timestamp (in ms) when the prompt was sent.
+    :ivar timestamp_sent: The epoch timestamp (in ms) when the request was sent.
     :vartype timestamp_sent: int
-    :ivar prompt_kwargs: The kwargs passed for prompt rendering.
+    :ivar prompt_kwargs: The kwargs passed for prompt rendering. Empty for a call
+        whose prompt is not rendered from a template: a chat message, a request
+        that returns the results of tool calls, or a request to a decision model.
     :vartype prompt_kwargs: dict[str, Any]
-    :ivar prompt: The fully rendered input prompt sent to the model.
+    :ivar prompt: What was sent to the model. For an LLM, the fully rendered input
+        prompt, or ``"<tools_round_trip>"`` for a request that returns the results
+        of tool calls. For a decision model, the request as JSON, i.e. the model,
+        the text and the questions.
     :vartype prompt: str
-    :ivar response: The raw text response returned by the model for the given prompt.
+    :ivar response: What the model returned. For an LLM, the raw text response for
+        the given prompt. For a decision model, the answers to the questions as JSON.
         Defaults to None if the response is not yet received.
     :vartype response: str | None
     :ivar timestamp_received: The epoch timestamp (in ms) when the response was received.

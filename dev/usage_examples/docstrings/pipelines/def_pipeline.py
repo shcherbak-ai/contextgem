@@ -33,11 +33,11 @@ nda_pipeline = ExtractionPipeline(
         StringConcept(
             name="Anomaly",
             description="Anomaly in the contract, e.g. out-of-context or nonsensical clauses",
-            model_role="reasoner",  # Route this aspect to the model with the "reasoner" role
+            model_role="reasoner",  # Route this concept to the model with the "reasoner" role
             add_references=True,  # Add references to the source text
             reference_depth="sentences",  # Reference to the sentence level
             add_justifications=True,  # Add justifications for the anomaly
-            justification_depth="balanced",  # Justification at the sentence level
+            justification_depth="balanced",  # Justification with a balanced level of detail
             justification_max_sents=5,  # Maximum number of sentences in the justification
         ),
         BooleanConcept(
