@@ -447,7 +447,8 @@ class TestModelGroups(BaseTest):
         ]:
             with pytest.raises(
                 ValueError,
-                match=f"^Fallback model `{text_only_model}` does not support vision",
+                match=f"^Fallback model `{text_only_model}` does not support vision "
+                r".*, if the model it is a fallback for fails: ",
             ):
                 extraction_method(document)
         # Same for the images sent in a chat

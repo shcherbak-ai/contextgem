@@ -1384,7 +1384,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     continue
                 if llm_instance.is_fallback:
                     subject = "Fallback model"
-                    condition = ", if the LLM it is a fallback for fails"
+                    condition = ", if the model it is a fallback for fails"
                 else:
                     subject = "Model"
                     condition = ""
@@ -1542,7 +1542,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             model_group = cast("_DocumentModelGroup", llm_or_group)
             if not model_group.models:
                 raise ValueError(
-                    "The provided DocumentModelGroup does not contain any defined LLMs."
+                    "The provided DocumentModelGroup does not contain any defined models."
                 )
             model_group._check_model_roles_are_routable(
                 {i.model_role for i in instances_in_scope}
@@ -3104,8 +3104,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
             if llm is None:
                 raise ValueError(
-                    f"No LLM with role `{instances_to_process[0].model_role}` is defined in the group, "
-                    f"while some {instance_type}s rely on such LLM."
+                    f"No model with role `{instances_to_process[0].model_role}` is defined in the group, "
+                    f"while some {instance_type}s rely on such model."
                 )
 
             def get_invalid_output_error_msg(
@@ -4635,7 +4635,7 @@ class _DocumentModel(_GenericModelProcessor):
         label="contextgem._calculate_auto_pricing_costs",
         hint=(
             "ContextGem refreshes model pricing data from raw.githubusercontent.com "
-            "via genai-prices when DocumentLLM(auto_pricing_refresh=True). "
+            "via genai-prices when a model has auto_pricing_refresh=True. "
             "If your app uses tethered.activate(), allow raw.githubusercontent.com "
             "— or set auto_pricing_refresh=False to use bundled pricing data, "
             "or set pricing_details=ModelPricing(...) to bypass genai-prices entirely. "
