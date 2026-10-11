@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import os
 from unittest.mock import patch
+from urllib.parse import urlsplit
 
 import nest_asyncio
 import pytest
@@ -189,6 +190,38 @@ _TETHERED_RECORDING_ALLOW = [
     *_TETHERED_REPLAY_ALLOW,
 ]
 
+# Environment variable with the endpoint of the Microsoft Foundry resource that
+# the decision model of the tests is deployed in, and the domain of such endpoints
+_FOUNDRY_API_BASE_ENV_VAR_NAME = "CONTEXTGEM_AZURE_AI_API_BASE"
+_FOUNDRY_RESOURCE_DOMAIN = ".services.ai.azure.com"
+
+
+def _get_tethered_recording_allow() -> list[str]:
+    """
+    Returns the approved network destinations for recording, including the host
+    of the Microsoft Foundry resource that the decision model of the tests is
+    deployed in, if its endpoint is set in the environment.
+
+    The host of a resource has the name of the resource, i.e. it differs for
+    each contributor, so it is read from the environment and not listed above.
+    It is read when a test starts: the ``.env`` file is loaded after this module.
+    It is approved only if it is the host of a Microsoft Foundry resource, i.e.
+    the variable cannot open the network to a host of another kind.
+
+    :return: The approved network destinations.
+    :rtype: list[str]
+    """
+    allow = list(_TETHERED_RECORDING_ALLOW)
+    try:
+        foundry_host = urlsplit(os.getenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, "")).hostname
+    except ValueError:
+        # Not a URL
+        foundry_host = None
+    if foundry_host and foundry_host.lower().endswith(_FOUNDRY_RESOURCE_DOMAIN):
+        allow.append(foundry_host.lower())
+    return allow
+
+
 # Sentinel for tethered's locked mode — required to deactivate a locked policy.
 # Held privately in this module so test code cannot trip the policy off.
 _TETHERED_LOCK = object()
@@ -239,7 +272,8 @@ def _tethered_network_guard(request):
     - **VCR replay** (cassette exists): allows only HuggingFace
       (SaT model downloads not captured by VCR).
     - **VCR recording** (no cassette): allows approved endpoints
-      (LLM APIs, HuggingFace for model downloads, genai-prices for cost data)
+      (LLM APIs, HuggingFace for model downloads, genai-prices for cost data),
+      the Microsoft Foundry resource whose endpoint is set in the environment,
       and localhost for local LLMs.
     - **Non-VCR tests**: blocks all network calls entirely.
 
@@ -251,7 +285,9 @@ def _tethered_network_guard(request):
     if is_vcr:
         is_replay = _cassette_exists(_get_cassette_path(request))
         tethered.activate(
-            allow=_TETHERED_REPLAY_ALLOW if is_replay else _TETHERED_RECORDING_ALLOW,
+            allow=(
+                _TETHERED_REPLAY_ALLOW if is_replay else _get_tethered_recording_allow()
+            ),
             allow_localhost=not is_replay,  # localhost for local LLMs during recording
             locked=True,
             lock_token=_TETHERED_LOCK,

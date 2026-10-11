@@ -402,6 +402,10 @@ Based on the test results and your changes, you'll fall into one of these four s
    # For TypeSafe API tests (decision models)
    CONTEXTGEM_TYPESAFE_API_KEY=your_typesafe_api_key
    
+   # For Microsoft Foundry API tests (decision models)
+   CONTEXTGEM_AZURE_AI_API_KEY=your_foundry_api_key
+   CONTEXTGEM_AZURE_AI_API_BASE=https://your-resource.services.ai.azure.com
+   
    # For debugging output
    CONTEXTGEM_LOGGER_LEVEL=DEBUG
    ```
@@ -411,8 +415,6 @@ Based on the test results and your changes, you'll fall into one of these four s
    ```bash
    CONTEXTGEM_GOOGLE_AI_STUDIO_API_KEY=your_google_api_key
    ```
-
-   The key of TypeSafe is the exception to the prefix (see [Decision Model Testing](#decision-model-testing)).
 
 3. **Update dummy variables** in `tests/utils.py` by adding your new environment variables to the `default_env_vars` dictionary in `set_dummy_env_variables_for_testing_from_cassettes()`, mapped to a dummy value (e.g. "DUMMY")
 
@@ -495,8 +497,10 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 - `CONTEXTGEM_OPENAI_API_KEY`
 - `CONTEXTGEM_TYPESAFE_API_KEY`
+- `CONTEXTGEM_AZURE_AI_API_KEY`
+- `CONTEXTGEM_AZURE_AI_API_BASE`: the host of a Microsoft Foundry resource, which has the name of the resource, is replaced with a dummy host (`dummy-endpoint.local`) in the recorded requests
 
-The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
+The response headers in which Azure names the deployment, the region and the cluster that served a request are redacted too. The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
 
 **Adding New Variables:**
 
@@ -520,12 +524,15 @@ Most tests of decision models in `tests/test_decision_models.py` replace the API
 
 - **`CONTEXTGEM_TYPESAFE_API_KEY`** in your `.env` file, for the requests to TypeSafe (`typesafe/jev-latest`).
 - **`CONTEXTGEM_OPENAI_API_KEY`** in your `.env` file, for the requests to the Decisions API of OpenAI (`openai/gpt-6-luna` as a decision model), and to the LLM that is used next to the decision model in a model group.
+- **`CONTEXTGEM_AZURE_AI_API_KEY` and `CONTEXTGEM_AZURE_AI_API_BASE`** in your `.env` file, for the requests to a decision model deployed in Microsoft Foundry: the key and the endpoint of your Foundry resource (`https://<resource>.services.ai.azure.com`). The resource needs a deployment of Microsoft-Decision-1 named `ms-decision-model`: a model deployed in Microsoft Foundry is requested by the name of its deployment, which is the one in `tests/test_decision_models.py` (`azure_ai/ms-decision-model`).
 - **[Ollama](https://ollama.com/) 0.35 or later**, running on its default port, with the decision model identified under the `strands_decider/` prefix in `tests/test_decision_models.py` downloaded (`ollama pull nimble`), for the requests to a local decision model. No API key is needed.
 - **[LM Studio](https://lmstudio.ai/) 0.4.26 or later** (not LM Studio Bionic, whose server does not serve decision models), running its local server on the default port, with the decision model of the LM Studio test in `tests/test_decision_models.py` downloaded (`lms get https://huggingface.co/ggml-org/Kev-4B-GGUF`). No API key is needed.
 
 `litellm` rejects a request to a decision model that has no API key before the request is sent, i.e. before it can be replayed from a cassette. For this reason, a dummy `CONTEXTGEM_TYPESAFE_API_KEY` is set when no `.env` file is present. If your `.env` file has no `CONTEXTGEM_TYPESAFE_API_KEY`, add the variable with any value, otherwise these tests fail also in replay.
 
-The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed while recording. A test that sends requests to another provider of decision models needs the host of that provider added to that list (see [Network Egress Control](#network-egress-control)).
+The same holds for the tests of a decision model deployed in Microsoft Foundry, which is requested with a key and with the endpoint of the resource: a dummy `CONTEXTGEM_AZURE_AI_API_KEY` and a dummy `CONTEXTGEM_AZURE_AI_API_BASE` are set when no `.env` file is present. If your `.env` file has no key and endpoint of a Foundry resource, add `CONTEXTGEM_AZURE_AI_API_KEY` with any value and `CONTEXTGEM_AZURE_AI_API_BASE=https://dummy-endpoint.local`, i.e. the host that the host of a resource is replaced with in the cassettes.
+
+The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed while recording. The host of your Microsoft Foundry resource is allowed while recording as well: it differs for each resource, so it is read from `CONTEXTGEM_AZURE_AI_API_BASE`, and is accepted only if it is a host under `services.ai.azure.com`. A test that sends requests to another provider of decision models needs the host of that provider added to that list (see [Network Egress Control](#network-egress-control)).
 
 #### Important Notes
 
@@ -551,7 +558,7 @@ LLM API calls are deliberately **not** scoped — endpoints are user-configured 
 **2. Test suite (`tethered.activate`)** — enforces egress control at the socket level during VCR-marked tests:
 
 - **Replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
-- **Recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data) and localhost for local LLMs
+- **Recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data), the Microsoft Foundry resource whose endpoint is set in `CONTEXTGEM_AZURE_AI_API_BASE`, and localhost for local LLMs
 
 The fixture activates tethered in **hardened mode** (`locked=True` with a private lock token, `external_subprocess_policy="block"`), so test code can't disable the policy mid-test and non-Python subprocesses are refused — closing the shell-egress bypass.
 

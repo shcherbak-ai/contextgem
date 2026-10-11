@@ -1,0 +1,142 @@
+interactions:
+- request:
+    body: '{"model":"ms-decision-model","state":"NON-DISCLOSURE AGREEMENT\n\nThis
+      Non-Disclosure Agreement is made between Alpha Ltd and Beta Inc. Each party
+      shall keep the confidential information of the other party secret and shall
+      not disclose it to any third party.\n\nThe parties rate the sensitivity of the
+      confidential information as 4 on a scale from 1 to 5.\n\nThis agreement is governed
+      by the laws of Norway.","questions":{"C0":{"type":"noul","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: NDA check\nConcept description: The document is a non-disclosure
+      agreement\nAnswer \"yes\" if the text supports the statement. Answer \"no\"
+      if the text contradicts the statement or does not support it."},"C1":{"type":"choice","instructions":"Classify
+      the text by selecting exactly one of the options, based on the concept below.\nConcept
+      name: Document type\nConcept description: Type of the document\nSelect the most
+      appropriate option, even if no option fits the text perfectly.","criteria":{"non-disclosure
+      agreement":null,"employment agreement":null,"lease agreement":null,"invoice":null}},"C2-L0":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the document covers\nLabel: confidentiality\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},"C2-L1":{"type":"noul","instructions":"Decide whether the label
+      below applies to the text, based on the concept below.\nConcept name: Topics\nConcept
+      description: Topics that the document covers\nLabel: governing law\nAnswer \"yes\"
+      if the label applies to the text. Answer \"no\" if it does not. The other labels
+      of the concept are decided separately: several labels, or none, may apply."},"C2-L2":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics\nConcept description: Topics that the document covers\nLabel: salary\nAnswer
+      \"yes\" if the label applies to the text. Answer \"no\" if it does not. The
+      other labels of the concept are decided separately: several labels, or none,
+      may apply."},"C2-L3":{"type":"noul","instructions":"Decide whether the label
+      below applies to the text, based on the concept below.\nConcept name: Topics\nConcept
+      description: Topics that the document covers\nLabel: real estate\nAnswer \"yes\"
+      if the label applies to the text. Answer \"no\" if it does not. The other labels
+      of the concept are decided separately: several labels, or none, may apply."},"C3":{"type":"score","instructions":"Rate
+      the text on a scale from 1 to 5, based on the concept below.\nConcept name:
+      Sensitivity\nConcept description: Sensitivity of the confidential information,
+      as rated by the parties in the document\nSelect the level of the scale that
+      fits the text best.","criteria":["1: 1 on a scale from 1 to 5","2: 2 on a scale
+      from 1 to 5","3: 3 on a scale from 1 to 5","4: 4 on a scale from 1 to 5","5:
+      5 on a scale from 1 to 5"]}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '3178'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"C0": {"noul": 0.9971990696888569,
+        "type": "noul"}, "C1": {"choice": "non-disclosure agreement", "confidence":
+        0.9974641510564206, "probabilities": {"employment agreement": 0.0008032025683031827,
+        "invoice": 0.0008032025683031827, "lease agreement": 0.0002954815710782158,
+        "non-disclosure agreement": 0.9980981132923155}, "type": "choice"}, "C2-L0":
+        {"noul": 0.991422498891882, "type": "noul"}, "C2-L1": {"noul": 0.9770226304228389,
+        "type": "noul"}, "C2-L2": {"noul": 0.0010322351951715962, "type": "noul"},
+        "C2-L3": {"noul": 0.0009110563021934162, "type": "noul"}, "C3": {"confidence":
+        0.9976922236072363, "legend": {"0": "1: 1 on a scale from 1 to 5", "1": "2:
+        2 on a scale from 1 to 5", "2": "3: 3 on a scale from 1 to 5", "3": "4: 4
+        on a scale from 1 to 5", "4": "5: 5 on a scale from 1 to 5"}, "probabilities":
+        {"0": 0.0002301342212612014, "1": 0.0002607762368198691, "2": 0.0008032473584499994,
+        "3": 0.998153778885789, "4": 0.0005520632976798536}, "score": 2.9985368608018064,
+        "type": "score"}}, "usage": {"input_tokens": 741, "output_tokens": 7}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '1022'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

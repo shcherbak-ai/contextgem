@@ -1,0 +1,1265 @@
+interactions:
+- request:
+    body: '{"model":"ms-decision-model","state":"This agreement is made between Alpha
+      Ltd, the client, and Beta Inc, the provider.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Payment\nAspect description: Clauses on the
+      fees and on how the fees are paid\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '475'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.0008040891121275524,
+        "type": "noul"}}, "usage": {"input_tokens": 100, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '142'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"The client shall pay the provider
+      a fee of 5,000 euros every month. The provider shall send the client a report
+      on its work every week.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Payment\nAspect description: Clauses on the
+      fees and on how the fees are paid\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '529'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.9978172832127138,
+        "type": "noul"}}, "usage": {"input_tokens": 115, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '139'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"Paragraph: A written notice of 60
+      days is required.\n\nAdditional context of the paragraph: Section 5. Termination
+      of the agreement by either party","questions":{"A0":{"type":"noul","instructions":"The
+      text has one paragraph of a document and additional context of the paragraph,
+      such as its formatting, list context or table position. Use the additional context
+      to understand the structural role and position of the paragraph in the document.
+      Decide whether the paragraph is relevant to the aspect below.\nAspect name:
+      Payment\nAspect description: Clauses on the fees and on how the fees are paid\nAnswer
+      \"yes\" if the paragraph addresses or clearly relates to the aspect. Answer
+      \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '746'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.0006263369461466886,
+        "type": "noul"}}, "usage": {"input_tokens": 151, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '142'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"Either party may terminate this agreement
+      if the other party is in material breach.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Payment\nAspect description: Clauses on the
+      fees and on how the fees are paid\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '477'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.0005527813662289925,
+        "type": "noul"}}, "usage": {"input_tokens": 97, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '141'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"This agreement is governed by the
+      laws of Norway.","questions":{"A0":{"type":"noul","instructions":"The text is
+      one paragraph of a document. Decide whether the paragraph is relevant to the
+      aspect below.\nAspect name: Payment\nAspect description: Clauses on the fees
+      and on how the fees are paid\nAnswer \"yes\" if the paragraph addresses or clearly
+      relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '443'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.0008040907321783306,
+        "type": "noul"}}, "usage": {"input_tokens": 92, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '141'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"Sentence: The client shall pay the
+      provider a fee of 5,000 euros every month.\n\nParagraph that the sentence is
+      from: The client shall pay the provider a fee of 5,000 euros every month. The
+      provider shall send the client a report on its work every week.","questions":{"A0":{"type":"noul","instructions":"The
+      text has one sentence of a document and the paragraph that the sentence is from,
+      given as its context. Decide whether the sentence is relevant to the aspect
+      below.\nAspect name: Payment\nAspect description: Clauses on the fees and on
+      how the fees are paid\nAnswer \"yes\" if the sentence addresses or clearly relates
+      to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '711'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.9982992774339811,
+        "type": "noul"}}, "usage": {"input_tokens": 158, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '139'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"Sentence: The provider shall send
+      the client a report on its work every week.\n\nParagraph that the sentence is
+      from: The client shall pay the provider a fee of 5,000 euros every month. The
+      provider shall send the client a report on its work every week.","questions":{"A0":{"type":"noul","instructions":"The
+      text has one sentence of a document and the paragraph that the sentence is from,
+      given as its context. Decide whether the sentence is relevant to the aspect
+      below.\nAspect name: Payment\nAspect description: Clauses on the fees and on
+      how the fees are paid\nAnswer \"yes\" if the sentence addresses or clearly relates
+      to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '711'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.047426056557712426,
+        "type": "noul"}}, "usage": {"input_tokens": 153, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '141'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"This agreement is made between Alpha
+      Ltd, the client, and Beta Inc, the provider.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Termination\nAspect description: Clauses
+      on how the agreement is terminated\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '473'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.0003353518633608929,
+        "type": "noul"}}, "usage": {"input_tokens": 97, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '141'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"The client shall pay the provider
+      a fee of 5,000 euros every month. The provider shall send the client a report
+      on its work every week.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Termination\nAspect description: Clauses
+      on how the agreement is terminated\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '527'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.00026119173009947765,
+        "type": "noul"}}, "usage": {"input_tokens": 112, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '143'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"Paragraph: A written notice of 60
+      days is required.\n\nAdditional context of the paragraph: Section 5. Termination
+      of the agreement by either party","questions":{"A0":{"type":"noul","instructions":"The
+      text has one paragraph of a document and additional context of the paragraph,
+      such as its formatting, list context or table position. Use the additional context
+      to understand the structural role and position of the paragraph in the document.
+      Decide whether the paragraph is relevant to the aspect below.\nAspect name:
+      Termination\nAspect description: Clauses on how the agreement is terminated\nAnswer
+      \"yes\" if the paragraph addresses or clearly relates to the aspect. Answer
+      \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '744'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.9986749770388261,
+        "type": "noul"}}, "usage": {"input_tokens": 148, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '139'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"Either party may terminate this agreement
+      if the other party is in material breach.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Termination\nAspect description: Clauses
+      on how the agreement is terminated\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '475'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.9988304894684206,
+        "type": "noul"}}, "usage": {"input_tokens": 94, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '138'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"This agreement is governed by the
+      laws of Norway.","questions":{"A0":{"type":"noul","instructions":"The text is
+      one paragraph of a document. Decide whether the paragraph is relevant to the
+      aspect below.\nAspect name: Termination\nAspect description: Clauses on how
+      the agreement is terminated\nAnswer \"yes\" if the paragraph addresses or clearly
+      relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '441'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.00043056055458298763,
+        "type": "noul"}}, "usage": {"input_tokens": 89, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '142'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"ms-decision-model","state":"A written notice of 60 days is required.","questions":{"A0":{"type":"noul","instructions":"The
+      text is one paragraph of a document. Decide whether the paragraph is relevant
+      to the aspect below.\nAspect name: Termination\nAspect description: Clauses
+      on how the agreement is terminated\nAnswer \"yes\" if the paragraph addresses
+      or clearly relates to the aspect. Answer \"no\" if it does not."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '432'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://dummy-endpoint.local/providers/microsoft/v1/systemone
+  response:
+    body:
+      string: '{"model": "microsoft-decision-1", "answers": {"A0": {"noul": 0.9669140550548645,
+        "type": "noul"}}, "usage": {"input_tokens": 90, "output_tokens": 1}}'
+    headers:
+      apim-request-id:
+      - DUMMY
+      azureai-fe-is-streaming:
+      - 'False'
+      azureai-fe-offer-type:
+      - paygo
+      azureai-processed-tier:
+      - default
+      azureai-requested-tier:
+      - default
+      azureml-destination-deployment:
+      - DUMMY
+      azureml-destination-endpoint:
+      - DUMMY
+      azureml-destination-model-group:
+      - DUMMY
+      azureml-destination-region:
+      - DUMMY
+      azureml-model-deployment:
+      - DUMMY
+      azureml-model-group:
+      - DUMMY
+      azureml-model-session:
+      - DUMMY
+      azureml-ms-model-error-comprehensive:
+      - --
+      azureml-served-by-cluster:
+      - DUMMY
+      content-length:
+      - '138'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - DUMMY
+      x-ms-inference-retry-history:
+      - DUMMY
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-region:
+      - DUMMY
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-key:
+      - DUMMY
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '0'
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

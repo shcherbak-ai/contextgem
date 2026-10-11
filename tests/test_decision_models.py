@@ -135,6 +135,11 @@ _OTHER_DECISION_MODEL = "typesafe/jev-1.13.0"
 _LLM_MODEL = "openai/gpt-6-luna"
 _OTHER_LLM_MODEL = "openai/gpt-5.6-luna"
 
+# Decision model deployed in Microsoft Foundry that the recorded tests send their
+# requests to: a deployment of Microsoft-Decision-1, identified by the name that
+# the deployment was given
+_FOUNDRY_DECISION_MODEL = "azure_ai/ms-decision-model"
+
 # Text of the document used in the tests, and the texts expected to be sent
 # to a decision model for it: the cleaned text of the document for the concepts
 # of the document, and the texts of the paragraphs for the concepts of an aspect
@@ -14183,21 +14188,90 @@ class TestDecisionModels(BaseTest):
 
         self._check_concepts_of_recorded_tests(document, decision_model)
 
+    @pytest.mark.vcr
+    def test_extract_concepts_with_microsoft_foundry_api(self):
+        """
+        Tests the extraction of concepts of each supported type from a document
+        with a decision model deployed in Microsoft Foundry, with the requests
+        sent to the endpoint of the Foundry resource. The model is identified by
+        the name of its deployment, and is created with the endpoint of
+        the resource and with its prices, which cannot be looked up by the name
+        of a deployment.
+        """
+        decision_model = self._create_decision_model_for_recorded_tests(
+            "microsoft_foundry"
+        )
+        assert decision_model.model == _FOUNDRY_DECISION_MODEL
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = self._create_concepts_for_recorded_tests()
+
+        decision_model.extract_concepts_from_document(document)
+
+        self._check_concepts_of_recorded_tests(document, decision_model)
+
+    @pytest.mark.vcr
+    def test_unknown_deployment_with_microsoft_foundry_api(self):
+        """
+        Tests that a request for a deployment that the Microsoft Foundry resource
+        does not have fails with the error of the API, without being retried.
+        The name of the model is such a deployment: a model deployed in Microsoft
+        Foundry is requested by the name of its deployment.
+        """
+        decision_model = DocumentDecisionModel(
+            model="azure_ai/Microsoft-Decision-1",
+            api_key=os.getenv("CONTEXTGEM_AZURE_AI_API_KEY"),
+            api_base=os.getenv("CONTEXTGEM_AZURE_AI_API_BASE"),
+        )
+        document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
+        document.concepts = [
+            BooleanConcept(
+                name="NDA check",
+                description="The document is a non-disclosure agreement",
+            )
+        ]
+
+        with pytest.raises(ModelAPIError) as exc_info:
+            decision_model.extract_concepts_from_document(document)
+
+        original_error = exc_info.value.original_error
+        assert isinstance(original_error, litellm.NotFoundError)
+        assert "DeploymentNotFound" in str(original_error)
+        assert not document.concepts[0]._is_processed
+        assert not document.concepts[0].extracted_items
+        # The error is not a transient one: the request is sent once, and is
+        # recorded as a failed one
+        (call,) = decision_model.get_usage()[0].usage.calls
+        assert call.timestamp_received is None
+        assert call.response is None
+
     @staticmethod
     def _create_decision_model_for_recorded_tests(
-        provider: Literal["typesafe", "openai", "ollama", "lm_studio"],
+        provider: Literal[
+            "typesafe", "openai", "ollama", "lm_studio", "microsoft_foundry"
+        ],
     ) -> DocumentDecisionModel:
         """
         Creates the decision model of a provider for a test that sends its
         requests to the API of the provider: with the API key and the prices of
         a hosted model, or with the address of a local server, which needs no
-        API key and has no prices.
+        API key and has no prices. A model deployed in Microsoft Foundry also
+        takes the endpoint of the Foundry resource.
 
         :param provider: The provider of the decision model.
-        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio",
+            "microsoft_foundry"]
         :return: The decision model.
         :rtype: DocumentDecisionModel
         """
+        if provider == "microsoft_foundry":
+            return DocumentDecisionModel(
+                model=_FOUNDRY_DECISION_MODEL,
+                api_key=os.getenv("CONTEXTGEM_AZURE_AI_API_KEY"),
+                api_base=os.getenv("CONTEXTGEM_AZURE_AI_API_BASE"),
+                pricing_details=ModelPricing(
+                    input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
+                ),
+            )
         if provider == "typesafe":
             return DocumentDecisionModel(
                 model="typesafe/jev-latest",
@@ -14225,7 +14299,10 @@ class TestDecisionModels(BaseTest):
         )
 
     def _check_sentence_level_aspects_of_recorded_tests(
-        self, provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        self,
+        provider: Literal[
+            "typesafe", "openai", "ollama", "lm_studio", "microsoft_foundry"
+        ],
     ) -> None:
         """
         Extracts, with the decision model of a provider through its API, an aspect
@@ -14239,7 +14316,8 @@ class TestDecisionModels(BaseTest):
         those of the model.
 
         :param provider: The provider of the decision model.
-        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio",
+            "microsoft_foundry"]
         :return: None
         :rtype: None
         """
@@ -14376,7 +14454,10 @@ class TestDecisionModels(BaseTest):
         assert 0 <= answer["probability"] <= probabilities_with_context[True]
 
     def _check_concepts_in_parts_of_recorded_tests(
-        self, provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        self,
+        provider: Literal[
+            "typesafe", "openai", "ollama", "lm_studio", "microsoft_foundry"
+        ],
     ) -> None:
         """
         Extracts, with the decision model of a provider through its API, concepts
@@ -14387,7 +14468,8 @@ class TestDecisionModels(BaseTest):
         The values are checked where the answers are unambiguous for the part.
 
         :param provider: The provider of the decision model.
-        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio"]
+        :type provider: Literal["typesafe", "openai", "ollama", "lm_studio",
+            "microsoft_foundry"]
         :return: None
         :rtype: None
         """
@@ -14518,6 +14600,16 @@ class TestDecisionModels(BaseTest):
         self._check_sentence_level_aspects_of_recorded_tests("lm_studio")
 
     @pytest.mark.vcr
+    def test_extract_sentence_level_aspects_with_microsoft_foundry_api(self):
+        """
+        Tests the extraction of an aspect with sentences as its items, and of
+        a paragraph that is sent with its additional context, with a decision
+        model deployed in Microsoft Foundry, with the requests sent to
+        the endpoint of the Foundry resource.
+        """
+        self._check_sentence_level_aspects_of_recorded_tests("microsoft_foundry")
+
+    @pytest.mark.vcr
     def test_extract_concepts_in_parts_with_typesafe_api(self):
         """
         Tests the extraction of concepts from a document in parts, with one
@@ -14552,3 +14644,13 @@ class TestDecisionModels(BaseTest):
         a local LM Studio server, with the requests sent to the server.
         """
         self._check_concepts_in_parts_of_recorded_tests("lm_studio")
+
+    @pytest.mark.vcr
+    def test_extract_concepts_in_parts_with_microsoft_foundry_api(self):
+        """
+        Tests the extraction of concepts from a document in parts, with one
+        item of a concept for each part, with a decision model deployed in
+        Microsoft Foundry, with the requests sent to the endpoint of
+        the Foundry resource.
+        """
+        self._check_concepts_in_parts_of_recorded_tests("microsoft_foundry")

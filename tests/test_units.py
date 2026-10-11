@@ -49,6 +49,7 @@ from typing import (  # noqa: UP035
 import pytest
 from pydantic import Field, StringConstraints
 from typing_extensions import NotRequired
+from vcr.request import Request as VCRRequest
 
 from contextgem import Aspect, Document, StringConcept
 from contextgem.internal.tools.docstring_parser import _ParsedDocstring
@@ -66,7 +67,13 @@ from contextgem.internal.typings.types_to_strings import (
     _raise_json_serializable_type_error,
     _serialize_type_hint,
 )
-from tests.utils import redact_home_dir
+from tests.conftest import (
+    _FOUNDRY_API_BASE_ENV_VAR_NAME,
+    _TETHERED_RECORDING_ALLOW,
+    VCR_DUMMY_ENDPOINT_PREFIX,
+    _get_tethered_recording_allow,
+)
+from tests.utils import redact_home_dir, vcr_before_record_request
 
 
 # ---------------------------------------------------------------------------
@@ -1211,3 +1218,97 @@ def test_redact_home_dir(
     and their escaping are, while other paths are left as they are."""
     monkeypatch.setattr(Path, "home", staticmethod(lambda: home_dir))
     assert redact_home_dir(text) == expected
+
+
+_FOUNDRY_DECISIONS_PATH = "providers/microsoft/v1/systemone"
+
+
+@pytest.mark.parametrize(
+    ("uri", "expected"),
+    [
+        # The host of a Microsoft Foundry resource, which has the name of
+        # the resource, is replaced with the dummy one
+        (
+            f"https://my-resource.services.ai.azure.com/{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+        ),
+        # ... in any letter case, and with a port
+        (
+            f"https://My-Resource.Services.AI.Azure.com:443/{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+        ),
+        # The dummy host, i.e. the one of a replayed request, is left as it is
+        (
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+            f"{VCR_DUMMY_ENDPOINT_PREFIX}{_FOUNDRY_DECISIONS_PATH}",
+        ),
+        # ... as are the hosts of the other APIs
+        ("https://api.openai.com/v1/decisions", "https://api.openai.com/v1/decisions"),
+        (
+            "https://api.typesafe.ai/v1/systemone",
+            "https://api.typesafe.ai/v1/systemone",
+        ),
+        ("http://localhost:11434/v1/systemone", "http://localhost:11434/v1/systemone"),
+        # ... and a URI that has the domain of the Foundry resources elsewhere
+        # than at the end of its host
+        (
+            "https://services.ai.azure.com.example.com/v1/systemone",
+            "https://services.ai.azure.com.example.com/v1/systemone",
+        ),
+        (
+            "https://example.com/my-resource.services.ai.azure.com/v1/systemone",
+            "https://example.com/my-resource.services.ai.azure.com/v1/systemone",
+        ),
+    ],
+)
+def test_vcr_request_redaction_of_foundry_resource(uri: str, expected: str) -> None:
+    """The host of a Microsoft Foundry resource is replaced with the dummy one in
+    the URI of a request that is recorded to a cassette, or matched with
+    the recorded ones, while the other URIs are left as they are."""
+    request = VCRRequest("POST", uri, b"{}", {})
+    assert vcr_before_record_request(request).uri == expected
+
+
+@pytest.mark.parametrize(
+    ("api_base", "foundry_host"),
+    [
+        # The host of the Microsoft Foundry resource of the environment is approved
+        (
+            "https://my-resource.services.ai.azure.com",
+            "my-resource.services.ai.azure.com",
+        ),
+        # ... whatever follows it in the endpoint, and in lower case
+        (
+            "https://My-Resource.Services.AI.Azure.com/models?api-version=1",
+            "my-resource.services.ai.azure.com",
+        ),
+        # No endpoint is set, or the dummy one, as when no `.env` file is found
+        (None, None),
+        ("", None),
+        (VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"), None),
+        # A host of another kind is not approved, whatever the endpoint is
+        ("https://example.com", None),
+        ("https://services.ai.azure.com.example.com", None),
+        ("https://example.com/my-resource.services.ai.azure.com", None),
+        ("https://services.ai.azure.com", None),
+        # Not a URL with a host
+        ("my-resource.services.ai.azure.com", None),
+        ("https://[my-resource.services.ai.azure.com", None),
+    ],
+)
+def test_recording_allowlist_has_foundry_resource_of_environment(
+    monkeypatch: pytest.MonkeyPatch, api_base: str | None, foundry_host: str | None
+) -> None:
+    """The network destinations approved while a cassette is recorded include
+    the host of the Microsoft Foundry resource whose endpoint is set in
+    the environment, and no other host that the variable may hold."""
+    if api_base is None:
+        monkeypatch.delenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, raising=False)
+    else:
+        monkeypatch.setenv(_FOUNDRY_API_BASE_ENV_VAR_NAME, api_base)
+    allow = _get_tethered_recording_allow()
+    n_listed = len(_TETHERED_RECORDING_ALLOW)
+    assert allow[:n_listed] == _TETHERED_RECORDING_ALLOW
+    assert allow[n_listed:] == ([foundry_host] if foundry_host else [])
+    # The list of the approved destinations is not changed itself
+    assert len(_TETHERED_RECORDING_ALLOW) == n_listed

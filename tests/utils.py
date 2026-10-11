@@ -80,7 +80,14 @@ VCR_FILTER_HEADERS = {
     "api-key",
     "apim-request-id",
     "authorization",
+    "azureml-destination-deployment",
+    "azureml-destination-endpoint",
+    "azureml-destination-model-group",
+    "azureml-destination-region",
+    "azureml-model-deployment",
+    "azureml-model-group",
     "azureml-model-session",
+    "azureml-served-by-cluster",
     "CF-RAY",
     "cookie",
     "Date",
@@ -93,7 +100,9 @@ VCR_FILTER_HEADERS = {
     "x-aml-cluster",
     "x-ms-client-request-id",
     "x-ms-deployment-name",
+    "x-ms-inference-retry-history",
     "x-ms-region",
+    "x-ratelimit-key",
     "x-ratelimit-limit-requests",
     "x-ratelimit-limit-tokens",
     "x-ratelimit-remaining-requests",
@@ -109,6 +118,12 @@ assert len(set(VCR_FILTER_HEADERS)) == len(VCR_FILTER_HEADERS)
 # What a validation error of a model or of a model group reports in place of
 # an input that is, or may be, an API key
 REDACTED_VALUE = "**********"
+
+# Start of the URI of a request to a Microsoft Foundry resource: the host has
+# the name of the resource
+_FOUNDRY_RESOURCE_URI_START_PATTERN = re.compile(
+    r"^https://[^/?#]+\.services\.ai\.azure\.com(?::\d+)?/", flags=re.IGNORECASE
+)
 
 
 def vcr_count_recording(response):
@@ -128,11 +143,22 @@ def vcr_before_record_request(request):
     Processes VCR requests before recording to redact sensitive information.
 
     Redacts Azure OpenAI domain and deployment names from request URIs
-    to protect sensitive configuration details in VCR cassettes.
+    to protect sensitive configuration details in VCR cassettes, and the host
+    of a Microsoft Foundry resource, which has the name of the resource.
+
+    VCR also applies the function to a request before the request is matched
+    with the recorded ones, i.e. a request to a resource is replayed whatever
+    the resource is, including the dummy one that is set when no ``.env`` file
+    is found.
 
     :param request: The VCR request object to process.
     :return: The modified request object with redacted URI.
     """
+    # Redact the host of the Microsoft Foundry resource
+    request.uri = _FOUNDRY_RESOURCE_URI_START_PATTERN.sub(
+        VCR_DUMMY_ENDPOINT_PREFIX, request.uri
+    )
+
     # Redact the Azure OpenAI domain & deployment name
     path_parts = request.uri.split("/openai/deployments/")
     if len(path_parts) > 1:
@@ -1502,6 +1528,12 @@ def set_dummy_env_variables_for_testing_from_cassettes() -> None:
         # is passed is rejected by litellm before it is sent, i.e. before it can
         # be replayed
         "CONTEXTGEM_TYPESAFE_API_KEY": "DUMMY",
+        # The key and the endpoint of the Microsoft Foundry resource of the decision
+        # model deployed in it: litellm rejects a request without either of them
+        # before it is sent. The endpoint is the one that the host of a resource
+        # is replaced with in the cassettes.
+        "CONTEXTGEM_AZURE_AI_API_KEY": "DUMMY",
+        "CONTEXTGEM_AZURE_AI_API_BASE": VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"),
         "CONTEXTGEM_LOGGER_LEVEL": "DEBUG",
     }
 
