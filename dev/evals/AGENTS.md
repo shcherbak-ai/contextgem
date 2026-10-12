@@ -75,7 +75,7 @@ uv run python -m dev.evals.check_scorer
 - **Cost**: requests, input, cached and output tokens, seconds, retries for invalid data.
 - **Decision models** extract all the aspects, and of the concepts only the Boolean, label and rating ones, without justifications and references. Their concept counts are not comparable with those of the LLMs.
 
-Each run records a short hash of every prompt template of the library (`provenance`), which tells the runs of a changed prompt apart.
+Each run records a short hash of every prompt template of the library, including the template of the default system message (`provenance`), which tells the runs of a changed prompt apart. The runs of the baseline were recorded before the system message template was hashed, so they have no hash of it.
 
 ## Comparing a Change with the Baseline
 
@@ -131,4 +131,4 @@ Not tested: the questions of concepts (each case has six concepts that a decisio
 
 ## Adding a Case
 
-Add the three files of the case to `cases/`, register its pipeline builder in `_PIPELINE_BUILDERS` of `harness.py`, and run `check_scorer`. The paragraphs of the text, split by line, must be those of the reference answers.
+Add the `.txt`, `.py` and `.gold.json` files of the case to `cases/`, and a `.neutral.json` file if the case has paragraphs that are not scored, register its pipeline builder in `_PIPELINE_BUILDERS` of `harness.py`, and run `check_scorer`. The paragraphs of the text, split by line, must be those of the reference answers.

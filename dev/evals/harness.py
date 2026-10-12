@@ -59,6 +59,7 @@ CASES_DIR = EVALS_DIR / "cases"
 RESULTS_DIR = EVALS_DIR / "results"
 REPO_DIR = EVALS_DIR.parent.parent
 PROMPTS_DIR = REPO_DIR / "contextgem" / "internal" / "prompts"
+SYSTEM_MESSAGE_DIR = REPO_DIR / "contextgem" / "internal" / "system"
 
 # Kind of the model that extracts a case
 ModelKind = Literal["llm", "decision"]
@@ -345,8 +346,9 @@ def scrub(text: str, private_texts: list[str]) -> str:
 def get_provenance() -> dict[str, Any]:
     """
     Returns what tells which prompts and which version of ``litellm`` a result is
-    recorded with: a short hash of each prompt template of the library, so that
-    the results of a changed prompt are told apart from the others.
+    recorded with: a short hash of each prompt template of the library, including
+    the template of the default system message, so that the results of a changed
+    prompt are told apart from the others.
 
     :return: The version of ``litellm``, and the first 12 characters of
         the SHA-256 hash of each prompt template, by the name of its file.
@@ -357,7 +359,10 @@ def get_provenance() -> dict[str, Any]:
             # Whatever the line endings of the checkout are
             path.read_bytes().replace(b"\r\n", b"\n")
         ).hexdigest()[:12]
-        for path in sorted(PROMPTS_DIR.glob("*.j2"))
+        for path in sorted(
+            [*PROMPTS_DIR.glob("*.j2"), *SYSTEM_MESSAGE_DIR.glob("*.j2")],
+            key=lambda path: path.name,
+        )
     }
     return {"litellm": metadata.version("litellm"), "prompts": prompts}
 
