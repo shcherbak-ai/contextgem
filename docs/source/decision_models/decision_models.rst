@@ -71,7 +71,7 @@ The requests are sent with `LiteLLM <https://github.com/BerriAI/litellm>`_, as f
 
 - **The answer comes from a closed set**: yes or no, one or several of your labels, a level of a scale.
 - **You need to know how sure the model is of an answer**, e.g. to send the uncertain answers to a human review, or to accept a "yes" only above a threshold of your choice.
-- **There are many such questions, or many documents, and the cost of generated output matters.** A decision model generates no text, and is billed for its input. For the prices, and for how the number of requests changes the cost, see :ref:`decision-models-cost-label`.
+- **There are many such questions, or many documents, and the cost of generated output matters.** A decision model generates no text. For what an extraction costs, see :ref:`decision-models-cost-label`.
 
 **Use an LLM instead when:**
 
@@ -117,7 +117,7 @@ A decision model is identified in the same way as an LLM, in the format ``<provi
      - ``api_key``.
    * - OpenAI
      - ``openai/gpt-6-luna``
-     - ``api_key``. The requests go to the Decisions API of OpenAI, which was in public beta as of October 2026. The same model name is used for chat and extraction with :class:`~contextgem.public.llms.DocumentLLM`: it is the class, not the model name, that makes it a decision model.
+     - ``api_key``. The requests go to the Decisions API of OpenAI. The same model name is used for chat and extraction with :class:`~contextgem.public.llms.DocumentLLM`: it is the class, not the model name, that makes it a decision model.
    * - Microsoft Foundry
      - ``azure_ai/<deployment_name>``
      - ``api_key``, and ``api_base``: the endpoint of your Foundry resource, as ``https://<resource>.services.ai.azure.com``. The part after ``azure_ai/`` is the name of your deployment of the model, not the name of the model, see :ref:`decision-models-foundry-label`.
@@ -157,25 +157,20 @@ ContextGem sends only text to a decision model. Concepts with the ``"image"`` or
 ☁️ Decision Models in Microsoft Foundry
 ------------------------------------------
 
-Microsoft Foundry serves Microsoft-Decision-1, a decision model that Microsoft announced on 9 October 2026 (`announcement of Microsoft-Decision-1 <https://commandline.microsoft.com/microsoft-decision-1-model-foundry/>`_, `model catalog of Foundry <https://ai.azure.com/catalog/models/Microsoft-Decision-1>`_). Microsoft describes it as a model post-trained from Qwen3.5-9B, with text-only input and a context of 32,768 tokens. Azure lists it as a preview model as of October 2026.
+Microsoft Foundry serves Microsoft-Decision-1, a decision model with text-only input (`announcement of Microsoft-Decision-1 <https://commandline.microsoft.com/microsoft-decision-1-model-foundry/>`_, `model catalog of Foundry <https://ai.azure.com/catalog/models/Microsoft-Decision-1>`_).
 
 In Foundry, a model is called through a deployment, which you create and name. Deploy the model in a Microsoft Foundry resource. Then create the decision model with the ``azure_ai/`` prefix followed by the name of your deployment, and with the endpoint of the resource as ``api_base``:
 
 .. code-block:: python
    :caption: Using a decision model deployed in Microsoft Foundry
 
-   from contextgem import DocumentDecisionModel, ModelPricing
+   from contextgem import DocumentDecisionModel
 
    decision_model = DocumentDecisionModel(
        model="azure_ai/<your-deployment-name>",  # the name of your deployment
        api_key="<your-foundry-api-key>",
        # The endpoint of your Foundry resource
        api_base="https://<your-resource>.services.ai.azure.com",
-       # The prices that Microsoft lists for Microsoft-Decision-1 (October 2026)
-       pricing_details=ModelPricing(
-           input_per_1m_tokens=0.042,
-           output_per_1m_tokens=0.0,
-       ),
    )
 
 What to know about decision models in Microsoft Foundry:
@@ -184,9 +179,9 @@ What to know about decision models in Microsoft Foundry:
 - **The prefix is** ``azure_ai/``, **not** ``azure/``. LiteLLM serves no decision models under the ``azure/`` prefix: a decision model created with it is rejected with a validation error (a ``ValueError``) that lists the supported providers.
 - **The API base is the endpoint of the Foundry resource**, as ``https://<resource>.services.ai.azure.com``. LiteLLM sends the requests to ``POST <resource endpoint>/providers/microsoft/v1/systemone``, with the API key as a bearer token. It also accepts the endpoint as Foundry shows it for other APIs, i.e. ending with ``/models``, ``/openai/v1``, ``/openai``, ``/v1`` or ``/api/projects/<project>``, or with a query string, and removes these parts. Pass the plain endpoint of the resource.
 - **The key and the endpoint in the environment.** LiteLLM reads the key from the ``AZURE_AI_API_KEY`` environment variable if ``api_key`` is not passed, and the endpoint from ``AZURE_AI_API_BASE`` if ``api_base`` is not passed. Without an API base, passed or in the environment, the first request fails with ``ModelAPIError``: the message of LiteLLM names ``AZURE_AI_API_BASE``.
-- **Set the prices with** ``pricing_details``. ``genai-prices`` has no prices for a model deployed in Foundry, and the name of the deployment is your own. With ``auto_pricing=True``, a warning is therefore issued, and the costs stay at zero (see :ref:`decision-models-cost-label`). As of October 2026, Microsoft lists $0.042 per 1M input tokens for Microsoft-Decision-1, with output tokens free (`announcement of Microsoft-Decision-1 <https://commandline.microsoft.com/microsoft-decision-1-model-foundry/>`_). The usage that the API reports for a request can have output tokens: with ``output_per_1m_tokens=0.0``, they cost nothing.
+- **Set the prices with** ``pricing_details``. ``genai-prices`` has no prices for a model deployed in Foundry, and the name of the deployment is your own. With ``auto_pricing=True``, a warning is therefore issued, and the costs stay at zero: set ``pricing_details`` to the prices that Microsoft lists for the model (see :ref:`decision-models-cost-label`).
 - **The rate limits are those of your deployment**, i.e. of the capacity that it is given. A request that is rejected for the rate limit is retried as any other transient error, up to ``num_retries_failed_request`` times. With ``use_concurrency=True``, set the ``async_limiter`` of the decision model to the rate of your deployment (see :ref:`decision-models-aspects-label`).
-- **The context of the model is 32,768 tokens**, according to Microsoft, and a text is not cut to fit it. For a longer text, see :ref:`decision-models-limits-label`.
+- **A text is not cut to fit the context of the model.** For a longer text, see :ref:`decision-models-limits-label`.
 
 
 .. _decision-models-local-label:
@@ -206,7 +201,7 @@ What to know about local decision models:
 - **No API key and no prices.** A local server needs no ``api_key``. The tokens are counted as for any other decision model, and no cost is calculated unless you set ``pricing_details``.
 - **LM Studio serves only the models that it lists as decision models**, e.g. the GGUF builds that ``ggml-org`` publishes on Hugging Face, such as Kev 4B (``lms get https://huggingface.co/ggml-org/Kev-4B-GGUF``). A request for a model that LM Studio lists as an LLM is rejected, and the extraction fails with ``ModelAPIError``. The local server of LM Studio Bionic, which is a separate app, does not serve the endpoint as of its version 1.1.7 (October 2026).
 - **The choice of the model matters.** In the tests of ContextGem on a short and unambiguous document, ``nimble`` (9B, with Ollama 0.40) answered each question as expected, with probabilities above 0.99. ``kev-4b`` (4B, with LM Studio 0.4.26) answered as expected except for one of the two labels of a multi-label concept that apply, which got a probability of 0.31. The much smaller ``tev1:0.8b`` answered several of the same questions wrongly. Check a local model on your own documents before you rely on it.
-- **Shorter texts than with the cloud models.** A local model has a smaller context, and the text is not cut to fit it: both servers reject a request whose text and question exceed the context that the model is loaded with, Ollama also a request whose body exceeds 64 KiB, and the extraction fails with ``ModelAPIError``. For a longer text, see :ref:`decision-models-limits-label`.
+- **Shorter texts than with the cloud models.** A local model usually has a smaller context, and the text is not cut to fit it: the server rejects a request whose text and question exceed the context that the model is loaded with, and the extraction fails with ``ModelAPIError``. For a longer text, see :ref:`decision-models-limits-label`.
 
 
 📝 Configuration Parameters
@@ -225,7 +220,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
    * - ``model``
      - ``str``
      - (Required)
-     - Model identifier in format ``<provider>/<model_name>``. For a model deployed in Microsoft Foundry, the name of your deployment takes the place of the model name. See :ref:`decision-models-providers-label`.
+     - Model identifier in format ``<provider>/<model_name>``. See :ref:`decision-models-providers-label`.
    * - ``api_key``
      - ``str | None``
      - ``None``
@@ -233,7 +228,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
    * - ``api_base``
      - ``str | None``
      - ``None``
-     - Base URL of the API endpoint. Required for a self-hosted server. For a model deployed in Microsoft Foundry, the endpoint of the Foundry resource (see :ref:`decision-models-foundry-label`). Not included in the serialized data.
+     - Base URL of the API endpoint. Required for a self-hosted server and for a model deployed in Microsoft Foundry (see :ref:`decision-models-foundry-label`). Not included in the serialized data.
    * - ``role``
      - ``str | None``
      - ``None``
@@ -611,7 +606,7 @@ Token usage is tracked for every decision model, while costs are calculated only
 - ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.10, this is the case for ``gpt-6-luna``, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``). ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
 - With ``pricing_details``, :class:`~contextgem.public.data_models.ModelPricing` requires both ``input_per_1m_tokens`` and ``output_per_1m_tokens``. Set ``output_per_1m_tokens=0.0`` for a provider that does not charge for output.
 
-As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0`` (`TypeSafe models <https://docs.typesafe.ai/models>`_), and OpenAI lists $0.10 per 1M input tokens for ``gpt-6-luna`` on the Decisions API (`OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_). Neither charges for output tokens. Check the pricing page of your provider for the current prices.
+For the prices of a model, see the pricing page of its provider, e.g. `TypeSafe models <https://docs.typesafe.ai/models>`_ or the `OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_.
 
 **What a request costs.** The text is sent, and billed as input tokens, once per request: the text of the document or of the paragraphs of the aspect for each call of concepts, and the text of the paragraph for each request of aspect extraction, including each request for a sentence of the paragraph, for an aspect with ``reference_depth="sentences"``. The fewer requests a text is sent in, the less it costs:
 
@@ -633,8 +628,8 @@ All the questions of a call on a text are sent in one request, and ``max_items_p
 The more questions a request has, the fewer requests a text is sent in, and the less the extraction costs (see :ref:`decision-models-cost-label`). Whether the answer to a question depends on the other questions of the request is a property of the model:
 
 - **Hosted Jev models are documented to answer each question on its own.** TypeSafe states that all the questions of a request see the same text and are evaluated independently and in parallel (`TypeSafe: building with System One <https://docs.typesafe.ai/concepts/how-to-build-with-system-one>`_), and a published experiment got the same probabilities for the same questions in requests with 6 to 400 questions (`jev-fanout <https://github.com/TheWebDevel/jev-fanout>`_). The tests of ContextGem do not check this. With such a model, process all the aspects, or all the concepts, in one call.
-- **Microsoft-Decision-1 answered the same in a test with many questions.** In a test of ContextGem with a deployment of Microsoft-Decision-1 in Microsoft Foundry (October 2026), the 7 questions of 4 concepts were sent on a short document in one request together with up to 114 other yes/no questions. With 7, 37, 57 and 121 questions in the request, and with the 7 questions before or after the other ones, the values were the same and the probabilities stayed within 0.01, with the input tokens growing in proportion to the number of the questions.
-- **A local model can answer differently in a request with many questions.** In a test of ContextGem with ``nimble`` served by Ollama 0.40.2, the 7 questions of 4 concepts were sent on a short document in one request together with up to 50 other yes/no questions. When the 7 questions came after the other questions, the probability of "yes" for a concept that is clearly true fell with the number of the questions in the request: 0.99 with 7 questions, 0.96 with 37, 0.77 with 47, 0.38 with 52 and 0.05 with 57, i.e. the concept became false. When the 7 questions came first, their probabilities changed by less than 0.01. The input tokens grew from about 8,000 with 7 questions to about 400,000 with 57 questions, i.e. each question was processed together with all the others. In the same test, ``kev-4b`` served by LM Studio 0.4.26 gave the same values with 57 questions as with 7, in either order, with the probabilities within 0.03, and with the input tokens growing in proportion to the number of the questions.
+- **Microsoft-Decision-1 answered the same in a test with many questions.** In a test of ContextGem with a deployment of Microsoft-Decision-1 in Microsoft Foundry (October 2026), the 7 questions of 4 concepts were sent on a short document in one request together with up to 114 other yes/no questions. With 7, 37, 57 and 121 questions in the request, and with the 7 questions before or after the other ones, the values were the same and the probabilities stayed within 0.01.
+- **A local model can answer differently in a request with many questions.** In a test of ContextGem with ``nimble`` served by Ollama 0.40.2, the 7 questions of 4 concepts were sent on a short document in one request together with up to 50 other yes/no questions. When the 7 questions came after the other questions, the probability of "yes" for a concept that is clearly true fell with the number of the questions in the request, from 0.99 with 7 questions to 0.05 with 57, i.e. the concept became false. When the 7 questions came first, their probabilities changed by less than 0.01. In the same test, ``kev-4b`` served by LM Studio 0.4.26 gave the same values with 57 questions as with 7, in either order, with the probabilities within 0.03.
 
 These were single tests on one short document: they show that the effect exists, not how large it is with your model and your documents. With a local model, before you rely on requests with many questions, extract a few of your aspects or concepts one per call (``max_items_per_call=1``) and all in one call, and compare the probabilities. If they differ, lower ``max_items_per_call``.
 
@@ -659,22 +654,22 @@ These were single tests on one short document: they show that the effect exists,
    * - Limit
      - What it means for the extraction
    * - Up to 128 questions per request
-     - Not a limit for the extraction: ContextGem sends the questions over the cap in further requests on the same text. A Boolean, single-label or rating concept takes one question, and a multi-label concept takes one question per label, so e.g. a multi-label concept with 130 labels takes two requests. The text is sent, and billed, once per request. In aspect extraction, each aspect of the call takes one question on each paragraph.
+     - Not a limit for the extraction: ContextGem sends the questions over the cap in further requests on the same text, e.g. a multi-label concept with 130 labels takes two requests. The text is sent, and billed, once per request.
    * - 2 to 255 options of a question with one option to pick
      - A :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_class"`` can have up to 255 labels: with more labels, ``ValueError`` is raised. A multi-label concept is not affected, as each of its labels is a question of its own.
    * - 2 to 10 levels of a rating question
      - The rating scale of a :class:`~contextgem.public.concepts.RatingConcept` can have up to 10 levels: ``rating_scale=(1, 10)`` works, while ``rating_scale=(0, 10)`` has 11 levels and raises ``ValueError``.
 
-A concept over the limit on the options or on the levels is rejected as any other concept that a decision model cannot extract (see :ref:`decision-models-supported-label`): ``ValueError`` is raised when an extraction method is called, before any request is sent, and the other aspects and concepts of that extraction are not extracted either. The error names the concept and gives the reason of ``litellm``:
+A concept over the limit on the options or on the levels is rejected up front, as any other concept that a decision model cannot extract (see :ref:`decision-models-supported-label`). The error names the concept and gives the reason of ``litellm``:
 
 .. code-block:: text
    :caption: The error for a rating scale with more levels than litellm accepts
 
    ValueError: Decision model `typesafe/jev-latest` cannot extract: concept `Clarity` (its `score` question with 11 options is not accepted by litellm: `levels`: Value should have at most 10 items after validation, not 11). A decision model extracts aspects, and Boolean, label and rating concepts from text without references, both without justifications. Route the other aspects and concepts to an LLM, e.g. in a model group.
 
-ContextGem has no limits of its own on the options and the levels: it checks each question with the request types of the installed ``litellm`` version, so the limits are those of that version. Use an LLM for a concept over a limit, e.g. by routing it to an LLM in a model group.
+ContextGem has no limits of its own on the options and the levels: it checks each question with the request types of the installed ``litellm`` version, so the limits are those of that version.
 
-**The text of a request must fit the model.** By default, a document-level concept is decided on the text of the whole document, and an aspect-level concept on the text of all the paragraphs of the aspect, each sent in one request. The length of a text is not checked before the request is sent, and a text is not cut to fit. A request that the provider rejects for its length fails as any other rejected request. For Jev 1.13, TypeSafe documents a limit of 32k tokens for the text together with the longest question, and of 64k tokens per request (`TypeSafe models <https://docs.typesafe.ai/models>`_, as of October 2026). For a longer text, there are two ways, which can be combined:
+**The text of a request must fit the model.** By default, a document-level concept is decided on the text of the whole document, and an aspect-level concept on the text of all the paragraphs of the aspect, each sent in one request. The length of a text is not checked before the request is sent, and a text is not cut to fit. A request that the provider rejects for its length fails as any other rejected request. For a longer text, there are two ways, which can be combined:
 
 - **Send the text in parts**, with ``max_paragraphs_to_analyze_per_call`` passed to the extraction method: each request then has the text of at most that many paragraphs, and each concept gets one item for each part (see :ref:`sending a long text in parts <decision-models-parts-label>`). A part is measured in paragraphs, not in tokens, so set the number by the length of your paragraphs.
 - **Attach the concepts to aspects**: the aspects are extracted paragraph by paragraph, and the concepts of an aspect are decided on the paragraphs of the aspect only.
@@ -702,7 +697,7 @@ Providers may set further limits of their own. See the documentation of your pro
 
 ``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`). Both can be imported from ``contextgem``.
 
-**A refused answer in aspect extraction is not an error.** When the model refuses to answer the question of an aspect on a paragraph, or on a sentence for an aspect with ``reference_depth="sentences"``, that paragraph or sentence is not included in the aspect, and the extraction goes on with the other answers. ``litellm`` also reports a question that the model left unanswered as a refused one. A warning is issued for each aspect with refused answers:
+**A refused answer in aspect extraction is not an error** (see :ref:`decision-models-aspects-label`): the paragraph or the sentence is not included in the aspect, and the extraction goes on with the other answers. ``litellm`` also reports a question that the model left unanswered as a refused one. A warning is issued for each aspect with refused answers:
 
 .. code-block:: text
    :caption: The warning on the answers that the model refused to give for an aspect
@@ -719,8 +714,7 @@ What to expect when a call fails:
 - **In aspect extraction, the answers on all the paragraphs are needed.** When a request for a paragraph fails for good, or its response cannot be used, the requests not yet sent are not sent, and no aspect of the call gets its items. The same holds for the requests for the sentences of the aspects with ``reference_depth="sentences"``, which are not sent at all if a request for a paragraph fails.
 - **For concepts extracted from a text in parts, the answers on all the parts are needed.** When a request for a part fails for good, or its response cannot be used, the requests not yet sent are not sent, and no concept of the call gets its items, including for the parts already answered. The logged error names the part, e.g. ``on part 2 of 3 of the text``.
 - **The requests made are recorded in the usage**, with their tokens, also when the call fails.
-- **A call that fails stops the other calls of the model.** With ``use_concurrency=True``, the aspects or concepts are extracted in several calls at the same time, unless ``max_items_per_call`` puts them into one call. When ``ModelAPIError`` or ``ModelExtractionError`` is to be raised for one of the calls, the requests in flight of the other calls are cancelled first, and no request is sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
-- **A model that fails stops the other models of its group.** In a model group, with ``use_concurrency=True``, the models extract at the same time. When the extraction with one of them fails, the requests in flight of the other models are cancelled before the error is raised, and no request is sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
+- **A failure stops what runs concurrently.** With ``use_concurrency=True``, when ``ModelAPIError`` or ``ModelExtractionError`` is to be raised for a call, the requests in flight of the other calls of the model, and of the other models of its group, are cancelled first, and no request is sent afterwards. The aspects and concepts extracted by then keep their items, and the requests completed by then are recorded in the usage.
 - **A warning instead of an exception.** With ``raise_exception_on_extraction_error=False`` passed to the extraction method, a warning is issued instead of ``ModelAPIError`` or ``ModelExtractionError``, and the aspects or concepts of the failed call are left without items. The ``ValueError`` above is raised in any case.
 
 
