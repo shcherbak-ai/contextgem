@@ -94,8 +94,6 @@ class TestUsageExamples(BaseTest):
             cost_tracking,  # noqa: F401
             detailed_usage,  # noqa: F401
             fallback_models,  # noqa: F401
-            llm_api,  # noqa: F401
-            llm_local,  # noqa: F401
             model_group,  # noqa: F401
             reasoning_params,  # noqa: F401
             tracking_usage_and_cost,  # noqa: F401
@@ -107,8 +105,8 @@ class TestUsageExamples(BaseTest):
             extract_concepts_from_document,  # noqa: F401
         )
         from dev.usage_examples.docs.llms.llm_init import (
-            llm_api,  # noqa: F401,F811
-            llm_local,  # noqa: F401,F811
+            llm_api,  # noqa: F401
+            llm_local,  # noqa: F401
             lm_studio_connection_error_fix,  # noqa: F401
         )
         from dev.usage_examples.docs.optimizations import (
@@ -128,7 +126,6 @@ class TestUsageExamples(BaseTest):
         from dev.usage_examples.docs.serialization import serialization  # noqa: F401
         from dev.usage_examples.readme import (
             llm_chat,  # noqa: F401
-            quickstart_aspect,  # noqa: F401,F811
             quickstart_concept,  # noqa: F401
         )
 
