@@ -239,7 +239,7 @@ A response that reaches the limit is cut off by the LLM provider, whether the li
 - **In a chat**, a cut-off response is returned as it is, with a warning, as the limit can be set on purpose to get a short answer. A cut-off response without a text, e.g. when all the tokens are used up by the reasoning of the model, is handled as an empty response.
 
 .. note::
-   Some providers (e.g. Anthropic) require a limit in each request. If ``max_tokens`` is not set, ``litellm`` sends the maximum output of the model for such a provider. For a model that ``litellm`` has no data on, e.g. a model released after the pinned ``litellm`` version, it sends a limit of 4096 tokens instead, so set ``max_tokens`` explicitly for such a model.
+   Some providers (e.g. Anthropic) require a limit in each request. If ``max_tokens`` is not set, ``litellm`` sends the maximum output of the model for such a provider. For a model that ``litellm`` has no data on, e.g. a model released after the pinned ``litellm`` version, it sends a low default limit instead, so set ``max_tokens`` explicitly for such a model.
 
 
 .. _llm-sampling-params-label:
