@@ -55,7 +55,7 @@ class StringConcept(_StringConcept):
 | Internal classes | `_Aspect`, `_Document` (underscore prefix) |
 | Public classes | `Aspect`, `Document` (no prefix) |
 | Constants | `_MAX_NESTING_LEVEL` (ALL_CAPS) |
-| Required import | `from __future__ import annotations` (except `__init__.py`) |
+| Required import | `from __future__ import annotations` (except `__init__.py` and the files under `dev/`, e.g. the usage examples) |
 | Formatter | Ruff (line length: 88) |
 | Type checker | ty |
 | Docstrings | reStructuredText format for Sphinx (`:param:`, `:type:`, `:ivar:`, `:vartype:`, `:returns:`, `:rtype:`) |
@@ -81,8 +81,10 @@ uv run pre-commit run --all-files
 # 2. Run targeted tests for the code you modified
 uv run pytest tests/test_extraction.py::TestExtraction::test_relevant_method
 
-# 3. Run full test suite to check for regressions
+# 3. Run full test suite to check for regressions. If you added tests that call
+# LLM APIs, deselect them: a test whose cassette is missing records live
 uv run pytest
+# uv run pytest --deselect "tests/test_<area>.py::Test<Area>::test_llm_feature"
 ```
 
 ### Writing Tests for New Implementations
