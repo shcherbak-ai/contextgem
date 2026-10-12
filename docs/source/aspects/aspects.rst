@@ -66,12 +66,6 @@ Here's how to extract a specific section from a document:
 .. literalinclude:: ../../../dev/usage_examples/docs/aspects/basic_aspect.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/aspects/basic_aspect.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 Aspect with Sub-Aspects
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -79,12 +73,6 @@ Breaking down complex topics into components:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/aspects/aspect_with_sub_aspects.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/aspects/aspect_with_sub_aspects.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 
 ⚙️ Parameters
@@ -189,12 +177,6 @@ Combining aspect extraction with detailed concept extraction:
 .. literalinclude:: ../../../dev/usage_examples/docs/aspects/aspect_with_concepts.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/aspects/aspect_with_concepts.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 Complex Hierarchical Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -203,12 +185,6 @@ Creating a comprehensive document analysis structure with aspects, sub-aspects a
 .. literalinclude:: ../../../dev/usage_examples/docs/aspects/complex_hierarchy.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/aspects/complex_hierarchy.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 Justifications for Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -216,12 +192,6 @@ With ``add_justifications=True``, each extracted item includes an explanation of
 
 .. literalinclude:: ../../../dev/usage_examples/docs/aspects/aspect_with_justifications.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/aspects/aspect_with_justifications.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 
 💡 Best Practices

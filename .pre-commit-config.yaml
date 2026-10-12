@@ -73,13 +73,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: generate-notebooks
-        name: Generate example notebooks
-        entry: python dev/generate_notebooks.py
-        language: system
-        pass_filenames: false
-        always_run: true
-
       - id: package-check
         name: package check (uv build + twine check)
         entry: python dev/check_package.py

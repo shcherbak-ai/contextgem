@@ -86,6 +86,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - **Breaking:** Removed the `max_completion_tokens` parameter and attribute of `DocumentLLM`. Use `max_tokens` instead, which now applies to all models (see "Changed"). Passing `max_completion_tokens` to `DocumentLLM`, or reading or assigning the attribute, now raises an error. An LLM or model group serialized by earlier versions has the `max_completion_tokens` key in each LLM, and can no longer be deserialized as is.
 - **Breaking:** Removed support for Python 3.10, which has reached its end of life. ContextGem now requires Python 3.11–3.14. On Python 3.10, package installers such as `pip` and `uv` do not install this version, and resolve to the latest earlier one. The `onnxruntime<1.24.0` constraint, which applied to Python 3.10 only, is removed as well.
 - Removed the `typing-extensions` dependency, which was used only for the typing features that are in the standard library as of Python 3.11.
+- Removed the Colab notebooks generated from the usage examples (`dev/notebooks/`), together with the "Open in Colab" links in the README and in the documentation. The examples are shown in full on the documentation pages, and their sources are in `dev/usage_examples/`. Links to the notebooks in the `main` branch no longer work once this version is released.
 
 ### Fixed
 

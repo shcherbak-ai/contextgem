@@ -108,12 +108,6 @@ Returns the same :class:`~contextgem.public.documents.Document` instance passed 
    :language: python
    :caption: Extracting all aspects and concepts from a document
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/llms/llm_extraction_methods/extract_all.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 |
 
 📄 Aspect Extraction Methods
@@ -193,12 +187,6 @@ Returns a list of :class:`~contextgem.public.aspects.Aspect` instances that were
 .. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_extraction_methods/extract_aspects_from_document.py
    :language: python
    :caption: Extracting aspects from a document
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/llms/llm_extraction_methods/extract_aspects_from_document.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 |
 
@@ -285,12 +273,6 @@ Returns a list of :class:`~contextgem.internal.base.concepts._Concept` instances
    :language: python
    :caption: Extracting concepts from a document
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/llms/llm_extraction_methods/extract_concepts_from_document.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 :meth:`~contextgem.public.llms.DocumentLLM.extract_concepts_from_aspect`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -372,9 +354,3 @@ Returns a list of :class:`~contextgem.internal.base.concepts._Concept` instances
 .. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_extraction_methods/extract_concepts_from_aspect.py
    :language: python
    :caption: Extracting concepts from an aspect
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/llms/llm_extraction_methods/extract_concepts_from_aspect.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>

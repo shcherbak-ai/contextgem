@@ -41,12 +41,6 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.Numeri
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/numerical_concept/numerical_concept.py    
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/numerical_concept/numerical_concept.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 ⚙️ Parameters
 --------------
 
@@ -120,12 +114,6 @@ You can configure a :class:`~contextgem.public.concepts.NumericalConcept` to inc
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/numerical_concept/refs_and_justifications.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/numerical_concept/refs_and_justifications.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 
 📊 Extracted Items

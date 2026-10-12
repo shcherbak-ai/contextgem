@@ -77,8 +77,6 @@ The following example demonstrates how to use ContextGem to extract **anomalies*
 {{QUICKSTART_CONCEPT}}
 ```
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
-
 ---
 
 ## 🧠 How it works

@@ -123,7 +123,6 @@ dev = [
     "fabric (>=3.2.0,<4.0.0)",
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",
-    "nbformat (>=5.10.4,<6.0.0)",
     "nest-asyncio (>=1.6.0,<2.0.0)",
     "pre-commit (>=4.1.0,<5.0.0)",
     "ty (==0.0.35)", # pinned to the last fully-clean ty release; newer ones surface issues here; unpin when issues are fixed
@@ -166,7 +165,6 @@ target-version = "py311"
 indent-width = 4
 exclude = [
     ".venv",
-    "notebooks",
     "code_sample.py",
 ]
 
@@ -194,10 +192,8 @@ line-ending = "auto"
 error-on-warning = true
 
 [tool.ty.src]
-# Skip auto-generated notebooks (regenerated from dev/usage_examples) and
-# demonstration code (usage examples, optional-dep comparisons, code samples).
+# Skip demonstration code (usage examples, optional-dep comparisons, code samples).
 exclude = [
-    "**/*.ipynb",
     "dev/usage_examples",
     "code_sample.py",
 ]
@@ -225,7 +221,6 @@ pre_bump_hooks = [
 [tool.deptry]
 extend_exclude = [
     ".venv",
-    "dev/generate_notebooks.py",
     "dev/evals",
     "code_sample.py",
 ]
@@ -250,4 +245,4 @@ ignore-init-module = true
 ignore-nested-classes = true
 ignore-overloaded-functions = true
 fail-under = 100
-exclude = [".venv", "docs", "notebooks", "dev/usage_examples", "code_sample.py"]
+exclude = [".venv", "docs", "dev/usage_examples", "code_sample.py"]

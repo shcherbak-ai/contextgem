@@ -41,12 +41,6 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.Boolea
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/boolean_concept/boolean_concept.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/boolean_concept/boolean_concept.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 
 ⚙️ Parameters
 --------------
@@ -121,12 +115,6 @@ You can configure a :class:`~contextgem.public.concepts.BooleanConcept` to inclu
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/boolean_concept/refs_and_justifications.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/boolean_concept/refs_and_justifications.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 
 📊 Extracted Items

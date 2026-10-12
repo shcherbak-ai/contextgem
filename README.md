@@ -141,8 +141,6 @@ for item in anomalies_concept.extracted_items:
 
 ```
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/readme/quickstart_concept.ipynb)
-
 ---
 
 ## 🧠 How it works

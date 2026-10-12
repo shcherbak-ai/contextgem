@@ -50,12 +50,6 @@ Here's a basic example of how to use :class:`~contextgem.public.concepts.LabelCo
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/label_concept/label_concept.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/label_concept/label_concept.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 
 ⚙️ Parameters
 --------------
@@ -144,12 +138,6 @@ Here's an example demonstrating multi-label classification for content topic ide
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/label_concept/multi_label_classification.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/label_concept/multi_label_classification.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 🔍 References and Justifications for Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -157,12 +145,6 @@ You can configure a :class:`~contextgem.public.concepts.LabelConcept` to include
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/label_concept/refs_and_justifications.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/label_concept/refs_and_justifications.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 🎯 Document Aspect Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,12 +155,6 @@ Here's an example that demonstrates using :class:`~contextgem.public.concepts.La
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/label_concept/document_aspect_analysis.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/label_concept/document_aspect_analysis.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 📊 Extracted Items
 --------------------

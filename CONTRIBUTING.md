@@ -128,7 +128,6 @@ contextgem/
 ├── dev/
 │   ├── usage_examples/           # 📝 Code examples for docs
 │   ├── evals/                    # 📊 Extraction evaluation harness, cases & baseline results
-│   ├── notebooks/                # 📓 Notebooks (auto-generated)
 │   ├── readme.template.md        # ✏️ Edit this, not README.md
 │   └── ...                       # 🛠️ Development scripts
 │
@@ -189,7 +188,7 @@ contextgem/
 
     The pre-commit hooks check and format your code when you commit. Some of them run with the Python of the project environment, so commit through uv (`uv run cz commit`, see below) or with `.venv` activated.
 
-    - **If a hook modifies files** (e.g. Ruff formatting, the README, the notebooks): review the changes, add the modified files to the staging area, and commit again.
+    - **If a hook modifies files** (e.g. Ruff formatting, the README): review the changes, add the modified files to the staging area, and commit again.
     - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.
 
 3. **🧪 Run tests** to ensure your changes do not break existing functionality:

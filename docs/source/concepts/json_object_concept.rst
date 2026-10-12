@@ -41,12 +41,6 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.JsonOb
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/json_object_concept.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/json_object_concept/json_object_concept.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 
 ⚙️ Parameters
 --------------
@@ -160,12 +154,6 @@ You can provide examples of structured JSON objects to improve extraction accura
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/adding_examples.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/json_object_concept/adding_examples.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 🔍 References and Justifications for Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -173,12 +161,6 @@ You can configure a :class:`~contextgem.public.concepts.JsonObjectConcept` to in
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/refs_and_justifications.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/json_object_concept/refs_and_justifications.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 .. note::
    To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.

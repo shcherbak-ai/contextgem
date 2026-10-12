@@ -115,12 +115,6 @@ Here's a comprehensive example of processing several documents with one pipeline
 .. literalinclude:: ../../../dev/usage_examples/docs/advanced/advanced_multiple_docs_pipeline.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_multiple_docs_pipeline.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 Pipeline Serialization
 ~~~~~~~~~~~~~~~~~~~~~~
 

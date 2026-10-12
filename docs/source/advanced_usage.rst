@@ -36,12 +36,6 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
 .. literalinclude:: ../../dev/usage_examples/docs/advanced/advanced_aspects_with_concepts.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_aspects_with_concepts.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 
 📊 Extracting Aspects and Concepts from a Document
 ----------------------------------------------------
@@ -53,12 +47,6 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
    
 .. literalinclude:: ../../dev/usage_examples/docs/advanced/advanced_aspects_and_concepts_document.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_aspects_and_concepts_document.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 
 .. _multi-llm-pipeline-label:
@@ -73,9 +61,3 @@ Below are complete, self-contained examples demonstrating advanced usage of Cont
 
 .. literalinclude:: ../../dev/usage_examples/docs/advanced/advanced_multiple_docs_pipeline.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/advanced/advanced_multiple_docs_pipeline.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>

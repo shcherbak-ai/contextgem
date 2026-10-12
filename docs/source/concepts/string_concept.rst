@@ -41,12 +41,6 @@ Here's a simple example of how to use :class:`~contextgem.public.concepts.String
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/string_concept/string_concept.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/string_concept/string_concept.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 
 ⚙️ Parameters
 --------------
@@ -122,12 +116,6 @@ You can add examples to improve the extraction accuracy and set the expected for
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/string_concept/adding_examples.py
    :language: python
 
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/string_concept/adding_examples.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
-
 🔍 References and Justifications for Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -135,12 +123,6 @@ You can configure a :class:`~contextgem.public.concepts.StringConcept` to includ
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/string_concept/refs_and_justifications.py
    :language: python
-
-.. raw:: html
-
-   <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/concepts/string_concept/refs_and_justifications.ipynb">
-     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-   </a>
 
 
 📊 Extracted Items
