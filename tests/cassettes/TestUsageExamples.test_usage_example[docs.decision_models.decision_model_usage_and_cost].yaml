@@ -1,0 +1,59 @@
+interactions:
+- request:
+    body: '{"model":"jev-latest","state":"This Agreement is governed by the laws of
+      Norway.","questions":{"C0":{"type":"noul","instructions":"Decide whether the
+      statement in the concept description below is true according to the text.\nConcept
+      name: Governing law\nConcept description: The document states which law governs
+      the agreement\nAnswer \"yes\" if the text supports the statement. Answer \"no\"
+      if the text contradicts the statement or does not support it."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '458'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://api.typesafe.ai/v1/systemone
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/02LQQqAIBRE7zJrE602ue0gEfSJylRSixDvnrVqMwPz3iTsdiINhZXOSnLZcAGG
+        0fiLDg+V0Is3w+2oSMZGXfBXSvCuy5kh+nGmV1qMi2EIdiNTrk3bMtgY/lstc34Au6kHDHMAAAA=
+    headers:
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      x-typesafe-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

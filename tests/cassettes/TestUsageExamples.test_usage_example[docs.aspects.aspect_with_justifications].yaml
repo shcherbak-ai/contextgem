@@ -1,0 +1,282 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
+      file containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n    <document_types>\n    - Contracts: Legal
+      agreements defining terms and obligations.\n    - Invoices: Financial documents
+      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
+      an individual''s professional experience and qualifications.\n    - Visual Documents:
+      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
+      that contain relevant information.\n    - General Documents: Any other types
+      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
+      that occasionally you may be working with document fragments rather than complete
+      documents. These fragments represent portions of a larger document and should
+      be analyzed within their limited context. When working with fragments, focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n    <content_types>\n    Documents may contain textual
+      or visual content:\n    - Text-based content: Written information that can be
+      directly read and processed.\n    - Visual content: Images, charts, diagrams,
+      blueprints, tables, handwritten text, or other visual elements that require
+      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
+      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
+      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
+      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\n    - Interpretative judgments: Such as ratings, classifications,
+      or qualitative assessments based on document content.\n    - Label classifications:
+      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
+      Extract only information that is explicitly stated or can be directly inferred
+      from the document content. Avoid speculation or assumptions beyond what the
+      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
+      Visual content analysis: When processing visual content (images):\n    -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
+      relationships, and structural information that may not be explicitly stated
+      in text.\n    -- Consider the visual context and layout as it may provide important
+      semantic information.\n    -- Analyze information in tables, forms, charts,
+      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
+      Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
+      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
+      and type of the document\n    -- The specific aspects or concepts you need to
+      focus on\n    -- The expected output format and structure requirements\n    --
+      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
+      Quality control: After extraction, verify that:\n    -- All extracted information
+      directly relates to the specified aspects/concepts\n    -- The output format
+      matches the required schema exactly\n    -- No extraneous information has been
+      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
+      If multiple interpretations are possible, choose the most conservative one\n    --
+      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
+      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
+      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
+      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
+      you will find a list of consecutively ordered paragraphs from a document and
+      a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
+      information in these instructions is provided using semantic XML tags. Field
+      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
+      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance, including indicators
+      of prohibition, requirement, exception, conditionals, and negations.\n    -
+      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
+      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
+      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
+      paragraph IDs within each aspect and preserve the original order.\n   - Align
+      stance in justifications (permission, prohibition, requirement, exception) with
+      the actual semantics.\n   - Ensure justifications comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
+      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      tags, includes a name specified within <aspect_name></aspect_name> tags, and
+      has a description specified within <aspect_description></aspect_description>
+      tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
+      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
+      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
+      tags.\n    - Note that paragraphs are listed in the same order they appear in
+      the original document; therefore, context from surrounding paragraphs may influence
+      whether a particular paragraph is relevant to an aspect.\n    - You may be working
+      with document fragments rather than complete documents. Focus on extracting
+      information from the available content without making assumptions about missing
+      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
+      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
+      on the aspect''s name and description), include the paragraph''s ID and provide
+      a justification, detailing why the paragraph is relevant to the aspect.\n    -
+      If a paragraph does not relate to an aspect, do not include it under that aspect''s
+      list.\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
+      references like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions; reflect the stance
+      succinctly in the justification.\n    - Prefer minimal sufficient evidence:\n        --
+      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
+      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
+      Produce the final answer in the JSON format specified within <answer_format></answer_format>
+      tags\n    - Your output must be a JSON array of objects, each object corresponding
+      to a single aspect.\n    - For each aspect (in the order they are provided),
+      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
+      paragraphs: An array of objects for each paragraph that addresses or relates
+      to the aspect. Each object should include:\n            --- paragraph_id: The
+      provided paragraph ID, e.g., \"P0\", \"P2\".\n            --- justification:
+      A justification of why the paragraph is relevant to the aspect. Ensure the justification
+      is specific and directly ties the content of the paragraph to the aspect''s
+      defining features. Never reference any of the structural IDs provided in this
+      prompt (such as aspect IDs like \"A0\", or paragraph IDs like \"P0\") in the
+      justification.\n                ---- Justification should be balanced, i.e.
+      cover the key insights with enough detail to be informative, while remaining
+      concise.\n                ---- Justification should be no longer than 4 sentences.\n                ----
+      Justification should be in English.\n        -- If an aspect has no related
+      paragraphs, still include it with an empty paragraphs array ([]).\n- Do not
+      add extra commentary, code block markers, or any other formatting beyond the
+      JSON array.\n- Internally verify before finalizing:\n    -- Each provided aspect
+      appears once, in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\"
+      contains only valid paragraph IDs.\n    -- No structural IDs (aspect/paragraph
+      IDs) appear inside justifications.\n    -- Justifications meet length and language
+      constraints.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      No additional text:\n    -- Do not include any headers, explanations, or text
+      outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
+      or any other formatting characters.\n- Private deliberation only:\n    -- Do
+      not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    --
+      Only output the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"aspect_id\":
+      str,\n        \"paragraphs\": [\n            {\n                \"paragraph_id\":
+      str,\n                \"justification\": str\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
+      ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>NDA
+      Direction</aspect_name>\n        \n        <aspect_description>\n        Provisions
+      informing the NDA direction (whether mutual or one-way) and information flow
+      between parties\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
+      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        NON-DISCLOSURE
+      AGREEMENT\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        This
+      Non-Disclosure Agreement (\"Agreement\") is entered into between TechCorp Inc.
+      (\"Disclosing Party\") and Innovation Labs LLC (\"Receiving Party\") on January
+      15, 2024.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        ...\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '15020'
+      content-type:
+      - application/json
+      cookie:
+      - DUMMY
+      host:
+      - DUMMY
+      user-agent:
+      - OpenAI/Python 2.54.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 2.54.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '600.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VTYW/aMBD9zq+w/DkgKAXGvlVdtU1iEpqqaRpB0dW5ELeJndkODFX8950dSMLW
+        fnHCvXePl3vn1wFjXKb8I+MiByfKqhg+/DzO736/5L8elPy2/nL/Q5e3IMF+zuEoeOQ79NMzCnfp
+        GglNfeikVg0sDIJDrzpZLCeL+e1sNg5AqVMsfNuucsP5sKgVnDtyLQVagjb0k7HXcHpvKsU/VA79
+        oVKitbBDql1IVDS68BUO1krrQDkedaDQyqEKdjexInF/MBYTu6LPSGQaExbzu3HMowtWgYGdgSq3
+        Htw05bb3H04rsZ60Eg3lubZOZlKAn07DecyRURtiSaaYTOkkBlr2iCK/16ZiX5UYMbDMEfOTtKLQ
+        VqodW4NxRwYqJYLS+yDJVvBk2Wp1f+F/R4Fy39IjRhMMf08VYFrh8ABHKmbalI1CVujDKOYX16fm
+        Zesf9L7tT9JgVlvwCaq6KHoAkCEX5EKG2zNyalPLpJI2T2gxLG0JJWGdrnhAT3RuwxbUV8HyytBe
+        ucTpFwyyNx+W00aQdxvXwZPJ/Iw68lJ0wHQ8XkZvSCYpOpCF7a0SFyByTHui0/kiugKTg5EOe4zZ
+        zbRlQJ1K3WHjQW8K/5t+y0AzIUqr53/xrn4HCIEV3bmkMkh5X0+moxn0F/c9WhtHcMwtmj3dysRJ
+        ND6yFDOoi+ZqcXu0DsuEct2hqYwM98tvxeA0+AtwrXQGVgQAAA==
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2352'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 109ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

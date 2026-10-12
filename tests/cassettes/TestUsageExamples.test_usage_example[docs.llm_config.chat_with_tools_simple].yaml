@@ -1,0 +1,199 @@
+interactions:
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"What''s
+      the weather in Tokyo?"}]}],"instructions":"You are a helpful assistant.","stream":false,"tools":[{"name":"get_weather","parameters":{"type":"object","properties":{"city":{"type":"string","description":"Name
+      of the city"}},"required":["city"]},"strict":null,"type":"function","description":"Get
+      current weather for a city."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '435'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61Vy27bOBTd5ysErdNAfoxt9Qdm1VkVxXSaQriirmROKFLhI4kR+N97SUqypNjF
+        LGZjWPeQ93nO5ftdkqS8Sj8nqUbTFVm2Y2xdZhWutrjZZPQNZDjAGlYsO+yrNWC13sN+m+c5q9aM
+        pffehSr/RWYHN0oajHamESxWBXhstc9X+912t10HzFiwzvg7TLWdQDoXL1FENKbotGo0tP6EdEIE
+        qAT21GjlpE+5BmEwmrkQXDZke6dPMnRwQu1dV/iCQnX0QcA55jREW2S1DShqrfQ0ZK3x2aFkp6JD
+        CcKeCMwesoBxOTgrKrTAxSxZLo3VjllO/fC5fFcuAY0JJEcUXe1EAsZwaoO0D7HyFt4K5WznbGHV
+        E8qZOw9apUTBQMwDtapC4SM0nf20+ySchHQENPgEpsdjBLL8CM2KLRt5ULPbLNhgXTPPgnKX11W+
+        yfNVticm1CFccGJPHQY3TobKQ7YX+NbQAwi6cS1KG/D3x5Rxe3pMPz+mX9XTST2m58tR77WICYe/
+        Jf/6bWP+2aq/q+f29dl+eXtrvij17XJDQhsSa9AWr8TKY+QEsYJ+f4bGdKDJF4p5m2mGkWUdcZuI
+        gFeIQNALV84UA/1jbmPLicttZ8klO2LxhKebmKaOyH5g6Xp7jHMkFRklZwxnSlp8C5Lz9VuniS2x
+        2JSmpHSAWqy4awe7p4O3espVoIfOp8a1LeghqVEoBmq0J6rEZ1RznMnCoH7h1AvLB6HV4IRNe2kr
+        jdPWWWw7z0QXzKu+a30BfUWUcwuX7wmXwrk4qz7jF9SlMjzMYChyzDtO76govdAeZ1V6AZyBBi9R
+        eUufRYNyGpjLmQSz+2vARPLDxdHfx6t9uROkB86j86Xys+vI/x7XKgtieWDo9CuWhUHQ7DhtkHRt
+        EfaisZMrswmYjwtmuRsu4qzQMM27gfh/ok2Y05qIl/RaTYgetDn9Snj4vaiXXTOkqxYm3O1fCHpb
+        SGx60cchx/5Fm7SRdEocJr7Pb3gtRiJObRNP9Ah45d7P0UXFf1EyiaoTqiDUmE5On8f/50k6vv1c
+        YzW2eZrMaPj5Ydo+nfBUh+dzsQGt6gqhGiq1HFkUjF1YdvkhGjQNcHhW0oobKMXweC/lNVfS7o/7
+        u/8ipDRuw1fN7TVSR7i6xdmlkFaHa8C1sOOiveV6oZXDZuS8M/MFSeSCCqwn3vv57vwLCze3OGoJ
+        AAA=
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1747'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 36ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"model\":\"gpt-6-luna\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"What's
+      the weather in Tokyo?\"}]},{\"type\":\"function_call\",\"call_id\":\"call_biTV3sZ4oXdqmwqtMxxgMooV\",\"name\":\"get_weather\",\"arguments\":\"{\\\"city\\\":\\\"Tokyo\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_biTV3sZ4oXdqmwqtMxxgMooV\",\"output\":[{\"type\":\"input_text\",\"text\":\"Weather
+      in Tokyo: Sunny, 22\xB0C\"}]}],\"instructions\":\"You are a helpful assistant.\",\"stream\":false,\"tools\":[{\"name\":\"get_weather\",\"parameters\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"description\":\"Name
+      of the city\"}},\"required\":[\"city\"]},\"strict\":null,\"type\":\"function\",\"description\":\"Get
+      current weather for a city.\"}]}"
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '705'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61WTZOjNhC9z6+gOHunADMenOsetnLJKZfU7hYlpAYrIySij/G6pvzf05IAA2NX
+        5ZCb6Sf153stfzwlScpZ+luSajBDnbW0yPfZPqcvOdsfiiw7EEqLipTHY1VVr6yo2mZf0bysXoqS
+        MNqmO+9CNX8DtZMbJQ1EO9VALLCaeCx/Peavh/JQlgEzllhn/B2q+kEAnouXMCIYUw9adZr0/oR0
+        QgSoIfSt08pJn3JLhIFo5kJw2aHtAz/RMJALaO+awTsINeAHAteY0xRtk9VLQEFrpZchWw3/OJD0
+        Ug8gibAXBLPnLGBcTs5qBpZwsUqWS2O1o5ZjP3wufymXEA0JSU4ghtaJhBjDsQ3SPsfKe/KrVs4O
+        ztZWvYFcufOgVUrUlIh1oF4xED5CN9gvhy/CSZLOgCY+geXxGAEt30OzYstmHvSme0yDF1IVpadB
+        sz9SxipWHMqW5eQ1xAte7GWA4AdnSDq4AY/mHUCqpAV5S2qZ2Mrt1B74Zefb4QCRUlkyNfv7zxUo
+        VId0au4gwRH6/d3+cEWWH01inJSXhMvkT/V2UbvkzO0JZ2ahH3wzHU5QtUlR/HBZ1mRfn9PZ3XX8
+        NUdIhxMxIe2WI3dqIs0ZqTjDWomAzjyIvryf4AN5rHHYINaDR1ZF3g+oNqQm3KEmQu9cOVNPgqzD
+        eGcSYDv6waJLeoL6DS4PMQ1+MJFCaVGeIrNQ10bJlebCCGMzMc8aG4WTiKWm0LZK20gLxl0/2T1B
+        vdUXz4ieCJEa1/dET0nN0jWkBXvBSnxGLYeVUA3od469sHySfkuciCzBAErDsnWLcfolMHZtLGCs
+        CHPuye17wcJwLs5qzPgddKMMDzOYipzzjtM7KUwvtMdZld4AF3QyR+U9ftYdyGVgLldLIdvdAxZL
+        6Kad0d/nq2O5C2QErrPz7S7K7iP/e1yLShbbA1Onz9DUBoimp2WDpOvrsKmNXVxZTcB8XnnTPFsn
+        w56+SZOBoZoPE/G/gU2o0xqJl5zxTTuBTpAeuBcozvz5dk+SPnjswNbjwXTbNYO66smCu+Obha8d
+        ik1v+jhvvvjGLtqIOkUOI9/XN7wWIxGXtoUnfJa8cndrdFPxH5iMX3RYQagxXZy+3lbeIh3ffq6B
+        rZb4lMxs+Plp2j6d8OchPOibDWjVUC+2dzYbh7DsjlU0aBzg9NCljBvSiOnvxFZeayXl2X739F+U
+        lMZ1eNbc3mN1hNkj0m6VlFf3gHth5037yPVGLHmRz6x3Zr0ikV6EEeup93F9uv4LqGz5wf4JAAA=
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1498'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

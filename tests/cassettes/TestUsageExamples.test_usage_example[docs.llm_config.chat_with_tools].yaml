@@ -1,0 +1,202 @@
+interactions:
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"What''s
+      the invoice total for the items [{''qty'':2.0,''price'':3.5},{''qty'':1.0,''price'':3.0}]?"}]}],"instructions":"You
+      are a helpful assistant.","stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"number"},"price":{"type":"number"}},"required":["price","qty"]},"description":"List
+      of invoice items with quantity and price"}},"required":["items"]},"strict":null,"type":"function","description":"Compute
+      invoice total as sum(qty*price) over items."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '674'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61WS2/jNhC++1cIOrWFN5Acx5b3tthrgbZ7KzaBQFEjmw1Fynw4MQL99w5JSZYU
+        O7so6oMhzUfO+5vR2yKKYlbGn6NYgW7y5P4hgbR62G7XJSm2RZJsCKWrjCRJtqHZtlzt0s2qSCsA
+        mtEsW9N46VTI4h+gplcjhYYgpwqIgTInDku3u3S7WW/Wice0IcZqd4fKuuGA58IltAha542Se0Vq
+        d0JYzj1UEPq8V9IK53JFuIYgZpwzsUfZG76ioCFnUE51CSfgssEXBNrgU29t5lXqUVBKqrHJSsHR
+        gqDnvAFBuDkjmNyFEJjoleUlGML4xFkmtFGWGob5cL78LW1EFEQkOgBvKssjojXDNAhzFyKvyWsu
+        rWmsyY18BjFR50AjJc8p4VNDtSyBOwv7xnzafOJWkHgAFHEOjI8HCyj57pMVUjb0QUU/6ILddue7
+        IMOHVZHRDazJrtgl3pxXYs4NeDVW+Mi9txf4VtE9SNTe1iCMx98eY2ag1o/x5+/4fDRnfFotH+NG
+        MQr4fH/30C4HJJ0gSfvUXvQ6F/IQnX/cvMrtt9ej5H9BJr/9UX6pTV28/KkuNwSpoXfSYnWZOEnU
+        jfk3hMf+VIv/Tz6fDVGoFfi0Olj60JwNUgL7B670D0InJq3Oe9YEL4dKIQXqxqBKeoD8Gc43MYWJ
+        FF2d49X6EMqP5NNSTIhBpTDw6pnqMmGswiYLYcdQVVJ5qIaS2bqXuy5yUtepJVF9wWJt65qo3qmB
+        X5pUYM4YifOoYjBhkwZ18olkPT8rYrmJu4kgFYxTh/VvXANbL067rHUBdBGhzzW5vI9a0J8Lteo8
+        PoEqpGa+Bn2Qg9+hegdXZ58ea2R8Aawme7hYZTW+5nsQY8NMTJibLK8Bo0nRXxz0vb/ahTtCOqAd
+        lM8HRnId+d/tei7MD/SZfoEi10AUPYwTJGyd+3GqzejKpAL6/Vyaj5QLTUvQVLGmb/yvga1Rx9bI
+        e4hDNsJO/QXHxG9+QPwaSeyDyA+Xu5+l/DynGllXk1Fnd2sHFxZSUc2y3EfQrclRkpHF2OHIhukN
+        Vxnn30w4UkWUIueRpg/ufOTAj9zo8KOnzHtgpBprW4Q1O/21y/fqfB3+s8LFDwzErsWYgnJopSvG
+        l9eDnEmfFh9Ymrff77jLI1kN7eerEb0wc4iOFpc8zp0IJ2gUHFhci2hk4VYUXZEXcxfb0Y5FA6b/
+        QJotKyObnMs9FrwYCO+Fjd9LuywIFHKt/3CIS6ZJwfvPs/kknA69NF0tFz8z9OKwuV4UxnNteHm4
+        vDVf5kPvfncNuGZ2WIq3VM/mWvqQDgPK6uk2Q66Tkhg3B97aRfsvPJvr9E4LAAA=
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1139'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"What''s
+      the invoice total for the items [{''qty'':2.0,''price'':3.5},{''qty'':1.0,''price'':3.0}]?"}]},{"type":"function_call","call_id":"call_6xo7RxqolQe8oROdAmtmbwPr","name":"compute_invoice_total","arguments":"{\"items\":[{\"qty\":2,\"price\":3.5},{\"qty\":1,\"price\":3.0}]}"},{"type":"function_call_output","call_id":"call_6xo7RxqolQe8oROdAmtmbwPr","output":[{"type":"input_text","text":"10.0"}]}],"instructions":"You
+      are a helpful assistant.","stream":false,"tools":[{"name":"compute_invoice_total","parameters":{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"qty":{"type":"number"},"price":{"type":"number"}},"required":["price","qty"]},"description":"List
+      of invoice items with quantity and price"}},"required":["items"]},"strict":null,"type":"function","description":"Compute
+      invoice total as sum(qty*price) over items."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '973'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61WTW/jRgy9+1cIQg9t4A0kxZHtXnvtsZdisRAoibKnGc0o8+GsEfi/lzMjyZJi
+        ZxdFczAiPs0jh3wk9b6KopjV8e9RrFB3RVJm232W5Zhk2f55nyZJDlWV7SDNd7DZbetsVydPz9t6
+        v93l9Fs+xWtHIct/sDIDjRQag71SCAbrAhyWbvfpNt/km9Rj2oCx2p2pZNtxpPfCIfKIWhedkgcF
+        rXtDWM49VEL1clDSChdyA1xjMDPOmTiQ7Z0eydDBGZWjrvGEXHb0QMAlxDR4W0SVeRSVkmrqslH4
+        alFU56JDAdycCUweE48xMZAVNRpgfBYsE9ooWxlG+XCx/C1tBAojiI7Iu8byCLRmlAZhHsPNW/he
+        SGs6awojX1DM6BxopORFBXzuqJU1cufh0Jkv+RduBcQjoMAFMH09eCDLV5+skLJRB60+fCKDJt15
+        GUC6fUKAbZkDJNlm4/15FnPu0PNQDeGAV+BevT1YSWFQXIOaBjajHdKD38142r8AQkgDQ7K/fpuB
+        XB5ITuUNxBMR719HjJg4SVZhZIiIR0xHDw+/pFTr5OHhMR4PXfr/Rp64O4L2wTWMFFKA0G8kuBFW
+        knt0rHbgcjyeg9SqqKTI5+Ul7QR1d9RTJEC8IUCCTkxaXQxtV/gijqWmS7edIcrqiMULnu9iCl36
+        g1DibHMM+qHu1VLMOssXKqSM4iyMVZTvcNUYm0YqE4pfM9sOdidDZ3WXr0ENZY+1bVtQQ1Bjg2po
+        0JzpJi6ihuGsHTWqE9WoMGxo8AYsD1ogB1LhNHUG2851gPXmtM9af4H+RhRzC9fnidb8e6FWfcQn
+        VKXUzNdguOQYd6je0UnIp8caGV8B67th9MpaeiwOKKaOmZi1frK+BUxGzbVDer6PR/vrTpAeuIzk
+        y4mT3Eb+d7++zZYvDJl+w7LQCKo6ThMkbFv4eazN5MisAvrjYBvq2Vjhp/G1NWvUlWLdIPw/qCOs
+        WQ4C0BEp9ddXc37oFJl/iyTpIGIkLv145RLQ4jDdiKToSQpPEi9zqqnrWpgou99btPGoFdUiy+P0
+        C3t2kmTqYlI4dcP8hKuMi29hnFCBUnCejdC7Zz4L4Edh9Pirb5mPwISaaluGPT3/u6w/0vk6/GfC
+        1Q8cxE5iTGE9W0cL5+vbl1xYv60+8bSU35+0HiLZjPLz1YjemDlGr5b2Bs2diCZoFAJY3brRxMO9
+        W/RFXi1DvEw2NTkwwxfWYlkZ2RWTdZqMxs7vpf0uGBT12vDlEddMQ8mH77vlJJwPvTTP16ufGXpx
+        2Fxviu5za3h5uL43X5ZDL32+BdxyOy7Fe9SLuZbu0nFAWT3fZtTrUINxc+D9srr8CxezXUaPCwAA
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1006'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 24ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

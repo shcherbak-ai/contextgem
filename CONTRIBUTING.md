@@ -295,6 +295,20 @@ Tests are split across the feature/integration test modules and two files for pu
 - **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no shared test objects, no cassettes.
 - **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no shared test objects, no cassettes.
 
+### 📚 Tests of the Usage Examples
+
+Each usage example in `dev/usage_examples/docs/` and `dev/usage_examples/readme/` is run by a test of its own in `tests/test_usage_examples.py`. The examples are listed there by the names of their modules, in one of two lists:
+
+- `_EXAMPLES_WITH_REQUESTS` — the examples that send requests to the API of a model. Each has a cassette of its own (`TestUsageExamples.test_usage_example[<example>].yaml`), so when the requests of an example change, delete and re-record the cassette of that example only:
+
+  ```bash
+  uv run pytest "tests/test_usage_examples.py::TestUsageExamples::test_usage_example[docs.quickstart.quickstart_aspect]"
+  ```
+
+- `_EXAMPLES_WITHOUT_REQUESTS` — the examples that send no requests, e.g. the ones that only create objects. They are run with all network access blocked.
+
+When you add an example, add it to one of the lists: a test fails for an example that is in neither. The examples of the docstrings (`dev/usage_examples/docstrings/`) are run by `test_docstring_examples`.
+
 ### 📏 Testing Guidelines
 
 - Write tests for new features or bug fixes
@@ -501,7 +515,7 @@ For local LLM testing, install the following tools and download the relevant mod
 
 #### Decision Model Testing
 
-Most tests of decision models in `tests/test_decision_models.py` replace the API call of `litellm` with a stub and need no cassettes. The tests that send requests to the APIs of decision models are marked with `@pytest.mark.vcr`: the ones in `tests/test_decision_models.py`, and `test_decision_model_usage_examples` in `tests/test_usage_examples.py`, which runs the usage examples in `dev/usage_examples/docs/decision_models/`. Recording their cassettes needs:
+Most tests of decision models in `tests/test_decision_models.py` replace the API call of `litellm` with a stub and need no cassettes. The tests that send requests to the APIs of decision models are marked with `@pytest.mark.vcr`: the ones in `tests/test_decision_models.py`, and the tests of the usage examples in `dev/usage_examples/docs/decision_models/` (`test_usage_example[docs.decision_models.<example>]` in `tests/test_usage_examples.py`). Recording their cassettes needs:
 
 - **`CONTEXTGEM_TYPESAFE_API_KEY`** in your `.env` file, for the requests to TypeSafe (`typesafe/jev-latest`).
 - **`CONTEXTGEM_OPENAI_API_KEY`** in your `.env` file, for the requests to the Decisions API of OpenAI (`openai/gpt-6-luna` as a decision model), and to the LLM that is used next to the decision model in a model group.

@@ -1,0 +1,100 @@
+interactions:
+- request:
+    body: '{"model":"jev-latest","state":"Consultancy Agreement\nThis agreement is
+      made between Company A (Supplier) and Company B (Customer).\nThe Supplier shall
+      provide the consultancy services described in Annex 1.\nThe Customer shall pay
+      the fees within 30 calendar days of receiving an invoice. Late payments bear
+      interest at 1% per month.\nEither party may terminate this agreement at any
+      time by giving 30 days'' written notice to the other party.\nEach party shall
+      keep the terms of this agreement confidential.","questions":{"C0":{"type":"noul","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: Termination for convenience\nConcept description: Either
+      party may terminate the agreement without cause\nAnswer \"yes\" if the text
+      supports the statement. Answer \"no\" if the text contradicts the statement
+      or does not support it."},"C1":{"type":"choice","instructions":"Classify the
+      text by selecting exactly one of the options, based on the concept below.\nConcept
+      name: Contract type\nConcept description: Type of the contract\nSelect the most
+      appropriate option, even if no option fits the text perfectly.","criteria":{"NDA":null,"Consultancy
+      agreement":null,"Lease agreement":null,"Other":null}},"C2-L0":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics covered\nConcept description: Topics that the contract has provisions
+      on\nLabel: Payment\nAnswer \"yes\" if the label applies to the text. Answer
+      \"no\" if it does not. The other labels of the concept are decided separately:
+      several labels, or none, may apply."},"C2-L1":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics covered\nConcept description: Topics that the contract has provisions
+      on\nLabel: Termination\nAnswer \"yes\" if the label applies to the text. Answer
+      \"no\" if it does not. The other labels of the concept are decided separately:
+      several labels, or none, may apply."},"C2-L2":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics covered\nConcept description: Topics that the contract has provisions
+      on\nLabel: Confidentiality\nAnswer \"yes\" if the label applies to the text.
+      Answer \"no\" if it does not. The other labels of the concept are decided separately:
+      several labels, or none, may apply."},"C2-L3":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Topics covered\nConcept description: Topics that the contract has provisions
+      on\nLabel: Liability\nAnswer \"yes\" if the label applies to the text. Answer
+      \"no\" if it does not. The other labels of the concept are decided separately:
+      several labels, or none, may apply."},"C3":{"type":"score","instructions":"Rate
+      the text on a scale from 1 to 5, based on the concept below.\nConcept name:
+      Payment terms detail\nConcept description: How detailed the payment terms are,
+      from 1 (payment is not addressed) to 5 (amounts, deadlines and late payment
+      consequences are specified)\nSelect the level of the scale that fits the text
+      best.","criteria":["1: 1 on a scale from 1 to 5","2: 2 on a scale from 1 to
+      5","3: 3 on a scale from 1 to 5","4: 4 on a scale from 1 to 5","5: 5 on a scale
+      from 1 to 5"]}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '3422'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.0
+    method: POST
+    uri: https://api.typesafe.ai/v1/systemone
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/42RzW7CMAzHXyXyuURJSmHkNnVHtD3CFFoD3doENekmhPruc0IPINGJSxzZP3/8
+        7Qt0rsYWNHzhz0JymXMBGRjrf7H3oC9QiviG8wkJsm5oKZyMFnyzGjMo5Q1QHV1TISHTR0PprB/a
+        YGx1ZubQI3ZoQwSc3Tc12ghJLjI49W5ndk3bhAZT5/e319iEQo9rXNO2aDzeelPGRzhin/5jHFEt
+        tv/J2EyMfIJRTzD5PCPTym4BX7k+buxqteLrl/vtCL5eZ9DiAW0d80gJSM0kc5YZ5ivTItv3riNP
+        cKygUqQDlGZqniAVkGuWzxM0Iiw1W84TSyIKzYo5YnxwUzHdRyar0iCCK5n6kdAilY2hMR5u8OaA
+        Ma+xpyF8BveNlupIkW8ycEO4c67ycfwDE3buLtACAAA=
+    headers:
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      x-typesafe-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

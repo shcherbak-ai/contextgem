@@ -22,9 +22,114 @@ Module defining tests for usage examples.
 
 from __future__ import annotations
 
+import importlib
+import sys
+from pathlib import Path
+
 import pytest
 
 from tests.base import BaseTest
+
+
+_USAGE_EXAMPLES_DIR = Path(__file__).parent.parent / "dev" / "usage_examples"
+
+# The usage examples of the documentation and of the README that send requests to
+# the API of a model, as the names of their modules in `dev/usage_examples/`. Each
+# of them is run by a test of its own, with a cassette of its own, so that a change
+# in an example requires re-recording the cassette of that example only.
+_EXAMPLES_WITH_REQUESTS = [
+    "docs.advanced.advanced_aspects_and_concepts_document",
+    "docs.advanced.advanced_aspects_with_concepts",
+    "docs.advanced.advanced_multiple_docs_pipeline",
+    "docs.aspects.aspect_with_concepts",
+    "docs.aspects.aspect_with_justifications",
+    "docs.aspects.aspect_with_sub_aspects",
+    "docs.aspects.basic_aspect",
+    "docs.aspects.complex_hierarchy",
+    "docs.concepts.boolean_concept.boolean_concept",
+    "docs.concepts.boolean_concept.refs_and_justifications",
+    "docs.concepts.date_concept.date_concept",
+    "docs.concepts.date_concept.refs_and_justifications",
+    "docs.concepts.json_object_concept.adding_examples",
+    "docs.concepts.json_object_concept.json_object_concept",
+    "docs.concepts.json_object_concept.refs_and_justifications",
+    "docs.concepts.label_concept.document_aspect_analysis",
+    "docs.concepts.label_concept.label_concept",
+    "docs.concepts.label_concept.multi_label_classification",
+    "docs.concepts.label_concept.refs_and_justifications",
+    "docs.concepts.numerical_concept.numerical_concept",
+    "docs.concepts.numerical_concept.refs_and_justifications",
+    "docs.concepts.rating_concept.multiple_ratings",
+    "docs.concepts.rating_concept.rating_concept",
+    "docs.concepts.rating_concept.refs_and_justifications",
+    "docs.concepts.string_concept.adding_examples",
+    "docs.concepts.string_concept.refs_and_justifications",
+    "docs.concepts.string_concept.string_concept",
+    "docs.decision_models.decision_model_aspects",
+    "docs.decision_models.decision_model_concepts",
+    "docs.decision_models.decision_model_group",
+    "docs.decision_models.decision_model_usage_and_cost",
+    "docs.llm_config.chat_with_tools",
+    "docs.llm_config.chat_with_tools_simple",
+    "docs.llms.llm_extraction_methods.extract_all",
+    "docs.llms.llm_extraction_methods.extract_aspects_from_document",
+    "docs.llms.llm_extraction_methods.extract_concepts_from_aspect",
+    "docs.llms.llm_extraction_methods.extract_concepts_from_document",
+    "docs.optimizations.optimization_accuracy",
+    "docs.quickstart.quickstart_aspect",
+    "docs.quickstart.quickstart_concept_aspect",
+    "docs.quickstart.quickstart_concept_document_text",
+    "docs.quickstart.quickstart_concept_document_vision",
+    "docs.quickstart.quickstart_sub_aspect",
+    "docs.serialization.serialization",
+    "readme.llm_chat",
+    "readme.quickstart_concept",
+]
+
+# The usage examples that send no requests, e.g. the ones that only create objects.
+# They are run without a cassette, i.e. with all network access blocked.
+_EXAMPLES_WITHOUT_REQUESTS = [
+    "docs.concepts.json_object_concept.structure.nested_class_structure",
+    "docs.concepts.json_object_concept.structure.nested_structure",
+    "docs.concepts.json_object_concept.structure.simple_class_structure",
+    "docs.concepts.json_object_concept.structure.simple_structure",
+    "docs.decision_models.decision_model_fallbacks",
+    "docs.decision_models.decision_model_init",
+    "docs.decision_models.decision_model_local",
+    "docs.decision_models.decision_model_threshold",
+    "docs.llm_config.cost_tracking",
+    "docs.llm_config.detailed_usage",
+    "docs.llm_config.fallback_models",
+    "docs.llm_config.model_group",
+    "docs.llm_config.reasoning_params",
+    "docs.llm_config.tracking_usage_and_cost",
+    "docs.llms.llm_init.llm_api",
+    "docs.llms.llm_init.llm_local",
+    "docs.llms.llm_init.lm_studio_connection_error_fix",
+    "docs.optimizations.optimization_choosing_llm",
+    "docs.optimizations.optimization_cost",
+    "docs.optimizations.optimization_long_docs",
+    "docs.optimizations.optimization_speed",
+]
+
+
+def _run_usage_example(example: str) -> None:
+    """
+    Runs a usage example by importing its module.
+
+    A module is executed only when it is first imported. If the module is already
+    imported, e.g. by another test, it is removed from the imported modules first,
+    so that the example is run by the test that calls this function.
+
+    :param example: The name of the module of the example in `dev/usage_examples/`,
+        e.g. "docs.quickstart.quickstart_aspect".
+    :type example: str
+    :return: None
+    :rtype: None
+    """
+    module_name = f"dev.usage_examples.{example}"
+    sys.modules.pop(module_name, None)
+    importlib.import_module(module_name)
 
 
 class TestUsageExamples(BaseTest):
@@ -33,122 +138,40 @@ class TestUsageExamples(BaseTest):
     """
 
     @pytest.mark.vcr
-    def test_usage_examples(self):
+    @pytest.mark.parametrize("example", _EXAMPLES_WITH_REQUESTS)
+    def test_usage_example(self, example: str):
         """
-        Tests for usage examples in project's documentation and README.md.
+        Tests a usage example of the documentation or of the README that sends
+        requests to the API of a model. The cassette of the test has the requests
+        of that example only.
         Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
         """
-        from dev.usage_examples.docs.advanced import (
-            advanced_aspects_and_concepts_document,  # noqa: F401
-            advanced_aspects_with_concepts,  # noqa: F401
-            advanced_multiple_docs_pipeline,  # noqa: F401
-        )
-        from dev.usage_examples.docs.aspects import (
-            aspect_with_concepts,  # noqa: F401
-            aspect_with_justifications,  # noqa: F401
-            aspect_with_sub_aspects,  # noqa: F401
-            basic_aspect,  # noqa: F401
-            complex_hierarchy,  # noqa: F401
-        )
-        from dev.usage_examples.docs.concepts.boolean_concept import (
-            boolean_concept,  # noqa: F401
-            refs_and_justifications,
-        )
-        from dev.usage_examples.docs.concepts.date_concept import (
-            date_concept,  # noqa: F401
-            refs_and_justifications,  # noqa: F401,F811
-        )
-        from dev.usage_examples.docs.concepts.json_object_concept import (
-            adding_examples,  # noqa: F401
-            json_object_concept,  # noqa: F401
-            refs_and_justifications,  # noqa: F401,F811
-        )
-        from dev.usage_examples.docs.concepts.json_object_concept.structure import (
-            nested_class_structure,  # noqa: F401
-            nested_structure,  # noqa: F401
-            simple_class_structure,  # noqa: F401
-            simple_structure,  # noqa: F401
-        )
-        from dev.usage_examples.docs.concepts.label_concept import (
-            document_aspect_analysis,  # noqa: F401
-            label_concept,  # noqa: F401
-            multi_label_classification,  # noqa: F401
-            refs_and_justifications,  # noqa: F401,F811
-        )
-        from dev.usage_examples.docs.concepts.numerical_concept import (
-            numerical_concept,  # noqa: F401
-            refs_and_justifications,  # noqa: F401,F811
-        )
-        from dev.usage_examples.docs.concepts.rating_concept import (
-            multiple_ratings,  # noqa: F401
-            rating_concept,  # noqa: F401
-            refs_and_justifications,  # noqa: F401,F811
-        )
-        from dev.usage_examples.docs.concepts.string_concept import (
-            adding_examples,  # noqa: F401,F811
-            refs_and_justifications,  # noqa: F401,F811
-            string_concept,  # noqa: F401
-        )
-        from dev.usage_examples.docs.llm_config import (
-            chat_with_tools,  # noqa: F401
-            cost_tracking,  # noqa: F401
-            detailed_usage,  # noqa: F401
-            fallback_models,  # noqa: F401
-            model_group,  # noqa: F401
-            reasoning_params,  # noqa: F401
-            tracking_usage_and_cost,  # noqa: F401
-        )
-        from dev.usage_examples.docs.llms.llm_extraction_methods import (
-            extract_all,  # noqa: F401
-            extract_aspects_from_document,  # noqa: F401
-            extract_concepts_from_aspect,  # noqa: F401
-            extract_concepts_from_document,  # noqa: F401
-        )
-        from dev.usage_examples.docs.llms.llm_init import (
-            llm_api,  # noqa: F401
-            llm_local,  # noqa: F401
-            lm_studio_connection_error_fix,  # noqa: F401
-        )
-        from dev.usage_examples.docs.optimizations import (
-            optimization_accuracy,  # noqa: F401
-            optimization_choosing_llm,  # noqa: F401
-            optimization_cost,  # noqa: F401
-            optimization_long_docs,  # noqa: F401
-            optimization_speed,  # noqa: F401
-        )
-        from dev.usage_examples.docs.quickstart import (
-            quickstart_aspect,  # noqa: F401
-            quickstart_concept_aspect,  # noqa: F401
-            quickstart_concept_document_text,  # noqa: F401
-            quickstart_concept_document_vision,  # noqa: F401
-            quickstart_sub_aspect,  # noqa: F401
-        )
-        from dev.usage_examples.docs.serialization import serialization  # noqa: F401
-        from dev.usage_examples.readme import (
-            llm_chat,  # noqa: F401
-            quickstart_concept,  # noqa: F401
-        )
+        _run_usage_example(example)
 
-    @pytest.mark.vcr
-    def test_decision_model_usage_examples(self):
+    @pytest.mark.parametrize("example", _EXAMPLES_WITHOUT_REQUESTS)
+    def test_usage_example_without_requests(self, example: str):
         """
-        Tests for usage examples of decision models in project's documentation.
-        The examples are kept in a test of their own, with its own cassette, so that
-        the cassette of the other usage examples does not depend on them.
-        Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
-        Note: A module is executed only when it is first imported, i.e. the modules
-        are not to be imported by another test.
+        Tests a usage example of the documentation that sends no requests.
         """
-        from dev.usage_examples.docs.decision_models import (
-            decision_model_aspects,  # noqa: F401
-            decision_model_concepts,  # noqa: F401
-            decision_model_fallbacks,  # noqa: F401
-            decision_model_group,  # noqa: F401
-            decision_model_init,  # noqa: F401
-            decision_model_local,  # noqa: F401
-            decision_model_threshold,  # noqa: F401
-            decision_model_usage_and_cost,  # noqa: F401
-        )
+        _run_usage_example(example)
+
+    def test_usage_examples_are_listed(self):
+        """
+        Tests that each usage example of the documentation and of the README is run
+        by one of the tests above, i.e. that an example that is added is also listed.
+        """
+        found = {
+            ".".join(file.relative_to(_USAGE_EXAMPLES_DIR).with_suffix("").parts)
+            for directory in ("docs", "readme")
+            for file in (_USAGE_EXAMPLES_DIR / directory).rglob("*.py")
+            if file.name != "__init__.py"
+        }
+        with_requests = set(_EXAMPLES_WITH_REQUESTS)
+        without_requests = set(_EXAMPLES_WITHOUT_REQUESTS)
+        assert len(with_requests) == len(_EXAMPLES_WITH_REQUESTS)
+        assert len(without_requests) == len(_EXAMPLES_WITHOUT_REQUESTS)
+        assert not with_requests & without_requests
+        assert found == with_requests | without_requests
 
     @pytest.mark.usefixtures("restore_logger_settings")
     def test_docstring_examples(self):
