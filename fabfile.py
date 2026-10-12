@@ -86,7 +86,9 @@ def docs_live(c: Context, port: int = 9000) -> None:
         f"--port {port} -v -E -W"
     )
     with c.cd(docs_dir):
-        c.run(cmd)
+        # Unbuffered: the output of the command is piped here, so the messages of
+        # sphinx-autobuild (the server URL among them) would stay in its buffer
+        c.run(cmd, env={"PYTHONUNBUFFERED": "1"})
 
 
 # =============================================================================
