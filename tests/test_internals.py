@@ -190,6 +190,29 @@ class TestInternals(BaseTest):
             with pytest.raises(AttributeError):
                 TestNoRequiredAttrs()  # initialized with no required attributes
 
+    def test_public_exceptions(self):
+        """
+        Tests that the exceptions raised to the calling code can be imported from
+        the package, and are the classes that the framework raises.
+        """
+
+        import contextgem
+        from contextgem import public
+        from contextgem.internal import exceptions
+
+        for name in ["ModelAPIError", "ModelExtractionError", "LLMToolLoopLimitError"]:
+            assert name in contextgem.__all__
+            assert name in public.__all__
+            # The same class, so that an `except` clause with the public name
+            # catches what the framework raises
+            assert getattr(contextgem, name) is getattr(exceptions, name)
+            assert getattr(public, name) is getattr(exceptions, name)
+            assert issubclass(getattr(contextgem, name), Exception)
+
+        # Internal exceptions are not exported
+        for name in ["_BaseModelError", "_ToolReturnValueError"]:
+            assert not hasattr(contextgem, name)
+
     def test_pre_v1_names_rejected(self):
         """
         Tests that the names of the classes and parameters that were renamed in v1.0
@@ -206,6 +229,8 @@ class TestInternals(BaseTest):
             (contextgem, "LLMPricing"),
             (exceptions, "LLMAPIError"),
             (exceptions, "LLMExtractionError"),
+            (contextgem, "LLMAPIError"),
+            (contextgem, "LLMExtractionError"),
         ]:
             assert not hasattr(module, old_name)
 

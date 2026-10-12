@@ -372,3 +372,4 @@ Indices and tables
    api/sentences
    api/pipelines
    api/decorators
+   api/exceptions

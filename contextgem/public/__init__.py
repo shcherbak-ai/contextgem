@@ -31,6 +31,11 @@ from contextgem.public.decision_models import DocumentDecisionModel
 from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
+from contextgem.public.exceptions import (
+    LLMToolLoopLimitError,
+    ModelAPIError,
+    ModelExtractionError,
+)
 from contextgem.public.images import Image
 from contextgem.public.llms import ChatSession, DocumentLLM
 from contextgem.public.models import DocumentModelGroup
@@ -85,4 +90,8 @@ __all__ = (
     "JsonObjectClassStruct",
     # Decorators
     "register_tool",
+    # Exceptions
+    "ModelAPIError",
+    "ModelExtractionError",
+    "LLMToolLoopLimitError",
 )

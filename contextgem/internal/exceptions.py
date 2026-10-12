@@ -79,12 +79,20 @@ class _BaseModelError(Exception):
 
 class ModelExtractionError(_BaseModelError):
     """
-    Exception raised when model extraction operations fail after all configured retries.
+    Exception raised by the extraction methods when a model returns data that cannot
+    be used, and there is no fallback model left to try.
 
-    This exception is typically raised when:
-    - Model extraction attempts have been exhausted without success
-    - The extracted data doesn't meet validation requirements
-    - Parsing of extracted content fails consistently
+    This is the case when:
+
+    - the response of an LLM cannot be parsed or validated, also after the LLM
+      was asked again ``max_retries_invalid_data`` times;
+    - the response of a decision model cannot be used, e.g. the model refused
+      to answer a question of a concept. A decision model is not asked again.
+
+    If ``raise_exception_on_extraction_error=False`` is passed to the extraction
+    method, a warning is issued instead.
+
+    Can be imported from ``contextgem``.
 
     :ivar message: Human-readable error description
     :vartype message: str
@@ -101,20 +109,26 @@ class ModelExtractionError(_BaseModelError):
 
 class ModelAPIError(_BaseModelError):
     """
-    Exception raised when model API calls fail.
+    Exception raised when a request to a model fails for good, and there is
+    no fallback model left to try.
 
-    This exception is typically raised when:
-    - Network errors occur during API communication
-    - API authentication or authorization fails
-    - Rate limits are exceeded
-    - API service is unavailable or returns unexpected responses
-    - Request timeouts occur
-    - The response of the model is cut off at the max output tokens during extraction,
-      or is empty in a chat
+    This is the case when:
+
+    - the request fails with a non-transient error, e.g. an invalid request or
+      a failed authentication;
+    - the request fails with a transient error (request timeout, rate limit, server
+      or connection error), also after ``num_retries_failed_request`` retries;
+    - the response of an LLM is cut off at the max output tokens during extraction,
+      or is empty in a chat.
+
+    During extraction, if ``raise_exception_on_extraction_error=False`` is passed
+    to the extraction method, a warning is issued instead.
+
+    Can be imported from ``contextgem``.
 
     :ivar message: Human-readable error description
     :vartype message: str
-    :ivar retry_count: Number of retries attempted before failure
+    :ivar retry_count: Number of retries attempted for the failed request
     :vartype retry_count: int or None
     :ivar original_error: The underlying exception that caused the failure
     :vartype original_error: Exception or None
@@ -128,12 +142,14 @@ class ModelAPIError(_BaseModelError):
 
 class LLMToolLoopLimitError(_BaseModelError):
     """
-    Exception raised when the assistant's tool-calling loop reaches the
-    configured `tool_max_rounds` limit and the model continues requesting tools.
+    Exception raised from a chat when the tool-calling loop reaches the configured
+    ``tool_max_rounds`` limit and the LLM continues requesting tools.
 
-    Typically indicates the model is stuck in a loop or needs more rounds to
-    complete the workflow. Consider increasing `tool_max_rounds` or adjusting
-    tool instructions/choice.
+    Typically indicates that the LLM is stuck in a loop or needs more rounds to
+    complete the workflow. Consider increasing ``tool_max_rounds`` or adjusting
+    the tool instructions or the tool choice.
+
+    Can be imported from ``contextgem``.
     """
 
     pass

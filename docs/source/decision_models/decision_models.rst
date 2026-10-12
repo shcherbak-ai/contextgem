@@ -695,12 +695,12 @@ Providers may set further limits of their own. See the documentation of your pro
      - When it is raised
    * - ``ValueError``
      - When an extraction method is called, before any request is sent: the decision model, or a decision model in the fallback chain, cannot extract an aspect or a concept that it is given (see :ref:`decision-models-supported-label`), including a concept over a limit of ``litellm`` (see :ref:`decision-models-limits-label`). Also when a decision model is created, or its params are assigned, as a validation error: the provider of the model is not a provider of decision models that ``litellm`` supports (see :ref:`decision-models-providers-label`), or ``auto_pricing`` cannot be used for the model (see :ref:`decision-models-cost-label`).
-   * - ``ModelAPIError``
+   * - :class:`~contextgem.public.exceptions.ModelAPIError`
      - A request failed for good: with a non-transient error, or with a transient error after ``num_retries_failed_request`` retries. This includes the requests that ``litellm`` rejects before sending them, e.g. for a missing API key or API base. The error has the number of retries made (``retry_count``) and the error of the request (``original_error``).
-   * - ``ModelExtractionError``
+   * - :class:`~contextgem.public.exceptions.ModelExtractionError`
      - A response cannot be used: the model refused to answer a question of a concept, or the question of an aspect on every paragraph, an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The request is not sent again, as the same response is expected.
 
-``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`).
+``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`). Both can be imported from ``contextgem``.
 
 **A refused answer in aspect extraction is not an error.** When the model refuses to answer the question of an aspect on a paragraph, or on a sentence for an aspect with ``reference_depth="sentences"``, that paragraph or sentence is not included in the aspect, and the extraction goes on with the other answers. ``litellm`` also reports a question that the model left unanswered as a refused one. A warning is issued for each aspect with refused answers:
 

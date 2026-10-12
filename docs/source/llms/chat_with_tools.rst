@@ -332,11 +332,13 @@ When the LLM can correct a failed tool call, the chat is not stopped: the error 
    * - The tool function raises an exception
      - The LLM receives the message of the exception
    * - The LLM returns a tool call that cannot be processed, e.g. without the name of the tool or the ID of the call
-     - No tool is called. This is handled as a failed request: a fallback LLM is tried, or ``ModelAPIError`` is raised
+     - No tool is called. This is handled as a failed request: a fallback LLM is tried, or :class:`~contextgem.public.exceptions.ModelAPIError` is raised
    * - The tool function returns a value other than a non-empty string
      - ``TypeError`` or ``ValueError`` is raised from ``chat(...)``
    * - The LLM still calls tools after ``tool_max_rounds`` rounds of tool calls
-     - ``LLMToolLoopLimitError`` is raised from ``chat(...)``
+     - :class:`~contextgem.public.exceptions.LLMToolLoopLimitError` is raised from ``chat(...)``
+
+``ModelAPIError`` and ``LLMToolLoopLimitError`` can be imported from ``contextgem``.
 
 When ``chat(...)`` raises an error, or is cancelled (e.g. on a timeout set by the calling code), the requests completed before that are still counted in the usage and cost of the LLM.
 

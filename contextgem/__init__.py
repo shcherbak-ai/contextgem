@@ -38,6 +38,9 @@ from contextgem.public import (
     JsonObjectConcept,
     JsonObjectExample,
     LabelConcept,
+    LLMToolLoopLimitError,
+    ModelAPIError,
+    ModelExtractionError,
     ModelPricing,
     NumericalConcept,
     Paragraph,
@@ -92,4 +95,8 @@ __all__ = (
     "JsonObjectClassStruct",
     # Decorators
     "register_tool",
+    # Exceptions
+    "ModelAPIError",
+    "ModelExtractionError",
+    "LLMToolLoopLimitError",
 )

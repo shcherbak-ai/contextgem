@@ -63,6 +63,8 @@ In v1.0, the classes, parameters and attributes that are not specific to LLMs ar
 
 Only the names are changed by the renaming, except for ``model_roles``, which also reports the roles differently (see :ref:`migration-v1-roles-label`). The other changes to model groups, roles and fallback LLMs are described in the sections below. The old names are removed: using them raises an error.
 
+The exceptions (``ModelAPIError``, ``ModelExtractionError`` and ``LLMToolLoopLimitError``) can now be imported from ``contextgem``. Before v1.0, they could be imported only from the internal ``contextgem.internal.exceptions`` module, which still works.
+
 .. code-block:: python
    :caption: Before v1.0
 
