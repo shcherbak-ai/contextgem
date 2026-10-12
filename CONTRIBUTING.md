@@ -58,11 +58,11 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
     # Install uv if you don't have it
     pip install uv
 
-    # Install dependencies and pre-commit hooks
+    # Install dependencies, as locked in uv.lock, and pre-commit hooks
     uv run fab setup
 
     # Or manually:
-    # uv sync --all-groups --upgrade
+    # uv sync --all-groups
     # uv run pre-commit install
     # uv run pre-commit install --hook-type commit-msg
     ```
@@ -73,8 +73,8 @@ The project includes a `fabfile.py` with common development tasks:
 
 ```bash
 uv run fab --list          # List all available commands
-uv run fab setup           # Set up dev environment (deps + hooks)
-uv run fab sync            # Sync dependencies with upgrades
+uv run fab setup           # Set up dev environment (locked deps + hooks)
+uv run fab sync            # Upgrade dependencies (rewrites uv.lock)
 uv run fab lint            # Run pre-commit checks on all files
 uv run fab docs            # Build documentation
 uv run fab docs-live       # Start live documentation server

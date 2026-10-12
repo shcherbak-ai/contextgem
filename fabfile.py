@@ -17,15 +17,16 @@ from invoke.context import Context
 
 @task
 def sync(c: Context) -> None:
-    """Sync dependencies from pyproject.toml with upgrades."""
+    """Upgrade dependencies within pyproject.toml constraints (rewrites uv.lock)."""
     c.run("uv sync --all-groups --upgrade")
 
 
 @task
 def setup(c: Context) -> None:
-    """Set up development environment (install deps + hooks)."""
+    """Set up development environment (install locked deps + hooks)."""
     print("Installing dependencies...")
-    sync(c)
+    # The versions locked in uv.lock, i.e. the ones that CI uses: no upgrades
+    c.run("uv sync --all-groups")
     print("\nInstalling pre-commit hooks...")
     install_hooks(c)
     print("\n✓ Development environment ready!")
@@ -63,7 +64,8 @@ def docs(c: Context) -> None:
     with c.cd(docs_dir):
         c.run(cmd)
     print("\n✓ Documentation built successfully!")
-    print("  Open docs/build/dirhtml/index.html to view")
+    print("  To view, serve the folder and open http://localhost:9000:")
+    print("  uv run python -m http.server 9000 --directory docs/build/dirhtml")
 
 
 @task(name="docs-live")
