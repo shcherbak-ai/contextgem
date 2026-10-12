@@ -7,7 +7,7 @@ from contextgem import Aspect, Document, DocumentLLM, DocumentModelGroup, String
 
 # Define LLMs
 
-# LLM without a role - extracts all aspects/concepts that are not routed to another LLM
+# LLM without a role - extracts the aspects/concepts that have no `model_role`
 base_llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
@@ -17,7 +17,7 @@ base_llm = DocumentLLM(
 base_llm_fallback = DocumentLLM(
     model="openai/gpt-5.6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    is_fallback=True,  # must have the same role as the parent LLM (here: no role)
+    is_fallback=True,  # must have the same role as the primary LLM (here: no role)
 )
 base_llm.fallback_models = [base_llm_fallback]
 

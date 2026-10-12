@@ -16,6 +16,6 @@ content_topics_concept = LabelConcept(
     description="Identify all relevant topics covered in the document",
     labels=["Finance", "Legal", "Technology", "HR", "Operations", "Marketing"],
     classification_type="multi_label",
-    add_justifications=True,
-    justification_depth="brief",  # add justifications for the selected labels
+    add_justifications=True,  # add justifications for the selected labels
+    justification_depth="brief",
 )

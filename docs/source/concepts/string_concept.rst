@@ -32,8 +32,6 @@ StringConcept
 * **Complex analyses**: conclusions, assessments, recommendations, summaries
 * **Detected elements**: anomalies, patterns, key findings, critical insights
 
-This concept type offers flexibility to extract both factual information and interpretive content that requires advanced understanding.
-
 
 💻 Usage Example
 ------------------
@@ -82,7 +80,7 @@ When creating a :class:`~contextgem.public.concepts.StringConcept`, you can spec
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -171,7 +169,7 @@ When a :class:`~contextgem.public.concepts.StringConcept` is extracted, it is po
      - List of sentence objects that informed the extraction (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices
@@ -183,4 +181,4 @@ Here are some best practices to optimize your use of :class:`~contextgem.public.
 - Include examples (using :class:`~contextgem.public.examples.StringExample`) to improve extraction accuracy and demonstrate the expected format (e.g., *"Party Name (Role)"* for contract parties or *"Revenue: $X million"* for financial figures).
 - Enable justifications (using ``add_justifications=True``) when you need to see why the LLM extracted certain values.
 - Enable references (using ``add_references=True``) when you need to trace back to where in the document the information was found or understand what evidence informed extracted values (especially for inferred information).
-- When relevant, enforce only a single item extraction (using ``singular_occurrence=True``). This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total.
+- When relevant, enforce only a single item extraction (using ``singular_occurrence=True``).

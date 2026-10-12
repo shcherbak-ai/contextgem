@@ -30,13 +30,13 @@ ContextGem leverages LLMs' long context windows to deliver superior extraction a
 🧩 Core Components
 -------------------
 
-ContextGem's main elements are the Document, Aspect, and Concept models:
+ContextGem's main elements are documents, aspects, and concepts:
 
 
 📄 **Document**
 ~~~~~~~~~~~~~~~~
 
-:class:`~contextgem.public.documents.Document` model contains text and/or visual content representing a specific document. Documents can vary in type and purpose, including but not limited to:
+:class:`~contextgem.public.documents.Document` contains text and/or visual content representing a specific document. Documents can vary in type and purpose, including but not limited to:
     - *Contracts*: legal agreements defining terms and obligations.
     - *Invoices*: financial documents detailing transactions and payments.
     - *Curricula Vitae (CVs)*: resumes outlining an individual's professional experience and qualifications.
@@ -46,7 +46,7 @@ ContextGem's main elements are the Document, Aspect, and Concept models:
 🔍 **Aspect**
 ~~~~~~~~~~~~~~~
 
-:class:`~contextgem.public.aspects.Aspect` model contains text representing a defined area or topic within a document (or another aspect) that requires focused attention. Each aspect reflects a specific subject or theme. For example:
+:class:`~contextgem.public.aspects.Aspect` contains text representing a defined area or topic within a document (or another aspect) that requires focused attention. Each aspect reflects a specific subject or theme. For example:
     - *Contract aspects*: payment terms, parties involved, or termination clauses.
     - *Invoice aspects*: due dates, line-item breakdowns, or tax details.
     - *CV aspects*: work experience, education, or skills.
@@ -57,7 +57,7 @@ Aspects may have sub-aspects, for more granular extraction with nested context. 
 💡 **Concept**
 ~~~~~~~~~~~~~~~
 
-Concept model contains a unit of information or an entity, derived from an aspect or the broader document context. Concepts represent a wide range of data points and insights, from simple entities (names, dates, monetary values) to complex evaluations, conclusions, and answers to specific questions. Concepts can be:
+A concept contains a unit of information or an entity, derived from an aspect or the broader document context. Concepts represent a wide range of data points and insights, from simple entities (names, dates, monetary values) to complex evaluations, conclusions, and answers to specific questions. Concepts can be:
     - *Factual extractions*: such as a penalty clause in a contract, a total amount due in an invoice, or a certification in a CV.
     - *Analytical insights*: such as risk assessments, compliance evaluations, or pattern identifications.
     - *Reasoned conclusions*: such as determining whether a document meets specific criteria or answers particular questions.
@@ -65,7 +65,7 @@ Concept model contains a unit of information or an entity, derived from an aspec
 
 Concepts may be attached to an aspect or a document. The context for the concept extraction will be the aspect or document, respectively. This flexible attachment allows for both targeted extraction from specific document sections and broader analysis across the entire document content. When attached to aspects, concepts benefit from the focused context, enabling more precise extraction of domain-specific information. When attached to documents, concepts can leverage the complete context to identify patterns, anomalies, or insights that span multiple sections.
 
-Multiple concept types are supported: :class:`~contextgem.public.concepts.StringConcept`, :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.NumericalConcept`, :class:`~contextgem.public.concepts.DateConcept`, :class:`~contextgem.public.concepts.JsonObjectConcept`, :class:`~contextgem.public.concepts.RatingConcept`, :class:`~contextgem.public.concepts.LabelConcept`
+Multiple concept types are supported: :class:`~contextgem.public.concepts.StringConcept`, :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.NumericalConcept`, :class:`~contextgem.public.concepts.DateConcept`, :class:`~contextgem.public.concepts.JsonObjectConcept`, :class:`~contextgem.public.concepts.RatingConcept`, :class:`~contextgem.public.concepts.LabelConcept`.
 
 .. list-table:: Component Examples
    :header-rows: 1
@@ -155,25 +155,19 @@ See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-
    * - 
      - LLM 1 (no role)
      - LLM 2 (``role="reasoner"``)
-     - LLM 3 (``role="vision"``)
+     - Decision model (``role="decide"``)
    * - *Model*
      - gpt-6-luna
      - gpt-6.1-sol
-     - gpt-6-luna
+     - jev-latest
    * - *Task*
      - Extract payment terms from a contract
      - Detect anomalies in the payment terms
-     - Extract invoice amounts
-   * - *Fallback LLM(s)* (optional)
+     - Check whether the contract can be terminated for convenience
+   * - *Fallback model(s)* (optional)
      - gpt-5.6-luna
      - gpt-5.6-sol
-     - gpt-5.6-luna
-
-.. image:: _static/contextgem_how_it_works_infographics.png
-   :width: 100%
-   :alt: ContextGem - How it works infographics
-   :target: #
-   :align: center
+     - gpt-6-luna
 
 
 ℹ️ What ContextGem Doesn't Offer (Yet)
@@ -189,4 +183,4 @@ ContextGem focuses on in-depth single-document analysis, leveraging long context
 **Not an agent framework**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ContextGem is not designed as an agent framework. It now supports tool calling in chat (function-calling) with optional parallel tool calls and JSON schema validation of tool arguments, which enables building lightweight, task-oriented agents using your own control loop together with :class:`~contextgem.public.llms.ChatSession`. For full agent orchestration (planning/critique, goal decomposition, long-term memory, schedulers, multi-agent coordination), we recommend frameworks specifically designed for this purpose. ContextGem integrates cleanly as a high-accuracy document extraction tool in larger agent systems thanks to its simple API and structured outputs.
+ContextGem is not designed as an agent framework. It supports tool calling in chat (function calling) with optional parallel tool calls and JSON schema validation of tool arguments, which enables building lightweight, task-oriented agents using your own control loop together with :class:`~contextgem.public.llms.ChatSession`. For full agent orchestration (planning/critique, goal decomposition, long-term memory, schedulers, multi-agent coordination), we recommend frameworks specifically designed for this purpose. ContextGem integrates cleanly as a high-accuracy document extraction tool in larger agent systems thanks to its simple API and structured outputs.

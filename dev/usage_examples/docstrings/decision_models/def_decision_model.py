@@ -28,7 +28,7 @@ decision_model_fallback = DocumentLLM(
 decision_model.fallback_models = [decision_model_fallback]
 
 # Create an LLM for everything else. This LLM has no role, i.e. it extracts
-# all aspects and concepts that are not routed to another model in the group.
+# the aspects and concepts that have no `model_role`.
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key="your-openai-api-key",  # Replace with your actual API key

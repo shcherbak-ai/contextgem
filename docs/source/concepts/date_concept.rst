@@ -84,7 +84,7 @@ When creating a :class:`~contextgem.public.concepts.DateConcept`, you can specif
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -159,7 +159,7 @@ When a :class:`~contextgem.public.concepts.DateConcept` is extracted, it is popu
      - List of sentence objects where the date was found or from which it was calculated, derived, or inferred (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices

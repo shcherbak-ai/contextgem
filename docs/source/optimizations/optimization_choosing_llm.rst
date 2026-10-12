@@ -77,7 +77,7 @@ Roles route aspects/concepts to the decision models of a group in the same way, 
    **Upgrading from an earlier version?** Before v1.0, roles were predefined names that also determined the content to extract from. See :doc:`../migration_v1` for updating your code and serialized data.
 
 .. note::
-  🧠 For LLMs that support reasoning (chain of thought), internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses. Reasoning support is detected automatically using ``litellm.supports_reasoning()``, regardless of the role of the LLM. If this function does not correctly identify your model's capabilities, you can explicitly declare the capability by setting ``_supports_reasoning=True`` on the LLM instance.
+  🧠 For LLMs that support reasoning (chain of thought), internal prompts include reasoning-specific instructions intended for these models to produce higher-quality responses. Reasoning support is detected automatically using ``litellm.supports_reasoning()``. If this function does not correctly identify your model's capabilities, you can explicitly declare the capability by setting ``_supports_reasoning=True`` on the LLM instance.
 
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_choosing_llm.py
     :language: python
@@ -116,7 +116,7 @@ The ``modality`` of a concept defines the document content that the concept is e
   👁️ Only LLMs that support vision can extract concepts from images. Vision support is detected automatically using ``litellm.supports_vision()``. If the LLM that is to extract concepts from images, or any of its fallback LLMs, does not support vision, an error is raised before any requests are sent. See :doc:`../llms/llm_config` for declaring the capability explicitly.
 
 .. note::
-  🔀 Concepts with the ``"multimodal"`` modality reuse the existing text and image extraction paths. If text exists, the text path runs first; if images exist, the image path runs next. References are only supported for multimodal concepts when text is used.
+  🔀 Concepts with the ``"multimodal"`` modality are extracted from the text first, if the document has text, and then from the images, if it has images. References are supported for such concepts only for what is extracted from the text.
 
 .. note::
-  🤖 A single multimodal LLM can extract concepts of all modalities. If you prefer a dedicated model for images, add it to a model group with a role (e.g. ``role="vision"``) and assign the same ``model_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.
+  🤖 A single vision-capable LLM can extract concepts of all modalities. If you prefer a dedicated model for images, add it to a model group with a role (e.g. ``role="vision"``) and assign the same ``model_role`` to the concepts with the ``"image"`` or ``"multimodal"`` modality.

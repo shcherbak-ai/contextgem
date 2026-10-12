@@ -49,13 +49,11 @@ Building reliable structured-extraction workflows from documents typically invol
         * Tracking usage and costs across providers
         * Configuring concurrent I/O to keep extraction fast
 
-ContextGem provides a "batteries included" approach to all of these, with simple, declarative syntax.
-
 
 💎 The ContextGem Approach
 ----------------------------
 
-ContextGem provides a "batteries included" answer to each of these problems:
+ContextGem provides a "batteries included" answer to each of these problems, with simple, declarative syntax:
 
 - **Prompting and modelling.** ContextGem auto-generates dynamic prompts and validated data models from your natural-language extraction targets, with optional few-shot calibration via attached examples.
 - **Document and pipeline plumbing.** Outputs map back to precise paragraph- or sentence-level locations in the source. Nested context (document → aspects → sub-aspects → concepts) is handled automatically. The whole workflow is a single declarative, reusable, serializable pipeline. Concurrent I/O, fallback/retry, and cross-provider usage tracking are built in.

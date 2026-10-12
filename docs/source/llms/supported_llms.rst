@@ -48,7 +48,7 @@ For local LLMs, you'll need to specify the provider, model name, and the appropr
    :caption: Using local LLM providers
 
 .. note::
-   **Vision Models with Ollama**: For local vision models that process images, use the ``ollama/`` prefix instead of ``ollama_chat/``, as the latter does not yet support image inputs. For more details, see the relevant `Ollama GitHub issue <https://github.com/ollama/ollama/issues/10255>`_ and `LiteLLM GitHub issue <https://github.com/ollama/ollama/issues/6451>`_.
+   **Vision Models with Ollama**: For local vision models that process images, use the ``ollama/`` prefix instead of ``ollama_chat/``, as the latter does not yet support image inputs. For more details, see the relevant Ollama GitHub issues `#10255 <https://github.com/ollama/ollama/issues/10255>`_ and `#6451 <https://github.com/ollama/ollama/issues/6451>`_.
 
 .. note::
    **LM Studio Connection Error**: If you encounter a connection error (``litellm.APIError: APIError: Lm_studioException - Connection error``) when using LM Studio, check that you have provided a dummy API key. While API keys are usually not expected for local models, this is a specific case where LM Studio requires one:

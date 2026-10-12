@@ -27,7 +27,7 @@ ContextGem provides comprehensive logging to help you monitor and debug the extr
 ⚙️ Environment Variables
 --------------------------
 
-ContextGem uses a single environment variable for logging configuration:
+ContextGem uses the following environment variables for logging configuration:
 
 **CONTEXTGEM_LOGGER_LEVEL**
   Sets the logging level. Valid values are:
@@ -42,6 +42,11 @@ ContextGem uses a single environment variable for logging configuration:
   * ``OFF`` - Completely disables logging
 
   **Default:** ``INFO``
+
+**CONTEXTGEM_SUPPRESS_LITELLM_NOISE**
+  ContextGem hides the non-actionable log messages of ``litellm``, at any logging level, including ``OFF``. Set the variable to ``0`` to show these messages. With any other value, they stay hidden.
+
+  **Default:** ``1``
 
 .. warning::
    **Not recommended:** Setting the level to ``OFF`` or above ``INFO`` (such as ``WARNING`` or ``ERROR``) may cause you to miss helpful messages, guidance, recommendations, and important information about the extraction process. The default ``INFO`` level provides a good balance of useful information without being too verbose.
@@ -76,7 +81,7 @@ ContextGem uses a single environment variable for logging configuration:
 🔄 Changing Settings at Runtime
 ---------------------------------
 
-If you need to change logging settings after importing ContextGem, use the ``reload_logger_settings()`` function:
+If you need to change logging settings after importing ContextGem, set the environment variables and call the ``reload_logger_settings()`` function, which applies both of them:
 
 .. literalinclude:: ../../dev/usage_examples/docstrings/utils/reload_logger_settings.py
    :language: python

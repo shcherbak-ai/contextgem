@@ -143,12 +143,12 @@ doc2.assign_pipeline(
 llm_extractor = DocumentLLM(
     model="openai/gpt-6-luna",  # or any other LLM from e.g. Anthropic, etc.
     api_key=os.environ["CONTEXTGEM_OPENAI_API_KEY"],  # your API key
-    # no role - the LLM extracts all aspects/concepts that are not routed to another LLM
+    # no role - the LLM extracts the aspects/concepts that have no `model_role`
     pricing_details=ModelPricing(  # optional, for costs calculation
         input_per_1m_tokens=0.10,
         output_per_1m_tokens=0.50,
     ),
-    # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
+    # or set `auto_pricing=True` to calculate the costs automatically with `genai-prices`
 )
 llm_reasoner = DocumentLLM(
     model="openai/gpt-6.1-sol",  # or any other LLM from e.g. Anthropic, etc.
@@ -158,7 +158,7 @@ llm_reasoner = DocumentLLM(
         input_per_1m_tokens=2.00,
         output_per_1m_tokens=10.00,
     ),
-    # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
+    # or set `auto_pricing=True` to calculate the costs automatically with `genai-prices`
 )
 # The model group is used for all extraction tasks within the pipeline
 model_group = DocumentModelGroup(models=[llm_extractor, llm_reasoner])

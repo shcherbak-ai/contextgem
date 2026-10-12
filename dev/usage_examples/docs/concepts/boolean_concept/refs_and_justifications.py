@@ -23,7 +23,7 @@ compliance_concept = BooleanConcept(
     description="Whether the document specifies that data must be encrypted",
     add_justifications=True,  # Enable justifications to understand reasoning
     justification_depth="brief",
-    justification_max_sents=1,  # Allow up to 1 sentences for each justification
+    justification_max_sents=1,  # Allow up to 1 sentence for each justification
     add_references=True,  # Include references to source text
     reference_depth="sentences",  # Reference specific sentences rather than paragraphs
 )

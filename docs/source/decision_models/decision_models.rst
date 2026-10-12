@@ -71,7 +71,7 @@ The requests are sent with `LiteLLM <https://github.com/BerriAI/litellm>`_, as f
 
 - **The answer comes from a closed set**: yes or no, one or several of your labels, a level of a scale.
 - **You need to know how sure the model is of an answer**, e.g. to send the uncertain answers to a human review, or to accept a "yes" only above a threshold of your choice.
-- **There are many such questions, or many documents, and the cost of generated output matters.** A decision model generates no text. As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0``, with output tokens free (`TypeSafe models <https://docs.typesafe.ai/models>`_), and OpenAI lists $0.10 per 1M input tokens for ``gpt-6-luna`` on the Decisions API, with input tokens as the only charge (`OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_). What an extraction costs also depends on how many requests the text is sent in, see :ref:`decision-models-cost-label`.
+- **There are many such questions, or many documents, and the cost of generated output matters.** A decision model generates no text, and is billed for its input. For the prices, and for how the number of requests changes the cost, see :ref:`decision-models-cost-label`.
 
 **Use an LLM instead when:**
 
@@ -186,8 +186,7 @@ What to know about decision models in Microsoft Foundry:
 - **The key and the endpoint in the environment.** LiteLLM reads the key from the ``AZURE_AI_API_KEY`` environment variable if ``api_key`` is not passed, and the endpoint from ``AZURE_AI_API_BASE`` if ``api_base`` is not passed. Without an API base, passed or in the environment, the first request fails with ``ModelAPIError``: the message of LiteLLM names ``AZURE_AI_API_BASE``.
 - **Set the prices with** ``pricing_details``. ``genai-prices`` has no prices for a model deployed in Foundry, and the name of the deployment is your own. With ``auto_pricing=True``, a warning is therefore issued, and the costs stay at zero (see :ref:`decision-models-cost-label`). As of October 2026, Microsoft lists $0.042 per 1M input tokens for Microsoft-Decision-1, with output tokens free (`announcement of Microsoft-Decision-1 <https://commandline.microsoft.com/microsoft-decision-1-model-foundry/>`_). The usage that the API reports for a request can have output tokens: with ``output_per_1m_tokens=0.0``, they cost nothing.
 - **The rate limits are those of your deployment**, i.e. of the capacity that it is given. A request that is rejected for the rate limit is retried as any other transient error, up to ``num_retries_failed_request`` times. With ``use_concurrency=True``, set the ``async_limiter`` of the decision model to the rate of your deployment (see :ref:`decision-models-aspects-label`).
-- **The context of the model is 32,768 tokens**, according to Microsoft, and a text is not cut to fit it. By default, a document-level concept is decided on the text of the whole document, so send the text of a long document in parts, with ``max_paragraphs_to_analyze_per_call``, or attach its concepts to aspects (see :ref:`decision-models-limits-label`).
-- **The rest of this page applies.** The requests and the answers have the same format as for the other providers, so concepts, aspects, decision thresholds, model groups, fallback chains and the limits work as described on this page.
+- **The context of the model is 32,768 tokens**, according to Microsoft, and a text is not cut to fit it. For a longer text, see :ref:`decision-models-limits-label`.
 
 
 .. _decision-models-local-label:
@@ -207,13 +206,13 @@ What to know about local decision models:
 - **No API key and no prices.** A local server needs no ``api_key``. The tokens are counted as for any other decision model, and no cost is calculated unless you set ``pricing_details``.
 - **LM Studio serves only the models that it lists as decision models**, e.g. the GGUF builds that ``ggml-org`` publishes on Hugging Face, such as Kev 4B (``lms get https://huggingface.co/ggml-org/Kev-4B-GGUF``). A request for a model that LM Studio lists as an LLM is rejected, and the extraction fails with ``ModelAPIError``. The local server of LM Studio Bionic, which is a separate app, does not serve the endpoint as of its version 1.1.7 (October 2026).
 - **The choice of the model matters.** In the tests of ContextGem on a short and unambiguous document, ``nimble`` (9B, with Ollama 0.40) answered each question as expected, with probabilities above 0.99. ``kev-4b`` (4B, with LM Studio 0.4.26) answered as expected except for one of the two labels of a multi-label concept that apply, which got a probability of 0.31. The much smaller ``tev1:0.8b`` answered several of the same questions wrongly. Check a local model on your own documents before you rely on it.
-- **Shorter texts than with the cloud models.** A local model has a smaller context, and the text is not cut to fit it: both servers reject a request whose text and question exceed the context that the model is loaded with, Ollama also a request whose body exceeds 64 KiB, and the extraction fails with ``ModelAPIError``. By default, a document-level concept is decided on the text of the whole document, so send the text of a long document in parts, with ``max_paragraphs_to_analyze_per_call``, or attach its concepts to aspects (see :ref:`decision-models-limits-label`).
+- **Shorter texts than with the cloud models.** A local model has a smaller context, and the text is not cut to fit it: both servers reject a request whose text and question exceed the context that the model is loaded with, Ollama also a request whose body exceeds 64 KiB, and the extraction fails with ``ModelAPIError``. For a longer text, see :ref:`decision-models-limits-label`.
 
 
 📝 Configuration Parameters
 -----------------------------
 
-The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class accepts the following parameters, which have the same meaning as for :class:`~contextgem.public.llms.DocumentLLM`:
+The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class accepts the following parameters. Except for ``decision_threshold``, which only a decision model has, they have the same meaning as for :class:`~contextgem.public.llms.DocumentLLM`:
 
 .. list-table::
    :header-rows: 1
@@ -276,7 +275,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
      - ``AsyncLimiter(10, 10)``
      - Relevant when concurrency is enabled for extraction tasks. Controls the frequency of the requests sent concurrently. Defaults to allowing 10 acquisitions per 10-second period. The rate applies to all the requests to the decision model that are sent concurrently, i.e. the extraction calls that run at the same time share it. This matters most for aspect extraction, which sends one request per paragraph (see :ref:`decision-models-aspects-label`). See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details.
 
-Apart from ``decision_threshold``, which only a decision model has, a decision model has none of the other parameters of :class:`~contextgem.public.llms.DocumentLLM`, e.g. those that control the generation of text or the chat (``system_message``, ``output_language``, ``temperature``, ``top_p``, ``seed``, ``max_tokens``, ``reasoning_effort``, ``tools``), or ``max_retries_invalid_data``. Passing one of them raises a validation error.
+A decision model has no other parameters of :class:`~contextgem.public.llms.DocumentLLM`, e.g. those that control the generation of text or the chat (``system_message``, ``output_language``, ``temperature``, ``top_p``, ``seed``, ``max_tokens``, ``reasoning_effort``, ``tools``), or ``max_retries_invalid_data``. Passing one of them raises a validation error.
 
 
 .. _decision-models-supported-label:
@@ -303,9 +302,7 @@ A decision model can extract only what can be answered with a probability. An as
      - Not supported
      - Always
 
-The number of the labels of a single-label concept and the length of a rating scale are limited by ``litellm``. A concept over such a limit is rejected with the same ``ValueError``, before any request is sent (see :ref:`decision-models-limits-label`).
-
-A concept with ``singular_occurrence=True`` is supported unless ``max_paragraphs_to_analyze_per_call`` (above 0) is passed to the extraction method. With that parameter, a text is sent in parts, and a decision model returns an item for each part, so the concept would get several items. It is rejected with the same ``ValueError``, before any request is sent, whatever the number of parts the text would be split into (see :ref:`sending a long text in parts <decision-models-parts-label>`).
+For the limits on the labels and on the rating levels, see :ref:`decision-models-limits-label`, and for a concept with ``singular_occurrence=True``, see :ref:`sending a long text in parts <decision-models-parts-label>`.
 
 The error names the model and each aspect or concept that cannot be extracted, with the reasons:
 
@@ -320,7 +317,7 @@ The error names the model and each aspect or concept that cannot be extracted, w
 - **A decision model in a model group** is given the aspects and concepts routed to it by the role (see :ref:`decision-models-model-group-label`). Only these are checked.
 - **A decision model that is a fallback model** has to support everything that is given or routed to the model it is a fallback for (see :ref:`decision-models-fallbacks-label`).
 
-**What each extraction method checks:** what it is to extract.
+**What each extraction method checks.** Each method checks only what it is to extract:
 
 - ``extract_all()`` checks all the aspects and concepts of the document, including the sub-aspects and the concepts of the aspects, before the first request. It therefore works with a decision model alone only if everything attached to the document is supported. To extract a document that also has aspects or concepts that need an LLM, use a model group.
 - ``extract_aspects_from_document()`` checks the aspects and their sub-aspects, and not the concepts of the aspects.
@@ -472,15 +469,13 @@ What to know about the threshold:
 - **The value must be above 0 and not above 1.** With a threshold of 1, only a probability of exactly 1 counts as "yes".
 - **The probabilities are what the model reports**, so the right threshold depends on the model: check it on your own documents (see :ref:`decision-models-trust-label`).
 
-See :ref:`decision-models-trust-label` for what a probability does and does not tell.
-
 
 .. _decision-models-aspects-label:
 
 📄 Extracting Aspects
 -----------------------
 
-A decision model extracts aspects one paragraph at a time. The paragraphs are the extracted items of an aspect with ``reference_depth="paragraphs"`` (default), for which the following applies. For an aspect with ``reference_depth="sentences"``, the sentences of these paragraphs are then decided on as well (see "Sentences as the extracted items" below):
+A decision model extracts aspects one paragraph at a time. For an aspect with ``reference_depth="sentences"``, the sentences of the paragraphs that belong to it are then decided on as well (see "Sentences as the extracted items" below). For an aspect with ``reference_depth="paragraphs"`` (default), the paragraphs are the extracted items, and the following applies:
 
 - **One request per paragraph.** A request has the text of one paragraph and, for each aspect processed in the call, one yes/no question: is the paragraph relevant to the aspect? The question is built from the ``name`` and the ``description`` of the aspect.
 - **A paragraph is judged on its own.** The model is not sent the neighbouring paragraphs or the rest of the document, whereas an LLM is sent the paragraphs together. A paragraph that can be understood only in its context, e.g. *"The same applies to the Supplier."*, can therefore be judged differently than by an LLM.
@@ -613,7 +608,7 @@ Token usage is tracked for every decision model, while costs are calculated only
 
 - ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.1.10), these are the TypeSafe models listed above, ``perplexity/pplx-decider-v1-27b``, ``openrouter/typesafe/jev-1.13``, ``cloudflare/clef`` and ``cloudflare/clef-flash``.
 - For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.1.10, this is the case for a model deployed in Microsoft Foundry (``azure_ai/``) and for a model of a self-hosted vLLM server (``hosted_vllm/``): set ``pricing_details`` to get the costs of these models (for the prices of the model in Foundry, see :ref:`decision-models-foundry-label`).
-- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.10, this is the case for ``gpt-6-luna``, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``): the prices found for the model under its provider are its chat prices, which differ from its prices on the Decisions API. ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
+- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.1.10, this is the case for ``gpt-6-luna``, whichever provider serves it (``openai/gpt-6-luna``, ``openrouter/openai/gpt-6-luna``). ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
 - With ``pricing_details``, :class:`~contextgem.public.data_models.ModelPricing` requires both ``input_per_1m_tokens`` and ``output_per_1m_tokens``. Set ``output_per_1m_tokens=0.0`` for a provider that does not charge for output.
 
 As of October 2026, TypeSafe lists $0.042 per 1M input tokens for ``jev-1.13.0`` (`TypeSafe models <https://docs.typesafe.ai/models>`_), and OpenAI lists $0.10 per 1M input tokens for ``gpt-6-luna`` on the Decisions API (`OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_). Neither charges for output tokens. Check the pricing page of your provider for the current prices.

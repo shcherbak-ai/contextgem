@@ -18,7 +18,7 @@ doc = Document(
     ),
 )
 
-# Define an aspect with optional concept(s), using natural language
+# Define an aspect, using natural language
 doc_aspect = Aspect(
     name="Governing law",
     description="Clauses defining the governing law of the agreement",

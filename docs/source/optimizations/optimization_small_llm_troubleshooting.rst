@@ -94,7 +94,7 @@ Instead of generic aspects/concepts:
         description="Contractual/legal details"
     )
 
-Use targeted concepts:
+Use targeted ones:
 
 .. code-block:: python
 
@@ -168,12 +168,12 @@ To see what your LLM is supposed to return, you can inspect the prompt and the m
     results = llm.extract_aspects_from_document(document)
     
     # Inspect the actual prompt sent to the LLM
-    prompt = llm.get_usage()[-1].usage.calls[-1].prompt
+    prompt = llm.get_usage()[0].usage.calls[-1].prompt
     print("Prompt sent to LLM:")
     print(prompt)
     
     # Check the raw response (if available)
-    response = llm.get_usage()[-1].usage.calls[-1].response
+    response = llm.get_usage()[0].usage.calls[-1].response
     print("LLM response:")
     print(response)
 

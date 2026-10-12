@@ -32,7 +32,6 @@ contract_type_concept = LabelConcept(
     classification_type="multi_class",  # only one label can be selected (mutually exclusive labels)
     singular_occurrence=True,  # expect only one classification result
 )
-print(contract_type_concept._format_labels_in_prompt)
 
 # Attach the concept to the document
 doc.add_concepts([contract_type_concept])

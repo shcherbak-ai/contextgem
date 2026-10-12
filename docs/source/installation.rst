@@ -26,7 +26,7 @@ Installation
 Before installing ContextGem, ensure you have:
 
 * Python 3.11-3.14
-* pip (Python package installer)
+* `uv <https://github.com/astral-sh/uv>`_ or pip
 
 📦 Installation Methods
 ------------------------

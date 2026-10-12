@@ -22,8 +22,6 @@ Serializing objects and results
 
 ContextGem provides multiple serialization methods to preserve your document processing pipeline components and results. These methods enable you to save your work, transfer data between systems, or integrate with other applications.
 
-When using serialization, all extracted data is preserved in the serialized objects.
-
 💾 Serialization Methods
 -------------------------
 
@@ -39,7 +37,7 @@ Each object supports three serialization methods:
 
 * ``to_json()`` - Converts the object to a JSON string for cross-platform compatibility
 * ``to_dict()`` - Converts the object to a Python dictionary for in-memory operations
-* ``to_disk(file_path)`` - Saves the object directly to disk at the specified path
+* ``to_disk(file_path)`` - Saves the object to a JSON file at the specified path, which must end with ``.json``
 
 🔄 Deserialization Methods
 ---------------------------
@@ -51,7 +49,7 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 * ``from_disk(file_path)`` - Loads an object from a file on disk
 
 .. note::
-   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). Internal state derived on demand — such as the caches behind :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index` — is never part of the serialized output and does not affect this equality. The serialized data stores each reference paragraph and reference sentence of the aspects and of the extracted items on its own, while in the restored document they are the paragraphs and sentences of the document itself, i.e. the same objects as in ``document.paragraphs``, as after an extraction (see :ref:`locating-paras-and-sents`). For models, see :ref:`serialization-llm-credentials-label`.
+   Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). The serialized data stores each reference paragraph and reference sentence of the aspects and of the extracted items on its own, while in the restored document they are the paragraphs and sentences of the document itself, i.e. the same objects as in ``document.paragraphs``, as after an extraction (see :ref:`locating-paras-and-sents`). For models, see :ref:`serialization-llm-credentials-label`.
 
 
 .. _serialization-llm-credentials-label:
@@ -77,8 +75,6 @@ A deserialized model therefore has no API credentials. Set them again before usi
        fallback_llm.api_base = "<your-fallback-api-base>"  # if applicable
 
 For a deserialized :class:`~contextgem.public.models.DocumentModelGroup`, do the same for each model in its ``models``.
-
-The same applies to a :class:`~contextgem.public.decision_models.DocumentDecisionModel`: its ``api_key`` and ``api_base`` are not included in the serialized data either, whether it is serialized on its own, in a model group, or as a fallback model.
 
 📝 Example Usage
 -----------------

@@ -3,7 +3,7 @@ from contextgem import DocumentLLM, DocumentModelGroup
 
 # Create LLMs with different roles
 
-# LLM without a role: extracts all aspects/concepts that are not routed to another LLM
+# LLM without a role: extracts the aspects/concepts that have no `model_role`
 extractor = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key="<your-openai-api-key>",

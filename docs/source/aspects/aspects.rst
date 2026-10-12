@@ -115,15 +115,15 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
    * - ``concepts``
      - ``list[_Concept]``
      - ``[]``
-     - *Optional*. List of concepts associated with the aspect for detailed data extraction within the aspect's scope. See supported concept types in :doc:`../concepts/supported_concepts`.
+     - *Optional*. List of concepts associated with the aspect for detailed data extraction within the aspect's scope. Aspects are extracted from text, so only concepts with the ``"text"`` modality (the default) can be assigned to an aspect. See supported concept types in :doc:`../concepts/supported_concepts`.
    * - ``model_role``
      - ``str | None``
      - ``None``
-     - The role label of the model that extracts the aspect when a model group is used: the aspect is routed to the model in the group with the same ``role``. With the default ``None``, the aspect is routed to the model without a role. Ignored when a single model is used, as it extracts every aspect it is given. For more details, see :ref:`model-roles-label`. Note that aspects only support text-based extraction. For this reason, concepts with the ``"image"`` or ``"multimodal"`` modality cannot be used within aspects.
+     - The role label of the model that extracts the aspect when a model group is used: the aspect is routed to the model in the group with the same ``role``. With the default ``None``, the aspect is routed to the model without a role. Ignored when a single model is used, as it extracts every aspect it is given. For more details, see :ref:`model-roles-label`.
    * - ``reference_depth``
      - ``str``
      - ``"paragraphs"``
-     - The structural depth of references. Available values: ``"paragraphs"``, ``"sentences"``. Paragraph references are always populated for aspect's extracted items, as aspect's extracted items represent existing text segments. Sentence references are only populated when ``reference_depth="sentences"``.
+     - The unit of text that is extracted. Available values: ``"paragraphs"``, ``"sentences"``. With ``"paragraphs"``, each extracted item is a paragraph of the document, which is referenced in the ``reference_paragraphs`` of the item. With ``"sentences"``, each extracted item is a sentence, which is referenced in ``reference_sentences``, with its paragraph in ``reference_paragraphs``.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -140,6 +140,10 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
      - ``float | None``
      - ``None``
      - Relevant when the aspect is extracted by a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`): the lowest probability (above 0, up to 1) with which a paragraph is taken as belonging to the aspect, and, with ``reference_depth="sentences"``, a sentence of such a paragraph. With the default ``None``, the ``decision_threshold`` of the decision model applies. Not passed on to the sub-aspects. Ignored when the aspect is extracted by an LLM. See :ref:`decision-models-threshold-label`.
+   * - ``custom_data``
+     - ``dict``
+     - ``{}``
+     - *Optional*. Dictionary for storing any additional data that you want to associate with the aspect. This data must be JSON-serializable. It is not used for extraction.
 
 
 📊 Extracted Items
@@ -156,7 +160,7 @@ When an :class:`~contextgem.public.aspects.Aspect` is extracted, it is populated
      - Description
    * - ``value``
      - str
-     - The extracted text segment representing the aspect
+     - The text of the extracted paragraph, or of the extracted sentence with ``reference_depth="sentences"``
    * - ``justification``
      - str
      - Explanation of why this text segment was identified as relevant to the aspect (only if ``add_justifications=True``)
@@ -169,6 +173,9 @@ When an :class:`~contextgem.public.aspects.Aspect` is extracted, it is populated
    * - ``reference_sentences``
      - list[:class:`~contextgem.public.sentences.Sentence`]
      - List of sentence objects that contain the extracted aspect content (only if ``reference_depth="sentences"``)
+
+.. note::
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 🚀 Advanced Usage
@@ -205,9 +212,7 @@ Creating a comprehensive document analysis structure with aspects, sub-aspects a
 Justifications for Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Justifications provide explanations for why specific text segments were identified as relevant to an aspect. Justifications help users understand the reasoning behind extractions and evaluate their relevance. When enabled, each extracted item includes a generated explanation of why that text segment was considered part of the aspect.
-
-Example:
+With ``add_justifications=True``, each extracted item includes an explanation of why the text segment was considered a part of the aspect:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/aspects/aspect_with_justifications.py
    :language: python
@@ -217,19 +222,6 @@ Example:
    <a target="_blank" href="https://colab.research.google.com/github/shcherbak-ai/contextgem/blob/main/dev/notebooks/docs/aspects/aspect_with_justifications.ipynb">
      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
    </a>
-
-.. note::
-   References are always included for aspects. The ``reference_paragraphs`` field is automatically populated in extracted items of aspects, as they represent existing text segments in the document. The ``reference_sentences`` field is only populated when ``reference_depth`` is set to ``"sentences"``. You can access these references as follows:
-   
-   .. code-block:: python
-
-      # Always available for aspects
-      aspect.extracted_items[0].reference_paragraphs
-
-      # Only populated if reference_depth="sentences"
-      aspect.extracted_items[0].reference_sentences
-
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID rather than text equality, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
 
 
 💡 Best Practices
@@ -254,7 +246,7 @@ Integration Strategy
 
 * **Two-stage extraction**: Use aspects to identify relevant sections first, then apply sub-aspects and/or concepts for detailed data extraction
 * **Scope alignment**: Ensure sub-aspects and/or concepts are relevant to their containing aspects
-* **Reference tracking**: Enable references when you need to trace extracted data back to source locations
+* **Reference tracking**: Extracted items of aspects always reference their paragraphs. For the concepts of an aspect, set ``add_references=True`` to trace the extracted data back to its source
 
 
 🎯 Example Use Cases
@@ -275,7 +267,7 @@ Financial Reports
 
 * **Revenue Sections**: Extract revenue recognition, breakdown by segments, and growth analysis
 * **Compliance Sections**: Identify regulatory compliance statements and audit findings
-* **Key Performance Indicators**: Extract precise numerical metrics like EBITDA margins, debt-to-equity ratios, and year-over-year percentage changes
+* **Key Performance Indicators**: Identify the sections that report metrics like EBITDA margins, debt-to-equity ratios, and year-over-year percentage changes
 
 Technical Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~

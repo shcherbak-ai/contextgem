@@ -20,7 +20,7 @@
 Optimizing for Accuracy
 ========================
 
-When accuracy is paramount, ContextGem offers several techniques to improve extraction quality, some of which are pretty obvious:
+When accuracy is paramount, ContextGem offers several techniques to improve extraction quality:
 
 - **🚀 Use a Capable LLM**: Choose a powerful LLM model for extraction.
 - **🪄 Use Larger Segmentation Models**: Select a larger SaT model for intelligent segmentation of paragraphs or sentences, to ensure the highest segmentation accuracy in complex documents (e.g. contracts).

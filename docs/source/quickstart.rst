@@ -20,8 +20,6 @@
 Quickstart examples
 ====================
 
-This guide will help you get started with ContextGem by walking through basic extraction examples.
-
 Below are complete, self-contained examples showing how to extract data from a document using ContextGem.
 
 

@@ -75,7 +75,8 @@ class DocumentLLM(_DocumentLLM):
     :vartype role: str | None
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
     :vartype system_message: str | None
-    :ivar temperature: Sampling temperature (0.0 to 1.0) controlling response creativity.
+    :ivar temperature: Sampling temperature (0.0 or higher; the upper limit depends on
+        the model) controlling response creativity.
         Lower values produce more predictable outputs, higher values generate more varied responses.
         Defaults to None, in which case the parameter is not sent, and the default of the model
         applies. A value is sent to any model; if ``litellm`` reports it as not supported
@@ -89,8 +90,11 @@ class DocumentLLM(_DocumentLLM):
     :vartype max_tokens: int | None
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
         ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, or
-        ``"max"``. Support for specific values varies by model and provider; unsupported
-        combinations are rejected by litellm or the provider API at request time. Note that
+        ``"max"``. The parameter is sent only to the models detected as supporting reasoning.
+        Support for specific values varies by model and provider: if ``litellm`` reports
+        a value as not supported for the model, it is dropped from the request, with a warning
+        logged, while a value that is rejected otherwise, e.g. by the provider API, fails
+        the request. Note that
         ``"none"`` explicitly disables reasoning on models that support this value, which
         differs from the default ``None`` (parameter not sent, provider default applies).
         Relevant for reasoning (CoT-capable) models. Defaults to None.
@@ -111,8 +115,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype max_retries_failed_request: int
     :ivar max_retries_invalid_data: Number of retries when LLM request succeeds but LLM returns
         invalid data. Each retry is a new request, i.e. the LLM is asked for the same
-        data up to ``1 + max_retries_invalid_data`` times. A fallback LLM has the retries
-        set for it, after it is asked for the first time. If the content of a call is sent
+        data up to ``1 + max_retries_invalid_data`` times. A fallback LLM applies its own
+        setting in the same way: it is asked once, and then again up to its
+        ``max_retries_invalid_data`` times. If the content of a call is sent
         in parts, a retry is a request for the part that the invalid data was returned
         for, i.e. the parts answered with valid data are not sent again. Defaults to 3.
     :vartype max_retries_invalid_data: int

@@ -36,30 +36,6 @@ Extraction pipelines package common extraction patterns into reusable units, all
 Pipelines are particularly valuable when processing multiple documents of the same type, where you need to extract the same categories of information consistently.
 
 
-⭐ Key Features
------------------
-
-Template-Based Extraction
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Pipelines act as extraction templates that define what information to extract from documents. Once created, a pipeline can be assigned to any number of documents, ensuring consistent analysis criteria.
-
-Aspect and Concept Organization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Pipelines can contain both:
-
-* **Aspects**: For extracting document sections and organizing content hierarchically
-* **Concepts**: For extracting specific data points with intelligent inference
-
-This allows you to create comprehensive extraction workflows that combine broad content organization with detailed data extraction.
-
-Reusability and Scalability
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A single pipeline can be applied to multiple documents, making it ideal for batch processing, automated workflows, and applications that need to process similar document types repeatedly.
-
-
 💻 Basic Usage
 --------------
 
@@ -74,7 +50,7 @@ Here's how to create and use a basic extraction pipeline:
 Pipeline Assignment to Documents
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once created, pipelines can be easily assigned to documents:
+Once created, a pipeline is assigned to documents with :meth:`~contextgem.public.documents.Document.assign_pipeline`, which copies the aspects and concepts of the pipeline to the document:
 
 .. code-block:: python
 
@@ -92,6 +68,13 @@ Once created, pipelines can be easily assigned to documents:
    doc2.assign_pipeline(my_pipeline)
    
    # Now both documents have the same extraction configuration
+
+``assign_pipeline()`` raises ``RuntimeError`` if the document already has aspects or concepts, unless ``overwrite_existing=True`` is passed:
+
+.. code-block:: python
+
+   # Replace the aspects and concepts that the document already has
+   document.assign_pipeline(my_pipeline, overwrite_existing=True)
 
 
 ⚙️ Parameters
@@ -115,26 +98,10 @@ When creating an :class:`~contextgem.public.pipelines.ExtractionPipeline`, you c
      - ``list[_Concept]``
      - ``[]``
      - *Optional*. List of ``_Concept`` instances to identify within or infer from documents. These are document-level concepts that apply to the entire document content. See supported concept types in :doc:`../concepts/supported_concepts`.
-
-
-📊 Pipeline Assignment
-------------------------
-
-The :meth:`~contextgem.public.documents.Document.assign_pipeline` method is used to apply a pipeline to a document. This method:
-
-* **Assigns aspects and concepts**: Transfers the pipeline's aspects and concepts to the document
-* **Validates compatibility**: Ensures no conflicts with existing document configuration
-
-Assignment Options
-~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   # Basic assignment (will raise error if document already has aspects/concepts)
-   document.assign_pipeline(my_pipeline)
-   
-   # Overwrite existing configuration
-   document.assign_pipeline(my_pipeline, overwrite_existing=True)
+   * - ``custom_data``
+     - ``dict``
+     - ``{}``
+     - *Optional*. Dictionary for storing any additional data that you want to associate with the pipeline. This data must be JSON-serializable. It is not used for extraction.
 
 
 🚀 Advanced Usage
@@ -143,7 +110,7 @@ Assignment Options
 Multi-Document Processing
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pipelines excel at processing multiple documents of the same type. Here's a comprehensive example:
+Here's a comprehensive example of processing several documents with one pipeline:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/advanced/advanced_multiple_docs_pipeline.py
    :language: python
@@ -226,14 +193,6 @@ Research Paper Analysis Pipeline
            RatingConcept(name="Novelty Score", description="Novelty of the research", rating_scale=(1, 10)),
        ]
    )
-
-
-⚡ Pipeline Reuse Benefits
------------------------------
-
-* **Consistency**: Ensures all documents are processed with identical extraction criteria
-* **Efficiency**: Eliminates the need to recreate aspects and concepts for each document
-* **Maintainability**: Changes to extraction logic only need to be made in one place
 
 
 📚 Related Documentation

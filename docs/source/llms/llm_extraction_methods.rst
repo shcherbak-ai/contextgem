@@ -78,11 +78,11 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``max_items_per_call``
      - ``int``
      - ``0``
-     - Maximum number of :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all aspect and/or concept instances with same extraction params in a one call. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
+     - Maximum number of :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` (default) means all aspect and/or concept instances with the same extraction params in one call, or, with ``use_concurrency=True``, each of them in a call of its own. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks in parallel, especially beneficial for documents with many aspects and concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each aspect/concept will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks in parallel, especially beneficial for documents with many aspects and concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each aspect/concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -168,11 +168,11 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``max_items_per_call``
      - ``int``
      - ``0``
-     - Maximum number of :class:`~contextgem.public.aspects.Aspect` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all aspect instances with same extraction params in a one call. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
+     - Maximum number of :class:`~contextgem.public.aspects.Aspect` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` (default) means all aspect instances with the same extraction params in one call, or, with ``use_concurrency=True``, each of them in a call of its own. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many aspects. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each aspect will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many aspects. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each aspect is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -209,9 +209,6 @@ Returns a list of :class:`~contextgem.public.aspects.Aspect` instances that were
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :class:`~contextgem.public.documents.Document` object.
-
-.. note::
-   See supported concept types in :doc:`../concepts/supported_concepts`. All public concept types inherit from the internal :class:`~contextgem.internal.base.concepts._Concept` base class.
 
 **Method Signature:**
 
@@ -258,11 +255,11 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``max_items_per_call``
      - ``int``
      - ``0``
-     - Maximum number of :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all concept instances with same extraction params in a one call. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
+     - Maximum number of :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` (default) means all concept instances with the same extraction params in one call, or, with ``use_concurrency=True``, each of them in a call of its own. This is particularly useful for complex tasks or long documents to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each concept will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -300,9 +297,6 @@ Returns a list of :class:`~contextgem.internal.base.concepts._Concept` instances
 Extracts :class:`~contextgem.internal.base.concepts._Concept` instances associated with a given :class:`~contextgem.public.aspects.Aspect` in a :class:`~contextgem.public.documents.Document`.
 
 The aspect must be previously processed before concept extraction can occur. This means that the aspect should have already gone through extraction, which identifies the relevant context (text segments) in the document that match the aspect's description. This extracted context is then used as the foundation for concept extraction, allowing concepts to be identified specifically within the scope of the aspect.
-
-.. note::
-   See supported concept types in :doc:`../concepts/supported_concepts`. All public concept types inherit from the internal :class:`~contextgem.internal.base.concepts._Concept` base class.
 
 **Method Signature:**
 
@@ -353,11 +347,11 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``max_items_per_call``
      - ``int``
      - ``0``
-     - Maximum number of :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` means all concept instances with same extraction params in one call. This is particularly useful for complex tasks to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
+     - Maximum number of :class:`~contextgem.internal.base.concepts._Concept` instances with the same extraction parameters to process in a single LLM call (single LLM prompt). ``0`` (default) means all concept instances with the same extraction params in one call, or, with ``use_concurrency=True``, each of them in a call of its own. This is particularly useful for complex tasks to prevent prompt overloading and allow the LLM to focus on a smaller set of extraction tasks at once.
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for aspects with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). For optimal results, combine with ``max_items_per_call=1`` to maximize concurrency, although this would cause increase in LLM API costs as each concept will be processed in a separate LLM call (LLM prompt). See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for aspects with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``

@@ -76,7 +76,7 @@ When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can spe
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -104,7 +104,7 @@ When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can spe
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. For boolean concepts, this parameter is particularly useful when you want to make a single true/false determination about the entire document (e.g., "contains confidential information") or a unique determination about a specific aspect (e.g., "is the payment schedule finalized"). This helps distinguish between evaluating overall document properties versus identifying multiple instances where a condition might be true/false. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "contains confidential information" vs "compliance violations"). With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. For boolean concepts, this parameter is particularly useful when you want to make a single true/false determination about the entire document (e.g., "contains confidential information") or a unique determination about a specific matter (e.g., "is the payment schedule finalized"). This helps distinguish between evaluating overall document properties versus identifying multiple instances where a condition might be true/false. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "contains confidential information" vs "compliance violations"). With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -158,7 +158,7 @@ When a :class:`~contextgem.public.concepts.BooleanConcept` is extracted, it is p
      - List of sentence objects that influenced the boolean determination (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices

@@ -2,7 +2,7 @@ from contextgem import DocumentLLM, DocumentModelGroup
 
 
 # Create an extractor LLM with a fallback. This LLM has no role, i.e. it extracts
-# all aspects and concepts that are not routed to another LLM in the group.
+# the aspects and concepts that have no `model_role`.
 extractor = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key="your-openai-api-key",  # Replace with your actual API key
@@ -39,8 +39,8 @@ model_group = DocumentModelGroup(
     models=[extractor, reasoner, vision_extractor],
     output_language="en",  # All LLMs must have the same output language ("en" is default)
 )
-# This group will have 4 LLMs: three main ones, with different roles, and one
-# fallback LLM for a specific LLM. Each LLM can have one or more fallback models.
+# This group will have 4 LLMs: three main ones (one without a role, two with roles),
+# and one fallback LLM for a specific LLM. Each LLM can have one or more fallback models.
 
 # Get usage statistics for the whole group or for a specific role
 group_usage = model_group.get_usage()

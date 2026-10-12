@@ -156,7 +156,7 @@ class _DocumentLLM(_DocumentModel):
         default=None,
         ge=0,
         description=(
-            "Sampling temperature [0..1]; higher values increase randomness. "
+            "Sampling temperature (0 or higher); higher values increase randomness. "
             "Defaults to None, i.e. the param is not sent, and the default "
             "of the model applies."
         ),

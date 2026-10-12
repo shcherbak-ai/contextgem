@@ -2,8 +2,7 @@
 
 import os
 
-from contextgem import DocumentLLM
-from contextgem.public import ChatSession
+from contextgem import ChatSession, DocumentLLM
 
 
 # Initialize main LLM for chat

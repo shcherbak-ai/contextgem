@@ -44,7 +44,7 @@ This concept type is particularly valuable for generating evaluative information
 💻 Usage Example
 ------------------
 
-Here's a simple example of how to use ``RatingConcept`` to extract a product rating:
+Here's a simple example of how to use :class:`~contextgem.public.concepts.RatingConcept` to extract a product rating:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/rating_concept/rating_concept.py
    :language: python
@@ -59,7 +59,7 @@ Here's a simple example of how to use ``RatingConcept`` to extract a product rat
 ⚙️ Parameters
 --------------
 
-When creating a ``RatingConcept``, you can specify the following parameters:
+When creating a :class:`~contextgem.public.concepts.RatingConcept`, you can specify the following parameters:
 
 .. list-table::
    :widths: 20 15 15 50
@@ -88,7 +88,7 @@ When creating a ``RatingConcept``, you can specify the following parameters:
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -112,7 +112,7 @@ When creating a ``RatingConcept``, you can specify the following parameters:
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single rating will be extracted. For rating concepts, this parameter is particularly useful when you want to extract a single overall score (e.g., *"overall product quality"*) rather than identifying multiple ratings throughout the document for different aspects or features. This helps distinguish between a global evaluation versus component-specific ratings. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of ratings to extract from the concept's name, description, and rating context. With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
+     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single rating will be extracted. For rating concepts, this parameter is particularly useful when you want to extract a single overall score (e.g., *"overall product quality"*) rather than identifying multiple ratings throughout the document for different features. This helps distinguish between a global evaluation versus component-specific ratings. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of ratings to extract from the concept's name, description, and rating context. With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -125,7 +125,7 @@ When creating a ``RatingConcept``, you can specify the following parameters:
 🔍 References and Justifications for Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When extracting a :class:`~contextgem.public.concepts.RatingConcept`, it's often useful to include justifications to understand the reasoning behind the score:
+When extracting a :class:`~contextgem.public.concepts.RatingConcept`, it's often useful to include justifications, to understand the reasoning behind the score, and references to the text that informed it:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/rating_concept/refs_and_justifications.py
    :language: python
@@ -180,13 +180,13 @@ When a :class:`~contextgem.public.concepts.RatingConcept` is extracted, it is po
      - List of sentence objects that influenced the rating determination (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices
 -------------------
 
-- Create descriptive names for your rating concepts that clearly indicate what aspect is being evaluated (e.g., *"Product Usability Rating"* rather than just *"Rating"*).
+- Create descriptive names for your rating concepts that clearly indicate what is being evaluated (e.g., *"Product Usability Rating"* rather than just *"Rating"*).
 - Enhance extraction quality by including clear definitions of what each point on the scale represents in your concept description (e.g., *"1 = poor, 3 = average, 5 = excellent"*).
 - Provide specific evaluation criteria in your concept description to guide the LLM's assessment process. For example, when rating software usability, specify that factors like interface intuitiveness, learning curve, and navigation efficiency should be considered.
 - Enable justifications (using ``add_justifications=True``) when you need to understand the reasoning behind a rating, which is particularly valuable for evaluations that involve complex criteria where the rationale may not be immediately obvious from the score alone.

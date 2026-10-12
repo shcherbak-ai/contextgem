@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
-from contextgem import JsonObjectConcept
-from contextgem.public.utils import JsonObjectClassStruct
+from contextgem import JsonObjectClassStruct, JsonObjectConcept
 
 
 # Use dataclasses to define the structure of the JSON object

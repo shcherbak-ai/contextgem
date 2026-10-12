@@ -6,7 +6,7 @@ local_llm = DocumentLLM(
     api_base="http://localhost:11434",  # Default Ollama endpoint
 )
 
-# Example - Using Llama 3.1 LLM via Ollama
+# Example - Using Llama 3.3 LLM via Ollama
 llm_llama = DocumentLLM(
     model="ollama_chat/llama3.3:70b",
     api_base="http://localhost:11434",

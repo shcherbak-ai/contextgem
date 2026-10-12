@@ -28,11 +28,9 @@ NumericalConcept
 
 :class:`~contextgem.public.concepts.NumericalConcept` enables powerful numerical data extraction and analysis from documents, such as:
 
-* **Direct extraction**: retrieving explicitly stated values like prices, percentages, dates, or measurements
+* **Direct extraction**: retrieving explicitly stated values like prices, percentages, or measurements
 * **Calculated values**: computing sums, averages, growth rates, or other derived metrics
 * **Quantitative assessments**: determining counts, frequencies, totals, or numerical scores 
-
-The concept can work with integers, floating-point numbers, or both types based on your configuration.
 
 
 💻 Usage Example
@@ -81,7 +79,7 @@ When creating a :class:`~contextgem.public.concepts.NumericalConcept`, you can s
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -118,7 +116,7 @@ When creating a :class:`~contextgem.public.concepts.NumericalConcept`, you can s
 🔍 References and Justifications for Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can configure a :class:`~contextgem.public.concepts.NumericalConcept` to include justifications and references. Justifications help explain the reasoning behind the extracted values, while references point to the specific parts of the document where the numerical values were either directly found or from which they were calculated or inferred, helping to trace back extracted values to their source content even when the extraction involves complex calculations or mathematical reasoning:
+You can configure a :class:`~contextgem.public.concepts.NumericalConcept` to include justifications and references. Justifications explain the reasoning behind the extracted values, while references point to the parts of the document where the values were found or from which they were calculated or inferred:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/numerical_concept/refs_and_justifications.py
    :language: python
@@ -133,7 +131,7 @@ You can configure a :class:`~contextgem.public.concepts.NumericalConcept` to inc
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.NumericalConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_NumericalItem`` class with the following attributes:
+When a :class:`~contextgem.public.concepts.NumericalConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_IntegerItem``, ``_FloatItem`` or ``_IntegerOrFloatItem`` class, for ``numeric_type`` set to ``"int"``, ``"float"`` or ``"any"`` (default) respectively, with the following attributes:
 
 .. list-table::
    :widths: 20 20 60
@@ -156,7 +154,7 @@ When a :class:`~contextgem.public.concepts.NumericalConcept` is extracted, it is
      - List of sentence objects where the numerical value was found or from which it was calculated or inferred (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices

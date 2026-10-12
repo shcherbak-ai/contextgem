@@ -32,8 +32,6 @@ JsonObjectConcept
 * **Standardized formats**: consistent data extraction following predefined schemas for reliable downstream processing
 * **Complex entity extraction**: comprehensive extraction of entities with multiple attributes and relationships
 
-This concept type offers the flexibility to define precise schemas that match your data requirements, ensuring that extracted information maintains structural integrity and relationships between different data elements.
-
 
 💻 Usage Example
 ------------------
@@ -86,7 +84,7 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -120,7 +118,7 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
 🏗️ Defining Structure
 -----------------------
 
-The ``structure`` parameter defines the schema for the data you want to extract. JsonObjectConcept uses Pydantic models internally to validate all structures, ensuring type safety and data integrity. You can define this structure using either dictionaries or classes. Dictionary-based definitions provide a simpler abstraction for defining JSON object structures, while still benefiting from Pydantic's robust validation system under the hood.
+The ``structure`` parameter defines the schema for the data you want to extract. JsonObjectConcept uses Pydantic models internally to validate all structures, ensuring type safety and data integrity. Dictionary-based definitions provide a simpler abstraction for defining JSON object structures, while still benefiting from Pydantic's robust validation system under the hood.
 
 You can define the structure in several ways:
 
@@ -136,14 +134,14 @@ You can define the structure in several ways:
 
 3. **Using a Python class with type annotations:**
 
-While dictionary structures provide the simplest way to define JSON schemas, you may prefer to use class definitions if that better fits your codebase style. You can define your structure using a Python class with type annotations:
+While dictionary structures provide the simplest way to define JSON schemas, you may prefer to use class definitions if that better fits your codebase style:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/structure/simple_class_structure.py
    :language: python
 
 4. **Using nested classes for complex structures:**
 
-If you prefer to use class definitions for hierarchical data structures (already supported by dictionary structures), you can use nested class definitions. This approach offers a more object-oriented style that may better align with your existing codebase, especially when working with dataclasses or Pydantic models in your application code.
+For hierarchical data structures, you can also use nested class definitions, e.g. when your application code already has dataclasses or Pydantic models for the data.
 
 When using nested class definitions, all classes in the structure must inherit from the ``JsonObjectClassStruct`` utility class to enable automatic conversion of the whole class hierarchy to a dictionary structure:
 
@@ -183,7 +181,7 @@ You can configure a :class:`~contextgem.public.concepts.JsonObjectConcept` to in
    </a>
 
 .. note::
-   To locate reference paragraphs/sentences within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices

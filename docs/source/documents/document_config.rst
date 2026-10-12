@@ -78,12 +78,16 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
      - ``bool``
      - ``False``
      - Whether to pre-segment sentences during Document initialization. When ``False``, sentence segmentation is deferred until sentences are actually needed, improving initialization performance.
+   * - ``custom_data``
+     - ``dict``
+     - ``{}``
+     - *Optional*. Dictionary for storing any additional data that you want to associate with the document. This data must be JSON-serializable. It is not used for extraction.
 
 
 🎯 Adding Aspects and Concepts for Extraction
 -----------------------------------------------
 
-Before extracting information from a document with a model, you must define and add **aspects** and **concepts** to your document instance. These components serve as the foundation for targeted analysis and structured information extraction.
+Before extracting information from a document with a model, you must define and add **aspects** and **concepts** to your document instance.
 
 **Aspects** define the text segments (sections, topics, themes) to be extracted from the document. They can be combined with concepts for comprehensive analysis.
 
@@ -108,7 +112,7 @@ When you create the paragraphs yourself, e.g. from the structured output of a do
 
 Pass such paragraphs to the document via ``paragraphs``. The additional context:
 
-- must be a single-line string;
+- should be a single-line string: a warning is logged if it has line breaks, which may break the structure of the prompt;
 - is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
 - is sent to a decision model together with the paragraph text when aspects are extracted, also with each sentence of the paragraph that the model is asked about, for an aspect with ``reference_depth="sentences"`` (see :ref:`decision-models-aspects-label`);
 - is inherited by the sentences segmented from the paragraph, and is passed to the LLM with each sentence when sentence-level references are used (``reference_depth="sentences"``);

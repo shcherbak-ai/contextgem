@@ -12,7 +12,7 @@ llm = DocumentLLM(
         input_per_1m_tokens=0.10,
         output_per_1m_tokens=0.50,
     ),  # add pricing details to track costs
-    # or set `auto_pricing=True` to automatically fetch pricing data from the LLM provider
+    # or set `auto_pricing=True` to calculate the costs automatically with `genai-prices`
 )
 
 # ... use the LLM for extraction ...

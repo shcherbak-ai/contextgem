@@ -29,7 +29,7 @@ total_revenue_concept = NumericalConcept(
     justification_max_sents=4,  # Maximum number of sentences for justification
     add_references=True,
     reference_depth="paragraphs",  # Reference specific paragraphs
-    singular_occurrence=True,  # Ensure that the data is merged into a single item
+    singular_occurrence=True,  # Extract a single item, i.e. the total
 )
 
 # Attach the concept to the document

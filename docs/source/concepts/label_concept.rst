@@ -36,12 +36,7 @@ LabelConcept
 This concept type supports two classification modes:
 
 * **Multi-class**: Always selects exactly one label from the predefined set (mutually exclusive labels) - used for classifying the content into a single type or category. A label is always returned, even if none perfectly fit the content.
-* **Multi-label**: Selects zero, one, or multiple labels from the predefined set (non-exclusive labels) - used when multiple topics or attributes can apply simultaneously. Returns only applicable labels, or no labels if none apply.
-
-.. note::
-   **For multi-label classification**: When none of the predefined labels apply to the content being classified, no extracted items will be returned for the concept (empty ``extracted_items`` list). This ensures that only applicable labels are selected.
-   
-   **For multi-class classification**: A label is always returned, as this classification type requires selecting the best-fitting option from the predefined set, even if none perfectly match the content.
+* **Multi-label**: Selects zero, one, or multiple labels from the predefined set (non-exclusive labels) - used when multiple topics or attributes can apply simultaneously. Returns only applicable labels, or no labels if none apply (the ``extracted_items`` list is then empty).
 
 .. important::
    **For multi-class classification**: Since multi-class classification will always return exactly one label, you should consider including a general "other" label (such as "N/A", "misc", "unspecified", etc.) to handle cases where none of the specific labels apply, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases. This ensures appropriate classification even when the content doesn't clearly fit into any of the predefined specific categories.
@@ -90,7 +85,7 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
    * - ``classification_type``
      - ``str``
      - ``"multi_class"``
-     - Classification mode. Available values: ``"multi_class"`` (select exactly one label), ``"multi_label"`` (select one or more labels).
+     - Classification mode. Available values: ``"multi_class"`` (select exactly one label), ``"multi_label"`` (select zero, one, or several labels).
    * - ``model_role``
      - ``str | None``
      - ``None``
@@ -98,7 +93,7 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -139,21 +134,10 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
 🏷️ Multi-Class vs Multi-Label Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Choose the appropriate classification type based on your use case:
+Choose the classification type based on your use case:
 
-**Multi-Class Classification** (``classification_type="multi_class"``):
-
-- Always selects exactly one label from the predefined set (mutually exclusive labels)
-- A label is always returned, even if none perfectly fit the content
-- Ideal for: document types, priority levels, status categories
-- Example: A document must be classified as one type: "NDA", "Consultancy Agreement", or "Privacy Policy" (or "Other" if none apply)
-
-**Multi-Label Classification** (``classification_type="multi_label"``):
-
-- Selects zero, one, or multiple labels from the predefined set (non-exclusive labels)
-- Returns only applicable labels; can return no labels if none apply
-- Ideal for: content topics, applicable regulations, feature tags
-- Example: A document can cover multiple topics: "Finance", "Legal", "Technology", or none of these topics
+- **Multi-class** (``classification_type="multi_class"``) is ideal for document types, priority levels, and status categories. Example: a document is classified as one of "NDA", "Consultancy Agreement", "Privacy Policy", or "Other" if none of them applies.
+- **Multi-label** (``classification_type="multi_label"``) is ideal for content topics, applicable regulations, and feature tags. Example: a document can cover several of the topics "Finance", "Legal", "Technology", or none of them.
 
 Here's an example demonstrating multi-label classification for content topic identification:
 
@@ -225,7 +209,7 @@ When a :class:`~contextgem.public.concepts.LabelConcept` is extracted, it is pop
      - List of sentence objects that informed the classification (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
-   To locate these reference objects within the document (e.g. to cite or highlight their exact positions, retrieve surrounding context, or order references combined from multiple extracted items), use :meth:`~contextgem.public.documents.Document.get_paragraph_index` and :meth:`~contextgem.public.documents.Document.get_sentence_index`. Lookups are keyed by each object's unique ID, so references resolve to their specific occurrences even when the document contains paragraphs or sentences with identical text. See :ref:`locating-paras-and-sents` for examples.
+   To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.
 
 
 💡 Best Practices
@@ -236,7 +220,4 @@ Here are some best practices to optimize your use of :class:`~contextgem.public.
 - **Choose meaningful labels**: Use clear, distinct labels that cover your classification needs without overlap.
 - **Provide clear descriptions**: Explain what each classification represents and when each label should be applied.
 - **Consider label granularity**: Balance between too few labels (insufficient precision) and too many labels (classification complexity).
-- **For multi-class classification**: Consider including a general "other" label (like "Other", "N/A", "Mixed", etc.) since a label is always returned, even when none of the specific labels perfectly fit the content, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases.
-- **For multi-label classification**: Design your workflow to handle cases where none of the predefined labels apply (resulting in empty ``extracted_items``), as this classification type can return zero labels.
-- **Use appropriate classification type**: Set ``classification_type="multi_class"`` for mutually exclusive categories where exactly one choice is required, ``classification_type="multi_label"`` for potentially overlapping attributes where zero, one, or multiple labels can apply.
 - **Enable justifications**: Use ``add_justifications=True`` to understand and validate classification decisions, especially for complex or ambiguous content.

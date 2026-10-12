@@ -126,7 +126,7 @@ Use ``TypedDict`` to specify field names and types explicitly:
        total = sum(it["qty"] * it["price"] for it in items)
        return str(total)
 
-This generates a proper schema with typed properties:
+This generates a schema with typed properties for the ``items`` parameter:
 
 .. code-block:: json
 
@@ -139,8 +139,9 @@ This generates a proper schema with typed properties:
            "qty": {"type": "number"},
            "price": {"type": "number"}
          },
-         "required": ["qty", "price"]
-       }
+         "required": ["price", "qty"]
+       },
+       "description": "List of invoice items"
      }
    }
 
@@ -273,8 +274,10 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts several tool-rela
        ``"required"`` (model must call at least one tool), or
        ``{"type": "function", "function": {"name": "..."}}`` to force a specific tool.
        When ``None``, defers to the API default (equivalent to ``"auto"`` when tools are defined).
-       Note: ``"required"`` or forced function is automatically relaxed to ``"auto"`` in follow-up
-       rounds, allowing the model to either call more tools or produce a final text response.
+       Note: ``"required"`` or a forced function is automatically relaxed to ``"auto"`` in the
+       follow-up rounds, i.e. after the results of the tools are returned to the model, so that
+       the model can either call more tools or produce the final text response, instead of
+       being forced to call tools in every round until ``tool_max_rounds`` is reached.
    * - ``parallel_tool_calls``
      - ``None``
      - Whether to enable parallel tool execution. When ``None``, defers to the API/model default.
@@ -283,24 +286,6 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts several tool-rela
      - ``10``
      - Maximum number of tool execution rounds per request. Prevents infinite or excessively
        long tool chains.
-
-.. note::
-   **Why ``tool_choice="required"`` is relaxed to ``"auto"`` in follow-up rounds:**
-
-   When you set ``tool_choice="required"``, the model MUST call at least one tool on the
-   initial request. However, if this setting were kept for follow-up rounds (after tool
-   results are returned to the model), the model would be forced to call tools again,
-   potentially causing:
-
-   - Infinite loops or hitting ``tool_max_rounds`` unnecessarily
-   - Inability to produce a final text response to the user
-
-   To solve this, ``tool_choice="required"`` (and forced function dicts like
-   ``{"type": "function", "function": {"name": "..."}}``) are automatically relaxed to
-   ``"auto"`` in follow-up rounds. This allows the model to either:
-
-   - Call additional tools if needed (multi-round tool chaining)
-   - Produce a final text response when done processing tool results
 
 
 Return Value Requirements

@@ -13,7 +13,7 @@ from contextgem import (
 )
 
 
-# LLM without a role: extracts all aspects/concepts that are not routed to another model
+# LLM without a role: extracts the aspects/concepts that have no `model_role`
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),

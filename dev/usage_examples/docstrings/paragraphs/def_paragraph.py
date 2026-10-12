@@ -12,7 +12,7 @@ contract_paragraph = Paragraph(
 
 # Create paragraphs with additional context, e.g. the structure or formatting
 # details provided by your document conversion tool. The additional context is
-# passed to the LLM together with the text of the paragraph.
+# passed to the model together with the text of the paragraph.
 heading_paragraph = Paragraph(
     raw_text="Term and Termination",
     additional_context="Heading, level 2",

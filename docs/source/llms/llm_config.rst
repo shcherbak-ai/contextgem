@@ -40,15 +40,6 @@ For local models, usually you need to specify the ``api_base`` instead of the AP
    :language: python
    :caption: Using a local LLM
 
-.. note::
-   **LM Studio Connection Error**: If you encounter a connection error (``litellm.APIError: APIError: Lm_studioException - Connection error``) when using LM Studio, check that you have provided a dummy API key. While API keys are usually not expected for local models, this is a specific case where LM Studio requires one:
-
-   .. literalinclude:: ../../../dev/usage_examples/docs/llms/llm_init/lm_studio_connection_error_fix.py
-      :language: python
-      :caption: LM Studio with dummy API key
-
-   This is a known issue with calling LM Studio API in litellm: https://github.com/openai/openai-python/issues/961
-
 
 📝 Configuration Parameters
 -----------------------------
@@ -90,7 +81,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``system_message``
      - ``str | None``
      - ``None``
-     - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/dev/contextgem/internal/system/default_system_message.j2>`_ in the source code. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
+     - If not provided (or set to None), ContextGem automatically sets a default system message optimized for extraction tasks, rendered based on the configured ``output_language``. This default system message template can be found `here <https://github.com/shcherbak-ai/contextgem/blob/main/contextgem/internal/system/default_system_message.j2>`_ in the source code. Overriding this is typically only necessary for advanced use cases, such as custom priming or non-extraction tasks. For simple chat interactions, consider setting ``system_message=''`` to disable the default entirely (meaning no system message will be sent).
    * - ``max_tokens``
      - ``int | None``
      - ``None``
@@ -98,7 +89,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``reasoning_effort``
      - ``str | None``
      - ``None``
-     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, ``"max"``. Support for specific values varies by model and provider; unsupported combinations are rejected by litellm or the provider API at request time. ``"none"`` explicitly disables reasoning on models that support this value, which differs from the default ``None`` (parameter not sent, provider default applies).
+     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, ``"max"``. The parameter is sent only to the models detected as supporting reasoning. Support for specific values varies by model and provider: if ``litellm`` reports a value as not supported for the model, the request is sent without the parameter, with a warning logged, as for the sampling parameters (see :ref:`llm-sampling-params-label`), while a value that is rejected otherwise, e.g. by the provider API, fails the request. ``"none"`` explicitly disables reasoning on models that support this value, which differs from the default ``None`` (parameter not sent, provider default applies).
    * - ``timeout``
      - ``int``
      - ``600``
@@ -114,7 +105,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``max_retries_invalid_data``
      - ``int``
      - ``3``
-     - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails). Each retry is a new request, i.e. the LLM is asked for the same data up to ``1 + max_retries_invalid_data`` times. A fallback LLM has the retries set for it, after it is asked for the first time. See :ref:`llm-retries-label`.
+     - Number of retries when LLM request succeeds but returns invalid data (JSON parsing and validation fails). Each retry is a new request, i.e. the LLM is asked for the same data up to ``1 + max_retries_invalid_data`` times. A fallback LLM applies its own setting in the same way: it is asked once, and then again up to its ``max_retries_invalid_data`` times. See :ref:`llm-retries-label`.
    * - ``pricing_details``
      - ``ModelPricing | None``
      - ``None``
@@ -142,11 +133,11 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``temperature``
      - ``float | None``
      - ``None``
-     - Sampling temperature (0.0 to 1.0) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses. If not set (default), the parameter is not sent, and the default of the model applies. See :ref:`llm-sampling-params-label` for when to set it.
+     - Sampling temperature (0.0 or higher; the upper limit depends on the model) controlling response creativity. Lower values produce more predictable outputs, higher values generate more varied responses. If not set (default), the parameter is not sent, and the default of the model applies. See :ref:`llm-sampling-params-label` for when to set it.
    * - ``top_p``
      - ``float | None``
      - ``None``
-     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs. If not set (default), the parameter is not sent. Some providers (e.g. Claude 4.x) reject requests that set both ``temperature`` and ``top_p``; set only one of them when using those models.
+     - Nucleus sampling value (0.0 to 1.0) controlling output focus/randomness. Lower values make output more deterministic, higher values produce more diverse outputs. If not set (default), the parameter is not sent. Some models (e.g. Anthropic's Claude 4.x) reject requests that set both ``temperature`` and ``top_p``; set only one of them when using those models.
    * - ``seed``
      - ``int | None``
      - ``None``
@@ -154,7 +145,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``tools``
      - ``list[Callable] | None``
      - ``None``
-     - Tools for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``: functions decorated with ``@register_tool``. The tool schemas sent to the LLM are generated from the names, docstrings and type hints of the functions. Handlers must return a non-empty string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :ref:`llm-chat-with-tools-label`.
+     - Tools for chat via ``DocumentLLM.chat(...)``/``.chat_async(...)``: functions decorated with ``@register_tool``. The tool schemas sent to the LLM are generated from the names, docstrings and type hints of the functions. Handlers must return a non-empty string; for structured data, serialize it (e.g., with ``json.dumps``) before returning. Ignored by extraction methods. For more details, see :doc:`chat_with_tools`.
    * - ``tool_choice``
      - ``str | dict | None``
      - ``None``
@@ -299,14 +290,14 @@ Some LLM providers cache the beginning of a prompt and reuse it across requests 
    Tokens written to the cache are priced at the standard cache write price of the model. A longer cache lifetime that a provider may offer at a higher price (e.g. 1-hour cache writes of Anthropic models) is not priced separately. Such a lifetime has to be requested explicitly, which ContextGem does not do.
 
 
-🧠 Using Model-Specific Parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+🧠 Setting the Reasoning Effort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For reasoning (CoT-capable) models (such as OpenAI's GPT-5 and GPT-6 models), you can set the reasoning effort. The reasoning tokens count towards ``max_tokens``, if set (see :ref:`llm-max-output-tokens-label`):
 
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/reasoning_params.py
    :language: python
-   :caption: Using model-specific parameters
+   :caption: Setting the reasoning effort
 
 
 ⚙️ Explicit Capability Declaration
