@@ -22,14 +22,16 @@ import os
 import sys
 
 
+# Add path to the package
+sys.path.insert(0, os.path.abspath("../.."))
+
+from contextgem import __version__  # noqa: E402
+
+
 project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
-release = "0.22.0"
-
-
-# Add path to the package
-sys.path.insert(0, os.path.abspath("../.."))
+release = __version__  # the version of the package the docs are built from
 
 
 # Skip Pydantic internal methods and attributes from the API docs
