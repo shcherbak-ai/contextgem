@@ -149,12 +149,11 @@ contextgem/
 
 ### ✏️ Making Changes
 
-1. **🌿 Create a new branch**:
-
-    For example:
+1. **🌿 Create a new branch** from the latest `dev` branch of the original repository. Pull requests are merged into `dev`, while `main`, the branch of a fresh clone, is behind it:
 
     ```bash
-    git checkout -b feature/your-feature-name
+    git fetch upstream
+    git checkout -b feature/your-feature-name upstream/dev
     ```
 
     When creating a branch, use one of the following prefixes that matches your change type:
@@ -183,20 +182,15 @@ contextgem/
     - **Interrogate**: For docstring coverage checking
     - **markdownlint-cli2**: For Markdown style and consistency
     - **Twine**: For sdist/wheel metadata validation (via the `package-check` pre-commit hook, which runs `uv build` + `twine check`)
+    - **uv lock check**: To verify that `uv.lock` is in sync with `pyproject.toml`
+    - **Commitizen**: For the format of commit messages (see below)
+    - **licenseal**: For license compatibility of the dependencies (in CI)
     - **Pre-commit hooks**: To automatically check and format code before commits
 
-    The pre-commit hooks will automatically check and format your code when you commit. There are two scenarios to be aware of:
+    The pre-commit hooks check and format your code when you commit. Some of them run with the Python of the project environment, so commit through uv (`uv run cz commit`, see below) or with `.venv` activated.
 
-    **If the hooks modify any files during commit** (such as Ruff formatting):
-    1. Review the changes made
-    2. Add the modified files to the staging area
-    3. Commit again
-
-    **If security issues are detected** (Bandit):
-    1. Review the security findings in the terminal output
-    2. Fix the identified security issues in your code
-    3. Add the fixed files to the staging area
-    4. Commit again
+    - **If a hook modifies files** (e.g. Ruff formatting, the README, the notebooks): review the changes, add the modified files to the staging area, and commit again.
+    - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.
 
 3. **🧪 Run tests** to ensure your changes do not break existing functionality:
 
@@ -204,7 +198,7 @@ contextgem/
    uv run pytest
    ```
 
-   > **Note:** We use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay LLM API interactions. Your changes may require re-recording VCR cassettes for the tests. See [VCR Cassette Management](#-vcr-cassette-management) section below for details.
+   > **Note:** Your changes may require re-recording VCR cassettes for the tests, see [VCR Cassette Management](#-vcr-cassette-management).
 
 4. **💾 Commit your changes** using Conventional Commits format:
 
@@ -227,20 +221,19 @@ contextgem/
    ```
 
    > **Note:** If pre-commit hooks fail or modify files during `cz commit`, you can retry with the same message:
->
+   >
    > ```bash
    > uv run cz commit --retry
    > ```
 
 ## 🔄 Pull Request Process
 
-1. **🔄 Update your fork** with the latest changes from the `dev` branch:
+1. **🔄 Update your branch** with the latest changes from the `dev` branch:
 
    ```bash
    git fetch upstream
-   git checkout dev
+   git checkout feature/your-feature-name
    git merge upstream/dev
-   git push origin dev
    ```
 
 2. **📤 Push your changes** to your fork:
@@ -300,8 +293,8 @@ Tests are split across the feature/integration test modules and two files for pu
   | `test_usage_examples.py` | Usage examples in the documentation, README and docstrings |
 
   All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run.
-- **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no fixtures, no cassettes.
-- **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no fixtures, no cassettes.
+- **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no shared test objects, no cassettes.
+- **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no shared test objects, no cassettes.
 
 ### 📏 Testing Guidelines
 
@@ -318,7 +311,7 @@ Tests are split across the feature/integration test modules and two files for pu
 
 ### 🎲 Tests for Pure Helpers (Property-Based and Example-Based)
 
-Pure utility helpers in `contextgem/internal/` (text cleaning, JSON parsing, type-hint serialization, tool-schema generation, etc.) are covered by two complementary test files. Both run without LLMs, fixtures, or cassettes.
+Pure utility helpers in `contextgem/internal/` (text cleaning, JSON parsing, type-hint serialization, tool-schema generation, etc.) are covered by two complementary test files. Both run without LLMs, shared test objects, or cassettes.
 
 **`tests/test_properties.py`** — property-based tests using [Hypothesis](https://hypothesis.readthedocs.io/). Property tests assert **invariants that must hold for any input** ("running the function twice yields the same result", "concatenating chunks recovers the original list", "serialize then deserialize round-trips") rather than checking hand-picked input/output pairs. Hypothesis generates many varied inputs and shrinks any failure to a minimal reproducer.
 
@@ -341,8 +334,6 @@ Stick with the feature/integration test modules (`tests/test_<area>.py`) for fea
 
 We use [pytest-recording](https://github.com/kiwicom/pytest-recording) to record and replay HTTP interactions with LLM APIs (both cloud-based and local). This allows tests that call LLM APIs to run without making actual API calls after the initial recording.
 
-> **Note:** Tests that do not call LLM APIs do not require or use VCR cassettes. The cassette system only applies to tests that interact with LLM APIs.
-
 #### Why VCR Cassettes?
 
 VCR cassettes provide the most reliable testing approach for ContextGem because:
@@ -354,7 +345,7 @@ VCR cassettes provide the most reliable testing approach for ContextGem because:
 
 Local LLMs (Ollama, LM Studio, etc.) also use HTTP APIs (typically on localhost) and their interactions are recorded in cassettes too.
 
-The test suite automatically uses dummy environment variables with pre-recorded cassettes when no `.env` file is present, so most contributors won't need to set up real API keys or local LLM servers.
+The test suite automatically uses dummy environment variables with pre-recorded cassettes when no `.env` file is present, so most contributors won't need to set up real API keys or local LLM servers. The first test run downloads a small SaT segmentation model from HuggingFace, so it needs network access.
 
 #### Determining Your Scenario
 
@@ -406,9 +397,6 @@ Based on the test results and your changes, you'll fall into one of these four s
    # For Microsoft Foundry API tests (decision models)
    CONTEXTGEM_AZURE_AI_API_KEY=your_foundry_api_key
    CONTEXTGEM_AZURE_AI_API_BASE=https://your-resource.services.ai.azure.com
-   
-   # For debugging output
-   CONTEXTGEM_LOGGER_LEVEL=DEBUG
    ```
 
 2. **For new LLM providers**, create environment variables prefixed with `CONTEXTGEM_`:
@@ -416,6 +404,8 @@ Based on the test results and your changes, you'll fall into one of these four s
    ```bash
    CONTEXTGEM_GOOGLE_AI_STUDIO_API_KEY=your_google_api_key
    ```
+
+   Also add the API host of the provider to `_TETHERED_RECORDING_ALLOW` in `tests/conftest.py`, otherwise its requests are blocked while recording (see [Network Egress Control](#network-egress-control)). If the provider does not send its key in the `Authorization` or `api-key` header (e.g. Google AI Studio sends it in `x-goog-api-key`), add that header to `VCR_FILTER_HEADERS` in `tests/utils.py`, otherwise the key is recorded in the cassette.
 
 3. **Update dummy variables** in `tests/utils.py` by adding your new environment variables to the `default_env_vars` dictionary in `set_dummy_env_variables_for_testing_from_cassettes()`, mapped to a dummy value (e.g. "DUMMY")
 
@@ -480,7 +470,7 @@ Based on the test results and your changes, you'll fall into one of these four s
    del tests\cassettes\*.yaml
    ```
 
-2. **Create a `.env` file** with your API keys (same as Scenario 2)
+2. **Create a `.env` file** with the API keys of all the services (same as Scenario 2), and set up what the tests of local LLMs and of decision models need (see [Local LLM Testing](#local-llm-testing) and [Decision Model Testing](#decision-model-testing))
 
 3. **Run all tests** to re-record everything:
 
@@ -494,27 +484,18 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 #### Environment Variable Security
 
-**Automatically Redacted Variables:**
+**What is redacted automatically:**
 
-- `CONTEXTGEM_OPENAI_API_KEY`
-- `CONTEXTGEM_TYPESAFE_API_KEY`
-- `CONTEXTGEM_AZURE_AI_API_KEY`
+- `CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY` and `CONTEXTGEM_AZURE_AI_API_KEY`: the headers that carry these keys (`Authorization`, `api-key`) are among the headers listed in `VCR_FILTER_HEADERS` (`tests/utils.py`), whose values are redacted in the recorded requests and responses. A key that is sent in another header, in the URL or in the body of a request is not redacted.
 - `CONTEXTGEM_AZURE_AI_API_BASE`: the host of a Microsoft Foundry resource, which has the name of the resource, is replaced with a dummy host (`dummy-endpoint.local`) in the recorded requests, and the name of a project of the resource with a dummy name, if the endpoint has it
 
 The response headers in which Azure names the deployment, the region and the cluster that served a request are redacted too. The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
-
-**Adding New Variables:**
-
-- Use the `CONTEXTGEM_` prefix for new API keys
-- Verify redaction in your cassette files
-- Update redaction logic in `tests/utils.py` if needed
-- Add dummy values to `set_dummy_env_variables_for_testing_from_cassettes()`
 
 #### Local LLM Testing
 
 For local LLM testing, install the following tools and download the relevant models identified under `ollama` and `lm_studio` prefixes in `tests/test_llms.py`:
 
-- [Ollama](https://ollama.ai/)
+- [Ollama](https://ollama.com/)
 - [LM Studio](https://lmstudio.ai/)
 
 > ⚠️ **Important:** Your system needs to have an appropriate GPU capacity to run such local LLMs.
@@ -539,7 +520,7 @@ The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed whi
 
 > **💰 Cost Warning:** Recording cassettes for test methods that use live LLM API (non-local LLMs) uses your API keys and **will incur charges**. Scenario 4 (re-recording all cassettes) can be particularly expensive.
 >
-> **🔒 Security:** Environment variables such as API keys are automatically stripped from cassettes, but always verify new cassette content.
+> **🔒 Security:** API keys are redacted in cassettes only where they are sent in the headers listed in `VCR_FILTER_HEADERS` (`tests/utils.py`), so always verify new cassette content.
 >
 > **🧪 Testing:** After recording, delete your `.env` file and run tests again to ensure LLM API tests pass by replaying from cassettes with dummy variables.
 >
@@ -556,10 +537,11 @@ ContextGem uses [tethered](https://github.com/shcherbak-ai/tethered) for network
 
 LLM API calls are deliberately **not** scoped — endpoints are user-configured (Azure custom domains, OpenAI-compatible proxies, self-hosted, etc.) and are left to the host application's own egress policy.
 
-**2. Test suite (`tethered.activate`)** — enforces egress control at the socket level during VCR-marked tests:
+**2. Test suite (`tethered.activate`)** — the `_tethered_network_guard` fixture in `tests/conftest.py` enforces egress control at the socket level during every test:
 
-- **Replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
-- **Recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data), the Microsoft Foundry resource whose endpoint is set in `CONTEXTGEM_AZURE_AI_API_BASE`, and localhost for local LLMs
+- **Tests without `@pytest.mark.vcr`**: all outbound connections are blocked, including the ones to localhost
+- **VCR-marked tests, replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
+- **VCR-marked tests, recording mode** (no cassette): allows only approved endpoints (LLM APIs, HuggingFace for model downloads, genai-prices for cost data), the Microsoft Foundry resource whose endpoint is set in `CONTEXTGEM_AZURE_AI_API_BASE`, and localhost for local LLMs
 
 The fixture activates tethered in **hardened mode** (`locked=True` with a private lock token, `external_subprocess_policy="block"`), so test code can't disable the policy mid-test and non-Python subprocesses are refused — closing the shell-egress bypass.
 
@@ -597,7 +579,6 @@ uv run python -c "import litellm; litellm.token_counter(model='gpt-6-luna', text
 Warnings generated during tests are often expected and by design. Many warnings are intentionally triggered to test error handling, edge cases, and warning systems. Common expected warnings include:
 
 - Model extraction errors and retries (testing error handling)
-- Missing model roles (testing validation logic)
 - Concurrency optimization warnings (testing performance comparisons)
 - Deprecation warnings from dependencies
 
@@ -605,7 +586,7 @@ Warnings generated during tests are often expected and by design. Many warnings 
 
 ### 🐞 Debugging Tests
 
-The log output will show detailed information about test execution.
+The tests run with the ContextGem logger at the `DEBUG` level, which is set in `tests/conftest.py`, so the log output shows detailed information about test execution.
 
 ## 📚 Documentation
 
@@ -643,7 +624,11 @@ uv run fab docs
 Open `http://localhost:9000` in your browser.
 
 **With Static Builds:**
-After building, open `docs/build/dirhtml/index.html` in your web browser.
+The pages of a static build link to each other as directories, which a browser does not resolve when the files are opened from disk. After building, serve the folder and open `http://localhost:9000`:
+
+```bash
+uv run python -m http.server 9000 --directory docs/build/dirhtml
+```
 
 ### 🌐 Live Documentation
 
@@ -652,6 +637,8 @@ You can access the live documentation at: <https://contextgem.dev>
 > **Note:** Documentation is automatically deployed when maintainers merge changes from `dev` to `main`. As a contributor, your documentation changes will be visible on the live site after your PR is merged and subsequently deployed by maintainers.
 
 ### 📋 Documentation Structure
+
+Under `docs/`:
 
 - `source/` - Contains the source `.rst` files
 - `source/_static/` - Static assets like images
@@ -686,7 +673,11 @@ We're here to help! Whether you're stuck on something technical, have questions 
 
 ### 📞 Contact Options
 
-**🐛 GitHub Issues** (preferred for technical questions):
+**💭 GitHub Discussions** (preferred for questions):
+
+- [Start a discussion](https://github.com/shcherbak-ai/contextgem/discussions/new/)
+
+**🐛 GitHub Issues** (for bugs, feature requests and documentation improvements):
 
 - [Open a new issue](https://github.com/shcherbak-ai/contextgem/issues/new) using our issue templates
 
@@ -700,7 +691,7 @@ We're here to help! Whether you're stuck on something technical, have questions 
 
 Found something unclear in this contributing guide? Missing information that would have helped you? Please:
 
-- Open an issue with the `documentation` label
+- Open an issue using the Documentation Improvement template
 - Suggest specific improvements or additions
 - Share your contributor experience to help us improve the process
 
