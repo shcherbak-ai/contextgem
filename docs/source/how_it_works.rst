@@ -169,6 +169,13 @@ See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-
      - gpt-5.6-sol
      - gpt-6-luna
 
+.. figure:: _static/contextgem_how_it_works_infographics.svg
+   :width: 100%
+   :alt: ContextGem - How it works: a model group with two LLMs and a decision model
+   :align: center
+
+   The models of the example above at work. The two LLMs extract an aspect and a concept of that aspect. The decision model is the alternative flow: in place of an LLM, it takes a closed question about the document, which it answers with probabilities.
+
 
 ℹ️ What ContextGem Doesn't Offer (Yet)
 ---------------------------------------

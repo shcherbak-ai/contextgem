@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 980" role="img" aria-labelledby="title desc" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title id="title">ContextGem - How it works: a model group with two LLMs and a decision model</title>
+  <desc id="desc">A document is processed by a group of three models. An LLM without a role extracts an aspect from the text of the document. An LLM with the role "reasoner" extracts a concept from the paragraphs extracted for the aspect. As an alternative to an LLM, a decision model with the role "decide" answers a closed question on the text of the document, with probabilities. Each model has an optional fallback model.</desc>
+
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5271ff"/>
+    </marker>
+    <marker id="arrow-navy" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#004aad"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5e17eb"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a94a6"/>
+    </marker>
+  </defs>
+
+  <!-- Background of its own, so that the picture reads the same in the light and dark themes -->
+  <rect width="1080" height="980" rx="16" fill="#eceef2"/>
+
+  <!-- The two flows -->
+  <g font-size="17" font-weight="600" text-anchor="middle">
+    <rect x="60" y="28" width="630" height="38" rx="19" fill="#dfe5ff"/>
+    <text x="375" y="53" fill="#1f3bb3">Extraction with LLMs</text>
+    <rect x="720" y="28" width="300" height="38" rx="19" fill="#e6dcff"/>
+    <text x="870" y="53" fill="#4a12b8">Alternative: a decision model</text>
+  </g>
+
+  <!-- Column headings -->
+  <g text-anchor="middle" fill="#111827">
+    <text x="210" y="104" font-size="19" font-weight="700">Aspect extraction</text>
+    <text x="210" y="128" font-size="16">(text of the document)</text>
+    <text x="540" y="104" font-size="19" font-weight="700">Concept extraction</text>
+    <text x="540" y="128" font-size="16">(paragraphs of the aspect)</text>
+    <text x="870" y="104" font-size="19" font-weight="700">Closed question</text>
+    <text x="870" y="128" font-size="16">(text of the document)</text>
+  </g>
+
+  <!-- Fallback models (optional) -->
+  <g text-anchor="middle">
+    <rect x="70" y="152" width="280" height="96" rx="6" fill="#ffffff" stroke="#5271ff" stroke-width="3" stroke-dasharray="9 7"/>
+    <text x="210" y="186" font-size="17" fill="#111827">Fallback LLM</text>
+    <rect x="160" y="200" width="100" height="32" rx="16" fill="#5271ff"/>
+    <text x="210" y="221" font-size="14" fill="#ffffff" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">no role</text>
+
+    <rect x="400" y="152" width="280" height="96" rx="6" fill="#ffffff" stroke="#004aad" stroke-width="3" stroke-dasharray="9 7"/>
+    <text x="540" y="186" font-size="17" fill="#111827">Fallback LLM</text>
+    <rect x="455" y="200" width="170" height="32" rx="16" fill="#004aad"/>
+    <text x="540" y="221" font-size="14" fill="#ffffff" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">role="reasoner"</text>
+
+    <rect x="730" y="152" width="280" height="96" rx="6" fill="#ffffff" stroke="#5e17eb" stroke-width="3" stroke-dasharray="9 7"/>
+    <text x="870" y="186" font-size="17" fill="#111827">Fallback LLM</text>
+    <rect x="795" y="200" width="150" height="32" rx="16" fill="#5e17eb"/>
+    <text x="870" y="221" font-size="14" fill="#ffffff" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">role="decide"</text>
+  </g>
+
+  <!-- A fallback model is tried when the model fails -->
+  <g stroke-width="3" stroke-dasharray="7 6" fill="none">
+    <line x1="210" y1="258" x2="210" y2="312" stroke="#5271ff" marker-start="url(#arrow-blue)" marker-end="url(#arrow-blue)"/>
+    <line x1="540" y1="258" x2="540" y2="312" stroke="#004aad" marker-start="url(#arrow-navy)" marker-end="url(#arrow-navy)"/>
+    <line x1="870" y1="258" x2="870" y2="312" stroke="#5e17eb" marker-start="url(#arrow-purple)" marker-end="url(#arrow-purple)"/>
+  </g>
+
+  <!-- Models of the group -->
+  <g text-anchor="middle" fill="#ffffff">
+    <rect x="70" y="322" width="280" height="104" fill="#5271ff"/>
+    <text x="210" y="362" font-size="21">LLM 1</text>
+    <rect x="160" y="378" width="100" height="32" rx="16" fill="#5271ff" stroke="#ffffff" stroke-width="2"/>
+    <text x="210" y="399" font-size="14" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">no role</text>
+
+    <rect x="400" y="322" width="280" height="104" fill="#004aad"/>
+    <text x="540" y="362" font-size="21">LLM 2</text>
+    <rect x="455" y="378" width="170" height="32" rx="16" fill="#004aad" stroke="#ffffff" stroke-width="2"/>
+    <text x="540" y="399" font-size="14" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">role="reasoner"</text>
+
+    <rect x="730" y="322" width="280" height="104" fill="#5e17eb"/>
+    <text x="870" y="362" font-size="21">Decision model</text>
+    <rect x="795" y="378" width="150" height="32" rx="16" fill="#5e17eb" stroke="#ffffff" stroke-width="2"/>
+    <text x="870" y="399" font-size="14" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">role="decide"</text>
+  </g>
+
+  <!-- Each aspect and concept is extracted by the model with its role -->
+  <g stroke-width="4" fill="none">
+    <line x1="210" y1="436" x2="210" y2="490" stroke="#5271ff" marker-start="url(#arrow-blue)" marker-end="url(#arrow-blue)"/>
+    <line x1="540" y1="436" x2="540" y2="490" stroke="#004aad" marker-start="url(#arrow-navy)" marker-end="url(#arrow-navy)"/>
+    <line x1="870" y1="436" x2="870" y2="490" stroke="#5e17eb" marker-start="url(#arrow-purple)" marker-end="url(#arrow-purple)"/>
+  </g>
+
+  <!-- What is extracted -->
+  <g text-anchor="middle" fill="#ffffff">
+    <rect x="70" y="500" width="280" height="200" rx="28" fill="#5271ff"/>
+    <text x="210" y="545" font-size="17">Aspect</text>
+    <text x="210" y="581" font-size="23" font-weight="700">Payment terms</text>
+    <text x="210" y="612" font-size="15">paragraphs of the document</text>
+    <rect x="135" y="644" width="150" height="32" rx="16" fill="#5271ff" stroke="#ffffff" stroke-width="2"/>
+    <text x="210" y="665" font-size="14" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">no model_role</text>
+
+    <rect x="400" y="500" width="280" height="200" rx="28" fill="#004aad"/>
+    <text x="540" y="545" font-size="17">Concept of the aspect</text>
+    <text x="540" y="577" font-size="23" font-weight="700">Anomalies in</text>
+    <text x="540" y="605" font-size="23" font-weight="700">payment terms</text>
+    <rect x="430" y="644" width="220" height="32" rx="16" fill="#004aad" stroke="#ffffff" stroke-width="2"/>
+    <text x="540" y="665" font-size="14" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">model_role="reasoner"</text>
+
+    <rect x="730" y="500" width="280" height="200" rx="28" fill="#5e17eb"/>
+    <text x="870" y="545" font-size="17">Yes/no concept of the document</text>
+    <text x="870" y="577" font-size="23" font-weight="700">Can be terminated</text>
+    <text x="870" y="605" font-size="23" font-weight="700">for convenience</text>
+    <text x="870" y="631" font-size="15">answered with probabilities</text>
+    <rect x="770" y="644" width="200" height="32" rx="16" fill="#5e17eb" stroke="#ffffff" stroke-width="2"/>
+    <text x="870" y="665" font-size="14" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">model_role="decide"</text>
+  </g>
+
+  <!-- The concept of the aspect is extracted from the paragraphs of the aspect -->
+  <line x1="356" y1="600" x2="393" y2="600" stroke="#004aad" stroke-width="4" marker-end="url(#arrow-navy)"/>
+
+  <!-- The text of the document goes to the aspect and to the yes/no concept -->
+  <g stroke="#8a94a6" stroke-width="4" fill="none">
+    <line x1="210" y1="800" x2="210" y2="712" marker-end="url(#arrow-gray)"/>
+    <line x1="870" y1="800" x2="870" y2="712" marker-end="url(#arrow-gray)"/>
+  </g>
+
+  <!-- Document -->
+  <g text-anchor="middle" fill="#ffffff">
+    <rect x="70" y="800" width="940" height="104" rx="28" fill="#4b5563"/>
+    <text x="540" y="842" font-size="17">Document</text>
+    <text x="540" y="876" font-size="23" font-weight="700">Consultancy contract</text>
+  </g>
+
+  <!-- Legend -->
+  <g font-size="14" fill="#374151">
+    <line x1="70" y1="940" x2="110" y2="940" stroke="#6b7280" stroke-width="3" stroke-dasharray="7 6"/>
+    <text x="120" y="945">optional fallback model</text>
+    <rect x="316" y="927" width="64" height="26" rx="13" fill="#6b7280"/>
+    <text x="348" y="945" fill="#ffffff" text-anchor="middle" font-size="12" font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace">role</text>
+    <text x="390" y="945">a free-form label that routes aspects and concepts to the models of a group</text>
+  </g>
+</svg>
