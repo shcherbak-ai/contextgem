@@ -1,5 +1,8 @@
 :og:image: https://contextgem.dev/_static/docs_preview_image_aspects.png
 
+.. meta::
+   :description: How to extract aspects, the sections and topics of a document that you define, with sub-aspects, concepts and justifications, and how to read the extracted paragraphs or sentences.
+
 Aspect Extraction
 ===================
 

@@ -170,6 +170,8 @@ Full documentation: **[contextgem.dev](https://contextgem.dev)**
 |-------------|------------------------|------------|----------|
 | [Installation](https://contextgem.dev/installation/)<br>[Quickstart](https://contextgem.dev/quickstart/)<br>[Advanced usage](https://contextgem.dev/advanced_usage/)<br>[How it works](https://contextgem.dev/how_it_works/)<br>[Migrating to v1.0](https://contextgem.dev/migration_v1/) | [Documents](https://contextgem.dev/documents/document_config/)<br>[Aspects](https://contextgem.dev/aspects/aspects/)<br>[Concepts](https://contextgem.dev/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.dev/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.dev/serialization/) | [Supported LLMs](https://contextgem.dev/llms/supported_llms/)<br>[LLM configuration](https://contextgem.dev/llms/llm_config/)<br>[Extraction methods](https://contextgem.dev/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.dev/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.dev/llms/chat_with_tools/) | [Accuracy](https://contextgem.dev/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.dev/optimizations/optimization_speed/)<br>[Cost](https://contextgem.dev/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.dev/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm/) |
 
+For LLMs and coding agents, [llms.txt](https://contextgem.dev/llms.txt) indexes the documentation, with a Markdown copy of each page.
+
 For visual architecture maps and natural language Q&A on the codebase, see [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem).
 
 ## Community

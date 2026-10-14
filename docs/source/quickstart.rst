@@ -1,5 +1,8 @@
 :og:description: ContextGem: Quickstart
 
+.. meta::
+   :description: Complete, self-contained examples of extracting aspects and concepts from a document with ContextGem, step by step.
+
 Quickstart examples
 ====================
 

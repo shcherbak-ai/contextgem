@@ -1,5 +1,8 @@
 :og:description: ContextGem: Supported LLM Providers and Models
 
+.. meta::
+   :description: ContextGem works with any cloud or local LLM that LiteLLM supports, e.g. from OpenAI, Anthropic, Google, Ollama or LM Studio, with or without reasoning.
+
 
 Supported LLMs
 ===============

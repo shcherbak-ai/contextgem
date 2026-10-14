@@ -1,5 +1,8 @@
 :og:description: ContextGem: Examples API
 
+.. meta::
+   :description: API reference of StringExample and JsonObjectExample, examples that guide the extraction of string and JSON object concepts.
+
 Examples
 =========
 

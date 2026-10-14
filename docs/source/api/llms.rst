@@ -1,5 +1,8 @@
 :og:description: ContextGem: LLMs API
 
+.. meta::
+   :description: API reference of DocumentLLM, which extracts aspects and concepts and chats with tools, and of ChatSession, which keeps the message history of a chat.
+
 LLMs
 =====
 

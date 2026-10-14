@@ -95,10 +95,19 @@ def lint(c: Context) -> None:
 # =============================================================================
 
 
+def _clear_docs_build(docs_dir: str) -> None:
+    """
+    Remove the previous build, so that no file of a removed page or of an earlier
+    configuration is served with the new one.
+    """
+    shutil.rmtree(os.path.join(docs_dir, "build", "dirhtml"), ignore_errors=True)
+
+
 @task
 def docs(c: Context) -> None:
     """Build documentation (static build with full rebuild)."""
     docs_dir = os.path.join(os.getcwd(), "docs")
+    _clear_docs_build(docs_dir)
     cmd = "uv run sphinx-build -b dirhtml source build/dirhtml -v -E -W"
     with c.cd(docs_dir):
         c.run(cmd)
@@ -120,6 +129,7 @@ def docs_live(c: Context, port: int = 9000) -> None:
         uv run fab docs-live --port 8080
     """
     docs_dir = os.path.join(os.getcwd(), "docs")
+    _clear_docs_build(docs_dir)
     cmd = (
         f"uv run sphinx-autobuild -b dirhtml source build/dirhtml "
         f"--port {port} -v -E -W"

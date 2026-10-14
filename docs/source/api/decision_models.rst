@@ -1,5 +1,8 @@
 :og:description: ContextGem: Decision models API
 
+.. meta::
+   :description: API reference of DocumentDecisionModel, which extracts aspects and Boolean, label and rating concepts with the probability of each answer.
+
 Decision models
 ================
 

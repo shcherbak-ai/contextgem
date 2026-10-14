@@ -1,5 +1,8 @@
 :og:description: ContextGem: Decision Models
 
+.. meta::
+   :description: How to extract aspects and Boolean, label and rating concepts with a decision model, which returns the probability of each answer instead of generating text, on its own or together with LLMs.
+
 
 Decision Models
 ================

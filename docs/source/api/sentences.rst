@@ -1,5 +1,8 @@
 :og:description: ContextGem: Sentences API
 
+.. meta::
+   :description: API reference of Sentence, a sentence of a paragraph of a document.
+
 Sentences
 ==========
 

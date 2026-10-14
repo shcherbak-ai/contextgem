@@ -1,5 +1,8 @@
 :og:description: ContextGem: Optimizing for Speed
 
+.. meta::
+   :description: How to speed up extraction: concurrency, smaller models, a fallback model, default parameters, and sparing use of justifications and sentence-level references.
+
 Optimizing for Speed
 =====================
 

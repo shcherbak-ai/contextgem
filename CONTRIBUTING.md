@@ -646,7 +646,7 @@ You can access the live documentation at: <https://contextgem.dev>
 
 Under `docs/`:
 
-- `source/` - Contains the source `.rst` files
+- `source/` - Contains the source `.rst` files. Each page starts with a `.. meta::` block whose `:description:` says in one sentence what the page covers: it is the page's line in `llms.txt`, the index of the documentation for LLMs and coding agents that the build writes to the root of the site, next to a Markdown copy of each page
 - `source/_static/` - Static assets like images
 - `source/conf.py` - Sphinx configuration
 - `build/` - Generated documentation (not committed to version control)

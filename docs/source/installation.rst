@@ -1,5 +1,8 @@
 :og:description: ContextGem: Installation
 
+.. meta::
+   :description: How to install ContextGem with uv or pip, and what it requires.
+
 Installation
 ============
 

@@ -1,5 +1,8 @@
 :og:image: https://contextgem.dev/_static/docs_preview_image_json_object_concept.png
 
+.. meta::
+   :description: How to extract structured data as JSON objects with JsonObjectConcept, with a structure that you define as a dictionary or as classes, including nested ones.
+
 JsonObjectConcept
 ==================
 

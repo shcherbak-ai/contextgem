@@ -1,5 +1,8 @@
 :og:description: ContextGem: Creating Documents
 
+.. meta::
+   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, and locate paragraphs and sentences in it.
+
 Creating Documents
 ===================
 

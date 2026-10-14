@@ -114,7 +114,7 @@ class TestExtraction(BaseTest):
 When adding or modifying functionality:
 
 1. **Update docstrings** in the affected classes/methods (reStructuredText format)
-2. **Update RST files** in `docs/source/` if the feature has dedicated documentation
+2. **Update RST files** in `docs/source/` if the feature has dedicated documentation. A new page starts with a `.. meta::` block whose `:description:` says in one sentence what the page covers: it is the page's line in `llms.txt` and its meta description (the `docs-page-description` hook checks that it is there)
 3. **Update `dev/readme.template.md`** if README content is affected (not `README.md` directly), and `PYPI.md` if the summary, the install command or the feature list changes
 4. **Add usage examples** to `dev/usage_examples/` if demonstrating new features, and list each new example in `tests/test_usage_examples.py`: in `_EXAMPLES_WITHOUT_REQUESTS` if it sends no requests, or in `_EXAMPLES_WITH_REQUESTS` if it does, in which case its test is a VCR test whose cassette the user has to record (**do NOT run it**). A change to the requests of an existing example invalidates the cassette of that example only
 5. **Verify docs compile** by running from the `docs/` directory:

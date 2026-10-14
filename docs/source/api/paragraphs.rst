@@ -1,5 +1,8 @@
 :og:description: ContextGem: Paragraphs API
 
+.. meta::
+   :description: API reference of Paragraph, a paragraph of a document with its text and sentences.
+
 Paragraphs
 ===========
 

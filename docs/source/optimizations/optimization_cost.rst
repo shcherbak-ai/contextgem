@@ -1,5 +1,8 @@
 :og:description: ContextGem: Optimizing for Cost
 
+.. meta::
+   :description: How to lower the cost of extraction: cost-efficient models, decision models for closed questions, default parameters, sparing justifications, and usage and cost monitoring.
+
 Optimizing for Cost
 ====================
 

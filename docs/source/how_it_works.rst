@@ -1,5 +1,8 @@
 :og:description: ContextGem: How it works
 
+.. meta::
+   :description: How ContextGem works: documents, aspects and concepts, how LLMs, decision models and model groups extract them, and what ContextGem is not (a RAG or an agent framework).
+
 How it works
 =============
 

@@ -1,5 +1,8 @@
 :og:image: https://contextgem.dev/_static/docs_preview_image_string_concept.png
 
+.. meta::
+   :description: How to extract text values, from names and titles to conclusions and findings, with StringConcept, including examples, references and justifications.
+
 StringConcept
 ==============
 

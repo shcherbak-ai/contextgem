@@ -1,3 +1,6 @@
+.. meta::
+   :description: The concept types of ContextGem, each for one kind of data to extract: text, true/false values, numbers, dates, ratings, labels and JSON objects.
+
 Supported Concepts
 ===================
 

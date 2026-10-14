@@ -1,5 +1,8 @@
 :og:description: ContextGem: Choosing the Right LLM(s)
 
+.. meta::
+   :description: How to choose LLMs for your extraction, and how to send each aspect and concept to the model that suits it with model roles and concept modality.
+
 Choosing the Right LLM(s)
 ==========================
 

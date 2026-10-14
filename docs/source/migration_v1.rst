@@ -1,5 +1,8 @@
 :og:description: ContextGem: Migrating to v1.0
 
+.. meta::
+   :description: How to upgrade code and serialized data from earlier ContextGem versions to v1.0: renamed classes and parameters, model roles and concept modality, and other changes in behavior.
+
 Migrating to v1.0
 ==================
 

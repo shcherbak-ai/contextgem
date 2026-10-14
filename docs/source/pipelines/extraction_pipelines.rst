@@ -1,5 +1,8 @@
 :og:description: ContextGem: Extraction Pipelines for reusable document analysis workflows
 
+.. meta::
+   :description: How to bundle aspects and concepts into a reusable ExtractionPipeline, apply it to many documents, and serialize it.
+
 Extraction Pipelines
 ====================
 

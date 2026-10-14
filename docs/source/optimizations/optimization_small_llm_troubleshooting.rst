@@ -1,5 +1,8 @@
 :og:description: ContextGem: Troubleshooting Issues with Small Models
 
+.. meta::
+   :description: Why small language models often fail at structured extraction with ContextGem, and how to mitigate, debug and test them.
+
 Troubleshooting Issues with Small Models
 ==========================================
 

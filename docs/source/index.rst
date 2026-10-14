@@ -1,5 +1,8 @@
 :og:description: ContextGem: Effortless LLM extraction from documents
 
+.. meta::
+   :description: ContextGem is a free, open-source LLM framework for extracting structured data and insights from documents with minimal code: start here for the guides, examples and API reference.
+
 .. image:: _static/contextgem_readme_header.png
    :width: 100%
    :alt: ContextGem logo

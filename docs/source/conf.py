@@ -81,6 +81,26 @@ extensions = [
     "sphinx_design",
     "sphinxext.opengraph",
     "sphinx_sitemap",
+    "sphinx_llm.txt",
+]
+
+# llms.txt (https://llmstxt.org/): the index of the documentation for language
+# models and coding agents, at the root of the site, with a Markdown copy of
+# every page beside its HTML one. A page's line in it is its description.
+llms_txt_description = (
+    "ContextGem is a free, open-source LLM framework for extracting structured "
+    "data and insights from documents: you describe what to extract as aspects "
+    "and concepts, and ContextGem handles the prompts, the data models, the "
+    "source references and the justifications."
+)
+llms_txt_nested_enabled = False  # one index, at the root of the site
+# The Markdown copies leave out what the Markdown builder has no form for: the
+# description of the page (its line in llms.txt), the captions of code blocks
+# and the elements of sphinx-design.
+llms_txt_suppress_unknown_node_warnings = [
+    "meta",
+    "caption",
+    "PassthroughTextElement",
 ]
 
 # Configure autosectionlabel to prefix labels with document name

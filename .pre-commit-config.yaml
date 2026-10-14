@@ -1,3 +1,7 @@
+# A hook without stages of its own runs at the commit, not again at the
+# commit-msg stage, where the package build and the README update would repeat.
+default_stages: [pre-commit]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
@@ -23,6 +27,14 @@ repos:
         language: system
         types: [python]
         exclude: ^dev/usage_examples/
+
+      # The description is the page's line in llms.txt and its meta description.
+      - id: docs-page-description
+        name: docs pages have a meta description
+        entry: '^\.\. meta::\n   :description: \S'
+        language: pygrep
+        args: [--multiline, --negate]
+        files: ^docs/source/.*\.rst$
 
       - id: ruff-check
         name: ruff check

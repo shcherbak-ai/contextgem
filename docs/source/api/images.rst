@@ -1,5 +1,8 @@
 :og:description: ContextGem: Images API
 
+.. meta::
+   :description: API reference of Image, an image that is attached to a document or makes up a document.
+
 Images
 =======
 

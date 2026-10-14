@@ -1,5 +1,8 @@
 :og:description: ContextGem: Logging Configuration Guide
 
+.. meta::
+   :description: How to set the level and the output of the ContextGem logger with environment variables, change them at runtime, and read the log format.
+
 
 Logging Configuration
 ========================

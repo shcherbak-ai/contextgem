@@ -1,5 +1,8 @@
 :og:description: ContextGem: Advanced Usage Examples
 
+.. meta::
+   :description: Complete examples of advanced ContextGem usage: aspects that contain concepts, extracting aspects and concepts together, and a pipeline that uses several LLMs over several documents.
+
 Advanced usage examples
 =======================
 
