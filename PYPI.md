@@ -17,6 +17,6 @@ Or, with pip: `pip install -U contextgem`.
 - Gives the probability of each possible answer of a decision model, so that you set the threshold.
 - Is built for in-depth analysis of individual documents, not for cross-document querying or corpus-wide retrieval.
 
-See the [documentation](https://contextgem.dev) for the [quickstart](https://contextgem.dev/quickstart/), [how it works](https://contextgem.dev/how_it_works/) and the [migration guide to v1.0](https://contextgem.dev/migration_v1/), the [repository](https://github.com/shcherbak-ai/contextgem#readme) for the overview and the source, and the [changelog](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for the version history.
+See the [documentation](https://contextgem.shcherbak.ai) for the [quickstart](https://contextgem.shcherbak.ai/quickstart/), [how it works](https://contextgem.shcherbak.ai/how_it_works/) and the [migration guide to v1.0](https://contextgem.shcherbak.ai/migration_v1/), the [repository](https://github.com/shcherbak-ai/contextgem#readme) for the overview and the source, and the [changelog](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for the version history.
 
 Licensed under [Apache-2.0](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE).

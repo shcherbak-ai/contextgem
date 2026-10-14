@@ -2536,7 +2536,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         f"`max_items_per_call`, `max_paragraphs_to_analyze_per_call` "
                         f"(for text) or `max_images_to_analyze_per_call` (for images). "
                         f"See the optimization guide for long documents: "
-                        f"https://contextgem.dev/optimizations/optimization_long_docs/"
+                        f"https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/"
                     )
                     logger.error(error_msg)
                     if has_fallback_pending:

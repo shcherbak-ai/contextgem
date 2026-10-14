@@ -1626,7 +1626,7 @@ class TestExtraction(BaseTest):
         )
         with pytest.raises(
             ValueError,
-            match="https://contextgem.dev/optimizations/optimization_long_docs/",
+            match="https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/",
         ):
             llm_short_context.extract_concepts_from_document(
                 too_long_doc,

@@ -1,4 +1,4 @@
-:og:image: https://contextgem.dev/_static/docs_preview_image_boolean_concept.png
+:og:image: https://contextgem.shcherbak.ai/_static/docs_preview_image_boolean_concept.png
 
 .. meta::
    :description: How to get true/false answers about a document or an aspect with BooleanConcept, e.g. whether it contains a clause or meets a condition.

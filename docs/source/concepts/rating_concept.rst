@@ -1,4 +1,4 @@
-:og:image: https://contextgem.dev/_static/docs_preview_image_rating_concept.png
+:og:image: https://contextgem.shcherbak.ai/_static/docs_preview_image_rating_concept.png
 
 .. meta::
    :description: How to rate a document or an aspect on a numerical scale that you define with RatingConcept.

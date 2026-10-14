@@ -638,7 +638,7 @@ uv run python -m http.server 9000 --directory docs/build/dirhtml
 
 ### 🌐 Live Documentation
 
-You can access the live documentation at: <https://contextgem.dev>
+You can access the live documentation at: <https://contextgem.shcherbak.ai>
 
 > **Note:** Documentation is automatically deployed when maintainers merge changes from `dev` to `main`. As a contributor, your documentation changes will be visible on the live site after your PR is merged and subsequently deployed by maintainers.
 

@@ -135,7 +135,7 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     Note:
         For what a decision model extracts, how its requests are formed, how
         the extracted items get their values and probabilities, and the limits,
-        see https://contextgem.dev/decision_models/decision_models/
+        see https://contextgem.shcherbak.ai/decision_models/decision_models/
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/decision_models/def_decision_model.py

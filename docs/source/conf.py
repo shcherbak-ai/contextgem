@@ -17,6 +17,7 @@ project = "ContextGem"
 copyright = "2025, Shcherbak AI AS"
 author = "Sergii Shcherbak"
 release = __version__  # the version of the package the docs are built from
+site_url = "https://contextgem.shcherbak.ai/"  # the base of every absolute link below
 
 
 # Skip Pydantic internal methods and attributes from the API docs
@@ -47,27 +48,12 @@ def skip_pydantic_internals(app, what, name, obj, skip, options):
     return skip
 
 
-def add_canonical_url(app, pagename, templatename, context, doctree):
-    """
-    Adds canonical URL to each page to prevent duplicate content issues from mirrors.
-    """
-
-    base_url = "https://contextgem.dev/"
-    canonical_url = base_url if pagename == "index" else f"{base_url}{pagename}/"
-
-    context["metatags"] = (
-        context.get("metatags", "")
-        + f'\n<link rel="canonical" href="{canonical_url}" />'
-    )
-
-
 def setup(app):
     """
     Setup function for Sphinx documentation.
     """
 
     app.connect("autodoc-skip-member", skip_pydantic_internals)
-    app.connect("html-page-context", add_canonical_url)
 
 
 # Extensions
@@ -94,6 +80,9 @@ llms_txt_description = (
     "source references and the justifications."
 )
 llms_txt_nested_enabled = False  # one index, at the root of the site
+# Full URLs for the links in llms.txt and in the Markdown copies, so that they
+# work wherever the text is read
+markdown_http_base = site_url.rstrip("/")
 # The Markdown copies leave out what the Markdown builder has no form for: the
 # description of the page (its line in llms.txt), the captions of code blocks
 # and the elements of sphinx-design.
@@ -129,7 +118,7 @@ exclude_patterns = []
 
 # Additional settings
 html_title = f"{project} {release} Documentation"
-html_baseurl = "https://contextgem.dev/"
+html_baseurl = site_url  # also the canonical URL of each page, against mirrors
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
 html_extra_path = ["robots.txt"]
@@ -148,14 +137,14 @@ html_theme_options = {
     "show_navbar_depth": 2,
     "pygments_dark_style": "github-dark-high-contrast",
     # Footer customization
-    "extra_footer": "<p><strong>⚠️ Official Documentation Notice:</strong> <a href='https://contextgem.dev/'>https://contextgem.dev/</a> is the only official source of ContextGem documentation. Be aware of unauthorized copies or mirrors.</p>",
+    "extra_footer": f"<p><strong>⚠️ Official Documentation Notice:</strong> <a href='{site_url}'>{site_url}</a> is the only official source of ContextGem documentation. Be aware of unauthorized copies or mirrors.</p>",
 }
 html_link_suffix = "/"
 sitemap_url_scheme = "{link}"
 
 # Open Graph metadata
-ogp_site_url = "https://contextgem.dev/"
-ogp_image = "https://contextgem.dev/_static/contextgem_website_preview.png"
+ogp_site_url = site_url
+ogp_image = f"{site_url}_static/contextgem_website_preview.png"
 ogp_description = "ContextGem: Effortless LLM extraction from documents"
 ogp_description_length = 200
 ogp_type = "website"

@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-  <a href="https://contextgem.dev"><img src="docs/source/_static/contextgem_wordmark.svg" alt="ContextGem" width="576"></a>
+  <a href="https://contextgem.shcherbak.ai"><img src="docs/source/_static/contextgem_wordmark.svg" alt="ContextGem" width="576"></a>
 </p>
 
 <h1 align="center">Effortless LLM extraction from documents</h1>
@@ -18,10 +18,10 @@
 </p>
 
 <p align="center">
-  <a href="https://contextgem.dev/quickstart/"><strong>Quickstart</strong></a> ·
-  <a href="https://contextgem.dev/how_it_works/"><strong>How it works</strong></a> ·
+  <a href="https://contextgem.shcherbak.ai/quickstart/"><strong>Quickstart</strong></a> ·
+  <a href="https://contextgem.shcherbak.ai/how_it_works/"><strong>How it works</strong></a> ·
   <a href="CHANGELOG.md"><strong>Changelog</strong></a> ·
-  <a href="https://contextgem.dev/"><strong>Documentation</strong></a>
+  <a href="https://contextgem.shcherbak.ai/"><strong>Documentation</strong></a>
 </p>
 
 <p align="center">
@@ -51,7 +51,7 @@ Reliable extraction from documents usually means writing prompts, designing vali
 </table>
 <!-- markdownlint-enable MD033 -->
 
-Read more on the [motivation](https://contextgem.dev/motivation/) behind ContextGem.
+Read more on the [motivation](https://contextgem.shcherbak.ai/motivation/) behind ContextGem.
 
 ## Quick start
 
@@ -129,7 +129,7 @@ for item in anomalies_concept.extracted_items:
 
 ```
 
-More examples: [aspects](https://contextgem.dev/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.dev/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.dev/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.dev/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-containing-concepts), [multi-model pipelines](https://contextgem.dev/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents) and a [chat interface with tool calling](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface).
+More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts), [multi-model pipelines](https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents) and a [chat interface with tool calling](https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface).
 
 ## How it works
 
@@ -140,21 +140,21 @@ More examples: [aspects](https://contextgem.dev/quickstart/#aspect-extraction-fr
 </p>
 <!-- markdownlint-enable MD033 -->
 
-1. **Wrap your content in a [Document](https://contextgem.dev/documents/document_config/)**: text, images, or both.
-2. **Say what to extract.** [Aspects](https://contextgem.dev/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.dev/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.dev/pipelines/extraction_pipelines/).
-3. **Run a model.** One call to an [LLM](https://contextgem.dev/llms/llm_extraction_methods/) extracts everything. A [model group](https://contextgem.dev/llms/llm_config/#model-groups) routes aspects and concepts to different models by role, e.g. the closed questions to a [decision model](https://contextgem.dev/decision_models/decision_models/), and each model can have fallbacks.
+1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/)**: text, images, or both.
+2. **Say what to extract.** [Aspects](https://contextgem.shcherbak.ai/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/).
+3. **Run a model.** One call to an [LLM](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/) extracts everything. A [model group](https://contextgem.shcherbak.ai/llms/llm_config/#model-groups) routes aspects and concepts to different models by role, e.g. the closed questions to a [decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/), and each model can have fallbacks.
 
-Read more on [how ContextGem works](https://contextgem.dev/how_it_works/) in the documentation.
+Read more on [how ContextGem works](https://contextgem.shcherbak.ai/how_it_works/) in the documentation.
 
 ## Models
 
 ContextGem works with two kinds of models, and routes each aspect and concept to the one that suits it: an LLM where it takes reasoning, a decision model where a fast, low-cost answer with a probability is enough.
 
-**LLMs.** Any cloud or local LLM through [LiteLLM](https://github.com/BerriAI/litellm): OpenAI, Anthropic, Google, Azure OpenAI, xAI, Ollama, LM Studio and more, with or without reasoning capabilities, behind one interface. See the [supported LLMs](https://contextgem.dev/llms/supported_llms/), the [LLM configuration](https://contextgem.dev/llms/llm_config/) and the [extraction methods](https://contextgem.dev/llms/llm_extraction_methods/).
+**LLMs.** Any cloud or local LLM through [LiteLLM](https://github.com/BerriAI/litellm): OpenAI, Anthropic, Google, Azure OpenAI, xAI, Ollama, LM Studio and more, with or without reasoning capabilities, behind one interface. See the [supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/), the [LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/) and the [extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/).
 
-**Decision models.** A decision model (e.g. TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry) answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers, and a decision threshold sets what counts as a "yes". Concepts with open values, justifications, references for concepts and extraction from images require an LLM. See [decision models](https://contextgem.dev/decision_models/decision_models/).
+**Decision models.** A decision model (e.g. TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry) answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers, and a decision threshold sets what counts as a "yes". Concepts with open values, justifications, references for concepts and extraction from images require an LLM. See [decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/).
 
-> **Choosing a model.** For reliable extraction, use a model at least as capable as `gpt-6-luna`. Smaller models (such as 8B parameter models) may struggle with the detailed extraction instructions: see the [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/).
+> **Choosing a model.** For reliable extraction, use a model at least as capable as `gpt-6-luna`. Smaller models (such as 8B parameter models) may struggle with the detailed extraction instructions: see the [troubleshooting guide](https://contextgem.shcherbak.ai/optimizations/optimization_small_llm_troubleshooting/).
 
 ## Whole documents, not fragments
 
@@ -164,13 +164,13 @@ The trade-off: ContextGem does not support cross-document querying or corpus-wid
 
 ## Documentation
 
-Full documentation: **[contextgem.dev](https://contextgem.dev)**
+Full documentation: **[contextgem.shcherbak.ai](https://contextgem.shcherbak.ai)**
 
 | Get started | Define what to extract | Run models | Optimize |
 |-------------|------------------------|------------|----------|
-| [Installation](https://contextgem.dev/installation/)<br>[Quickstart](https://contextgem.dev/quickstart/)<br>[Advanced usage](https://contextgem.dev/advanced_usage/)<br>[How it works](https://contextgem.dev/how_it_works/)<br>[Migrating to v1.0](https://contextgem.dev/migration_v1/) | [Documents](https://contextgem.dev/documents/document_config/)<br>[Aspects](https://contextgem.dev/aspects/aspects/)<br>[Concepts](https://contextgem.dev/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.dev/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.dev/serialization/) | [Supported LLMs](https://contextgem.dev/llms/supported_llms/)<br>[LLM configuration](https://contextgem.dev/llms/llm_config/)<br>[Extraction methods](https://contextgem.dev/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.dev/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.dev/llms/chat_with_tools/) | [Accuracy](https://contextgem.dev/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.dev/optimizations/optimization_speed/)<br>[Cost](https://contextgem.dev/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.dev/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm/) |
+| [Installation](https://contextgem.shcherbak.ai/installation/)<br>[Quickstart](https://contextgem.shcherbak.ai/quickstart/)<br>[Advanced usage](https://contextgem.shcherbak.ai/advanced_usage/)<br>[How it works](https://contextgem.shcherbak.ai/how_it_works/)<br>[Migrating to v1.0](https://contextgem.shcherbak.ai/migration_v1/) | [Documents](https://contextgem.shcherbak.ai/documents/document_config/)<br>[Aspects](https://contextgem.shcherbak.ai/aspects/aspects/)<br>[Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.shcherbak.ai/serialization/) | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/)<br>[LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/)<br>[Extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.shcherbak.ai/llms/chat_with_tools/) | [Accuracy](https://contextgem.shcherbak.ai/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.shcherbak.ai/optimizations/optimization_speed/)<br>[Cost](https://contextgem.shcherbak.ai/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.shcherbak.ai/optimizations/optimization_choosing_llm/) |
 
-For LLMs and coding agents, [llms.txt](https://contextgem.dev/llms.txt) indexes the documentation, with a Markdown copy of each page.
+For LLMs and coding agents, [llms.txt](https://contextgem.shcherbak.ai/llms.txt) indexes the documentation, with a Markdown copy of each page.
 
 For visual architecture maps and natural language Q&A on the codebase, see [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem).
 
