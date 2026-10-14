@@ -56,6 +56,7 @@ class StringConcept(_StringConcept):
 | Public classes | `Aspect`, `Document` (no prefix) |
 | Constants | `_MAX_NESTING_LEVEL` (ALL_CAPS) |
 | Required import | `from __future__ import annotations` (except `__init__.py` and the files under `dev/`, e.g. the usage examples) |
+| File header | `# SPDX-FileCopyrightText: Shcherbak AI AS` and `# SPDX-License-Identifier: Apache-2.0` as the first two lines of every Python file, except empty `__init__.py` files and the usage examples (`dev/usage_examples/`), which the documentation shows; documentation pages have no header. The `add-file-headers` pre-commit hook adds the lines where they are missing |
 | Formatter | Ruff (line length: 88) |
 | Type checker | ty |
 | Docstrings | reStructuredText format for Sphinx (`:param:`, `:type:`, `:ivar:`, `:vartype:`, `:returns:`, `:rtype:`) |

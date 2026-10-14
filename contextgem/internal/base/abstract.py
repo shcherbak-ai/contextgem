@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Shcherbak AI AS
+# SPDX-License-Identifier: Apache-2.0
+
 """
 Abstract base layer for instance and model processor types.
 """

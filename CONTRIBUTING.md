@@ -185,6 +185,7 @@ contextgem/
     - **uv lock check**: To verify that `uv.lock` is in sync with `pyproject.toml`
     - **Commitizen**: For the format of commit messages (see below)
     - **licenseal**: For license compatibility of the dependencies (in CI)
+    - **add-file-headers**: Adds the license header (two SPDX lines) to a Python file that has none, except a usage example
     - **Pre-commit hooks**: To automatically check and format code before commits, together with checks for trailing whitespace and the ends of files (except in the files whose bytes go into the requests recorded in the VCR cassettes: the package, the tests, the usage examples and the evaluation cases)
 
     The pre-commit hooks check and format your code when you commit. They run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI.

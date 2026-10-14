@@ -16,6 +16,14 @@ repos:
   # These run from the project environment: uv.lock is their only version pin.
   - repo: local
     hooks:
+      # Not on the usage examples, which the documentation shows.
+      - id: add-file-headers
+        name: add SPDX file headers
+        entry: uv run python dev/add_file_headers.py
+        language: system
+        types: [python]
+        exclude: ^dev/usage_examples/
+
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --force-exclude --fix
